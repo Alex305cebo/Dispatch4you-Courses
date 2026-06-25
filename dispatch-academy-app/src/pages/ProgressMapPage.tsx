@@ -249,6 +249,13 @@ export default function ProgressMapPage() {
   const [popupLevelId, setPopupLevelId] = useState(0);
   const [popupTaskLimit, setPopupTaskLimit] = useState(0);
 
+  // Random avatar video for map 1 — chosen once per popup open
+  const MAP1_VIDEOS = [
+    '/dispatch-academy-app/videos/student-avatar.mp4',
+    '/dispatch-academy-app/videos/student-avatar-3.mp4',
+  ];
+  const [randomVideoSrc, setRandomVideoSrc] = useState(MAP1_VIDEOS[0]);
+
   const completeTask = useProgressStore((s) => s.completeTask);
   const addXP = useProgressStore((s) => s.addXP);
 
@@ -265,6 +272,11 @@ export default function ProgressMapPage() {
       setPopupTaskIndex(0);
       setPopupLevelId(levelId);
       setPopupTaskLimit(limit);
+      // Pick random avatar video for map 1
+      if (!isDream) {
+        const pick = MAP1_VIDEOS[Math.floor(Math.random() * MAP1_VIDEOS.length)];
+        setRandomVideoSrc(pick);
+      }
       setPopupOpen(true);
     } catch {
       // fallback to navigation
@@ -798,7 +810,7 @@ export default function ProgressMapPage() {
                   <div className="w-28 h-28 lg:w-40 lg:h-40 rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-lg shadow-cyan-500/10">
                     <video
                       className="w-full h-full object-cover"
-                      src={currentMapIndex === 0 ? '/dispatch-academy-app/videos/student-avatar.mp4' : '/dispatch-academy-app/videos/student-avatar-2.mp4'}
+                      src={currentMapIndex === 0 ? randomVideoSrc : '/dispatch-academy-app/videos/student-avatar-2.mp4'}
                       autoPlay
                       loop
                       muted

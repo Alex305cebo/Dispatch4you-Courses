@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FillBlankData } from '../../types/index';
 
@@ -142,35 +143,66 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
               >
-                {/* Section header */}
-                <div className={`px-4 py-2 rounded-t-lg mb-0 border-l-4 flex items-center justify-center gap-3 ${
+                {/* Section header — shows the sentence with highlighted blank */}
+                <div className={`px-3 py-2.5 rounded-t-lg mb-0 border-l-4 flex items-start gap-2 ${
                   index === 0 ? 'bg-purple-500/15 border-purple-500' :
                   index === 1 ? 'bg-blue-500/15 border-blue-500' :
                   index === 2 ? 'bg-cyan-500/15 border-cyan-500' :
                   index === 3 ? 'bg-green-500/15 border-green-500' :
                   'bg-orange-500/15 border-orange-500'
                 }`}>
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${
-                    index === 0 ? 'bg-purple-500/40' :
-                    index === 1 ? 'bg-blue-500/40' :
-                    index === 2 ? 'bg-cyan-500/40' :
-                    index === 3 ? 'bg-green-500/40' :
-                    'bg-orange-500/40'
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-0.5 ${
+                    index === 0 ? 'bg-purple-500/60' :
+                    index === 1 ? 'bg-blue-500/60' :
+                    index === 2 ? 'bg-cyan-500/60' :
+                    index === 3 ? 'bg-green-500/60' :
+                    'bg-orange-500/60'
                   }`}>
                     {index + 1}
                   </span>
-                  <p className={`text-xs font-bold uppercase tracking-widest text-center ${
-                    index === 0 ? 'text-purple-300' :
-                    index === 1 ? 'text-blue-300' :
-                    index === 2 ? 'text-cyan-300' :
-                    index === 3 ? 'text-green-300' :
-                    'text-orange-300'
-                  }`}>
-                    {index === 0 ? 'Выберите первое подходящее слово' :
-                     index === 1 ? 'Выберите второе подходящее слово' :
-                     index === 2 ? 'Выберите третье подходящее слово' :
-                     index === 3 ? 'Выберите четвёртое подходящее слово' :
-                     `Выберите пятое подходящее слово`}
+                  {/* Full sentence — current blank = ?, filled blanks = answer, unfilled = ___ */}
+                  <p className="text-[12px] leading-relaxed text-white/80 flex-1">
+                    {(() => {
+                      const sentence = data.sentence;
+                      const blankRegex = /\{(\d+)\}/g;
+                      const allMatches: { idx: number; start: number; end: number }[] = [];
+                      let m;
+                      while ((m = blankRegex.exec(sentence)) !== null) {
+                        allMatches.push({ idx: parseInt(m[1] ?? '0'), start: m.index, end: m.index + (m[0]?.length ?? 0) });
+                      }
+
+                      const highlightColor =
+                        index === 0 ? 'text-purple-200 bg-purple-500/25 border-purple-400' :
+                        index === 1 ? 'text-blue-200 bg-blue-500/25 border-blue-400' :
+                        index === 2 ? 'text-cyan-200 bg-cyan-500/25 border-cyan-400' :
+                        index === 3 ? 'text-green-200 bg-green-500/25 border-green-400' :
+                        'text-orange-200 bg-orange-500/25 border-orange-400';
+
+                      const nodes: React.ReactNode[] = [];
+                      let lastEnd = 0;
+                      allMatches.forEach((match, mi) => {
+                        if (match.start > lastEnd) {
+                          nodes.push(<span key={`t${mi}`}>{sentence.slice(lastEnd, match.start)}</span>);
+                        }
+                        if (match.idx === index) {
+                          nodes.push(
+                            <span key={`b${mi}`} className={`inline-block px-2 py-0 rounded font-bold border mx-0.5 ${highlightColor}`}>?</span>
+                          );
+                        } else {
+                          const val = answers[match.idx];
+                          nodes.push(
+                            <span key={`b${mi}`} className={`inline-block px-1.5 font-semibold mx-0.5 rounded ${val ? 'text-white/70 bg-white/10' : 'text-white/30'}`}>
+                              {val || '___'}
+                            </span>
+                          );
+                        }
+                        lastEnd = match.end;
+                      });
+                      if (lastEnd < sentence.length) {
+                        nodes.push(<span key="tail">{sentence.slice(lastEnd)}</span>);
+                      }
+                      return nodes;
+                    })()}
                   </p>
                 </div>
 
