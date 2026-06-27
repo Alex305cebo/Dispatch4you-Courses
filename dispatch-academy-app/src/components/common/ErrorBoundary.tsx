@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { captureError } from '../../services/analytics';
 
 interface ErrorBoundaryProps {
   /** Custom fallback UI. If not provided, a default error screen is shown. */
@@ -28,6 +29,10 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
+    captureError(error, {
+      source: 'ErrorBoundary',
+      componentStack: errorInfo.componentStack?.slice(0, 1000),
+    });
   }
 
   private handleReset = () => {

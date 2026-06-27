@@ -6,6 +6,7 @@ import { calculateStreak, checkMilestone } from '../logic/streak';
 import { getLevelForXP, didLevelUp } from '../logic/levels';
 import { deriveStats, findNewlyUnlocked, getAchievementById } from '../logic/achievements';
 import { addDailyXp, DEFAULT_DAILY_GOAL } from '../logic/daily-goal';
+import { track } from '../services/analytics';
 import { useUIStore } from './useUIStore';
 
 export const useProgressStore = create<ProgressState>()(
@@ -58,6 +59,7 @@ export const useProgressStore = create<ProgressState>()(
           // Celebrate when the student crosses into a new level.
           if (didLevelUp(state.totalXP, newXP)) {
             useUIStore.getState().triggerLevelUp(newLevelDef.level, newLevelDef.title);
+            track('level_up', { level: newLevelDef.level });
           }
           // Track progress toward today's goal and celebrate reaching it once.
           const today = new Date().toISOString().split('T')[0] ?? '';
@@ -149,6 +151,7 @@ export const useProgressStore = create<ProgressState>()(
           if (newly.length > 1) {
             useUIStore.getState().showToast(`🏅 Открыто достижений: ${newly.length}`);
           }
+          newly.forEach((id) => track('achievement_unlocked', { id }));
           return {
             unlockedAchievements: [...state.unlockedAchievements, ...newly],
           };

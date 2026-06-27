@@ -2,6 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
 import { registerServiceWorker } from './services/register-sw'
+import { initAnalytics } from './services/analytics'
+
+initAnalytics()
 
 const App = React.lazy(() => import('./App'))
 

@@ -5,6 +5,7 @@ import { loadDayContent, prefetchNextDay } from '../services/content-loader';
 import { useProgressStore } from '../store/useProgressStore';
 import { calculateDayMeanScore } from '../logic/unlock';
 import { getBaseXPForTask, getPerfectScoreBonus, getDayPerfectBonus } from '../logic/xp';
+import { track } from '../services/analytics';
 import TaskRenderer from '../components/tasks/TaskRenderer';
 import type { DayContent } from '../types/index';
 import type { TaskResult } from '../types/progress';
@@ -116,6 +117,13 @@ export default function DayPage() {
 
         const score = calculateDayMeanScore(updatedResults);
         setMeanScore(score);
+
+        track('lesson_complete', {
+          dayId,
+          score: Math.round(score),
+          tasks: updatedResults.length,
+          passed: score >= 70,
+        });
 
         if (score >= 70) {
           unlockNextDay(dayId);
