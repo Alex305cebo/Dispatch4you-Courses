@@ -6,8 +6,10 @@ import { useFirestoreSync } from '../../hooks/useFirestoreSync';
 import { shouldRemindStreak } from '../../logic/streak-reminder';
 import { showLocalNotification } from '../../services/notifications';
 import { ACHIEVEMENTS, getAchievementById } from '../../logic/achievements';
+import { useAuth } from '../../hooks/useAuth';
 import LevelUpModal from '../common/LevelUpModal';
 import AchievementModal from '../common/AchievementModal';
+import ProfilePanel from '../common/ProfilePanel';
 
 /**
  * Application layout wrapper — Premium design.
@@ -25,11 +27,13 @@ export default function AppLayout() {
   const lastActivityDate = useProgressStore((s) => s.lastActivityDate);
   const checkAchievements = useProgressStore((s) => s.checkAchievements);
   const unlockedAchievements = useProgressStore((s) => s.unlockedAchievements);
+  const { user } = useAuth();
   const { toastMessage } = useUIStore();
   const showToast = useUIStore((s) => s.showToast);
   const navigate = useNavigate();
   const location = useLocation();
   const [showAchievementsPanel, setShowAchievementsPanel] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [showSiteConfirm, setShowSiteConfirm] = useState(false);
   useFirestoreSync();
 
@@ -99,18 +103,37 @@ export default function AppLayout() {
             {/* Spacer */}
             <div className="flex-1" />
 
-            {/* XP + map progress bar */}
-            <div className="flex items-center gap-2">
-              <div className="flex flex-col items-end gap-0.5">
-                <span className="text-xs font-bold text-cyan-400">{totalXP} XP</span>
-                <div className="w-36 h-2.5 bg-transparent rounded-full overflow-hidden border border-white/50 relative">
-                  <div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-green-400 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, Math.round(((level - 1) / 11) * 100))}%` }}
-                  />
-                </div>
-              </div>
-            </div>
+            {/* Profile chip — opens ProfilePanel */}
+            <button
+              onClick={() => setShowProfile(true)}
+              className="shrink-0 flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-full bg-slate-800/70 border border-white/10 hover:bg-slate-700/70 active:scale-95 transition-all"
+              aria-label="Профиль"
+            >
+              {user ? (
+                <>
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="w-6 h-6 rounded-full object-cover border border-cyan-400/40"
+                    />
+                  ) : (
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-[9px] font-bold text-white">
+                      {user.firstName[0]?.toUpperCase() ?? '?'}
+                    </div>
+                  )}
+                  <span className="text-xs font-semibold text-white max-w-[52px] truncate leading-none">
+                    {user.firstName}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-base leading-none">👤</span>
+                  <span className="text-xs font-semibold text-slate-300 leading-none">Войти</span>
+                </>
+              )}
+            </button>
 
             {/* Achievements chip (right) — shows unlocked count, opens panel */}
             <button
@@ -169,12 +192,6 @@ export default function AppLayout() {
 
       {/* Achievements + Leaderboard Panel */}
       {showAchievementsPanel && (() => {
-        const scores = Object.values(taskScores);
-        const correct = scores.filter((s: any) => s?.correct).length;
-        const accuracy = scores.length > 0 ? Math.round((correct / scores.length) * 100) : 0;
-        const leaders = [
-          ...(totalXP > 0 ? [{ name: 'Вы', xp: totalXP, level, accuracy, isLocal: true }] : []),
-        ].sort((a, b) => b.xp - a.xp).map((e, i) => ({ ...e, rank: i + 1 }));
         const unlockedSet = new Set(unlockedAchievements);
 
         return (
@@ -238,51 +255,40 @@ export default function AppLayout() {
                   </div>
                 </div>
 
-                {/* Leaderboard section */}
-                <div className="px-3 pt-3 pb-4">
-                  <div className="flex items-center gap-2 mb-2">
+                {/* Leaderboard link */}
+                <div className="px-3 pt-2 pb-5">
+                  <div className="flex items-center gap-2 mb-3">
                     <div className="h-px flex-1 bg-white/8" />
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">🏆 Рейтинг</p>
                     <div className="h-px flex-1 bg-white/8" />
                   </div>
-                  <div className="flex flex-col gap-1.5">
-                    {leaders.length === 0 && (
-                      <p className="text-center text-slate-500 text-xs py-4">Пока нет игроков с очками</p>
-                    )}
-                    {leaders.map((entry) => {
-                      const medal = entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : '';
-                      return (
-                        <div
-                          key={entry.rank}
-                          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${
-                            entry.isLocal
-                              ? 'bg-cyan-500/10 border-cyan-500/30'
-                              : 'bg-white/3 border-white/8'
-                          }`}
-                        >
-                          <span className="w-7 text-center font-bold text-sm text-slate-300">
-                            {medal || `#${entry.rank}`}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-bold truncate ${entry.isLocal ? 'text-cyan-300' : 'text-white'}`}>
-                              {entry.name}
-                            </p>
-                            <p className="text-[10px] text-slate-400">Ур. {entry.level} · {entry.accuracy}%</p>
-                          </div>
-                          <span className={`text-xs font-bold ${entry.isLocal ? 'text-cyan-400' : 'text-slate-300'}`}>
-                            {entry.xp} XP
-                          </span>
-                        </div>
-                      );
-                    })}
-                    <p className="text-[9px] text-slate-600 text-center pt-1">Данные обновятся с Firebase</p>
-                  </div>
+                  <button
+                    onClick={() => { setShowAchievementsPanel(false); navigate('/leaderboard'); }}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-400/25 text-sm font-semibold text-amber-300 hover:bg-amber-500/20 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>🏅 Открыть рейтинг игроков</span>
+                    <span className="text-slate-400">→</span>
+                  </button>
+                  {!user && (
+                    <p className="text-[10px] text-slate-500 text-center mt-2">
+                      Войдите через Google чтобы попасть в рейтинг
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
           </div>
         );
       })()}
+
+      {/* Profile Panel */}
+      <ProfilePanel
+        open={showProfile}
+        onClose={() => setShowProfile(false)}
+        totalXP={totalXP}
+        level={level}
+        currentStreak={currentStreak}
+      />
 
       {/* Level-Up Celebration Modal */}
       <LevelUpModal />
