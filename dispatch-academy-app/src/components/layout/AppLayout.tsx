@@ -1,5 +1,5 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProgressStore } from '../../store/useProgressStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useFirestoreSync } from '../../hooks/useFirestoreSync';
@@ -13,12 +13,32 @@ import LevelUpModal from '../common/LevelUpModal';
  */
 export default function AppLayout() {
   const { totalXP, level, taskScores } = useProgressStore();
+  const currentStreak = useProgressStore((s) => s.currentStreak);
+  const finalExamPassed = useProgressStore((s) => s.finalExamPassed);
+  const miniExamPassed = useProgressStore((s) => s.miniExamPassed);
+  const flashcardStates = useProgressStore((s) => s.flashcardStates);
+  const checkAchievements = useProgressStore((s) => s.checkAchievements);
   const { toastMessage } = useUIStore();
   const navigate = useNavigate();
   const location = useLocation();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSiteConfirm, setShowSiteConfirm] = useState(false);
   useFirestoreSync();
+
+  // Re-evaluate achievements whenever any contributing progress changes.
+  // New badges surface a toast and persist via the store.
+  useEffect(() => {
+    checkAchievements();
+  }, [
+    checkAchievements,
+    totalXP,
+    level,
+    currentStreak,
+    finalExamPassed,
+    Object.keys(taskScores).length,
+    Object.values(miniExamPassed).filter(Boolean).length,
+    Object.keys(flashcardStates).length,
+  ]);
 
   // Bottom nav always visible
   const hideBottomNav = false;

@@ -4,6 +4,7 @@ import type { ProgressState } from '../types/store';
 import type { SM2Rating, TaskResult } from '../types/progress';
 import { calculateStreak, checkMilestone } from '../logic/streak';
 import { getLevelForXP, didLevelUp } from '../logic/levels';
+import { deriveStats, findNewlyUnlocked, getAchievementById } from '../logic/achievements';
 import { useUIStore } from './useUIStore';
 
 export const useProgressStore = create<ProgressState>()(
@@ -33,6 +34,9 @@ export const useProgressStore = create<ProgressState>()(
 
       // Flashcard states
       flashcardStates: {},
+
+      // Achievements
+      unlockedAchievements: [],
 
       // Cooldowns
       miniExamCooldowns: {},
@@ -85,6 +89,32 @@ export const useProgressStore = create<ProgressState>()(
           return {
             currentStreak: result.newStreak,
             lastActivityDate: todayStr,
+          };
+        });
+      },
+
+      checkAchievements: () => {
+        set((state) => {
+          const stats = deriveStats({
+            totalXP: state.totalXP,
+            level: state.level,
+            currentStreak: state.currentStreak,
+            taskScores: state.taskScores,
+            dayStatuses: state.dayStatuses,
+            miniExamPassed: state.miniExamPassed,
+            finalExamPassed: state.finalExamPassed,
+            flashcardStates: state.flashcardStates,
+          });
+          const newly = findNewlyUnlocked(stats, state.unlockedAchievements);
+          if (newly.length === 0) return {};
+          // Announce the first newly-earned badge; the rest still unlock.
+          const firstId = newly[0];
+          const def = firstId ? getAchievementById(firstId) : undefined;
+          if (def) {
+            useUIStore.getState().showToast(`🏅 Достижение: ${def.icon} ${def.title}`);
+          }
+          return {
+            unlockedAchievements: [...state.unlockedAchievements, ...newly],
           };
         });
       },

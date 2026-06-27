@@ -1,11 +1,16 @@
 import { useProgressStore } from '../store/useProgressStore';
 import { useUIStore } from '../store/useUIStore';
 import { useAuth } from '../hooks/useAuth';
+import { ACHIEVEMENTS } from '../logic/achievements';
 
 export default function SettingsPage() {
   const { totalXP, taskScores, currentStreak } = useProgressStore();
+  const unlockedAchievements = useProgressStore((s) => s.unlockedAchievements);
   const { soundEnabled, toggleSound } = useUIStore();
   const { user, loading: authLoading, signIn, signOut } = useAuth();
+
+  const unlockedSet = new Set(unlockedAchievements);
+  const unlockedCount = ACHIEVEMENTS.filter((a) => unlockedSet.has(a.id)).length;
 
   const scores = Object.values(taskScores);
   const totalAnswered = scores.length;
@@ -19,7 +24,7 @@ export default function SettingsPage() {
   const handleResetProgress = () => {
     if (confirm('Вы уверены? Весь прогресс будет сброшен. Это действие нельзя отменить.')) {
       localStorage.removeItem('dispatch-academy-progress');
-      useProgressStore.setState({ taskScores: {}, totalXP: 0, level: 1, currentStreak: 0, dayStatuses: { 1: 'available' } });
+      useProgressStore.setState({ taskScores: {}, totalXP: 0, level: 1, currentStreak: 0, dayStatuses: { 1: 'available' }, unlockedAchievements: [] });
       window.location.reload();
     }
   };
@@ -62,6 +67,46 @@ export default function SettingsPage() {
         <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
           <p className="text-2xl font-bold text-purple-400">{levelsCompleted}</p>
           <p className="text-[11px] text-slate-400">Уровней</p>
+        </div>
+      </div>
+
+      {/* Achievements */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-bold text-white">🏅 Достижения</h2>
+          <span className="text-[11px] font-semibold text-cyan-300">
+            {unlockedCount} / {ACHIEVEMENTS.length}
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {ACHIEVEMENTS.map((a) => {
+            const unlocked = unlockedSet.has(a.id);
+            return (
+              <div
+                key={a.id}
+                title={`${a.title} — ${a.description}`}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl border text-center transition-all ${
+                  unlocked
+                    ? 'bg-cyan-500/10 border-cyan-500/30'
+                    : 'bg-slate-800/40 border-slate-700/40'
+                }`}
+              >
+                <span
+                  className="text-2xl leading-none"
+                  style={unlocked ? undefined : { filter: 'grayscale(1)', opacity: 0.35 }}
+                >
+                  {a.icon}
+                </span>
+                <span
+                  className={`text-[9px] leading-tight font-medium ${
+                    unlocked ? 'text-slate-200' : 'text-slate-500'
+                  }`}
+                >
+                  {a.title}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -28,6 +28,9 @@ export interface ProgressState {
   // Flashcard states
   flashcardStates: Record<string, FlashcardReviewState>;
 
+  // Achievements
+  unlockedAchievements: string[]; // achievement ids
+
   // Cooldowns
   miniExamCooldowns: Record<number, string>; // weekId → cooldown end ISO
   finalExamCooldown: string | null;
@@ -37,6 +40,7 @@ export interface ProgressState {
   completeTask: (dayId: number, result: TaskResult) => void;
   unlockNextDay: (currentDayId: number) => void;
   updateStreak: () => void;
+  checkAchievements: () => void;
   updateFlashcardState: (cardId: string, rating: SM2Rating) => void;
   submitExam: (examType: 'mini' | 'final', score: number, weekId?: number) => void;
   syncToFirestore: () => Promise<void>;
