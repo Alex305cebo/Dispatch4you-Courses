@@ -111,11 +111,19 @@ export const useProgressStore = create<ProgressState>()(
           });
           const newly = findNewlyUnlocked(stats, state.unlockedAchievements);
           if (newly.length === 0) return {};
-          // Announce the first newly-earned badge; the rest still unlock.
+          // Celebrate the first newly-earned badge with a modal; if several
+          // unlocked at once, surface the remainder via a toast.
           const firstId = newly[0];
           const def = firstId ? getAchievementById(firstId) : undefined;
           if (def) {
-            useUIStore.getState().showToast(`🏅 Достижение: ${def.icon} ${def.title}`);
+            useUIStore.getState().showAchievement({
+              icon: def.icon,
+              title: def.title,
+              description: def.description,
+            });
+          }
+          if (newly.length > 1) {
+            useUIStore.getState().showToast(`🏅 Открыто достижений: ${newly.length}`);
           }
           return {
             unlockedAchievements: [...state.unlockedAchievements, ...newly],

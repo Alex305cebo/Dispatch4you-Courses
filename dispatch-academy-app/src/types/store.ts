@@ -49,12 +49,19 @@ export interface ProgressState {
 
 // === UI Store ===
 
+export interface AchievementToast {
+  icon: string;
+  title: string;
+  description: string;
+}
+
 export interface UIState {
   soundEnabled: boolean;
   isOffline: boolean;
   pendingSyncCount: number;
   showLevelUpModal: boolean;
   levelUpData: { level: number; title: string } | null;
+  achievementModal: AchievementToast | null;
   toastMessage: string | null;
 
   // Actions
@@ -63,4 +70,6 @@ export interface UIState {
   showToast: (message: string, duration?: number) => void;
   triggerLevelUp: (level: number, title: string) => void;
   dismissLevelUp: () => void;
+  showAchievement: (achievement: AchievementToast) => void;
+  dismissAchievement: () => void;
 }

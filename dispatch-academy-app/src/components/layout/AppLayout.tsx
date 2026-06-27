@@ -4,6 +4,7 @@ import { useProgressStore } from '../../store/useProgressStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useFirestoreSync } from '../../hooks/useFirestoreSync';
 import LevelUpModal from '../common/LevelUpModal';
+import AchievementModal from '../common/AchievementModal';
 
 /**
  * Application layout wrapper — Premium design.
@@ -210,6 +211,9 @@ export default function AppLayout() {
 
       {/* Level-Up Celebration Modal */}
       <LevelUpModal />
+
+      {/* Achievement Unlocked Modal */}
+      <AchievementModal />
 
       {/* Toast Notification */}
       {toastMessage && (
