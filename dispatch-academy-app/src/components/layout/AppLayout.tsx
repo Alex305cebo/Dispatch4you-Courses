@@ -47,6 +47,7 @@ export default function AppLayout() {
   const navItems = [
     { path: '/', icon: '🗺️', label: 'Карта' },
     { path: '/flashcards', icon: '📚', label: 'Карточки' },
+    { path: '/glossary', icon: '📖', label: 'Словарь' },
     { path: '/settings', icon: '⚙️', label: 'Настройки' },
   ];
 
@@ -109,22 +110,22 @@ export default function AppLayout() {
       <nav className="shrink-0 z-50 px-3 py-1.5 bg-slate-950">
         {/* Gradient divider line */}
         <div className="h-[2px] mb-2 bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
-        <div className="max-w-lg mx-auto flex items-center justify-center gap-2">
+        <div className="max-w-lg mx-auto flex items-stretch justify-center gap-1.5">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/map');
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all text-[12px] font-bold ${
+                className={`flex-1 max-w-[88px] flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all ${
                   isActive
                     ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm shadow-cyan-500/10'
                     : 'bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:text-white hover:bg-slate-700/60'
                 }`}
                 aria-label={item.label}
               >
-                <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="text-lg leading-none">{item.icon}</span>
+                <span className="text-[11px] font-bold leading-none">{item.label}</span>
               </button>
             );
           })}
