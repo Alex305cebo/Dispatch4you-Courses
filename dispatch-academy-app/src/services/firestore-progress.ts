@@ -1,5 +1,4 @@
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from './firebase';
+import { getDb } from './firebase';
 import type { AcademyUser } from '../hooks/useAuth';
 
 interface ProgressData {
@@ -28,16 +27,19 @@ export async function saveProgressToFirestore(
   const correct = scores.filter((s: any) => s?.correct).length;
   const accuracy = scores.length > 0 ? Math.round((correct / scores.length) * 100) : 0;
 
-  const data: ProgressData = {
-    totalXP,
-    level,
-    currentStreak,
-    taskScoresCount: scores.length,
-    accuracy,
-    lastUpdated: serverTimestamp(),
-  };
-
   try {
+    const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+    const db = await getDb();
+
+    const data: ProgressData = {
+      totalXP,
+      level,
+      currentStreak,
+      taskScoresCount: scores.length,
+      accuracy,
+      lastUpdated: serverTimestamp(),
+    };
+
     // Save detailed progress
     await setDoc(doc(db, 'academy-progress', user.uid), {
       ...data,
@@ -66,6 +68,8 @@ export async function saveProgressToFirestore(
  */
 export async function loadProgressFromFirestore(uid: string) {
   try {
+    const { doc, getDoc } = await import('firebase/firestore');
+    const db = await getDb();
     const snap = await getDoc(doc(db, 'academy-progress', uid));
     if (snap.exists()) return snap.data();
   } catch (err) {
@@ -88,6 +92,7 @@ export async function fetchLeaderboard(): Promise<Array<{
 }>> {
   try {
     const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
+    const db = await getDb();
     const q = query(
       collection(db, 'academy-leaderboard'),
       orderBy('totalXP', 'desc'),

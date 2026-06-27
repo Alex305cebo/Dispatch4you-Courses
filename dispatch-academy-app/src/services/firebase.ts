@@ -1,6 +1,6 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, type Auth } from 'firebase/auth';
-import { getFirestore, type Firestore } from 'firebase/firestore';
+import type { Firestore } from 'firebase/firestore';
 
 // Same Firebase project as the main site and map-trainer
 const firebaseConfig = {
@@ -17,21 +17,31 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 let auth: Auth;
-let db: Firestore;
 
 try {
   app = getApps().length ? getApps()[0]! : initializeApp(firebaseConfig);
   auth = getAuth(app);
-  db = getFirestore(app);
 } catch (e) {
   console.warn('[Firebase] Init failed:', e);
   app = {} as FirebaseApp;
   auth = {} as Auth;
-  db = {} as Firestore;
+}
+
+/**
+ * Lazily loads Firestore. The firestore SDK is heavy and only needed for the
+ * cross-device sync / leaderboard of signed-in users, so it is split into its
+ * own chunk and initialised on first use rather than at app startup.
+ */
+let dbPromise: Promise<Firestore> | null = null;
+export function getDb(): Promise<Firestore> {
+  if (!dbPromise) {
+    dbPromise = import('firebase/firestore').then(({ getFirestore }) => getFirestore(app));
+  }
+  return dbPromise;
 }
 
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
 
-export { auth, db };
+export { auth };
 export default app;

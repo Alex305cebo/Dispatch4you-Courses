@@ -1,5 +1,4 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from './firebase';
+import { getDb } from './firebase';
 import type { ProgressState } from '../types/store';
 
 /** Timeout duration for Firestore operations (5 seconds) */
@@ -38,6 +37,8 @@ export async function saveProgress(
   // Strip action functions — only persist data fields
   const dataFields = stripActions(state);
 
+  const { doc, setDoc } = await import('firebase/firestore');
+  const db = await getDb();
   const userDocRef = doc(db, 'users', userId);
   await withTimeout(
     setDoc(userDocRef, dataFields, { merge: true }),
@@ -53,6 +54,8 @@ export async function saveProgress(
 export async function loadProgress(
   userId: string
 ): Promise<Partial<ProgressState> | null> {
+  const { doc, getDoc } = await import('firebase/firestore');
+  const db = await getDb();
   const userDocRef = doc(db, 'users', userId);
   const snapshot = await withTimeout(getDoc(userDocRef), FIRESTORE_TIMEOUT_MS);
 
@@ -105,6 +108,8 @@ export async function createInitialProgress(
     finalExamCooldown: null,
   };
 
+  const { doc, setDoc } = await import('firebase/firestore');
+  const db = await getDb();
   const userDocRef = doc(db, 'users', userId);
   await withTimeout(
     setDoc(userDocRef, initialData),
