@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { ProgressState } from '../types/store';
 import type { SM2Rating, TaskResult } from '../types/progress';
 import { calculateStreak, checkMilestone } from '../logic/streak';
+import { getLevelForXP, didLevelUp } from '../logic/levels';
 import { useUIStore } from './useUIStore';
 
 export const useProgressStore = create<ProgressState>()(
@@ -39,9 +40,18 @@ export const useProgressStore = create<ProgressState>()(
 
       // Actions
       addXP: (amount: number, _reason: string) => {
-        set((state) => ({
-          totalXP: state.totalXP + amount,
-        }));
+        set((state) => {
+          const newXP = state.totalXP + amount;
+          const newLevelDef = getLevelForXP(newXP);
+          // Celebrate when the student crosses into a new level.
+          if (didLevelUp(state.totalXP, newXP)) {
+            useUIStore.getState().triggerLevelUp(newLevelDef.level, newLevelDef.title);
+          }
+          return {
+            totalXP: newXP,
+            level: newLevelDef.level,
+          };
+        });
       },
 
       completeTask: (_dayId: number, result: TaskResult) => {

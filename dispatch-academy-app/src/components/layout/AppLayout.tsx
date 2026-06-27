@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useProgressStore } from '../../store/useProgressStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useFirestoreSync } from '../../hooks/useFirestoreSync';
+import LevelUpModal from '../common/LevelUpModal';
 
 /**
  * Application layout wrapper — Premium design.
@@ -183,6 +184,9 @@ export default function AppLayout() {
           </div>
         );
       })()}
+
+      {/* Level-Up Celebration Modal */}
+      <LevelUpModal />
 
       {/* Toast Notification */}
       {toastMessage && (
