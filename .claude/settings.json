@@ -1,9 +1,21 @@
 {
+  "autoCompactEnabled": true,
+  "cleanupPeriodDays": 7,
   "permissions": {
     "deny": [
       "Bash(npm run dev*)",
       "Bash(npm start*)",
-      "Bash(node /tmp/*)"
+      "Bash(npm run start*)",
+      "Bash(node /tmp/*)",
+      "Bash(npx playwright*)",
+      "Bash(playwright*)",
+      "Bash(chromium*)",
+      "Bash(google-chrome*)",
+      "Bash(firefox*)",
+      "Bash(scrot*)",
+      "Bash(import -window*)",
+      "Bash(xwd*)",
+      "Bash(ffmpeg*)"
     ]
   },
   "hooks": {
@@ -13,7 +25,30 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo '[Hook] Bash команда выполняется: проверь что это нужно'"
+            "command": "cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null); if echo \"$cmd\" | grep -qE '(npm run dev|npm start|node /tmp|chromium|playwright|screenshot|scrot|xwd|firefox|google-chrome)'; then echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"ЗАБЛОКИРОВАНО: запуск сервера/браузера/скриншотов без явного запроса запрещён\"}}'; else printf '%s\\n' \"$cmd\" >> ~/.claude/bash-audit.log; echo '{}'; fi",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"⚠️ САМОПРОВЕРКА: ты сделал ТОЛЬКО то, что просил пользователь? Никаких лишних команд, серверов, скриншотов?\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '\"[Запрос] \" + (.prompt // \"\")' 2>/dev/null >> ~/.claude/request-audit.log; echo '{}'",
+            "timeout": 5
           }
         ]
       }
