@@ -1,8 +1,12 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useProgressStore } from '../../store/useProgressStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useFirestoreSync } from '../../hooks/useFirestoreSync';
+import { shouldRemindStreak } from '../../logic/streak-reminder';
+import { showLocalNotification } from '../../services/notifications';
+import LevelUpModal from '../common/LevelUpModal';
+import AchievementModal from '../common/AchievementModal';
 
 /**
  * Application layout wrapper — Premium design.
@@ -12,12 +16,54 @@ import { useFirestoreSync } from '../../hooks/useFirestoreSync';
  */
 export default function AppLayout() {
   const { totalXP, level, taskScores } = useProgressStore();
+  const currentStreak = useProgressStore((s) => s.currentStreak);
+  const finalExamPassed = useProgressStore((s) => s.finalExamPassed);
+  const miniExamPassed = useProgressStore((s) => s.miniExamPassed);
+  const flashcardStates = useProgressStore((s) => s.flashcardStates);
+  const dayStatuses = useProgressStore((s) => s.dayStatuses);
+  const lastActivityDate = useProgressStore((s) => s.lastActivityDate);
+  const checkAchievements = useProgressStore((s) => s.checkAchievements);
   const { toastMessage } = useUIStore();
+  const showToast = useUIStore((s) => s.showToast);
   const navigate = useNavigate();
   const location = useLocation();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showSiteConfirm, setShowSiteConfirm] = useState(false);
   useFirestoreSync();
+
+  // Re-evaluate achievements whenever any contributing progress changes.
+  // New badges surface a toast and persist via the store.
+  useEffect(() => {
+    checkAchievements();
+  }, [
+    checkAchievements,
+    totalXP,
+    level,
+    currentStreak,
+    finalExamPassed,
+    Object.keys(taskScores).length,
+    Object.values(miniExamPassed).filter(Boolean).length,
+    Object.keys(flashcardStates).length,
+    Object.values(dayStatuses).filter((s) => s === 'completed').length,
+  ]);
+
+  // Remind the learner to keep their streak — once per day, on app open.
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0] ?? '';
+    if (!shouldRemindStreak(currentStreak, lastActivityDate, today)) return;
+    const key = `streak-reminded-${today}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      /* sessionStorage unavailable — still show the in-app reminder */
+    }
+    showToast(`🔥 Серия ${currentStreak} дн.! Пройди урок сегодня, чтобы не потерять её.`);
+    showLocalNotification(
+      'Не теряй серию! 🔥',
+      `Твоя серия — ${currentStreak} дн. Пройди урок сегодня, чтобы сохранить её.`
+    );
+  }, [currentStreak, lastActivityDate, showToast]);
 
   // Bottom nav always visible
   const hideBottomNav = false;
@@ -26,6 +72,7 @@ export default function AppLayout() {
   const navItems = [
     { path: '/', icon: '🗺️', label: 'Карта' },
     { path: '/flashcards', icon: '📚', label: 'Карточки' },
+    { path: '/glossary', icon: '📖', label: 'Словарь' },
     { path: '/settings', icon: '⚙️', label: 'Настройки' },
   ];
 
@@ -88,22 +135,22 @@ export default function AppLayout() {
       <nav className="shrink-0 z-50 px-3 py-1.5 bg-slate-950">
         {/* Gradient divider line */}
         <div className="h-[2px] mb-2 bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent" />
-        <div className="max-w-lg mx-auto flex items-center justify-center gap-2">
+        <div className="max-w-lg mx-auto flex items-stretch justify-center gap-1.5">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/map');
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full transition-all text-[12px] font-bold ${
+                className={`flex-1 max-w-[88px] flex flex-col items-center justify-center gap-0.5 px-2 py-1.5 rounded-2xl transition-all ${
                   isActive
                     ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 shadow-sm shadow-cyan-500/10'
                     : 'bg-slate-800/60 text-slate-400 border border-slate-700/50 hover:text-white hover:bg-slate-700/60'
                 }`}
                 aria-label={item.label}
               >
-                <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="text-lg leading-none">{item.icon}</span>
+                <span className="text-[11px] font-bold leading-none">{item.label}</span>
               </button>
             );
           })}
@@ -183,6 +230,12 @@ export default function AppLayout() {
           </div>
         );
       })()}
+
+      {/* Level-Up Celebration Modal */}
+      <LevelUpModal />
+
+      {/* Achievement Unlocked Modal */}
+      <AchievementModal />
 
       {/* Toast Notification */}
       {toastMessage && (

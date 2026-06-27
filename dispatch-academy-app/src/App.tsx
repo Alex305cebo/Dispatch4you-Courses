@@ -13,6 +13,7 @@ const DayPage = React.lazy(() => import('./pages/DayPage'));
 const TaskPage = React.lazy(() => import('./pages/TaskPage'));
 const ExamPage = React.lazy(() => import('./pages/ExamPage'));
 const FlashcardPage = React.lazy(() => import('./pages/FlashcardPage'));
+const GlossaryPage = React.lazy(() => import('./pages/GlossaryPage'));
 const CertificatePage = React.lazy(() => import('./pages/CertificatePage'));
 const SettingsPage = React.lazy(() => import('./pages/SettingsPage'));
 const LeaderboardPage = React.lazy(() => import('./pages/LeaderboardPage'));
@@ -96,6 +97,14 @@ const router = createBrowserRouter([
         element: (
           <SuspenseRoute>
             <FlashcardPage />
+          </SuspenseRoute>
+        ),
+      },
+      {
+        path: 'glossary',
+        element: (
+          <SuspenseRoute>
+            <GlossaryPage />
           </SuspenseRoute>
         ),
       },

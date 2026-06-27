@@ -5,6 +5,7 @@ import { loadDayContent, prefetchNextDay } from '../services/content-loader';
 import { useProgressStore } from '../store/useProgressStore';
 import { calculateDayMeanScore } from '../logic/unlock';
 import { getBaseXPForTask, getPerfectScoreBonus, getDayPerfectBonus } from '../logic/xp';
+import { track } from '../services/analytics';
 import TaskRenderer from '../components/tasks/TaskRenderer';
 import type { DayContent } from '../types/index';
 import type { TaskResult } from '../types/progress';
@@ -116,6 +117,13 @@ export default function DayPage() {
 
         const score = calculateDayMeanScore(updatedResults);
         setMeanScore(score);
+
+        track('lesson_complete', {
+          dayId,
+          score: Math.round(score),
+          tasks: updatedResults.length,
+          passed: score >= 70,
+        });
 
         if (score >= 70) {
           unlockNextDay(dayId);
@@ -309,6 +317,15 @@ export default function DayPage() {
           />
         </div>
         <span className="text-[10px] text-slate-400">{completedCount}/{totalTasks}</span>
+        <button
+          onClick={() => navigate('/glossary')}
+          className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold text-cyan-300 bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 transition-colors"
+          aria-label="Открыть словарь терминов"
+          title="Непонятен термин? Открыть словарь"
+        >
+          <span>📖</span>
+          <span>Словарь</span>
+        </button>
       </div>
 
       {/* Task area — smooth vertical scroll when needed */}

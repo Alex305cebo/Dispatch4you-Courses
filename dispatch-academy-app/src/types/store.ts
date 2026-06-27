@@ -15,6 +15,11 @@ export interface ProgressState {
   currentStreak: number;
   lastActivityDate: string | null; // ISO date (YYYY-MM-DD)
 
+  // Daily goal
+  dailyGoal: number; // target XP per day
+  xpToday: number; // XP earned on xpTodayDate
+  xpTodayDate: string | null; // ISO date the xpToday tally belongs to
+
   // Day progress
   dayStatuses: Record<number, DayStatus>; // dayId → status
   taskScores: Record<string, TaskResult>; // taskId → result
@@ -28,15 +33,20 @@ export interface ProgressState {
   // Flashcard states
   flashcardStates: Record<string, FlashcardReviewState>;
 
+  // Achievements
+  unlockedAchievements: string[]; // achievement ids
+
   // Cooldowns
   miniExamCooldowns: Record<number, string>; // weekId → cooldown end ISO
   finalExamCooldown: string | null;
 
   // Actions
   addXP: (amount: number, reason: string) => void;
+  setDailyGoal: (goal: number) => void;
   completeTask: (dayId: number, result: TaskResult) => void;
   unlockNextDay: (currentDayId: number) => void;
   updateStreak: () => void;
+  checkAchievements: () => void;
   updateFlashcardState: (cardId: string, rating: SM2Rating) => void;
   submitExam: (examType: 'mini' | 'final', score: number, weekId?: number) => void;
   syncToFirestore: () => Promise<void>;
@@ -45,12 +55,19 @@ export interface ProgressState {
 
 // === UI Store ===
 
+export interface AchievementToast {
+  icon: string;
+  title: string;
+  description: string;
+}
+
 export interface UIState {
   soundEnabled: boolean;
   isOffline: boolean;
   pendingSyncCount: number;
   showLevelUpModal: boolean;
   levelUpData: { level: number; title: string } | null;
+  achievementModal: AchievementToast | null;
   toastMessage: string | null;
 
   // Actions
@@ -59,4 +76,6 @@ export interface UIState {
   showToast: (message: string, duration?: number) => void;
   triggerLevelUp: (level: number, title: string) => void;
   dismissLevelUp: () => void;
+  showAchievement: (achievement: AchievementToast) => void;
+  dismissAchievement: () => void;
 }

@@ -11,7 +11,9 @@ export default defineConfig({
           vendor: ['react', 'react-dom', 'react-router-dom'],
           state: ['zustand'],
           animation: ['framer-motion'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          // firebase/firestore is intentionally NOT listed here so it can be
+          // code-split and loaded lazily only when sync/leaderboard runs.
+          firebase: ['firebase/app', 'firebase/auth'],
           pdf: ['jspdf'],
         },
       },

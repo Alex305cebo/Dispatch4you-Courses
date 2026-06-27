@@ -3,6 +3,10 @@ import { persist } from 'zustand/middleware';
 import type { ProgressState } from '../types/store';
 import type { SM2Rating, TaskResult } from '../types/progress';
 import { calculateStreak, checkMilestone } from '../logic/streak';
+import { getLevelForXP, didLevelUp } from '../logic/levels';
+import { deriveStats, findNewlyUnlocked, getAchievementById } from '../logic/achievements';
+import { addDailyXp, DEFAULT_DAILY_GOAL } from '../logic/daily-goal';
+import { track } from '../services/analytics';
 import { useUIStore } from './useUIStore';
 
 export const useProgressStore = create<ProgressState>()(
@@ -20,8 +24,15 @@ export const useProgressStore = create<ProgressState>()(
       currentStreak: 0,
       lastActivityDate: null,
 
-      // Day progress — ALL UNLOCKED TEMPORARILY FOR TESTING
-      dayStatuses: { 1: 'available', 2: 'available', 3: 'available', 4: 'available', 5: 'available', 6: 'available', 7: 'available', 8: 'available', 9: 'available', 10: 'available', 11: 'available', 12: 'available', 13: 'available', 14: 'available', 15: 'available', 16: 'available', 17: 'available', 18: 'available', 19: 'available', 20: 'available' },
+      // Daily goal
+      dailyGoal: DEFAULT_DAILY_GOAL,
+      xpToday: 0,
+      xpTodayDate: null,
+
+      // Day progress — day 1 is available; further days unlock on completion.
+      // (The map itself gates levels sequentially from taskScores; dayStatuses
+      // tracks completion for stats, achievements and cross-device sync.)
+      dayStatuses: { 1: 'available' },
       taskScores: {},
 
       // Exam progress
@@ -33,15 +44,46 @@ export const useProgressStore = create<ProgressState>()(
       // Flashcard states
       flashcardStates: {},
 
+      // Achievements
+      unlockedAchievements: [],
+
       // Cooldowns
       miniExamCooldowns: {},
       finalExamCooldown: null,
 
       // Actions
       addXP: (amount: number, _reason: string) => {
-        set((state) => ({
-          totalXP: state.totalXP + amount,
-        }));
+        set((state) => {
+          const newXP = state.totalXP + amount;
+          const newLevelDef = getLevelForXP(newXP);
+          // Celebrate when the student crosses into a new level.
+          if (didLevelUp(state.totalXP, newXP)) {
+            useUIStore.getState().triggerLevelUp(newLevelDef.level, newLevelDef.title);
+            track('level_up', { level: newLevelDef.level });
+          }
+          // Track progress toward today's goal and celebrate reaching it once.
+          const today = new Date().toISOString().split('T')[0] ?? '';
+          const daily = addDailyXp(
+            state.xpTodayDate,
+            state.xpToday,
+            amount,
+            today,
+            state.dailyGoal
+          );
+          if (daily.reachedGoalNow) {
+            useUIStore.getState().showToast('🎯 Дневная цель выполнена! Отличная работа!');
+          }
+          return {
+            totalXP: newXP,
+            level: newLevelDef.level,
+            xpToday: daily.xpToday,
+            xpTodayDate: daily.xpTodayDate,
+          };
+        });
+      },
+
+      setDailyGoal: (goal: number) => {
+        set({ dailyGoal: Math.max(1, Math.round(goal)) });
       },
 
       completeTask: (_dayId: number, result: TaskResult) => {
@@ -54,9 +96,11 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       unlockNextDay: (currentDayId: number) => {
+        // Mark the day just finished as completed and open the next one.
         set((state) => ({
           dayStatuses: {
             ...state.dayStatuses,
+            [currentDayId]: 'completed',
             [currentDayId + 1]: 'available',
           },
         }));
@@ -79,8 +123,44 @@ export const useProgressStore = create<ProgressState>()(
         });
       },
 
+      checkAchievements: () => {
+        set((state) => {
+          const stats = deriveStats({
+            totalXP: state.totalXP,
+            level: state.level,
+            currentStreak: state.currentStreak,
+            taskScores: state.taskScores,
+            dayStatuses: state.dayStatuses,
+            miniExamPassed: state.miniExamPassed,
+            finalExamPassed: state.finalExamPassed,
+            flashcardStates: state.flashcardStates,
+          });
+          const newly = findNewlyUnlocked(stats, state.unlockedAchievements);
+          if (newly.length === 0) return {};
+          // Celebrate the first newly-earned badge with a modal; if several
+          // unlocked at once, surface the remainder via a toast.
+          const firstId = newly[0];
+          const def = firstId ? getAchievementById(firstId) : undefined;
+          if (def) {
+            useUIStore.getState().showAchievement({
+              icon: def.icon,
+              title: def.title,
+              description: def.description,
+            });
+          }
+          if (newly.length > 1) {
+            useUIStore.getState().showToast(`🏅 Открыто достижений: ${newly.length}`);
+          }
+          newly.forEach((id) => track('achievement_unlocked', { id }));
+          return {
+            unlockedAchievements: [...state.unlockedAchievements, ...newly],
+          };
+        });
+      },
+
       updateFlashcardState: (_cardId: string, _rating: SM2Rating) => {
-        // Stub — will use SM-2 engine later
+        // No-op: FlashcardPage computes the SM-2 schedule and persists
+        // flashcardStates directly via setState, so there is nothing to do here.
       },
 
       submitExam: (examType: 'mini' | 'final', score: number, weekId?: number) => {
@@ -102,11 +182,13 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       syncToFirestore: async () => {
-        // Stub — to be implemented in Firebase integration task
+        // Cloud sync (save + restore) is driven by the useFirestoreSync hook,
+        // which has access to the authenticated user. Kept for the call site
+        // in DayPage and any future explicit-sync needs.
       },
 
       loadFromFirestore: async () => {
-        // Stub — to be implemented in Firebase integration task
+        // See syncToFirestore — restore on sign-in is handled by useFirestoreSync.
       },
     }),
     {

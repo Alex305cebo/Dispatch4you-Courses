@@ -8,6 +8,7 @@ export const useUIStore = create<UIState>((set) => ({
   pendingSyncCount: 0,
   showLevelUpModal: false,
   levelUpData: null,
+  achievementModal: null,
   toastMessage: null,
 
   // Actions
@@ -26,4 +27,8 @@ export const useUIStore = create<UIState>((set) => ({
     set({ showLevelUpModal: true, levelUpData: { level, title } }),
 
   dismissLevelUp: () => set({ showLevelUpModal: false, levelUpData: null }),
+
+  showAchievement: (achievement) => set({ achievementModal: achievement }),
+
+  dismissAchievement: () => set({ achievementModal: null }),
 }));

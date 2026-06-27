@@ -6,6 +6,7 @@ import { calculateSM2 } from '../logic/sm2';
 import { getDueCards, getNextReviewDate } from '../logic/flashcard-filter';
 import type { Flashcard } from '../types/index';
 import type { FlashcardReviewState, SM2Rating } from '../types/progress';
+import SpeakButton from '../components/common/SpeakButton';
 
 type PageState = 'loading' | 'error' | 'review' | 'done';
 type DifficultyRating = 'again' | 'hard' | 'good' | 'easy';
@@ -437,9 +438,12 @@ export default function FlashcardPage() {
                     <p className="text-xs text-cyan-400 font-medium uppercase tracking-wide mb-2">
                       {currentFlashcard.category} • Уровень {currentDifficultyLevel}/10
                     </p>
-                    <h2 className="text-2xl font-bold text-white text-center leading-snug">
-                      {currentFlashcard.term}
-                    </h2>
+                    <div className="flex items-center justify-center gap-2">
+                      <h2 className="text-2xl font-bold text-white text-center leading-snug">
+                        {currentFlashcard.term}
+                      </h2>
+                      <SpeakButton text={currentFlashcard.term} size={34} />
+                    </div>
                     <p className="text-xs text-slate-500 mt-4 text-center">
                       Чем выше уровень, тем больше очков получишь
                     </p>
@@ -460,7 +464,10 @@ export default function FlashcardPage() {
                       {currentFlashcard.definition}
                     </p>
                     <div className="w-full border-t border-white/10 pt-3 mt-auto">
-                      <p className="text-xs text-slate-400 mb-1">Пример:</p>
+                      <div className="flex items-center justify-center gap-1.5 mb-1">
+                        <p className="text-xs text-slate-400">Пример:</p>
+                        <SpeakButton text={currentFlashcard.example} size={28} />
+                      </div>
                       <p className="text-sm text-cyan-300 italic text-center">
                         "{currentFlashcard.example}"
                       </p>
