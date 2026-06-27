@@ -2,6 +2,19 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useProgressStore } from './useProgressStore';
 import { useUIStore } from './useUIStore';
 
+describe('useProgressStore.unlockNextDay', () => {
+  beforeEach(() => {
+    useProgressStore.setState({ dayStatuses: { 1: 'available' } });
+  });
+
+  it('marks the finished day completed and opens the next', () => {
+    useProgressStore.getState().unlockNextDay(1);
+    const { dayStatuses } = useProgressStore.getState();
+    expect(dayStatuses[1]).toBe('completed');
+    expect(dayStatuses[2]).toBe('available');
+  });
+});
+
 describe('useProgressStore.addXP', () => {
   beforeEach(() => {
     useProgressStore.setState({ totalXP: 0, level: 1 });

@@ -59,6 +59,20 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     isUnlocked: (s) => s.perfectTasks >= 10,
   },
   {
+    id: 'first-week',
+    icon: '📅',
+    title: 'Первая неделя',
+    description: 'Пройдите 5 дней',
+    isUnlocked: (s) => s.daysCompleted >= 5,
+  },
+  {
+    id: 'marathon',
+    icon: '🏃',
+    title: 'Марафонец',
+    description: 'Пройдите 10 дней',
+    isUnlocked: (s) => s.daysCompleted >= 10,
+  },
+  {
     id: 'streak-3',
     icon: '🌊',
     title: 'На волне',

@@ -17,6 +17,7 @@ export default function AppLayout() {
   const finalExamPassed = useProgressStore((s) => s.finalExamPassed);
   const miniExamPassed = useProgressStore((s) => s.miniExamPassed);
   const flashcardStates = useProgressStore((s) => s.flashcardStates);
+  const dayStatuses = useProgressStore((s) => s.dayStatuses);
   const checkAchievements = useProgressStore((s) => s.checkAchievements);
   const { toastMessage } = useUIStore();
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ export default function AppLayout() {
     Object.keys(taskScores).length,
     Object.values(miniExamPassed).filter(Boolean).length,
     Object.keys(flashcardStates).length,
+    Object.values(dayStatuses).filter((s) => s === 'completed').length,
   ]);
 
   // Bottom nav always visible

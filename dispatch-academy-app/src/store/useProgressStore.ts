@@ -22,8 +22,10 @@ export const useProgressStore = create<ProgressState>()(
       currentStreak: 0,
       lastActivityDate: null,
 
-      // Day progress — ALL UNLOCKED TEMPORARILY FOR TESTING
-      dayStatuses: { 1: 'available', 2: 'available', 3: 'available', 4: 'available', 5: 'available', 6: 'available', 7: 'available', 8: 'available', 9: 'available', 10: 'available', 11: 'available', 12: 'available', 13: 'available', 14: 'available', 15: 'available', 16: 'available', 17: 'available', 18: 'available', 19: 'available', 20: 'available' },
+      // Day progress — day 1 is available; further days unlock on completion.
+      // (The map itself gates levels sequentially from taskScores; dayStatuses
+      // tracks completion for stats, achievements and cross-device sync.)
+      dayStatuses: { 1: 'available' },
       taskScores: {},
 
       // Exam progress
@@ -68,9 +70,11 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       unlockNextDay: (currentDayId: number) => {
+        // Mark the day just finished as completed and open the next one.
         set((state) => ({
           dayStatuses: {
             ...state.dayStatuses,
+            [currentDayId]: 'completed',
             [currentDayId + 1]: 'available',
           },
         }));
