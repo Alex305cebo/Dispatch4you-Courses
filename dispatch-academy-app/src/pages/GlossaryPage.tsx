@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { loadFlashcards } from '../services/content-loader';
 import { filterGlossary, getCategories, ALL_CATEGORIES } from '../logic/glossary-filter';
 import SpeakButton from '../components/common/SpeakButton';
@@ -11,10 +12,21 @@ type LoadState = 'loading' | 'error' | 'ready';
  * the speech wrapper so learners can look up and hear any term on demand.
  */
 export default function GlossaryPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [state, setState] = useState<LoadState>('loading');
   const [cards, setCards] = useState<Flashcard[]>([]);
-  const [query, setQuery] = useState('');
+  // Seed the search from a ?q= deep link so other screens can link to a term.
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '');
   const [category, setCategory] = useState<string>(ALL_CATEGORIES);
+
+  // Keep the URL in sync with the search so the view is shareable/bookmarkable.
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (query) next.set('q', query);
+    else next.delete('q');
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
 
   useEffect(() => {
     let alive = true;

@@ -309,6 +309,15 @@ export default function DayPage() {
           />
         </div>
         <span className="text-[10px] text-slate-400">{completedCount}/{totalTasks}</span>
+        <button
+          onClick={() => navigate('/glossary')}
+          className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold text-cyan-300 bg-cyan-500/10 border border-cyan-500/25 hover:bg-cyan-500/20 transition-colors"
+          aria-label="Открыть словарь терминов"
+          title="Непонятен термин? Открыть словарь"
+        >
+          <span>📖</span>
+          <span>Словарь</span>
+        </button>
       </div>
 
       {/* Task area — smooth vertical scroll when needed */}
