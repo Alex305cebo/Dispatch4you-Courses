@@ -12,6 +12,12 @@ const mockCalcData: CalculatorData = {
   unit: '$',
 };
 
+// The component renders a calculator toggle button in addition to the answer
+// options, so query the option buttons by their accessible name instead of by
+// position among all buttons.
+const getOptionButtons = () =>
+  screen.getAllByRole('button', { name: /^Вариант \d+:/ });
+
 describe('generateCalculatorOptions', () => {
   it('returns exactly 6 options with one correct index', () => {
     const result = generateCalculatorOptions(2.4, '$/mile');
@@ -38,7 +44,7 @@ describe('CalculatorTask', () => {
   it('renders six answer options', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    expect(screen.getAllByRole('button')).toHaveLength(6);
+    expect(getOptionButtons()).toHaveLength(6);
   });
 
   it('calls onAnswer(true) when correct option is selected', () => {
@@ -48,7 +54,7 @@ describe('CalculatorTask', () => {
       mockCalcData.unit
     );
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const btn = screen.getAllByRole('button')[correctIndex];
+    const btn = getOptionButtons()[correctIndex];
     if (btn) fireEvent.click(btn);
     expect(onAnswer).toHaveBeenCalledWith(true);
   });
@@ -61,7 +67,7 @@ describe('CalculatorTask', () => {
     );
     const wrongIndex = correctIndex === 0 ? 1 : 0;
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const btn = screen.getAllByRole('button')[wrongIndex];
+    const btn = getOptionButtons()[wrongIndex];
     if (btn) fireEvent.click(btn);
     expect(onAnswer).toHaveBeenCalledWith(false);
   });
@@ -73,9 +79,11 @@ describe('CalculatorTask', () => {
       mockCalcData.unit
     );
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const btn = screen.getAllByRole('button')[correctIndex];
+    const btn = getOptionButtons()[correctIndex];
     if (btn) fireEvent.click(btn);
-    expect(screen.getByText(`Верно! Ответ: ${options[correctIndex]}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`Правильно! Ответ: ${options[correctIndex]}`, { exact: false })
+    ).toBeInTheDocument();
   });
 
   it('shows error message when incorrect', () => {
@@ -86,20 +94,20 @@ describe('CalculatorTask', () => {
     );
     const wrongIndex = correctIndex === 0 ? 1 : 0;
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const btn = screen.getAllByRole('button')[wrongIndex];
+    const btn = getOptionButtons()[wrongIndex];
     if (btn) fireEvent.click(btn);
     expect(
-      screen.getByText(`Неверно. Правильный ответ: ${options[correctIndex]}`)
+      screen.getByText(`Неверно. Правильный ответ: ${options[correctIndex]}`, { exact: false })
     ).toBeInTheDocument();
   });
 
   it('disables options after answering', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const buttons = screen.getAllByRole('button');
+    const buttons = getOptionButtons();
     const btn = buttons[0];
     if (btn) fireEvent.click(btn);
-    buttons.forEach((button) => {
+    getOptionButtons().forEach((button) => {
       expect(button).toBeDisabled();
     });
   });
@@ -107,7 +115,7 @@ describe('CalculatorTask', () => {
   it('does not call onAnswer more than once', () => {
     const onAnswer = vi.fn();
     render(<CalculatorTask data={mockCalcData} onAnswer={onAnswer} />);
-    const buttons = screen.getAllByRole('button');
+    const buttons = getOptionButtons();
     const btn0 = buttons[0];
     const btn1 = buttons[1];
     if (btn0) fireEvent.click(btn0);
@@ -126,7 +134,7 @@ describe('CalculatorTask', () => {
     const onAnswer = vi.fn();
     const { correctIndex } = generateCalculatorOptions(0, '$');
     render(<CalculatorTask data={zeroData} onAnswer={onAnswer} />);
-    const btn = screen.getAllByRole('button')[correctIndex];
+    const btn = getOptionButtons()[correctIndex];
     if (btn) fireEvent.click(btn);
     expect(onAnswer).toHaveBeenCalledWith(true);
   });
