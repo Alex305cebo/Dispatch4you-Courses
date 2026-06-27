@@ -159,7 +159,8 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       updateFlashcardState: (_cardId: string, _rating: SM2Rating) => {
-        // Stub — will use SM-2 engine later
+        // No-op: FlashcardPage computes the SM-2 schedule and persists
+        // flashcardStates directly via setState, so there is nothing to do here.
       },
 
       submitExam: (examType: 'mini' | 'final', score: number, weekId?: number) => {
@@ -181,11 +182,13 @@ export const useProgressStore = create<ProgressState>()(
       },
 
       syncToFirestore: async () => {
-        // Stub — to be implemented in Firebase integration task
+        // Cloud sync (save + restore) is driven by the useFirestoreSync hook,
+        // which has access to the authenticated user. Kept for the call site
+        // in DayPage and any future explicit-sync needs.
       },
 
       loadFromFirestore: async () => {
-        // Stub — to be implemented in Firebase integration task
+        // See syncToFirestore — restore on sign-in is handled by useFirestoreSync.
       },
     }),
     {
