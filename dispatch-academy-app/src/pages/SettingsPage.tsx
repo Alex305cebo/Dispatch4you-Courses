@@ -1,13 +1,39 @@
+import { useState } from 'react';
 import { useProgressStore } from '../store/useProgressStore';
 import { useUIStore } from '../store/useUIStore';
 import { useAuth } from '../hooks/useAuth';
 import { ACHIEVEMENTS } from '../logic/achievements';
+import {
+  DAILY_GOAL_OPTIONS,
+  dailyGoalPercent,
+  xpTodayForDate,
+} from '../logic/daily-goal';
+import {
+  notificationPermission,
+  requestNotificationPermission,
+} from '../services/notifications';
 
 export default function SettingsPage() {
   const { totalXP, taskScores, currentStreak } = useProgressStore();
   const unlockedAchievements = useProgressStore((s) => s.unlockedAchievements);
+  const dailyGoal = useProgressStore((s) => s.dailyGoal);
+  const xpToday = useProgressStore((s) => s.xpToday);
+  const xpTodayDate = useProgressStore((s) => s.xpTodayDate);
+  const setDailyGoal = useProgressStore((s) => s.setDailyGoal);
   const { soundEnabled, toggleSound } = useUIStore();
   const { user, loading: authLoading, signIn, signOut } = useAuth();
+
+  const [notifPermission, setNotifPermission] = useState(notificationPermission());
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    setNotifPermission(granted ? 'granted' : notificationPermission());
+  };
+
+  const today = new Date().toISOString().split('T')[0] ?? '';
+  const todayXP = xpTodayForDate(xpTodayDate, xpToday, today);
+  const goalPercent = dailyGoalPercent(todayXP, dailyGoal);
+  const goalReached = todayXP >= dailyGoal;
 
   const unlockedSet = new Set(unlockedAchievements);
   const unlockedCount = ACHIEVEMENTS.filter((a) => unlockedSet.has(a.id)).length;
@@ -24,7 +50,7 @@ export default function SettingsPage() {
   const handleResetProgress = () => {
     if (confirm('Вы уверены? Весь прогресс будет сброшен. Это действие нельзя отменить.')) {
       localStorage.removeItem('dispatch-academy-progress');
-      useProgressStore.setState({ taskScores: {}, totalXP: 0, level: 1, currentStreak: 0, dayStatuses: { 1: 'available' }, unlockedAchievements: [] });
+      useProgressStore.setState({ taskScores: {}, totalXP: 0, level: 1, currentStreak: 0, dayStatuses: { 1: 'available' }, unlockedAchievements: [], xpToday: 0, xpTodayDate: null });
       window.location.reload();
     }
   };
@@ -67,6 +93,41 @@ export default function SettingsPage() {
         <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
           <p className="text-2xl font-bold text-purple-400">{levelsCompleted}</p>
           <p className="text-[11px] text-slate-400">Уровней</p>
+        </div>
+      </div>
+
+      {/* Daily goal */}
+      <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-bold text-white">🎯 Цель дня</h2>
+          <span className={`text-[12px] font-bold ${goalReached ? 'text-green-400' : 'text-cyan-300'}`}>
+            {todayXP} / {dailyGoal} XP{goalReached ? ' ✓' : ''}
+          </span>
+        </div>
+        <div className="h-2.5 rounded-full bg-slate-800 overflow-hidden border border-white/10 mb-3">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${
+              goalReached
+                ? 'bg-gradient-to-r from-green-500 to-emerald-400'
+                : 'bg-gradient-to-r from-cyan-500 to-blue-500'
+            }`}
+            style={{ width: `${goalPercent}%` }}
+          />
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {DAILY_GOAL_OPTIONS.map((g) => (
+            <button
+              key={g}
+              onClick={() => setDailyGoal(g)}
+              className={`px-3 py-1 rounded-full text-[12px] font-semibold border transition-all ${
+                dailyGoal === g
+                  ? 'bg-cyan-500/20 border-cyan-400/50 text-cyan-200'
+                  : 'bg-slate-800/50 border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700/50'
+              }`}
+            >
+              {g} XP
+            </button>
+          ))}
         </div>
       </div>
 
@@ -167,6 +228,28 @@ export default function SettingsPage() {
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${soundEnabled ? 'left-6' : 'left-0.5'}`} />
           </button>
         </div>
+
+        {/* Streak reminder notifications */}
+        {notifPermission !== 'unsupported' && (
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/10">
+            <div className="pr-3">
+              <p className="text-sm text-slate-300">Напоминания о серии</p>
+              <p className="text-[11px] text-slate-500">Уведомление при открытии, если серия под угрозой</p>
+            </div>
+            {notifPermission === 'granted' ? (
+              <span className="text-xs font-semibold text-green-400 whitespace-nowrap">✓ Включены</span>
+            ) : notifPermission === 'denied' ? (
+              <span className="text-xs text-slate-500 whitespace-nowrap">Заблокированы</span>
+            ) : (
+              <button
+                onClick={handleEnableNotifications}
+                className="text-xs font-semibold text-cyan-300 px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 transition-colors whitespace-nowrap"
+              >
+                Включить
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Danger zone */}

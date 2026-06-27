@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useProgressStore } from '../../store/useProgressStore';
 import { useUIStore } from '../../store/useUIStore';
 import { useFirestoreSync } from '../../hooks/useFirestoreSync';
+import { shouldRemindStreak } from '../../logic/streak-reminder';
+import { showLocalNotification } from '../../services/notifications';
 import LevelUpModal from '../common/LevelUpModal';
 import AchievementModal from '../common/AchievementModal';
 
@@ -19,8 +21,10 @@ export default function AppLayout() {
   const miniExamPassed = useProgressStore((s) => s.miniExamPassed);
   const flashcardStates = useProgressStore((s) => s.flashcardStates);
   const dayStatuses = useProgressStore((s) => s.dayStatuses);
+  const lastActivityDate = useProgressStore((s) => s.lastActivityDate);
   const checkAchievements = useProgressStore((s) => s.checkAchievements);
   const { toastMessage } = useUIStore();
+  const showToast = useUIStore((s) => s.showToast);
   const navigate = useNavigate();
   const location = useLocation();
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -42,6 +46,24 @@ export default function AppLayout() {
     Object.keys(flashcardStates).length,
     Object.values(dayStatuses).filter((s) => s === 'completed').length,
   ]);
+
+  // Remind the learner to keep their streak — once per day, on app open.
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0] ?? '';
+    if (!shouldRemindStreak(currentStreak, lastActivityDate, today)) return;
+    const key = `streak-reminded-${today}`;
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      /* sessionStorage unavailable — still show the in-app reminder */
+    }
+    showToast(`🔥 Серия ${currentStreak} дн.! Пройди урок сегодня, чтобы не потерять её.`);
+    showLocalNotification(
+      'Не теряй серию! 🔥',
+      `Твоя серия — ${currentStreak} дн. Пройди урок сегодня, чтобы сохранить её.`
+    );
+  }, [currentStreak, lastActivityDate, showToast]);
 
   // Bottom nav always visible
   const hideBottomNav = false;

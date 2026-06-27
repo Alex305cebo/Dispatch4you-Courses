@@ -5,6 +5,7 @@ import type { SM2Rating, TaskResult } from '../types/progress';
 import { calculateStreak, checkMilestone } from '../logic/streak';
 import { getLevelForXP, didLevelUp } from '../logic/levels';
 import { deriveStats, findNewlyUnlocked, getAchievementById } from '../logic/achievements';
+import { addDailyXp, DEFAULT_DAILY_GOAL } from '../logic/daily-goal';
 import { useUIStore } from './useUIStore';
 
 export const useProgressStore = create<ProgressState>()(
@@ -21,6 +22,11 @@ export const useProgressStore = create<ProgressState>()(
       // Streak
       currentStreak: 0,
       lastActivityDate: null,
+
+      // Daily goal
+      dailyGoal: DEFAULT_DAILY_GOAL,
+      xpToday: 0,
+      xpTodayDate: null,
 
       // Day progress — day 1 is available; further days unlock on completion.
       // (The map itself gates levels sequentially from taskScores; dayStatuses
@@ -53,11 +59,29 @@ export const useProgressStore = create<ProgressState>()(
           if (didLevelUp(state.totalXP, newXP)) {
             useUIStore.getState().triggerLevelUp(newLevelDef.level, newLevelDef.title);
           }
+          // Track progress toward today's goal and celebrate reaching it once.
+          const today = new Date().toISOString().split('T')[0] ?? '';
+          const daily = addDailyXp(
+            state.xpTodayDate,
+            state.xpToday,
+            amount,
+            today,
+            state.dailyGoal
+          );
+          if (daily.reachedGoalNow) {
+            useUIStore.getState().showToast('🎯 Дневная цель выполнена! Отличная работа!');
+          }
           return {
             totalXP: newXP,
             level: newLevelDef.level,
+            xpToday: daily.xpToday,
+            xpTodayDate: daily.xpTodayDate,
           };
         });
+      },
+
+      setDailyGoal: (goal: number) => {
+        set({ dailyGoal: Math.max(1, Math.round(goal)) });
       },
 
       completeTask: (_dayId: number, result: TaskResult) => {

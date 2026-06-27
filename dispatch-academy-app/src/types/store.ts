@@ -15,6 +15,11 @@ export interface ProgressState {
   currentStreak: number;
   lastActivityDate: string | null; // ISO date (YYYY-MM-DD)
 
+  // Daily goal
+  dailyGoal: number; // target XP per day
+  xpToday: number; // XP earned on xpTodayDate
+  xpTodayDate: string | null; // ISO date the xpToday tally belongs to
+
   // Day progress
   dayStatuses: Record<number, DayStatus>; // dayId → status
   taskScores: Record<string, TaskResult>; // taskId → result
@@ -37,6 +42,7 @@ export interface ProgressState {
 
   // Actions
   addXP: (amount: number, reason: string) => void;
+  setDailyGoal: (goal: number) => void;
   completeTask: (dayId: number, result: TaskResult) => void;
   unlockNextDay: (currentDayId: number) => void;
   updateStreak: () => void;
