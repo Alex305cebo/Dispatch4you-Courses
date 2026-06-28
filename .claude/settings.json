@@ -1,0 +1,45 @@
+{
+  "autoCompactEnabled": true,
+  "cleanupPeriodDays": 7,
+  "permissions": {
+    "deny": [
+      "Bash(node /tmp/*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // empty' 2>/dev/null); printf '%s\\n' \"$cmd\" >> ~/.claude/bash-audit.log; echo '{}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"systemMessage\": \"⚠️ САМОПРОВЕРКА: ты сделал ТОЛЬКО то, что просил пользователь? Никаких лишних действий?\"}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '\"[Запрос] \" + (.prompt // \"\")' 2>/dev/null >> ~/.claude/request-audit.log; echo '{}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
