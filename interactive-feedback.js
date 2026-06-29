@@ -6,93 +6,118 @@
 (function() {
     'use strict';
 
+    // === КОНФИГУРАЦИЯ СЕЛЕКТОРОВ ===
+    const CLICK_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.clickable',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]',
+        '[onclick*="viewTruck"]',
+        'a[href]',
+        '.tab',
+        '[role="tab"]'
+    ];
+
+    const HAPTIC_SELECTORS = [
+        'button',
+        '.btn',
+        '[role="button"]',
+        '.truck-card',
+        '[onclick*="assignLoad"]',
+        '[onclick*="selectLoad"]'
+    ];
+
+    // Глобальное состояние для отслеживания активного элемента
+    let activeFeedbackElement = null;
+
     // === ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ СТРАНИЦЫ ===
     document.addEventListener('DOMContentLoaded', initInteractiveFeedback);
 
     function initInteractiveFeedback() {
-        // Добавляем обработчики на все кликабельные элементы
-        addClickFeedback();
+        // Добавляем глобальные обработчики (Event Delegation)
+        setupVisualFeedback();
         
         // Добавляем вибрацию на мобильных устройствах
-        addHapticFeedback();
+        setupHapticFeedback();
         
         // Добавляем визуальный индикатор загрузки
         addLoadingIndicator();
     }
 
-    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ ===
-    function addClickFeedback() {
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.clickable',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]',
-            '[onclick*="viewTruck"]',
-            'a[href]',
-            '.tab',
-            '[role="tab"]'
-        ];
+    // === ВИЗУАЛЬНЫЙ FEEDBACK ПРИ КЛИКЕ (DELEGATED) ===
+    function setupVisualFeedback() {
+        const selectorStr = CLICK_SELECTORS.join(', ');
 
-        const elements = document.querySelectorAll(selectors.join(', '));
-
-        elements.forEach(element => {
-            // Пропускаем disabled элементы
-            if (element.disabled || element.hasAttribute('disabled')) return;
-
-            // Добавляем класс при клике
-            element.addEventListener('mousedown', function(e) {
-                this.classList.add('clicking');
-            });
-
-            element.addEventListener('mouseup', function() {
+        const clearFeedback = (el, withDelay) => {
+            if (!el) return;
+            if (withDelay) {
+                const target = el;
                 setTimeout(() => {
-                    this.classList.remove('clicking');
+                    target.classList.remove('clicking');
                 }, 300);
-            });
+            } else {
+                el.classList.remove('clicking');
+            }
+            if (activeFeedbackElement === el) activeFeedbackElement = null;
+        };
 
-            element.addEventListener('mouseleave', function() {
-                this.classList.remove('clicking');
-            });
+        // Обработка начала нажатия
+        const startInteraction = (e) => {
+            const target = e.target.closest(selectorStr);
+            if (!target || target.disabled || target.hasAttribute('disabled')) return;
 
-            // Touch события для мобильных
-            element.addEventListener('touchstart', function(e) {
-                this.classList.add('clicking');
-            }, { passive: true });
+            // Если есть другой активный элемент, сбрасываем его
+            if (activeFeedbackElement && activeFeedbackElement !== target) {
+                clearFeedback(activeFeedbackElement, false);
+            }
 
-            element.addEventListener('touchend', function() {
-                setTimeout(() => {
-                    this.classList.remove('clicking');
-                }, 300);
-            });
-        });
+            target.classList.add('clicking');
+            activeFeedbackElement = target;
+        };
+
+        // Обработка завершения нажатия
+        const endInteraction = (e) => {
+            if (activeFeedbackElement) {
+                clearFeedback(activeFeedbackElement, true);
+            }
+        };
+
+        // Обработка ухода курсора (эмуляция mouseleave через delegation)
+        const handleMouseOut = (e) => {
+            if (!activeFeedbackElement) return;
+
+            // Проверяем, действительно ли мы вышли за пределы активного элемента
+            if (!activeFeedbackElement.contains(e.relatedTarget)) {
+                clearFeedback(activeFeedbackElement, false);
+            }
+        };
+
+        // Mouse events
+        document.addEventListener('mousedown', startInteraction);
+        document.addEventListener('mouseup', endInteraction);
+        document.addEventListener('mouseout', handleMouseOut);
+
+        // Touch events
+        document.addEventListener('touchstart', startInteraction, { passive: true });
+        document.addEventListener('touchend', endInteraction);
+        document.addEventListener('touchcancel', endInteraction);
     }
 
-
-
-    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ - УСИЛЕННАЯ ===
-    function addHapticFeedback() {
+    // === ВИБРАЦИЯ НА МОБИЛЬНЫХ (DELEGATED) ===
+    function setupHapticFeedback() {
         if (!('vibrate' in navigator)) return;
 
-        const selectors = [
-            'button',
-            '.btn',
-            '[role="button"]',
-            '.truck-card',
-            '[onclick*="assignLoad"]',
-            '[onclick*="selectLoad"]'
-        ];
+        const selectorStr = HAPTIC_SELECTORS.join(', ');
 
-        const elements = document.querySelectorAll(selectors.join(', '));
-
-        elements.forEach(element => {
-            element.addEventListener('click', function() {
-                // Более заметная вибрация (20ms)
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest(selectorStr);
+            if (target && !target.disabled && !target.hasAttribute('disabled')) {
                 navigator.vibrate(20);
-            }, { passive: true });
-        });
+            }
+        }, { passive: true });
     }
 
     // === ИНДИКАТОР ЗАГРУЗКИ ДЛЯ КНОПОК ===
@@ -188,26 +213,10 @@
     `;
     document.head.appendChild(style);
 
-    // === ДОПОЛНИТЕЛЬНАЯ ОБРАБОТКА ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ ===
-    // Наблюдаем за добавлением новых элементов
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Переинициализируем feedback для новых элементов
-                setTimeout(addClickFeedback, 100);
-            }
-        });
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-
     // === ЭКСПОРТ ДЛЯ ИСПОЛЬЗОВАНИЯ В ДРУГИХ СКРИПТАХ ===
     window.InteractiveFeedback = {
         showButtonLoading: showButtonLoading,
-        reinit: addClickFeedback
+        reinit: function() { /* No-op: delegation handles dynamic elements */ }
     };
 
 })();
