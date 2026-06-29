@@ -22,7 +22,7 @@ DefaultDirName={localappdata}\Dispatch4you
 DisableDirPage=yes
 DisableProgramGroupPage=yes
 CreateAppDir=no
-PrivilegesRequired=lowest
+PrivilegesRequired=admin
 OutputDir=.
 OutputBaseFilename=Dispatch4you-Setup
 Compression=lzma2
@@ -34,10 +34,11 @@ UninstallDisplayName={#AppName}
 Name: "ru"; MessagesFile: "compiler:Languages\Russian.isl"
 
 [Registry]
-; Chrome force-install list (per-user). Value name "1" = "<id>;<update_url>".
-Root: HKCU; Subkey: "Software\Policies\Google\Chrome"; Flags: uninsdeletekeyifempty
-Root: HKCU; Subkey: "Software\Policies\Google\Chrome\ExtensionInstallForcelist"; Flags: uninsdeletekeyifempty
-Root: HKCU; Subkey: "Software\Policies\Google\Chrome\ExtensionInstallForcelist"; \
+; Chrome force-install list (machine-wide). Value name "1" = "<id>;<update_url>".
+; HKLM because Windows protects the policy branch from non-admin writes.
+Root: HKLM; Subkey: "Software\Policies\Google\Chrome"; Flags: uninsdeletekeyifempty
+Root: HKLM; Subkey: "Software\Policies\Google\Chrome\ExtensionInstallForcelist"; Flags: uninsdeletekeyifempty
+Root: HKLM; Subkey: "Software\Policies\Google\Chrome\ExtensionInstallForcelist"; \
     ValueType: string; ValueName: "1"; ValueData: "{#ExtId};{#UpdateUrl}"; \
     Flags: uninsdeletevalue
 
