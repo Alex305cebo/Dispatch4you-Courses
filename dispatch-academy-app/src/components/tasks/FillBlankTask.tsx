@@ -84,7 +84,7 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
     <div className="w-full max-w-lg mx-auto">
       {/* Sentence with blanks */}
       <div className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 mb-4">
-        <p className="text-white text-base md:text-lg leading-relaxed">
+        <p className="text-white text-[15px] md:text-[17px] lg:text-[18px] leading-relaxed font-medium">
           {finalParts.map((part, partIndex) => (
             <span key={partIndex}>
               {/* Text part — inline */}
@@ -144,24 +144,24 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
                 transition={{ duration: 0.4, type: 'spring', stiffness: 200 }}
               >
                 {/* Section header — shows the sentence with highlighted blank */}
-                <div className={`px-3 py-2.5 rounded-t-lg mb-0 border-l-4 flex items-start gap-2 ${
-                  index === 0 ? 'bg-purple-500/15 border-purple-500' :
-                  index === 1 ? 'bg-blue-500/15 border-blue-500' :
-                  index === 2 ? 'bg-cyan-500/15 border-cyan-500' :
-                  index === 3 ? 'bg-green-500/15 border-green-500' :
-                  'bg-orange-500/15 border-orange-500'
+                <div className={`px-3 py-3 rounded-t-lg mb-0 border-l-4 flex items-start gap-2.5 ${
+                  index === 0 ? 'bg-purple-500/20 border-purple-400' :
+                  index === 1 ? 'bg-blue-500/20 border-blue-400' :
+                  index === 2 ? 'bg-cyan-500/20 border-cyan-400' :
+                  index === 3 ? 'bg-green-500/20 border-green-400' :
+                  'bg-orange-500/20 border-orange-400'
                 }`}>
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 mt-0.5 ${
-                    index === 0 ? 'bg-purple-500/60' :
-                    index === 1 ? 'bg-blue-500/60' :
-                    index === 2 ? 'bg-cyan-500/60' :
-                    index === 3 ? 'bg-green-500/60' :
-                    'bg-orange-500/60'
+                  <span className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0 mt-0.5 ${
+                    index === 0 ? 'bg-purple-500' :
+                    index === 1 ? 'bg-blue-500' :
+                    index === 2 ? 'bg-cyan-500' :
+                    index === 3 ? 'bg-green-500' :
+                    'bg-orange-500'
                   }`}>
                     {index + 1}
                   </span>
                   {/* Full sentence — current blank = ?, filled blanks = answer, unfilled = ___ */}
-                  <p className="text-[12px] leading-relaxed text-white/80 flex-1">
+                  <p className="text-[14px] lg:text-[15px] leading-relaxed text-white flex-1 font-medium">
                     {(() => {
                       const sentence = data.sentence;
                       const blankRegex = /\{(\d+)\}/g;
@@ -172,11 +172,11 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
                       }
 
                       const highlightColor =
-                        index === 0 ? 'text-purple-200 bg-purple-500/25 border-purple-400' :
-                        index === 1 ? 'text-blue-200 bg-blue-500/25 border-blue-400' :
-                        index === 2 ? 'text-cyan-200 bg-cyan-500/25 border-cyan-400' :
-                        index === 3 ? 'text-green-200 bg-green-500/25 border-green-400' :
-                        'text-orange-200 bg-orange-500/25 border-orange-400';
+                        index === 0 ? 'text-purple-100 bg-purple-500/40 border-purple-300' :
+                        index === 1 ? 'text-blue-100 bg-blue-500/40 border-blue-300' :
+                        index === 2 ? 'text-cyan-100 bg-cyan-500/40 border-cyan-300' :
+                        index === 3 ? 'text-green-100 bg-green-500/40 border-green-300' :
+                        'text-orange-100 bg-orange-500/40 border-orange-300';
 
                       const nodes: React.ReactNode[] = [];
                       let lastEnd = 0;
@@ -191,7 +191,7 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
                         } else {
                           const val = answers[match.idx];
                           nodes.push(
-                            <span key={`b${mi}`} className={`inline-block px-1.5 font-semibold mx-0.5 rounded ${val ? 'text-white/70 bg-white/10' : 'text-white/30'}`}>
+                            <span key={`b${mi}`} className={`inline-block px-1.5 font-semibold mx-0.5 rounded ${val ? 'text-white bg-white/15' : 'text-white/50'}`}>
                               {val || '___'}
                             </span>
                           );
@@ -224,7 +224,7 @@ export default function FillBlankTask({ data, onAnswer }: FillBlankTaskProps) {
                         key={word}
                         type="button"
                         onClick={() => handleWordBankSelect(index, word)}
-                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-900 ${
+                        className={`px-4 py-2.5 rounded-lg text-[14px] lg:text-[15px] font-semibold transition-all duration-200 border-2 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-offset-slate-900 ${
                           answers[index] === word
                             ? index === 0 ? 'bg-purple-500/30 border-purple-400 text-purple-200 shadow-lg shadow-purple-500/20' :
                               index === 1 ? 'bg-blue-500/30 border-blue-400 text-blue-200 shadow-lg shadow-blue-500/20' :
