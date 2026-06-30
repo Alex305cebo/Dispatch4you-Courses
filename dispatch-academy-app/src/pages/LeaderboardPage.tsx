@@ -72,7 +72,7 @@ export default function LeaderboardPage() {
     <div className="max-w-lg mx-auto px-4 py-6">
       <div className="text-center mb-6">
         <h1 className="text-2xl font-bold text-white mb-1">🏆 Рейтинг</h1>
-        <p className="text-sm text-slate-400">Dispatch Academy — лучшие студенты</p>
+        <p className="text-sm text-slate-400">Dispatch: Career Path — лучшие игроки</p>
       </div>
 
       {loading ? (

@@ -73,7 +73,7 @@ export default function ProfilePanel({ open, onClose, totalXP, level, currentStr
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-semibold">
                     Уровень {level}
                   </span>
-                  <span className="text-[10px] text-slate-400">Dispatch Academy</span>
+                  <span className="text-[10px] text-slate-400">Dispatch: Career Path</span>
                 </div>
               </div>
             </div>

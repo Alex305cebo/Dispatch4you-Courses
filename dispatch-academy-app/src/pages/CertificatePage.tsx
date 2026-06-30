@@ -60,7 +60,7 @@ export default function CertificatePage() {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(28);
     doc.setTextColor(212, 175, 55);
-    doc.text('Dispatch Academy', pageWidth / 2, 45, { align: 'center' });
+    doc.text('Dispatch: Career Path', pageWidth / 2, 45, { align: 'center' });
 
     // Subtitle
     doc.setFontSize(18);
@@ -193,7 +193,7 @@ export default function CertificatePage() {
                 backgroundClip: 'text',
               }}
             >
-              Dispatch Academy — Сертификат
+              Dispatch: Career Path — Сертификат
             </h1>
           </div>
 

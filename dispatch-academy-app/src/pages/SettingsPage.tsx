@@ -71,7 +71,7 @@ export default function SettingsPage() {
             {user ? user.displayName : 'Студент'}
           </h1>
           <p className="text-sm text-slate-400">
-            {user ? user.email : 'Dispatch Academy'}
+            {user ? user.email : 'Dispatch: Career Path'}
           </p>
         </div>
       </div>

@@ -97,7 +97,7 @@ export default function AppLayout() {
               className="shrink-0 flex flex-col hover:opacity-80 transition-opacity cursor-pointer"
               aria-label="Перейти на сайт dispatch4you.com"
             >
-              <p className="text-sm font-bold text-gradient">Dispatch Academy</p>
+              <p className="text-sm font-bold text-gradient">Dispatch: Career Path</p>
               <p className="text-[10px] text-slate-400">→ перейти на сайт</p>
             </button>
 
