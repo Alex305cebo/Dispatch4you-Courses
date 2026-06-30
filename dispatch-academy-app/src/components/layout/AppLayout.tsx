@@ -10,6 +10,7 @@ import { useAuth } from '../../hooks/useAuth';
 import LevelUpModal from '../common/LevelUpModal';
 import AchievementModal from '../common/AchievementModal';
 import ProfilePanel from '../common/ProfilePanel';
+import WelcomeModal from '../common/WelcomeModal';
 
 /**
  * Application layout wrapper — Premium design.
@@ -289,6 +290,9 @@ export default function AppLayout() {
         level={level}
         currentStreak={currentStreak}
       />
+
+      {/* Welcome / Auth gate */}
+      <WelcomeModal />
 
       {/* Level-Up Celebration Modal */}
       <LevelUpModal />

@@ -1,86 +1,81 @@
 import { getDb } from './firebase';
 import type { AcademyUser } from '../hooks/useAuth';
 
-interface ProgressData {
+// Full progress snapshot saved/loaded per user
+export interface ProgressSnapshot {
   totalXP: number;
   level: number;
   currentStreak: number;
-  taskScoresCount: number;
-  accuracy: number;
+  lastActivityDate: string | null;
+  dailyGoal: number;
+  xpToday: number;
+  xpTodayDate: string | null;
+  dayStatuses: Record<string, string>;
+  taskScores: Record<string, unknown>;
+  miniExamPassed: Record<string, boolean>;
+  finalExamPassed: boolean;
+  finalExamScore: number | null;
+  certificateId: string | null;
+  flashcardStates: Record<string, unknown>;
+  unlockedAchievements: string[];
+  miniExamCooldowns: Record<string, string>;
+  finalExamCooldown: string | null;
+  // meta
+  displayName: string;
+  email: string;
+  photoURL: string | null;
   lastUpdated: unknown;
 }
 
-/**
- * Save player progress to Firestore collection "academy-progress"
- * Also updates "academy-leaderboard" for the leaderboard feature.
- */
 export async function saveProgressToFirestore(
   user: AcademyUser,
-  totalXP: number,
-  level: number,
-  currentStreak: number,
-  taskScores: Record<string, unknown>
+  snapshot: Omit<ProgressSnapshot, 'displayName' | 'email' | 'photoURL' | 'lastUpdated'>
 ): Promise<void> {
   if (!user?.uid) return;
-
-  const scores = Object.values(taskScores);
-  const correct = scores.filter((s: any) => s?.correct).length;
-  const accuracy = scores.length > 0 ? Math.round((correct / scores.length) * 100) : 0;
-
   try {
     const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
     const db = await getDb();
 
-    const data: ProgressData = {
-      totalXP,
-      level,
-      currentStreak,
-      taskScoresCount: scores.length,
-      accuracy,
-      lastUpdated: serverTimestamp(),
-    };
-
-    // Save detailed progress
-    await setDoc(doc(db, 'academy-progress', user.uid), {
-      ...data,
+    const data: ProgressSnapshot = {
+      ...snapshot,
       displayName: user.displayName,
       email: user.email,
       photoURL: user.photoURL,
-    }, { merge: true });
+      lastUpdated: serverTimestamp(),
+    };
 
-    // Update leaderboard entry
+    await setDoc(doc(db, 'academy-progress', user.uid), data, { merge: false });
+
+    // Leaderboard summary (lightweight)
+    const scores = Object.values(snapshot.taskScores);
+    const correct = scores.filter((s: any) => s?.correct).length;
+    const accuracy = scores.length > 0 ? Math.round((correct / scores.length) * 100) : 0;
     await setDoc(doc(db, 'academy-leaderboard', user.uid), {
       displayName: user.displayName,
-      firstName: user.firstName,
+      firstName: user.displayName.split(' ')[0] || user.displayName,
       photoURL: user.photoURL,
-      totalXP,
-      level,
+      totalXP: snapshot.totalXP,
+      level: snapshot.level,
       accuracy,
       lastUpdated: serverTimestamp(),
     }, { merge: true });
   } catch (err) {
-    console.warn('[Firestore] Save progress failed:', err);
+    console.warn('[Firestore] Save failed:', err);
   }
 }
 
-/**
- * Load player progress from Firestore (for sync between devices)
- */
-export async function loadProgressFromFirestore(uid: string) {
+export async function loadProgressFromFirestore(uid: string): Promise<ProgressSnapshot | null> {
   try {
     const { doc, getDoc } = await import('firebase/firestore');
     const db = await getDb();
     const snap = await getDoc(doc(db, 'academy-progress', uid));
-    if (snap.exists()) return snap.data();
+    if (snap.exists()) return snap.data() as ProgressSnapshot;
   } catch (err) {
-    console.warn('[Firestore] Load progress failed:', err);
+    console.warn('[Firestore] Load failed:', err);
   }
   return null;
 }
 
-/**
- * Fetch top leaderboard entries
- */
 export async function fetchLeaderboard(): Promise<Array<{
   uid: string;
   displayName: string;
@@ -93,15 +88,11 @@ export async function fetchLeaderboard(): Promise<Array<{
   try {
     const { collection, getDocs, query, orderBy, limit } = await import('firebase/firestore');
     const db = await getDb();
-    const q = query(
-      collection(db, 'academy-leaderboard'),
-      orderBy('totalXP', 'desc'),
-      limit(20)
-    );
+    const q = query(collection(db, 'academy-leaderboard'), orderBy('totalXP', 'desc'), limit(20));
     const snap = await getDocs(q);
     return snap.docs.map(d => ({ uid: d.id, ...d.data() } as any));
   } catch (err) {
-    console.warn('[Firestore] Fetch leaderboard failed:', err);
+    console.warn('[Firestore] Leaderboard failed:', err);
     return [];
   }
 }
