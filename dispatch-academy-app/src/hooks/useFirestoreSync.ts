@@ -62,6 +62,13 @@ export function useFirestoreSync() {
         // Merge flashcardStates: keep remote ones not yet in local
         const mergedFlashcards = { ...remote.flashcardStates, ...local.flashcardStates };
 
+        // Merge miniExamCooldowns: keep the later deadline (Firestore returns string keys → Number)
+        const mergedCooldowns: Record<number, string> = { ...local.miniExamCooldowns };
+        for (const [k, v] of Object.entries(remote.miniExamCooldowns ?? {})) {
+          const cur = mergedCooldowns[Number(k)];
+          if (!cur || v > cur) mergedCooldowns[Number(k)] = v;
+        }
+
         track('progress_restored', { remoteXP: remote.totalXP, mergedXP });
 
         return {
@@ -77,6 +84,8 @@ export function useFirestoreSync() {
           certificateId: local.certificateId ?? remote.certificateId ?? null,
           unlockedAchievements: mergedAchievements,
           flashcardStates: mergedFlashcards as any,
+          miniExamCooldowns: mergedCooldowns,
+          finalExamCooldown: local.finalExamCooldown ?? remote.finalExamCooldown ?? null,
         };
       });
     }).catch(() => { /* offline — keep local */ });

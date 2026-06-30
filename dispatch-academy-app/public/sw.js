@@ -1,4 +1,4 @@
-/* Dispatch Academy service worker.
+/* Dispatch: Career Path service worker.
  *
  * Strategy:
  *  - Navigations: network-first, falling back to the cached app shell when
