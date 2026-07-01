@@ -12,9 +12,9 @@
   body{color:var(--text);font-family:system-ui,sans-serif;height:100vh;height:100dvh;}
   .wrap{position:relative;z-index:1;width:100vw;height:100vh;height:100dvh;
     display:grid;grid-template-rows:1fr auto;gap:8px;padding:8px;box-sizing:border-box;}
-  .arena{position:relative;width:100%;height:100%;min-width:0;min-height:0;}
+  .arena{position:relative;width:100%;height:100%;min-width:0;min-height:0;overflow:hidden;}
   canvas#sboard{background:#0c0f18;border:1px solid var(--border);border-radius:12px;display:block;width:100%;height:100%;touch-action:none;}
-  .side{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start;min-width:0;min-height:0;overflow:auto;}
+  .side{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start;min-width:0;min-height:0;overflow:auto;max-height:36vh;}
   .side .full{grid-column:1/-1;}
   .box{background:var(--panel);border-radius:8px;padding:6px 10px;}
   .label{font-size:11px;color:var(--muted);margin-bottom:2px;white-space:nowrap;}
@@ -37,7 +37,7 @@
   .hint{grid-column:1/-1;font-size:11px;color:var(--muted);line-height:1.4;margin:0;text-align:center;}
   @media (min-width:820px) and (min-height:480px){
     .wrap{grid-template-columns:1fr 210px;grid-template-rows:1fr;}
-    .side{grid-template-columns:1fr;}
+    .side{grid-template-columns:1fr;max-height:none;}
     .box{padding:12px 16px;}
     .label{font-size:13px;margin-bottom:4px;}
     #stime{font-size:26px;}
@@ -120,7 +120,7 @@
     </div>
   </div>
   <div class="side">
-    <div class="box" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button></div>
+    <div class="box full" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button></div>
     <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
     <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
     <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
@@ -139,11 +139,9 @@
         <div><span>Радиус</span><b id="staoe">100%</b></div>
       </div>
     </div>
-    <div class="box full" style="padding:8px 10px;">
+    <div class="box full" style="display:flex;gap:6px;padding:8px 10px;">
       <button id="btnShop" style="padding:8px;">🛒 Магазин (<span id="spoints">0</span> баллов)</button>
-    </div>
-    <div class="box full" style="padding:8px 10px;">
-      <button id="btnMenuSide" style="padding:8px;">☰ Меню</button>
+      <button id="btnMenuSide" style="padding:8px;width:auto;flex:0 0 auto;white-space:nowrap;">☰ Меню</button>
     </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
   </div>
@@ -676,13 +674,23 @@
 
 
   function showLevelUp(){
+    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
+    if(pool.length===0){
+      // everything's already maxed out — nothing to pick, so don't freeze on an empty card
+      // screen. Pay out points instead and move straight on.
+      points+=100*Math.max(1,pendingLevelUps);
+      pendingLevelUps=0;chestPending=false;
+      updateHud();
+      olevel.classList.remove('show');
+      startCooldown();
+      return;
+    }
     state='levelup';
     const boss=pendingBossLevel===player.level;
     if(chestPending){levelTitle.textContent='Сундук! Выбери бонус';chestPending=false;}
     else levelTitle.textContent=boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!';
     if(pendingLevelUps>1){levelSub.style.display='block';levelSub.textContent='Осталось выборов: '+pendingLevelUps;}
     else levelSub.style.display='none';
-    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     const picks=[];
     const copy=pool.slice();
     for(let i=0;i<3&&copy.length;i++){picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);}
@@ -712,6 +720,7 @@
     shopPointsEl.textContent=Math.floor(points);
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     shopListEl.innerHTML='';
+    if(pool.length===0){shopListEl.innerHTML='<p style="color:var(--muted);text-align:center;">Все улучшения уже максимальны!</p>';}
     pool.forEach(u=>{
       const cost=shopCost(u);
       const afford=points>=cost;
@@ -738,8 +747,7 @@
   function openShop(){
     if(state!=='running')return;
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
-    const canAfford=pool.some(u=>points>=shopCost(u));
-    if(!canAfford){
+    if(pool.length>0&&!pool.some(u=>points>=shopCost(u))){
       announce={text:'Недостаточно баллов для покупки',life:1.8,color:'#f97316'};
       beep(160,0.12,'sawtooth',0.1);
       return;
