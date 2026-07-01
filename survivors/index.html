@@ -80,11 +80,6 @@
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
       <button class="ostart" id="btnStart">Начать</button>
     </div>
-    <div id="olevel" class="overlay">
-      <h2 id="levelTitle">Новый уровень!</h2>
-      <p id="levelSub" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
-      <div class="cards" id="cards"></div>
-    </div>
     <div id="ocooldown" class="overlay">
       <h2 id="cooldownMsg">Приготовься</h2>
       <div id="cooldownNum" style="font-size:64px;font-weight:700;color:#4D96FF;text-shadow:0 0 20px rgba(77,150,255,0.6);">3</div>
@@ -106,8 +101,9 @@
       <button class="ostart" id="btnRetry">Заново</button>
     </div>
     <div id="oshop" class="overlay">
-      <h2>🛒 Магазин улучшений</h2>
+      <h2 id="shopTitle">🛒 Магазин улучшений</h2>
       <p style="margin:-6px 0 0;">Баллов: <b id="shopPoints" style="color:#4D96FF;">0</b></p>
+      <p id="shopHint" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
       <div class="cards" id="shopList" style="max-height:340px;overflow:auto;"></div>
       <button class="ostart" id="btnShopClose">Закрыть</button>
     </div>
@@ -154,14 +150,14 @@
   const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest'),livesEl=document.getElementById('slives');
   const stDmgEl=document.getElementById('stdmg'),stRateEl=document.getElementById('strate'),stSpeedEl=document.getElementById('stspeed'),stCritEl=document.getElementById('stcrit'),stPierceEl=document.getElementById('stpierce'),stAoeEl=document.getElementById('staoe');
   const hpFill=document.querySelector('#hpbar>div'),hpNumEl=document.getElementById('shpnum'),xpFill=document.querySelector('#xpbar>div');
-  const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
-  const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
-  const levelTitle=document.getElementById('levelTitle'),levelSub=document.getElementById('levelSub');
+  const ostart=document.getElementById('ostart'),oover=document.getElementById('oover');
+  const overStats=document.getElementById('overStats');
   const ocooldown=document.getElementById('ocooldown'),cooldownMsg=document.getElementById('cooldownMsg'),cooldownNum=document.getElementById('cooldownNum');
   const oweapon=document.getElementById('oweapon'),weaponTitle=document.getElementById('weaponTitle'),weaponDesc=document.getElementById('weaponDesc');
   const wcv=document.getElementById('weaponIcon'),wx=wcv.getContext('2d');
   const osuperwarn=document.getElementById('osuperwarn'),superWarnText=document.getElementById('superWarnText');
   const oshop=document.getElementById('oshop'),shopListEl=document.getElementById('shopList'),shopPointsEl=document.getElementById('shopPoints');
+  const shopTitleEl=document.getElementById('shopTitle'),shopHintEl=document.getElementById('shopHint');
   const pointsEl=document.getElementById('spoints'),btnShop=document.getElementById('btnShop'),btnShopClose=document.getElementById('btnShopClose');
 
   let best=parseFloat(localStorage.getItem('survivors-best')||'0');
@@ -234,22 +230,22 @@
   }
 
   const UPGRADES=[
-    {id:'dmg',name:'Урон +35%',desc:'Больше урона у ВСЕГО оружия',rarity:'common',apply:p=>{p.dmg=Math.round(p.dmg*1.35);p.dmgMult*=1.35;}},
+    {id:'dmg',name:'Урон +35%',desc:'Больше урона у ВСЕГО оружия',rarity:'mid',apply:p=>{p.dmg=Math.round(p.dmg*1.35);p.dmgMult*=1.35;}},
     {id:'rate',name:'Скорострельность +18%',desc:'ВСЁ оружие атакует чаще',rarity:'common',apply:p=>{p.fireRate=Math.max(120,Math.round(p.fireRate*0.82));p.atkSpeedMult/=0.82;}},
     {id:'speed',name:'Скорость +12%',desc:'Быстрее передвижение',rarity:'common',apply:p=>p.speed=Math.round(p.speed*1.12)},
     {id:'hp',name:'Макс. HP +20',desc:'Больше живучести, лечит 30',rarity:'common',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+30);}},
-    {id:'multi',name:'+1 одновременный удар',desc:'Всё оружие бьёт на 1 раз больше за залп',rarity:'mid',cond:p=>p.projCount<6,apply:p=>p.projCount++},
+    {id:'multi',name:'Мультивыстрел: уровень +1',desc:'Всё оружие бьёт на 1 раз больше за залп',rarity:'mid',cond:p=>p.projCount<6,apply:p=>p.projCount++},
     {id:'pierce',name:'Пробитие +1',desc:'Пуля пробивает врагов, молния — больше прыжков, мины — шире взрыв',rarity:'common',cond:p=>p.pierce<6,apply:p=>p.pierce++},
     {id:'pickup',name:'Радиус подбора +30%',desc:'Собирает опыт и предметы издалека',rarity:'common',apply:p=>p.pickupRadius=Math.round(p.pickupRadius*1.3)},
-    {id:'regen',name:'Регенерация +1/с',desc:'Восстанавливает HP со временем',rarity:'common',apply:p=>p.regen+=1},
+    {id:'regen',name:'Регенерация +1/с',desc:'Восстанавливает HP со временем',rarity:'rare',apply:p=>p.regen+=1},
     {id:'aura',name:'Аура урона',desc:'Дамажит врагов рядом каждую секунду',rarity:'rare',apply:p=>{p.auraLevel=(p.auraLevel||0)+1;p.auraDmg=p.auraLevel*8;p.auraRadius=60+p.auraLevel*10;}},
     {id:'projspeed',name:'Скорость снарядов +20%',desc:'Снаряды летят быстрее, клинки крутятся быстрее',rarity:'common',apply:p=>{p.projSpeed=Math.round(p.projSpeed*1.2);p.projSpeedMult*=1.2;}},
-    {id:'crit',name:'Шанс крита +12%',desc:'Любая атака ВСЕГО оружия может крит нуть вдвое сильнее',rarity:'mid',cond:p=>p.critChance<0.72,apply:p=>p.critChance+=0.12},
-    {id:'aoe',name:'Радиус поражения +15%',desc:'Клинки, мины, аура и пули достают дальше',rarity:'mid',apply:p=>p.aoeMult*=1.15},
-    {id:'lifesteal',name:'Похищение жизни',desc:'Немного лечит HP за каждое убийство любым оружием',rarity:'mid',cond:p=>p.lifesteal<0.08,apply:p=>p.lifesteal+=0.015},
-    {id:'berserk',name:'Аура ярости',desc:'Периодически на пару секунд резко усиливает урон ВСЕГО оружия',rarity:'rare',cond:p=>p.berserkLevel<5,apply:p=>p.berserkLevel++},
-    {id:'haste',name:'Аура скорости',desc:'Периодически на пару секунд разгоняет передвижение и снаряды',rarity:'rare',cond:p=>p.hasteLevel<5,apply:p=>p.hasteLevel++},
-    {id:'shield',name:'Аура щита',desc:'Периодически даёт короткую неуязвимость',rarity:'rare',cond:p=>p.shieldLevel<5,apply:p=>p.shieldLevel++},
+    {id:'crit',name:'Шанс крита +12%',desc:'Любая атака ВСЕГО оружия может крит нуть вдвое сильнее',rarity:'common',cond:p=>p.critChance<0.72,apply:p=>p.critChance+=0.12},
+    {id:'aoe',name:'Радиус поражения +15%',desc:'Клинки, мины, аура и пули достают дальше',rarity:'common',apply:p=>p.aoeMult*=1.15},
+    {id:'lifesteal',name:'Похищение жизни',desc:'Немного лечит HP за каждое убийство любым оружием',rarity:'rare',cond:p=>p.lifesteal<0.08,apply:p=>p.lifesteal+=0.015},
+    {id:'berserk',name:'Аура ярости',desc:'Периодически на пару секунд резко усиливает урон ВСЕГО оружия',rarity:'common',cond:p=>p.berserkLevel<5,apply:p=>p.berserkLevel++},
+    {id:'haste',name:'Аура скорости',desc:'Периодически на пару секунд разгоняет передвижение и снаряды',rarity:'common',cond:p=>p.hasteLevel<5,apply:p=>p.hasteLevel++},
+    {id:'shield',name:'Аура щита',desc:'Периодически даёт короткую неуязвимость',rarity:'mid',cond:p=>p.shieldLevel<5,apply:p=>p.shieldLevel++},
     {id:'blades_up',name:'Клинки: уровень +1',desc:'Ещё клинок и больше урона',rarity:'mid',cond:p=>p.bladeLevel>0&&p.bladeLevel<5,apply:p=>p.bladeLevel++},
     {id:'chain_up',name:'Молния: уровень +1',desc:'Больше урона и прыжков',rarity:'mid',cond:p=>p.chainLevel>0&&p.chainLevel<5,apply:p=>p.chainLevel++},
     {id:'mines_up',name:'Мины: уровень +1',desc:'Мощнее взрыв, ставятся чаще',rarity:'mid',cond:p=>p.mineLevel>0&&p.mineLevel<5,apply:p=>p.mineLevel++},
@@ -279,7 +275,7 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems;
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,levelUpShopActive,points,shopBought,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
     return {x:0,y:0,r:14,hp:100,maxHp:100,speed:180,dmg:18,fireRate:550,fireAcc:0,
@@ -302,7 +298,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];
-    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;levelUpShopActive=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -385,7 +381,7 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
-    points+=Math.max(1,Math.ceil(e.xp/6));
+    points+=Math.pow(0.95,Math.floor(player.level/10));
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))});
     beep(e.elite?160:300,0.12,'triangle',0.08);
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
@@ -445,7 +441,7 @@
     beep(523,0.1,'sine',0.12);setTimeout(()=>beep(784,0.15,'sine',0.12),100);
     setTimeout(()=>{
       oweapon.classList.remove('show');
-      if(pendingLevelUps>0)showLevelUp();
+      if(pendingLevelUps>0)openLevelUpShop();
       else{state='running';last=performance.now();raf=requestAnimationFrame(loop);}
     },2800);
   }
@@ -594,7 +590,7 @@
 
   function openChest(){
     chestPending=true;pendingLevelUps++;
-    if(state==='running')showLevelUp();
+    if(state==='running')openLevelUpShop();
   }
 
   function collectPickup(pk){
@@ -624,7 +620,7 @@
       levelUpOnce();
       player.xpNeed=xpNeedFor(player.level);
     }
-    if(pendingLevelUps>0&&state==='running')showLevelUp();
+    if(pendingLevelUps>0&&state==='running')openLevelUpShop();
     updateHud();
   }
 
@@ -638,32 +634,25 @@
   }
 
 
-  function showLevelUp(){
-    state='levelup';
+  function openLevelUpShop(){
+    levelUpShopActive=true;
+    state='shop';
     const boss=pendingBossLevel===player.level;
-    if(chestPending){levelTitle.textContent='Сундук! Выбери бонус';chestPending=false;}
-    else levelTitle.textContent=boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!';
-    if(pendingLevelUps>1){levelSub.style.display='block';levelSub.textContent='Осталось выборов: '+pendingLevelUps;}
-    else levelSub.style.display='none';
-    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
-    const picks=[];
-    const copy=pool.slice();
-    for(let i=0;i<3&&copy.length;i++){picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);}
-    cardsEl.innerHTML='';
-    picks.forEach(u=>{
-      const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;
-      const lvl=upgradeLevel(u);
-      const el=document.createElement('div');el.className='card';
-      el.style.borderColor=ri.color;
-      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLevel(u)+'</span><span>'+u.desc+'</span>';
-      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;pendingLevelUps--;beep(523,0.08,'sine',0.1);setTimeout(()=>beep(659,0.1,'sine',0.1),80);
-        olevel.classList.remove('show');
-        if(pendingLevelUps>0)showLevelUp();else startCooldown();
-      };
-      cardsEl.appendChild(el);
-    });
-    olevel.classList.add('show');
-    updateHud();
+    let title=chestPending?'Сундук! Магазин открыт':(boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!');
+    chestPending=false;
+    shopTitleEl.textContent='🎁 '+title;
+    if(pendingLevelUps>1){shopHintEl.style.display='block';shopHintEl.textContent='Осталось визитов: '+pendingLevelUps;}
+    else shopHintEl.style.display='none';
+    btnShopClose.textContent='Пропустить';
+    renderShop();
+    oshop.classList.add('show');
+  }
+
+  function finishLevelUpVisit(){
+    oshop.classList.remove('show');
+    levelUpShopActive=false;
+    pendingLevelUps--;
+    if(pendingLevelUps>0)openLevelUpShop();else startCooldown();
   }
 
   function shopCost(u){
@@ -672,7 +661,7 @@
   }
 
   function renderShop(){
-    shopPointsEl.textContent=points;
+    shopPointsEl.textContent=Math.floor(points);
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     shopListEl.innerHTML='';
     pool.forEach(u=>{
@@ -691,7 +680,7 @@
           u.apply(player);
           beep(600,0.08,'sine',0.1);
           updateHud();
-          renderShop();
+          if(levelUpShopActive)finishLevelUpVisit();else renderShop();
         };
       }
       shopListEl.appendChild(el);
@@ -700,12 +689,17 @@
 
   function openShop(){
     if(state!=='running')return;
+    levelUpShopActive=false;
     state='shop';
+    shopTitleEl.textContent='🛒 Магазин улучшений';
+    shopHintEl.style.display='none';
+    btnShopClose.textContent='Закрыть';
     renderShop();
     oshop.classList.add('show');
   }
 
   function closeShop(){
+    if(levelUpShopActive){finishLevelUpVisit();return;}
     oshop.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
@@ -856,7 +850,7 @@
     stCritEl.textContent=Math.round(player.critChance*100)+'%';
     stPierceEl.textContent=player.pierce;
     stAoeEl.textContent=Math.round(player.aoeMult*100)+'%';
-    pointsEl.textContent=points;
+    pointsEl.textContent=Math.floor(points);
   }
 
   function hurtPlayer(dmg,fx,fy,force,isBossHit){
@@ -930,7 +924,7 @@
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
     if(t-lastLevelUpAt>=90){
       levelUpOnce();
-      if(pendingLevelUps>0&&state==='running')showLevelUp();
+      if(pendingLevelUps>0&&state==='running')openLevelUpShop();
     }
 
     fire(dt);
@@ -1314,7 +1308,7 @@
 
   function start(){
     ensureAudio();reset();
-    ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
+    ostart.classList.remove('show');oover.classList.remove('show');
     ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
