@@ -1091,17 +1091,19 @@
       else drawMob(e.x,e.y,e);
       if(e.hp<e.maxHp){
         if(e.elite&&e.stageCount){
-          const segs=e.stageCount,barW=Math.min(150,e.r*2.6),barH=5,gap=1;
-          const segW=(barW-gap*(segs-1))/segs;
-          const segHp=e.maxHp/segs;
-          const bx0=e.x-barW/2,by0=e.y-e.r-14;
-          for(let i=0;i<segs;i++){
-            const segStart=i*segHp;
-            const frac=Math.max(0,Math.min(1,(e.hp-segStart)/segHp));
-            const sxp=bx0+i*(segW+gap);
-            x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(sxp,by0,segW,barH);
-            x.fillStyle=e.color;x.fillRect(sxp,by0,segW*frac,barH);
-          }
+          // one solid bar per boss "life" — it drains fully, then the next of the
+          // stacked stageCount bars underneath takes over, full again
+          const segHp=e.maxHp/e.stageCount;
+          const localFrac=Math.max(0,Math.min(1,(e.hp-(e.stage-1)*segHp)/segHp));
+          const barW=Math.min(150,e.r*2.6),barH=6;
+          const bx0=e.x-barW/2,by0=e.y-e.r-16;
+          x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(bx0,by0,barW,barH);
+          x.fillStyle=e.color;x.shadowColor=e.color;x.shadowBlur=4;
+          x.fillRect(bx0,by0,barW*localFrac,barH);
+          x.shadowBlur=0;
+          x.strokeStyle='rgba(255,255,255,0.35)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,barW-1,barH-1);
+          x.fillStyle='#fff';x.font='bold 9px system-ui,sans-serif';x.textAlign='center';
+          x.fillText(e.stage+'/'+e.stageCount,e.x,by0-3);
         }else{
           x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2,3);
           x.fillStyle='#4ade80';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2*Math.max(0,e.hp/e.maxHp),3);
@@ -1189,6 +1191,7 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+
 
 
 
