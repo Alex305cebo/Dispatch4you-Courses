@@ -140,6 +140,8 @@
     W=Math.round(rw*scale);H=Math.round(rh*scale);
     cv.width=W;cv.height=H;
   }
+  const isMobileDevice=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
+  const baseZoom=isMobileDevice?0.75:1;
   const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest'),livesEl=document.getElementById('slives');
   const stDmgEl=document.getElementById('stdmg'),stRateEl=document.getElementById('strate'),stSpeedEl=document.getElementById('stspeed'),stCritEl=document.getElementById('stcrit'),stPierceEl=document.getElementById('stpierce'),stAoeEl=document.getElementById('staoe');
   const hpFill=document.querySelector('#hpbar>div'),xpFill=document.querySelector('#xpbar>div');
@@ -284,7 +286,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];gems=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];
-    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=1;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;screenFlash=0;announce=null;chestPending=false;
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
@@ -808,7 +810,7 @@
     // camera zoom: pull back when the field gets crowded — smoothed so bursts of
     // spawns/deaths (mines, nova bursts) don't yank the view around every frame
     enemyCountSmoothed+=(enemies.length-enemyCountSmoothed)*Math.min(1,dt*0.3);
-    const targetZoom=Math.max(0.55,Math.min(1,1-Math.max(0,enemyCountSmoothed-25)/200));
+    const targetZoom=Math.max(0.55,Math.min(baseZoom,baseZoom-Math.max(0,enemyCountSmoothed-25)/200));
     zoom+=(targetZoom-zoom)*Math.min(1,dt*0.6);
 
     // spawn
@@ -1191,6 +1193,7 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+
 
 
 
