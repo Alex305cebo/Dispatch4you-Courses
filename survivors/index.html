@@ -252,7 +252,9 @@
     {id:'chain_up',name:'Молния: уровень +1',desc:'Больше урона и прыжков',rarity:'mid',cond:p=>p.chainLevel>0&&p.chainLevel<5,apply:p=>p.chainLevel++},
     {id:'mines_up',name:'Мины: уровень +1',desc:'Мощнее взрыв, ставятся чаще',rarity:'mid',cond:p=>p.mineLevel>0&&p.mineLevel<5,apply:p=>p.mineLevel++},
   ];
-  const RARITY_INFO={common:{cost:100,label:'Нередкое',color:'#8891a3'},mid:{cost:250,label:'Среднее',color:'#4D96FF'},rare:{cost:500,label:'Редкое',color:'#a855f7'}};
+  const RARITY_INFO={common:{cost:100,label:'Нередкое',color:'#8891a3',maxLevel:6},mid:{cost:250,label:'Среднее',color:'#4D96FF',maxLevel:5},rare:{cost:500,label:'Редкое',color:'#a855f7',maxLevel:5}};
+  function upgradeLevel(u){return shopBought[u.id]||0;}
+  function upgradeMaxLevel(u){return (RARITY_INFO[u.rarity]||RARITY_INFO.common).maxLevel;}
 
   const WEAPON_UNLOCKS=[
     {id:'blade',name:'Клинки',desc:'Вращающиеся клинки режут всех, кто рядом.',apply:p=>p.bladeLevel=1},
@@ -379,7 +381,7 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
-    points+=Math.max(1,Math.ceil(e.xp/3));
+    points+=Math.max(1,Math.ceil(e.xp/6));
     beep(e.elite?160:300,0.12,'triangle',0.08);
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(e.pauseSpawns){mobSpawnPaused=false;announce={text:'Босс уровня 8 повержен!',life:2.4,color:'#f97316'};}
@@ -596,7 +598,7 @@
     else if(pk.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+35);beep(660,0.12,'sine',0.1);}
     else if(pk.type==='magnet'){
       const R=3*Math.max(W,H);
-      points+=50+player.level*3;
+      points+=25+player.level*2;
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
       updateHud();
       beep(1000,0.15,'sine',0.08);
@@ -610,11 +612,10 @@
 
   function levelUpOnce(){
     player.level++;
-    pendingLevelUps++;
-    if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;}
+    if(player.level%5===0){pendingLevelUps+=3;pendingBossLevel=player.level;}
     if(player.level%25===0){pendingSuperWarning=player.level;}
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
-    if(player.level===8){pendingLevelUps+=2;pendingLevel8Boss=true;}
+    if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
     lastLevelUpAt=t;
   }
 
@@ -626,15 +627,18 @@
     else levelTitle.textContent=boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!';
     if(pendingLevelUps>1){levelSub.style.display='block';levelSub.textContent='Осталось выборов: '+pendingLevelUps;}
     else levelSub.style.display='none';
-    const pool=UPGRADES.filter(u=>!u.cond||u.cond(player));
+    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     const picks=[];
     const copy=pool.slice();
     for(let i=0;i<3&&copy.length;i++){picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);}
     cardsEl.innerHTML='';
     picks.forEach(u=>{
+      const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;
+      const lvl=upgradeLevel(u);
       const el=document.createElement('div');el.className='card';
-      el.innerHTML='<b>'+u.name+'</b><span>'+u.desc+'</span>';
-      el.onclick=()=>{u.apply(player);pendingLevelUps--;beep(523,0.08,'sine',0.1);setTimeout(()=>beep(659,0.1,'sine',0.1),80);
+      el.style.borderColor=ri.color;
+      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLevel(u)+'</span><span>'+u.desc+'</span>';
+      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;pendingLevelUps--;beep(523,0.08,'sine',0.1);setTimeout(()=>beep(659,0.1,'sine',0.1),80);
         olevel.classList.remove('show');
         if(pendingLevelUps>0)showLevelUp();else startCooldown();
       };
@@ -651,16 +655,17 @@
 
   function renderShop(){
     shopPointsEl.textContent=points;
-    const pool=UPGRADES.filter(u=>!u.cond||u.cond(player));
+    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     shopListEl.innerHTML='';
     pool.forEach(u=>{
       const cost=shopCost(u);
       const afford=points>=cost;
       const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;
+      const lvl=upgradeLevel(u);
       const el=document.createElement('div');el.className='card';
       el.style.opacity=afford?1:0.5;
       el.style.borderColor=ri.color;
-      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+'</span><span>'+u.desc+'</span><div style="margin-top:8px;color:'+ri.color+';font-weight:600;">'+cost+' баллов</div>';
+      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLevel(u)+'</span><span>'+u.desc+'</span><div style="margin-top:8px;color:'+ri.color+';font-weight:600;">'+cost+' баллов</div>';
       if(afford){
         el.onclick=()=>{
           points-=cost;
@@ -904,7 +909,7 @@
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
 
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
-    if(t-lastLevelUpAt>=60){
+    if(t-lastLevelUpAt>=90){
       levelUpOnce();
       if(pendingLevelUps>0&&state==='running')showLevelUp();
     }
