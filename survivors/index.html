@@ -105,7 +105,7 @@
       <p style="margin:-6px 0 0;">Баллов: <b id="shopPoints" style="color:#4D96FF;">0</b></p>
       <p id="shopHint" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
       <div class="cards" id="shopList" style="max-height:340px;overflow:auto;"></div>
-      <button class="ostart" id="btnShopClose">Закрыть</button>
+      <button class="ostart" id="btnShopClose">Пропустить</button>
     </div>
   </div>
   <div class="side">
@@ -128,9 +128,7 @@
         <div><span>Радиус</span><b id="staoe">100%</b></div>
       </div>
     </div>
-    <div class="box full" style="padding:8px 10px;">
-      <button id="btnShop" style="padding:8px;">🛒 Магазин (<span id="spoints">0</span> баллов)</button>
-    </div>
+    <div class="box"><div class="label">🛒 Баллов</div><div id="spoints" class="small">0</div></div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
   </div>
 </div>
@@ -158,7 +156,7 @@
   const osuperwarn=document.getElementById('osuperwarn'),superWarnText=document.getElementById('superWarnText');
   const oshop=document.getElementById('oshop'),shopListEl=document.getElementById('shopList'),shopPointsEl=document.getElementById('shopPoints');
   const shopTitleEl=document.getElementById('shopTitle'),shopHintEl=document.getElementById('shopHint');
-  const pointsEl=document.getElementById('spoints'),btnShop=document.getElementById('btnShop'),btnShopClose=document.getElementById('btnShopClose');
+  const pointsEl=document.getElementById('spoints'),btnShopClose=document.getElementById('btnShopClose');
 
   let best=parseFloat(localStorage.getItem('survivors-best')||'0');
   bestEl.textContent=fmtTime(best);
@@ -275,7 +273,7 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems;
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,levelUpShopActive,points,shopBought,raf,last,keys,moveVec,joy;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
     return {x:0,y:0,r:14,hp:100,maxHp:100,speed:180,dmg:18,fireRate:550,fireAcc:0,
@@ -298,7 +296,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];
-    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;levelUpShopActive=false;
+    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -635,7 +633,6 @@
 
 
   function openLevelUpShop(){
-    levelUpShopActive=true;
     state='shop';
     const boss=pendingBossLevel===player.level;
     let title=chestPending?'Сундук! Магазин открыт':(boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!');
@@ -643,14 +640,12 @@
     shopTitleEl.textContent='🎁 '+title;
     if(pendingLevelUps>1){shopHintEl.style.display='block';shopHintEl.textContent='Осталось визитов: '+pendingLevelUps;}
     else shopHintEl.style.display='none';
-    btnShopClose.textContent='Пропустить';
     renderShop();
     oshop.classList.add('show');
   }
 
   function finishLevelUpVisit(){
     oshop.classList.remove('show');
-    levelUpShopActive=false;
     pendingLevelUps--;
     if(pendingLevelUps>0)openLevelUpShop();else startCooldown();
   }
@@ -680,28 +675,15 @@
           u.apply(player);
           beep(600,0.08,'sine',0.1);
           updateHud();
-          if(levelUpShopActive)finishLevelUpVisit();else renderShop();
+          finishLevelUpVisit();
         };
       }
       shopListEl.appendChild(el);
     });
   }
 
-  function openShop(){
-    if(state!=='running')return;
-    levelUpShopActive=false;
-    state='shop';
-    shopTitleEl.textContent='🛒 Магазин улучшений';
-    shopHintEl.style.display='none';
-    btnShopClose.textContent='Закрыть';
-    renderShop();
-    oshop.classList.add('show');
-  }
-
   function closeShop(){
-    if(levelUpShopActive){finishLevelUpVisit();return;}
-    oshop.classList.remove('show');
-    state='running';last=performance.now();raf=requestAnimationFrame(loop);
+    finishLevelUpVisit();
   }
 
   function startCooldown(){
@@ -1315,7 +1297,6 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
-  btnShop.addEventListener('click',openShop);
   btnShopClose.addEventListener('click',closeShop);
 
 
