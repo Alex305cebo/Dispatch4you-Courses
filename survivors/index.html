@@ -26,6 +26,11 @@
   .bar>div{height:100%;width:0%;transition:width .15s;}
   #hpbar>div{background:linear-gradient(90deg,#ef4444,#f97316);}
   #xpbar>div{background:linear-gradient(90deg,#4D96FF,#B388FF);}
+  .bars .label:not(:first-child){margin-top:6px;}
+  .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px;margin-top:2px;}
+  .statgrid div{display:flex;flex-direction:column;font-size:11px;}
+  .statgrid span{color:var(--muted);}
+  .statgrid b{font-weight:600;font-size:13px;}
   button{width:100%;padding:10px;font-size:15px;background:var(--panel2);color:var(--text);
     border:1px solid var(--border);border-radius:8px;cursor:pointer;}
   button:hover{background:#242c3a;}
@@ -39,6 +44,8 @@
     .small{font-size:16px;}
     .bar{height:10px;margin-top:4px;}
     .hint{font-size:13px;line-height:1.6;text-align:left;}
+    .statgrid{font-size:13px;gap:6px 10px;}
+    .statgrid b{font-size:15px;}
   }
   @media (max-width:420px){
     .card{width:120px !important;padding:10px !important;}
@@ -104,8 +111,21 @@
     <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
     <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
     <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
-    <div class="box full"><div class="label">HP</div><div class="bar" id="hpbar"><div></div></div></div>
-    <div class="box full"><div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div></div>
+    <div class="box full bars">
+      <div class="label">HP</div><div class="bar" id="hpbar"><div></div></div>
+      <div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div>
+    </div>
+    <div class="box full">
+      <div class="label">Характеристики</div>
+      <div class="statgrid">
+        <div><span>Урон</span><b id="stdmg">0</b></div>
+        <div><span>Атака/с</span><b id="strate">0</b></div>
+        <div><span>Скорость</span><b id="stspeed">0</b></div>
+        <div><span>Крит</span><b id="stcrit">0%</b></div>
+        <div><span>Пробитие</span><b id="stpierce">0</b></div>
+        <div><span>Радиус</span><b id="staoe">100%</b></div>
+      </div>
+    </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
   </div>
 </div>
@@ -121,6 +141,7 @@
     cv.width=W;cv.height=H;
   }
   const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest'),livesEl=document.getElementById('slives');
+  const stDmgEl=document.getElementById('stdmg'),stRateEl=document.getElementById('strate'),stSpeedEl=document.getElementById('stspeed'),stCritEl=document.getElementById('stcrit'),stPierceEl=document.getElementById('stpierce'),stAoeEl=document.getElementById('staoe');
   const hpFill=document.querySelector('#hpbar>div'),xpFill=document.querySelector('#xpbar>div');
   const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
   const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
@@ -170,6 +191,16 @@
     juggernaut:{hp:180,speed:35,dmg:22,r:22,color:'#7c3aed',shape:'square'},
     wraith:{hp:40,speed:160,dmg:12,r:10,color:'#a3e635',shape:'triangle'},
     behemoth:{hp:260,speed:40,dmg:28,r:26,color:'#dc2626',shape:'shield'},
+    bloodsucker:{hp:60,speed:75,dmg:16,r:13,color:'#b91c1c',shape:'blob'},
+    boneguard:{hp:340,speed:38,dmg:20,r:19,color:'#d4d4d8',shape:'shield'},
+    ashrunner:{hp:90,speed:210,dmg:18,r:10,color:'#78716c',shape:'triangle'},
+    stonegolem:{hp:520,speed:28,dmg:26,r:28,color:'#57534e',shape:'square'},
+    toxicspitter:{hp:140,speed:60,dmg:14,r:12,color:'#65a30d',shape:'diamond',ranged:true},
+    steelsentinel:{hp:480,speed:42,dmg:30,r:18,color:'#475569',shape:'shield'},
+    spikeswarm:{hp:40,speed:170,dmg:12,r:8,color:'#f43f5e',shape:'blob'},
+    wrecker:{hp:650,speed:36,dmg:36,r:24,color:'#9a3412',shape:'square'},
+    shadowhunter:{hp:220,speed:200,dmg:24,r:11,color:'#1e1b4b',shape:'triangle',ranged:true},
+    abyssleviathan:{hp:900,speed:33,dmg:40,r:30,color:'#052e16',shape:'shield'},
   };
   const BOSS_BASE={hp:70,speed:45,dmg:14,r:18};
   const ENEMY_TIERS=[
@@ -178,7 +209,16 @@
     ['spitter','shielded'],
     ['swarmer','juggernaut'],
     ['wraith','behemoth'],
+    ['bloodsucker','boneguard'],
+    ['ashrunner','stonegolem'],
+    ['toxicspitter','steelsentinel'],
+    ['spikeswarm','wrecker'],
+    ['shadowhunter','abyssleviathan'],
   ];
+  function tierIndexForLevel(lvl){
+    const idx=lvl<25?Math.floor(lvl/5):5+Math.floor((lvl-25)/3);
+    return Math.min(ENEMY_TIERS.length-1,idx);
+  }
 
   const UPGRADES=[
     {id:'dmg',name:'Урон +35%',desc:'Больше урона у ВСЕГО оружия',apply:p=>{p.dmg=Math.round(p.dmg*1.35);p.dmgMult*=1.35;}},
@@ -261,12 +301,12 @@
   }
 
   function pickType(){
-    const tier=ENEMY_TIERS[Math.min(ENEMY_TIERS.length-1,Math.floor(player.level/5))];
+    const tier=ENEMY_TIERS[tierIndexForLevel(player.level)];
     return tier[Math.floor(Math.random()*tier.length)];
   }
 
   function tierAvgDmg(lvl){
-    const tier=ENEMY_TIERS[Math.min(ENEMY_TIERS.length-1,Math.floor(lvl/5))];
+    const tier=ENEMY_TIERS[tierIndexForLevel(lvl)];
     const dmgs=tier.map(k=>ENEMY_TYPES[k].dmg);
     return dmgs.reduce((a,b)=>a+b,0)/dmgs.length;
   }
@@ -681,6 +721,12 @@
     livesEl.textContent='❤'.repeat(Math.max(0,lives));
     hpFill.style.width=Math.max(0,player.hp/player.maxHp*100)+'%';
     xpFill.style.width=Math.min(100,player.xp/player.xpNeed*100)+'%';
+    stDmgEl.textContent=Math.round(player.dmg);
+    stRateEl.textContent=(1000/player.fireRate).toFixed(1);
+    stSpeedEl.textContent=Math.round(player.speed);
+    stCritEl.textContent=Math.round(player.critChance*100)+'%';
+    stPierceEl.textContent=player.pierce;
+    stAoeEl.textContent=Math.round(player.aoeMult*100)+'%';
   }
 
   function hurtPlayer(dmg,fx,fy,force){
@@ -948,6 +994,23 @@
     for(let gy=sy0;gy<bottom;gy+=g){x.beginPath();x.moveTo(left,gy);x.lineTo(right,gy);x.stroke();}
   }
 
+  function drawOffscreenIndicators(){
+    const margin=22;
+    pickups.forEach(pk=>{
+      const sx=(pk.x-player.x)*zoom+W/2,sy=(pk.y-player.y)*zoom+H/2;
+      const pad=pk.r*zoom+4;
+      if(sx>-pad&&sx<W+pad&&sy>-pad&&sy<H+pad)return;
+      const ang=Math.atan2(sy-H/2,sx-W/2);
+      const halfWs=W/2-margin,halfHs=H/2-margin;
+      const scale=Math.min(halfWs/Math.max(1e-6,Math.abs(Math.cos(ang))),halfHs/Math.max(1e-6,Math.abs(Math.sin(ang))));
+      const ix=W/2+Math.cos(ang)*scale,iy=H/2+Math.sin(ang)*scale;
+      x.save();x.translate(ix,iy);x.rotate(ang);
+      x.fillStyle=pk.color;x.shadowColor=pk.color;x.shadowBlur=6;
+      x.beginPath();x.moveTo(9,0);x.lineTo(-6,-5);x.lineTo(-6,5);x.closePath();x.fill();
+      x.restore();
+    });
+  }
+
   function draw(){
     let sx=0,sy=0;
     if(camShake>0.3){sx=rand(-camShake,camShake);sy=rand(-camShake,camShake);}
@@ -1048,6 +1111,7 @@
     x.strokeStyle='#4D96FF';x.lineWidth=2;x.beginPath();x.moveTo(player.x,player.y);x.lineTo(player.x+player.facing.x*20,player.y+player.facing.y*20);x.stroke();
     x.globalAlpha=1;
     x.restore();
+    drawOffscreenIndicators();
     // joystick (screen-space, drawn outside the world transform)
     if(joy.active){x.strokeStyle='rgba(255,255,255,0.25)';x.lineWidth=2;x.beginPath();x.arc(joy.bx,joy.by,42,0,Math.PI*2);x.stroke();x.fillStyle='rgba(255,255,255,0.15)';x.beginPath();x.arc(joy.bx+joy.dx*42,joy.by+joy.dy*42,16,0,Math.PI*2);x.fill();}
     if(announce){const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));x.font='bold 26px system-ui,sans-serif';x.textAlign='center';x.fillStyle=ac;x.shadowColor=ac;x.shadowBlur=12;x.fillText(announce.text,W/2,46);x.restore();}
@@ -1070,6 +1134,8 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+
+
 
   document.getElementById('btnSuperWarnOk').addEventListener('click',()=>{
     osuperwarn.classList.remove('show');
