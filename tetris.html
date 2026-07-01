@@ -84,7 +84,13 @@
     </div>
   </div>
   <div class="side">
-    <div class="box" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Счёт</div><div id="tscore">0</div></div><button id="tboard-lb" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Таблица лидеров</button></div>
+    <div class="box">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Счёт</div><div id="tscore">0</div></div><button id="tboard-lb" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Таблица лидеров</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+        <div style="font-size:12px;color:var(--muted);">Игрок: <span id="tplayername" style="color:var(--text);">—</span></div>
+        <button id="tRename" style="width:auto;padding:4px 8px;font-size:11px;">✎</button>
+      </div>
+    </div>
     <div class="box row"><div><div class="label">Уровень</div><div id="tlevel" class="small">1</div></div><div><div class="label">Время</div><div id="ttime" class="small">0:00</div></div><div><div class="label">Рекорд</div><div id="tbest" class="small">0</div><div id="tbesttime" style="font-size:11px;color:var(--muted);">0:00</div></div></div>
     <div class="box"><div class="label">Запас (↑)</div><canvas id="thold" width="96" height="96"></canvas></div>
     <div class="box"><div class="label">Дальше</div><canvas id="tnext" width="96" height="96"></canvas></div>
@@ -121,6 +127,16 @@
   function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   let playerName=localStorage.getItem('tetris-name')||'';
+  const playerNameEl=document.getElementById('tplayername');
+  function renderPlayerName(){playerNameEl.textContent=playerName||'—';}
+  renderPlayerName();
+  document.getElementById('tRename').addEventListener('click',()=>{
+    const n=prompt('Имя для таблицы лидеров:',playerName);
+    if(n===null)return;
+    playerName=sanitizeName(n);
+    localStorage.setItem('tetris-name',playerName);
+    renderPlayerName();
+  });
   let best=0,bestTime=0,elapsed=0;
   try{const saved=JSON.parse(localStorage.getItem('tetris-best'));if(saved&&typeof saved.score==='number'){best=saved.score;bestTime=saved.time||0;}}catch(e){}
   bestEl.textContent=best;
@@ -182,7 +198,7 @@
   function draw(dt){x.save();if(shake>0){x.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);shake*=0.85;if(shake<0.5)shake=0;}x.clearRect(-15,-15,cv.width+30,cv.height+30);grid_lines();for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++)if(grid[r][c]>=0)cell(x,c,r,COLORS[grid[r][c]],S,false,grid[r][c]===POISON);if(cur)cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v&&py+r>=0)cell(x,px+c,py+r,COLORS[cur.c],S,cur.c===BOMB,cur.c===POISON,cur.c===COLORBOMB,cur.c===GHOST,specOf(cur.c));}));drawEffects(dt||0.016);x.restore();nx.clearRect(0,0,nv.width,nv.height);const m=next.m,off=(4-m[0].length)/2;m.forEach((row,r)=>row.forEach((v,c)=>{if(v)cell(nx,off+c,(4-m.length)/2+r,COLORS[next.c],24,next.c===BOMB,next.c===POISON,next.c===COLORBOMB,false,specOf(next.c));}));
     hx.clearRect(0,0,hv.width,hv.height);if(hold!==null){const hm=SHAPES[hold],ho=(4-hm[0].length)/2;hx.globalAlpha=canHold?1:0.4;hm.forEach((row,r)=>row.forEach((v,c)=>{if(v)cell(hx,ho+c,(4-hm.length)/2+r,COLORS[hold],24,hold===BOMB,hold===POISON,hold===COLORBOMB,false,specOf(hold));}));hx.globalAlpha=1;}}
   function loop(t){if(!last)last=t;const dt=(t-last)/1000;try{if(running){acc+=t-last;if(acc>dropMs){drop();acc=0;}elapsed+=dt;timeEl.textContent=formatTime(elapsed);}last=t;draw(dt);}catch(e){console.error('tetris frame error',e);last=t;}if(running||flashes.length||particles.length||shake||popups.length)raf=requestAnimationFrame(loop);}
-  function start(){if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('tetris-name',playerName);}ensureAudio();grid=emptyGrid();score=0;scoreEl.textContent=0;lines=0;level=1;levelEl.textContent=1;dropMs=speedFor(1);acc=0;last=0;elapsed=0;timeEl.textContent='0:00';flashes=[];particles=[];shake=0;hold=null;canHold=true;combo=-1;rotated=false;popups=[];overEl.style.display='none';next=rnd();spawn();running=true;startBtn.textContent='Рестарт';cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
+  function start(){if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('tetris-name',playerName);renderPlayerName();}ensureAudio();grid=emptyGrid();score=0;scoreEl.textContent=0;lines=0;level=1;levelEl.textContent=1;dropMs=speedFor(1);acc=0;last=0;elapsed=0;timeEl.textContent='0:00';flashes=[];particles=[];shake=0;hold=null;canHold=true;combo=-1;rotated=false;popups=[];overEl.style.display='none';next=rnd();spawn();running=true;startBtn.textContent='Рестарт';cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
   startBtn.addEventListener('click',start);
   const lbOverlay=document.getElementById('lbOverlay'),lbList=document.getElementById('lbList');
   document.getElementById('tboard-lb').addEventListener('click',async()=>{
