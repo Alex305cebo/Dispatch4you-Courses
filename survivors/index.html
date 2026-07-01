@@ -263,7 +263,7 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,gems,particles,rings,pickups,bolts,mines;
-  let t,spawnAcc,camShake,kills,lives,zoom,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,raf,last,keys,moveVec,joy;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
     return {x:0,y:0,r:14,hp:100,maxHp:100,speed:180,dmg:18,fireRate:550,fireAcc:0,
@@ -284,7 +284,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];gems=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];
-    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=1;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=1;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;screenFlash=0;announce=null;chestPending=false;
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
@@ -311,6 +311,14 @@
     return dmgs.reduce((a,b)=>a+b,0)/dmgs.length;
   }
 
+  function tierAvgHp(lvl){
+    const tier=ENEMY_TIERS[tierIndexForLevel(lvl)];
+    const hps=tier.map(k=>ENEMY_TYPES[k].hp);
+    return hps.reduce((a,b)=>a+b,0)/hps.length;
+  }
+
+  const BOSS_STAGES=10;
+
   function xpForPower(hp,dmg){return Math.max(1,Math.round(Math.sqrt(hp*dmg)/6));}
 
   function spawnEnemy(elite,bossNumber){
@@ -319,15 +327,15 @@
     const type=elite?null:pickType();
     const base=elite?BOSS_BASE:ENEMY_TYPES[type];
     const bn=bossNumber||1;
-    const m=elite?(3+bn*1.8):1;
     const skin=elite?BOSS_SKINS[(bn-1)%BOSS_SKINS.length]:null;
-    const finalHp=base.hp*d.hpMul*m;
+    const finalHp=elite?tierAvgHp(player.level)*(20+bn*4)*d.hpMul:base.hp*d.hpMul;
     const finalDmg=elite?tierAvgDmg(player.level)*7:base.dmg;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       hp:finalHp,maxHp:finalHp,speed:base.speed*d.spdMul*(elite?0.7:1),
       dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1),
       color:elite?skin.color:base.color,glow:elite?skin.glow:null,skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
       xp:xpForPower(finalHp,finalDmg),elite:!!elite,bossNumber:bn,shootCd:elite?rand(0.8,1.6):0,
+      stageCount:elite?BOSS_STAGES:0,stage:elite?BOSS_STAGES:0,
       ranged:!elite&&!!base.ranged,rangedCd:!elite&&base.ranged?rand(1,2):0};
     enemies.push(en);
     return en;
@@ -672,13 +680,14 @@
   function spawnSuperboss(atLevel){
     const superNumber=(atLevel-1)/25;
     const d=difficulty();
-    const hp=(600+superNumber*400)*d.hpMul;
+    const hp=tierAvgHp(atLevel)*(40+superNumber*8)*d.hpMul;
     const dmg=tierAvgDmg(atLevel)*14;
     const ang=rand(0,Math.PI*2),rad=Math.max(W,H)/2+80;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       hp,maxHp:hp,speed:55*d.spdMul*0.65,dmg,r:40+superNumber*6,
       color:'#ff2d55',glow:'#ff2d55',skinShape:'super',skinName:'Апокалипсис',
       xp:xpForPower(hp,dmg)*2,elite:true,superboss:true,superNumber,bossNumber:6,
+      stageCount:BOSS_STAGES,stage:BOSS_STAGES,
       shootCd:rand(0.5,1),summonCd:10,phase66:false,phase33:false};
     enemies.push(en);
     announce={text:'⚠ СУПЕРБОСС: '+en.skinName+' ⚠',life:3.5,color:'#ff2d55'};
@@ -709,6 +718,20 @@
     camShake=Math.max(camShake,16);screenFlash=Math.max(screenFlash,0.5);
     beep(60,0.4,'sawtooth',0.2);
     announce={text:'СУПЕРБОСС В ЯРОСТИ!',life:1.6,color:'#ff2d55'};
+  }
+
+  function checkBossStage(e){
+    if(!e.stageCount)return;
+    const segHp=e.maxHp/e.stageCount;
+    const curStage=Math.max(1,Math.ceil(e.hp/segHp));
+    if(curStage<e.stage){
+      e.stage=curStage;
+      burst(e.x,e.y,e.color,20);
+      camShake=Math.max(camShake,12);
+      e.speed*=1.03;e.dmg*=1.04;
+      announce={text:(e.skinName||'Босс')+': стадия '+e.stage+'/'+e.stageCount+'!',life:1.4,color:e.color};
+      beep(260+e.stage*18,0.15,'square',0.1);
+    }
   }
 
   function updateSuperboss(e,dt){
@@ -782,9 +805,11 @@
     if(player.invuln>0)player.invuln-=dt;
     if(player.regen>0)player.hp=Math.min(player.maxHp,player.hp+player.regen*dt);
 
-    // camera zoom: pull back when the field gets crowded
-    const targetZoom=Math.max(0.55,Math.min(1,1-Math.max(0,enemies.length-25)/200));
-    zoom+=(targetZoom-zoom)*Math.min(1,dt*2);
+    // camera zoom: pull back when the field gets crowded — smoothed so bursts of
+    // spawns/deaths (mines, nova bursts) don't yank the view around every frame
+    enemyCountSmoothed+=(enemies.length-enemyCountSmoothed)*Math.min(1,dt*0.3);
+    const targetZoom=Math.max(0.55,Math.min(1,1-Math.max(0,enemyCountSmoothed-25)/200));
+    zoom+=(targetZoom-zoom)*Math.min(1,dt*0.6);
 
     // spawn
     const d=difficulty();
@@ -818,6 +843,7 @@
       if(e.elite){
         e.shootCd-=dt;
         if(e.shootCd<=0){bossShoot(e);e.shootCd=Math.max(1,2.6-e.bossNumber*0.15);}
+        checkBossStage(e);
         if(e.superboss)updateSuperboss(e,dt);
       }else if(e.ranged){
         e.rangedCd-=dt;
@@ -1063,7 +1089,24 @@
     enemies.forEach(e=>{
       if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
-      if(e.hp<e.maxHp){x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2,3);x.fillStyle='#4ade80';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2*Math.max(0,e.hp/e.maxHp),3);}
+      if(e.hp<e.maxHp){
+        if(e.elite&&e.stageCount){
+          const segs=e.stageCount,barW=Math.min(150,e.r*2.6),barH=5,gap=1;
+          const segW=(barW-gap*(segs-1))/segs;
+          const segHp=e.maxHp/segs;
+          const bx0=e.x-barW/2,by0=e.y-e.r-14;
+          for(let i=0;i<segs;i++){
+            const segStart=i*segHp;
+            const frac=Math.max(0,Math.min(1,(e.hp-segStart)/segHp));
+            const sxp=bx0+i*(segW+gap);
+            x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(sxp,by0,segW,barH);
+            x.fillStyle=e.color;x.fillRect(sxp,by0,segW*frac,barH);
+          }
+        }else{
+          x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2,3);
+          x.fillStyle='#4ade80';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2*Math.max(0,e.hp/e.maxHp),3);
+        }
+      }
     });
     // projectiles
     projectiles.forEach(p=>{
@@ -1146,6 +1189,7 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+
 
 
 
