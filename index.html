@@ -113,11 +113,13 @@
   const COLORS=['#2DD4E8','#FFC94D','#B388FF','#66E39A','#FF6B6B','#4D96FF','#FFA24D','#4DD0C4','#F06BB0','#D9C24D','#7BC96F','#A177E0','#E8664D','#4A1F1F','#B4FF39','#D9D9D9','#BFE3FF'];
   const SHAPES=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[0,1,0],[1,1,1],[0,1,0]],[[1,0,1],[1,1,1]],[[1,1,1]],[[1,0],[1,1]],[[1,0],[0,1]],[[1]],[[1]],[[1,1],[1,1]],[[1]],[[1,1,1]]];
   const BOMB=13,POISON=14,COLORBOMB=15,COLORBOMB_CHANCE=0.03,GHOST=16,GHOST_CHANCE=0.04;
+  const NORMAL_POOL=SHAPES.map((_,i)=>i).filter(i=>i!==BOMB&&i!==POISON&&i!==COLORBOMB&&i!==GHOST);
+  function randShapeIdx(){return NORMAL_POOL[Math.floor(Math.random()*NORMAL_POOL.length)];}
   let grid,cur,next,px,py,score,dropMs,acc,last,running=false,raf;
   let flashes=[],particles=[],shake=0,hold=null,canHold=true,combo=-1,rotated=false,popups=[],lines=0,level=1;
   const T=2;
   function emptyGrid(){return Array.from({length:ROWS},()=>Array(COLS).fill(-1));}
-  function rnd(){if(Math.random()<COLORBOMB_CHANCE)return{m:SHAPES[COLORBOMB].map(r=>r.slice()),c:COLORBOMB};if(Math.random()<GHOST_CHANCE)return{m:SHAPES[GHOST].map(r=>r.slice()),c:GHOST};const i=Math.floor(Math.random()*(SHAPES.length-2));return{m:SHAPES[i].map(r=>r.slice()),c:i};}
+  function rnd(){if(Math.random()<COLORBOMB_CHANCE)return{m:SHAPES[COLORBOMB].map(r=>r.slice()),c:COLORBOMB};if(Math.random()<GHOST_CHANCE)return{m:SHAPES[randShapeIdx()].map(r=>r.slice()),c:GHOST};const i=Math.floor(Math.random()*(SHAPES.length-2));return{m:SHAPES[i].map(r=>r.slice()),c:i};}
   function rotate(m){return m[0].map((_,c)=>m.map(r=>r[c]).reverse());}
   function collide(m,ox,oy){const ghostMode=cur&&cur.c===GHOST;for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++){if(!m[r][c])continue;const a=ox+c,b=oy+r;if(a<0||a>=COLS||b>=ROWS)return true;if(!ghostMode&&b>=0&&grid[b][a]>=0)return true;}return false;}
   function merge(){cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v){const yy=py+r;if(yy>=0)grid[yy][px+c]=cur.c;}}));}
@@ -134,7 +136,7 @@
   function lock(){if(cur.c===BOMB){explode(px,py);combo=-1;spawn();canHold=true;return;}if(cur.c===COLORBOMB){colorExplode();combo=-1;spawn();canHold=true;return;}if(cur.c===GHOST){siftMerge();const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;spawn();canHold=true;return;}const tspin=isTSpin();merge();beep(110,0.06,'sine',0.1);const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;if(tspin){addScore(n>0?400*n:100);popup(n>0?'T-SPIN x'+n:'T-SPIN','#F06BB0');beep(550,0.15,'sawtooth',0.12);}spawn();canHold=true;}
   function drop(){if(!collide(cur.m,px,py+1))py++;else lock();}
   function hardDrop(){while(!collide(cur.m,px,py+1))py++;lock();}
-  function poisonMorph(){const pool=SHAPES.map((_,i)=>i).filter(i=>i!==BOMB&&i!==POISON&&i!==COLORBOMB&&i!==GHOST);const i=pool[Math.floor(Math.random()*pool.length)];return SHAPES[i].map(r=>r.slice());}
+  function poisonMorph(){return SHAPES[randShapeIdx()].map(r=>r.slice());}
   function rotateCur(){const r=cur.c===POISON?poisonMorph():rotate(cur.m);if(!collide(r,px,py)){cur.m=r;rotated=true;}else if(!collide(r,px-1,py)){px--;cur.m=r;rotated=true;}else if(!collide(r,px+1,py)){px++;cur.m=r;rotated=true;}else return;beep(cur.c===POISON?200:330,cur.c===POISON?0.1:0.05,cur.c===POISON?'sawtooth':'square',0.07);}
   function moveLeft(){if(!collide(cur.m,px-1,py)){px--;rotated=false;beep(200,0.04,'square',0.05);}}
   function moveRight(){if(!collide(cur.m,px+1,py)){px++;rotated=false;beep(200,0.04,'square',0.05);}}
