@@ -70,7 +70,7 @@
     <canvas id="sboard" width="640" height="480"></canvas>
     <div id="ostart" class="overlay show">
       <h2>Выжившие</h2>
-      <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба), выбирай улучшения, продержись как можно дольше.</p>
+      <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
       <button class="ostart" id="btnStart">Начать</button>
     </div>
     <div id="olevel" class="overlay">
@@ -103,6 +103,7 @@
     <div class="box"><div class="label">Время</div><div id="stime">00:00</div></div>
     <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
     <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
+    <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
     <div class="box full"><div class="label">HP</div><div class="bar" id="hpbar"><div></div></div></div>
     <div class="box full"><div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div></div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
@@ -119,7 +120,7 @@
     W=Math.round(rw*scale);H=Math.round(rh*scale);
     cv.width=W;cv.height=H;
   }
-  const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest');
+  const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest'),livesEl=document.getElementById('slives');
   const hpFill=document.querySelector('#hpbar>div'),xpFill=document.querySelector('#xpbar>div');
   const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
   const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
@@ -185,20 +186,26 @@
     {id:'speed',name:'Скорость +12%',desc:'Быстрее передвижение',apply:p=>p.speed=Math.round(p.speed*1.12)},
     {id:'hp',name:'Макс. HP +20',desc:'Больше живучести, лечит 30',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+30);}},
     {id:'multi',name:'+1 одновременный удар',desc:'Всё оружие бьёт на 1 раз больше за залп',cond:p=>p.projCount<6,apply:p=>p.projCount++},
-    {id:'pierce',name:'Пробитие +1',desc:'Пуля пробивает больше врагов, молния — больше прыжков, мины — шире взрыв',cond:p=>p.pierce<6,apply:p=>p.pierce++},
+    {id:'pierce',name:'Пробитие +1',desc:'Пуля пробивает врагов, молния — больше прыжков, мины — шире взрыв',cond:p=>p.pierce<6,apply:p=>p.pierce++},
     {id:'pickup',name:'Радиус подбора +30%',desc:'Собирает опыт издалека',apply:p=>p.pickupRadius=Math.round(p.pickupRadius*1.3)},
     {id:'regen',name:'Регенерация +1/с',desc:'Восстанавливает HP со временем',apply:p=>p.regen+=1},
     {id:'aura',name:'Аура урона',desc:'Дамажит врагов рядом каждую секунду',apply:p=>{p.auraLevel=(p.auraLevel||0)+1;p.auraDmg=p.auraLevel*8;p.auraRadius=60+p.auraLevel*10;}},
     {id:'projspeed',name:'Скорость снарядов +20%',desc:'Снаряды летят быстрее, клинки крутятся быстрее',apply:p=>{p.projSpeed=Math.round(p.projSpeed*1.2);p.projSpeedMult*=1.2;}},
+    {id:'crit',name:'Шанс крита +12%',desc:'Любая атака ВСЕГО оружия может крит нуть вдвое сильнее',cond:p=>p.critChance<0.72,apply:p=>p.critChance+=0.12},
+    {id:'aoe',name:'Радиус поражения +15%',desc:'Клинки, мины, аура и пули достают дальше',apply:p=>p.aoeMult*=1.15},
+    {id:'lifesteal',name:'Похищение жизни',desc:'Немного лечит HP за каждое убийство любым оружием',cond:p=>p.lifesteal<0.08,apply:p=>p.lifesteal+=0.015},
+    {id:'berserk',name:'Аура ярости',desc:'Периодически на пару секунд резко усиливает урон ВСЕГО оружия',cond:p=>p.berserkLevel<5,apply:p=>p.berserkLevel++},
+    {id:'haste',name:'Аура скорости',desc:'Периодически на пару секунд разгоняет передвижение и снаряды',cond:p=>p.hasteLevel<5,apply:p=>p.hasteLevel++},
+    {id:'shield',name:'Аура щита',desc:'Периодически даёт короткую неуязвимость',cond:p=>p.shieldLevel<5,apply:p=>p.shieldLevel++},
     {id:'blades_up',name:'Клинки: уровень +1',desc:'Ещё клинок и больше урона',cond:p=>p.bladeLevel>0&&p.bladeLevel<5,apply:p=>p.bladeLevel++},
     {id:'chain_up',name:'Молния: уровень +1',desc:'Больше урона и прыжков',cond:p=>p.chainLevel>0&&p.chainLevel<5,apply:p=>p.chainLevel++},
     {id:'mines_up',name:'Мины: уровень +1',desc:'Мощнее взрыв, ставятся чаще',cond:p=>p.mineLevel>0&&p.mineLevel<5,apply:p=>p.mineLevel++},
   ];
 
   const WEAPON_UNLOCKS=[
-    {kills:10,id:'blade',name:'Клинки',desc:'Вращающиеся клинки режут всех, кто рядом.',apply:p=>p.bladeLevel=1},
-    {kills:30,id:'chain',name:'Цепная молния',desc:'Бьёт ближайшего врага и прыгает по соседним.',apply:p=>p.chainLevel=1},
-    {kills:60,id:'mine',name:'Мины',desc:'Оставляет за тобой мины, взрывающиеся по площади.',apply:p=>p.mineLevel=1},
+    {id:'blade',name:'Клинки',desc:'Вращающиеся клинки режут всех, кто рядом.',apply:p=>p.bladeLevel=1},
+    {id:'chain',name:'Цепная молния',desc:'Бьёт ближайшего врага и прыгает по соседним.',apply:p=>p.chainLevel=1},
+    {id:'mine',name:'Мины',desc:'Оставляет за тобой мины, взрывающиеся по площади.',apply:p=>p.mineLevel=1},
   ];
 
   const PICKUP_TYPES=[
@@ -216,20 +223,28 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,gems,particles,rings,pickups,bolts,mines;
-  let t,spawnAcc,camShake,kills,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,raf,last,keys,moveVec,joy;
+  let t,spawnAcc,camShake,kills,lives,zoom,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
     return {x:0,y:0,r:14,hp:100,maxHp:100,speed:180,dmg:18,fireRate:550,fireAcc:0,
-      projSpeed:420,projCount:1,pierce:1,pickupRadius:40,regen:0,
-      dmgMult:1,atkSpeedMult:1,projSpeedMult:1,
+      projSpeed:420,projCount:1,pierce:0,pickupRadius:40,regen:0,
+      dmgMult:1,atkSpeedMult:1,projSpeedMult:1,critChance:0,critMult:2,aoeMult:1,lifesteal:0,
       auraLevel:0,auraDmg:0,auraRadius:0,auraAcc:0,
       bladeLevel:0,bladeAngle:0,chainLevel:0,chainAcc:0,mineLevel:0,mineAcc:0,
+      berserkLevel:0,berserkCd:0,berserkActive:0,
+      hasteLevel:0,hasteCd:0,hasteActive:0,
+      shieldLevel:0,shieldCd:0,shieldActive:0,
       level:1,xp:0,xpNeed:8,invuln:0,facing:{x:1,y:0}};
+  }
+
+  function rollDmg(base){
+    if(player.berserkActive>0)base*=1.4+player.berserkLevel*0.05;
+    return Math.random()<player.critChance?base*player.critMult:base;
   }
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];gems=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];
-    t=0;spawnAcc=0;camShake=0;kills=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=1;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;screenFlash=0;announce=null;chestPending=false;
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
@@ -303,6 +318,7 @@
     kills++;burst(e.x,e.y,e.color,8);
     gems.push({x:e.x,y:e.y,value:e.xp,r:e.elite?9:5});
     beep(e.elite?160:300,0.12,'triangle',0.08);
+    if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(e.elite){
       pickups.push({x:e.x+rand(-16,16),y:e.y+rand(-16,16),r:11,type:'chest',color:'#facc15',label:'★'});
       if(e.superboss){
@@ -318,14 +334,6 @@
         const extra=others[Math.floor(Math.random()*others.length)];
         pickups.push({x:e.x+rand(-16,16),y:e.y+rand(-16,16),r:11,type:extra.id,color:extra.color,label:extra.label});
       }
-    }
-    checkWeaponUnlocks();
-  }
-
-  function checkWeaponUnlocks(){
-    if(state!=='running')return;
-    for(const w of WEAPON_UNLOCKS){
-      if(!w.done&&kills>=w.kills){w.done=true;w.apply(player);showWeaponPopup(w);return;}
     }
   }
 
@@ -385,10 +393,11 @@
     player.fireAcc=0;
     const ang=Math.atan2(target.y-player.y,target.x-player.x);
     const n=player.projCount,spread=0.16;
+    const sp=player.projSpeed*(player.hasteActive>0?1.3:1);
     for(let i=0;i<n;i++){
       const a=ang+spread*(i-(n-1)/2);
-      projectiles.push({x:player.x,y:player.y,vx:Math.cos(a)*player.projSpeed,vy:Math.sin(a)*player.projSpeed,
-        dmg:player.dmg,pierceLeft:player.pierce,r:5,life:1.2,hitSet:new Set()});
+      projectiles.push({x:player.x,y:player.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+        dmg:rollDmg(player.dmg),pierceLeft:player.pierce,r:5*player.aoeMult,life:1.2,hitSet:new Set()});
     }
     beep(660,0.03,'square',0.03);
   }
@@ -398,18 +407,19 @@
     player.auraAcc+=dt*player.atkSpeedMult;
     if(player.auraAcc<1)return;
     player.auraAcc=0;
-    const dmg=player.auraDmg*player.dmgMult;
-    rings.push({x:player.x,y:player.y,r:0,maxR:player.auraRadius,life:1});
-    for(const e of enemies){if(dist(player,e)<player.auraRadius){e.hp-=dmg;}}
+    const dmg=rollDmg(player.auraDmg*player.dmgMult);
+    const R=player.auraRadius*player.aoeMult;
+    rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1});
+    for(const e of enemies){if(dist(player,e)<R){e.hp-=dmg;}}
   }
 
   function updateBlades(dt){
     if(!player.bladeLevel)return;
     player.bladeAngle+=dt*3*player.projSpeedMult;
     const perRing=player.bladeLevel,ringCount=Math.min(3,player.projCount);
-    const dmg=(8+player.bladeLevel*5)*player.dmgMult;
+    const dmg=rollDmg((8+player.bladeLevel*5)*player.dmgMult);
     const hitCd=0.3/player.atkSpeedMult;
-    const reach=8+player.bladeLevel*2;
+    const reach=(8+player.bladeLevel*2)*player.aoeMult;
     for(let ring=0;ring<ringCount;ring++){
       const R=50+player.bladeLevel*6+ring*22,dir=ring%2===0?1:-1;
       for(let i=0;i<perRing;i++){
@@ -429,8 +439,8 @@
     const interval=Math.max(400,1200-player.chainLevel*120);
     if(player.chainAcc<interval)return;
     player.chainAcc=0;
-    const dmg=(14+player.chainLevel*6)*player.dmgMult;
-    const jumps=1+player.chainLevel+(player.pierce-1);
+    const dmg=rollDmg((14+player.chainLevel*6)*player.dmgMult);
+    const jumps=1+player.chainLevel+player.pierce;
     const width=2+player.chainLevel*0.5;
     for(let volley=0;volley<player.projCount;volley++){
       let target=nearestEnemy(450);
@@ -455,16 +465,58 @@
     const interval=Math.max(2.5,6-player.mineLevel*0.6);
     if(player.mineAcc<interval)return;
     player.mineAcc=0;
-    const dmg=(20+player.mineLevel*14)*player.dmgMult;
-    const blastR=(60+player.mineLevel*8)*(1+(player.pierce-1)*0.15);
+    const dmg=rollDmg((20+player.mineLevel*14)*player.dmgMult);
+    const blastR=(60+player.mineLevel*8)*(1+player.pierce*0.15)*player.aoeMult;
     for(let i=0;i<player.projCount;i++){
       mines.push({x:player.x+rand(-14,14),y:player.y+rand(-14,14),r:10+player.mineLevel*2,armed:false,armT:0.5,life:8,
         dmg,blastR});
     }
   }
 
+  function updateTimedAuras(dt){
+    if(player.berserkLevel){
+      if(player.berserkActive>0)player.berserkActive-=dt;
+      else{
+        player.berserkCd-=dt;
+        if(player.berserkCd<=0){
+          player.berserkActive=2.5+player.berserkLevel*0.3;
+          player.berserkCd=Math.max(8,16-player.berserkLevel*1.5);
+          announce={text:'⚡ АУРА ЯРОСТИ!',life:1.2,color:'#f97316'};
+          beep(200,0.15,'sawtooth',0.12);
+        }
+      }
+    }
+    if(player.hasteLevel){
+      if(player.hasteActive>0)player.hasteActive-=dt;
+      else{
+        player.hasteCd-=dt;
+        if(player.hasteCd<=0){
+          player.hasteActive=2.5+player.hasteLevel*0.3;
+          player.hasteCd=Math.max(7,14-player.hasteLevel*1.3);
+          announce={text:'💨 АУРА СКОРОСТИ!',life:1.2,color:'#4ade80'};
+          beep(500,0.12,'sine',0.1);
+        }
+      }
+    }
+    if(player.shieldLevel){
+      if(player.shieldActive>0)player.shieldActive-=dt;
+      else{
+        player.shieldCd-=dt;
+        if(player.shieldCd<=0){
+          player.shieldActive=1+player.shieldLevel*0.2;
+          player.shieldCd=Math.max(12,20-player.shieldLevel*1.5);
+          announce={text:'🛡 АУРА ЩИТА!',life:1.2,color:'#38bdf8'};
+          beep(700,0.15,'sine',0.1);
+        }
+      }
+      if(player.shieldActive>0)player.invuln=Math.max(player.invuln,0.1);
+    }
+  }
+
   function spawnPickup(){
-    const type=PICKUP_TYPES[Math.floor(Math.random()*PICKUP_TYPES.length)];
+    const hasWeapon=WEAPON_UNLOCKS.some(w=>!w.done);
+    const pool=hasWeapon?[...PICKUP_TYPES,{id:'weapon',color:'#eab308',label:'⚔'}]:PICKUP_TYPES;
+    const type=pool[Math.floor(Math.random()*pool.length)];
     const ang=rand(0,Math.PI*2),rad=rand(160,260);
     pickups.push({x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,r:11,type:type.id,color:type.color,label:type.label});
   }
@@ -485,6 +537,10 @@
       beep(1000,0.15,'sine',0.08);
     }
     else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,12);beep(70,0.35,'sawtooth',0.2);}
+    else if(pk.type==='weapon'){
+      const w=WEAPON_UNLOCKS.find(w=>!w.done);
+      if(w){w.done=true;w.apply(player);showWeaponPopup(w);}
+    }
   }
 
   function grantXp(v){
@@ -622,19 +678,35 @@
     timeEl.textContent=fmtTime(t);
     levelEl.textContent=player.level;
     killsEl.textContent=kills;
+    livesEl.textContent='❤'.repeat(Math.max(0,lives));
     hpFill.style.width=Math.max(0,player.hp/player.maxHp*100)+'%';
     xpFill.style.width=Math.min(100,player.xp/player.xpNeed*100)+'%';
   }
 
   function hurtPlayer(dmg,fx,fy,force){
     if(player.invuln>0)return;
-    player.hp-=dmg;player.invuln=0.5;camShake=8;
+    const mitig=player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1;
+    player.hp-=dmg*mitig;camShake=8;
     if(force){
       const a=Math.atan2(player.y-fy,player.x-fx);
       player.x+=Math.cos(a)*force;player.y+=Math.sin(a)*force;
     }
     beep(120,0.15,'sawtooth',0.12);
-    if(player.hp<=0)gameOver();
+    if(player.hp<=0){
+      if(lives>1){
+        lives--;
+        player.hp=Math.round(player.maxHp*0.5);
+        player.invuln=2;
+        announce={text:'💔 Жизнь потеряна! Осталось: '+lives,life:2.5,color:'#ff2d55'};
+        camShake=Math.max(camShake,16);screenFlash=Math.max(screenFlash,0.5);
+        beep(150,0.3,'sawtooth',0.15);
+      }else{
+        gameOver();
+      }
+    }else{
+      player.invuln=0.5;
+    }
+    updateHud();
   }
 
   function gameOver(){
@@ -653,9 +725,14 @@
     if(keys.up||keys.w)my-=1;if(keys.down||keys.s)my+=1;
     if(joy.active){mx=joy.dx;my=joy.dy;}
     const len=Math.hypot(mx,my);
-    if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*dt;player.y+=my*player.speed*dt;player.facing={x:mx,y:my};}
+    const hasteMul=player.hasteActive>0?1.4+player.hasteLevel*0.05:1;
+    if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*dt;player.y+=my*player.speed*hasteMul*dt;player.facing={x:mx,y:my};}
     if(player.invuln>0)player.invuln-=dt;
     if(player.regen>0)player.hp=Math.min(player.maxHp,player.hp+player.regen*dt);
+
+    // camera zoom: pull back when the field gets crowded
+    const targetZoom=Math.max(0.55,Math.min(1,1-Math.max(0,enemies.length-25)/200));
+    zoom+=(targetZoom-zoom)*Math.min(1,dt*2);
 
     // spawn
     const d=difficulty();
@@ -672,6 +749,7 @@
     updateBlades(dt);
     updateChain(dt);
     updateMines(dt);
+    updateTimedAuras(dt);
 
     // enemies
     for(const e of enemies){
@@ -850,36 +928,46 @@
       x.strokeStyle=pk.color;x.lineWidth=1.5;x.beginPath();x.arc(0,3,9,0,Math.PI*2);x.stroke();
       x.strokeStyle='#fbbf24';x.lineWidth=2;x.beginPath();x.moveTo(3,-5);x.quadraticCurveTo(7,-13,10,-9);x.stroke();
       x.fillStyle='#fbbf24';x.beginPath();x.arc(10,-9,2,0,Math.PI*2);x.fill();
+    }else if(pk.type==='weapon'){
+      x.rotate(-Math.PI/4);
+      x.fillRect(-1.5,-10,3,15);
+      x.fillRect(-6,4,12,2.5);
+      x.fillRect(-1.5,6.5,3,5);
     }
     x.restore();
   }
 
-  function drawGrid(camX,camY){
-    x.strokeStyle='rgba(255,255,255,0.04)';x.lineWidth=1;const g=40;
-    const ox=-((camX%g)+g)%g,oy=-((camY%g)+g)%g;
-    for(let gx=ox;gx<W;gx+=g){x.beginPath();x.moveTo(gx,0);x.lineTo(gx,H);x.stroke();}
-    for(let gy=oy;gy<H;gy+=g){x.beginPath();x.moveTo(0,gy);x.lineTo(W,gy);x.stroke();}
+  function drawGrid(){
+    const g=40;
+    const halfW=(W/2)/zoom,halfH=(H/2)/zoom;
+    const left=player.x-halfW,right=player.x+halfW,top=player.y-halfH,bottom=player.y+halfH;
+    x.strokeStyle='rgba(255,255,255,0.04)';x.lineWidth=1/zoom;
+    const sx0=Math.floor(left/g)*g;
+    for(let gx=sx0;gx<right;gx+=g){x.beginPath();x.moveTo(gx,top);x.lineTo(gx,bottom);x.stroke();}
+    const sy0=Math.floor(top/g)*g;
+    for(let gy=sy0;gy<bottom;gy+=g){x.beginPath();x.moveTo(left,gy);x.lineTo(right,gy);x.stroke();}
   }
 
   function draw(){
     let sx=0,sy=0;
     if(camShake>0.3){sx=rand(-camShake,camShake);sy=rand(-camShake,camShake);}
-    const camX=player.x-W/2,camY=player.y-H/2;
     x.clearRect(0,0,W,H);
-    x.save();x.translate(sx,sy);
-    drawGrid(camX,camY);
+    x.save();
+    x.translate(W/2+sx,H/2+sy);
+    x.scale(zoom,zoom);
+    x.translate(-player.x,-player.y);
+    drawGrid();
     // rings
-    rings.forEach(r=>{x.globalAlpha=r.life*0.5;x.strokeStyle='#4D96FF';x.lineWidth=3;x.beginPath();x.arc(r.x-camX,r.y-camY,r.r,0,Math.PI*2);x.stroke();});
+    rings.forEach(r=>{x.globalAlpha=r.life*0.5;x.strokeStyle='#4D96FF';x.lineWidth=3/zoom;x.beginPath();x.arc(r.x,r.y,r.r,0,Math.PI*2);x.stroke();});
     x.globalAlpha=1;
     // gems
-    gems.forEach(g=>{const gx=g.x-camX,gy=g.y-camY,sz=g.magnetized?g.r*1.3:g.r;x.save();x.translate(gx,gy);x.rotate(Math.PI/4);x.fillStyle='#4D96FF';x.shadowColor='#4D96FF';x.shadowBlur=g.magnetized?18:8;x.fillRect(-sz,-sz,sz*2,sz*2);x.restore();});
+    gems.forEach(g=>{const sz=g.magnetized?g.r*1.3:g.r;x.save();x.translate(g.x,g.y);x.rotate(Math.PI/4);x.fillStyle='#4D96FF';x.shadowColor='#4D96FF';x.shadowBlur=(g.magnetized?18:8)/zoom;x.fillRect(-sz,-sz,sz*2,sz*2);x.restore();});
     x.shadowBlur=0;
     // pickups
-    pickups.forEach(pk=>{drawPickup(pk.x-camX,pk.y-camY,pk);});
+    pickups.forEach(pk=>{drawPickup(pk.x,pk.y,pk);});
     // mines
     mines.forEach(m=>{
-      const mx=m.x-camX,my=m.y-camY;
-      x.save();x.translate(mx,my);x.globalAlpha=m.armed?(0.6+0.4*Math.sin(t*10)):0.4;
+      x.save();x.translate(m.x,m.y);x.globalAlpha=m.armed?(0.6+0.4*Math.sin(t*10)):0.4;
       x.strokeStyle='#f97316';x.lineWidth=3;
       for(let i=0;i<6;i++){
         const a=i/6*Math.PI*2;
@@ -893,19 +981,18 @@
     // bolts
     bolts.forEach(b=>{
       x.save();x.globalAlpha=Math.max(0,b.life/0.25);x.strokeStyle='#38bdf8';x.lineWidth=b.width||2;x.shadowColor='#38bdf8';x.shadowBlur=8;
-      x.beginPath();x.moveTo(b.x1-camX,b.y1-camY);x.lineTo(b.x2-camX,b.y2-camY);x.stroke();x.restore();
+      x.beginPath();x.moveTo(b.x1,b.y1);x.lineTo(b.x2,b.y2);x.stroke();x.restore();
     });
     x.globalAlpha=1;
     // enemies
     enemies.forEach(e=>{
-      const ex=e.x-camX,ey=e.y-camY;
-      if(e.elite)drawBoss(ex,ey,e);
-      else drawMob(ex,ey,e);
-      if(e.hp<e.maxHp){x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(ex-e.r,ey-e.r-8,e.r*2,3);x.fillStyle='#4ade80';x.fillRect(ex-e.r,ey-e.r-8,e.r*2*Math.max(0,e.hp/e.maxHp),3);}
+      if(e.elite)drawBoss(e.x,e.y,e);
+      else drawMob(e.x,e.y,e);
+      if(e.hp<e.maxHp){x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2,3);x.fillStyle='#4ade80';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2*Math.max(0,e.hp/e.maxHp),3);}
     });
     // projectiles
     projectiles.forEach(p=>{
-      x.save();x.translate(p.x-camX,p.y-camY);x.rotate(Math.atan2(p.vy,p.vx));
+      x.save();x.translate(p.x,p.y);x.rotate(Math.atan2(p.vy,p.vx));
       x.fillStyle='#7dd3fc';x.shadowColor='#7dd3fc';x.shadowBlur=6;
       x.beginPath();x.ellipse(0,0,p.r*1.6,p.r*0.75,0,0,Math.PI*2);x.fill();
       x.restore();
@@ -913,8 +1000,8 @@
     x.shadowBlur=0;
     // enemy projectiles
     enemyProjectiles.forEach(ep=>{
-      const epx=ep.x-camX,epy=ep.y-camY,col=ep.color||'#a855f7';
-      x.save();x.translate(epx,epy);x.fillStyle=col;x.shadowColor=col;x.shadowBlur=10;
+      const col=ep.color||'#a855f7';
+      x.save();x.translate(ep.x,ep.y);x.fillStyle=col;x.shadowColor=col;x.shadowBlur=10;
       if(ep.boss){
         const spikes=6;
         x.beginPath();
@@ -932,10 +1019,10 @@
       x.restore();
     });
     // particles
-    particles.forEach(p=>{x.globalAlpha=Math.max(0,p.life);x.fillStyle=p.color;x.fillRect(p.x-camX-p.sz/2,p.y-camY-p.sz/2,p.sz,p.sz);});
+    particles.forEach(p=>{x.globalAlpha=Math.max(0,p.life);x.fillStyle=p.color;x.fillRect(p.x-p.sz/2,p.y-p.sz/2,p.sz,p.sz);});
     x.globalAlpha=1;
     // aura
-    if(player.auraLevel){x.strokeStyle='rgba(77,150,255,0.25)';x.lineWidth=2;x.beginPath();x.arc(W/2,H/2,player.auraRadius,0,Math.PI*2);x.stroke();}
+    if(player.auraLevel){x.strokeStyle='rgba(77,150,255,0.25)';x.lineWidth=2/zoom;x.beginPath();x.arc(player.x,player.y,player.auraRadius*player.aoeMult,0,Math.PI*2);x.stroke();}
     // blades
     if(player.bladeLevel){
       const perRing=player.bladeLevel,ringCount=Math.min(3,player.projCount);
@@ -945,7 +1032,7 @@
         const R=50+player.bladeLevel*6+ring*22,dir=ring%2===0?1:-1;
         for(let i=0;i<perRing;i++){
           const a=player.bladeAngle*dir+i*(Math.PI*2/perRing)+ring*0.3;
-          x.save();x.translate(W/2+Math.cos(a)*R,H/2+Math.sin(a)*R);x.rotate(a);x.scale(sz,sz);
+          x.save();x.translate(player.x+Math.cos(a)*R,player.y+Math.sin(a)*R);x.rotate(a);x.scale(sz,sz);
           x.beginPath();x.moveTo(-8,0);x.lineTo(6,-5);x.lineTo(6,5);x.closePath();x.fill();
           x.restore();
         }
@@ -954,13 +1041,15 @@
     }
     // player
     x.globalAlpha=(player.invuln>0)?(Math.floor(t*20)%2?0.4:1):1;
-    x.fillStyle='#e8ebf2';x.shadowColor='#4D96FF';x.shadowBlur=12;
-    x.beginPath();x.arc(W/2,H/2,player.r,0,Math.PI*2);x.fill();x.shadowBlur=0;
-    x.strokeStyle='#4D96FF';x.lineWidth=2;x.beginPath();x.moveTo(W/2,H/2);x.lineTo(W/2+player.facing.x*20,H/2+player.facing.y*20);x.stroke();
+    x.fillStyle='#e8ebf2';
+    x.shadowColor=player.berserkActive>0?'#f97316':(player.shieldActive>0?'#38bdf8':(player.hasteActive>0?'#4ade80':'#4D96FF'));
+    x.shadowBlur=12;
+    x.beginPath();x.arc(player.x,player.y,player.r,0,Math.PI*2);x.fill();x.shadowBlur=0;
+    x.strokeStyle='#4D96FF';x.lineWidth=2;x.beginPath();x.moveTo(player.x,player.y);x.lineTo(player.x+player.facing.x*20,player.y+player.facing.y*20);x.stroke();
     x.globalAlpha=1;
-    // joystick
-    if(joy.active){x.strokeStyle='rgba(255,255,255,0.25)';x.lineWidth=2;x.beginPath();x.arc(joy.bx,joy.by,42,0,Math.PI*2);x.stroke();x.fillStyle='rgba(255,255,255,0.15)';x.beginPath();x.arc(joy.bx+joy.dx*42,joy.by+joy.dy*42,16,0,Math.PI*2);x.fill();}
     x.restore();
+    // joystick (screen-space, drawn outside the world transform)
+    if(joy.active){x.strokeStyle='rgba(255,255,255,0.25)';x.lineWidth=2;x.beginPath();x.arc(joy.bx,joy.by,42,0,Math.PI*2);x.stroke();x.fillStyle='rgba(255,255,255,0.15)';x.beginPath();x.arc(joy.bx+joy.dx*42,joy.by+joy.dy*42,16,0,Math.PI*2);x.fill();}
     if(announce){const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));x.font='bold 26px system-ui,sans-serif';x.textAlign='center';x.fillStyle=ac;x.shadowColor=ac;x.shadowBlur=12;x.fillText(announce.text,W/2,46);x.restore();}
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
   }
@@ -981,6 +1070,7 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+
   document.getElementById('btnSuperWarnOk').addEventListener('click',()=>{
     osuperwarn.classList.remove('show');
     beep(523,0.1,'sine',0.12);
