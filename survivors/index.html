@@ -25,6 +25,7 @@
   .bar{height:8px;border-radius:4px;background:var(--panel2);overflow:hidden;margin-top:3px;}
   .bar>div{height:100%;width:0%;transition:width .15s;}
   #hpbar>div{background:linear-gradient(90deg,#ef4444,#f97316);}
+  #xpbar>div{background:linear-gradient(90deg,#4D96FF,#B388FF);}
   .bars .label:not(:first-child){margin-top:6px;}
   .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px 8px;margin-top:2px;}
   .statgrid div{display:flex;flex-direction:column;font-size:11px;}
@@ -118,6 +119,7 @@
     <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
     <div class="box full bars">
       <div class="label">HP <span id="shpnum" style="color:var(--text);font-weight:600;">100/100</span></div><div class="bar" id="hpbar"><div></div></div>
+      <div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div>
     </div>
     <div class="box full">
       <div class="label">Характеристики</div>
@@ -151,7 +153,7 @@
   const baseZoom=isMobileDevice?0.62:1;
   const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest'),livesEl=document.getElementById('slives');
   const stDmgEl=document.getElementById('stdmg'),stRateEl=document.getElementById('strate'),stSpeedEl=document.getElementById('stspeed'),stCritEl=document.getElementById('stcrit'),stPierceEl=document.getElementById('stpierce'),stAoeEl=document.getElementById('staoe');
-  const hpFill=document.querySelector('#hpbar>div'),hpNumEl=document.getElementById('shpnum');
+  const hpFill=document.querySelector('#hpbar>div'),hpNumEl=document.getElementById('shpnum'),xpFill=document.querySelector('#xpbar>div');
   const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
   const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
   const levelTitle=document.getElementById('levelTitle'),levelSub=document.getElementById('levelSub');
@@ -238,7 +240,7 @@
     {id:'hp',name:'Макс. HP +20',desc:'Больше живучести, лечит 30',rarity:'common',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+30);}},
     {id:'multi',name:'+1 одновременный удар',desc:'Всё оружие бьёт на 1 раз больше за залп',rarity:'mid',cond:p=>p.projCount<6,apply:p=>p.projCount++},
     {id:'pierce',name:'Пробитие +1',desc:'Пуля пробивает врагов, молния — больше прыжков, мины — шире взрыв',rarity:'common',cond:p=>p.pierce<6,apply:p=>p.pierce++},
-    {id:'pickup',name:'Радиус подбора +30%',desc:'Подбирает предметы на земле издалека',rarity:'common',apply:p=>p.pickupRadius=Math.round(p.pickupRadius*1.3)},
+    {id:'pickup',name:'Радиус подбора +30%',desc:'Собирает опыт и предметы издалека',rarity:'common',apply:p=>p.pickupRadius=Math.round(p.pickupRadius*1.3)},
     {id:'regen',name:'Регенерация +1/с',desc:'Восстанавливает HP со временем',rarity:'common',apply:p=>p.regen+=1},
     {id:'aura',name:'Аура урона',desc:'Дамажит врагов рядом каждую секунду',rarity:'rare',apply:p=>{p.auraLevel=(p.auraLevel||0)+1;p.auraDmg=p.auraLevel*8;p.auraRadius=60+p.auraLevel*10;}},
     {id:'projspeed',name:'Скорость снарядов +20%',desc:'Снаряды летят быстрее, клинки крутятся быстрее',rarity:'common',apply:p=>{p.projSpeed=Math.round(p.projSpeed*1.2);p.projSpeedMult*=1.2;}},
@@ -276,7 +278,7 @@
     {name:'Многоглазый',color:'#84cc16',glow:'#bef264',shape:'eyes'},
   ];
 
-  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines;
+  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems;
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
@@ -288,8 +290,10 @@
       berserkLevel:0,berserkCd:0,berserkActive:0,
       hasteLevel:0,hasteCd:0,hasteActive:0,
       shieldLevel:0,shieldCd:0,shieldActive:0,
-      level:1,invuln:0,facing:{x:1,y:0}};
+      level:1,xp:0,xpNeed:xpNeedFor(1),invuln:0,facing:{x:1,y:0}};
   }
+
+  function xpNeedFor(lvl){return Math.round(18*Math.pow(1.15,lvl-1));}
 
   function rollDmg(base){
     if(player.berserkActive>0)base*=1.4+player.berserkLevel*0.05;
@@ -297,7 +301,7 @@
   }
 
   function reset(){
-    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];
+    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];
     t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
@@ -382,6 +386,7 @@
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
     points+=Math.max(1,Math.ceil(e.xp/6));
+    gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))});
     beep(e.elite?160:300,0.12,'triangle',0.08);
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(e.pauseSpawns){mobSpawnPaused=false;announce={text:'Босс уровня 8 повержен!',life:2.4,color:'#f97316'};}
@@ -599,6 +604,8 @@
     else if(pk.type==='magnet'){
       const R=3*Math.max(W,H);
       points+=25+player.level*2;
+      gems.forEach(g=>grantXp(g.val));
+      gems=[];
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
       updateHud();
       beep(1000,0.15,'sine',0.08);
@@ -608,6 +615,17 @@
       const w=WEAPON_UNLOCKS.find(w=>!w.done);
       if(w){w.done=true;w.apply(player);showWeaponPopup(w);}
     }
+  }
+
+  function grantXp(v){
+    player.xp+=v;
+    while(player.xp>=player.xpNeed){
+      player.xp-=player.xpNeed;
+      levelUpOnce();
+      player.xpNeed=xpNeedFor(player.level);
+    }
+    if(pendingLevelUps>0&&state==='running')showLevelUp();
+    updateHud();
   }
 
   function levelUpOnce(){
@@ -831,6 +849,7 @@
     livesEl.textContent='❤'.repeat(Math.max(0,lives));
     hpNumEl.textContent=Math.max(0,Math.round(player.hp))+'/'+Math.round(player.maxHp);
     hpFill.style.width=Math.max(0,player.hp/player.maxHp*100)+'%';
+    xpFill.style.width=Math.max(0,Math.min(100,player.xp/player.xpNeed*100))+'%';
     stDmgEl.textContent=Math.round(player.dmg);
     stRateEl.textContent=(1000/player.fireRate).toFixed(1);
     stSpeedEl.textContent=Math.round(player.speed);
@@ -923,9 +942,13 @@
 
     // enemies
     for(const e of enemies){
-      const a=Math.atan2(player.y-e.y,player.x-e.x);
-      e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;
-      if(dist(player,e)<player.r+e.r)hurtPlayer(e.dmg*dt*6,e.x,e.y,e.elite?18:0,e.elite);
+      const d=dist(player,e);
+      const stopAt=player.r+e.r-2;
+      if(d>stopAt){
+        const a=Math.atan2(player.y-e.y,player.x-e.x);
+        e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;
+      }
+      if(d<player.r+e.r)hurtPlayer(e.dmg*dt*6,e.x,e.y,e.elite?18:0,e.elite);
       if(e._bladeCd>0)e._bladeCd-=dt;
       if(e.elite){
         e.shootCd-=dt;
@@ -935,6 +958,22 @@
       }else if(e.ranged){
         e.rangedCd-=dt;
         if(e.rangedCd<=0){mobShoot(e);e.rangedCd=rand(1.6,2.4);}
+      }
+    }
+    // push overlapping enemies apart so a swarm doesn't collapse into one blob on the player
+    // ponytail: O(n^2), fine up to the 240-enemy cap; switch to a grid if that cap ever grows
+    for(let i=0;i<enemies.length;i++){
+      const e1=enemies[i];
+      for(let j=i+1;j<enemies.length;j++){
+        const e2=enemies[j];
+        const minD=e1.r+e2.r;
+        const dx=e2.x-e1.x,dy=e2.y-e1.y;
+        const d2=dx*dx+dy*dy;
+        if(d2<minD*minD&&d2>0.0001){
+          const d2d=Math.sqrt(d2),push=(minD-d2d)/2,nx=dx/d2d,ny=dy/d2d;
+          e1.x-=nx*push;e1.y-=ny*push;
+          e2.x+=nx*push;e2.y+=ny*push;
+        }
       }
     }
     enemies=enemies.filter(e=>{
@@ -971,6 +1010,18 @@
       if(dist(player,pk)<player.r+pk.r+player.pickupRadius*0.4){collectPickup(pk);pk.dead=true;}
     }
     pickups=pickups.filter(p=>!p.dead);
+
+    // gems (xp)
+    const gemMagnetR=player.pickupRadius*2.2;
+    for(const g of gems){
+      const d=dist(player,g);
+      if(d<gemMagnetR){
+        const a=Math.atan2(player.y-g.y,player.x-g.x);
+        g.x+=Math.cos(a)*(280+gemMagnetR)*dt;g.y+=Math.sin(a)*(280+gemMagnetR)*dt;
+      }
+      if(dist(player,g)<player.r+g.r){grantXp(g.val);g.dead=true;}
+    }
+    gems=gems.filter(g=>!g.dead);
 
     // projectiles
     for(const p of projectiles){
@@ -1137,6 +1188,13 @@
     x.globalAlpha=1;
     // pickups
     pickups.forEach(pk=>{drawPickup(pk.x,pk.y,pk);});
+    // gems
+    gems.forEach(g=>{
+      x.save();x.translate(g.x,g.y);x.rotate(Math.PI/4);
+      x.fillStyle='#4D96FF';x.shadowColor='#4D96FF';x.shadowBlur=6;
+      x.fillRect(-g.r,-g.r,g.r*2,g.r*2);
+      x.restore();
+    });
     // mines
     mines.forEach(m=>{
       x.save();x.translate(m.x,m.y);x.globalAlpha=m.armed?(0.6+0.4*Math.sin(t*10)):0.4;
