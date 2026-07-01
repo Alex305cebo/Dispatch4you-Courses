@@ -179,9 +179,12 @@
   function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   let playerName=localStorage.getItem('survivors-name')||'';
+  let lbResumeRunning=false,lbHiddenOverlays=[];
   const olb=document.getElementById('olb'),lbListEl=document.getElementById('lbList');
   async function showLeaderboard(){
-    document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
+    if(state==='running'){lbResumeRunning=true;state='leaderboard';}
+    lbHiddenOverlays=Array.from(document.querySelectorAll('.overlay.show')).filter(o=>o!==olb);
+    lbHiddenOverlays.forEach(o=>o.classList.remove('show'));
     olb.classList.add('show');
     lbListEl.textContent='Загрузка…';
     const rows=await fetchLeaderboard('survivors',10);
@@ -189,7 +192,12 @@
   }
   document.getElementById('btnLbSide').addEventListener('click',showLeaderboard);
   document.getElementById('btnLbFromOver').addEventListener('click',showLeaderboard);
-  document.getElementById('btnLbClose').addEventListener('click',()=>olb.classList.remove('show'));
+  document.getElementById('btnLbClose').addEventListener('click',()=>{
+    olb.classList.remove('show');
+    if(lbResumeRunning){lbResumeRunning=false;state='running';last=performance.now();raf=requestAnimationFrame(loop);}
+    else lbHiddenOverlays.forEach(o=>o.classList.add('show'));
+    lbHiddenOverlays=[];
+  });
 
   let actx=null,compressor=null,lastBeepAt=0;
   function ensureAudio(){
