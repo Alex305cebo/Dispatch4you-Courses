@@ -105,6 +105,7 @@
       <p id="overStats"></p>
       <button class="ostart" id="btnRetry">Заново</button>
       <button class="ostart" id="btnLbFromOver">Таблица лидеров</button>
+      <button class="ostart" id="btnMenuFromOver">Меню</button>
     </div>
     <div id="olb" class="overlay">
       <h2>Таблица лидеров</h2>
@@ -119,7 +120,7 @@
     </div>
   </div>
   <div class="side">
-    <div class="box" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button></div>
+    <div class="box" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><div style="display:flex;gap:6px;"><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button><button id="btnMenuSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Меню</button></div></div>
     <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
     <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
     <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
@@ -1354,15 +1355,28 @@
   }
 
   function start(){
-    if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('survivors-name',playerName);}
+    if(!playerName){
+      let entered='';
+      try{entered=prompt('Введи имя для таблицы лидеров:','');}catch(e){entered='';}
+      playerName=sanitizeName(entered);
+      localStorage.setItem('survivors-name',playerName);
+    }
     ensureAudio();reset();
     ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
-    ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');
+    ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');olb.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
+  }
+
+  function showMenu(){
+    document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
+    ostart.classList.add('show');
+    state='menu';
   }
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+  document.getElementById('btnMenuFromOver').addEventListener('click',showMenu);
+  document.getElementById('btnMenuSide').addEventListener('click',showMenu);
   btnShop.addEventListener('click',openShop);
   btnShopClose.addEventListener('click',closeShop);
 
