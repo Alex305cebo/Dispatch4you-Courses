@@ -903,16 +903,18 @@
     pointsEl.textContent=Math.floor(points);
   }
 
-  function hurtPlayer(dmg,fx,fy,force,isBossHit){
-    if(player.invuln>0)return;
+  function hurtPlayer(dmg,fx,fy,force,isBossHit,isContact){
+    // contact dps from a swarm ignores the regular 0.5s hit-mercy (that's what let a mob wall
+    // deal no more damage than a single mob), but still respects the longer post-life-loss mercy
+    if(player.invuln>(isContact?1:0))return;
     const mitig=player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1;
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
-    player.hp-=dmg*mitig;camShake=Math.max(camShake,3);
+    player.hp-=dmg*mitig;camShake=Math.max(camShake,isContact?2:3);
     if(force){
       const a=Math.atan2(player.y-fy,player.x-fx);
       player.x+=Math.cos(a)*force;player.y+=Math.sin(a)*force;
     }
-    beep(120,0.15,'sawtooth',0.12);
+    if(!isContact)beep(120,0.15,'sawtooth',0.12);
     if(player.hp<=0){
       if(lives>1){
         lives--;
@@ -924,7 +926,7 @@
       }else{
         gameOver();
       }
-    }else{
+    }else if(!isContact){
       player.invuln=0.5;
     }
     updateHud();
@@ -986,6 +988,10 @@
     updateTimedAuras(dt);
 
     // enemies
+    // ponytail: cap how many touching mobs contribute contact dps at once — a swarm should
+    // scale danger with size, but not let an unbounded mob count one-shot the player
+    const CONTACT_CAP=8;
+    let touchSum=0,touchN=0;
     for(const e of enemies){
       const d=dist(player,e);
       const stopAt=player.r+e.r-2;
@@ -993,7 +999,13 @@
         const a=Math.atan2(player.y-e.y,player.x-e.x);
         e.x+=Math.cos(a)*e.speed*dt;e.y+=Math.sin(a)*e.speed*dt;
       }
-      if(d<player.r+e.r)hurtPlayer(e.dmg*dt*6,e.x,e.y,e.elite?18:0,e.elite);
+      if(d<player.r+e.r){
+        if(e.elite){
+          hurtPlayer(e.dmg*dt*6,e.x,e.y,18,true);
+        }else if(touchN<CONTACT_CAP){
+          touchSum+=e.dmg;touchN++;
+        }
+      }
       if(e._bladeCd>0)e._bladeCd-=dt;
       if(e.elite){
         e.shootCd-=dt;
@@ -1005,6 +1017,7 @@
         if(e.rangedCd<=0){mobShoot(e);e.rangedCd=rand(1.6,2.4);}
       }
     }
+    if(touchN>0)hurtPlayer(touchSum*dt,player.x,player.y,0,false,true);
     // push overlapping enemies apart so a swarm doesn't collapse into one blob on the player
     // ponytail: O(n^2), fine up to the 240-enemy cap; switch to a grid if that cap ever grows
     for(let i=0;i<enemies.length;i++){
