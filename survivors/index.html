@@ -377,7 +377,7 @@
           pickups.push({x:e.x+rand(-20,20),y:e.y+rand(-20,20),r:11,type:pt.id,color:pt.color,label:pt.label});
         });
         announce={text:'СУПЕРБОСС ПОВЕРЖЕН!',life:3,color:'#ff2d55'};
-        camShake=Math.max(camShake,20);screenFlash=Math.max(screenFlash,0.7);
+        camShake=Math.max(camShake,14);screenFlash=Math.max(screenFlash,0.7);
         burst(e.x,e.y,'#ff2d55',40);
         beep(880,0.3,'sine',0.2);setTimeout(()=>beep(1200,0.4,'sine',0.2),150);
       }else{
@@ -587,7 +587,7 @@
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
       beep(1000,0.15,'sine',0.08);
     }
-    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,12);beep(70,0.35,'sawtooth',0.2);}
+    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,6);beep(70,0.35,'sawtooth',0.2);}
     else if(pk.type==='weapon'){
       const w=WEAPON_UNLOCKS.find(w=>!w.done);
       if(w){w.done=true;w.apply(player);showWeaponPopup(w);}
@@ -658,7 +658,7 @@
     if(pendingBossLevel){
       const boss=spawnEnemy(true,pendingBossLevel/5);
       announce={text:'БОСС: '+boss.skinName+'! Уровень '+pendingBossLevel,life:2.4};
-      beep(90,0.4,'sawtooth',0.18);camShake=14;
+      beep(90,0.4,'sawtooth',0.18);camShake=Math.max(camShake,10);
       pendingBossLevel=null;
     }
     if(pendingSuperboss){
@@ -695,7 +695,7 @@
     enemies.push(en);
     announce={text:'⚠ СУПЕРБОСС: '+en.skinName+' ⚠',life:3.5,color:'#ff2d55'};
     rings.push({x:player.x,y:player.y,r:0,maxR:900,life:1.4});
-    camShake=24;screenFlash=1;
+    camShake=Math.max(camShake,18);screenFlash=1;
     beep(50,0.6,'sawtooth',0.25);setTimeout(()=>beep(70,0.5,'sawtooth',0.22),150);setTimeout(()=>beep(40,0.8,'sawtooth',0.2),320);
     return en;
   }
@@ -718,7 +718,7 @@
       enemyProjectiles.push({x:e.x,y:e.y,vx:Math.cos(a)*180,vy:Math.sin(a)*180,dmg:Math.round(e.dmg*0.3),r:8,life:2.5,color:'#ff2d55',boss:true});
     }
     burst(e.x,e.y,'#ff2d55',30);
-    camShake=Math.max(camShake,16);screenFlash=Math.max(screenFlash,0.5);
+    camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.5);
     beep(60,0.4,'sawtooth',0.2);
     announce={text:'СУПЕРБОСС В ЯРОСТИ!',life:1.6,color:'#ff2d55'};
   }
@@ -730,7 +730,7 @@
     if(curStage<e.stage){
       e.stage=curStage;
       burst(e.x,e.y,e.color,20);
-      camShake=Math.max(camShake,12);
+      camShake=Math.max(camShake,6);
       e.speed*=1.03;e.dmg*=1.04;
       announce={text:(e.skinName||'Босс')+': стадия '+e.stage+'/'+e.stageCount+'!',life:1.4,color:e.color};
       beep(260+e.stage*18,0.15,'square',0.1);
@@ -764,7 +764,7 @@
   function hurtPlayer(dmg,fx,fy,force){
     if(player.invuln>0)return;
     const mitig=player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1;
-    player.hp-=dmg*mitig;camShake=8;
+    player.hp-=dmg*mitig;camShake=Math.max(camShake,3);
     if(force){
       const a=Math.atan2(player.y-fy,player.x-fx);
       player.x+=Math.cos(a)*force;player.y+=Math.sin(a)*force;
@@ -776,7 +776,7 @@
         player.hp=Math.round(player.maxHp*0.5);
         player.invuln=2;
         announce={text:'💔 Жизнь потеряна! Осталось: '+lives,life:2.5,color:'#ff2d55'};
-        camShake=Math.max(camShake,16);screenFlash=Math.max(screenFlash,0.5);
+        camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.5);
         beep(150,0.3,'sawtooth',0.15);
       }else{
         gameOver();
@@ -810,9 +810,11 @@
 
     // camera zoom: pull back when the field gets crowded — smoothed so bursts of
     // spawns/deaths (mines, nova bursts) don't yank the view around every frame
-    enemyCountSmoothed+=(enemies.length-enemyCountSmoothed)*Math.min(1,dt*0.3);
+    enemyCountSmoothed+=(enemies.length-enemyCountSmoothed)*Math.min(1,dt*0.12);
     const targetZoom=Math.max(0.55,Math.min(baseZoom,baseZoom-Math.max(0,enemyCountSmoothed-25)/200));
-    zoom+=(targetZoom-zoom)*Math.min(1,dt*0.6);
+    const zoomDelta=(targetZoom-zoom)*Math.min(1,dt*0.3);
+    const zoomMaxStep=0.15*dt;
+    zoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
 
     // spawn
     const d=difficulty();
@@ -874,7 +876,7 @@
       for(const e of enemies){if(dist(m,e)<m.r+e.r){triggered=true;break;}}
       if(triggered){
         for(const e of enemies){if(dist(m,e)<m.blastR)e.hp-=m.dmg;}
-        burst(m.x,m.y,'#f97316',14);camShake=Math.max(camShake,10);beep(90,0.25,'sawtooth',0.15);
+        burst(m.x,m.y,'#f97316',14);camShake=Math.max(camShake,5);beep(90,0.25,'sawtooth',0.15);
         m.dead=true;
       }
     });
@@ -917,7 +919,7 @@
     rings.forEach(r=>{r.r+=r.maxR*dt*2;r.life-=dt;});
     rings=rings.filter(r=>r.life>0);
 
-    if(camShake>0)camShake*=0.85;
+    if(camShake>0)camShake*=0.78;
     if(screenFlash>0)screenFlash=Math.max(0,screenFlash-dt*1.5);
     updateHud();
   }
@@ -1054,7 +1056,7 @@
 
   function draw(){
     let sx=0,sy=0;
-    if(camShake>0.3){sx=rand(-camShake,camShake);sy=rand(-camShake,camShake);}
+    if(camShake>0.3){sx=Math.sin(t*47)*camShake*0.6;sy=Math.cos(t*41)*camShake*0.6;}
     x.clearRect(0,0,W,H);
     x.save();
     x.translate(W/2+sx,H/2+sy);
@@ -1195,6 +1197,7 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+
 
 
 
