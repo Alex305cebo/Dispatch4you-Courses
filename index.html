@@ -153,17 +153,34 @@
   document.getElementById('tRot').addEventListener('click',()=>{vib();if(running)rotateCur();});
   document.getElementById('tDown').addEventListener('click',()=>{vib(25);if(running){hardDrop();acc=0;}});
   document.getElementById('tHold').addEventListener('click',()=>{vib();if(running)holdPiece();});
-  let tsX=0,tsY=0;
-  const SWIPE_MIN=24;
-  cv.addEventListener('touchstart',e=>{const t=e.touches[0];tsX=t.clientX;tsY=t.clientY;e.preventDefault();},{passive:false});
-  cv.addEventListener('touchmove',e=>{e.preventDefault();},{passive:false});
+  let tsX=0,tsY=0,lastStepX=0,dragged=false;
+  const SWIPE_MIN=20;
+  cv.addEventListener('touchstart',e=>{const t=e.touches[0];tsX=t.clientX;tsY=t.clientY;lastStepX=tsX;dragged=false;e.preventDefault();},{passive:false});
+  cv.addEventListener('touchmove',e=>{
+    if(running){
+      const t=e.touches[0];
+      const cellPx=cv.getBoundingClientRect().width/COLS;
+      const dx=t.clientX-lastStepX;
+      if(cellPx>0&&Math.abs(dx)>=cellPx){
+        const steps=Math.trunc(dx/cellPx);
+        for(let i=0;i<Math.abs(steps);i++){if(steps>0)moveRight();else moveLeft();}
+        lastStepX+=steps*cellPx;
+        dragged=true;
+        vib(8);
+      }
+    }
+    e.preventDefault();
+  },{passive:false});
   cv.addEventListener('touchend',e=>{
     if(!running)return;
-    const t=e.changedTouches[0],dx=t.clientX-tsX,dy=t.clientY-tsY;
-    if(Math.abs(dx)<SWIPE_MIN&&Math.abs(dy)<SWIPE_MIN){vib();rotateCur();}
-    else if(Math.abs(dx)>Math.abs(dy)){vib();if(dx>0)moveRight();else moveLeft();}
-    else if(dy>0){vib(25);hardDrop();acc=0;}
-    else{vib();holdPiece();}
+    if(!dragged){
+      const t=e.changedTouches[0],dx=t.clientX-tsX,dy=t.clientY-tsY;
+      if(Math.abs(dx)<SWIPE_MIN&&Math.abs(dy)<SWIPE_MIN){vib();rotateCur();}
+      else if(Math.abs(dy)>Math.abs(dx)){
+        if(dy>0){vib(25);hardDrop();acc=0;}
+        else{vib();holdPiece();}
+      }
+    }
     e.preventDefault();
   },{passive:false});
   const touchMQ=matchMedia('(hover:none) and (pointer:coarse)');
