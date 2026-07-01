@@ -265,7 +265,7 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,gems,particles,rings,pickups,bolts,mines;
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,raf,last,keys,moveVec,joy;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
     return {x:0,y:0,r:14,hp:100,maxHp:100,speed:180,dmg:18,fireRate:550,fireAcc:0,
@@ -286,7 +286,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];gems=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];
-    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
@@ -331,8 +331,9 @@
     const base=elite?BOSS_BASE:ENEMY_TYPES[type];
     const bn=bossNumber||1;
     const skin=elite?BOSS_SKINS[(bn-1)%BOSS_SKINS.length]:null;
-    const finalHp=elite?tierAvgHp(player.level)*(20+bn*4)*d.hpMul:base.hp*d.hpMul;
-    const finalDmg=elite?tierAvgDmg(player.level)*7:base.dmg;
+    const levelMul=1+Math.floor(player.level/4)*0.08;
+    const finalHp=elite?tierAvgHp(player.level)*(20+bn*4)*d.hpMul:base.hp*d.hpMul*levelMul;
+    const finalDmg=elite?tierAvgDmg(player.level)*7:base.dmg*levelMul;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       hp:finalHp,maxHp:finalHp,speed:base.speed*d.spdMul*(elite?0.7:1),
       dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1),
@@ -370,6 +371,7 @@
     gems.push({x:e.x,y:e.y,value:e.xp,r:e.elite?9:5});
     beep(e.elite?160:300,0.12,'triangle',0.08);
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
+    if(e.pauseSpawns){mobSpawnPaused=false;announce={text:'Босс уровня 8 повержен!',life:2.4,color:'#f97316'};}
     if(e.elite){
       pickups.push({x:e.x+rand(-16,16),y:e.y+rand(-16,16),r:11,type:'chest',color:'#facc15',label:'★'});
       if(e.superboss){
@@ -601,6 +603,7 @@
     if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;}
     if(player.level%25===0){pendingSuperWarning=player.level;}
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
+    if(player.level===8){pendingLevelUps+=2;pendingLevel8Boss=true;}
     lastLevelUpAt=t;
   }
 
@@ -665,6 +668,10 @@
       const lvl=pendingSuperboss;pendingSuperboss=null;
       spawnSuperboss(lvl);
     }
+    if(pendingLevel8Boss){
+      pendingLevel8Boss=false;
+      spawnLevel8Boss();
+    }
     if(pendingSuperWarning){
       const lvl=pendingSuperWarning;pendingSuperWarning=null;
       showSuperWarning(lvl+1);
@@ -697,6 +704,26 @@
     rings.push({x:player.x,y:player.y,r:0,maxR:900,life:1.4});
     camShake=Math.max(camShake,18);screenFlash=1;
     beep(50,0.6,'sawtooth',0.25);setTimeout(()=>beep(70,0.5,'sawtooth',0.22),150);setTimeout(()=>beep(40,0.8,'sawtooth',0.2),320);
+    return en;
+  }
+
+  function spawnLevel8Boss(){
+    const d=difficulty();
+    const hp=tierAvgHp(8)*30*d.hpMul;
+    const dmg=tierAvgDmg(8)*10;
+    const ang=rand(0,Math.PI*2),rad=Math.max(W,H)/2+80;
+    const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
+      hp,maxHp:hp,speed:50*d.spdMul*0.7,dmg,r:34,
+      color:'#f97316',glow:'#fb923c',skinShape:'super',skinName:'Страж Восьмого',
+      xp:xpForPower(hp,dmg)*1.5,elite:true,superboss:true,pauseSpawns:true,bossNumber:3,
+      stageCount:BOSS_STAGES,stage:BOSS_STAGES,
+      shootCd:rand(0.6,1.2),summonCd:8,phase66:false,phase33:false};
+    enemies.push(en);
+    mobSpawnPaused=true;
+    announce={text:'⚠ БОСС УРОВНЯ 8: '+en.skinName+' ⚠',life:3.2,color:'#f97316'};
+    rings.push({x:player.x,y:player.y,r:0,maxR:700,life:1.3});
+    camShake=Math.max(camShake,14);screenFlash=Math.max(screenFlash,0.6);
+    beep(70,0.5,'sawtooth',0.2);setTimeout(()=>beep(90,0.4,'sawtooth',0.18),150);
     return en;
   }
 
@@ -816,10 +843,12 @@
     const zoomMaxStep=0.15*dt;
     zoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
 
-    // spawn
+    // spawn (paused during a dedicated arena-boss fight like the level-8 encounter)
     const d=difficulty();
-    spawnAcc+=dt*1000;
-    if(spawnAcc>d.interval){spawnAcc=0;for(let i=0;i<d.count;i++)spawnEnemy(false);}
+    if(!mobSpawnPaused){
+      spawnAcc+=dt*1000;
+      if(spawnAcc>d.interval){spawnAcc=0;for(let i=0;i<d.count;i++)spawnEnemy(false);}
+    }
 
     pickupAcc+=dt;
     if(pickupAcc>pickupInterval){pickupAcc=0;pickupInterval=rand(14,20);spawnPickup();}
@@ -1197,6 +1226,7 @@
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+
 
 
 
