@@ -80,6 +80,11 @@
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
       <button class="ostart" id="btnStart">Начать</button>
     </div>
+    <div id="olevel" class="overlay">
+      <h2 id="levelTitle">Новый уровень!</h2>
+      <p id="levelSub" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
+      <div class="cards" id="cards"></div>
+    </div>
     <div id="ocooldown" class="overlay">
       <h2 id="cooldownMsg">Приготовься</h2>
       <div id="cooldownNum" style="font-size:64px;font-weight:700;color:#4D96FF;text-shadow:0 0 20px rgba(77,150,255,0.6);">3</div>
@@ -99,17 +104,22 @@
       <h2>Ты погиб</h2>
       <p id="overStats"></p>
       <button class="ostart" id="btnRetry">Заново</button>
+      <button class="ostart" id="btnLbFromOver">Таблица лидеров</button>
+    </div>
+    <div id="olb" class="overlay">
+      <h2>Таблица лидеров</h2>
+      <div id="lbList" style="font-size:13px;color:var(--muted);max-height:280px;overflow:auto;width:100%;max-width:300px;">Загрузка…</div>
+      <button class="ostart" id="btnLbClose">Закрыть</button>
     </div>
     <div id="oshop" class="overlay">
-      <h2 id="shopTitle">🛒 Магазин улучшений</h2>
+      <h2>🛒 Магазин улучшений</h2>
       <p style="margin:-6px 0 0;">Баллов: <b id="shopPoints" style="color:#4D96FF;">0</b></p>
-      <p id="shopHint" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
       <div class="cards" id="shopList" style="max-height:340px;overflow:auto;"></div>
-      <button class="ostart" id="btnShopClose">Пропустить</button>
+      <button class="ostart" id="btnShopClose">Закрыть</button>
     </div>
   </div>
   <div class="side">
-    <div class="box"><div class="label">Время</div><div id="stime">00:00</div></div>
+    <div class="box" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button></div>
     <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
     <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
     <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
@@ -128,7 +138,9 @@
         <div><span>Радиус</span><b id="staoe">100%</b></div>
       </div>
     </div>
-    <div class="box"><div class="label">🛒 Баллов</div><div id="spoints" class="small">0</div></div>
+    <div class="box full" style="padding:8px 10px;">
+      <button id="btnShop" style="padding:8px;">🛒 Магазин (<span id="spoints">0</span> баллов)</button>
+    </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
   </div>
 </div>
@@ -148,18 +160,36 @@
   const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest'),livesEl=document.getElementById('slives');
   const stDmgEl=document.getElementById('stdmg'),stRateEl=document.getElementById('strate'),stSpeedEl=document.getElementById('stspeed'),stCritEl=document.getElementById('stcrit'),stPierceEl=document.getElementById('stpierce'),stAoeEl=document.getElementById('staoe');
   const hpFill=document.querySelector('#hpbar>div'),hpNumEl=document.getElementById('shpnum'),xpFill=document.querySelector('#xpbar>div');
-  const ostart=document.getElementById('ostart'),oover=document.getElementById('oover');
-  const overStats=document.getElementById('overStats');
+  const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
+  const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
+  const levelTitle=document.getElementById('levelTitle'),levelSub=document.getElementById('levelSub');
   const ocooldown=document.getElementById('ocooldown'),cooldownMsg=document.getElementById('cooldownMsg'),cooldownNum=document.getElementById('cooldownNum');
   const oweapon=document.getElementById('oweapon'),weaponTitle=document.getElementById('weaponTitle'),weaponDesc=document.getElementById('weaponDesc');
   const wcv=document.getElementById('weaponIcon'),wx=wcv.getContext('2d');
   const osuperwarn=document.getElementById('osuperwarn'),superWarnText=document.getElementById('superWarnText');
   const oshop=document.getElementById('oshop'),shopListEl=document.getElementById('shopList'),shopPointsEl=document.getElementById('shopPoints');
-  const shopTitleEl=document.getElementById('shopTitle'),shopHintEl=document.getElementById('shopHint');
-  const pointsEl=document.getElementById('spoints'),btnShopClose=document.getElementById('btnShopClose');
+  const pointsEl=document.getElementById('spoints'),btnShop=document.getElementById('btnShop'),btnShopClose=document.getElementById('btnShopClose');
 
   let best=parseFloat(localStorage.getItem('survivors-best')||'0');
   bestEl.textContent=fmtTime(best);
+  const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch4you-80e0f/databases/(default)/documents';
+  function fsVal(v){return typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
+  async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
+  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:Number((f.score&&(f.score.integerValue||f.score.doubleValue))||0)};});list.sort((a,b)=>b.score-a.score);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
+  function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
+  function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  let playerName=localStorage.getItem('survivors-name')||'';
+  const olb=document.getElementById('olb'),lbListEl=document.getElementById('lbList');
+  async function showLeaderboard(){
+    document.querySelectorAll('.overlay.show').forEach(o=>o.classList.remove('show'));
+    olb.classList.add('show');
+    lbListEl.textContent='Загрузка…';
+    const rows=await fetchLeaderboard('survivors',10);
+    lbListEl.innerHTML=rows.length?rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i+1}. ${escapeHtml(r.name)}</span><span style="color:var(--text);font-weight:500;">${fmtTime(Number(r.score)||0)}</span></div>`).join(''):'Пока никто не играл.';
+  }
+  document.getElementById('btnLbSide').addEventListener('click',showLeaderboard);
+  document.getElementById('btnLbFromOver').addEventListener('click',showLeaderboard);
+  document.getElementById('btnLbClose').addEventListener('click',()=>olb.classList.remove('show'));
 
   let actx=null,compressor=null,lastBeepAt=0;
   function ensureAudio(){
@@ -439,7 +469,7 @@
     beep(523,0.1,'sine',0.12);setTimeout(()=>beep(784,0.15,'sine',0.12),100);
     setTimeout(()=>{
       oweapon.classList.remove('show');
-      if(pendingLevelUps>0)openLevelUpShop();
+      if(pendingLevelUps>0)showLevelUp();
       else{state='running';last=performance.now();raf=requestAnimationFrame(loop);}
     },2800);
   }
@@ -588,7 +618,7 @@
 
   function openChest(){
     chestPending=true;pendingLevelUps++;
-    if(state==='running')openLevelUpShop();
+    if(state==='running')showLevelUp();
   }
 
   function collectPickup(pk){
@@ -618,7 +648,7 @@
       levelUpOnce();
       player.xpNeed=xpNeedFor(player.level);
     }
-    if(pendingLevelUps>0&&state==='running')openLevelUpShop();
+    if(pendingLevelUps>0&&state==='running')showLevelUp();
     updateHud();
   }
 
@@ -632,22 +662,32 @@
   }
 
 
-  function openLevelUpShop(){
-    state='shop';
+  function showLevelUp(){
+    state='levelup';
     const boss=pendingBossLevel===player.level;
-    let title=chestPending?'Сундук! Магазин открыт':(boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!');
-    chestPending=false;
-    shopTitleEl.textContent='🎁 '+title;
-    if(pendingLevelUps>1){shopHintEl.style.display='block';shopHintEl.textContent='Осталось визитов: '+pendingLevelUps;}
-    else shopHintEl.style.display='none';
-    renderShop();
-    oshop.classList.add('show');
-  }
-
-  function finishLevelUpVisit(){
-    oshop.classList.remove('show');
-    pendingLevelUps--;
-    if(pendingLevelUps>0)openLevelUpShop();else startCooldown();
+    if(chestPending){levelTitle.textContent='Сундук! Выбери бонус';chestPending=false;}
+    else levelTitle.textContent=boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!';
+    if(pendingLevelUps>1){levelSub.style.display='block';levelSub.textContent='Осталось выборов: '+pendingLevelUps;}
+    else levelSub.style.display='none';
+    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
+    const picks=[];
+    const copy=pool.slice();
+    for(let i=0;i<3&&copy.length;i++){picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);}
+    cardsEl.innerHTML='';
+    picks.forEach(u=>{
+      const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;
+      const lvl=upgradeLevel(u);
+      const el=document.createElement('div');el.className='card';
+      el.style.borderColor=ri.color;
+      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLevel(u)+'</span><span>'+u.desc+'</span>';
+      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;pendingLevelUps--;beep(523,0.08,'sine',0.1);setTimeout(()=>beep(659,0.1,'sine',0.1),80);
+        olevel.classList.remove('show');
+        if(pendingLevelUps>0)showLevelUp();else startCooldown();
+      };
+      cardsEl.appendChild(el);
+    });
+    olevel.classList.add('show');
+    updateHud();
   }
 
   function shopCost(u){
@@ -675,15 +715,23 @@
           u.apply(player);
           beep(600,0.08,'sine',0.1);
           updateHud();
-          finishLevelUpVisit();
+          renderShop();
         };
       }
       shopListEl.appendChild(el);
     });
   }
 
+  function openShop(){
+    if(state!=='running')return;
+    state='shop';
+    renderShop();
+    oshop.classList.add('show');
+  }
+
   function closeShop(){
-    finishLevelUpVisit();
+    oshop.classList.remove('show');
+    state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
   function startCooldown(){
@@ -868,6 +916,7 @@
     overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills;
     oover.classList.add('show');
     beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);
+    if(t>0)submitScore('survivors',playerName,t,{level:player.level,kills:kills});
   }
 
   function step(dt){
@@ -906,7 +955,7 @@
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
     if(t-lastLevelUpAt>=90){
       levelUpOnce();
-      if(pendingLevelUps>0&&state==='running')openLevelUpShop();
+      if(pendingLevelUps>0&&state==='running')showLevelUp();
     }
 
     fire(dt);
@@ -1289,14 +1338,16 @@
   }
 
   function start(){
+    if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('survivors-name',playerName);}
     ensureAudio();reset();
-    ostart.classList.remove('show');oover.classList.remove('show');
+    ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
     ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
   document.getElementById('btnStart').addEventListener('click',start);
   document.getElementById('btnRetry').addEventListener('click',start);
+  btnShop.addEventListener('click',openShop);
   btnShopClose.addEventListener('click',closeShop);
 
 
