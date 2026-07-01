@@ -7,28 +7,43 @@
 <style>
   :root{--bg1:#0b0e17;--bg2:#05060a;--panel:#121724;--panel2:#1a2130;--border:#293042;--text:#e8ebf2;--muted:#8891a3;--danger:#ef4444;--xp:#4D96FF;--hp:#ef4444;}
   *{box-sizing:border-box;}
-  html,body{margin:0;min-height:100vh;background:var(--bg2);}
+  html,body{margin:0;height:100%;background:var(--bg2);overflow:hidden;}
   canvas#bgfx{position:fixed;inset:0;width:100%;height:100%;z-index:0;}
-  body{color:var(--text);font-family:system-ui,sans-serif;
-    display:flex;align-items:center;justify-content:center;padding:20px;}
-  .wrap{position:relative;z-index:1;display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;}
-  .arena{position:relative;}
-  canvas#sboard{background:#0c0f18;border:1px solid var(--border);border-radius:12px;display:block;max-width:88vw;height:auto;touch-action:none;}
-  .side{min-width:190px;}
-  .box{background:var(--panel);border-radius:8px;padding:12px 16px;margin-bottom:12px;}
-  .label{font-size:13px;color:var(--muted);margin-bottom:4px;}
-  #stime{font-size:26px;font-weight:500;}
-  .small{font-size:16px;font-weight:500;}
-  .row{display:flex;gap:12px;}
-  .row>div{flex:1;}
-  .bar{height:10px;border-radius:5px;background:var(--panel2);overflow:hidden;margin-top:4px;}
+  body{color:var(--text);font-family:system-ui,sans-serif;height:100vh;height:100dvh;}
+  .wrap{position:relative;z-index:1;width:100vw;height:100vh;height:100dvh;
+    display:grid;grid-template-rows:1fr auto;gap:8px;padding:8px;box-sizing:border-box;}
+  .arena{position:relative;width:100%;height:100%;min-width:0;min-height:0;}
+  canvas#sboard{background:#0c0f18;border:1px solid var(--border);border-radius:12px;display:block;width:100%;height:100%;touch-action:none;}
+  .side{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-content:start;min-width:0;min-height:0;overflow:auto;}
+  .side .full{grid-column:1/-1;}
+  .box{background:var(--panel);border-radius:8px;padding:6px 10px;}
+  .label{font-size:11px;color:var(--muted);margin-bottom:2px;white-space:nowrap;}
+  #stime{font-size:19px;font-weight:500;}
+  .small{font-size:15px;font-weight:500;}
+  .row{display:flex;gap:8px;}
+  .row>div{flex:1;min-width:0;}
+  .bar{height:8px;border-radius:4px;background:var(--panel2);overflow:hidden;margin-top:3px;}
   .bar>div{height:100%;width:0%;transition:width .15s;}
   #hpbar>div{background:linear-gradient(90deg,#ef4444,#f97316);}
   #xpbar>div{background:linear-gradient(90deg,#4D96FF,#B388FF);}
   button{width:100%;padding:10px;font-size:15px;background:var(--panel2);color:var(--text);
     border:1px solid var(--border);border-radius:8px;cursor:pointer;}
   button:hover{background:#242c3a;}
-  .hint{font-size:13px;color:var(--muted);line-height:1.6;margin-top:12px;}
+  .hint{grid-column:1/-1;font-size:11px;color:var(--muted);line-height:1.4;margin:0;text-align:center;}
+  @media (min-width:820px) and (min-height:480px){
+    .wrap{grid-template-columns:1fr 210px;grid-template-rows:1fr;}
+    .side{grid-template-columns:1fr;}
+    .box{padding:12px 16px;}
+    .label{font-size:13px;margin-bottom:4px;}
+    #stime{font-size:26px;}
+    .small{font-size:16px;}
+    .bar{height:10px;margin-top:4px;}
+    .hint{font-size:13px;line-height:1.6;text-align:left;}
+  }
+  @media (max-width:420px){
+    .card{width:120px !important;padding:10px !important;}
+    .overlay p{font-size:12px;max-width:280px;}
+  }
   .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(5,6,10,0.82);border-radius:12px;text-align:center;padding:20px;}
   .overlay.show{display:flex;}
   .overlay h2{margin:0;font-weight:600;font-size:22px;}
@@ -87,16 +102,23 @@
   <div class="side">
     <div class="box"><div class="label">Время</div><div id="stime">00:00</div></div>
     <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
-    <div class="box"><div class="label">HP</div><div class="bar" id="hpbar"><div></div></div></div>
-    <div class="box"><div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div></div>
-    <div class="box"><div class="label">Рекорд времени</div><div id="sbest" class="small">00:00</div></div>
-    <p class="hint">WASD / стрелки — движение<br>на телефоне — тяни пальцем по полю</p>
+    <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
+    <div class="box full"><div class="label">HP</div><div class="bar" id="hpbar"><div></div></div></div>
+    <div class="box full"><div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div></div>
+    <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
   </div>
 </div>
 <script>
 (function(){
-  const W=640,H=480;
+  let W=640,H=480;
   const cv=document.getElementById('sboard'),x=cv.getContext('2d');
+  function resizeCanvas(){
+    const rect=cv.parentElement.getBoundingClientRect();
+    const rw=Math.max(1,rect.width),rh=Math.max(1,rect.height);
+    const scale=Math.min(1,900/rw,700/rh);
+    W=Math.round(rw*scale);H=Math.round(rh*scale);
+    cv.width=W;cv.height=H;
+  }
   const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest');
   const hpFill=document.querySelector('#hpbar>div'),xpFill=document.querySelector('#xpbar>div');
   const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
@@ -977,7 +999,11 @@
   function endJoy(){joy.active=false;joy.dx=0;joy.dy=0;}
   cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
 
-  reset();draw();
+  window.addEventListener('resize',()=>{resizeCanvas();draw();});
+  window.addEventListener('orientationchange',()=>{resizeCanvas();draw();});
+  if(window.ResizeObserver)new ResizeObserver(()=>{resizeCanvas();draw();}).observe(cv.parentElement);
+
+  resizeCanvas();reset();draw();
 })();
 (function(){
   const bg=document.getElementById('bgfx'),bx=bg.getContext('2d');
