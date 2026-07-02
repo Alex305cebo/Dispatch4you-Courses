@@ -52,21 +52,21 @@
   }
   @media (hover:none) and (pointer:coarse) and (orientation:portrait){
     .wrap{flex-direction:column;}
-    .side{width:100%;max-width:400px;justify-content:center;margin:0 auto;align-self:center;flex:0 0 auto;max-height:37dvh;}
+    .side{width:100%;max-width:400px;justify-content:center;margin:0 auto;align-self:center;flex:0 0 auto;max-height:37dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
     .side .box{flex:1 1 45%;}
     .touch-hint{font-size:10px;margin-top:1px;}
     #tstart{flex:1 1 100%;padding:5px;font-size:12px;}
   }
   @media (hover:none) and (pointer:coarse) and (orientation:landscape){
     .wrap{flex-direction:row;}
-    .side{flex-direction:column;width:260px;justify-content:space-evenly;}
-    .side .box{padding:16px 18px;}
-    .label{font-size:15px;}
-    #tscore{font-size:32px;}
-    .small{font-size:22px;}
-    canvas#thold,canvas#tnext{width:72px;height:72px;}
-    #tstart{padding:16px;font-size:19px;}
-    .touch-hint{font-size:13px;}
+    .side{flex-direction:column;width:210px;justify-content:flex-start;flex-wrap:nowrap;gap:6px;overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:100%;}
+    .side .box{padding:8px 10px;margin-bottom:0;}
+    .label{font-size:11px;}
+    #tscore{font-size:20px;}
+    .small{font-size:13px;}
+    canvas#thold,canvas#tnext{width:40px;height:40px;}
+    #tstart{padding:10px;font-size:14px;}
+    .touch-hint{font-size:11px;}
   }
 </style>
 </head>
@@ -304,7 +304,7 @@
     if(cur.c===COLORBOMB){colorExplode();combo=-1;return;}
     if(cur.c===LIGHTNING_V){lightningCol(px);combo=-1;return;}
     if(cur.c===LIGHTNING_H){lightningRow(py);combo=-1;return;}
-    if(cur.c===EARTHQUAKE){earthquakeCol(px);combo=-1;return;}
+    if(cur.c===EARTHQUAKE){earthquakeCol(px);const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;return;}
     if(cur.c===GHOST){siftMerge();const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;return;}
     const tspin=isTSpin();merge();beep(110,0.06,'sine',0.1);const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;if(tspin){addScore(n>0?400*n:100);popup(n>0?'T-SPIN x'+n:'T-SPIN','#F06BB0');beep(550,0.15,'sawtooth',0.12);unlockAchievement('tspin1');}
   }
