@@ -1,0 +1,51 @@
+name: Deploy Mini-Games (Tetris/Survivors) to Hostinger
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-mini-games
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy games/ via rsync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout gh-pages (game source)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          submodules: false
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy to /games/ (with retry)
+        run: |
+          for i in 1 2 3; do
+            echo "Deploy attempt $i..."
+            rsync -avzrc --delete \
+              --exclude='.git' --exclude='.github' \
+              -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
+              ./ \
+              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/games/ \
+              && echo "✅ Deploy successful" && exit 0
+            echo "⚠️ Attempt $i failed, waiting 20s..."
+            sleep 20
+          done
+          echo "❌ Deploy failed after 3 attempts"
+          exit 1
+
+      - name: Verify live
+        run: |
+          STATUS=$(curl -o /dev/null -s -w "%{http_code}" https://dispatch4you.com/games/)
+          echo "games/ index status: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ CRITICAL: /games/ returned HTTP $STATUS"
+            exit 1
+          fi
