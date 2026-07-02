@@ -94,7 +94,7 @@
     <div class="box row"><div><div class="label">Уровень</div><div id="tlevel" class="small">1</div></div><div><div class="label">Время</div><div id="ttime" class="small">0:00</div></div><div><div class="label">Рекорд</div><div id="tbest" class="small">0</div><div id="tbesttime" style="font-size:11px;color:var(--muted);">0:00</div></div></div>
     <div class="box"><div class="label">Запас (↑)</div><canvas id="thold" width="96" height="96"></canvas></div>
     <div class="box"><div class="label">Дальше</div><canvas id="tnext" width="96" height="96"></canvas></div>
-    <div class="box" style="padding:8px;">
+    <div class="box" id="diffBox" style="padding:8px;">
       <div class="label" style="margin-bottom:6px;">Сложность</div>
       <div style="display:flex;gap:4px;">
         <button class="diffBtn" data-diff="easy" style="width:auto;flex:1;padding:6px 0;font-size:11px;">Лёгко</button>
@@ -119,11 +119,28 @@
       <h2 style="margin:0;font-size:17px;font-weight:500;">Таблица лидеров</h2>
       <button id="lbClose" style="width:auto;padding:4px 10px;font-size:16px;">×</button>
     </div>
-    <div style="display:flex;gap:4px;margin-bottom:12px;">
+    <div style="display:flex;gap:4px;margin-bottom:8px;">
+      <button class="lbModeTab" data-mode="classic" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Классика</button>
+      <button class="lbModeTab" data-mode="levels" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Уровни</button>
+    </div>
+    <div id="lbDiffTabs" style="display:flex;gap:4px;margin-bottom:12px;">
       <button class="lbTab" data-diff="easy" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Лёгкий</button>
       <button class="lbTab" data-diff="normal" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Норм.</button>
       <button class="lbTab" data-diff="hard" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Сложный</button>
     </div>
+    <select id="lbLevelPicker" style="display:none;width:100%;padding:7px;margin-bottom:12px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;">
+      <option value="1">Уровень 1</option>
+      <option value="2">Уровень 2</option>
+      <option value="3">Уровень 3</option>
+      <option value="4">Уровень 4</option>
+      <option value="5">Уровень 5</option>
+      <option value="6">Уровень 6</option>
+      <option value="7">Уровень 7</option>
+      <option value="8">Уровень 8</option>
+      <option value="9">Уровень 9</option>
+      <option value="10">Уровень 10</option>
+      <option value="11">Босс</option>
+    </select>
     <div id="lbList" style="font-size:13px;color:var(--muted);">Загрузка…</div>
   </div>
 </div>
@@ -150,7 +167,7 @@
       <h2 style="margin:0;font-size:17px;font-weight:500;">Карта уровней</h2>
       <button id="levelMapClose" style="width:auto;padding:4px 10px;font-size:16px;">×</button>
     </div>
-    <div id="levelMapGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;"></div>
+    <div id="levelMapGrid" style="display:flex;flex-direction:column;align-items:center;"></div>
   </div>
 </div>
 <div id="levelResultOverlay" style="display:none;position:fixed;inset:0;z-index:56;background:rgba(5,6,10,0.92);align-items:center;justify-content:center;">
@@ -181,7 +198,7 @@
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
   function fsVal(v){return typeof v==='boolean'?{booleanValue:v}:typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
-  async function fetchLeaderboard(game){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),time:num(f.time),level:num(f.level),difficulty:(f.difficulty&&f.difficulty.stringValue)||'normal',bossCleared:!!(f.bossCleared&&f.bossCleared.booleanValue)};});list.sort((a,b)=>b.score-a.score||b.level-a.level);return list;}catch(e){console.error('leaderboard fetch failed',e);return[];}}
+  async function fetchLeaderboard(game){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),time:num(f.time),level:num(f.level),difficulty:(f.difficulty&&f.difficulty.stringValue)||'normal',mode:(f.mode&&f.mode.stringValue)||'classic',bossCleared:!!(f.bossCleared&&f.bossCleared.booleanValue)};});list.sort((a,b)=>b.score-a.score||b.level-a.level);return list;}catch(e){console.error('leaderboard fetch failed',e);return[];}}
   const OWNER_NAMES=['ilya','alex'];
   function isOwner(name){return OWNER_NAMES.includes((name||'').trim().toLowerCase());}
   const PODIUM_COLORS=['#FFD700','#C0C0C0','#CD7F32'];
@@ -374,7 +391,9 @@
   function tSpinCenter(m){for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++){if(!m[r][c])continue;let n=0;if(r>0&&m[r-1][c])n++;if(r<m.length-1&&m[r+1][c])n++;if(c>0&&m[r][c-1])n++;if(c<m[r].length-1&&m[r][c+1])n++;if(n===3)return{cx:c,cy:r};}return null;}
   function isTSpin(){if(cur.c!==T||!rotated)return false;const ctr=tSpinCenter(cur.m);if(!ctr)return false;const gx=px+ctr.cx,gy=py+ctr.cy;const occ=(a,b)=>a<0||a>=COLS||b>=ROWS||(b>=0&&grid[b][a]>=0);let n=0;if(occ(gx-1,gy-1))n++;if(occ(gx+1,gy-1))n++;if(occ(gx-1,gy+1))n++;if(occ(gx+1,gy+1))n++;return n>=3;}
   function spawn(){cur=next;next=rnd();px=Math.floor((COLS-cur.m[0].length)/2);py=-1;rotated=false;if(collide(cur.m,px,py))gameOver();}
-  function gameOver(){running=false;cancelAnimationFrame(raf);beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);checkGameOverAchievements();if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:level,difficulty:difficulty,mode:mode,bossCleared:localStorage.getItem('tetris-boss-cleared')==='1'});
+  function gameOver(){running=false;cancelAnimationFrame(raf);beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);checkGameOverAchievements();
+    const reportedLevel=(mode==='levels'&&activeLevel!=null)?(activeLevel==='boss'?11:activeLevel):level;
+    if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:reportedLevel,difficulty:difficulty,mode:mode,bossCleared:localStorage.getItem('tetris-boss-cleared')==='1'});
     if(mode==='levels'&&activeLevel!=null){showLevelResult(false,activeLevel);}else{overEl.style.display='block';startBtn.textContent='Заново';}
   }
   function explode(gx,gy){shake=10;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=gx+dx,cy=gy+dy;if(cx<0||cx>=COLS||cy<0||cy>=ROWS)continue;const col=grid[cy][cx]>=0?COLORS[grid[cy][cx]]:'#FF6B6B';grid[cy][cx]=-1;for(let k=0;k<5;k++)particles.push({x:(cx+0.5)*S,y:(cy+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:col,sz:2+Math.random()*4});}popup('БУМ!','#FF6B6B');beep(80,0.3,'sawtooth',0.2);addScore(150);unlockAchievement('sapper');}
@@ -409,10 +428,10 @@
   function loop(t){if(!last)last=t;const dt=(t-last)/1000;try{if(running){acc+=t-last;if(acc>dropMs){drop();acc=0;}elapsed+=dt;timeEl.textContent=formatTime(elapsed);
     if(garbageInterval>0){garbageAcc+=dt;if(garbageAcc>=garbageInterval){garbageAcc=0;injectGarbageRow();}}
   }last=t;draw(dt);}catch(e){console.error('tetris frame error',e);last=t;}if(running||flashes.length||particles.length||shake||popups.length)raf=requestAnimationFrame(loop);}
-  function start(){if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('tetris-name',playerName);renderPlayerName();}ensureAudio();grid=emptyGrid();if(difficulty==='hard'){for(let r=ROWS-3;r<ROWS;r++){for(let c=0;c<COLS;c++){if(Math.random()<0.65)grid[r][c]=Math.floor(Math.random()*7);}if(grid[r].every(v=>v>=0))grid[r][Math.floor(Math.random()*COLS)]=-1;}}score=0;scoreEl.textContent=0;lines=0;level=1;
+  function start(){if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('tetris-name',playerName);renderPlayerName();}ensureAudio();grid=emptyGrid();if(mode!=='levels'&&difficulty==='hard'){for(let r=ROWS-3;r<ROWS;r++){for(let c=0;c<COLS;c++){if(Math.random()<0.65)grid[r][c]=Math.floor(Math.random()*7);}if(grid[r].every(v=>v>=0))grid[r][Math.floor(Math.random()*COLS)]=-1;}}score=0;scoreEl.textContent=0;lines=0;level=1;
     if(mode==='levels'&&activeLevel!=null){
       const def=levelDef(activeLevel);
-      levelTarget=def.target;dropMs=Math.round(def.dropMs*DIFF_MULT[difficulty]);garbageInterval=def.garbage||0;garbageAcc=0;
+      levelTarget=def.target;dropMs=def.dropMs;garbageInterval=def.garbage||0;garbageAcc=0;
       levelEl.textContent=activeLevel==='boss'?'БОСС':activeLevel;
       tLevelTargetEl.style.display='block';tLevelTargetEl.textContent='Цель: 0 / '+levelTarget;
     }else{
@@ -422,24 +441,27 @@
     acc=0;last=0;elapsed=0;timeEl.textContent='0:00';flashes=[];particles=[];shake=0;hold=null;canHold=true;combo=-1;rotated=false;popups=[];overEl.style.display='none';next=rnd();spawn();running=true;startBtn.textContent='Рестарт';cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
   startBtn.addEventListener('click',()=>{if(mode==='levels')openLevelMap();else start();});
   const modeOverlay=document.getElementById('modeOverlay'),tmodeLabel=document.getElementById('tmodeLabel');
-  function setMode(m){mode=m;tmodeLabel.textContent=mode==='levels'?'Уровни (10+Босс)':'Классика';modeOverlay.style.display='none';if(mode!=='levels')activeLevel=null;}
+  const diffBox=document.getElementById('diffBox');
+  function setMode(m){mode=m;tmodeLabel.textContent=mode==='levels'?'Уровни (10+Босс)':'Классика';modeOverlay.style.display='none';diffBox.style.display=mode==='levels'?'none':'block';if(mode!=='levels')activeLevel=null;}
   document.getElementById('modeClassicBtn').addEventListener('click',()=>setMode('classic'));
   document.getElementById('modeLevelsBtn').addEventListener('click',()=>setMode('levels'));
   document.getElementById('tmodeChange').addEventListener('click',()=>{if(!running)modeOverlay.style.display='flex';});
   const levelMapOverlay=document.getElementById('levelMapOverlay'),levelMapGrid=document.getElementById('levelMapGrid');
   function openLevelMap(){renderLevelMap();levelMapOverlay.style.display='flex';}
+  function levelNodeHtml(lvl,label,done,unlocked,target,extraStyle){
+    const st=done?'background:#1a2436;border-color:#FFD700;color:#FFD700;':unlocked?'':'opacity:0.35;cursor:default;';
+    return '<button class="lvlNode" data-lvl="'+lvl+'" '+(unlocked?'':'disabled')+' style="width:64px;height:64px;border-radius:50%;padding:0;font-size:18px;font-weight:600;flex:none;'+st+(extraStyle||'')+'" title="Цель: '+target+'">'+(done?'✓':label)+'</button>';
+  }
   function renderLevelMap(){
     let html='';
     for(let i=1;i<=10;i++){
       const done=levelProgress.completed.includes(i);
       const unlocked=i<=levelProgress.unlocked;
-      const st=done?'background:#1a2436;border-color:#FFD700;color:#FFD700;':unlocked?'':'opacity:0.35;cursor:default;';
-      html+='<button class="lvlNode" data-lvl="'+i+'" '+(unlocked?'':'disabled')+' style="aspect-ratio:1;padding:0;font-size:15px;font-weight:600;'+st+'" title="Цель: '+LEVEL_DEFS[i-1].target+'">'+(done?'✓':i)+'</button>';
+      html+=levelNodeHtml(i,i,done,unlocked,LEVEL_DEFS[i-1].target);
+      html+='<div style="font-size:20px;color:var(--border);line-height:1;margin:2px 0;">↓<br>↓</div>';
     }
-    if(levelProgress.unlocked>10){
-      const bst=levelProgress.bossCleared?'background:#1a2436;border-color:#B388FF;color:#B388FF;':'border-color:#F06BB0;color:#F06BB0;';
-      html+='<button class="lvlNode" data-lvl="boss" style="aspect-ratio:1;padding:0;font-size:14px;grid-column:span 4;'+bst+'" title="Цель: '+BOSS_DEF.target+'">'+(levelProgress.bossCleared?'✓ БОСС':'👑 БОСС')+'</button>';
-    }
+    const bossUnlocked=levelProgress.unlocked>10;
+    html+=levelNodeHtml('boss',bossUnlocked?(levelProgress.bossCleared?'✓':'👑'):'👑',levelProgress.bossCleared,bossUnlocked,BOSS_DEF.target,';font-size:24px;border-color:'+(levelProgress.bossCleared?'#B388FF':'#F06BB0')+';color:'+(levelProgress.bossCleared?'#B388FF':'#F06BB0')+';');
     levelMapGrid.innerHTML=html;
     levelMapGrid.querySelectorAll('.lvlNode:not(:disabled)').forEach(b=>b.addEventListener('click',()=>{
       activeLevel=b.dataset.lvl==='boss'?'boss':parseInt(b.dataset.lvl,10);
@@ -451,10 +473,16 @@
   document.getElementById('levelResultRetry').addEventListener('click',()=>{document.getElementById('levelResultOverlay').style.display='none';start();});
   document.getElementById('levelResultMap').addEventListener('click',()=>{document.getElementById('levelResultOverlay').style.display='none';openLevelMap();});
   const lbOverlay=document.getElementById('lbOverlay'),lbList=document.getElementById('lbList');
-  let lbCache=[],lbTab='normal';
+  const lbDiffTabs=document.getElementById('lbDiffTabs'),lbLevelPicker=document.getElementById('lbLevelPicker');
+  let lbCache=[],lbTab='normal',lbMode='classic';
   function renderLbTab(){
+    document.querySelectorAll('.lbModeTab').forEach(b=>{const on=b.dataset.mode===lbMode;b.style.borderColor=on?'#4D96FF':'';b.style.background=on?'#1a2436':'';});
+    lbDiffTabs.style.display=lbMode==='classic'?'flex':'none';
+    lbLevelPicker.style.display=lbMode==='levels'?'block':'none';
     document.querySelectorAll('.lbTab').forEach(b=>{const on=b.dataset.diff===lbTab;b.style.borderColor=on?'#4D96FF':'';b.style.background=on?'#1a2436':'';});
-    const filtered=lbCache.filter(r=>r.difficulty===lbTab);
+    const filtered=lbMode==='classic'
+      ?lbCache.filter(r=>r.mode!=='levels'&&r.difficulty===lbTab)
+      :lbCache.filter(r=>r.mode==='levels'&&r.level===+lbLevelPicker.value);
     const top=filtered.slice(0,10);
     const myIdx=playerName?filtered.findIndex(r=>r.name===playerName):-1;
     let html=renderLbRows(top,myIdx>=0&&myIdx<10?myIdx:-1);
@@ -463,7 +491,9 @@
     }
     lbList.innerHTML=html;
   }
+  document.querySelectorAll('.lbModeTab').forEach(b=>b.addEventListener('click',()=>{lbMode=b.dataset.mode;renderLbTab();}));
   document.querySelectorAll('.lbTab').forEach(b=>b.addEventListener('click',()=>{lbTab=b.dataset.diff;renderLbTab();}));
+  lbLevelPicker.addEventListener('change',renderLbTab);
   document.getElementById('tboard-lb').addEventListener('click',async()=>{
     lbOverlay.style.display='flex';
     lbList.textContent='Загрузка…';
