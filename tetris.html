@@ -94,19 +94,42 @@
     <div class="box row"><div><div class="label">Уровень</div><div id="tlevel" class="small">1</div></div><div><div class="label">Время</div><div id="ttime" class="small">0:00</div></div><div><div class="label">Рекорд</div><div id="tbest" class="small">0</div><div id="tbesttime" style="font-size:11px;color:var(--muted);">0:00</div></div></div>
     <div class="box"><div class="label">Запас (↑)</div><canvas id="thold" width="96" height="96"></canvas></div>
     <div class="box"><div class="label">Дальше</div><canvas id="tnext" width="96" height="96"></canvas></div>
+    <div class="box" style="padding:8px;">
+      <div class="label" style="margin-bottom:6px;">Сложность</div>
+      <div style="display:flex;gap:4px;">
+        <button class="diffBtn" data-diff="easy" style="width:auto;flex:1;padding:6px 0;font-size:11px;">Лёгко</button>
+        <button class="diffBtn" data-diff="normal" style="width:auto;flex:1;padding:6px 0;font-size:11px;">Норм.</button>
+        <button class="diffBtn" data-diff="hard" style="width:auto;flex:1;padding:6px 0;font-size:11px;">Сложно</button>
+      </div>
+    </div>
     <button id="tstart">Старт</button>
+    <button id="tach-btn" style="margin-top:8px;font-size:12px;">Достижения</button>
     <p class="hint">← → двигать · пробел повернуть · ↓ сбросить вниз · ↑ отложить</p>
     <p class="hint touch-hint">свайп ← → двигать · тап повернуть · свайп ↓ сбросить · свайп ↑ отложить</p>
     <div id="tover">Игра окончена</div>
   </div>
 </div>
 <div id="lbOverlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(5,6,10,0.82);align-items:center;justify-content:center;">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;width:280px;max-height:70vh;overflow:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;width:300px;max-height:70vh;overflow:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <h2 style="margin:0;font-size:17px;font-weight:500;">Таблица лидеров</h2>
       <button id="lbClose" style="width:auto;padding:4px 10px;font-size:16px;">×</button>
     </div>
+    <div style="display:flex;gap:4px;margin-bottom:12px;">
+      <button class="lbTab" data-diff="easy" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Лёгкий</button>
+      <button class="lbTab" data-diff="normal" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Норм.</button>
+      <button class="lbTab" data-diff="hard" style="width:auto;flex:1;padding:5px 0;font-size:11px;">Сложный</button>
+    </div>
     <div id="lbList" style="font-size:13px;color:var(--muted);">Загрузка…</div>
+  </div>
+</div>
+<div id="achOverlay" style="display:none;position:fixed;inset:0;z-index:50;background:rgba(5,6,10,0.82);align-items:center;justify-content:center;">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;width:300px;max-height:70vh;overflow:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h2 style="margin:0;font-size:17px;font-weight:500;">Достижения</h2>
+      <button id="achClose" style="width:auto;padding:4px 10px;font-size:16px;">×</button>
+    </div>
+    <div id="achList" style="font-size:13px;"></div>
   </div>
 </div>
 <script>
@@ -123,7 +146,21 @@
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
   function fsVal(v){return typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
-  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),time:num(f.time),level:num(f.level)};});list.sort((a,b)=>b.score-a.score||b.level-a.level);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
+  async function fetchLeaderboard(game){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),time:num(f.time),level:num(f.level),difficulty:(f.difficulty&&f.difficulty.stringValue)||'normal'};});list.sort((a,b)=>b.score-a.score||b.level-a.level);return list;}catch(e){console.error('leaderboard fetch failed',e);return[];}}
+  const OWNER_NAMES=['ilya','alex'];
+  function isOwner(name){return OWNER_NAMES.includes((name||'').trim().toLowerCase());}
+  const PODIUM_COLORS=['#FFD700','#C0C0C0','#CD7F32'];
+  function renderLbRows(rows){
+    if(!rows.length)return 'Пока никто не играл.';
+    return rows.map((r,i)=>{
+      const rankColor=i<3?PODIUM_COLORS[i]:'var(--text)';
+      const badge=isOwner(r.name)?' <span style="background:rgba(77,150,255,0.15);color:#4D96FF;font-size:10px;padding:1px 5px;border-radius:4px;white-space:nowrap;">владелец ✓</span>':'';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
+        <span style="color:${rankColor};font-weight:${i<3?600:400};">${i+1}. ${escapeHtml(r.name)}</span>
+        <span style="display:flex;align-items:center;gap:6px;">${badge}<span style="color:var(--text);font-weight:500;white-space:nowrap;">${Number(r.score)||0}</span></span>
+      </div>`;
+    }).join('');
+  }
   function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   // renames every existing leaderboard record from the old name to the new one
@@ -152,6 +189,42 @@
     renderPlayerName();
     if(old&&old!==playerName)renameRecords('tetris',old,playerName);
   });
+  const ACHIEVEMENTS=[
+    {id:'tspin1',name:'Первый T-spin'},
+    {id:'tetris4',name:'ТЕТРИС! (4 линии разом)'},
+    {id:'sapper',name:'Сапёр (взорвал бомбу)'},
+    {id:'poisoner',name:'Отравитель (яд сменил форму)'},
+    {id:'exorcist',name:'Экзорцист (использовал призрака)'},
+    {id:'electric',name:'Электрик (молния)'},
+    {id:'seismic',name:'Сейсмолог (землетрясение)'},
+    {id:'longlife',name:'Долгожитель (5 минут за игру)'},
+    {id:'century',name:'Сотня (100 линий всего)'}
+  ];
+  let unlockedAch=new Set();
+  try{unlockedAch=new Set(JSON.parse(localStorage.getItem('tetris-achievements')||'[]'));}catch(e){}
+  let totalLines=parseInt(localStorage.getItem('tetris-total-lines')||'0',10)||0;
+  function unlockAchievement(id){
+    if(unlockedAch.has(id))return;
+    const def=ACHIEVEMENTS.find(a=>a.id===id);
+    if(!def)return;
+    unlockedAch.add(id);
+    localStorage.setItem('tetris-achievements',JSON.stringify([...unlockedAch]));
+    popup('🏆 '+def.name,'#FFD700');
+  }
+  function checkGameOverAchievements(){if(elapsed>=300)unlockAchievement('longlife');}
+  function renderAchievements(){
+    const achListEl=document.getElementById('achList');
+    achListEl.innerHTML=ACHIEVEMENTS.map(a=>{
+      const on=unlockedAch.has(a.id);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);opacity:${on?1:0.4};">
+        <span style="color:${on?'#FFD700':'var(--muted)'};font-size:16px;">${on?'✓':'—'}</span>
+        <span>${a.name}</span>
+      </div>`;
+    }).join('');
+  }
+  const achOverlay=document.getElementById('achOverlay');
+  document.getElementById('tach-btn').addEventListener('click',()=>{renderAchievements();achOverlay.style.display='flex';});
+  document.getElementById('achClose').addEventListener('click',()=>{achOverlay.style.display='none';});
   let best=0,bestTime=0,elapsed=0;
   try{const saved=JSON.parse(localStorage.getItem('tetris-best'));if(saved&&typeof saved.score==='number'){best=saved.score;bestTime=saved.time||0;}}catch(e){}
   bestEl.textContent=best;
@@ -160,12 +233,18 @@
   function ensureAudio(){if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}else if(actx.state==='suspended')actx.resume();}
   function beep(freq,dur,type,gain){if(!actx)return;const t0=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();o.type=type||'square';o.frequency.value=freq;o.connect(g);g.connect(actx.destination);g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(gain||0.12,t0+0.01);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);o.start(t0);o.stop(t0+dur);}
   function addScore(n){score+=n;scoreEl.textContent=score;if(score>best){best=score;bestTime=elapsed;localStorage.setItem('tetris-best',JSON.stringify({score:best,time:bestTime}));bestEl.textContent=best;bestTimeEl.textContent=formatTime(bestTime);}}
-  function speedFor(lvl){return Math.max(100,600-(lvl-1)*40);}
+  const DIFF_MULT={easy:1.3,normal:1,hard:0.7};
+  let difficulty=localStorage.getItem('tetris-difficulty')||'normal';
+  if(!DIFF_MULT[difficulty])difficulty='normal';
+  function speedFor(lvl){return Math.round(Math.max(100,600-(lvl-1)*40)*DIFF_MULT[difficulty]);}
+  function renderDiffPicker(){document.querySelectorAll('.diffBtn').forEach(b=>{const on=b.dataset.diff===difficulty;b.style.borderColor=on?'#4D96FF':'';b.style.background=on?'#1a2436':'';});}
+  document.querySelectorAll('.diffBtn').forEach(b=>b.addEventListener('click',()=>{if(running)return;difficulty=b.dataset.diff;localStorage.setItem('tetris-difficulty',difficulty);renderDiffPicker();}));
+  renderDiffPicker();
   const COLORS=['#2DD4E8','#FFC94D','#B388FF','#66E39A','#FF6B6B','#4D96FF','#FFA24D','#4DD0C4','#F06BB0','#D9C24D','#7BC96F','#A177E0','#E8664D','#4A1F1F','#B4FF39','#D9D9D9','#BFE3FF','#FFE066','#66E0FF','#C08552'];
   const SHAPES=[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[0,1,0],[1,1,1],[0,1,0]],[[1,0,1],[1,1,1]],[[1,1,1]],[[1,0],[1,1]],[[1,0],[0,1]],[[1]],[[1]],[[1,1],[1,1]],[[1]],[[1,1,1]],[[1]],[[1]],[[1]]];
   const BOMB=13,POISON=14,COLORBOMB=15,COLORBOMB_CHANCE=0.03,GHOST=16,GHOST_CHANCE=0.04;
   const LIGHTNING_V=17,LIGHTNING_H=18,EARTHQUAKE=19,LIGHTNING_V_CHANCE=0.025,LIGHTNING_H_CHANCE=0.025,EARTHQUAKE_CHANCE=0.05;
-  const SPECIALS=[BOMB,POISON,COLORBOMB,GHOST,LIGHTNING_V,LIGHTNING_H,EARTHQUAKE];
+  const SPECIALS=[COLORBOMB,GHOST,LIGHTNING_V,LIGHTNING_H,EARTHQUAKE];
   const NORMAL_POOL=SHAPES.map((_,i)=>i).filter(i=>!SPECIALS.includes(i));
   function randShapeIdx(){return NORMAL_POOL[Math.floor(Math.random()*NORMAL_POOL.length)];}
   let grid,cur,next,px,py,score,dropMs,acc,last,running=false,raf;
@@ -177,18 +256,18 @@
   function collide(m,ox,oy){const ghostMode=cur&&cur.c===GHOST;for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++){if(!m[r][c])continue;const a=ox+c,b=oy+r;if(a<0||a>=COLS||b>=ROWS)return true;if(!ghostMode&&b>=0&&grid[b][a]>=0)return true;}return false;}
   function merge(){cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v){const yy=py+r;if(yy>=0)grid[yy][px+c]=cur.c;}}));}
   function burst(rowY){for(let c=0;c<COLS;c++){const n=3+Math.floor(Math.random()*3);for(let k=0;k<n;k++)particles.push({x:(c+0.5)*S,y:(rowY+0.5)*S,vx:(Math.random()-0.5)*5,vy:(Math.random()-1.2)*5,life:1,col:COLORS[Math.floor(Math.random()*COLORS.length)],sz:2+Math.random()*3});}}
-  function clearLines(){let rows=[];for(let r=0;r<ROWS;r++)if(grid[r].every(v=>v>=0))rows.push(r);if(!rows.length)return 0;rows.forEach(r=>{flashes.push({y:r,life:1});burst(r);});shake=Math.min(10,rows.length*4);const n=rows.length;rows.sort((a,b)=>b-a).forEach(r=>grid.splice(r,1));for(let i=0;i<n;i++)grid.unshift(Array(COLS).fill(-1));addScore([0,100,300,500,800][Math.min(n,4)]);beep(440+n*80,0.18,'triangle',0.15);lines+=n;const lvl=Math.floor(lines/10)+1;if(lvl!==level){level=lvl;dropMs=speedFor(level);levelEl.textContent=level;popup('уровень '+level,'#4D96FF');beep(523,0.2,'sine',0.15);}return n;}
+  function clearLines(){let rows=[];for(let r=0;r<ROWS;r++)if(grid[r].every(v=>v>=0))rows.push(r);if(!rows.length)return 0;rows.forEach(r=>{flashes.push({y:r,life:1});burst(r);});shake=Math.min(10,rows.length*4);const n=rows.length;rows.sort((a,b)=>b-a).forEach(r=>grid.splice(r,1));for(let i=0;i<n;i++)grid.unshift(Array(COLS).fill(-1));addScore([0,100,300,500,800][Math.min(n,4)]);beep(440+n*80,0.18,'triangle',0.15);lines+=n;if(n===4)unlockAchievement('tetris4');totalLines+=n;localStorage.setItem('tetris-total-lines',String(totalLines));if(totalLines>=100)unlockAchievement('century');const lvl=Math.floor(lines/10)+1;if(lvl!==level){level=lvl;dropMs=speedFor(level);levelEl.textContent=level;popup('уровень '+level,'#4D96FF');beep(523,0.2,'sine',0.15);}return n;}
   function popup(text,color){popups.push({text,color:color||'#fff',life:1,y:0});}
   function tSpinCenter(m){for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++){if(!m[r][c])continue;let n=0;if(r>0&&m[r-1][c])n++;if(r<m.length-1&&m[r+1][c])n++;if(c>0&&m[r][c-1])n++;if(c<m[r].length-1&&m[r][c+1])n++;if(n===3)return{cx:c,cy:r};}return null;}
   function isTSpin(){if(cur.c!==T||!rotated)return false;const ctr=tSpinCenter(cur.m);if(!ctr)return false;const gx=px+ctr.cx,gy=py+ctr.cy;const occ=(a,b)=>a<0||a>=COLS||b>=ROWS||(b>=0&&grid[b][a]>=0);let n=0;if(occ(gx-1,gy-1))n++;if(occ(gx+1,gy-1))n++;if(occ(gx-1,gy+1))n++;if(occ(gx+1,gy+1))n++;return n>=3;}
   function spawn(){cur=next;next=rnd();px=Math.floor((COLS-cur.m[0].length)/2);py=-1;rotated=false;if(collide(cur.m,px,py))gameOver();}
-  function gameOver(){running=false;cancelAnimationFrame(raf);overEl.style.display='block';startBtn.textContent='Заново';beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:level});}
-  function explode(gx,gy){shake=10;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=gx+dx,cy=gy+dy;if(cx<0||cx>=COLS||cy<0||cy>=ROWS)continue;const col=grid[cy][cx]>=0?COLORS[grid[cy][cx]]:'#FF6B6B';grid[cy][cx]=-1;for(let k=0;k<5;k++)particles.push({x:(cx+0.5)*S,y:(cy+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:col,sz:2+Math.random()*4});}popup('БУМ!','#FF6B6B');beep(80,0.3,'sawtooth',0.2);addScore(150);}
+  function gameOver(){running=false;cancelAnimationFrame(raf);overEl.style.display='block';startBtn.textContent='Заново';beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:level,difficulty:difficulty});checkGameOverAchievements();}
+  function explode(gx,gy){shake=10;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=gx+dx,cy=gy+dy;if(cx<0||cx>=COLS||cy<0||cy>=ROWS)continue;const col=grid[cy][cx]>=0?COLORS[grid[cy][cx]]:'#FF6B6B';grid[cy][cx]=-1;for(let k=0;k<5;k++)particles.push({x:(cx+0.5)*S,y:(cy+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:col,sz:2+Math.random()*4});}popup('БУМ!','#FF6B6B');beep(80,0.3,'sawtooth',0.2);addScore(150);unlockAchievement('sapper');}
   function colorExplode(){const belowRow=py+1;const target=belowRow<ROWS?grid[belowRow][px]:-1;if(target<0){popup('мимо...','#8891a3');return;}let count=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(grid[r][c]===target){count++;for(let k=0;k<5;k++)particles.push({x:(c+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:COLORS[target],sz:2+Math.random()*4});grid[r][c]=-1;}}shake=10;popup('ЦВЕТ.БОМБА x'+count,'#fff');beep(60,0.4,'sawtooth',0.22);addScore(count*30);}
-  function siftMerge(){const colCounts={};cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v){const col=px+c;colCounts[col]=(colCounts[col]||0)+1;}}));let placed=0;Object.keys(colCounts).forEach(colStr=>{const col=+colStr;if(col<0||col>=COLS)return;let need=colCounts[col];for(let r=ROWS-1;r>=0&&need>0;r--){if(grid[r][col]<0){grid[r][col]=GHOST;placed++;need--;for(let k=0;k<4;k++)particles.push({x:(col+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*4,vy:-(Math.random()*3),life:1,col:COLORS[GHOST],sz:2+Math.random()*3});}}});if(placed>0){shake=Math.min(8,placed*2);popup('ПРИЗРАК x'+placed,'#BFE3FF');beep(180,0.2,'sine',0.15);addScore(placed*20);}else popup('некуда...','#8891a3');}
-  function lightningCol(col){if(col<0||col>=COLS)return;let count=0;for(let r=0;r<ROWS;r++){if(grid[r][col]>=0){count++;for(let k=0;k<3;k++)particles.push({x:(col+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*5,vy:(Math.random()-1)*5,life:1,col:COLORS[LIGHTNING_V],sz:2+Math.random()*3});}grid[r][col]=-1;}shake=8;popup('МОЛНИЯ ↓','#FFE066');beep(700,0.2,'square',0.18);addScore(count*20);}
-  function lightningRow(row){if(row<0||row>=ROWS)return;flashes.push({y:row,life:1});burst(row);grid.splice(row,1);grid.unshift(Array(COLS).fill(-1));shake=8;popup('МОЛНИЯ →','#66E0FF');beep(700,0.2,'square',0.18);addScore(150);}
-  function earthquakeCol(col){if(col<0||col>=COLS)return;let moved=0;for(let r=ROWS-2;r>=0;r--){if(grid[r][col]>=0&&grid[r+1][col]<0){grid[r+1][col]=grid[r][col];grid[r][col]=-1;moved++;}}if(moved>0){shake=6;popup('ЗЕМЛЕТРЯСЕНИЕ','#C08552');beep(90,0.25,'sawtooth',0.15);addScore(moved*10);}else popup('крепко стоит','#8891a3');}
+  function siftMerge(){unlockAchievement('exorcist');const colCounts={};cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v){const col=px+c;colCounts[col]=(colCounts[col]||0)+1;}}));let placed=0;Object.keys(colCounts).forEach(colStr=>{const col=+colStr;if(col<0||col>=COLS)return;let need=colCounts[col];for(let r=ROWS-1;r>=0&&need>0;r--){if(grid[r][col]<0){grid[r][col]=GHOST;placed++;need--;for(let k=0;k<4;k++)particles.push({x:(col+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*4,vy:-(Math.random()*3),life:1,col:COLORS[GHOST],sz:2+Math.random()*3});}}});if(placed>0){shake=Math.min(8,placed*2);popup('ПРИЗРАК x'+placed,'#BFE3FF');beep(180,0.2,'sine',0.15);addScore(placed*20);}else popup('некуда...','#8891a3');}
+  function lightningCol(col){unlockAchievement('electric');if(col<0||col>=COLS)return;let count=0;for(let r=0;r<ROWS;r++){if(grid[r][col]>=0){count++;for(let k=0;k<3;k++)particles.push({x:(col+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*5,vy:(Math.random()-1)*5,life:1,col:COLORS[LIGHTNING_V],sz:2+Math.random()*3});}grid[r][col]=-1;}shake=8;popup('МОЛНИЯ ↓','#FFE066');beep(700,0.2,'square',0.18);addScore(count*20);}
+  function lightningRow(row){unlockAchievement('electric');if(row<0||row>=ROWS)return;flashes.push({y:row,life:1});burst(row);grid.splice(row,1);grid.unshift(Array(COLS).fill(-1));shake=8;popup('МОЛНИЯ →','#66E0FF');beep(700,0.2,'square',0.18);addScore(150);}
+  function earthquakeCol(col){unlockAchievement('seismic');if(col<0||col>=COLS)return;let moved=0;for(let r=ROWS-2;r>=0;r--){if(grid[r][col]>=0&&grid[r+1][col]<0){grid[r+1][col]=grid[r][col];grid[r][col]=-1;moved++;}}if(moved>0){shake=6;popup('ЗЕМЛЕТРЯСЕНИЕ','#C08552');beep(90,0.25,'sawtooth',0.15);addScore(moved*10);}else popup('крепко стоит','#8891a3');}
   function lockInner(){
     if(cur.c===BOMB){explode(px,py);combo=-1;return;}
     if(cur.c===COLORBOMB){colorExplode();combo=-1;return;}
@@ -196,13 +275,13 @@
     if(cur.c===LIGHTNING_H){lightningRow(py);combo=-1;return;}
     if(cur.c===EARTHQUAKE){earthquakeCol(px);combo=-1;return;}
     if(cur.c===GHOST){siftMerge();const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;return;}
-    const tspin=isTSpin();merge();beep(110,0.06,'sine',0.1);const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;if(tspin){addScore(n>0?400*n:100);popup(n>0?'T-SPIN x'+n:'T-SPIN','#F06BB0');beep(550,0.15,'sawtooth',0.12);}
+    const tspin=isTSpin();merge();beep(110,0.06,'sine',0.1);const n=clearLines();if(n>0){combo++;if(combo>0){addScore(50*combo);popup('комбо x'+(combo+1),'#FFC94D');beep(660,0.1,'square',0.1);}}else combo=-1;if(tspin){addScore(n>0?400*n:100);popup(n>0?'T-SPIN x'+n:'T-SPIN','#F06BB0');beep(550,0.15,'sawtooth',0.12);unlockAchievement('tspin1');}
   }
   function lock(){try{lockInner();}catch(e){console.error('tetris lock error',e);}spawn();canHold=true;}
   function drop(){if(!collide(cur.m,px,py+1))py++;else lock();}
   function hardDrop(){while(!collide(cur.m,px,py+1))py++;lock();}
   function poisonMorph(){return SHAPES[randShapeIdx()].map(r=>r.slice());}
-  function rotateCur(){const r=cur.c===POISON?poisonMorph():rotate(cur.m);if(!collide(r,px,py)){cur.m=r;rotated=true;}else if(!collide(r,px-1,py)){px--;cur.m=r;rotated=true;}else if(!collide(r,px+1,py)){px++;cur.m=r;rotated=true;}else return;beep(cur.c===POISON?200:330,cur.c===POISON?0.1:0.05,cur.c===POISON?'sawtooth':'square',0.07);}
+  function rotateCur(){const wasPoison=cur.c===POISON;const r=wasPoison?poisonMorph():rotate(cur.m);if(!collide(r,px,py)){cur.m=r;rotated=true;}else if(!collide(r,px-1,py)){px--;cur.m=r;rotated=true;}else if(!collide(r,px+1,py)){px++;cur.m=r;rotated=true;}else return;if(wasPoison)unlockAchievement('poisoner');beep(cur.c===POISON?200:330,cur.c===POISON?0.1:0.05,cur.c===POISON?'sawtooth':'square',0.07);}
   function moveLeft(){if(!collide(cur.m,px-1,py)){px--;rotated=false;beep(200,0.04,'square',0.05);}}
   function moveRight(){if(!collide(cur.m,px+1,py)){px++;rotated=false;beep(200,0.04,'square',0.05);}}
   function holdPiece(){if(!canHold)return;const idx=cur.c;if(hold===null){hold=idx;spawn();}else{const s=hold;hold=idx;cur={m:SHAPES[s].map(r=>r.slice()),c:s};px=Math.floor((COLS-cur.m[0].length)/2);py=-1;if(collide(cur.m,px,py))gameOver();}canHold=false;beep(260,0.06,'triangle',0.08);}
@@ -216,11 +295,17 @@
   function start(){if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('tetris-name',playerName);renderPlayerName();}ensureAudio();grid=emptyGrid();score=0;scoreEl.textContent=0;lines=0;level=1;levelEl.textContent=1;dropMs=speedFor(1);acc=0;last=0;elapsed=0;timeEl.textContent='0:00';flashes=[];particles=[];shake=0;hold=null;canHold=true;combo=-1;rotated=false;popups=[];overEl.style.display='none';next=rnd();spawn();running=true;startBtn.textContent='Рестарт';cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}
   startBtn.addEventListener('click',start);
   const lbOverlay=document.getElementById('lbOverlay'),lbList=document.getElementById('lbList');
+  let lbCache=[],lbTab='normal';
+  function renderLbTab(){
+    document.querySelectorAll('.lbTab').forEach(b=>{const on=b.dataset.diff===lbTab;b.style.borderColor=on?'#4D96FF':'';b.style.background=on?'#1a2436':'';});
+    lbList.innerHTML=renderLbRows(lbCache.filter(r=>r.difficulty===lbTab).slice(0,10));
+  }
+  document.querySelectorAll('.lbTab').forEach(b=>b.addEventListener('click',()=>{lbTab=b.dataset.diff;renderLbTab();}));
   document.getElementById('tboard-lb').addEventListener('click',async()=>{
     lbOverlay.style.display='flex';
     lbList.textContent='Загрузка…';
-    const rows=await fetchLeaderboard('tetris',10);
-    lbList.innerHTML=rows.length?rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i+1}. ${escapeHtml(r.name)}</span><span style="color:var(--text);font-weight:500;white-space:nowrap;">${Number(r.score)||0} · ур.${r.level} · ${formatTime(r.time)}</span></div>`).join(''):'Пока никто не играл.';
+    lbCache=await fetchLeaderboard('tetris');
+    renderLbTab();
   });
   document.getElementById('lbClose').addEventListener('click',()=>{lbOverlay.style.display='none';});
   function safeCall(fn){try{fn();}catch(e){console.error('tetris action error',e);}}
