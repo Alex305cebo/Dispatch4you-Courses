@@ -70,6 +70,12 @@
   @keyframes shopGlow{0%,100%{box-shadow:0 0 3px #4ade80;}50%{box-shadow:0 0 18px #4ade80;}}
   .shop-active{animation:shopGlow 0.9s ease-in-out infinite;border-color:#4ade80 !important;}
   @keyframes warnpulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
+  @media (hover:none) and (pointer:coarse){
+    /* stats live in the on-canvas HUD — hide the duplicate boxes, give the screen to the game */
+    .side .m-hide{display:none;}
+    .side{max-height:16vh;}
+    .hint{display:none;}
+  }
 </style>
 </head>
 <body>
@@ -129,14 +135,14 @@
         <button id="btnRename" style="width:auto;padding:4px 8px;font-size:11px;">✎</button>
       </div>
     </div>
-    <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
-    <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
-    <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
-    <div class="box full bars">
+    <div class="box row m-hide"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
+    <div class="box m-hide"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
+    <div class="box m-hide"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
+    <div class="box full bars m-hide">
       <div class="label">HP <span id="shpnum" style="color:var(--text);font-weight:600;">100/100</span></div><div class="bar" id="hpbar"><div></div></div>
       <div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div>
     </div>
-    <div class="box full">
+    <div class="box full m-hide">
       <div class="label">Характеристики</div>
       <div class="statgrid">
         <div><span>Урон</span><b id="stdmg">0</b></div>
@@ -656,13 +662,13 @@
       enemyProjectiles.push({x:e.x,y:e.y,vx:Math.cos(a)*(150+bn*8),vy:Math.sin(a)*(150+bn*8),
         dmg:Math.round(e.dmg*0.35),r:7,life:3,color:'#a855f7',boss:true});
     }
-    beep(140,0.2,'sawtooth',0.12);
+    beep(140,0.16,'triangle',0.08);
   }
 
   function mobShoot(e){
     const ang=Math.atan2(player.y-e.y,player.x-e.x);
     enemyProjectiles.push({x:e.x,y:e.y,vx:Math.cos(ang)*130,vy:Math.sin(ang)*130,dmg:e.dmg,r:5,life:3,color:e.color});
-    beep(300,0.08,'triangle',0.06);
+    beep(300,0.06,'sine',0.035);
   }
 
   function killEnemy(e){
@@ -678,7 +684,7 @@
           child:true,xp:Math.max(1,Math.round(e.xp*0.3)),elite:false});
       }
     }
-    beep(e.elite?160:300,0.12,'triangle',0.08);
+    beep(e.elite?160:300,0.09,'sine',0.045);
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(player.explodeKillLevel&&!e.elite){
       const R=70*player.aoeMult,ed=e.maxHp*(0.1+0.04*player.explodeKillLevel);
@@ -777,7 +783,7 @@
       projectiles.push({x:player.x,y:player.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
         dmg:rollDmg(player.dmg*0.8),pierceLeft:player.pierce,r:5*player.aoeMult,life:1.2,hitSet:new Set()});
     }
-    beep(660,0.03,'square',0.03);
+    sfxSweep(700,520,0.06,'sine',0.022);
   }
 
   function applyAura(dt){
@@ -834,7 +840,7 @@
         for(const e of enemies){if(hit.has(e))continue;const d=dist(from,e);if(d<bd){bd=d;target=e;}}
       }
     }
-    beep(880,0.08,'sawtooth',0.06);
+    sfxSweep(900,480,0.09,'triangle',0.04);
   }
 
   function updateMines(dt){
@@ -900,14 +906,14 @@
         if(e){p.fireballAcc=0;const a=Math.atan2(e.y-p.y,e.x-p.x),sp=240*p.projSpeedMult;
           projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:9,life:2.6,pierceLeft:0,hitSet:new Set(),
             dmg:rollDmg((26+12*p.fireballLevel)*p.dmgMult),fireball:true,blastR:(65+10*p.fireballLevel)*p.aoeMult,color:'#f97316'});
-          beep(180,0.09,'square',0.07);}}}
+          sfxSweep(220,140,0.12,'sine',0.05);}}}
     // boomerang — out along facing, decelerates, comes back; hits on both passes
     if(p.boomLevel){p.boomAcc+=dt*as;
       if(p.boomAcc>=2.6-p.boomLevel*0.2){p.boomAcc=0;
         const sp=340*p.projSpeedMult;
         boomers.push({x:p.x,y:p.y,vx:p.facing.x*sp,vy:p.facing.y*sp,r:11*p.aoeMult,phase:0,
           dmg:rollDmg((16+8*p.boomLevel)*p.dmgMult),hitSet:new Set(),life:5});
-        beep(520,0.05,'triangle',0.05);}}
+        sfxSweep(480,720,0.08,'sine',0.03);}}
     for(const b of boomers){
       if(b.phase===0){
         b.vx*=Math.pow(0.08,dt);b.vy*=Math.pow(0.08,dt);
@@ -946,7 +952,7 @@
         const off=rand(0,Math.PI*2);
         for(let i=0;i<n;i++){const a=off+i/n*Math.PI*2;
           projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:4,life:0.8,pierceLeft:0,hitSet:new Set(),dmg,color:'#f0abfc'});}
-        beep(760,0.05,'square',0.05);}}
+        sfxSweep(650,880,0.05,'sine',0.03);}}
     // drones — orbiting companions that snipe the nearest enemy
     if(p.droneLevel){p.droneAcc+=dt*as;
       if(p.droneAcc>=1.4-p.droneLevel*0.1){p.droneAcc=0;
@@ -985,7 +991,7 @@
     if(p.turretLevel){p.turretAcc+=dt*as;
       if(p.turretAcc>=9-p.turretLevel*0.6){p.turretAcc=0;
         turrets.push({x:p.x,y:p.y,life:8+p.turretLevel,fireAcc:0});
-        beep(340,0.1,'square',0.07);}}
+        beep(340,0.1,'sine',0.05);}}
     for(const tu of turrets){tu.life-=dt;tu.fireAcc+=dt*as;
       if(tu.fireAcc>=0.45){
         let bestE=null,bd=330;
@@ -1799,6 +1805,33 @@
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
   }
 
+  // critical stats drawn on the canvas itself — always visible, no matter how
+  // the page layout scrolls or squeezes on small screens
+  function drawHudOverlay(){
+    const pad=8,w=176,h=66;
+    x.save();
+    x.globalAlpha=0.6;x.fillStyle='#0b0e17';x.fillRect(pad,pad,w,h);
+    x.globalAlpha=1;x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=1;x.strokeRect(pad+0.5,pad+0.5,w-1,h-1);
+    // HP bar + numbers
+    x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(pad+8,pad+8,w-16,10);
+    x.fillStyle='#ef4444';x.fillRect(pad+8,pad+8,(w-16)*Math.max(0,Math.min(1,player.hp/player.maxHp)),10);
+    x.fillStyle='#fff';x.font='bold 9px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+    x.fillText(Math.max(0,Math.round(player.hp))+'/'+Math.round(player.maxHp),pad+w/2,pad+13.5);
+    // XP bar
+    x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(pad+8,pad+22,w-16,5);
+    x.fillStyle='#4D96FF';x.fillRect(pad+8,pad+22,(w-16)*Math.max(0,Math.min(1,player.xp/player.xpNeed)),5);
+    // row 1: level + lives
+    x.textAlign='left';x.font='bold 12px system-ui,sans-serif';
+    x.fillStyle='#e8ebf2';x.fillText('Ур. '+player.level,pad+8,pad+38);
+    x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+62,pad+38);
+    x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+124,pad+38);
+    // row 2: points (+ blinking beacon when the shop zone is live)
+    if(safeZone&&state==='running')x.globalAlpha=0.55+0.45*Math.sin(t*7);
+    x.fillStyle='#4ade80';x.fillText('🛒 '+Math.floor(points)+' баллов',pad+8,pad+55);
+    x.globalAlpha=1;
+    x.restore();
+  }
+
   function draw(){
     let sx=0,sy=0;
     if(camShake>0.3){sx=Math.sin(t*47)*camShake*0.6;sy=Math.cos(t*41)*camShake*0.6;}
@@ -1979,16 +2012,18 @@
     x.globalAlpha=1;
     x.restore();
     drawOffscreenIndicators();
-    // joystick (screen-space, drawn outside the world transform)
-    if(joy.active){x.strokeStyle='rgba(255,255,255,0.25)';x.lineWidth=2;x.beginPath();x.arc(joy.bx,joy.by,42,0,Math.PI*2);x.stroke();x.fillStyle='rgba(255,255,255,0.15)';x.beginPath();x.arc(joy.bx+joy.dx*42,joy.by+joy.dy*42,16,0,Math.PI*2);x.fill();}
-    if(announce){const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));x.font='bold 26px system-ui,sans-serif';x.textAlign='center';x.fillStyle=ac;x.shadowColor=ac;x.shadowBlur=12;x.fillText(announce.text,W/2,46);x.restore();}
-    // blinking shop beacon while the safe-zone shop is open for business
-    if(safeZone&&state==='running'){
-      x.save();x.globalAlpha=0.55+0.45*Math.sin(t*7);
-      x.font='22px system-ui,sans-serif';x.textAlign='left';x.textBaseline='top';
-      x.shadowColor='#4ade80';x.shadowBlur=14;x.fillText('🛒',12,10);
+    // movement indicator: a chevron orbiting the player instead of a joystick pad —
+    // on touch screens the finger sits right on top of the player, a pad there is invisible
+    if(joy.active&&(Math.abs(joy.dx)>0.05||Math.abs(joy.dy)>0.05)){
+      const ja=Math.atan2(joy.dy,joy.dx);
+      const jr=(player.r+22)*zoom;
+      x.save();x.translate(W/2+Math.cos(ja)*jr,H/2+Math.sin(ja)*jr);x.rotate(ja);
+      x.globalAlpha=0.75;x.fillStyle='#4D96FF';x.shadowColor='#4D96FF';x.shadowBlur=8;
+      x.beginPath();x.moveTo(10,0);x.lineTo(-4,-7);x.lineTo(-4,7);x.closePath();x.fill();
       x.restore();
     }
+    drawHudOverlay();
+    if(announce){const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));x.font='bold 26px system-ui,sans-serif';x.textAlign='center';x.fillStyle=ac;x.shadowColor=ac;x.shadowBlur=12;x.fillText(announce.text,W/2,46);x.restore();}
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
   }
 
