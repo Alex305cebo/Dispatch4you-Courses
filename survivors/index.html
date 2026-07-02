@@ -88,6 +88,11 @@
       <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart" id="btnStart">Начать заново</button>
     </div>
+    <div id="oweaponchoice" class="overlay">
+      <h2>Выбери 2 оружия</h2>
+      <p id="weaponChoiceHint" style="color:#4D96FF;font-size:13px;margin:-8px 0 0;">Выбрано: 0/2</p>
+      <div class="cards" id="weaponChoiceList" style="max-height:340px;overflow:auto;"></div>
+    </div>
     <div id="olevel" class="overlay">
       <h2 id="levelTitle">Новый уровень!</h2>
       <p id="levelSub" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
@@ -411,6 +416,26 @@
     {id:'turret',name:'Турель',desc:'Ставит турель, ведущую огонь по округе.',apply:p=>p.turretLevel=1},
   ];
 
+  // signature Vampire-Survivors mechanic: max a weapon + level a paired passive -> evolve it.
+  // ready(p) gates the special golden card; apply(p) flips the evo flag the weapon update reads.
+  const EVOLUTIONS=[
+    {id:'blade',flag:'bladeEvo',name:'⭐ Вихрь Клинков',desc:'Клинки → буря лезвий: больше колец, шире охват, вдвое урон',
+      wlvl:'bladeLevel',cat:'aoe',ready:p=>p.bladeLevel>=5&&(shopBought.aoe||0)>=3&&!p.bladeEvo,apply:p=>p.bladeEvo=true},
+    {id:'chain',flag:'chainEvo',name:'⭐ Гроза',desc:'Молния → гроза: больше прыжков и урона, бьёт чаще',
+      wlvl:'chainLevel',cat:'crit',ready:p=>p.chainLevel>=5&&(shopBought.crit||0)>=3&&!p.chainEvo,apply:p=>p.chainEvo=true},
+    {id:'mine',flag:'mineEvo',name:'⭐ Минное Поле',desc:'Мины → минное поле: не исчезают, огромный взрыв, ставятся чаще',
+      wlvl:'mineLevel',cat:'pierce',ready:p=>p.mineLevel>=5&&p.pierce>=3&&!p.mineEvo,apply:p=>p.mineEvo=true},
+    {id:'fireball',flag:'fireballEvo',name:'⭐ Метеор-Шар',desc:'Огненный шар → метеор: пробивает и взрывается снова, гигантский радиус',
+      wlvl:'fireballLevel',cat:'dmg',ready:p=>p.fireballLevel>=5&&(shopBought.dmg||0)>=4&&!p.fireballEvo,apply:p=>p.fireballEvo=true},
+    {id:'laser',flag:'laserEvo',name:'⭐ Призма',desc:'Лазер → призма: веер из трёх лучей, вдвое урон',
+      wlvl:'laserLevel',cat:'projspeed',ready:p=>p.laserLevel>=5&&(shopBought.projspeed||0)>=3&&!p.laserEvo,apply:p=>p.laserEvo=true},
+    {id:'drone',flag:'droneEvo',name:'⭐ Рой Дронов',desc:'Дрон → рой: больше дронов, стреляют вдвое чаще',
+      wlvl:'droneLevel',cat:'rate',ready:p=>p.droneLevel>=5&&(shopBought.rate||0)>=4&&!p.droneEvo,apply:p=>p.droneEvo=true},
+    {id:'gun',flag:'gunEvo',name:'⭐ Шквал',desc:'Пушка → шквал: залп во все стороны каждым выстрелом',
+      wlvl:'',cat:'multi',ready:p=>(shopBought.multi||0)>=5&&(shopBought.rate||0)>=4&&!p.gunEvo,apply:p=>p.gunEvo=true},
+  ];
+  function readyEvolutions(){return EVOLUTIONS.filter(e=>e.ready(player));}
+
   const PICKUP_TYPES=[
     {id:'chest',color:'#facc15',label:'★'},
     {id:'heal',color:'#4ade80',label:'+'},
@@ -443,10 +468,11 @@
       barrierLevel:0,barrierCd:0,thornsLevel:0,greedLevel:0,wisdomLevel:0,secondWindLevel:0,
       auraHasteLevel:0,momentumLevel:0,noHitT:0,rageLevel:0,armorLevel:0,dodgeLevel:0,
       explodeKillLevel:0,chillLevel:0,rearLevel:0,chronoLevel:0,chronoCd:15,
+      bladeEvo:false,chainEvo:false,mineEvo:false,fireballEvo:false,laserEvo:false,droneEvo:false,gunEvo:false,
       level:1,xp:0,xpNeed:xpNeedFor(1),invuln:0,facing:{x:1,y:0}};
   }
 
-  function xpNeedFor(lvl){return Math.round(18*Math.pow(1.15,lvl-1));}
+  function xpNeedFor(lvl){return Math.round(18*Math.pow(1.22,lvl-1));}
 
   function rollDmg(base){
     if(player.berserkActive>0)base*=1.4+player.berserkLevel*0.05;
@@ -542,6 +568,9 @@
   // (player power plateaus once upgrade caps are hit — a runaway exponent would wall the run)
   function levelHpMul(L){return L<=60?Math.pow(1.035,L):Math.pow(1.035,60)*Math.pow(1.01,L-60);}
   function levelDmgMul(L){return Math.min(4,1+L*0.028);}
+  // ponytail: d.hpMul is time-based and caps at 6x within ~4 min, well before a fresh
+  // player reaches level 10 — taper it down early so mobs aren't unkillable on a slow start
+  function earlyGameHpEase(L){return L<10?0.5+0.05*L:1;}
 
   function spawnEnemy(elite,bossNumber){
     const ang=rand(0,Math.PI*2),rad=Math.max(W,H)/2+80;
@@ -552,7 +581,7 @@
     const skin=elite?BOSS_SKINS[(bn-1)%BOSS_SKINS.length]:null;
     const hpMulL=levelHpMul(player.level),dmgMulL=levelDmgMul(player.level);
     const champion=!elite&&player.level>=8&&Math.random()<0.05;
-    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1);
+    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level);
     const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
@@ -788,6 +817,13 @@
       projectiles.push({x:player.x,y:player.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
         dmg:rollDmg(player.dmg*0.8),pierceLeft:player.pierce,r:5*player.aoeMult,life:1.2,hitSet:new Set()});
     }
+    if(player.gunEvo){
+      // Шквал: a full radial burst on every shot
+      const rn=12;
+      for(let i=0;i<rn;i++){const a=i/rn*Math.PI*2;
+        projectiles.push({x:player.x,y:player.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+          dmg:rollDmg(player.dmg),pierceLeft:player.pierce,r:5*player.aoeMult,life:1,hitSet:new Set(),color:'#fde047'});}
+    }
     sfxSweep(700,520,0.06,'sine',0.022);
   }
 
@@ -804,11 +840,12 @@
 
   function updateBlades(dt){
     if(!player.bladeLevel)return;
-    player.bladeAngle+=dt*3*player.projSpeedMult;
-    const perRing=player.bladeLevel,ringCount=Math.min(3,player.projCount);
-    const dmg=rollDmg((8+player.bladeLevel*5)*player.dmgMult);
+    const evo=player.bladeEvo;
+    player.bladeAngle+=dt*(evo?4.5:3)*player.projSpeedMult;
+    const perRing=player.bladeLevel+(evo?2:0),ringCount=Math.min(evo?5:3,player.projCount+(evo?2:0));
+    const dmg=rollDmg((8+player.bladeLevel*5)*(evo?2:1)*player.dmgMult);
     const hitCd=0.3/player.atkSpeedMult;
-    const reach=(8+player.bladeLevel*2)*player.aoeMult;
+    const reach=(8+player.bladeLevel*2)*(evo?1.6:1)*player.aoeMult;
     for(let ring=0;ring<ringCount;ring++){
       const R=50+player.bladeLevel*6+ring*22,dir=ring%2===0?1:-1;
       for(let i=0;i<perRing;i++){
@@ -824,13 +861,14 @@
 
   function updateChain(dt){
     if(!player.chainLevel)return;
+    const evo=player.chainEvo;
     player.chainAcc+=dt*1000*player.atkSpeedMult;
-    const interval=Math.max(400,1200-player.chainLevel*120);
+    const interval=Math.max(evo?200:400,1200-player.chainLevel*120)*(evo?0.6:1);
     if(player.chainAcc<interval)return;
     player.chainAcc=0;
-    const dmg=rollDmg((14+player.chainLevel*6)*player.dmgMult);
-    const jumps=1+player.chainLevel+player.pierce;
-    const width=2+player.chainLevel*0.5;
+    const dmg=rollDmg((14+player.chainLevel*6)*(evo?2:1)*player.dmgMult);
+    const jumps=1+player.chainLevel+player.pierce+(evo?4:0);
+    const width=2+player.chainLevel*0.5+(evo?2:0);
     for(let volley=0;volley<player.projCount;volley++){
       let target=nearestEnemy(450);
       if(!target)break;
@@ -850,14 +888,15 @@
 
   function updateMines(dt){
     if(!player.mineLevel)return;
+    const evo=player.mineEvo;
     player.mineAcc+=dt*player.atkSpeedMult;
-    const interval=Math.max(2.5,6-player.mineLevel*0.6);
+    const interval=Math.max(evo?1:2.5,6-player.mineLevel*0.6)*(evo?0.5:1);
     if(player.mineAcc<interval)return;
     player.mineAcc=0;
-    const dmg=rollDmg((20+player.mineLevel*14)*player.dmgMult);
-    const blastR=(60+player.mineLevel*8)*(1+player.pierce*0.15)*player.aoeMult;
+    const dmg=rollDmg((20+player.mineLevel*14)*(evo?1.8:1)*player.dmgMult);
+    const blastR=(60+player.mineLevel*8)*(1+player.pierce*0.15)*(evo?1.7:1)*player.aoeMult;
     for(let i=0;i<player.projCount;i++){
-      mines.push({x:player.x+rand(-14,14),y:player.y+rand(-14,14),r:10+player.mineLevel*2,armed:false,armT:0.5,life:8,
+      mines.push({x:player.x+rand(-14,14),y:player.y+rand(-14,14),r:10+player.mineLevel*2,armed:false,armT:0.5,life:evo?24:8,
         dmg,blastR});
     }
   }
@@ -907,10 +946,13 @@
     const p=player,as=p.atkSpeedMult;
     // fireball — big slow projectile, explodes on first hit (handled in projectile loop)
     if(p.fireballLevel){p.fireballAcc+=dt*as;
-      if(p.fireballAcc>=3.4-p.fireballLevel*0.3){const e=nearestEnemy(520);
+      const fEvo=p.fireballEvo;
+      if(p.fireballAcc>=(3.4-p.fireballLevel*0.3)*(fEvo?0.6:1)){const e=nearestEnemy(520);
         if(e){p.fireballAcc=0;const a=Math.atan2(e.y-p.y,e.x-p.x),sp=240*p.projSpeedMult;
-          projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:9,life:2.6,pierceLeft:0,hitSet:new Set(),
-            dmg:rollDmg((26+12*p.fireballLevel)*p.dmgMult),fireball:true,blastR:(65+10*p.fireballLevel)*p.aoeMult,color:'#f97316'});
+          const shots=fEvo?2:1;
+          for(let s=0;s<shots;s++){const aa=a+(fEvo?(s-0.5)*0.25:0);
+            projectiles.push({x:p.x,y:p.y,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:fEvo?13:9,life:2.6,pierceLeft:fEvo?3:0,hitSet:new Set(),
+              dmg:rollDmg((26+12*p.fireballLevel)*(fEvo?2.2:1)*p.dmgMult),fireball:true,fireballEvo:fEvo,blastR:(65+10*p.fireballLevel)*(fEvo?2:1)*p.aoeMult,color:fEvo?'#fb7185':'#f97316'});}
           sfxSweep(220,140,0.12,'sine',0.05);}}}
     // boomerang — out along facing, decelerates, comes back; hits on both passes
     if(p.boomLevel){p.boomAcc+=dt*as;
@@ -943,12 +985,16 @@
     if(p.laserLevel){p.laserAcc+=dt*as;
       if(p.laserAcc>=2.8-p.laserLevel*0.22){const e=nearestEnemy(460);
         if(e){p.laserAcc=0;
-          const a=Math.atan2(e.y-p.y,e.x-p.x),L=460,thr=(15+2*p.laserLevel)*p.aoeMult;
-          const dmg=rollDmg((18+9*p.laserLevel)*p.dmgMult);
-          const ux=Math.cos(a),uy=Math.sin(a);
-          for(const o of enemies){const rx=o.x-p.x,ry=o.y-p.y,proj=rx*ux+ry*uy;
-            if(proj>0&&proj<L&&Math.abs(rx*uy-ry*ux)<thr+o.r)o.hp-=dmg;}
-          bolts.push({x1:p.x,y1:p.y,x2:p.x+ux*L,y2:p.y+uy*L,life:0.25,width:4+p.laserLevel,color:'#f43f5e'});
+          const lEvo=p.laserEvo;
+          const baseA=Math.atan2(e.y-p.y,e.x-p.x),L=460,thr=(15+2*p.laserLevel)*p.aoeMult;
+          const dmg=rollDmg((18+9*p.laserLevel)*(lEvo?2:1)*p.dmgMult);
+          const beams=lEvo?[-0.28,0,0.28]:[0];
+          for(const off of beams){
+            const a=baseA+off,ux=Math.cos(a),uy=Math.sin(a);
+            for(const o of enemies){const rx=o.x-p.x,ry=o.y-p.y,proj=rx*ux+ry*uy;
+              if(proj>0&&proj<L&&Math.abs(rx*uy-ry*ux)<thr+o.r)o.hp-=dmg;}
+            bolts.push({x1:p.x,y1:p.y,x2:p.x+ux*L,y2:p.y+uy*L,life:0.25,width:4+p.laserLevel,color:lEvo?'#a78bfa':'#f43f5e'});
+          }
           sfxSweep(1800,300,0.15,'sawtooth',0.07);}}}
     // shards — radial burst
     if(p.shardLevel){p.shardAcc+=dt*as;
@@ -960,14 +1006,15 @@
         sfxSweep(650,880,0.05,'sine',0.03);}}
     // drones — orbiting companions that snipe the nearest enemy
     if(p.droneLevel){p.droneAcc+=dt*as;
-      if(p.droneAcc>=1.4-p.droneLevel*0.1){p.droneAcc=0;
-        const n=1+Math.floor((p.droneLevel-1)/2);
+      const dEvo=p.droneEvo;
+      if(p.droneAcc>=(1.4-p.droneLevel*0.1)*(dEvo?0.5:1)){p.droneAcc=0;
+        const n=1+Math.floor((p.droneLevel-1)/2)+(dEvo?2:0);
         for(let i=0;i<n;i++){
           const a=t*1.6+i*(Math.PI*2/n),dx0=p.x+Math.cos(a)*46,dy0=p.y+Math.sin(a)*46;
           const e=nearestEnemy(420);
           if(e){const aa=Math.atan2(e.y-dy0,e.x-dx0),sp=500*p.projSpeedMult;
-            projectiles.push({x:dx0,y:dy0,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:3.5,life:1,pierceLeft:0,hitSet:new Set(),
-              dmg:rollDmg((10+6*p.droneLevel)*p.dmgMult),color:'#4ade80'});}}}}
+            projectiles.push({x:dx0,y:dy0,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:3.5,life:1,pierceLeft:dEvo?1:0,hitSet:new Set(),
+              dmg:rollDmg((10+6*p.droneLevel)*(dEvo?1.5:1)*p.dmgMult),color:'#4ade80'});}}}}
     // acid pools — lingering damage zones dropped at the player's feet
     if(p.acidLevel){p.acidAcc+=dt*as;
       if(p.acidAcc>=4.5-p.acidLevel*0.35){p.acidAcc=0;
@@ -1079,9 +1126,16 @@
   }
 
 
+  function pickChosen(){
+    pendingLevelUps--;
+    olevel.classList.remove('show');
+    if(pendingLevelUps>0)showLevelUp();else startCooldown();
+  }
+
   function showLevelUp(){
+    const evos=readyEvolutions();
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
-    if(pool.length===0){
+    if(pool.length===0&&evos.length===0){
       // everything available is maxed (damage is uncapped so this is rare) — heal a bit
       // instead of freezing on an empty card screen, and move straight on
       player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);
@@ -1096,27 +1150,37 @@
     else levelTitle.textContent=boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!';
     if(pendingLevelUps>1){levelSub.style.display='block';levelSub.textContent='Осталось выборов: '+pendingLevelUps;}
     else levelSub.style.display='none';
-    const picks=[];
-    const copy=pool.slice();
-    for(let i=0;i<3&&copy.length;i++){picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);}
     cardsEl.innerHTML='';
+    // a ready evolution takes the first, highlighted slot (the VS "chest evolution" moment)
+    const evo=evos.length?evos[Math.floor(Math.random()*evos.length)]:null;
+    const normalSlots=evo?2:3;
+    const picks=[];const copy=pool.slice();
+    for(let i=0;i<normalSlots&&copy.length;i++){picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);}
+    if(evo){
+      const el=document.createElement('div');el.className='card';
+      el.style.borderColor='#facc15';el.style.boxShadow='0 0 14px rgba(250,204,21,0.5)';el.style.background='rgba(250,204,21,0.08)';
+      el.innerHTML='<b style="color:#facc15;">'+evo.name+'</b><span style="display:block;color:#fde047;font-weight:600;margin-bottom:4px;">ЭВОЛЮЦИЯ ОРУЖИЯ</span><span>'+evo.desc+'</span>';
+      el.onclick=()=>{evo.apply(player);announce={text:evo.name+'!',life:2.4,color:'#facc15'};sfxChime(660,5,0.09,0.12);camShake=Math.max(camShake,6);pickChosen();};
+      cardsEl.appendChild(el);
+    }
     picks.forEach(u=>{
       const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;
       const lvl=upgradeLevel(u);
       const el=document.createElement('div');el.className='card';
       el.style.borderColor=ri.color;
       el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLabel(u)+'</span><span>'+u.desc+'</span>';
-      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;pendingLevelUps--;sfxChime(523,3,0.08,0.1);
-        olevel.classList.remove('show');
-        if(pendingLevelUps>0)showLevelUp();else startCooldown();
-      };
+      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;sfxChime(523,3,0.08,0.1);pickChosen();};
       cardsEl.appendChild(el);
     });
     olevel.classList.add('show');
-    updateHud();
   }
 
   function startCooldown(){
+    if(!pendingBossLevel&&!pendingSuperboss&&!pendingLevel8Boss&&!pendingSuperWarning){
+      freezeT=Math.max(freezeT,2);
+      state='running';last=performance.now();raf=requestAnimationFrame(loop);
+      return;
+    }
     state='cooldown';
     let secs=3;
     cooldownMsg.textContent=pendingBossLevel?'Босс приближается!':'Приготовься';
@@ -1552,7 +1616,9 @@
         if(dist(p,e)<p.r+e.r){
           if(p.fireball){
             for(const o of enemies){if(dist(p,o)<p.blastR)o.hp-=p.dmg;}
-            burst(p.x,p.y,'#f97316',14);camShake=Math.max(camShake,4);sfxBoom(0.25,0.18,900,100);
+            burst(p.x,p.y,p.color||'#f97316',14);camShake=Math.max(camShake,4);sfxBoom(0.25,0.18,900,100);
+            // Метеор-Шар (evo): pierces through and detonates again instead of dying on first hit
+            if(p.fireballEvo&&p.pierceLeft>0){p.hitSet.add(e);p.pierceLeft--;continue;}
             p.life=0;p.pierceLeft=-1;break;
           }
           e.hp-=p.dmg;p.hitSet.add(e);p.pierceLeft--;burst(p.x,p.y,p.color||'#4D96FF',3);
@@ -1854,7 +1920,7 @@
     });
     // drones
     if(player.droneLevel){
-      const dn=1+Math.floor((player.droneLevel-1)/2);
+      const dn=1+Math.floor((player.droneLevel-1)/2)+(player.droneEvo?2:0);
       x.fillStyle='#4ade80';x.shadowColor='#4ade80';x.shadowBlur=8;
       for(let i=0;i<dn;i++){
         const a=t*1.6+i*(Math.PI*2/dn),dx0=player.x+Math.cos(a)*46,dy0=player.y+Math.sin(a)*46;
@@ -1979,6 +2045,30 @@
     if(state==='running')raf=requestAnimationFrame(loop);
   }
 
+  let chosenStartWeapons=[];
+  function showWeaponChoice(){
+    ostart.classList.remove('show');oover.classList.remove('show');
+    chosenStartWeapons=[];
+    const listEl=document.getElementById('weaponChoiceList'),hintEl=document.getElementById('weaponChoiceHint');
+    hintEl.textContent='Выбрано: 0/2';
+    listEl.innerHTML='';
+    const shuffled=WEAPON_UNLOCKS.slice().sort(()=>Math.random()-0.5);
+    shuffled.forEach(w=>{
+      const el=document.createElement('div');
+      el.className='card';
+      el.innerHTML='<b>'+w.name+'</b><span>'+w.desc+'</span>';
+      el.onclick=()=>{
+        if(chosenStartWeapons.includes(w)||chosenStartWeapons.length>=2)return;
+        chosenStartWeapons.push(w);
+        el.style.borderColor='#4D96FF';el.style.opacity='0.55';el.style.pointerEvents='none';
+        hintEl.textContent='Выбрано: '+chosenStartWeapons.length+'/2';
+        sfxChime(523,3,0.08,0.1);
+        if(chosenStartWeapons.length===2)setTimeout(()=>{document.getElementById('oweaponchoice').classList.remove('show');start();},350);
+      };
+      listEl.appendChild(el);
+    });
+    document.getElementById('oweaponchoice').classList.add('show');
+  }
   function start(){
     if(!playerName){
       let entered='';
@@ -1988,7 +2078,9 @@
       renderPlayerName();
     }
     clearRun();ensureAudio();reset();
+    chosenStartWeapons.forEach(w=>{w.done=true;w.apply(player);});
     ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
+    document.getElementById('oweaponchoice').classList.remove('show');
     ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');olb.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
@@ -2007,9 +2099,9 @@
     (window.top||window).location.href=hubUrl;
   }
 
-  document.getElementById('btnStart').addEventListener('click',start);
+  document.getElementById('btnStart').addEventListener('click',showWeaponChoice);
   document.getElementById('btnResume').addEventListener('click',resumeRun);
-  document.getElementById('btnRetry').addEventListener('click',start);
+  document.getElementById('btnRetry').addEventListener('click',showWeaponChoice);
   document.getElementById('btnMenuFromOver').addEventListener('click',showMenu);
   document.getElementById('btnMenuSide').addEventListener('click',showMenu);
   // persist on tab hide / refresh / close so nothing is lost
