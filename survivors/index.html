@@ -58,6 +58,7 @@
   .cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   .card{width:150px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:left;}
   .card:hover{background:var(--panel2);border-color:#4D96FF;}
+  .gp-focus{outline:3px solid #4D96FF;outline-offset:2px;}
   .card b{display:block;font-size:14px;margin-bottom:6px;color:#4D96FF;}
   .card span{font-size:12px;color:var(--muted);line-height:1.4;}
   .ostart{padding:10px 22px;font-size:15px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;}
@@ -452,6 +453,7 @@
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay;
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy;
+  let gp={active:false,x:0,y:0};
 
   function newPlayer(){
     return {x:0,y:0,r:14,hp:100,maxHp:100,speed:180,dmg:18,fireRate:550,fireAcc:0,
@@ -1394,6 +1396,7 @@
     if(keys.left||keys.a)mx-=1;if(keys.right||keys.d)mx+=1;
     if(keys.up||keys.w)my-=1;if(keys.down||keys.s)my+=1;
     if(joy.active){mx=joy.dx;my=joy.dy;}
+    if(gp.active){mx=gp.x;my=gp.y;}
     const len=Math.hypot(mx,my);
     const hasteMul=player.hasteActive>0?1.4+player.hasteLevel*0.05:1;
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*dt;player.y+=my*player.speed*hasteMul*dt;player.facing={x:mx,y:my};}
@@ -2141,6 +2144,39 @@
   window.addEventListener('resize',()=>{resizeCanvas();draw();});
   window.addEventListener('orientationchange',()=>{resizeCanvas();draw();});
   if(window.ResizeObserver)new ResizeObserver(()=>{resizeCanvas();draw();}).observe(cv.parentElement);
+
+  // --- gamepad support: left stick / dpad move the player, A confirms whichever
+  // overlay button/card is focused, dpad/stick cycles focus between them ---
+  let gpFocusIdx=0,gpPrevBtns=[];
+  function gpFocusables(){
+    const ov=document.querySelector('.overlay.show');
+    return ov?Array.from(ov.querySelectorAll('.card,button')).filter(el=>el.offsetParent!==null):[];
+  }
+  function gpPoll(){
+    const pads=navigator.getGamepads?navigator.getGamepads():[];
+    const pad=pads&&(pads[0]||pads[1]||pads[2]||pads[3]);
+    if(pad){
+      const dz=0.25;let ax=pad.axes[0]||0,ay=pad.axes[1]||0;
+      if(Math.abs(ax)<dz)ax=0;if(Math.abs(ay)<dz)ay=0;
+      if(pad.buttons[14]&&pad.buttons[14].pressed)ax=-1;if(pad.buttons[15]&&pad.buttons[15].pressed)ax=1;
+      if(pad.buttons[12]&&pad.buttons[12].pressed)ay=-1;if(pad.buttons[13]&&pad.buttons[13].pressed)ay=1;
+      gp.active=ax!==0||ay!==0;gp.x=ax;gp.y=ay;
+      const btns=pad.buttons.map(b=>b.pressed);
+      const justPressed=i=>btns[i]&&!gpPrevBtns[i];
+      const list=gpFocusables();
+      list.forEach((el,i)=>el.classList.toggle('gp-focus',i===gpFocusIdx&&state!=='running'));
+      if(list.length){
+        if(gpFocusIdx>=list.length)gpFocusIdx=0;
+        const stepFocus=d=>{gpFocusIdx=(gpFocusIdx+d+list.length)%list.length;};
+        if(justPressed(14)||justPressed(12))stepFocus(-1);
+        if(justPressed(15)||justPressed(13))stepFocus(1);
+        if(justPressed(0))list[gpFocusIdx].click();
+      }
+      gpPrevBtns=btns;
+    }else{gp.active=false;gp.x=0;gp.y=0;}
+    requestAnimationFrame(gpPoll);
+  }
+  requestAnimationFrame(gpPoll);
 
   resizeCanvas();reset();draw();
 })();

@@ -353,6 +353,31 @@
   document.getElementById('lbClose').addEventListener('click',()=>{lbOverlay.style.display='none';});
   function safeCall(fn){try{fn();}catch(e){console.error('tetris action error',e);}}
   document.addEventListener('keydown',e=>{if(!running)return;if(e.key==='ArrowLeft')safeCall(moveLeft);else if(e.key==='ArrowRight')safeCall(moveRight);else if(e.key==='ArrowDown'){safeCall(hardDrop);acc=0;}else if(e.key==='ArrowUp')safeCall(holdPiece);else if(e.key===' ')safeCall(rotateCur);else return;e.preventDefault();});
+
+  // gamepad: dpad/stick left-right move (auto-repeats while held), down=drop, up=hold, A=rotate
+  (function(){
+    let prevBtns=[],moveAcc=0,moveDir=0,last=performance.now();
+    function poll(now){
+      const dt=(now-last)/1000;last=now;
+      const pads=navigator.getGamepads?navigator.getGamepads():[];
+      const pad=pads&&(pads[0]||pads[1]||pads[2]||pads[3]);
+      if(pad&&running){
+        const dz=0.35;let ax=pad.axes[0]||0;if(Math.abs(ax)<dz)ax=0;
+        if(pad.buttons[14]&&pad.buttons[14].pressed)ax=-1;if(pad.buttons[15]&&pad.buttons[15].pressed)ax=1;
+        const dir=ax<0?-1:ax>0?1:0;
+        if(dir!==moveDir){moveDir=dir;moveAcc=0;if(dir)safeCall(dir<0?moveLeft:moveRight);}
+        else if(dir){moveAcc+=dt;if(moveAcc>=0.13){moveAcc=0;safeCall(dir<0?moveLeft:moveRight);}}
+        const btns=pad.buttons.map(b=>b.pressed);
+        const justPressed=i=>btns[i]&&!prevBtns[i];
+        if(justPressed(0)||justPressed(1))safeCall(rotateCur);
+        if(justPressed(12))safeCall(holdPiece);
+        if(justPressed(13)||justPressed(2)){safeCall(hardDrop);acc=0;}
+        prevBtns=btns;
+      }
+      requestAnimationFrame(poll);
+    }
+    requestAnimationFrame(poll);
+  })();
   function vib(ms){if(navigator.vibrate)navigator.vibrate(ms||15);}
   document.getElementById('tL').addEventListener('click',()=>{vib();if(running)safeCall(moveLeft);});
   document.getElementById('tR').addEventListener('click',()=>{vib();if(running)safeCall(moveRight);});
