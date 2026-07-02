@@ -299,27 +299,49 @@
   function rand(a,b){return a+Math.random()*(b-a);}
   function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 
+  // beh: движение/атака — zigzag, flank (кружит и ныряет), charge (рывок с телеграфом),
+  // blink (телепорт), split (делится при смерти), bomber (камикадзе), healer, summoner
   const ENEMY_TYPES={
     chaser:{hp:18,speed:70,dmg:8,r:12,color:'#ef4444',shape:'blob'},
     fast:{hp:10,speed:130,dmg:6,r:9,color:'#facc15',shape:'triangle'},
     brute:{hp:55,speed:50,dmg:14,r:17,color:'#a855f7',shape:'square'},
-    sprinter:{hp:16,speed:190,dmg:8,r:9,color:'#fb923c',shape:'triangle'},
+    sprinter:{hp:16,speed:190,dmg:8,r:9,color:'#fb923c',shape:'triangle',beh:'zigzag'},
     spitter:{hp:26,speed:55,dmg:6,r:11,color:'#22d3ee',shape:'diamond',ranged:true},
     shielded:{hp:90,speed:40,dmg:16,r:16,color:'#64748b',shape:'shield'},
     swarmer:{hp:9,speed:150,dmg:5,r:7,color:'#f472b6',shape:'blob'},
     juggernaut:{hp:180,speed:35,dmg:22,r:22,color:'#7c3aed',shape:'square'},
-    wraith:{hp:40,speed:160,dmg:12,r:10,color:'#a3e635',shape:'triangle'},
+    wraith:{hp:40,speed:160,dmg:12,r:10,color:'#a3e635',shape:'triangle',beh:'blink'},
     behemoth:{hp:260,speed:40,dmg:28,r:26,color:'#dc2626',shape:'shield'},
-    bloodsucker:{hp:60,speed:75,dmg:16,r:13,color:'#b91c1c',shape:'blob'},
+    bloodsucker:{hp:60,speed:75,dmg:16,r:13,color:'#b91c1c',shape:'blob',beh:'flank'},
     boneguard:{hp:340,speed:38,dmg:20,r:19,color:'#d4d4d8',shape:'shield'},
-    ashrunner:{hp:90,speed:210,dmg:18,r:10,color:'#78716c',shape:'triangle'},
+    ashrunner:{hp:90,speed:210,dmg:18,r:10,color:'#78716c',shape:'triangle',beh:'charge'},
     stonegolem:{hp:520,speed:28,dmg:26,r:28,color:'#57534e',shape:'square'},
     toxicspitter:{hp:140,speed:60,dmg:14,r:12,color:'#65a30d',shape:'diamond',ranged:true},
     steelsentinel:{hp:480,speed:42,dmg:30,r:18,color:'#475569',shape:'shield'},
-    spikeswarm:{hp:40,speed:170,dmg:12,r:8,color:'#f43f5e',shape:'blob'},
-    wrecker:{hp:650,speed:36,dmg:36,r:24,color:'#9a3412',shape:'square'},
-    shadowhunter:{hp:220,speed:200,dmg:24,r:11,color:'#1e1b4b',shape:'triangle',ranged:true},
+    spikeswarm:{hp:40,speed:170,dmg:12,r:8,color:'#f43f5e',shape:'blob',beh:'zigzag'},
+    wrecker:{hp:650,speed:36,dmg:36,r:24,color:'#9a3412',shape:'square',beh:'charge'},
+    shadowhunter:{hp:220,speed:200,dmg:24,r:11,color:'#1e1b4b',shape:'triangle',ranged:true,beh:'flank'},
     abyssleviathan:{hp:900,speed:33,dmg:40,r:30,color:'#052e16',shape:'shield'},
+    duskbomber:{hp:90,speed:150,dmg:26,r:11,color:'#f97316',shape:'star',beh:'bomber'},
+    gravewarden:{hp:1000,speed:30,dmg:34,r:26,color:'#6b7280',shape:'hex'},
+    voidsplitter:{hp:260,speed:80,dmg:22,r:16,color:'#7c3aed',shape:'ring',beh:'split'},
+    ironclad:{hp:700,speed:55,dmg:38,r:20,color:'#94a3b8',shape:'square',beh:'charge'},
+    plaguehealer:{hp:420,speed:60,dmg:16,r:14,color:'#22c55e',shape:'cross',beh:'healer'},
+    fleshreaper:{hp:300,speed:170,dmg:30,r:12,color:'#dc2626',shape:'fang',beh:'zigzag'},
+    stormcaller:{hp:520,speed:50,dmg:20,r:15,color:'#38bdf8',shape:'diamond',beh:'summoner'},
+    obsidiantitan:{hp:1100,speed:28,dmg:44,r:30,color:'#3f3f46',shape:'hex'},
+    phasestalker:{hp:380,speed:90,dmg:34,r:11,color:'#a78bfa',shape:'triangle',beh:'blink'},
+    hellbomber:{hp:200,speed:160,dmg:40,r:13,color:'#ea580c',shape:'star',beh:'bomber'},
+    bloodmatriarch:{hp:900,speed:55,dmg:24,r:18,color:'#be123c',shape:'cross',beh:'healer'},
+    razorwing:{hp:420,speed:180,dmg:36,r:10,color:'#f43f5e',shape:'fang',beh:'flank'},
+    chaosspawner:{hp:800,speed:45,dmg:26,r:17,color:'#c026d3',shape:'ring',beh:'summoner'},
+    doomcharger:{hp:950,speed:60,dmg:48,r:19,color:'#b45309',shape:'square',beh:'charge'},
+    nightsplitter:{hp:520,speed:90,dmg:34,r:15,color:'#6366f1',shape:'ring',beh:'split'},
+    voidsentinel:{hp:1300,speed:40,dmg:40,r:22,color:'#334155',shape:'shield',ranged:true},
+    eclipsereaper:{hp:700,speed:185,dmg:44,r:12,color:'#7c3aed',shape:'fang',beh:'zigzag'},
+    titanofruin:{hp:1800,speed:26,dmg:56,r:34,color:'#92400e',shape:'hex'},
+    omegastalker:{hp:600,speed:110,dmg:50,r:12,color:'#e879f9',shape:'triangle',beh:'blink'},
+    worldender:{hp:2200,speed:35,dmg:60,r:36,color:'#7f1d1d',shape:'hex',ranged:true},
   };
   const BOSS_BASE={hp:70,speed:45,dmg:14,r:18};
   const ENEMY_TIERS=[
@@ -333,10 +355,19 @@
     ['toxicspitter','steelsentinel'],
     ['spikeswarm','wrecker'],
     ['shadowhunter','abyssleviathan'],
+    ['duskbomber','gravewarden'],
+    ['voidsplitter','ironclad'],
+    ['plaguehealer','fleshreaper'],
+    ['stormcaller','obsidiantitan'],
+    ['phasestalker','hellbomber'],
+    ['bloodmatriarch','razorwing'],
+    ['chaosspawner','doomcharger'],
+    ['nightsplitter','voidsentinel'],
+    ['eclipsereaper','titanofruin'],
+    ['omegastalker','worldender'],
   ];
   function tierIndexForLevel(lvl){
-    const idx=lvl<25?Math.floor(lvl/5):5+Math.floor((lvl-25)/3);
-    return Math.min(ENEMY_TIERS.length-1,idx);
+    return Math.min(ENEMY_TIERS.length-1,Math.floor(lvl/5));
   }
 
   const UPGRADES=[
@@ -419,7 +450,7 @@
     {name:'Многоглазый',color:'#84cc16',glow:'#bef264',shape:'eyes'},
   ];
 
-  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc;
+  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay;
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
@@ -450,7 +481,7 @@
   }
 
   function reset(){
-    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;
+    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
@@ -495,6 +526,11 @@
 
   function xpForPower(hp,dmg){return Math.max(1,Math.round(Math.sqrt(hp*dmg)/6));}
 
+  // enemy power tracks the player's exponential upgrade curve, decelerating after 60
+  // (player power plateaus once upgrade caps are hit — a runaway exponent would wall the run)
+  function levelHpMul(L){return L<=60?Math.pow(1.035,L):Math.pow(1.035,60)*Math.pow(1.01,L-60);}
+  function levelDmgMul(L){return Math.min(4,1+L*0.028);}
+
   function spawnEnemy(elite,bossNumber){
     const ang=rand(0,Math.PI*2),rad=Math.max(W,H)/2+80;
     const d=difficulty();
@@ -502,14 +538,16 @@
     const base=elite?BOSS_BASE:ENEMY_TYPES[type];
     const bn=bossNumber||1;
     const skin=elite?BOSS_SKINS[(bn-1)%BOSS_SKINS.length]:null;
-    const levelMul=1+Math.floor(player.level/4)*0.08;
-    const finalHp=elite?tierAvgHp(player.level)*(20+bn*4)*d.hpMul:base.hp*d.hpMul*levelMul;
-    const finalDmg=elite?tierAvgDmg(player.level)*7*levelMul:base.dmg*levelMul;
+    const hpMulL=levelHpMul(player.level),dmgMulL=levelDmgMul(player.level);
+    const champion=!elite&&player.level>=8&&Math.random()<0.05;
+    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1);
+    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
       // outrun glues to you permanently, which is what made fast spawns miserable
       hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7:Math.min(170,base.speed*d.spdMul),
-      dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1),
+      beh:elite?null:base.beh||null,champion:champion,
+      dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1)*(champion?1.4:1),
       color:elite?skin.color:base.color,glow:elite?skin.glow:null,skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
       xp:xpForPower(finalHp,finalDmg),elite:!!elite,bossNumber:bn,shootCd:elite?rand(0.8,1.6):0,
       stageCount:elite?BOSS_STAGES:0,stage:elite?BOSS_STAGES:0,
@@ -519,6 +557,94 @@
   }
 
   function burst(px,py,color,n){for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
+
+  function makeMinion(e){
+    const hp=e.maxHp*0.12,dmg=e.dmg*0.4;
+    return {x:e.x+rand(-30,30),y:e.y+rand(-30,30),r:7,hp,maxHp:hp,speed:150,dmg,color:e.color,
+      skinShape:'blob',xp:xpForPower(hp,dmg),elite:false,minion:true};
+  }
+
+  // behavior-driven movement: each archetype forces a different answer from the player
+  function moveEnemy(e,dt,d,spd){
+    const toP=Math.atan2(player.y-e.y,player.x-e.x);
+    const stopAt=player.r+e.r-2;
+    const b=e.beh;
+    if(!b){if(d>stopAt){e.x+=Math.cos(toP)*spd*dt;e.y+=Math.sin(toP)*spd*dt;}return;}
+    if(b==='zigzag'){
+      e.zz=(e.zz||rand(0,6))+dt*6;
+      if(d>stopAt){const a=toP+Math.sin(e.zz)*0.9;e.x+=Math.cos(a)*spd*dt;e.y+=Math.sin(a)*spd*dt;}
+    }else if(b==='flank'){
+      e.fm=e.fm||'orbit';if(e.ft==null)e.ft=rand(1.5,3);
+      e.ft-=dt;
+      if(e.fm==='orbit'){
+        const dir=e.fd||(e.fd=Math.random()<0.5?1:-1);
+        const tang=toP+Math.PI/2*dir;
+        const radial=d>210?toP:toP+Math.PI;
+        e.x+=(Math.cos(tang)*0.75+Math.cos(radial)*0.45)*spd*dt;
+        e.y+=(Math.sin(tang)*0.75+Math.sin(radial)*0.45)*spd*dt;
+        if(e.ft<=0){e.fm='dive';e.ft=1.1;}
+      }else{
+        if(d>stopAt){e.x+=Math.cos(toP)*spd*1.8*dt;e.y+=Math.sin(toP)*spd*1.8*dt;}
+        if(e.ft<=0||d<=stopAt+4){e.fm='orbit';e.ft=rand(2,3.5);}
+      }
+    }else if(b==='charge'){
+      e.cm=e.cm||'walk';if(e.ct==null)e.ct=0;
+      e.ct-=dt;
+      if(e.cm==='walk'){
+        if(d>stopAt){e.x+=Math.cos(toP)*spd*0.8*dt;e.y+=Math.sin(toP)*spd*0.8*dt;}
+        if(d<300&&e.ct<=0){e.cm='aim';e.ct=0.55;e.ca=toP;}
+      }else if(e.cm==='aim'){
+        e.ca=toP;
+        if(e.ct<=0){e.cm='dash';e.ct=0.55;}
+      }else if(e.cm==='dash'){
+        e.x+=Math.cos(e.ca)*520*dt;e.y+=Math.sin(e.ca)*520*dt;
+        if(e.ct<=0){e.cm='walk';e.ct=2.2;}
+      }
+    }else if(b==='blink'){
+      if(e.bt==null)e.bt=rand(1.5,3);
+      e.bt-=dt;
+      if(d>stopAt){e.x+=Math.cos(toP)*spd*0.6*dt;e.y+=Math.sin(toP)*spd*0.6*dt;}
+      if(e.bt<=0&&d>140){
+        e.bt=rand(2,3.2);
+        burst(e.x,e.y,e.color,6);
+        const jump=Math.min(d-90,170);
+        e.x+=Math.cos(toP)*jump;e.y+=Math.sin(toP)*jump;
+        burst(e.x,e.y,e.color,6);
+      }
+    }else if(b==='bomber'){
+      if(e.armT==null){
+        if(d>90){e.x+=Math.cos(toP)*spd*dt;e.y+=Math.sin(toP)*spd*dt;}
+        else e.armT=0.7;
+      }else{
+        e.armT-=dt;
+        if(e.armT<=0){
+          if(dist(player,e)<95)hurtPlayer(e.dmg*2.2,e.x,e.y,26,false);
+          burst(e.x,e.y,'#f97316',16);camShake=Math.max(camShake,5);sfxBoom(0.3,0.2,700,80);
+          e.hp=-1;
+        }
+      }
+    }else if(b==='healer'){
+      const a2=d<260?toP+Math.PI:toP;
+      if(Math.abs(d-260)>30){e.x+=Math.cos(a2)*spd*dt;e.y+=Math.sin(a2)*spd*dt;}
+      e.ht=(e.ht||0)+dt;
+      if(e.ht>=1){e.ht=0;
+        let healed=false;
+        for(const o of enemies){if(o!==e&&!o.elite&&dist(e,o)<150&&o.hp<o.maxHp){o.hp=Math.min(o.maxHp,o.hp+o.maxHp*0.06);healed=true;}}
+        if(healed)rings.push({x:e.x,y:e.y,r:0,maxR:150,life:0.5,color:'#22c55e'});
+      }
+    }else if(b==='summoner'){
+      const a2=d<320?toP+Math.PI:toP;
+      if(Math.abs(d-320)>40){e.x+=Math.cos(a2)*spd*dt;e.y+=Math.sin(a2)*spd*dt;}
+      if(e.smT==null)e.smT=3;
+      e.smT-=dt;
+      if(e.smT<=0&&enemies.length<230){e.smT=4.5;
+        enemies.push(makeMinion(e));enemies.push(makeMinion(e));
+        burst(e.x,e.y,e.color,8);
+      }
+    }else if(b==='split'){
+      if(d>stopAt){e.x+=Math.cos(toP)*spd*dt;e.y+=Math.sin(toP)*spd*dt;}
+    }
+  }
 
   function bossShoot(e){
     const bn=e.bossNumber||1;
@@ -541,8 +667,17 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
-    points+=Math.pow(0.95,Math.floor(player.level/10))*(1+0.2*player.greedLevel);
-    gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))});
+    points+=Math.pow(0.95,Math.floor(player.level/10))*(1+0.2*player.greedLevel)*(e.champion?10:1);
+    gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
+    if(e.beh==='split'&&!e.child){
+      // killed splitters break into two faster halves (queued — we're inside the filter pass)
+      for(let i=0;i<2;i++){
+        const hp=e.maxHp*0.35;
+        pendingSpawns.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:e.r*0.6,hp,maxHp:hp,
+          speed:Math.min(170,e.speed*1.4),dmg:e.dmg*0.6,color:e.color,skinShape:e.skinShape,
+          child:true,xp:Math.max(1,Math.round(e.xp*0.3)),elite:false});
+      }
+    }
     beep(e.elite?160:300,0.12,'triangle',0.08);
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(player.explodeKillLevel&&!e.elite){
@@ -912,7 +1047,27 @@
     if(player.level%25===0){pendingSuperWarning=player.level;}
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
     if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
+    if(player.level%10===0){pendingEvent=player.level;eventDelay=7;}
+    if(player.level%10===1&&player.level>1){
+      announce={text:'— АКТ '+(Math.floor(player.level/10)+1)+' —',life:2.5,color:'#e8ebf2'};
+    }
     lastLevelUpAt=t;
+  }
+
+  // scripted wave events — one every 10 levels, rotating by act
+  function fireEvent(lvl){
+    const kind=Math.floor(lvl/10)%3;
+    if(kind===0){
+      announce={text:'⚠ НАШЕСТВИЕ ОРДЫ! ⚠',life:2.5,color:'#f97316'};
+      for(let i=0;i<36;i++){const e=spawnEnemy(false);const a=rand(0,Math.PI*2);const rr=rand(450,650);e.x=player.x+Math.cos(a)*rr;e.y=player.y+Math.sin(a)*rr;}
+    }else if(kind===1){
+      announce={text:'⚠ СЖИМАЮЩЕЕСЯ КОЛЬЦО! ⚠',life:2.5,color:'#a855f7'};
+      for(let i=0;i<26;i++){const e=spawnEnemy(false);const a=i/26*Math.PI*2;e.x=player.x+Math.cos(a)*620;e.y=player.y+Math.sin(a)*620;}
+    }else{
+      announce={text:'⚠ ДОЖДЬ КАМИКАДЗЕ! ⚠',life:2.5,color:'#ef4444'};
+      for(let i=0;i<10;i++){const e=spawnEnemy(false);const a=rand(0,Math.PI*2);const rr=rand(400,600);e.x=player.x+Math.cos(a)*rr;e.y=player.y+Math.sin(a)*rr;e.beh='bomber';e.speed=Math.min(170,e.speed*1.3);}
+    }
+    sfxSweep(150,600,0.5,'sawtooth',0.12);camShake=Math.max(camShake,6);
   }
 
 
@@ -1028,10 +1183,19 @@
     },1000);
   }
 
+  const BOSS_MODS=[
+    {name:'Стремительный',apply:b=>{b.speed*=1.5;}},
+    {name:'Бастион',apply:b=>{b.hp=b.maxHp=b.maxHp*1.5;b.speed*=0.8;}},
+    {name:'Призыватель',apply:b=>{b.modSummon=6;b.msT=6;}},
+    {name:'Взрывной',apply:b=>{b.modNova=true;}},
+  ];
+
   function resumeAfterCooldown(){
     if(pendingBossLevel){
       const boss=spawnEnemy(true,pendingBossLevel/5);
-      announce={text:'БОСС: '+boss.skinName+'! Уровень '+pendingBossLevel,life:2.4};
+      const mod=BOSS_MODS[Math.floor(Math.random()*BOSS_MODS.length)];
+      mod.apply(boss);
+      announce={text:'БОСС: '+boss.skinName+' ['+mod.name+']! Уровень '+pendingBossLevel,life:2.6};
       beep(90,0.4,'sawtooth',0.18);camShake=Math.max(camShake,10);
       pendingBossLevel=null;
     }
@@ -1105,7 +1269,7 @@
       add.hp=add.maxHp=add.hp*1.8;add.dmg*=1.4;add.xp=xpForPower(add.hp,add.dmg);
       add.supermob=true;
     }
-    announce={text:'Супербосс призывает подкрепление!',life:1.8,color:'#facc15'};
+    announce={text:'Босс призывает подкрепление!',life:1.8,color:'#facc15'};
     beep(200,0.15,'square',0.1);
   }
 
@@ -1130,6 +1294,14 @@
       burst(e.x,e.y,e.color,20);
       camShake=Math.max(camShake,6);
       e.speed*=1.03;e.dmg*=1.04;
+      if(e.modNova){
+        // explosive modifier: every stage transition detonates a radial burst
+        for(let i=0;i<10;i++){
+          const a=i/10*Math.PI*2;
+          enemyProjectiles.push({x:e.x,y:e.y,vx:Math.cos(a)*170,vy:Math.sin(a)*170,dmg:Math.round(e.dmg*0.3),r:7,life:2,color:'#fb923c',boss:true});
+        }
+        sfxBoom(0.25,0.16,800,90);
+      }
       announce={text:(e.skinName||'Босс')+': стадия '+e.stage+'/'+e.stageCount+'!',life:1.4,color:e.color};
       beep(260+e.stage*18,0.15,'square',0.1);
     }
@@ -1277,6 +1449,12 @@
     }
     if(freezeT>0)freezeT-=dt;
 
+    // scheduled wave event (delayed a few seconds past the level-up so it doesn't stack the boss intro)
+    if(pendingEvent){
+      eventDelay-=dt;
+      if(eventDelay<=0){const lvl=pendingEvent;pendingEvent=null;fireEvent(lvl);}
+    }
+
     // safe zone: a periodic sanctuary — enemies can't enter, and the shop only works inside
     if(!safeZone){
       safeZoneAcc+=dt;
@@ -1304,13 +1482,11 @@
     for(const e of enemies){
       const d=dist(player,e);
       if(e.slowT>0)e.slowT-=dt;
-      const stopAt=player.r+e.r-2;
-      if(!frozen&&d>stopAt){
+      if(!frozen){
         let spd=e.speed;
         if(e.slowT>0)spd*=0.5;
         if(player.chillLevel&&d<130)spd*=1-0.08*player.chillLevel;
-        const a=Math.atan2(player.y-e.y,player.x-e.x);
-        e.x+=Math.cos(a)*spd*dt;e.y+=Math.sin(a)*spd*dt;
+        moveEnemy(e,dt,d,spd);
       }
       if(d<player.r+e.r){
         if(player.thornsLevel)e.hp-=6*player.thornsLevel*player.dmgMult*dt;
@@ -1326,6 +1502,7 @@
       if(e.elite){
         e.shootCd-=dt;
         if(e.shootCd<=0){bossShoot(e);e.shootCd=Math.max(1,2.6-e.bossNumber*0.15);}
+        if(e.modSummon){e.msT-=dt;if(e.msT<=0){e.msT=e.modSummon;summonAdds(e,2);}}
         checkBossStage(e);
         if(e.superboss)updateSuperboss(e,dt);
       }else if(e.ranged){
@@ -1365,6 +1542,7 @@
       if(e.hp<=0){killEnemy(e);return false;}
       return true;
     });
+    if(pendingSpawns.length){enemies.push(...pendingSpawns);pendingSpawns.length=0;}
     if(enemies.length>240){
       // blind truncation once silently deleted an alive boss whose pauseSpawns flag was
       // never cleared — spawning stopped forever. Keep elites, trim regular mobs only.
@@ -1517,20 +1695,43 @@
   function drawMob(ex,ey,e){
     x.save();x.translate(ex,ey);
     if(e.supermob){x.shadowColor='#facc15';x.shadowBlur=12;x.strokeStyle='#facc15';x.lineWidth=2;x.beginPath();x.arc(0,0,e.r+4,0,Math.PI*2);x.stroke();x.shadowBlur=0;}
+    if(e.champion){x.shadowColor='#22d3ee';x.shadowBlur=14;x.strokeStyle='#22d3ee';x.lineWidth=2.5;x.beginPath();x.arc(0,0,e.r+5+Math.sin(t*5)*2,0,Math.PI*2);x.stroke();x.shadowBlur=0;}
+    // behavior telegraphs
+    if(e.armT!=null){x.globalAlpha=0.5+0.5*Math.sin(t*30);x.fillStyle='#fff';x.beginPath();x.arc(0,0,e.r+6,0,Math.PI*2);x.fill();x.globalAlpha=1;}
+    if(e.cm==='aim'){x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;x.setLineDash([5,5]);x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(e.ca)*260,Math.sin(e.ca)*260);x.stroke();x.setLineDash([]);}
     x.fillStyle=e.color;
     if(e.skinShape==='triangle'){
       x.beginPath();x.moveTo(0,-e.r);x.lineTo(e.r*0.87,e.r*0.6);x.lineTo(-e.r*0.87,e.r*0.6);x.closePath();x.fill();
     }else if(e.skinShape==='square'){
       x.fillRect(-e.r,-e.r,e.r*2,e.r*2);
     }else if(e.skinShape==='diamond'){
-      x.rotate(Math.PI/4);x.fillRect(-e.r*0.8,-e.r*0.8,e.r*1.6,e.r*1.6);
+      x.rotate(Math.PI/4);x.fillRect(-e.r*0.8,-e.r*0.8,e.r*1.6,e.r*1.6);x.rotate(-Math.PI/4);
     }else if(e.skinShape==='shield'){
       x.beginPath();x.arc(0,0,e.r,0,Math.PI*2);x.fill();
       x.strokeStyle='rgba(255,255,255,0.5)';x.lineWidth=2;x.beginPath();x.arc(0,0,e.r*0.65,0,Math.PI*2);x.stroke();
+    }else if(e.skinShape==='star'){
+      x.rotate(t*3);x.beginPath();
+      for(let i=0;i<5;i++){const a=i/5*Math.PI*2-Math.PI/2;x.lineTo(Math.cos(a)*e.r*1.15,Math.sin(a)*e.r*1.15);x.lineTo(Math.cos(a+Math.PI/5)*e.r*0.5,Math.sin(a+Math.PI/5)*e.r*0.5);}
+      x.closePath();x.fill();x.rotate(-t*3);
+    }else if(e.skinShape==='hex'){
+      x.rotate(t*0.3);x.beginPath();
+      for(let i=0;i<6;i++){const a=i/6*Math.PI*2;x.lineTo(Math.cos(a)*e.r,Math.sin(a)*e.r);}
+      x.closePath();x.fill();x.rotate(-t*0.3);
+      x.strokeStyle='rgba(0,0,0,0.4)';x.lineWidth=2;x.stroke();
+    }else if(e.skinShape==='cross'){
+      const w=e.r*0.55;
+      x.fillRect(-w/2,-e.r,w,e.r*2);x.fillRect(-e.r,-w/2,e.r*2,w);
+      if(e.beh==='healer'){x.shadowColor='#22c55e';x.shadowBlur=8+4*Math.sin(t*4);x.fillRect(-w/2,-e.r,w,e.r*2);x.shadowBlur=0;}
+    }else if(e.skinShape==='ring'){
+      x.strokeStyle=e.color;x.lineWidth=e.r*0.5;x.beginPath();x.arc(0,0,e.r*0.72,0,Math.PI*2);x.stroke();
+      x.fillStyle=e.color;x.beginPath();x.arc(0,0,e.r*0.25,0,Math.PI*2);x.fill();
+    }else if(e.skinShape==='fang'){
+      const a0=Math.atan2(player.y-ey,player.x-ex);
+      x.rotate(a0);x.beginPath();x.moveTo(e.r*1.5,0);x.lineTo(-e.r*0.8,-e.r*0.7);x.lineTo(-e.r*0.3,0);x.lineTo(-e.r*0.8,e.r*0.7);x.closePath();x.fill();x.rotate(-a0);
     }else{
       x.beginPath();x.arc(0,0,e.r,0,Math.PI*2);x.fill();
     }
-    x.fillStyle='rgba(0,0,0,0.35)';x.beginPath();x.arc(0,0,e.r*0.45,0,Math.PI*2);x.fill();
+    if(e.skinShape!=='ring'&&e.skinShape!=='fang'){x.fillStyle='rgba(0,0,0,0.35)';x.beginPath();x.arc(0,0,e.r*0.45,0,Math.PI*2);x.fill();}
     x.restore();
   }
 
@@ -1561,11 +1762,13 @@
     x.restore();
   }
 
+  // one tint per act — the world subtly shifts colour every 10 levels
+  const ACT_TINTS=['rgba(255,255,255,0.04)','rgba(77,150,255,0.06)','rgba(74,222,128,0.06)','rgba(250,204,21,0.06)','rgba(249,115,22,0.06)','rgba(244,63,94,0.06)','rgba(168,85,247,0.07)','rgba(34,211,238,0.07)','rgba(232,121,249,0.07)','rgba(255,45,85,0.08)'];
   function drawGrid(){
     const g=40;
     const halfW=(W/2)/zoom,halfH=(H/2)/zoom;
     const left=player.x-halfW,right=player.x+halfW,top=player.y-halfH,bottom=player.y+halfH;
-    x.strokeStyle='rgba(255,255,255,0.04)';x.lineWidth=1/zoom;
+    x.strokeStyle=ACT_TINTS[Math.min(ACT_TINTS.length-1,Math.floor((player.level-1)/10))];x.lineWidth=1/zoom;
     const sx0=Math.floor(left/g)*g;
     for(let gx=sx0;gx<right;gx+=g){x.beginPath();x.moveTo(gx,top);x.lineTo(gx,bottom);x.stroke();}
     const sy0=Math.floor(top/g)*g;
