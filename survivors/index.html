@@ -377,7 +377,7 @@
   }
 
   const UPGRADES=[
-    {id:'dmg',name:'Урон +35%',desc:'Больше урона у ВСЕГО оружия',rarity:'mid',apply:p=>{p.dmg=Math.round(p.dmg*1.35);p.dmgMult*=1.35;}},
+    {id:'dmg',name:'Урон +35%',desc:'Больше урона у ВСЕГО оружия — без предела',rarity:'mid',maxLevel:Infinity,apply:p=>{p.dmg=Math.round(p.dmg*1.35);p.dmgMult*=1.35;}},
     {id:'rate',name:'Скорострельность +18%',desc:'ВСЁ оружие атакует чаще',rarity:'common',apply:p=>{p.fireRate=Math.max(120,Math.round(p.fireRate*0.82));p.atkSpeedMult/=0.82;}},
     {id:'speed',name:'Скорость +12%',desc:'Быстрее передвижение',rarity:'common',apply:p=>p.speed=Math.round(p.speed*1.12)},
     {id:'hp',name:'Макс. HP +20',desc:'Больше живучести, лечит 30',rarity:'common',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+30);}},
@@ -424,7 +424,8 @@
   ];
   const RARITY_INFO={common:{cost:100,label:'Нередкое',color:'#8891a3',maxLevel:6},mid:{cost:250,label:'Среднее',color:'#4D96FF',maxLevel:5},rare:{cost:500,label:'Редкое',color:'#a855f7',maxLevel:5}};
   function upgradeLevel(u){return shopBought[u.id]||0;}
-  function upgradeMaxLevel(u){return (RARITY_INFO[u.rarity]||RARITY_INFO.common).maxLevel;}
+  function upgradeMaxLevel(u){return u.maxLevel!=null?u.maxLevel:(RARITY_INFO[u.rarity]||RARITY_INFO.common).maxLevel;}
+  function upgradeMaxLabel(u){const m=upgradeMaxLevel(u);return isFinite(m)?m:'∞';}
 
   const WEAPON_UNLOCKS=[
     {id:'blade',name:'Клинки',desc:'Вращающиеся клинки режут всех, кто рядом.',apply:p=>p.bladeLevel=1},
@@ -673,7 +674,7 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
-    points+=Math.pow(0.95,Math.floor(player.level/10))*(1+0.2*player.greedLevel)*(e.champion?10:1);
+    points+=(1.5+player.level*0.12)*(1+0.2*player.greedLevel)*(e.champion?10:1);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
     if(e.beh==='split'&&!e.child){
       // killed splitters break into two faster halves (queued — we're inside the filter pass)
@@ -1021,7 +1022,7 @@
     else if(pk.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+35);sfxChime(660,2,0.08,0.09);}
     else if(pk.type==='magnet'){
       const R=3*Math.max(W,H);
-      points+=25+player.level*2;
+      points+=60+player.level*5;
       gems.forEach(g=>g.magnet=true);
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
       updateHud();
@@ -1041,7 +1042,7 @@
       player.xp-=player.xpNeed;
       levelUpOnce();
       player.xpNeed=xpNeedFor(player.level);
-      points+=75;
+      points+=150;
     }
     if(pendingLevelUps>0&&state==='running')showLevelUp();
     updateHud();
@@ -1104,7 +1105,7 @@
       const lvl=upgradeLevel(u);
       const el=document.createElement('div');el.className='card';
       el.style.borderColor=ri.color;
-      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLevel(u)+'</span><span>'+u.desc+'</span>';
+      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLabel(u)+'</span><span>'+u.desc+'</span>';
       el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;pendingLevelUps--;sfxChime(523,3,0.08,0.1);
         olevel.classList.remove('show');
         if(pendingLevelUps>0)showLevelUp();else startCooldown();
@@ -1133,7 +1134,7 @@
       const el=document.createElement('div');el.className='card';
       el.style.opacity=afford?1:0.5;
       el.style.borderColor=ri.color;
-      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLevel(u)+'</span><span>'+u.desc+'</span><div style="margin-top:8px;color:'+ri.color+';font-weight:600;">'+cost+' баллов</div>';
+      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLabel(u)+'</span><span>'+u.desc+'</span><div style="margin-top:8px;color:'+ri.color+';font-weight:600;">'+cost+' баллов</div>';
       if(afford){
         el.onclick=()=>{
           points-=cost;
