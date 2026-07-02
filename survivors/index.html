@@ -238,6 +238,45 @@
     g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(gain||0.1,t0+0.01);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
     o.start(t0);o.stop(t0+dur);
   }
+  // richer synth: pitch sweep (lasers, magnets, ui) — beep can't bend frequency
+  function sfxSweep(f1,f2,dur,type,gain){
+    if(!actx)return;
+    const t0=actx.currentTime;
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type||'sine';
+    o.frequency.setValueAtTime(f1,t0);o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t0+dur);
+    o.connect(g);g.connect(compressor);
+    g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(gain||0.1,t0+0.015);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+    o.start(t0);o.stop(t0+dur);
+  }
+  // filtered noise burst — real "boom" for explosions instead of a sawtooth honk
+  function sfxBoom(dur,gain,cut1,cut2){
+    if(!actx)return;
+    const t0=actx.currentTime;
+    const n=Math.floor(actx.sampleRate*dur);
+    const buf=actx.createBuffer(1,n,actx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+    const src=actx.createBufferSource();src.buffer=buf;
+    const f=actx.createBiquadFilter();f.type='lowpass';
+    f.frequency.setValueAtTime(cut1||900,t0);f.frequency.exponentialRampToValueAtTime(cut2||90,t0+dur);
+    const g=actx.createGain();
+    g.gain.setValueAtTime(gain||0.25,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+    src.connect(f);f.connect(g);g.connect(compressor);
+    src.start(t0);
+  }
+  // short ascending arpeggio — pickups, chests, level-ups
+  function sfxChime(base,steps,gap,gain){
+    if(!actx)return;
+    for(let i=0;i<steps;i++){
+      const t0=actx.currentTime+i*gap;
+      const o=actx.createOscillator(),g=actx.createGain();
+      o.type='sine';o.frequency.value=base*Math.pow(1.335,i);
+      o.connect(g);g.connect(compressor);
+      g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(gain||0.09,t0+0.012);g.gain.exponentialRampToValueAtTime(0.001,t0+gap*1.8);
+      o.start(t0);o.stop(t0+gap*2);
+    }
+  }
 
   function fmtTime(s){s=Math.floor(s);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
   function rand(a,b){return a+Math.random()*(b-a);}
@@ -363,7 +402,7 @@
     {name:'Многоглазый',color:'#84cc16',glow:'#bef264',shape:'eyes'},
   ];
 
-  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT;
+  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc;
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy;
 
   function newPlayer(){
@@ -394,7 +433,7 @@
   }
 
   function reset(){
-    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;
+    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;
     t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
@@ -504,7 +543,7 @@
         announce={text:'СУПЕРБОСС ПОВЕРЖЕН!',life:3,color:'#ff2d55'};
         camShake=Math.max(camShake,14);screenFlash=Math.max(screenFlash,0.7);
         burst(e.x,e.y,'#ff2d55',40);
-        beep(880,0.3,'sine',0.2);setTimeout(()=>beep(1200,0.4,'sine',0.2),150);
+        sfxChime(660,4,0.1,0.13);
       }else{
         const others=PICKUP_TYPES.filter(pt=>pt.id!=='chest');
         const extra=others[Math.floor(Math.random()*others.length)];
@@ -553,7 +592,7 @@
     weaponDesc.textContent=w.desc;
     drawWeaponIcon(w.id);
     oweapon.classList.add('show');
-    beep(523,0.1,'sine',0.12);setTimeout(()=>beep(784,0.15,'sine',0.12),100);
+    sfxChime(440,4,0.09,0.11);
     setTimeout(()=>{
       oweapon.classList.remove('show');
       if(pendingLevelUps>0)showLevelUp();
@@ -736,7 +775,7 @@
         const R=(110+15*p.frostLevel)*p.aoeMult,dmg=rollDmg((10+6*p.frostLevel)*p.dmgMult);
         rings.push({x:p.x,y:p.y,r:0,maxR:R,life:1,color:'#7dd3fc'});
         for(const e of enemies){if(dist(p,e)<R){e.hp-=dmg;e.slowT=2;}}
-        beep(900,0.12,'sine',0.08);}}
+        sfxSweep(1200,400,0.25,'sine',0.08);}}
     // laser — instant beam through the nearest enemy, hits everything on the line
     if(p.laserLevel){p.laserAcc+=dt*as;
       if(p.laserAcc>=2.8-p.laserLevel*0.22){const e=nearestEnemy(460);
@@ -747,7 +786,7 @@
           for(const o of enemies){const rx=o.x-p.x,ry=o.y-p.y,proj=rx*ux+ry*uy;
             if(proj>0&&proj<L&&Math.abs(rx*uy-ry*ux)<thr+o.r)o.hp-=dmg;}
           bolts.push({x1:p.x,y1:p.y,x2:p.x+ux*L,y2:p.y+uy*L,life:0.25,width:4+p.laserLevel,color:'#f43f5e'});
-          beep(1200,0.09,'sawtooth',0.06);}}}
+          sfxSweep(1800,300,0.15,'sawtooth',0.07);}}}
     // shards — radial burst
     if(p.shardLevel){p.shardAcc+=dt*as;
       if(p.shardAcc>=3-p.shardLevel*0.25){p.shardAcc=0;
@@ -781,7 +820,7 @@
     for(const m of meteors){m.tt-=dt;
       if(m.tt<=0){
         for(const e of enemies){if(dist(m,e)<m.blastR)e.hp-=m.dmg;}
-        burst(m.x,m.y,'#fb923c',18);camShake=Math.max(camShake,6);beep(80,0.3,'sawtooth',0.14);m.dead=true;}}
+        burst(m.x,m.y,'#fb923c',18);camShake=Math.max(camShake,6);sfxBoom(0.4,0.25,700,60);m.dead=true;}}
     meteors=meteors.filter(m=>!m.dead);
     // ghost orb — homing, pierces everything (steering in the projectile loop)
     if(p.ghostLevel){p.ghostAcc+=dt*as;
@@ -820,18 +859,17 @@
 
   function collectPickup(pk){
     burst(pk.x,pk.y,pk.color,10);
-    if(pk.type==='chest'){openChest();beep(700,0.15,'square',0.1);}
-    else if(pk.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+35);beep(660,0.12,'sine',0.1);}
+    if(pk.type==='chest'){openChest();sfxChime(520,3,0.07,0.1);}
+    else if(pk.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+35);sfxChime(660,2,0.08,0.09);}
     else if(pk.type==='magnet'){
       const R=3*Math.max(W,H);
       points+=25+player.level*2;
-      gems.forEach(g=>grantXp(g.val));
-      gems=[];
+      gems.forEach(g=>g.magnet=true);
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
       updateHud();
-      beep(1000,0.15,'sine',0.08);
+      sfxSweep(500,1400,0.35,'sine',0.1);
     }
-    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,6);beep(70,0.35,'sawtooth',0.2);}
+    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
     else if(pk.type==='weapon'){
       const rem=WEAPON_UNLOCKS.filter(w=>!w.done);
       const w=rem[Math.floor(Math.random()*rem.length)];
@@ -889,7 +927,7 @@
       const el=document.createElement('div');el.className='card';
       el.style.borderColor=ri.color;
       el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLevel(u)+'</span><span>'+u.desc+'</span>';
-      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;pendingLevelUps--;beep(523,0.08,'sine',0.1);setTimeout(()=>beep(659,0.1,'sine',0.1),80);
+      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;pendingLevelUps--;sfxChime(523,3,0.08,0.1);
         olevel.classList.remove('show');
         if(pendingLevelUps>0)showLevelUp();else startCooldown();
       };
@@ -932,8 +970,15 @@
     });
   }
 
+  function insideSafeZone(){return !!safeZone&&dist(player,safeZone)<safeZone.r;}
+
   function openShop(){
     if(state!=='running')return;
+    if(!insideSafeZone()){
+      announce={text:'Магазин работает только в безопасной зоне 🛡',life:2,color:'#4ade80'};
+      beep(160,0.12,'sawtooth',0.1);
+      return;
+    }
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     if(pool.length>0&&!pool.some(u=>points>=shopCost(u))){
       announce={text:'Недостаточно баллов для покупки',life:1.8,color:'#f97316'};
@@ -993,7 +1038,7 @@
     state='superwarning';
     superWarnText.textContent='На уровне '+nextLevel+' появится СУПЕРБОСС — намного опаснее обычных боссов, и приведёт с собой подкрепление.';
     osuperwarn.classList.add('show');
-    beep(150,0.3,'sawtooth',0.15);setTimeout(()=>beep(100,0.4,'sawtooth',0.15),200);
+    sfxBoom(0.45,0.26,600,55);setTimeout(()=>beep(100,0.4,'sawtooth',0.15),200);
   }
 
   function spawnSuperboss(atLevel){
@@ -1032,7 +1077,7 @@
     announce={text:'⚠ БОСС УРОВНЯ 8: '+en.skinName+' ⚠',life:3.2,color:'#f97316'};
     rings.push({x:player.x,y:player.y,r:0,maxR:700,life:1.3});
     camShake=Math.max(camShake,14);screenFlash=Math.max(screenFlash,0.6);
-    beep(70,0.5,'sawtooth',0.2);setTimeout(()=>beep(90,0.4,'sawtooth',0.18),150);
+    sfxBoom(0.7,0.3,450,45);sfxSweep(60,140,0.6,'sawtooth',0.12);
     return en;
   }
 
@@ -1097,6 +1142,9 @@
     stPierceEl.textContent=player.pierce;
     stAoeEl.textContent=Math.round(player.aoeMult*100)+'%';
     pointsEl.textContent=Math.floor(points);
+    const inZone=insideSafeZone();
+    btnShop.style.opacity=(state==='running'&&!inZone)?0.45:1;
+    btnShop.style.borderColor=inZone?'#4ade80':'';
   }
 
   function hurtPlayer(dmg,fx,fy,force,isBossHit,isContact){
@@ -1107,7 +1155,7 @@
     if(!isContact&&player.barrierLevel&&player.barrierCd<=0){
       player.barrierCd=14-player.barrierLevel*1.5;
       rings.push({x:player.x,y:player.y,r:0,maxR:60,life:0.5,color:'#38bdf8'});
-      beep(950,0.1,'sine',0.08);return;
+      sfxSweep(700,1200,0.12,'sine',0.09);return;
     }
     const mitig=(player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1)*(1-0.05*player.armorLevel);
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
@@ -1116,7 +1164,7 @@
       const a=Math.atan2(player.y-fy,player.x-fx);
       player.x+=Math.cos(a)*force;player.y+=Math.sin(a)*force;
     }
-    if(!isContact)beep(120,0.15,'sawtooth',0.12);
+    if(!isContact)sfxSweep(200,70,0.18,'sawtooth',0.1);
     if(player.hp<=0){
       if(lives>1){
         lives--;
@@ -1124,7 +1172,7 @@
         player.invuln=2;
         announce={text:'💔 Жизнь потеряна! Осталось: '+lives,life:2.5,color:'#ff2d55'};
         camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.5);
-        beep(150,0.3,'sawtooth',0.15);
+        sfxBoom(0.45,0.26,600,55);
         if(player.secondWindLevel){
           const R=280,swd=60*player.secondWindLevel;
           for(const e of enemies){
@@ -1147,7 +1195,7 @@
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));bestEl.textContent=fmtTime(best);}
     overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills;
     oover.classList.add('show');
-    beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);
+    sfxSweep(420,45,0.9,'sawtooth',0.14);sfxBoom(0.7,0.2,500,40);
     if(t>0)submitScore('survivors',playerName,t,{level:player.level,kills:kills});
   }
 
@@ -1207,10 +1255,28 @@
         player.chronoCd=15;freezeT=1+0.4*player.chronoLevel;
         announce={text:'⏱ ХРОНОСФЕРА!',life:1.4,color:'#c4b5fd'};
         rings.push({x:player.x,y:player.y,r:0,maxR:500,life:1,color:'#c4b5fd'});
-        beep(1000,0.2,'sine',0.1);
+        sfxSweep(400,1600,0.4,'sine',0.1);
       }
     }
     if(freezeT>0)freezeT-=dt;
+
+    // safe zone: a periodic sanctuary — enemies can't enter, and the shop only works inside
+    if(!safeZone){
+      safeZoneAcc+=dt;
+      if(safeZoneAcc>=45){
+        safeZoneAcc=0;
+        const a=rand(0,Math.PI*2),d0=rand(450,750);
+        safeZone={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:150,life:25};
+        announce={text:'🛡 Безопасная зона появилась! Магазин внутри',life:2.6,color:'#4ade80'};
+        sfxChime(392,4,0.09,0.1);
+      }
+    }else{
+      safeZone.life-=dt;
+      if(safeZone.life<=0){
+        safeZone=null;
+        announce={text:'Безопасная зона исчезла',life:1.6,color:'#8891a3'};
+      }
+    }
 
     // enemies
     // ponytail: cap how many touching mobs contribute contact dps at once — a swarm should
@@ -1267,15 +1333,34 @@
         }
       }
     }
+    // the sanctuary is impassable for enemies — clamp any intruder back to its edge
+    if(safeZone){
+      for(const e of enemies){
+        const d=dist(safeZone,e);
+        if(d<safeZone.r+e.r){
+          const a=Math.atan2(e.y-safeZone.y,e.x-safeZone.x)||rand(0,Math.PI*2);
+          e.x=safeZone.x+Math.cos(a)*(safeZone.r+e.r);
+          e.y=safeZone.y+Math.sin(a)*(safeZone.r+e.r);
+        }
+      }
+    }
     enemies=enemies.filter(e=>{
       if(e.hp<=0){killEnemy(e);return false;}
       return true;
     });
-    if(enemies.length>240)enemies.length=240;
+    if(enemies.length>240){
+      // blind truncation once silently deleted an alive boss whose pauseSpawns flag was
+      // never cleared — spawning stopped forever. Keep elites, trim regular mobs only.
+      const elites=enemies.filter(e=>e.elite);
+      enemies=elites.concat(enemies.filter(e=>!e.elite).slice(0,240-elites.length));
+    }
+    // self-heal: never let a leaked pause flag starve the field of enemies
+    if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns))mobSpawnPaused=false;
 
-    // enemy projectiles
+    // enemy projectiles (fizzle at the safe-zone border — it's actually safe inside)
     for(const ep of enemyProjectiles){
       ep.x+=ep.vx*dt;ep.y+=ep.vy*dt;ep.life-=dt;
+      if(safeZone&&dist(safeZone,ep)<safeZone.r){ep.dead=true;burst(ep.x,ep.y,'#4ade80',3);continue;}
       if(dist(player,ep)<player.r+ep.r){hurtPlayer(ep.dmg,ep.x,ep.y,ep.boss?14:0,ep.boss);ep.dead=true;burst(ep.x,ep.y,'#a855f7',5);}
     }
     enemyProjectiles=enemyProjectiles.filter(ep=>ep.life>0&&!ep.dead);
@@ -1288,7 +1373,7 @@
       for(const e of enemies){if(dist(m,e)<m.r+e.r){triggered=true;break;}}
       if(triggered){
         for(const e of enemies){if(dist(m,e)<m.blastR)e.hp-=m.dmg;}
-        burst(m.x,m.y,'#f97316',14);camShake=Math.max(camShake,5);beep(90,0.25,'sawtooth',0.15);
+        burst(m.x,m.y,'#f97316',14);camShake=Math.max(camShake,5);sfxBoom(0.3,0.22,800,80);
         m.dead=true;
       }
     });
@@ -1306,7 +1391,12 @@
     const gemMagnetR=player.pickupRadius*2.2;
     for(const g of gems){
       const d=dist(player,g);
-      if(d<gemMagnetR){
+      if(g.magnet){
+        // magnet pickup: every gem on the map races to the player
+        const a=Math.atan2(player.y-g.y,player.x-g.x);
+        const sp=Math.max(600,d*2.5);
+        g.x+=Math.cos(a)*sp*dt;g.y+=Math.sin(a)*sp*dt;
+      }else if(d<gemMagnetR){
         const a=Math.atan2(player.y-g.y,player.x-g.x);
         g.x+=Math.cos(a)*(280+gemMagnetR)*dt;g.y+=Math.sin(a)*(280+gemMagnetR)*dt;
       }
@@ -1332,7 +1422,7 @@
         if(dist(p,e)<p.r+e.r){
           if(p.fireball){
             for(const o of enemies){if(dist(p,o)<p.blastR)o.hp-=p.dmg;}
-            burst(p.x,p.y,'#f97316',14);camShake=Math.max(camShake,4);beep(110,0.2,'sawtooth',0.1);
+            burst(p.x,p.y,'#f97316',14);camShake=Math.max(camShake,4);sfxBoom(0.25,0.18,900,100);
             p.life=0;p.pierceLeft=-1;break;
           }
           e.hp-=p.dmg;p.hitSet.add(e);p.pierceLeft--;burst(p.x,p.y,p.color||'#4D96FF',3);
@@ -1465,21 +1555,28 @@
     for(let gy=sy0;gy<bottom;gy+=g){x.beginPath();x.moveTo(left,gy);x.lineTo(right,gy);x.stroke();}
   }
 
-  function drawOffscreenIndicators(){
+  function edgeArrow(wx0,wy0,worldR,color,sz){
+    const sx=(wx0-player.x)*zoom+W/2,sy=(wy0-player.y)*zoom+H/2;
+    const pad=worldR*zoom+4;
+    if(sx>-pad&&sx<W+pad&&sy>-pad&&sy<H+pad)return;
     const margin=22;
-    pickups.forEach(pk=>{
-      const sx=(pk.x-player.x)*zoom+W/2,sy=(pk.y-player.y)*zoom+H/2;
-      const pad=pk.r*zoom+4;
-      if(sx>-pad&&sx<W+pad&&sy>-pad&&sy<H+pad)return;
-      const ang=Math.atan2(sy-H/2,sx-W/2);
-      const halfWs=W/2-margin,halfHs=H/2-margin;
-      const scale=Math.min(halfWs/Math.max(1e-6,Math.abs(Math.cos(ang))),halfHs/Math.max(1e-6,Math.abs(Math.sin(ang))));
-      const ix=W/2+Math.cos(ang)*scale,iy=H/2+Math.sin(ang)*scale;
-      x.save();x.translate(ix,iy);x.rotate(ang);
-      x.fillStyle=pk.color;x.shadowColor=pk.color;x.shadowBlur=6;
-      x.beginPath();x.moveTo(9,0);x.lineTo(-6,-5);x.lineTo(-6,5);x.closePath();x.fill();
-      x.restore();
-    });
+    const ang=Math.atan2(sy-H/2,sx-W/2);
+    const halfWs=W/2-margin,halfHs=H/2-margin;
+    const scale=Math.min(halfWs/Math.max(1e-6,Math.abs(Math.cos(ang))),halfHs/Math.max(1e-6,Math.abs(Math.sin(ang))));
+    const ix=W/2+Math.cos(ang)*scale,iy=H/2+Math.sin(ang)*scale;
+    x.save();x.translate(ix,iy);x.rotate(ang);
+    x.fillStyle=color;x.shadowColor=color;x.shadowBlur=6;
+    const s=sz||1;
+    x.beginPath();x.moveTo(9*s,0);x.lineTo(-6*s,-5*s);x.lineTo(-6*s,5*s);x.closePath();x.fill();
+    x.restore();
+  }
+
+  function drawOffscreenIndicators(){
+    pickups.forEach(pk=>edgeArrow(pk.x,pk.y,pk.r,pk.color));
+    // bosses: bigger pulsing arrows in the boss's color
+    enemies.forEach(e=>{if(e.elite)edgeArrow(e.x,e.y,e.r,e.color,1.7+0.25*Math.sin(t*6));});
+    // safe zone: green arrow so the player can always find it
+    if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
   }
 
   function draw(){
@@ -1491,6 +1588,23 @@
     x.scale(zoom,zoom);
     x.translate(-player.x,-player.y);
     drawGrid();
+    // safe zone (under everything)
+    if(safeZone){
+      const fade=Math.min(1,safeZone.life/2);
+      x.save();x.globalAlpha=0.1*fade;
+      x.fillStyle='#4ade80';x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.fill();
+      x.globalAlpha=0.7*fade;x.strokeStyle='#4ade80';x.lineWidth=2.5/zoom;x.setLineDash([12,8]);
+      x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.stroke();x.setLineDash([]);
+      // shop kiosk in the middle
+      x.globalAlpha=fade;x.translate(safeZone.x,safeZone.y);
+      x.fillStyle='#166534';x.fillRect(-16,-10,32,22);
+      x.fillStyle='#4ade80';x.beginPath();x.moveTo(-20,-10);x.lineTo(0,-24);x.lineTo(20,-10);x.closePath();x.fill();
+      x.fillStyle='#fff';x.font='bold 13px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText('🛒',0,3);
+      x.font='bold 11px system-ui,sans-serif';x.fillStyle='#bbf7d0';
+      x.fillText(Math.ceil(safeZone.life)+'с',0,24);
+      x.restore();
+    }
     // acid pools (under everything else)
     pools.forEach(pl=>{
       x.globalAlpha=0.22+0.08*Math.sin(t*6);
