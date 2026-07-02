@@ -70,10 +70,11 @@
   @keyframes shopGlow{0%,100%{box-shadow:0 0 3px #4ade80;}50%{box-shadow:0 0 18px #4ade80;}}
   .shop-active{animation:shopGlow 0.9s ease-in-out infinite;border-color:#4ade80 !important;}
   @keyframes warnpulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
-  @media (hover:none) and (pointer:coarse){
-    /* stats live in the on-canvas HUD — hide the duplicate boxes, give the screen to the game */
+  /* only the narrow single-column (phone) layout hides sidebar stats and leans on the
+     on-canvas HUD; tablets wide enough for the side-by-side layout keep the full sidebar */
+  @media (hover:none) and (pointer:coarse) and (max-width:819px){
     .side .m-hide{display:none;}
-    .side{max-height:16vh;}
+    .side{max-height:20vh;}
     .hint{display:none;}
   }
 </style>
@@ -86,7 +87,8 @@
     <div id="ostart" class="overlay show">
       <h2>Выжившие</h2>
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
-      <button class="ostart" id="btnStart">Начать</button>
+      <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
+      <button class="ostart" id="btnStart">Начать заново</button>
     </div>
     <div id="olevel" class="overlay">
       <h2 id="levelTitle">Новый уровень!</h2>
@@ -495,6 +497,43 @@
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
     updateHud();
+  }
+
+  // --- run persistence: survive refresh / accidental menu exit ---
+  const SAVE_KEY='survivors-run';
+  let saveAcc=0;
+  function saveRun(){
+    if(!player||!(state==='running'||state==='shop'||state==='levelup'||state==='cooldown'||state==='weaponpopup'))return;
+    try{
+      localStorage.setItem(SAVE_KEY,JSON.stringify({
+        player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
+        t,spawnAcc,kills,lives,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
+        pendingLevel8Boss,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,
+        weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
+      }));
+    }catch(e){}
+  }
+  function hasSave(){try{return !!localStorage.getItem(SAVE_KEY);}catch(e){return false;}}
+  function clearRun(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+  function loadRun(){
+    let s;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){s=null;}
+    if(!s||!s.player)return false;
+    player=s.player;
+    enemies=s.enemies||[];gems=s.gems||[];pickups=s.pickups||[];mines=s.mines||[];pools=s.pools||[];
+    meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
+    boomers=s.boomers||[];particles=[];rings=[];bolts=[];
+    t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=s.lives!=null?s.lives:3;zoom=baseZoom;enemyCountSmoothed=0;
+    lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
+    pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;
+    pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
+    safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
+    eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;
+    (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
+    keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
+    updateHud();
+    return true;
   }
 
   function difficulty(){
@@ -1388,6 +1427,7 @@
 
   function gameOver(){
     state='over';
+    clearRun();
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));bestEl.textContent=fmtTime(best);}
     overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills;
     oover.classList.add('show');
@@ -1397,6 +1437,8 @@
 
   function step(dt){
     t+=dt;
+    // autosave the run every ~2s so a refresh/close loses at most a couple seconds
+    saveAcc+=dt;if(saveAcc>=2){saveAcc=0;saveRun();}
     // input
     let mx=0,my=0;
     if(keys.left||keys.a)mx-=1;if(keys.right||keys.d)mx+=1;
@@ -1809,9 +1851,9 @@
   // critical stats drawn on the canvas itself — always visible, no matter how
   // the page layout scrolls or squeezes on small screens
   function drawHudOverlay(){
-    const pad=8,w=176,h=66;
+    const pad=8,w=176,h=96;
     x.save();
-    x.globalAlpha=0.6;x.fillStyle='#0b0e17';x.fillRect(pad,pad,w,h);
+    x.globalAlpha=0.62;x.fillStyle='#0b0e17';x.fillRect(pad,pad,w,h);
     x.globalAlpha=1;x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=1;x.strokeRect(pad+0.5,pad+0.5,w-1,h-1);
     // HP bar + numbers
     x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(pad+8,pad+8,w-16,10);
@@ -1821,15 +1863,28 @@
     // XP bar
     x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(pad+8,pad+22,w-16,5);
     x.fillStyle='#4D96FF';x.fillRect(pad+8,pad+22,(w-16)*Math.max(0,Math.min(1,player.xp/player.xpNeed)),5);
-    // row 1: level + lives
+    // row 1: level + lives + time
     x.textAlign='left';x.font='bold 12px system-ui,sans-serif';
     x.fillStyle='#e8ebf2';x.fillText('Ур. '+player.level,pad+8,pad+38);
     x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+62,pad+38);
     x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+124,pad+38);
     // row 2: points (+ blinking beacon when the shop zone is live)
     if(safeZone&&state==='running')x.globalAlpha=0.55+0.45*Math.sin(t*7);
-    x.fillStyle='#4ade80';x.fillText('🛒 '+Math.floor(points)+' баллов',pad+8,pad+55);
+    x.fillStyle='#4ade80';x.font='bold 11px system-ui,sans-serif';x.fillText('🛒 '+Math.floor(points)+' баллов',pad+8,pad+53);
     x.globalAlpha=1;
+    // combat stats — always visible even when the sidebar is hidden on phones
+    const col=[pad+8,pad+66,pad+122];
+    x.font='9px system-ui,sans-serif';
+    const cells=[
+      ['Урон',Math.round(player.dmg)],['Атк',(1000/player.fireRate).toFixed(1)],['Скор',Math.round(player.speed)],
+      ['Крит',Math.round(player.critChance*100)+'%'],['Проб',player.pierce],['Рад',Math.round(player.aoeMult*100)+'%']
+    ];
+    for(let i=0;i<6;i++){
+      const cx=col[i%3],cy=pad+(i<3?68:82);
+      x.fillStyle='#8891a3';x.fillText(cells[i][0],cx,cy);
+      x.fillStyle='#e8ebf2';x.font='bold 9px system-ui,sans-serif';x.fillText(cells[i][1],cx+28,cy);
+      x.font='9px system-ui,sans-serif';
+    }
     x.restore();
   }
 
@@ -2050,21 +2105,35 @@
       localStorage.setItem('survivors-name',playerName);
       renderPlayerName();
     }
-    ensureAudio();reset();
+    clearRun();ensureAudio();reset();
+    ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
+    ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');olb.classList.remove('show');
+    state='running';last=performance.now();raf=requestAnimationFrame(loop);
+  }
+
+  function resumeRun(){
+    if(!loadRun()){start();return;}
+    ensureAudio();
     ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
     ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');olb.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
   function showMenu(){
+    saveRun();
     const hubUrl=new URL('../index.html',window.location.href).href;
     (window.top||window).location.href=hubUrl;
   }
 
   document.getElementById('btnStart').addEventListener('click',start);
+  document.getElementById('btnResume').addEventListener('click',resumeRun);
   document.getElementById('btnRetry').addEventListener('click',start);
   document.getElementById('btnMenuFromOver').addEventListener('click',showMenu);
   document.getElementById('btnMenuSide').addEventListener('click',showMenu);
+  // persist on tab hide / refresh / close so nothing is lost
+  window.addEventListener('pagehide',saveRun);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun();});
+  if(hasSave())document.getElementById('btnResume').style.display='';
   btnShop.addEventListener('click',openShop);
   btnShopClose.addEventListener('click',closeShop);
 
