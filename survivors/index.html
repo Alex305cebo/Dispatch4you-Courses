@@ -67,8 +67,6 @@
   #osuperwarn p{color:#ff8fa3;}
   .btn-danger{background:#7f1d2e;border-color:#ff2d55;color:#fff;}
   .btn-danger:hover{background:#9a2436;}
-  @keyframes shopGlow{0%,100%{box-shadow:0 0 3px #4ade80;}50%{box-shadow:0 0 18px #4ade80;}}
-  .shop-active{animation:shopGlow 0.9s ease-in-out infinite;border-color:#4ade80 !important;}
   @keyframes warnpulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
   /* only the narrow single-column (phone) layout hides sidebar stats and leans on the
      on-canvas HUD; tablets wide enough for the side-by-side layout keep the full sidebar */
@@ -122,42 +120,17 @@
       <div id="lbList" style="font-size:13px;color:var(--muted);max-height:280px;overflow:auto;width:100%;max-width:300px;">Загрузка…</div>
       <button class="ostart" id="btnLbClose">Закрыть</button>
     </div>
-    <div id="oshop" class="overlay">
-      <h2>🛒 Магазин улучшений</h2>
-      <p style="margin:-6px 0 0;">Баллов: <b id="shopPoints" style="color:#4D96FF;">0</b></p>
-      <div class="cards" id="shopList" style="max-height:340px;overflow:auto;"></div>
-      <button class="ostart" id="btnShopClose">Закрыть</button>
-    </div>
   </div>
   <div class="side">
-    <div class="box full">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-        <div style="font-size:12px;color:var(--muted);">Игрок: <span id="splayername" style="color:var(--text);">—</span></div>
-        <button id="btnRename" style="width:auto;padding:4px 8px;font-size:11px;">✎</button>
+    <div class="box full" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+      <div style="font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;">Игрок: <span id="splayername" style="color:var(--text);">—</span></div>
+      <div style="display:flex;gap:6px;flex:0 0 auto;">
+        <button id="btnRename" style="width:auto;padding:6px 9px;font-size:11px;">✎</button>
+        <button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button>
       </div>
     </div>
-    <div class="box row m-hide"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
-    <div class="box m-hide"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
-    <div class="box m-hide"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
-    <div class="box full bars m-hide">
-      <div class="label">HP <span id="shpnum" style="color:var(--text);font-weight:600;">100/100</span></div><div class="bar" id="hpbar"><div></div></div>
-      <div class="label">Опыт</div><div class="bar" id="xpbar"><div></div></div>
-    </div>
-    <div class="box full m-hide">
-      <div class="label">Характеристики</div>
-      <div class="statgrid">
-        <div><span>Урон</span><b id="stdmg">0</b></div>
-        <div><span>Атака/с</span><b id="strate">0</b></div>
-        <div><span>Скорость</span><b id="stspeed">0</b></div>
-        <div><span>Крит</span><b id="stcrit">0%</b></div>
-        <div><span>Пробитие</span><b id="stpierce">0</b></div>
-        <div><span>Радиус</span><b id="staoe">100%</b></div>
-      </div>
-    </div>
-    <div class="box full" style="display:flex;gap:6px;padding:8px 10px;">
-      <button id="btnShop" style="padding:8px;">🛒 Магазин (<span id="spoints">0</span> баллов)</button>
-      <button id="btnMenuSide" style="padding:8px;width:auto;flex:0 0 auto;white-space:nowrap;">☰ Меню</button>
+    <div class="box full" style="padding:8px 10px;">
+      <button id="btnMenuSide" style="padding:8px;">☰ Меню</button>
     </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
   </div>
@@ -175,9 +148,6 @@
   }
   const isMobileDevice=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
   const baseZoom=isMobileDevice?0.62:1;
-  const timeEl=document.getElementById('stime'),levelEl=document.getElementById('slevel'),killsEl=document.getElementById('skills'),bestEl=document.getElementById('sbest'),livesEl=document.getElementById('slives');
-  const stDmgEl=document.getElementById('stdmg'),stRateEl=document.getElementById('strate'),stSpeedEl=document.getElementById('stspeed'),stCritEl=document.getElementById('stcrit'),stPierceEl=document.getElementById('stpierce'),stAoeEl=document.getElementById('staoe');
-  const hpFill=document.querySelector('#hpbar>div'),hpNumEl=document.getElementById('shpnum'),xpFill=document.querySelector('#xpbar>div');
   const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
   const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
   const levelTitle=document.getElementById('levelTitle'),levelSub=document.getElementById('levelSub');
@@ -185,11 +155,8 @@
   const oweapon=document.getElementById('oweapon'),weaponTitle=document.getElementById('weaponTitle'),weaponDesc=document.getElementById('weaponDesc');
   const wcv=document.getElementById('weaponIcon'),wx=wcv.getContext('2d');
   const osuperwarn=document.getElementById('osuperwarn'),superWarnText=document.getElementById('superWarnText');
-  const oshop=document.getElementById('oshop'),shopListEl=document.getElementById('shopList'),shopPointsEl=document.getElementById('shopPoints');
-  const pointsEl=document.getElementById('spoints'),btnShop=document.getElementById('btnShop'),btnShopClose=document.getElementById('btnShopClose');
 
   let best=parseFloat(localStorage.getItem('survivors-best')||'0');
-  bestEl.textContent=fmtTime(best);
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
   function fsVal(v){return typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
@@ -401,7 +368,6 @@
     {id:'critdmg',name:'Урон крита +40%',desc:'Криты бьют ещё сильнее',rarity:'common',cond:p=>p.critMult<4.4,apply:p=>p.critMult+=0.4},
     {id:'rage',name:'Ярость раненого',desc:'+12% урона за уровень, пока HP ниже 35%',rarity:'common',cond:p=>p.rageLevel<5,apply:p=>p.rageLevel++},
     {id:'armor',name:'Каменная кожа',desc:'-5% получаемого урона за уровень',rarity:'common',cond:p=>p.armorLevel<6,apply:p=>p.armorLevel++},
-    {id:'greed',name:'Жадность',desc:'+20% баллов за убийства за уровень',rarity:'mid',cond:p=>p.greedLevel<5,apply:p=>p.greedLevel++},
     {id:'wisdom',name:'Мудрость',desc:'+15% опыта с кристаллов за уровень',rarity:'mid',cond:p=>p.wisdomLevel<5,apply:p=>p.wisdomLevel++},
     {id:'dodge',name:'Уклонение',desc:'6% шанс за уровень полностью избежать удара',rarity:'mid',cond:p=>p.dodgeLevel<5,apply:p=>p.dodgeLevel++},
     {id:'thorns',name:'Шипы',desc:'Враги, прижавшиеся вплотную, получают урон',rarity:'mid',cond:p=>p.thornsLevel<5,apply:p=>p.thornsLevel++},
@@ -713,7 +679,6 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
-    points+=(1.5+player.level*0.12)*(1+0.2*player.greedLevel)*(e.champion?10:1);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
     if(e.beh==='split'&&!e.child){
       // killed splitters break into two faster halves (queued — we're inside the filter pass)
@@ -1061,10 +1026,8 @@
     else if(pk.type==='heal'){player.hp=Math.min(player.maxHp,player.hp+35);sfxChime(660,2,0.08,0.09);}
     else if(pk.type==='magnet'){
       const R=3*Math.max(W,H);
-      points+=60+player.level*5;
       gems.forEach(g=>g.magnet=true);
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
-      updateHud();
       sfxSweep(500,1400,0.35,'sine',0.1);
     }
     else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
@@ -1081,15 +1044,14 @@
       player.xp-=player.xpNeed;
       levelUpOnce();
       player.xpNeed=xpNeedFor(player.level);
-      points+=150;
     }
     if(pendingLevelUps>0&&state==='running')showLevelUp();
-    updateHud();
   }
 
   function levelUpOnce(){
     player.level++;
-    if(player.level%5===0){pendingLevelUps+=3;pendingBossLevel=player.level;}
+    pendingLevelUps++;
+    if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;}
     if(player.level%25===0){pendingSuperWarning=player.level;}
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
     if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
@@ -1120,11 +1082,10 @@
   function showLevelUp(){
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     if(pool.length===0){
-      // everything's already maxed out — nothing to pick, so don't freeze on an empty card
-      // screen. Pay out points instead and move straight on.
-      points+=100*Math.max(1,pendingLevelUps);
+      // everything available is maxed (damage is uncapped so this is rare) — heal a bit
+      // instead of freezing on an empty card screen, and move straight on
+      player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);
       pendingLevelUps=0;chestPending=false;
-      updateHud();
       olevel.classList.remove('show');
       startCooldown();
       return;
@@ -1153,64 +1114,6 @@
     });
     olevel.classList.add('show');
     updateHud();
-  }
-
-  function shopCost(u){
-    const bought=shopBought[u.id]||0;
-    return Math.round((RARITY_INFO[u.rarity]||RARITY_INFO.common).cost*Math.pow(1.25,bought));
-  }
-
-  function renderShop(){
-    shopPointsEl.textContent=Math.floor(points);
-    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
-    shopListEl.innerHTML='';
-    if(pool.length===0){shopListEl.innerHTML='<p style="color:var(--muted);text-align:center;">Все улучшения уже максимальны!</p>';}
-    pool.forEach(u=>{
-      const cost=shopCost(u);
-      const afford=points>=cost;
-      const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;
-      const lvl=upgradeLevel(u);
-      const el=document.createElement('div');el.className='card';
-      el.style.opacity=afford?1:0.5;
-      el.style.borderColor=ri.color;
-      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLabel(u)+'</span><span>'+u.desc+'</span><div style="margin-top:8px;color:'+ri.color+';font-weight:600;">'+cost+' баллов</div>';
-      if(afford){
-        el.onclick=()=>{
-          points-=cost;
-          shopBought[u.id]=(shopBought[u.id]||0)+1;
-          u.apply(player);
-          beep(600,0.08,'sine',0.1);
-          updateHud();
-          renderShop();
-        };
-      }
-      shopListEl.appendChild(el);
-    });
-  }
-
-  function insideSafeZone(){return !!safeZone&&dist(player,safeZone)<safeZone.r;}
-
-  function openShop(){
-    if(state!=='running')return;
-    if(!insideSafeZone()){
-      announce={text:'Магазин работает только в безопасной зоне 🛡',life:2,color:'#4ade80'};
-      beep(160,0.12,'sawtooth',0.1);
-      return;
-    }
-    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
-    if(pool.length>0&&!pool.some(u=>points>=shopCost(u))){
-      announce={text:'Недостаточно баллов для покупки',life:1.8,color:'#f97316'};
-      beep(160,0.12,'sawtooth',0.1);
-      return;
-    }
-    state='shop';
-    renderShop();
-    oshop.classList.add('show');
-  }
-
-  function closeShop(){
-    oshop.classList.remove('show');
-    state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
   function startCooldown(){
@@ -1362,25 +1265,8 @@
     if(Math.random()<0.3)particles.push({x:e.x+rand(-e.r,e.r),y:e.y+rand(-e.r,e.r),vx:rand(-0.5,0.5),vy:-rand(0.5,1.5),life:1,color:'#ff2d55',sz:2+Math.random()*3});
   }
 
-  function updateHud(){
-    timeEl.textContent=fmtTime(t);
-    levelEl.textContent=player.level;
-    killsEl.textContent=kills;
-    livesEl.textContent='❤'.repeat(Math.max(0,lives));
-    hpNumEl.textContent=Math.max(0,Math.round(player.hp))+'/'+Math.round(player.maxHp);
-    hpFill.style.width=Math.max(0,player.hp/player.maxHp*100)+'%';
-    xpFill.style.width=Math.max(0,Math.min(100,player.xp/player.xpNeed*100))+'%';
-    stDmgEl.textContent=Math.round(player.dmg);
-    stRateEl.textContent=(1000/player.fireRate).toFixed(1);
-    stSpeedEl.textContent=Math.round(player.speed);
-    stCritEl.textContent=Math.round(player.critChance*100)+'%';
-    stPierceEl.textContent=player.pierce;
-    stAoeEl.textContent=Math.round(player.aoeMult*100)+'%';
-    pointsEl.textContent=Math.floor(points);
-    const inZone=insideSafeZone();
-    btnShop.style.opacity=(state==='running'&&!inZone)?0.45:1;
-    btnShop.classList.toggle('shop-active',!!safeZone&&state==='running');
-  }
+  // all live stats now render in the on-canvas HUD (drawHudOverlay); nothing to push to the DOM
+  function updateHud(){}
 
   function hurtPlayer(dmg,fx,fy,force,isBossHit,isContact){
     // contact dps from a swarm ignores the regular 0.5s hit-mercy (that's what let a mob wall
@@ -1511,7 +1397,7 @@
         safeZoneAcc=0;
         const a=rand(0,Math.PI*2),d0=rand(450,750);
         safeZone={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:150,life:25};
-        announce={text:'🛡 Безопасная зона появилась! Магазин внутри',life:2.6,color:'#4ade80'};
+        announce={text:'🛡 Безопасная зона — передышка!',life:2.6,color:'#4ade80'};
         sfxChime(392,4,0.09,0.1);
       }
     }else{
@@ -1851,7 +1737,7 @@
   // critical stats drawn on the canvas itself — always visible, no matter how
   // the page layout scrolls or squeezes on small screens
   function drawHudOverlay(){
-    const pad=8,w=176,h=96;
+    const pad=8,w=176,h=88;
     x.save();
     x.globalAlpha=0.62;x.fillStyle='#0b0e17';x.fillRect(pad,pad,w,h);
     x.globalAlpha=1;x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=1;x.strokeRect(pad+0.5,pad+0.5,w-1,h-1);
@@ -1868,10 +1754,8 @@
     x.fillStyle='#e8ebf2';x.fillText('Ур. '+player.level,pad+8,pad+38);
     x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+62,pad+38);
     x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+124,pad+38);
-    // row 2: points (+ blinking beacon when the shop zone is live)
-    if(safeZone&&state==='running')x.globalAlpha=0.55+0.45*Math.sin(t*7);
-    x.fillStyle='#4ade80';x.font='bold 11px system-ui,sans-serif';x.fillText('🛒 '+Math.floor(points)+' баллов',pad+8,pad+53);
-    x.globalAlpha=1;
+    // row 2: kills
+    x.fillStyle='#9aa4b5';x.font='11px system-ui,sans-serif';x.fillText('Убийств: '+kills,pad+8,pad+52);
     // combat stats — always visible even when the sidebar is hidden on phones
     const col=[pad+8,pad+66,pad+122];
     x.font='9px system-ui,sans-serif';
@@ -1880,7 +1764,7 @@
       ['Крит',Math.round(player.critChance*100)+'%'],['Проб',player.pierce],['Рад',Math.round(player.aoeMult*100)+'%']
     ];
     for(let i=0;i<6;i++){
-      const cx=col[i%3],cy=pad+(i<3?68:82);
+      const cx=col[i%3],cy=pad+(i<3?64:78);
       x.fillStyle='#8891a3';x.fillText(cells[i][0],cx,cy);
       x.fillStyle='#e8ebf2';x.font='bold 9px system-ui,sans-serif';x.fillText(cells[i][1],cx+28,cy);
       x.font='9px system-ui,sans-serif';
@@ -1904,14 +1788,12 @@
       x.fillStyle='#4ade80';x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.fill();
       x.globalAlpha=0.7*fade;x.strokeStyle='#4ade80';x.lineWidth=2.5/zoom;x.setLineDash([12,8]);
       x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.stroke();x.setLineDash([]);
-      // shop kiosk in the middle
+      // rest marker + countdown in the middle
       x.globalAlpha=fade;x.translate(safeZone.x,safeZone.y);
-      x.fillStyle='#166534';x.fillRect(-16,-10,32,22);
-      x.fillStyle='#4ade80';x.beginPath();x.moveTo(-20,-10);x.lineTo(0,-24);x.lineTo(20,-10);x.closePath();x.fill();
-      x.fillStyle='#fff';x.font='bold 13px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-      x.fillText('🛒',0,3);
+      x.fillStyle='#fff';x.font='22px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText('🛡',0,-2);
       x.font='bold 11px system-ui,sans-serif';x.fillStyle='#bbf7d0';
-      x.fillText(Math.ceil(safeZone.life)+'с',0,24);
+      x.fillText(Math.ceil(safeZone.life)+'с',0,22);
       x.restore();
     }
     // acid pools (under everything else)
@@ -2107,7 +1989,7 @@
     }
     clearRun();ensureAudio();reset();
     ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
-    ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');olb.classList.remove('show');
+    ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');olb.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
@@ -2115,7 +1997,7 @@
     if(!loadRun()){start();return;}
     ensureAudio();
     ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
-    ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');oshop.classList.remove('show');olb.classList.remove('show');
+    ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');olb.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
@@ -2134,8 +2016,6 @@
   window.addEventListener('pagehide',saveRun);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun();});
   if(hasSave())document.getElementById('btnResume').style.display='';
-  btnShop.addEventListener('click',openShop);
-  btnShopClose.addEventListener('click',closeShop);
 
 
 
