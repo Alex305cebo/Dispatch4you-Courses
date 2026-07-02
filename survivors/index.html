@@ -120,7 +120,13 @@
     </div>
   </div>
   <div class="side">
-    <div class="box full" style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button></div>
+    <div class="box full">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div><div class="label">Время</div><div id="stime">00:00</div></div><button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+        <div style="font-size:12px;color:var(--muted);">Игрок: <span id="splayername" style="color:var(--text);">—</span></div>
+        <button id="btnRename" style="width:auto;padding:4px 8px;font-size:11px;">✎</button>
+      </div>
+    </div>
     <div class="box row"><div><div class="label">Уровень</div><div id="slevel" class="small">1</div></div><div><div class="label">Убийств</div><div id="skills" class="small">0</div></div></div>
     <div class="box"><div class="label">Рекорд</div><div id="sbest" class="small">00:00</div></div>
     <div class="box"><div class="label">Жизни</div><div id="slives" class="small">❤❤❤</div></div>
@@ -181,6 +187,16 @@
   function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   let playerName=localStorage.getItem('survivors-name')||'';
+  const playerNameEl=document.getElementById('splayername');
+  function renderPlayerName(){playerNameEl.textContent=playerName||'—';}
+  renderPlayerName();
+  document.getElementById('btnRename').addEventListener('click',()=>{
+    const n=prompt('Имя для таблицы лидеров:',playerName);
+    if(n===null)return;
+    playerName=sanitizeName(n);
+    localStorage.setItem('survivors-name',playerName);
+    renderPlayerName();
+  });
   let lbResumeRunning=false,lbHiddenOverlays=[];
   const olb=document.getElementById('olb'),lbListEl=document.getElementById('lbList');
   async function showLeaderboard(){
@@ -355,7 +371,12 @@
 
   function pickType(){
     const tier=ENEMY_TIERS[tierIndexForLevel(player.level)];
-    return tier[Math.floor(Math.random()*tier.length)];
+    // fast small mobs swarm-glue onto the player when they're half of every spawn —
+    // keep them as spice (~30%), not the main course
+    const fast=tier.filter(k=>ENEMY_TYPES[k].speed>=130);
+    const slow=tier.filter(k=>ENEMY_TYPES[k].speed<130);
+    const pool=(slow.length&&(!fast.length||Math.random()>=0.3))?slow:fast;
+    return pool[Math.floor(Math.random()*pool.length)];
   }
 
   function tierAvgDmg(lvl){
@@ -386,7 +407,9 @@
     const finalHp=elite?tierAvgHp(player.level)*(20+bn*4)*d.hpMul:base.hp*d.hpMul*levelMul;
     const finalDmg=elite?tierAvgDmg(player.level)*7*levelMul:base.dmg*levelMul;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
-      hp:finalHp,maxHp:finalHp,speed:base.speed*d.spdMul*(elite?0.7:1),
+      // ponytail: regular mobs capped below base player speed (180) — a mob you can never
+      // outrun glues to you permanently, which is what made fast spawns miserable
+      hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7:Math.min(170,base.speed*d.spdMul),
       dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1),
       color:elite?skin.color:base.color,glow:elite?skin.glow:null,skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
       xp:xpForPower(finalHp,finalDmg),elite:!!elite,bossNumber:bn,shootCd:elite?rand(0.8,1.6):0,
@@ -1384,6 +1407,7 @@
       try{entered=prompt('Введи имя для таблицы лидеров:','');}catch(e){entered='';}
       playerName=sanitizeName(entered);
       localStorage.setItem('survivors-name',playerName);
+      renderPlayerName();
     }
     ensureAudio();reset();
     ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
@@ -1421,9 +1445,10 @@
 
 
 
-  const KEYMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',a:'a',d:'d',w:'w',s:'s',A:'a',D:'d',W:'w',S:'s'};
-  document.addEventListener('keydown',e=>{const k=KEYMAP[e.key];if(k){keys[k]=true;e.preventDefault();}});
-  document.addEventListener('keyup',e=>{const k=KEYMAP[e.key];if(k){keys[k]=false;e.preventDefault();}});
+  // layout-independent: e.code names the physical key, so WASD works on Cyrillic/any layout
+  const KEYMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',KeyA:'a',KeyD:'d',KeyW:'w',KeyS:'s'};
+  document.addEventListener('keydown',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=true;e.preventDefault();}});
+  document.addEventListener('keyup',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=false;e.preventDefault();}});
 
   function toCanvasXY(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*(cv.width/r.width),y:(e.clientY-r.top)*(cv.height/r.height)};}
   cv.addEventListener('pointerdown',e=>{if(state!=='running')return;const p=toCanvasXY(e);joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
