@@ -178,6 +178,14 @@
     <button id="levelResultMap">Карта уровней</button>
   </div>
 </div>
+<div id="levelClearOverlay" style="display:none;position:fixed;inset:0;z-index:57;background:rgba(5,6,10,0.92);align-items:center;justify-content:center;">
+  <div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;width:280px;text-align:center;">
+    <h2 id="levelClearTitle" style="margin:0 0 8px;font-size:19px;font-weight:500;color:#4ade80;">Уровень пройден!</h2>
+    <p id="levelClearMsg" style="margin:0 0 16px;font-size:13px;color:var(--muted);"></p>
+    <button id="levelClearContinue" style="margin-bottom:10px;border-color:#4ade80;color:#4ade80;">Продолжить</button>
+    <button id="levelClearGoMap">Карта уровней</button>
+  </div>
+</div>
 <script>
 (function(){
   // old free-hosting routes (htmlpreview.github.io / githack.com proxying raw.githubusercontent.com) are retired —
@@ -294,10 +302,14 @@
   function addScore(n){score+=n;scoreEl.textContent=score;if(score>best){best=score;bestTime=elapsed;localStorage.setItem('tetris-best',JSON.stringify({score:best,time:bestTime}));bestEl.textContent=best;bestTimeEl.textContent=formatTime(bestTime);}
     if(mode==='levels'&&activeLevel!=null&&running){
       tLevelTargetEl.textContent='Цель: '+score+' / '+levelTarget;
-      if(score>=levelTarget)levelComplete();
+      if(score>=levelTarget&&!levelClearedThisRun)levelTargetReached();
     }
   }
-  function levelComplete(){
+  // reaching the target pauses the run and offers a choice, rather than ending it outright —
+  // progress/achievements are granted right away (the stage IS cleared), but the score submitted
+  // to the leaderboard only locks in once the run actually ends (map now, or death later)
+  function levelTargetReached(){
+    levelClearedThisRun=true;
     running=false;cancelAnimationFrame(raf);
     const idx=activeLevel;
     if(idx==='boss'){
@@ -311,8 +323,12 @@
     }
     saveLevelProgress();
     beep(659,0.15,'sine',0.15);setTimeout(()=>beep(880,0.25,'sine',0.15),150);
-    if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:(idx==='boss'?11:idx),difficulty:difficulty,mode:mode,bossCleared:localStorage.getItem('tetris-boss-cleared')==='1'});
-    showLevelResult(true,idx);
+    document.getElementById('levelClearTitle').textContent=idx==='boss'?'Босс повержен!':'Уровень пройден!';
+    document.getElementById('levelClearMsg').textContent='Счёт: '+score;
+    document.getElementById('levelClearOverlay').style.display='flex';
+  }
+  function finishLevelRun(){
+    if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:(activeLevel==='boss'?11:activeLevel),difficulty:difficulty,mode:mode,bossCleared:localStorage.getItem('tetris-boss-cleared')==='1'});
   }
   function showLevelResult(won,idx){
     const def=levelDef(idx);
@@ -360,7 +376,7 @@
   let levelProgress={unlocked:1,completed:[],bossCleared:false};
   try{const saved=JSON.parse(localStorage.getItem('tetris-levels-progress'));if(saved)levelProgress=Object.assign({unlocked:1,completed:[],bossCleared:false},saved);}catch(e){}
   function saveLevelProgress(){localStorage.setItem('tetris-levels-progress',JSON.stringify(levelProgress));}
-  let activeLevel=null,levelTarget=0,garbageInterval=0,garbageAcc=0;
+  let activeLevel=null,levelTarget=0,garbageInterval=0,garbageAcc=0,levelClearedThisRun=false;
   const tLevelTargetEl=document.getElementById('tlevelTarget');
   function emptyGrid(){return Array.from({length:ROWS},()=>Array(COLS).fill(-1));}
   function rnd(){if(Math.random()<COLORBOMB_CHANCE)return{m:SHAPES[COLORBOMB].map(r=>r.slice()),c:COLORBOMB};if(Math.random()<GHOST_CHANCE)return{m:SHAPES[randShapeIdx()].map(r=>r.slice()),c:GHOST};if(Math.random()<LIGHTNING_V_CHANCE)return{m:SHAPES[LIGHTNING_V].map(r=>r.slice()),c:LIGHTNING_V};if(Math.random()<LIGHTNING_H_CHANCE)return{m:SHAPES[LIGHTNING_H].map(r=>r.slice()),c:LIGHTNING_H};if(Math.random()<EARTHQUAKE_CHANCE)return{m:SHAPES[EARTHQUAKE].map(r=>r.slice()),c:EARTHQUAKE};const i=NORMAL_POOL[Math.floor(Math.random()*NORMAL_POOL.length)];return{m:SHAPES[i].map(r=>r.slice()),c:i};}
@@ -394,7 +410,7 @@
   function gameOver(){running=false;cancelAnimationFrame(raf);beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);checkGameOverAchievements();
     const reportedLevel=(mode==='levels'&&activeLevel!=null)?(activeLevel==='boss'?11:activeLevel):level;
     if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:reportedLevel,difficulty:difficulty,mode:mode,bossCleared:localStorage.getItem('tetris-boss-cleared')==='1'});
-    if(mode==='levels'&&activeLevel!=null){showLevelResult(false,activeLevel);}else{overEl.style.display='block';startBtn.textContent='Заново';}
+    if(mode==='levels'&&activeLevel!=null){showLevelResult(levelClearedThisRun,activeLevel);}else{overEl.style.display='block';startBtn.textContent='Заново';}
   }
   function explode(gx,gy){shake=10;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=gx+dx,cy=gy+dy;if(cx<0||cx>=COLS||cy<0||cy>=ROWS)continue;const col=grid[cy][cx]>=0?COLORS[grid[cy][cx]]:'#FF6B6B';grid[cy][cx]=-1;for(let k=0;k<5;k++)particles.push({x:(cx+0.5)*S,y:(cy+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:col,sz:2+Math.random()*4});}popup('БУМ!','#FF6B6B');beep(80,0.3,'sawtooth',0.2);addScore(150);unlockAchievement('sapper');}
   function colorExplode(){const belowRow=py+1;const target=belowRow<ROWS?grid[belowRow][px]:-1;if(target<0){popup('мимо...','#8891a3');return;}let count=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(grid[r][c]===target){count++;for(let k=0;k<5;k++)particles.push({x:(c+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:COLORS[target],sz:2+Math.random()*4});grid[r][c]=-1;}}shake=10;popup('ЦВЕТ.БОМБА x'+count,'#fff');beep(60,0.4,'sawtooth',0.22);addScore(count*30);}
@@ -431,7 +447,7 @@
   function start(){if(!playerName){playerName=sanitizeName(prompt('Введи имя для таблицы лидеров:',''));localStorage.setItem('tetris-name',playerName);renderPlayerName();}ensureAudio();grid=emptyGrid();if(mode!=='levels'&&difficulty==='hard'){for(let r=ROWS-3;r<ROWS;r++){for(let c=0;c<COLS;c++){if(Math.random()<0.65)grid[r][c]=Math.floor(Math.random()*7);}if(grid[r].every(v=>v>=0))grid[r][Math.floor(Math.random()*COLS)]=-1;}}score=0;scoreEl.textContent=0;lines=0;level=1;
     if(mode==='levels'&&activeLevel!=null){
       const def=levelDef(activeLevel);
-      levelTarget=def.target;dropMs=def.dropMs;garbageInterval=def.garbage||0;garbageAcc=0;
+      levelTarget=def.target;dropMs=def.dropMs;garbageInterval=def.garbage||0;garbageAcc=0;levelClearedThisRun=false;
       levelEl.textContent=activeLevel==='boss'?'БОСС':activeLevel;
       tLevelTargetEl.style.display='block';tLevelTargetEl.textContent='Цель: 0 / '+levelTarget;
     }else{
@@ -472,6 +488,15 @@
   document.getElementById('levelMapClose').addEventListener('click',()=>{levelMapOverlay.style.display='none';});
   document.getElementById('levelResultRetry').addEventListener('click',()=>{document.getElementById('levelResultOverlay').style.display='none';start();});
   document.getElementById('levelResultMap').addEventListener('click',()=>{document.getElementById('levelResultOverlay').style.display='none';openLevelMap();});
+  document.getElementById('levelClearContinue').addEventListener('click',()=>{
+    document.getElementById('levelClearOverlay').style.display='none';
+    running=true;last=0;cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  });
+  document.getElementById('levelClearGoMap').addEventListener('click',()=>{
+    document.getElementById('levelClearOverlay').style.display='none';
+    finishLevelRun();
+    openLevelMap();
+  });
   const lbOverlay=document.getElementById('lbOverlay'),lbList=document.getElementById('lbList');
   const lbDiffTabs=document.getElementById('lbDiffTabs'),lbLevelPicker=document.getElementById('lbLevelPicker');
   let lbCache=[],lbTab='normal',lbMode='classic';
