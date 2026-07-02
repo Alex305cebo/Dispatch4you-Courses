@@ -67,6 +67,8 @@
   #osuperwarn p{color:#ff8fa3;}
   .btn-danger{background:#7f1d2e;border-color:#ff2d55;color:#fff;}
   .btn-danger:hover{background:#9a2436;}
+  @keyframes shopGlow{0%,100%{box-shadow:0 0 3px #4ade80;}50%{box-shadow:0 0 18px #4ade80;}}
+  .shop-active{animation:shopGlow 0.9s ease-in-out infinite;border-color:#4ade80 !important;}
   @keyframes warnpulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
 </style>
 </head>
@@ -183,9 +185,22 @@
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
   function fsVal(v){return typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
-  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:Number((f.score&&(f.score.integerValue||f.score.doubleValue))||0)};});list.sort((a,b)=>b.score-a.score);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
+  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),level:num(f.level),kills:num(f.kills)};});list.sort((a,b)=>b.score-a.score||b.level-a.level||b.kills-a.kills);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
   function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  // renames every existing leaderboard record from the old name to the new one
+  async function renameRecords(game,oldName,newName){
+    try{
+      const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{compositeFilter:{op:'AND',filters:[
+        {fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},
+        {fieldFilter:{field:{fieldPath:'name'},op:'EQUAL',value:{stringValue:oldName}}}]}},limit:300}};
+      const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const rows=await res.json();
+      await Promise.all(rows.filter(r=>r.document).map(r=>
+        fetch('https://firestore.googleapis.com/v1/'+r.document.name+'?updateMask.fieldPaths=name',
+          {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{name:{stringValue:newName}}})})));
+    }catch(e){console.error('rename records failed',e);}
+  }
   let playerName=localStorage.getItem('survivors-name')||'';
   const playerNameEl=document.getElementById('splayername');
   function renderPlayerName(){playerNameEl.textContent=playerName||'—';}
@@ -193,9 +208,11 @@
   document.getElementById('btnRename').addEventListener('click',()=>{
     const n=prompt('Имя для таблицы лидеров:',playerName);
     if(n===null)return;
+    const old=playerName;
     playerName=sanitizeName(n);
     localStorage.setItem('survivors-name',playerName);
     renderPlayerName();
+    if(old&&old!==playerName)renameRecords('survivors',old,playerName);
   });
   let lbResumeRunning=false,lbHiddenOverlays=[];
   const olb=document.getElementById('olb'),lbListEl=document.getElementById('lbList');
@@ -206,7 +223,7 @@
     olb.classList.add('show');
     lbListEl.textContent='Загрузка…';
     const rows=await fetchLeaderboard('survivors',10);
-    lbListEl.innerHTML=rows.length?rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i+1}. ${escapeHtml(r.name)}</span><span style="color:var(--text);font-weight:500;">${fmtTime(Number(r.score)||0)}</span></div>`).join(''):'Пока никто не играл.';
+    lbListEl.innerHTML=rows.length?rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i+1}. ${escapeHtml(r.name)}</span><span style="color:var(--text);font-weight:500;white-space:nowrap;">${fmtTime(Number(r.score)||0)} · ур.${r.level} · ⚔${r.kills}</span></div>`).join(''):'Пока никто не играл.';
   }
   document.getElementById('btnLbSide').addEventListener('click',showLeaderboard);
   document.getElementById('btnLbFromOver').addEventListener('click',showLeaderboard);
@@ -1144,7 +1161,7 @@
     pointsEl.textContent=Math.floor(points);
     const inZone=insideSafeZone();
     btnShop.style.opacity=(state==='running'&&!inZone)?0.45:1;
-    btnShop.style.borderColor=inZone?'#4ade80':'';
+    btnShop.classList.toggle('shop-active',!!safeZone&&state==='running');
   }
 
   function hurtPlayer(dmg,fx,fy,force,isBossHit,isContact){
@@ -1762,6 +1779,13 @@
     // joystick (screen-space, drawn outside the world transform)
     if(joy.active){x.strokeStyle='rgba(255,255,255,0.25)';x.lineWidth=2;x.beginPath();x.arc(joy.bx,joy.by,42,0,Math.PI*2);x.stroke();x.fillStyle='rgba(255,255,255,0.15)';x.beginPath();x.arc(joy.bx+joy.dx*42,joy.by+joy.dy*42,16,0,Math.PI*2);x.fill();}
     if(announce){const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));x.font='bold 26px system-ui,sans-serif';x.textAlign='center';x.fillStyle=ac;x.shadowColor=ac;x.shadowBlur=12;x.fillText(announce.text,W/2,46);x.restore();}
+    // blinking shop beacon while the safe-zone shop is open for business
+    if(safeZone&&state==='running'){
+      x.save();x.globalAlpha=0.55+0.45*Math.sin(t*7);
+      x.font='22px system-ui,sans-serif';x.textAlign='left';x.textBaseline='top';
+      x.shadowColor='#4ade80';x.shadowBlur=14;x.fillText('🛒',12,10);
+      x.restore();
+    }
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
   }
 

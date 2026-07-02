@@ -123,9 +123,22 @@
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
   function fsVal(v){return typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
-  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:Number((f.score&&(f.score.integerValue||f.score.doubleValue))||0)};});list.sort((a,b)=>b.score-a.score);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
+  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),time:num(f.time),level:num(f.level)};});list.sort((a,b)=>b.score-a.score||b.level-a.level);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
   function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+  // renames every existing leaderboard record from the old name to the new one
+  async function renameRecords(game,oldName,newName){
+    try{
+      const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{compositeFilter:{op:'AND',filters:[
+        {fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},
+        {fieldFilter:{field:{fieldPath:'name'},op:'EQUAL',value:{stringValue:oldName}}}]}},limit:300}};
+      const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const rows=await res.json();
+      await Promise.all(rows.filter(r=>r.document).map(r=>
+        fetch('https://firestore.googleapis.com/v1/'+r.document.name+'?updateMask.fieldPaths=name',
+          {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields:{name:{stringValue:newName}}})})));
+    }catch(e){console.error('rename records failed',e);}
+  }
   let playerName=localStorage.getItem('tetris-name')||'';
   const playerNameEl=document.getElementById('tplayername');
   function renderPlayerName(){playerNameEl.textContent=playerName||'—';}
@@ -133,9 +146,11 @@
   document.getElementById('tRename').addEventListener('click',()=>{
     const n=prompt('Имя для таблицы лидеров:',playerName);
     if(n===null)return;
+    const old=playerName;
     playerName=sanitizeName(n);
     localStorage.setItem('tetris-name',playerName);
     renderPlayerName();
+    if(old&&old!==playerName)renameRecords('tetris',old,playerName);
   });
   let best=0,bestTime=0,elapsed=0;
   try{const saved=JSON.parse(localStorage.getItem('tetris-best'));if(saved&&typeof saved.score==='number'){best=saved.score;bestTime=saved.time||0;}}catch(e){}
@@ -167,7 +182,7 @@
   function tSpinCenter(m){for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++){if(!m[r][c])continue;let n=0;if(r>0&&m[r-1][c])n++;if(r<m.length-1&&m[r+1][c])n++;if(c>0&&m[r][c-1])n++;if(c<m[r].length-1&&m[r][c+1])n++;if(n===3)return{cx:c,cy:r};}return null;}
   function isTSpin(){if(cur.c!==T||!rotated)return false;const ctr=tSpinCenter(cur.m);if(!ctr)return false;const gx=px+ctr.cx,gy=py+ctr.cy;const occ=(a,b)=>a<0||a>=COLS||b>=ROWS||(b>=0&&grid[b][a]>=0);let n=0;if(occ(gx-1,gy-1))n++;if(occ(gx+1,gy-1))n++;if(occ(gx-1,gy+1))n++;if(occ(gx+1,gy+1))n++;return n>=3;}
   function spawn(){cur=next;next=rnd();px=Math.floor((COLS-cur.m[0].length)/2);py=-1;rotated=false;if(collide(cur.m,px,py))gameOver();}
-  function gameOver(){running=false;cancelAnimationFrame(raf);overEl.style.display='block';startBtn.textContent='Заново';beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);if(score>0)submitScore('tetris',playerName,score,{time:elapsed});}
+  function gameOver(){running=false;cancelAnimationFrame(raf);overEl.style.display='block';startBtn.textContent='Заново';beep(200,0.15,'sawtooth',0.12);setTimeout(()=>beep(150,0.15,'sawtooth',0.12),120);setTimeout(()=>beep(100,0.25,'sawtooth',0.12),240);if(score>0)submitScore('tetris',playerName,score,{time:elapsed,level:level});}
   function explode(gx,gy){shake=10;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=gx+dx,cy=gy+dy;if(cx<0||cx>=COLS||cy<0||cy>=ROWS)continue;const col=grid[cy][cx]>=0?COLORS[grid[cy][cx]]:'#FF6B6B';grid[cy][cx]=-1;for(let k=0;k<5;k++)particles.push({x:(cx+0.5)*S,y:(cy+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:col,sz:2+Math.random()*4});}popup('БУМ!','#FF6B6B');beep(80,0.3,'sawtooth',0.2);addScore(150);}
   function colorExplode(){const belowRow=py+1;const target=belowRow<ROWS?grid[belowRow][px]:-1;if(target<0){popup('мимо...','#8891a3');return;}let count=0;for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){if(grid[r][c]===target){count++;for(let k=0;k<5;k++)particles.push({x:(c+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*7,vy:(Math.random()-1.5)*7,life:1,col:COLORS[target],sz:2+Math.random()*4});grid[r][c]=-1;}}shake=10;popup('ЦВЕТ.БОМБА x'+count,'#fff');beep(60,0.4,'sawtooth',0.22);addScore(count*30);}
   function siftMerge(){const colCounts={};cur.m.forEach((row,r)=>row.forEach((v,c)=>{if(v){const col=px+c;colCounts[col]=(colCounts[col]||0)+1;}}));let placed=0;Object.keys(colCounts).forEach(colStr=>{const col=+colStr;if(col<0||col>=COLS)return;let need=colCounts[col];for(let r=ROWS-1;r>=0&&need>0;r--){if(grid[r][col]<0){grid[r][col]=GHOST;placed++;need--;for(let k=0;k<4;k++)particles.push({x:(col+0.5)*S,y:(r+0.5)*S,vx:(Math.random()-0.5)*4,vy:-(Math.random()*3),life:1,col:COLORS[GHOST],sz:2+Math.random()*3});}}});if(placed>0){shake=Math.min(8,placed*2);popup('ПРИЗРАК x'+placed,'#BFE3FF');beep(180,0.2,'sine',0.15);addScore(placed*20);}else popup('некуда...','#8891a3');}
@@ -205,7 +220,7 @@
     lbOverlay.style.display='flex';
     lbList.textContent='Загрузка…';
     const rows=await fetchLeaderboard('tetris',10);
-    lbList.innerHTML=rows.length?rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i+1}. ${escapeHtml(r.name)}</span><span style="color:var(--text);font-weight:500;">${Number(r.score)||0}</span></div>`).join(''):'Пока никто не играл.';
+    lbList.innerHTML=rows.length?rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i+1}. ${escapeHtml(r.name)}</span><span style="color:var(--text);font-weight:500;white-space:nowrap;">${Number(r.score)||0} · ур.${r.level} · ${formatTime(r.time)}</span></div>`).join(''):'Пока никто не играл.';
   });
   document.getElementById('lbClose').addEventListener('click',()=>{lbOverlay.style.display='none';});
   function safeCall(fn){try{fn();}catch(e){console.error('tetris action error',e);}}
