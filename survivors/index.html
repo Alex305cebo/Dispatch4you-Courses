@@ -1735,7 +1735,10 @@
 
   function endSession(reason){
     const died=reason!=='finish';
-    saveRun(); // снимок перед остановкой — «Продолжить» на попапе загрузит именно его
+    // смерть (кончились все жизни) — путь назад закрыт, только новая игра.
+    // ручное «Завершить» (жизни ещё есть) — снимок сохраняется, «Продолжить» его загрузит
+    if(died)clearRun();else saveRun();
+    document.getElementById('btnContinueFromOver').style.display=died?'none':'';
     state='over';
     olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
@@ -2479,16 +2482,11 @@
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
-  // «Продолжить» на попапе конца сессии — доступна всегда: и после ручного «Завершить»,
-  // и после смерти. Смерть требует воскрешения, иначе игрок откроется с 0 HP и умрёт
-  // от следующего же царапины; финиш ничего не воскрешает — HP там и так в порядке
+  // «Продолжить» на попапе конца сессии — доступна только после ручного «Завершить»
+  // (жизни ещё есть, endSession сохранил снимок). После настоящей смерти (жизни кончились)
+  // кнопка скрыта в endSession, и clearRun() уже стёр сейв — назад пути нет, только новая игра
   function continueAfterEnd(){
     if(!loadRun()){start();return;}
-    if(player.hp<=0){
-      player.hp=Math.round(player.maxHp*0.5);
-      lives=Math.max(lives,1);
-      player.invuln=2;
-    }
     ensureAudio();
     oover.classList.remove('show');olevel.classList.remove('show');ocooldown.classList.remove('show');
     oweapon.classList.remove('show');osuperwarn.classList.remove('show');olb.classList.remove('show');
