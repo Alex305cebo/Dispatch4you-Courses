@@ -7,7 +7,10 @@
 <style>
   :root{--bg1:#0b0e17;--bg2:#05060a;--panel:#121724;--panel2:#1a2130;--border:#293042;--text:#e8ebf2;--muted:#8891a3;--danger:#ef4444;--xp:#4D96FF;--hp:#ef4444;}
   *{box-sizing:border-box;}
-  html,body{margin:0;height:100%;background:var(--bg2);overflow:hidden;}
+  html,body{margin:0;height:100%;background:var(--bg2);overflow:hidden;overscroll-behavior:none;}
+  /* in-app браузеры (Telegram и т.п.) скроллят страницу поверх игры — фиксируем body намертво */
+  body{position:fixed;inset:0;width:100%;}
+  .side,.overlay,#lbList,#histList{touch-action:pan-y;}
   canvas#bgfx{position:fixed;inset:0;width:100%;height:100%;z-index:0;}
   body{color:var(--text);font-family:system-ui,sans-serif;height:100vh;height:100dvh;}
   .wrap{position:relative;z-index:1;width:100vw;height:100vh;height:100dvh;
@@ -92,6 +95,10 @@
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
       <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart" id="btnStart">Начать заново</button>
+      <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
+        <p style="color:#fbbf24;font-size:12px;margin:0;">⚠ Ты во встроенном браузере чата — страница может скроллиться и мешать управлению.</p>
+        <button class="ostart" id="btnOpenExternal" style="border-color:#f59e0b;color:#fbbf24;">🌐 Открыть в браузере</button>
+      </div>
     </div>
     <div id="oweaponchoice" class="overlay">
       <h2>Выбери 2 оружия</h2>
@@ -2204,6 +2211,20 @@
 
   // layout-independent: e.code names the physical key, so WASD works on Cyrillic/any layout
   const KEYMAP={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',KeyA:'a',KeyD:'d',KeyW:'w',KeyS:'s'};
+  // in-app browsers ignore touch-action on the canvas and scroll the page mid-game:
+  // swallow every touchmove that isn't inside an intentionally scrollable panel
+  document.addEventListener('touchmove',e=>{
+    if(!(e.target.closest&&e.target.closest('.side,#lbList,#histList,#oweaponchoice,.cards')))e.preventDefault();
+  },{passive:false});
+  const isInAppBrowser=/FBAN|FBAV|Instagram|Telegram|Line\/|WhatsApp|; wv\)/i.test(navigator.userAgent||'');
+  if(isInAppBrowser){
+    const hint=document.getElementById('inappHint');
+    hint.style.display='flex';
+    document.getElementById('btnOpenExternal').addEventListener('click',()=>{
+      const w=window.open(window.location.href,'_blank');
+      if(!w)alert('Нажми ⋯ (или значок браузера) в углу окна чата и выбери «Открыть в браузере / Safari»');
+    });
+  }
   document.addEventListener('keydown',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=true;e.preventDefault();}});
   document.addEventListener('keyup',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=false;e.preventDefault();}});
 
