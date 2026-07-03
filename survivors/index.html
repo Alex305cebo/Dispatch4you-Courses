@@ -366,45 +366,62 @@
     document.querySelectorAll('.sndBtn').forEach(b=>b.textContent=soundOn?'🔊':'🔇');
   }
   function toggleSound(){soundOn=!soundOn;ensureAudio();applySound();}
-  // ambient-музыка: мягкий фильтрованный дрон (тоника+квинта) + редкие ноты пентатоники,
-  // медленно меняющий аккорд. Тихо и генеративно, без файлов; глушится мастер-громкостью
-  const MUSIC_ROOTS=[110,98,123.47,87.31]; // A2 G2 B2 F2 — медленная смена «настроения»
-  let musicRootIdx=0;
+  // Игровая музыка: чёткий мелодичный чиптюн-луп (Am–F–C–G) — бас, аккордовый пад,
+  // ведущая мелодия на пентатонике и ударные. Точный планировщик с упреждением
+  // (lookahead) для ровного грува. Полностью генеративно, без файлов; глушится мастером.
+  const M_BPM=132, M_STEP=60/M_BPM/2;      // восьмая нота
+  // 4 такта по 8 восьмых. Бас (частоты корней) по тактам: Am F C G
+  const M_BASS=[110.00,87.31,130.81,98.00];
+  // ноты аккордового пада по тактам (мид-октава)
+  const M_PAD=[[220.00,261.63,329.63],[174.61,220.00,261.63],[261.63,329.63,392.00],[196.00,246.94,293.66]];
+  // ведущая мелодия: 32 шага (null = пауза), ля-минор пентатоника
+  const A4=440,C5=523.25,D5=587.33,E5=659.25,G5=783.99,A5=880,G4=392;
+  const M_LEAD=[A4,null,C5,null,E5,null,D5,C5, A4,null,C5,D5,E5,null,A5,null, C5,null,E5,null,G5,null,E5,D5, A4,null,G4,A4,C5,null,null,null];
+  function mSynth(freq,t0,dur,type,gain,cut){
+    const o=actx.createOscillator(),g=actx.createGain();o.type=type;o.frequency.value=freq;
+    let node=o;
+    if(cut){const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=cut;o.connect(lp);node=lp;}
+    node.connect(g);g.connect(compressor);
+    g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(gain,t0+0.02);g.gain.exponentialRampToValueAtTime(0.0008,t0+dur);
+    o.start(t0);o.stop(t0+dur+0.02);
+  }
+  function mNoise(t0,dur,gain,cut1,cut2){
+    const n=Math.floor(actx.sampleRate*dur),buf=actx.createBuffer(1,n,actx.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+    const src=actx.createBufferSource();src.buffer=buf;
+    const f=actx.createBiquadFilter();f.type='bandpass';f.frequency.setValueAtTime(cut1,t0);f.frequency.exponentialRampToValueAtTime(cut2,t0+dur);
+    const g=actx.createGain();g.gain.setValueAtTime(gain,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+    src.connect(f);f.connect(g);g.connect(compressor);src.start(t0);
+  }
+  function mScheduleStep(step,time){
+    const bar=Math.floor(step/8)%4, inBar=step%8;
+    // бас — на 1 и 3 долю такта (каждые 4 восьмых)
+    if(inBar%4===0)mSynth(M_BASS[bar],time,0.26,'sawtooth',0.06,420);
+    // аккордовый пад — мягко в начале такта
+    if(inBar===0)M_PAD[bar].forEach(f=>mSynth(f,time,1.5,'triangle',0.018,1400));
+    // ведущая мелодия
+    const lead=M_LEAD[step%32];
+    if(lead)mSynth(lead,time,0.22,'square',0.045,2600);
+    // ударные
+    if(inBar%4===0){mSynth(120,time,0.14,'sine',0.13,200);mSynth(55,time,0.14,'sine',0.10);} // кик
+    if(inBar===4)mNoise(time,0.16,0.06,1800,700);  // снейр на 3 доле
+    if(inBar%2===1)mNoise(time,0.03,0.014,9000,7000); // хэт на офф-битах
+  }
+  let mNextTime=0,mStep=0;
   function startMusic(){
     if(!actx||musicNodes)return;
-    const drone=actx.createGain();drone.gain.value=0.028;drone.connect(compressor);
-    const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;lp.connect(drone);
-    const root=MUSIC_ROOTS[musicRootIdx];
-    const o1=actx.createOscillator(),o2=actx.createOscillator();
-    o1.type='sawtooth';o2.type='sawtooth';
-    o1.frequency.value=root;o2.frequency.value=root*1.5;o2.detune.value=6;
-    o1.connect(lp);o2.connect(lp);o1.start();o2.start();
-    // медленное «дыхание» громкости
-    const lfo=actx.createOscillator(),lfoG=actx.createGain();
-    lfo.frequency.value=0.08;lfoG.gain.value=0.012;lfo.connect(lfoG);lfoG.connect(drone.gain);lfo.start();
-    musicNodes={o1,o2,lfo,lp,drone,lfoG};
-    // редкие мягкие ноты пентатоники поверх дрона
-    const scale=[0,3,5,7,10,12];
+    musicNodes=true;mStep=0;mNextTime=actx.currentTime+0.08;
     musicTimer=setInterval(()=>{
       if(!actx||!musicNodes)return;
-      if(Math.random()<0.55){
-        const r=MUSIC_ROOTS[musicRootIdx]*2;
-        const semi=scale[Math.floor(Math.random()*scale.length)];
-        const f=r*Math.pow(2,semi/12);
-        const t0=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
-        o.type='sine';o.frequency.value=f;o.connect(g);g.connect(compressor);
-        g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(0.03,t0+0.4);g.gain.exponentialRampToValueAtTime(0.001,t0+2.4);
-        o.start(t0);o.stop(t0+2.5);
+      while(mNextTime<actx.currentTime+0.12){
+        mScheduleStep(mStep,mNextTime);
+        mNextTime+=M_STEP;mStep=(mStep+1)%32;
       }
-      if(Math.random()<0.25){musicRootIdx=(musicRootIdx+1)%MUSIC_ROOTS.length;
-        const nr=MUSIC_ROOTS[musicRootIdx];
-        musicNodes.o1.frequency.setTargetAtTime(nr,actx.currentTime,1.5);
-        musicNodes.o2.frequency.setTargetAtTime(nr*1.5,actx.currentTime,1.5);}
-    },2600);
+    },25);
   }
   function stopMusic(){
     if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
-    if(musicNodes){try{musicNodes.o1.stop();musicNodes.o2.stop();musicNodes.lfo.stop();}catch(e){}musicNodes=null;}
+    musicNodes=null; // осцилляторы одноразовые (auto-stop), гасить нечего
   }
   function beep(freq,dur,type,gain){
     if(!actx)return;
