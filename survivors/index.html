@@ -56,6 +56,23 @@
     .card{width:120px !important;padding:10px !important;}
     .overlay p{font-size:12px;max-width:280px;}
   }
+  /* лидерборд: большая золотая кнопка + топ-3 в панели, пьедестал в попапе */
+  .lb-btn{width:100%;padding:11px 8px;font-size:14px;font-weight:800;letter-spacing:0.5px;color:#1a1305;
+    background:linear-gradient(135deg,#fde047,#f59e0b);border:1px solid #fbbf24;border-radius:10px;cursor:pointer;
+    box-shadow:0 0 16px rgba(250,204,21,0.3);text-shadow:0 1px 0 rgba(255,255,255,0.25);}
+  .lb-btn:hover{background:linear-gradient(135deg,#fef08a,#fbbf24);}
+  .lb-top3{margin-top:8px;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);}
+  .lb-top3 .row{display:flex;justify-content:space-between;gap:6px;align-items:baseline;}
+  .lb-top3 .row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+  .lb-top3 .row .sc{color:var(--text);font-weight:700;white-space:nowrap;}
+  .lb-podium{display:flex;align-items:flex-end;gap:8px;justify-content:center;width:100%;max-width:340px;}
+  .lb-podium .p{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 6px;
+    border-radius:10px 10px 0 0;background:var(--panel2);border:1px solid var(--border);border-bottom:none;min-width:0;}
+  .lb-podium .medal{font-size:24px;line-height:1;}
+  .lb-podium .nm{font-size:11px;color:var(--text);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-podium .sc{font-size:13px;font-weight:800;}
+  .lb-podium .ex{font-size:10px;color:var(--muted);}
+  #olb{overflow-y:auto;}
   .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(5,6,10,0.82);border-radius:12px;text-align:center;padding:20px;}
   .overlay.show{display:flex;}
   /* выбор оружия: центр, если помещается; скролл без обрезки сверху, если нет */
@@ -137,8 +154,9 @@
       <button class="ostart" id="btnHistoryFromOver">📜 Мои сессии</button>
     </div>
     <div id="olb" class="overlay">
-      <h2>Таблица лидеров</h2>
-      <div id="lbList" style="font-size:13px;color:var(--muted);max-height:280px;overflow:auto;width:100%;max-width:300px;">Загрузка…</div>
+      <h2>🏆 Таблица лидеров</h2>
+      <div id="lbPodium" class="lb-podium"></div>
+      <div id="lbList" style="font-size:13px;color:var(--muted);max-height:240px;overflow:auto;width:100%;max-width:340px;">Загрузка…</div>
       <button class="ostart" id="btnLbClose">Закрыть</button>
     </div>
     <div id="ohistory" class="overlay">
@@ -150,10 +168,11 @@
   <div class="side">
     <div class="box full" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div style="font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;">Игрок: <span id="splayername" style="color:var(--text);">—</span></div>
-      <div style="display:flex;gap:6px;flex:0 0 auto;">
-        <button id="btnRename" style="width:auto;padding:6px 9px;font-size:11px;">✎</button>
-        <button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button>
-      </div>
+      <button id="btnRename" style="width:auto;padding:6px 9px;font-size:11px;flex:0 0 auto;">✎</button>
+    </div>
+    <div class="box full" style="padding:10px;">
+      <button id="btnLbSide" class="lb-btn">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
+      <div id="lbTop3" class="lb-top3">Загрузка…</div>
     </div>
     <div class="box full" style="padding:8px 10px;display:flex;gap:6px;">
       <button id="btnFinishSide" style="padding:8px;">⏹ Завершить</button>
@@ -229,15 +248,46 @@
     if(old&&old!==playerName)renameRecords('survivors',old,playerName);
   });
   let lbResumeRunning=false,lbHiddenOverlays=[];
-  const olb=document.getElementById('olb'),lbListEl=document.getElementById('lbList');
+  const olb=document.getElementById('olb'),lbListEl=document.getElementById('lbList'),lbPodiumEl=document.getElementById('lbPodium');
+  const lbTop3El=document.getElementById('lbTop3');
+  const MEDALS=['🥇','🥈','🥉'];
+  function isMyRecord(name){return !!playerName&&(name===playerName||name.indexOf(playerName+' #')===0);}
+  // always-visible top-3 under the sidebar button — everyone sees the current leaders
+  async function refreshTop3(){
+    const rows=await fetchLeaderboard('survivors',3);
+    lbTop3El.innerHTML=rows.length?rows.map((r,i)=>
+      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+'</span><span class="sc">'+fmtTime(Number(r.score)||0)+'</span></div>'
+    ).join(''):'<div>Пока пусто — стань первым!</div>';
+  }
+  refreshTop3();setInterval(refreshTop3,60000);
+  function podiumCell(r,i){
+    const st=[['#facc15','18px'],['#9ca3af','10px'],['#b45309','5px']][i];
+    if(!r)return '<div class="p" style="opacity:0.3;padding-top:'+st[1]+';"><span class="medal">'+MEDALS[i]+'</span><span class="nm">—</span></div>';
+    return '<div class="p" style="border-color:'+st[0]+';padding-top:'+st[1]+';'+(i===0?'box-shadow:0 0 14px rgba(250,204,21,0.25);':'')+'">'
+      +'<span class="medal">'+MEDALS[i]+'</span>'
+      +'<span class="nm">'+escapeHtml(r.name)+'</span>'
+      +'<span class="sc" style="color:'+st[0]+';">'+fmtTime(Number(r.score)||0)+'</span>'
+      +'<span class="ex">ур.'+(r.level||1)+' · ⚔'+(r.kills||0)+'</span></div>';
+  }
+  function lbRow(r,i){
+    const mine=isMyRecord(r.name);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-bottom:1px solid var(--border);'
+      +(mine?'background:rgba(77,150,255,0.12);border-left:3px solid #4D96FF;':'')+'">'
+      +'<span style="width:20px;text-align:right;color:var(--muted);font-weight:700;">'+(i+1)+'</span>'
+      +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">'+escapeHtml(r.name)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
+      +'<span style="white-space:nowrap;color:var(--text);font-weight:700;">'+fmtTime(Number(r.score)||0)+'</span>'
+      +'<span style="white-space:nowrap;font-size:10px;color:var(--muted);">ур.'+(r.level||1)+' ⚔'+(r.kills||0)+'</span></div>';
+  }
   async function showLeaderboard(){
     if(state==='running'){lbResumeRunning=true;state='leaderboard';}
     lbHiddenOverlays=Array.from(document.querySelectorAll('.overlay.show')).filter(o=>o!==olb);
     lbHiddenOverlays.forEach(o=>o.classList.remove('show'));
     olb.classList.add('show');
-    lbListEl.textContent='Загрузка…';
+    lbPodiumEl.innerHTML='';lbListEl.textContent='Загрузка…';
     const rows=await fetchLeaderboard('survivors',10);
-    lbListEl.innerHTML=rows.length?rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);"><span>${i+1}. ${escapeHtml(r.name)}</span><span style="color:var(--text);font-weight:500;white-space:nowrap;">${fmtTime(Number(r.score)||0)} · ур.${r.level} · ⚔${r.kills}</span></div>`).join(''):'Пока никто не играл.';
+    if(!rows.length){lbListEl.textContent='Пока никто не играл — стань первым!';return;}
+    lbPodiumEl.innerHTML=podiumCell(rows[1],1)+podiumCell(rows[0],0)+podiumCell(rows[2],2);
+    lbListEl.innerHTML=rows.length>3?rows.slice(3).map((r,i)=>lbRow(r,i+3)).join(''):'<div style="text-align:center;padding:6px 0;">Займи место в десятке!</div>';
   }
   document.getElementById('btnLbSide').addEventListener('click',showLeaderboard);
   document.getElementById('btnLbFromOver').addEventListener('click',showLeaderboard);
@@ -1442,6 +1492,7 @@
     oover.classList.add('show');
     if(died){sfxSweep(420,45,0.9,'sawtooth',0.14);sfxBoom(0.7,0.2,500,40);}
     else sfxChime(523,4,0.09,0.11);
+    setTimeout(refreshTop3,1500);
   }
   function gameOver(){endSession('death');}
 
