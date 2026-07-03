@@ -1038,7 +1038,11 @@
     const base=elite?BOSS_BASE:ENEMY_TYPES[type];
     const bn=bossNumber||1;
     const skin=elite?BOSS_SKINS[(bn-1)%BOSS_SKINS.length]:null;
-    const hpMulL=levelHpMul(player.level),dmgMulL=levelDmgMul(player.level);
+    // ступенчатая сложность: сила врагов постоянна внутри полосы из 5 уровней и делает
+    // заметный шаг вверх на рубежах (5/10/15…), пока игрок растёт плавно — так каждая
+    // полоса ощущается всё комфортнее, а усложнение телеграфируется (см. levelUpOnce)
+    const bandL=Math.floor(player.level/5)*5;
+    const hpMulL=levelHpMul(bandL),dmgMulL=levelDmgMul(bandL);
     const champion=!elite&&player.level>=8&&Math.random()<0.05;
     const wb=player.waveBuff||1,ceSpd=player.curseEnemySpdMul||1,ceDmg=player.curseEnemyDmgMul||1;
     const depthIdx=(!elite&&player.level>=100)?Math.floor((player.level-100)/20):-1;
@@ -1097,7 +1101,7 @@
     player.x+=60000;player.y+=60000;player.invuln=Math.max(player.invuln,1.2);
     inVault=true;vaultT=20;vaultCleared=false;
     const g=spawnEnemy(true,3);
-    g.hp=g.maxHp=tierAvgHp(player.level)*levelHpMul(player.level)*8;
+    g.hp=g.maxHp=tierAvgHp(player.level)*levelHpMul(Math.floor(player.level/5)*5)*8;
     g.dmg*=0.8;g.guardian=true;g.pauseSpawns=false;
     g.x=player.x-320;g.y=player.y;g.color='#a855f7';g.glow='#c084fc';g.skinName='Страж Хранилища';
     announce={text:'🏛 ХРАНИЛИЩЕ — одолей Стража за 20с!',life:3,color:'#c084fc'};
@@ -1750,7 +1754,13 @@
     flashFx(0.7,'77,150,255'); // вспышка левелапа — голубая
     rings.push({x:player.x,y:player.y,r:0,maxR:160,life:0.6,color:'#4D96FF'});
     pendingLevelUps++;
-    if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;}
+    if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;
+      // рубеж сложности: враги делают шаг вверх — предупреждаем и даём передышку (+20% HP),
+      // чтобы полоса оставалась играбельной
+      announce={text:'⚠ РУБЕЖ '+player.level+' — враги стали сильнее!',life:3,color:'#f59e0b'};
+      flashFx(0.5,'245,158,11');
+      player.hp=Math.min(player.maxHp,player.hp+Math.round(player.maxHp*0.2));
+    }
     if(player.level%25===0){pendingSuperWarning=player.level;}
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
     if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
