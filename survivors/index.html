@@ -961,8 +961,8 @@
   function difficulty(){
     return {
       interval:Math.max(220,1000-t*6),
-      count:1+Math.floor(t/40),
-      hpMul:Math.min(6,1+t/45),
+      count:1+Math.floor(t/28),
+      hpMul:Math.min(12,1+t/30),
       spdMul:Math.min(2.2,1+t/150),
     };
   }
@@ -997,10 +997,10 @@
   // enemy power tracks the player's exponential upgrade curve, decelerating after 60.
   // HP-экспонента приручена (было 1.035/1.01) — иначе враги превращались в губки, т.к.
   // у игрока рост урона по уровню гарантирован отдельно (player.lvlDmgScale, ~1.026^L)
-  function levelHpMul(L){return L<=60?Math.pow(1.028,L):Math.pow(1.028,60)*Math.pow(1.006,L-60);}
+  function levelHpMul(L){return L<=60?Math.pow(1.045,L):Math.pow(1.045,60)*Math.pow(1.012,L-60);}
   // урон врагов теперь заметно растёт (было кап ×4) — чтобы на 40+ толпа снова была смертельна
   // и «смысл» возвращался: убиваешь быстро, но и погибнуть реально
-  function levelDmgMul(L){return Math.min(6.5,1+L*0.04);}
+  function levelDmgMul(L){return Math.min(10,1+L*0.06);}
   // ponytail: d.hpMul is time-based and caps at 6x within ~4 min, well before a fresh
   // player reaches level 10 — taper it down early so mobs aren't unkillable on a slow start
   function earlyGameHpEase(L){return L<10?0.5+0.05*L:1;}
@@ -1048,7 +1048,10 @@
     const depthIdx=(!elite&&player.level>=100)?Math.floor((player.level-100)/20):-1;
     const tint=depthIdx>=0?POST100_TINTS[depthIdx%POST100_TINTS.length]:null;
     const postMul=depthIdx>=0?1+0.12*depthIdx:1;
-    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb*postMul;
+    // rubber-band: чем сильнее билд игрока (dmgMult), тем толще обычные враги — иначе они «испаряются».
+    // sqrt смягчает, чтобы апгрейды всё же ощущались; к боссам не применяем (у них свои множители)
+    const powCouple=elite?1:Math.sqrt(player.dmgMult||1);
+    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb*postMul*powCouple;
     const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg*postMul;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
@@ -1759,7 +1762,7 @@
       // чтобы полоса оставалась играбельной
       announce={text:'⚠ РУБЕЖ '+player.level+' — враги стали сильнее!',life:3,color:'#f59e0b'};
       flashFx(0.5,'245,158,11');
-      player.hp=Math.min(player.maxHp,player.hp+Math.round(player.maxHp*0.2));
+      player.hp=Math.min(player.maxHp,player.hp+Math.round(player.maxHp*0.08));
     }
     if(player.level%25===0){pendingSuperWarning=player.level;}
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
@@ -2017,7 +2020,7 @@
       rings.push({x:player.x,y:player.y,r:0,maxR:60,life:0.5,color:'#38bdf8'});
       sfxSweep(700,1200,0.12,'sine',0.09,true);return;
     }
-    const mitig=(player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1)*(1-0.05*player.armorLevel)*(player.curseDmgTakenMul||1);
+    const mitig=(1-0.05*player.armorLevel)*(player.curseDmgTakenMul||1);
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
     player.hp-=dmg*mitig;player.noHitT=0;camShake=Math.max(camShake,isContact?2:3);
     if(force){
@@ -2208,7 +2211,7 @@
     // enemies
     // ponytail: cap how many touching mobs contribute contact dps at once — a swarm should
     // scale danger with size, but not let an unbounded mob count one-shot the player
-    const CONTACT_CAP=8;
+    const CONTACT_CAP=12;
     const frozen=freezeT>0;
     let touchSum=0,touchN=0;
     for(const e of enemies){
