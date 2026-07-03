@@ -941,6 +941,13 @@
 
   function burst(px,py,color,n){for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
 
+  // псевдо-3D: приплюснутая тень под телом, чуть ниже центра — даёт ощущение объёма/земли
+  function groundShadow(gx,gy,r){
+    x.save();x.globalAlpha=0.26;x.fillStyle='#000';
+    x.beginPath();x.ellipse(gx,gy+r*0.72,r*0.92,r*0.34,0,0,Math.PI*2);x.fill();
+    x.restore();
+  }
+
   function makeMinion(e){
     const hp=e.maxHp*0.12,dmg=e.dmg*0.4;
     return {x:e.x+rand(-30,30),y:e.y+rand(-30,30),r:7,hp,maxHp:hp,speed:150,dmg,color:e.color,
@@ -2402,6 +2409,7 @@
     }
     // enemies
     enemies.forEach(e=>{
+      groundShadow(e.x,e.y,e.r);
       if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
       if(e.hp<e.maxHp){
@@ -2478,6 +2486,7 @@
       x.shadowBlur=0;
     }
     // player
+    groundShadow(player.x,player.y,player.r);
     x.globalAlpha=(player.invuln>0)?(Math.floor(t*20)%2?0.4:1):1;
     x.fillStyle='#e8ebf2';
     x.shadowColor=player.berserkActive>0?'#f97316':(player.shieldActive>0?'#38bdf8':(player.hasteActive>0?'#4ade80':'#4D96FF'));
