@@ -478,6 +478,12 @@
     {id:'meteor_up',name:'☄️ Метеорит',desc:'Падают чаще и мощнее.',rarity:'mid',cond:p=>p.meteorLevel>0&&p.meteorLevel<5,apply:p=>p.meteorLevel++},
     {id:'ghost_up',name:'👻 Сфера',desc:'Больше урона, чаще запуск.',rarity:'mid',cond:p=>p.ghostLevel>0&&p.ghostLevel<5,apply:p=>p.ghostLevel++},
     {id:'turret_up',name:'🗼 Турель',desc:'Живёт дольше, бьёт сильнее.',rarity:'mid',cond:p=>p.turretLevel>0&&p.turretLevel<5,apply:p=>p.turretLevel++},
+    {id:'dagger_up',name:'🔪 Кинжалы',desc:'Больше кинжалов, чаще броски.',rarity:'mid',cond:p=>p.daggerLevel>0&&p.daggerLevel<5,apply:p=>p.daggerLevel++},
+    {id:'tornado_up',name:'🌪 Торнадо',desc:'Крупнее, дольше, больнее.',rarity:'mid',cond:p=>p.tornadoLevel>0&&p.tornadoLevel<5,apply:p=>p.tornadoLevel++},
+    {id:'hammer_up',name:'🔨 Молот',desc:'Шире волна, сильнее удар.',rarity:'mid',cond:p=>p.hammerLevel>0&&p.hammerLevel<5,apply:p=>p.hammerLevel++},
+    {id:'luck',name:'🍀 Удача',desc:'Полезные предметы появляются чаще.',rarity:'mid',cond:p=>(p.luckLevel||0)<5,apply:p=>p.luckLevel=(p.luckLevel||0)+1},
+    {id:'loot',name:'💎 Добыча',desc:'Шанс двойного кристалла опыта с убийства.',rarity:'mid',cond:p=>(p.lootLevel||0)<5,apply:p=>p.lootLevel=(p.lootLevel||0)+1},
+    {id:'slowhit',name:'🕸 Липкие снаряды',desc:'Попадания снарядов замедляют врагов.',rarity:'rare',cond:p=>(p.slowHitLevel||0)<3,apply:p=>p.slowHitLevel=(p.slowHitLevel||0)+1},
   ];
   const RARITY_INFO={common:{cost:100,label:'Нередкое',color:'#8891a3',maxLevel:6},mid:{cost:250,label:'Среднее',color:'#4D96FF',maxLevel:5},rare:{cost:500,label:'Редкое',color:'#a855f7',maxLevel:5}};
   function upgradeLevel(u){return shopBought[u.id]||0;}
@@ -498,6 +504,9 @@
     {id:'meteor',name:'☄️ Метеорит',desc:'Падает с неба прямо на врагов.',apply:p=>p.meteorLevel=1},
     {id:'ghost',name:'👻 Сфера',desc:'Самонаводится и пронзает всё насквозь.',apply:p=>p.ghostLevel=1},
     {id:'turret',name:'🗼 Турель',desc:'Стоит на месте и стреляет по округе.',apply:p=>p.turretLevel=1},
+    {id:'dagger',name:'🔪 Кинжалы',desc:'Быстрый веер кинжалов по направлению движения.',apply:p=>p.daggerLevel=1},
+    {id:'tornado',name:'🌪 Торнадо',desc:'Смерч бродит за врагами, рвёт и замедляет.',apply:p=>p.tornadoLevel=1},
+    {id:'hammer',name:'🔨 Молот',desc:'Ударная волна перед собой, отбрасывает толпу.',apply:p=>p.hammerLevel=1},
   ];
 
   // signature Vampire-Survivors mechanic: max a weapon + level a paired passive -> evolve it.
@@ -517,6 +526,10 @@
       wlvl:'droneLevel',cat:'rate',ready:p=>p.droneLevel>=5&&(shopBought.rate||0)>=4&&!p.droneEvo,apply:p=>p.droneEvo=true},
     {id:'gun',flag:'gunEvo',name:'⭐ Шквал',desc:'Каждый выстрел — залп во все стороны.',
       wlvl:'',cat:'multi',ready:p=>(shopBought.multi||0)>=5&&(shopBought.rate||0)>=4&&!p.gunEvo,apply:p=>p.gunEvo=true},
+    {id:'dagger',flag:'daggerEvo',name:'⭐ Веер смерти',desc:'Кинжалы пробивают, веер вдвое шире и больнее.',
+      wlvl:'daggerLevel',cat:'speed',ready:p=>p.daggerLevel>=5&&(shopBought.speed||0)>=3&&!p.daggerEvo,apply:p=>p.daggerEvo=true},
+    {id:'tornado',flag:'tornadoEvo',name:'⭐ Ураган',desc:'Смерч огромный, быстрый и живёт дольше.',
+      wlvl:'tornadoLevel',cat:'aoe',ready:p=>p.tornadoLevel>=5&&(shopBought.aoe||0)>=3&&!p.tornadoEvo,apply:p=>p.tornadoEvo=true},
   ];
   function readyEvolutions(){return EVOLUTIONS.filter(e=>e.ready(player));}
 
@@ -550,6 +563,8 @@
       fireballLevel:0,fireballAcc:0,boomLevel:0,boomAcc:0,frostLevel:0,frostAcc:0,
       laserLevel:0,laserAcc:0,shardLevel:0,shardAcc:0,droneLevel:0,droneAcc:0,
       acidLevel:0,acidAcc:0,meteorLevel:0,meteorAcc:0,ghostLevel:0,ghostAcc:0,turretLevel:0,turretAcc:0,
+      daggerLevel:0,daggerAcc:0,tornadoLevel:0,tornadoAcc:0,hammerLevel:0,hammerAcc:0,
+      luckLevel:0,lootLevel:0,slowHitLevel:0,
       barrierLevel:0,barrierCd:0,thornsLevel:0,greedLevel:0,wisdomLevel:0,secondWindLevel:0,
       auraHasteLevel:0,momentumLevel:0,noHitT:0,rageLevel:0,armorLevel:0,dodgeLevel:0,
       explodeKillLevel:0,chillLevel:0,rearLevel:0,chronoLevel:0,chronoCd:15,
@@ -812,6 +827,7 @@
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
+    if(player.lootLevel&&Math.random()<0.12*player.lootLevel)gems.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:5,val:Math.max(1,Math.round(e.xp/2))});
     if(e.beh==='split'&&!e.child){
       // killed splitters break into two faster halves (queued — we're inside the filter pass)
       for(let i=0;i<2;i++){
@@ -872,7 +888,7 @@
       wx.fillStyle='#f97316';wx.beginPath();wx.arc(0,0,14,0,Math.PI*2);wx.fill();
       wx.fillStyle='rgba(0,0,0,0.4)';wx.beginPath();wx.arc(0,0,6,0,Math.PI*2);wx.fill();
     }else{
-      const meta={fireball:['#f97316','☀'],boom:['#fde047','⤾'],frost:['#7dd3fc','❄'],laser:['#f43f5e','⚡'],shard:['#f0abfc','✳'],drone:['#4ade80','▲'],acid:['#84cc16','☣'],meteor:['#fb923c','☄'],ghost:['#c4b5fd','◉'],turret:['#fbbf24','⌂']}[id]||['#7dd3fc','✦'];
+      const meta={fireball:['#f97316','☀'],boom:['#fde047','⤾'],frost:['#7dd3fc','❄'],laser:['#f43f5e','⚡'],shard:['#f0abfc','✳'],drone:['#4ade80','▲'],acid:['#84cc16','☣'],meteor:['#fb923c','☄'],ghost:['#c4b5fd','◉'],turret:['#fbbf24','⌂'],dagger:['#e2e8f0','†'],tornado:['#a5b4fc','◍'],hammer:['#fbbf24','⚒']}[id]||['#7dd3fc','✦'];
       wx.fillStyle=meta[0];wx.shadowColor=meta[0];wx.shadowBlur=12;
       wx.beginPath();wx.arc(0,0,20,0,Math.PI*2);wx.fill();wx.shadowBlur=0;
       wx.fillStyle='#0c0f18';wx.font='bold 22px system-ui,sans-serif';wx.textAlign='center';wx.textBaseline='middle';
@@ -1123,7 +1139,10 @@
       if(p.acidAcc>=4.5-p.acidLevel*0.35){p.acidAcc=0;
         pools.push({x:p.x,y:p.y,r:(55+8*p.acidLevel)*p.aoeMult,life:4+0.4*p.acidLevel,dps:(8+5*p.acidLevel)*p.dmgMult});
         beep(240,0.1,'sine',0.06);}}
-    for(const pl of pools){pl.life-=dt;for(const e of enemies){if(dist(pl,e)<pl.r+e.r*0.4)e.hp-=pl.dps*dt;}}
+    for(const pl of pools){pl.life-=dt;
+      if(pl.tornado){let bn=null,bd=560;for(const e of enemies){const d=dist(pl,e);if(d<bd){bd=d;bn=e;}}
+        if(bn){const a=Math.atan2(bn.y-pl.y,bn.x-pl.x);pl.x+=Math.cos(a)*pl.spd*dt;pl.y+=Math.sin(a)*pl.spd*dt;}}
+      for(const e of enemies){if(dist(pl,e)<pl.r+e.r*0.4){e.hp-=pl.dps*dt;if(pl.slow)e.slowT=Math.max(e.slowT||0,0.35);}}}
     pools=pools.filter(pl=>pl.life>0);
     // meteors — telegraphed strike on a random enemy
     if(p.meteorLevel){p.meteorAcc+=dt*as;
@@ -1142,6 +1161,34 @@
         projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:8,life:4,pierceLeft:999,hitSet:new Set(),
           dmg:rollDmg((14+7*p.ghostLevel)*p.dmgMult),homing:true,color:'#c4b5fd'});
         beep(600,0.1,'sine',0.05);}}
+    // daggers — fast fan along facing direction
+    if(p.daggerLevel){p.daggerAcc+=dt*as;
+      if(p.daggerAcc>=1.5-p.daggerLevel*0.09){p.daggerAcc=0;
+        const dgEvo=p.daggerEvo;
+        const base=Math.atan2(p.facing.y,p.facing.x),n=(2+p.daggerLevel)+(dgEvo?3:0),sp=520*p.projSpeedMult;
+        const dmg=rollDmg((7+4*p.daggerLevel)*(dgEvo?1.7:1)*p.dmgMult);
+        for(let i=0;i<n;i++){const a=base+(i-(n-1)/2)*(dgEvo?0.22:0.15);
+          projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:3.5,life:0.75,pierceLeft:dgEvo?2:0,hitSet:new Set(),dmg,color:'#e2e8f0'});}
+        sfxSweep(700,950,0.04,'sine',0.025);}}
+    // tornado — a wandering damage/slow zone that chases the nearest enemy
+    if(p.tornadoLevel){p.tornadoAcc+=dt*as;
+      if(p.tornadoAcc>=7.5-p.tornadoLevel*0.55){p.tornadoAcc=0;
+        const tEvo=p.tornadoEvo,a=rand(0,Math.PI*2);
+        pools.push({x:p.x+Math.cos(a)*50,y:p.y+Math.sin(a)*50,r:(48+7*p.tornadoLevel)*(tEvo?1.6:1)*p.aoeMult,
+          life:(5+0.5*p.tornadoLevel)*(tEvo?1.4:1),dps:(9+6*p.tornadoLevel)*(tEvo?1.8:1)*p.dmgMult,
+          tornado:true,slow:true,spd:70+(tEvo?45:0),color:tEvo?'#818cf8':'#a5b4fc'});
+        sfxSweep(280,520,0.3,'sine',0.05);}}
+    // hammer — frontal shockwave: damage + knockback + brief slow
+    if(p.hammerLevel){p.hammerAcc+=dt*as;
+      if(p.hammerAcc>=4.2-p.hammerLevel*0.3){p.hammerAcc=0;
+        const R=(130+16*p.hammerLevel)*p.aoeMult,dmg=rollDmg((24+12*p.hammerLevel)*p.dmgMult);
+        const fa=Math.atan2(p.facing.y,p.facing.x);
+        rings.push({x:p.x+p.facing.x*R*0.35,y:p.y+p.facing.y*R*0.35,r:0,maxR:R*0.85,life:0.5,color:'#fbbf24'});
+        for(const e of enemies){const d=dist(p,e);
+          if(d<R){const a=Math.atan2(e.y-p.y,e.x-p.x);let da=Math.abs(a-fa);if(da>Math.PI)da=Math.PI*2-da;
+            if(da<1.05){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,0.5);
+              if(!e.elite){e.x+=Math.cos(a)*75;e.y+=Math.sin(a)*75;}}}}
+        camShake=Math.max(camShake,5);sfxBoom(0.3,0.18,600,80);}}
     // turrets — stationary guns with a lifespan
     if(p.turretLevel){p.turretAcc+=dt*as;
       if(p.turretAcc>=9-p.turretLevel*0.6){p.turretAcc=0;
@@ -1528,7 +1575,7 @@
     }
 
     pickupAcc+=dt;
-    if(pickupAcc>pickupInterval){pickupAcc=0;pickupInterval=rand(14,20);spawnPickup();}
+    if(pickupAcc>pickupInterval){pickupAcc=0;pickupInterval=rand(14,20)/(1+0.13*(player.luckLevel||0));spawnPickup();}
 
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
 
@@ -1734,6 +1781,7 @@
             p.life=0;p.pierceLeft=-1;break;
           }
           e.hp-=p.dmg;p.hitSet.add(e);p.pierceLeft--;burst(p.x,p.y,p.color||'#4D96FF',3);
+          if(player.slowHitLevel)e.slowT=Math.max(e.slowT||0,0.3+0.3*player.slowHitLevel);
         }
       }
     }
@@ -1977,7 +2025,7 @@
     // acid pools (under everything else)
     pools.forEach(pl=>{
       x.globalAlpha=0.22+0.08*Math.sin(t*6);
-      x.fillStyle='#84cc16';x.beginPath();x.arc(pl.x,pl.y,pl.r,0,Math.PI*2);x.fill();
+      x.fillStyle=pl.color||'#84cc16';x.beginPath();x.arc(pl.x,pl.y,pl.r,0,Math.PI*2);x.fill();
     });
     x.globalAlpha=1;
     // rings
