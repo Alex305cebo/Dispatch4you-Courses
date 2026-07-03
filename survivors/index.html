@@ -718,12 +718,19 @@
       auraHasteLevel:0,momentumLevel:0,noHitT:0,rageLevel:0,armorLevel:0,dodgeLevel:0,
       explodeKillLevel:0,chillLevel:0,rearLevel:0,chronoLevel:0,chronoCd:15,
       bladeEvo:false,chainEvo:false,mineEvo:false,fireballEvo:false,laserEvo:false,droneEvo:false,gunEvo:false,
+      lvlDmgScale:1,overdrive:0,overdriveActive:0,
       level:1,xp:0,xpNeed:xpNeedFor(1),invuln:0,facing:{x:1,y:0}};
   }
+
+  // гарантированный рост убойности по уровню — киллы остаются быстрыми даже без карт «Урон»,
+  // и не зависят от везения в драфте. Кэшируем, а не считаем pow() на каждый удар
+  function recalcLvlScale(){player.lvlDmgScale=Math.pow(1.026,player.level-1);}
 
   function xpNeedFor(lvl){return Math.round(18*Math.pow(1.22,lvl-1));}
 
   function rollDmg(base){
+    base*=player.lvlDmgScale||1;
+    if(player.overdriveActive>0)base*=2;
     if(player.berserkActive>0)base*=1.4+player.berserkLevel*0.05;
     if(player.rageLevel&&player.hp<player.maxHp*0.35)base*=1+0.12*player.rageLevel;
     if(player.momentumLevel)base*=1+Math.min(0.1*player.momentumLevel,0.02*player.noHitT);
@@ -788,6 +795,9 @@
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
     sessionTag=s.sessionTag||newSessionTag();renderPlayerName();
+    if(player.lvlDmgScale==null)recalcLvlScale(); // старые сейвы без поля
+    if(player.overdrive==null)player.overdrive=0;
+    if(player.overdriveActive==null)player.overdriveActive=0;
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
     updateHud();
     return true;
@@ -829,10 +839,13 @@
 
   function xpForPower(hp,dmg){return Math.max(1,Math.round(Math.sqrt(hp*dmg)/6));}
 
-  // enemy power tracks the player's exponential upgrade curve, decelerating after 60
-  // (player power plateaus once upgrade caps are hit — a runaway exponent would wall the run)
-  function levelHpMul(L){return L<=60?Math.pow(1.035,L):Math.pow(1.035,60)*Math.pow(1.01,L-60);}
-  function levelDmgMul(L){return Math.min(4,1+L*0.028);}
+  // enemy power tracks the player's exponential upgrade curve, decelerating after 60.
+  // HP-экспонента приручена (было 1.035/1.01) — иначе враги превращались в губки, т.к.
+  // у игрока рост урона по уровню гарантирован отдельно (player.lvlDmgScale, ~1.026^L)
+  function levelHpMul(L){return L<=60?Math.pow(1.028,L):Math.pow(1.028,60)*Math.pow(1.006,L-60);}
+  // урон врагов теперь заметно растёт (было кап ×4) — чтобы на 40+ толпа снова была смертельна
+  // и «смысл» возвращался: убиваешь быстро, но и погибнуть реально
+  function levelDmgMul(L){return Math.min(6.5,1+L*0.04);}
   // ponytail: d.hpMul is time-based and caps at 6x within ~4 min, well before a fresh
   // player reaches level 10 — taper it down early so mobs aren't unkillable on a slow start
   function earlyGameHpEase(L){return L<10?0.5+0.05*L:1;}
@@ -1459,6 +1472,7 @@
       const idx=(player.level-100)/20;
       announce={text:'— Глубина '+idx+' —',life:2.5,color:POST100_TINTS[idx%POST100_TINTS.length].color};
     }
+    recalcLvlScale();
     lastLevelUpAt=t;
   }
 
