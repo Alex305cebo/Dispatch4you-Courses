@@ -659,11 +659,18 @@
     {id:'nuke',color:'#ef4444',label:'✹'},
   ];
 
+  // 8 палитр на 4 существующих силуэта (spiky/horns/blocky/eyes) — тот же силуэт
+  // повторяется реже за счёт разных имён и цветов, без риска "невидимого" босса
+  // с незнакомой drawBoss() формой
   const BOSS_SKINS=[
     {name:'Шипастый',color:'#22d3ee',glow:'#22d3ee',shape:'spiky'},
     {name:'Рогатый',color:'#c026d3',glow:'#e879f9',shape:'horns'},
     {name:'Глыба',color:'#f97316',glow:'#fb923c',shape:'blocky'},
     {name:'Многоглазый',color:'#84cc16',glow:'#bef264',shape:'eyes'},
+    {name:'Кристальный',color:'#818cf8',glow:'#a5b4fc',shape:'spiky'},
+    {name:'Костяной',color:'#e5e7eb',glow:'#f8fafc',shape:'horns'},
+    {name:'Магматический',color:'#dc2626',glow:'#fb923c',shape:'blocky'},
+    {name:'Штормовой',color:'#0ea5e9',glow:'#38bdf8',shape:'eyes'},
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay;
@@ -843,6 +850,14 @@
     camShake=Math.max(camShake,8);
     sfxBoom(0.4,0.22,700,60,true);
   }
+  // «Акт 2»: тиры кончаются на 100 уровне (tierIndexForLevel капается на ENEMY_TIERS[19]) —
+  // дальше вместо повторения тех же мобов без изменений раз в 20 уровней перекрашиваем
+  // толпу в новую палитру и заметно усиливаем (бесконечно, по модулю палитры)
+  const POST100_TINTS=[
+    {color:'#f43f5e',glow:'#fb7185'},{color:'#a855f7',glow:'#d8b4fe'},
+    {color:'#0ea5e9',glow:'#7dd3fc'},{color:'#f59e0b',glow:'#fde047'},
+    {color:'#10b981',glow:'#6ee7b7'},
+  ];
   function spawnEnemy(elite,bossNumber){
     const ang=rand(0,Math.PI*2),rad=offscreenRad();
     const d=difficulty();
@@ -853,15 +868,19 @@
     const hpMulL=levelHpMul(player.level),dmgMulL=levelDmgMul(player.level);
     const champion=!elite&&player.level>=8&&Math.random()<0.05;
     const wb=player.waveBuff||1,ceSpd=player.curseEnemySpdMul||1,ceDmg=player.curseEnemyDmgMul||1;
-    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb;
-    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg;
+    const depthIdx=(!elite&&player.level>=100)?Math.floor((player.level-100)/20):-1;
+    const tint=depthIdx>=0?POST100_TINTS[depthIdx%POST100_TINTS.length]:null;
+    const postMul=depthIdx>=0?1+0.12*depthIdx:1;
+    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb*postMul;
+    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg*postMul;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
       // outrun glues to you permanently, which is what made fast spawns miserable
       hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7*ceSpd:Math.min(170,base.speed*d.spdMul*Math.min(1.5,wb)*ceSpd),
       beh:elite?null:base.beh||null,champion:champion,
       dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1)*(champion?1.4:1),
-      color:elite?skin.color:base.color,glow:elite?skin.glow:null,skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
+      color:elite?skin.color:(tint?tint.color:base.color),glow:elite?skin.glow:(tint?tint.glow:null),
+      skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
       xp:xpForPower(finalHp,finalDmg),elite:!!elite,bossNumber:bn,shootCd:elite?rand(0.8,1.6):0,
       stageCount:elite?BOSS_STAGES:0,stage:elite?BOSS_STAGES:0,
       ranged:!elite&&!!base.ranged,rangedCd:!elite&&base.ranged?rand(1,2):0};
@@ -1428,6 +1447,12 @@
     if(player.level>=50&&player.level%10===0){pendingCurse=player.level;}
     if(player.level%10===1&&player.level>1){
       announce={text:'— АКТ '+(Math.floor(player.level/10)+1)+' —',life:2.5,color:'#e8ebf2'};
+    }
+    if(player.level===100){
+      announce={text:'⚠ АКТ 2 — мир меняется ⚠',life:3,color:'#f43f5e'};
+    }else if(player.level>100&&(player.level-100)%20===0){
+      const idx=(player.level-100)/20;
+      announce={text:'— Глубина '+idx+' —',life:2.5,color:POST100_TINTS[idx%POST100_TINTS.length].color};
     }
     lastLevelUpAt=t;
   }
