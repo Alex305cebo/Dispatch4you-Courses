@@ -947,7 +947,20 @@
     return en;
   }
 
-  function burst(px,py,color,n){for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
+  function burst(px,py,color,n){if(particles.length>600)return;for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
+  // осколки при смерти — разлетаются кусочками цвета врага + белые искры
+  function deathShards(e){
+    if(particles.length>600)return;
+    const n=Math.min(20,6+Math.floor(e.r*0.5));
+    for(let i=0;i<n;i++){const a=rand(0,Math.PI*2),sp=1.5+Math.random()*3.5;
+      particles.push({x:e.x,y:e.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color:Math.random()<0.5?e.color:'#fff',sz:2.5+Math.random()*4});}
+  }
+  // короткий бурст искр в точке попадания снаряда
+  function sparkHit(px,py,color){
+    if(particles.length>600)return;
+    for(let i=0;i<4;i++){const a=rand(0,Math.PI*2),sp=1+Math.random()*2.5;
+      particles.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:0.55,color:Math.random()<0.4?'#fff':color,sz:1.5+Math.random()*2});}
+  }
 
   // псевдо-3D: приплюснутая тень под телом, чуть ниже центра — даёт ощущение объёма/земли
   function groundShadow(gx,gy,r){
@@ -1069,7 +1082,7 @@
   }
 
   function killEnemy(e){
-    kills++;burst(e.x,e.y,e.color,8);
+    kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
     if(player.lootLevel&&Math.random()<0.12*player.lootLevel)gems.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:5,val:Math.max(1,Math.round(e.xp/2))});
@@ -2105,7 +2118,7 @@
             if(p.fireballEvo&&p.pierceLeft>0){p.hitSet.add(e);p.pierceLeft--;continue;}
             p.life=0;p.pierceLeft=-1;break;
           }
-          e.hp-=p.dmg;p.hitSet.add(e);p.pierceLeft--;burst(p.x,p.y,p.color||'#4D96FF',3);
+          e.hp-=p.dmg;p.hitSet.add(e);p.pierceLeft--;sparkHit(p.x,p.y,p.color||'#4D96FF');
           if(player.slowHitLevel)e.slowT=Math.max(e.slowT||0,0.3+0.3*player.slowHitLevel);
         }
       }
@@ -2234,6 +2247,8 @@
       x.beginPath();x.arc(0,0,e.r,0,Math.PI*2);x.fill();
     }
     if(e.skinShape!=='ring'&&e.skinShape!=='fang'){x.fillStyle='rgba(0,0,0,0.35)';x.beginPath();x.arc(0,0,e.r*0.45,0,Math.PI*2);x.fill();}
+    // объёмный блик сверху-слева — тела выглядят выпуклыми (псевдо-3D без WebGL)
+    if(e.skinShape!=='ring'&&e.skinShape!=='fang'){x.globalAlpha=0.18;x.fillStyle='#fff';x.beginPath();x.arc(-e.r*0.3,-e.r*0.32,e.r*0.4,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     x.restore();
   }
 
