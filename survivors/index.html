@@ -677,7 +677,7 @@
     {name:'Штормовой',color:'#0ea5e9',glow:'#38bdf8',shape:'eyes'},
   ];
 
-  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay;
+  let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let gp={active:false,x:0,y:0};
@@ -755,7 +755,7 @@
   }
 
   function reset(){
-    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
+    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     points=0;shopBought={};
@@ -802,7 +802,7 @@
     player=s.player;
     enemies=s.enemies||[];gems=s.gems||[];pickups=s.pickups||[];mines=s.mines||[];pools=s.pools||[];
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
-    boomers=s.boomers||[];particles=[];rings=[];bolts=[];
+    boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=s.lives!=null?s.lives:3;zoom=baseZoom;enemyCountSmoothed=0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
@@ -946,6 +946,11 @@
     x.save();x.globalAlpha=0.26;x.fillStyle='#000';
     x.beginPath();x.ellipse(gx,gy+r*0.72,r*0.92,r*0.34,0,0,Math.PI*2);x.fill();
     x.restore();
+  }
+
+  // всплывающие числа урона — взлетают над врагом и тают
+  function spawnFloater(fx,fy,val,crit){
+    floaters.push({x:fx+rand(-4,4),y:fy,vy:-38,life:0.75,val:val,crit:!!crit});
   }
 
   function makeMinion(e){
@@ -1934,6 +1939,17 @@
     for(const e of enemies){
       const d=dist(player,e);
       if(e.slowT>0)e.slowT-=dt;
+      // juice: враг вспыхивает при получении урона + всплывающие числа (троттлинг, у экрана, с общим капом)
+      const dmgTaken=(e._lastHp!=null?e._lastHp-e.hp:0);
+      if(dmgTaken>0){
+        e.hitFlash=0.09;
+        e._floatAcc=(e._floatAcc||0)+dmgTaken;e._floatT=(e._floatT||0)+dt;
+        if((e._floatT>=0.22||dmgTaken>e.maxHp*0.2)&&floaters.length<34&&d<820){
+          spawnFloater(e.x,e.y-e.r,Math.round(e._floatAcc),dmgTaken>e.maxHp*0.2);e._floatAcc=0;e._floatT=0;
+        }
+      }
+      e._lastHp=e.hp;
+      if(e.hitFlash>0)e.hitFlash-=dt;
       if(!frozen){
         let spd=e.speed;
         if(e.slowT>0)spd*=0.5;
@@ -2084,6 +2100,8 @@
     // particles / rings
     particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=dt/0.6;});
     particles=particles.filter(p=>p.life>0);
+    floaters.forEach(f=>{f.y+=f.vy*dt;f.vy*=0.92;f.life-=dt;});
+    floaters=floaters.filter(f=>f.life>0);
     rings.forEach(r=>{r.r+=r.maxR*dt*2;r.life-=dt;});
     rings=rings.filter(r=>r.life>0);
 
@@ -2412,6 +2430,7 @@
       groundShadow(e.x,e.y,e.r);
       if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
+      if(e.hitFlash>0){x.save();x.globalAlpha=Math.min(0.75,e.hitFlash*7);x.fillStyle='#fff';x.beginPath();x.arc(e.x,e.y,e.r*1.05,0,Math.PI*2);x.fill();x.restore();}
       if(e.hp<e.maxHp){
         if(e.elite&&e.stageCount){
           // one solid bar per boss "life" — it drains fully, then the next of the
@@ -2467,6 +2486,17 @@
     // particles
     particles.forEach(p=>{x.globalAlpha=Math.max(0,p.life);x.fillStyle=p.color;x.fillRect(p.x-p.sz/2,p.y-p.sz/2,p.sz,p.sz);});
     x.globalAlpha=1;
+    // floating damage numbers
+    if(floaters.length){
+      x.textAlign='center';x.textBaseline='middle';
+      floaters.forEach(f=>{
+        x.globalAlpha=Math.max(0,Math.min(1,f.life/0.6));
+        x.font='bold '+(f.crit?17:12)+'px system-ui,sans-serif';
+        x.fillStyle=f.crit?'#fde047':'#fff';x.shadowColor='rgba(0,0,0,0.7)';x.shadowBlur=3;
+        x.fillText(f.val,f.x,f.y);
+      });
+      x.shadowBlur=0;x.globalAlpha=1;
+    }
     // aura
     if(player.auraLevel){x.strokeStyle='rgba(77,150,255,0.25)';x.lineWidth=2/zoom;x.beginPath();x.arc(player.x,player.y,player.auraRadius*player.aoeMult,0,Math.PI*2);x.stroke();}
     // blades
