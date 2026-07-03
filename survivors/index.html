@@ -1848,6 +1848,10 @@
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*dt;player.y+=my*player.speed*hasteMul*dt;player.facing={x:mx,y:my};}
     if(player.invuln>0)player.invuln-=dt;
     if(player.overdriveActive>0)player.overdriveActive-=dt;
+    // след для шлейфа во время перегрузки (короткий кольцевой буфер)
+    if(!player._trail)player._trail=[];
+    player._trail.push(player.x);player._trail.push(player.y);
+    if(player._trail.length>16)player._trail.splice(0,2);
     if(player.regen>0)player.hp=Math.min(player.maxHp,player.hp+player.regen*dt);
 
     // camera zoom: pull back when the field gets crowded — smoothed so bursts of
@@ -2457,6 +2461,9 @@
     projectiles.forEach(p=>{
       const pc=p.color||'#7dd3fc';
       x.save();x.translate(p.x,p.y);x.rotate(Math.atan2(p.vy,p.vx));
+      // motion-стрик за снарядом — эффект скорости без новых объектов
+      const tl=Math.min(30,Math.hypot(p.vx,p.vy)*0.045);
+      if(tl>5){x.globalAlpha=0.4;x.fillStyle=pc;x.beginPath();x.moveTo(-tl,0);x.lineTo(0,-p.r*0.8);x.lineTo(0,p.r*0.8);x.closePath();x.fill();x.globalAlpha=1;}
       x.fillStyle=pc;x.shadowColor=pc;x.shadowBlur=6;
       if(p.fireball||p.homing){x.beginPath();x.arc(0,0,p.r,0,Math.PI*2);x.fill();}
       else{x.beginPath();x.ellipse(0,0,p.r*1.6,p.r*0.75,0,0,Math.PI*2);x.fill();}
@@ -2517,6 +2524,12 @@
     }
     // player
     groundShadow(player.x,player.y,player.r);
+    // шлейф-афтеримейдж во время перегрузки
+    if(player.overdriveActive>0&&player._trail){
+      const tr=player._trail;
+      for(let i=0;i<tr.length;i+=2){x.globalAlpha=0.05*(i/2);x.fillStyle='#c084fc';x.beginPath();x.arc(tr[i],tr[i+1],player.r*0.9,0,Math.PI*2);x.fill();}
+      x.globalAlpha=1;
+    }
     x.globalAlpha=(player.invuln>0)?(Math.floor(t*20)%2?0.4:1):1;
     x.fillStyle='#e8ebf2';
     x.shadowColor=player.berserkActive>0?'#f97316':(player.shieldActive>0?'#38bdf8':(player.hasteActive>0?'#4ade80':'#4D96FF'));
