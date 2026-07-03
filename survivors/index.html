@@ -162,6 +162,7 @@
       <p id="overSession" style="color:#4D96FF;font-weight:600;margin:-6px 0 0;"></p>
       <p id="overStats"></p>
       <p style="color:#4ade80;font-size:12px;margin:-6px 0 0;">✓ Сессия сохранена в архив и рейтинг</p>
+      <button class="ostart" id="btnContinueFromOver" style="border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart" id="btnRetry">🔄 Новая игра</button>
       <button class="ostart" id="btnLbFromOver">🏆 Таблица лидеров</button>
       <button class="ostart" id="btnHistoryFromOver">📜 Мои сессии</button>
@@ -674,7 +675,7 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay;
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let gp={active:false,x:0,y:0};
 
@@ -729,6 +730,7 @@
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
+    lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1730,13 +1732,17 @@
 
   function endSession(reason){
     const died=reason!=='finish';
+    saveRun(); // снимок перед остановкой — «Продолжить» на попапе загрузит именно его
     state='over';
     olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
     archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
     if(t>0)submitScore('survivors',sessionName(),t,{level:player.level,kills:kills});
-    clearRun();
-    const metaEarned=Math.floor(player.level/2)+Math.floor(kills/50)+Math.floor(t/60);
+    // эссенция — по дельте с прошлого чекпоинта, а не по абсолюту: иначе повторные
+    // Завершить→Продолжить без нового прогресса фармили бы её бесконечно
+    const dLevel=player.level-lastCheckpointLevel,dKills=kills-lastCheckpointKills,dT=t-lastCheckpointT;
+    const metaEarned=Math.max(0,Math.floor(dLevel/2)+Math.floor(dKills/50)+Math.floor(dT/60));
+    lastCheckpointT=t;lastCheckpointKills=kills;lastCheckpointLevel=player.level;
     metaState.shards+=metaEarned;saveMeta();
     overTitle.textContent=died?'☠ Ты погиб':'Сессия завершена';
     overSession.textContent='Сессия: '+sessionName();
@@ -2470,6 +2476,22 @@
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
+  // «Продолжить» на попапе конца сессии — доступна всегда: и после ручного «Завершить»,
+  // и после смерти. Смерть требует воскрешения, иначе игрок откроется с 0 HP и умрёт
+  // от следующего же царапины; финиш ничего не воскрешает — HP там и так в порядке
+  function continueAfterEnd(){
+    if(!loadRun()){start();return;}
+    if(player.hp<=0){
+      player.hp=Math.round(player.maxHp*0.5);
+      lives=Math.max(lives,1);
+      player.invuln=2;
+    }
+    ensureAudio();
+    oover.classList.remove('show');olevel.classList.remove('show');ocooldown.classList.remove('show');
+    oweapon.classList.remove('show');osuperwarn.classList.remove('show');olb.classList.remove('show');
+    state='running';last=performance.now();raf=requestAnimationFrame(loop);
+  }
+
   function showMenu(){
     saveRun();
     const hubUrl=new URL('../index.html',window.location.href).href;
@@ -2478,7 +2500,10 @@
 
   document.getElementById('btnStart').addEventListener('click',showWeaponChoice);
   document.getElementById('btnResume').addEventListener('click',resumeRun);
-  document.getElementById('btnRetry').addEventListener('click',showWeaponChoice);
+  document.getElementById('btnContinueFromOver').addEventListener('click',continueAfterEnd);
+  // явный выбор новой игры вместо продолжения — чистим сейв сами, иначе archiveAbandonedSave()
+  // внутри start() продублирует в истории уже записанное завершение как «прервана»
+  document.getElementById('btnRetry').addEventListener('click',()=>{clearRun();showWeaponChoice();});
   document.getElementById('btnMenuSide').addEventListener('click',showMenu);
   document.getElementById('btnFinishSide').addEventListener('click',()=>{
     if(state!=='running')return;
