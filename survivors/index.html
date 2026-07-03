@@ -817,13 +817,20 @@
   }
 
   // выбор персонажа — архетипы уклона, применяются поверх базы (не трогают выбор оружия)
+  // ленивый загрузчик картинок (аватары/эмодзи из нашей коллекции)
+  const imgCache={};
+  function getImg(src){let im=imgCache[src];if(!im){im=new Image();im.src=src;imgCache[src]=im;}return im;}
+  function imgReady(im){return im&&im.complete&&im.naturalWidth>0;}
   const CHARACTERS=[
-    {id:'balanced',icon:'🎯',name:'Универсал',desc:'Сбалансированный старт, без уклона.',apply:p=>{}},
-    {id:'warrior',icon:'⚔️',name:'Воин',desc:'+30% макс. HP, +10% урона, -5% скорости.',apply:p=>{p.maxHp=Math.round(p.maxHp*1.3);p.hp=p.maxHp;p.dmgMult*=1.1;p.speed=Math.round(p.speed*0.95);}},
-    {id:'scout',icon:'🏃',name:'Разведчик',desc:'+18% скорости, +1 пробитие, +30% радиус подбора.',apply:p=>{p.speed=Math.round(p.speed*1.18);p.pierce+=1;p.pickupRadius=Math.round(p.pickupRadius*1.3);}},
-    {id:'mage',icon:'🔮',name:'Маг',desc:'+15% скорость атаки, +8% крит, но -15% макс. HP.',apply:p=>{p.atkSpeedMult*=1.15;p.critChance=Math.min(0.95,p.critChance+0.08);p.maxHp=Math.round(p.maxHp*0.85);p.hp=p.maxHp;}},
-    {id:'berserk',icon:'🩸',name:'Берсерк',desc:'+25% урона и вампиризм, но -20% макс. HP.',apply:p=>{p.dmgMult*=1.25;p.lifesteal+=0.02;p.maxHp=Math.round(p.maxHp*0.8);p.hp=p.maxHp;}},
+    {id:'balanced',icon:'🎯',name:'Универсал',avatar:'assets/avatars/dispatcher.png',desc:'Сбалансированный старт, без уклона.',apply:p=>{}},
+    {id:'warrior',icon:'⚔️',name:'Воин',avatar:'assets/avatars/driver.png',desc:'+30% макс. HP, +10% урона, -5% скорости.',apply:p=>{p.maxHp=Math.round(p.maxHp*1.3);p.hp=p.maxHp;p.dmgMult*=1.1;p.speed=Math.round(p.speed*0.95);}},
+    {id:'scout',icon:'🏃',name:'Разведчик',avatar:'assets/avatars/broker.png',desc:'+18% скорости, +1 пробитие, +30% радиус подбора.',apply:p=>{p.speed=Math.round(p.speed*1.18);p.pierce+=1;p.pickupRadius=Math.round(p.pickupRadius*1.3);}},
+    {id:'mage',icon:'🔮',name:'Маг',avatar:'assets/avatars/accountant.png',desc:'+15% скорость атаки, +8% крит, но -15% макс. HP.',apply:p=>{p.atkSpeedMult*=1.15;p.critChance=Math.min(0.95,p.critChance+0.08);p.maxHp=Math.round(p.maxHp*0.85);p.hp=p.maxHp;}},
+    {id:'berserk',icon:'🩸',name:'Берсерк',avatar:'assets/avatars/owner.png',desc:'+25% урона и вампиризм, но -20% макс. HP.',apply:p=>{p.dmgMult*=1.25;p.lifesteal+=0.02;p.maxHp=Math.round(p.maxHp*0.8);p.hp=p.maxHp;}},
   ];
+  function playerAvatar(){const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];return getImg(c.avatar);}
+  // враги-эмодзи по форме тела (с откатом на векторную фигуру, если картинка не загружена)
+  const SHAPE_EMOJI={blob:'assets/emojis/angry.webp',triangle:'assets/emojis/rage.webp',square:'assets/emojis/tired.webp',shield:'assets/emojis/worried.webp',star:'assets/emojis/exploding.webp',diamond:'assets/emojis/neutral.webp',fang:'assets/emojis/rage.webp',hex:'assets/emojis/sad.webp'};
   let selectedChar=localStorage.getItem('survivors-char')||'balanced';
   function applyCharacter(p){
     const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];
@@ -2481,6 +2488,14 @@
     // behavior telegraphs
     if(e.armT!=null){x.globalAlpha=0.5+0.5*Math.sin(t*30);x.fillStyle='#fff';x.beginPath();x.arc(0,0,e.r+6,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     if(e.cm==='aim'){x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;x.setLineDash([5,5]);x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(e.ca)*260,Math.sin(e.ca)*260);x.stroke();x.setLineDash([]);}
+    // враг-эмодзи из нашей коллекции (если картинка загружена) — иначе векторная фигура ниже
+    const em=SHAPE_EMOJI[e.skinShape]?getImg(SHAPE_EMOJI[e.skinShape]):null;
+    if(em&&imgReady(em)){
+      // цветная подложка-ореол под эмодзи (сохраняет цвет тира/акта)
+      x.globalAlpha=0.5;x.fillStyle=e.color;x.beginPath();x.arc(0,0,e.r*1.05,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      const R=e.r*1.25;x.drawImage(em,-R,-R,R*2,R*2);
+      x.restore();return;
+    }
     x.fillStyle=e.color;
     if(e.skinShape==='triangle'){
       x.beginPath();x.moveTo(0,-e.r);x.lineTo(e.r*0.87,e.r*0.6);x.lineTo(-e.r*0.87,e.r*0.6);x.closePath();x.fill();
@@ -2858,11 +2873,21 @@
       x.globalAlpha=1;
     }
     x.globalAlpha=(player.invuln>0)?(Math.floor(t*20)%2?0.4:1):1;
-    x.fillStyle='#e8ebf2';
+    const av=playerAvatar();
     x.shadowColor=player.berserkActive>0?'#f97316':(player.shieldActive>0?'#38bdf8':(player.hasteActive>0?'#4ade80':'#4D96FF'));
-    x.shadowBlur=12;
-    x.beginPath();x.arc(player.x,player.y,player.r,0,Math.PI*2);x.fill();x.shadowBlur=0;
-    x.strokeStyle='#4D96FF';x.lineWidth=2;x.beginPath();x.moveTo(player.x,player.y);x.lineTo(player.x+player.facing.x*20,player.y+player.facing.y*20);x.stroke();
+    x.shadowBlur=14;
+    if(imgReady(av)){
+      // герой — аватар из нашей коллекции; круглый клип + свечение-кольцо
+      const R=player.r*1.7;
+      x.save();x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.clip();
+      x.drawImage(av,player.x-R,player.y-R,R*2,R*2);x.restore();
+      x.strokeStyle='#4D96FF';x.lineWidth=2.5;x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.stroke();
+    }else{
+      x.fillStyle='#e8ebf2';x.beginPath();x.arc(player.x,player.y,player.r,0,Math.PI*2);x.fill();
+    }
+    x.shadowBlur=0;
+    // индикатор направления
+    x.strokeStyle='#4D96FF';x.lineWidth=2;x.beginPath();x.moveTo(player.x,player.y);x.lineTo(player.x+player.facing.x*(player.r*1.9),player.y+player.facing.y*(player.r*1.9));x.stroke();
     x.globalAlpha=1;
     x.restore();
     drawOffscreenIndicators();
@@ -3045,7 +3070,8 @@
   function syncCharName(){const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];document.getElementById('charName').textContent=c.name;}
   function renderChars(){
     document.getElementById('charList').innerHTML=CHARACTERS.map(c=>
-      '<div class="card charCard" data-id="'+c.id+'" style="width:150px;cursor:pointer;'+(c.id===selectedChar?'border-color:#38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.4);':'')+'">'
+      '<div class="card charCard" data-id="'+c.id+'" style="width:150px;cursor:pointer;text-align:center;'+(c.id===selectedChar?'border-color:#38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.4);':'')+'">'
+      +'<img src="'+c.avatar+'" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;margin:0 auto 6px;display:block;background:#0c0f18;">'
       +'<b style="color:#7dd3fc;">'+c.icon+' '+c.name+'</b><span>'+c.desc+'</span></div>').join('');
     document.querySelectorAll('.charCard').forEach(el=>el.addEventListener('click',()=>{
       selectedChar=el.getAttribute('data-id');localStorage.setItem('survivors-char',selectedChar);
