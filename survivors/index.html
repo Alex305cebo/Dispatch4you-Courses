@@ -116,6 +116,7 @@
       <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart" id="btnStart">Начать заново</button>
       <button class="ostart" id="btnMetaOpen" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
+      <button class="ostart" id="btnAchiOpen" style="border-color:#facc15;color:#fde047;">🏅 Достижения</button>
       <button class="ostart sndBtn" id="btnSoundStart">🔊</button>
       <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
         <p style="color:#fbbf24;font-size:12px;margin:0;">⚠ Ты во встроенном браузере чата — страница может скроллиться и мешать управлению.</p>
@@ -154,6 +155,11 @@
       <button class="ostart" id="btnResumePause" style="border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart sndBtn" id="btnSoundPause">🔊</button>
     </div>
+    <div id="oachi" class="overlay" style="overflow-y:auto;">
+      <h2>🏅 Достижения <span id="achiCount" style="font-size:15px;color:#facc15;">0/10</span></h2>
+      <div class="cards" id="achiList"></div>
+      <button class="ostart" id="btnAchiClose">Закрыть</button>
+    </div>
     <div id="oweapon" class="overlay">
       <h2 id="weaponTitle">Новое оружие!</h2>
       <canvas id="weaponIcon" width="72" height="72" style="background:#0c0f18;border-radius:12px;"></canvas>
@@ -174,6 +180,7 @@
       <button class="ostart" id="btnRetry">🔄 Новая игра</button>
       <button class="ostart" id="btnLbFromOver">🏆 Таблица лидеров</button>
       <button class="ostart" id="btnHistoryFromOver">📜 Мои сессии</button>
+      <button class="ostart" id="btnAchiFromOver" style="border-color:#facc15;color:#fde047;">🏅 Достижения</button>
       <button class="ostart" id="btnMetaFromOver" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия</button>
     </div>
     <div id="olb" class="overlay">
@@ -664,6 +671,40 @@
     {id:'armor',name:'🛡 Стойкость',desc:'-3% получаемого урона за уровень.',max:5,costBase:10},
   ];
   function metaCost(u,lvl){return (lvl+1)*u.costBase;}
+
+  // достижения — открываются по итогам забега, хранятся отдельно и навсегда
+  const ACHIEVEMENTS=[
+    {id:'surv3',icon:'🌱',name:'Новичок',desc:'Продержись 3 минуты',ok:s=>s.time>=180},
+    {id:'surv10',icon:'⏳',name:'Стойкий',desc:'Продержись 10 минут',ok:s=>s.time>=600},
+    {id:'surv20',icon:'🏔',name:'Марафонец',desc:'Продержись 20 минут',ok:s=>s.time>=1200},
+    {id:'kill500',icon:'⚔️',name:'Боец',desc:'500 убийств за забег',ok:s=>s.kills>=500},
+    {id:'kill2000',icon:'💀',name:'Жнец',desc:'2000 убийств за забег',ok:s=>s.kills>=2000},
+    {id:'lvl25',icon:'📈',name:'Ветеран',desc:'Достигни 25 уровня',ok:s=>s.level>=25},
+    {id:'lvl50',icon:'👑',name:'Легенда',desc:'Достигни 50 уровня',ok:s=>s.level>=50},
+    {id:'lvl100',icon:'🌌',name:'Покоритель',desc:'Достигни 100 уровня (Акт 2)',ok:s=>s.level>=100},
+    {id:'combo50',icon:'🔥',name:'Комбо-мастер',desc:'Комбо x50',ok:s=>s.combo>=50},
+    {id:'combo100',icon:'⚡',name:'Неудержимый',desc:'Комбо x100',ok:s=>s.combo>=100},
+  ];
+  function loadAchis(){try{return JSON.parse(localStorage.getItem('survivors-achis'))||{};}catch(e){return {};}}
+  function saveAchis(a){try{localStorage.setItem('survivors-achis',JSON.stringify(a));}catch(e){}}
+  function evalAchievements(stats){
+    const a=loadAchis();const unlocked=[];
+    ACHIEVEMENTS.forEach(ac=>{if(!a[ac.id]&&ac.ok(stats)){a[ac.id]=Date.now();unlocked.push(ac);}});
+    if(unlocked.length)saveAchis(a);
+    return unlocked;
+  }
+  function showAchievements(){
+    const a=loadAchis();
+    const listEl=document.getElementById('achiList');
+    const got=ACHIEVEMENTS.filter(ac=>a[ac.id]).length;
+    document.getElementById('achiCount').textContent=got+'/'+ACHIEVEMENTS.length;
+    listEl.innerHTML=ACHIEVEMENTS.map(ac=>{
+      const on=!!a[ac.id];
+      return '<div class="card" style="width:150px;'+(on?'border-color:#facc15;':'opacity:0.5;')+'">'
+        +'<b style="color:'+(on?'#fde047':'#8891a3')+';">'+ac.icon+' '+ac.name+'</b>'
+        +'<span>'+ac.desc+(on?' ✓':'')+'</span></div>';
+    }).join('');
+  }
   function showMetaShop(){
     document.getElementById('metaShardsBalance').textContent=metaState.shards;
     const cardsEl=document.getElementById('metaCards');
@@ -1922,6 +1963,11 @@
     if(died){sfxSweep(420,45,0.9,'sawtooth',0.14,true);sfxBoom(0.7,0.2,500,40,true);}
     else sfxChime(523,4,0.09,0.11);
     setTimeout(refreshTop3,1500);
+    // достижения по итогам забега — показать новые строкой в статистике
+    const newAchis=evalAchievements({time:t,level:player.level,kills:kills,combo:player.comboBest||0});
+    if(newAchis.length){
+      overStats.textContent+=' · 🏅 +'+newAchis.length+': '+newAchis.map(a=>a.icon+' '+a.name).join(', ');
+    }
   }
   function gameOver(){endSession('death');}
 
@@ -2812,6 +2858,21 @@
     metaHiddenOverlays=[];
   });
   document.getElementById('metaShardsStart').textContent=metaState.shards;
+  // достижения — оверлей со стартового экрана и экрана конца сессии
+  const oachi=document.getElementById('oachi');
+  let achiHiddenOverlays=[];
+  function openAchi(){
+    achiHiddenOverlays=Array.from(document.querySelectorAll('.overlay.show')).filter(o=>o!==oachi);
+    achiHiddenOverlays.forEach(o=>o.classList.remove('show'));
+    showAchievements();oachi.classList.add('show');
+  }
+  document.getElementById('btnAchiOpen').addEventListener('click',openAchi);
+  document.getElementById('btnAchiFromOver').addEventListener('click',openAchi);
+  document.getElementById('btnAchiClose').addEventListener('click',()=>{
+    oachi.classList.remove('show');
+    achiHiddenOverlays.forEach(o=>o.classList.add('show'));
+    achiHiddenOverlays=[];
+  });
   // persist on tab hide / refresh / close so nothing is lost
   window.addEventListener('pagehide',saveRun);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun();});
