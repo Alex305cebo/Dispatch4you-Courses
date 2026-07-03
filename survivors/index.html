@@ -257,11 +257,12 @@
   const lbTop3El=document.getElementById('lbTop3');
   const MEDALS=['🥇','🥈','🥉'];
   function isMyRecord(name){return !!playerName&&(name===playerName||name.indexOf(playerName+' #')===0);}
+  function milestoneBadge(level){return level>=100?'👑':level>=75?'💎':level>=50?'🔥':'';}
   // always-visible top-3 under the sidebar button — everyone sees the current leaders
   async function refreshTop3(){
     const rows=await fetchLeaderboard('survivors',3);
     lbTop3El.innerHTML=rows.length?rows.map((r,i)=>
-      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+'</span><span class="sc">'+fmtTime(Number(r.score)||0)+'</span></div>'
+      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+'</span><span class="sc">'+fmtTime(Number(r.score)||0)+'</span></div>'
     ).join(''):'<div>Пока пусто — стань первым!</div>';
   }
   refreshTop3();setInterval(refreshTop3,60000);
@@ -270,7 +271,7 @@
     if(!r)return '<div class="p" style="opacity:0.3;padding-top:'+st[1]+';"><span class="medal">'+MEDALS[i]+'</span><span class="nm">—</span></div>';
     return '<div class="p" style="border-color:'+st[0]+';padding-top:'+st[1]+';'+(i===0?'box-shadow:0 0 14px rgba(250,204,21,0.25);':'')+'">'
       +'<span class="medal">'+MEDALS[i]+'</span>'
-      +'<span class="nm">'+escapeHtml(r.name)+'</span>'
+      +'<span class="nm">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+'</span>'
       +'<span class="sc" style="color:'+st[0]+';">'+fmtTime(Number(r.score)||0)+'</span>'
       +'<span class="ex">ур.'+(r.level||1)+' · ⚔'+(r.kills||0)+'</span></div>';
   }
@@ -279,7 +280,7 @@
     return '<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-bottom:1px solid var(--border);'
       +(mine?'background:rgba(77,150,255,0.12);border-left:3px solid #4D96FF;':'')+'">'
       +'<span style="width:20px;text-align:right;color:var(--muted);font-weight:700;">'+(i+1)+'</span>'
-      +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">'+escapeHtml(r.name)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
+      +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
       +'<span style="white-space:nowrap;color:var(--text);font-weight:700;">'+fmtTime(Number(r.score)||0)+'</span>'
       +'<span style="white-space:nowrap;font-size:10px;color:var(--muted);">ур.'+(r.level||1)+' ⚔'+(r.kills||0)+'</span></div>';
   }
