@@ -613,8 +613,11 @@
   // player reaches level 10 — taper it down early so mobs aren't unkillable on a slow start
   function earlyGameHpEase(L){return L<10?0.5+0.05*L:1;}
 
+  // spawn distance in world units: past the visible half-diagonal (zoom-aware),
+  // so mobs never pop into view on zoomed-out mobile screens
+  function offscreenRad(extra){return Math.hypot((W/2)/zoom,(H/2)/zoom)+120+rand(0,extra||160);}
   function spawnEnemy(elite,bossNumber){
-    const ang=rand(0,Math.PI*2),rad=Math.max(W,H)/2+80;
+    const ang=rand(0,Math.PI*2),rad=offscreenRad();
     const d=difficulty();
     const type=elite?null:pickType();
     const base=elite?BOSS_BASE:ENEMY_TYPES[type];
@@ -1281,7 +1284,7 @@
     const d=difficulty();
     const hp=tierAvgHp(atLevel)*(40+superNumber*8)*d.hpMul;
     const dmg=tierAvgDmg(atLevel)*14*(1+Math.floor(atLevel/4)*0.08);
-    const ang=rand(0,Math.PI*2),rad=Math.max(W,H)/2+80;
+    const ang=rand(0,Math.PI*2),rad=offscreenRad(40);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       hp,maxHp:hp,speed:55*d.spdMul*0.65,dmg,r:40+superNumber*6,
       color:'#ff2d55',glow:'#ff2d55',skinShape:'super',skinName:'Апокалипсис',
@@ -1300,7 +1303,7 @@
     const d=difficulty();
     const hp=tierAvgHp(8)*30*d.hpMul;
     const dmg=tierAvgDmg(8)*10*(1+Math.floor(8/4)*0.08);
-    const ang=rand(0,Math.PI*2),rad=Math.max(W,H)/2+80;
+    const ang=rand(0,Math.PI*2),rad=offscreenRad(40);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       hp,maxHp:hp,speed:50*d.spdMul*0.7,dmg,r:34,
       color:'#f97316',glow:'#fb923c',skinShape:'super',skinName:'Страж Восьмого',
