@@ -149,6 +149,11 @@
       <h2 id="cooldownMsg">Приготовься</h2>
       <div id="cooldownNum" style="font-size:64px;font-weight:700;color:#4D96FF;text-shadow:0 0 20px rgba(77,150,255,0.6);">3</div>
     </div>
+    <div id="opause" class="overlay">
+      <h2>⏸ Пауза</h2>
+      <button class="ostart" id="btnResumePause" style="border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
+      <button class="ostart sndBtn" id="btnSoundPause">🔊</button>
+    </div>
     <div id="oweapon" class="overlay">
       <h2 id="weaponTitle">Новое оружие!</h2>
       <canvas id="weaponIcon" width="72" height="72" style="background:#0c0f18;border-radius:12px;"></canvas>
@@ -193,6 +198,7 @@
       <div id="lbTop3" class="lb-top3">Загрузка…</div>
     </div>
     <div class="box full" style="padding:8px 10px;display:flex;gap:6px;">
+      <button id="btnPauseSide" style="padding:8px;width:auto;flex:0 0 auto;">⏸</button>
       <button id="btnFinishSide" style="padding:8px;">⏹ Завершить</button>
       <button id="btnMenuSide" style="padding:8px;">☰ Меню</button>
       <button class="sndBtn" id="btnSoundSide" style="padding:8px;width:auto;flex:0 0 auto;">🔊</button>
@@ -2689,9 +2695,9 @@
     const real=Math.min(0.05,(now-last)/1000);last=now;
     let dt=real;
     if(hitStop>0){hitStop-=real;dt=real*0.18;} // микро-слоу-мо на «сочных» моментах
-    if(state==='running')step(dt);
+    if(state==='running'&&!paused)step(dt);
     draw();
-    if(state==='running')raf=requestAnimationFrame(loop);
+    if(state==='running')raf=requestAnimationFrame(loop); // RAF крутится и на паузе — чтобы можно было снять
   }
 
   let chosenStartWeapons=[];
@@ -2849,8 +2855,18 @@
   document.addEventListener('keyup',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=false;e.preventDefault();}});
   document.getElementById('btnSoundStart').addEventListener('click',toggleSound);
   document.getElementById('btnSoundSide').addEventListener('click',toggleSound);
+  document.getElementById('btnSoundPause').addEventListener('click',toggleSound);
   document.addEventListener('keydown',e=>{if(e.code==='KeyM')toggleSound();});
   document.querySelectorAll('.sndBtn').forEach(b=>b.textContent=soundOn?'🔊':'🔇');
+  // пауза
+  let paused=false;
+  const opause=document.getElementById('opause');
+  function pauseGame(){if(state!=='running'||paused)return;paused=true;saveRun();opause.classList.add('show');}
+  function unpause(){if(!paused)return;paused=false;opause.classList.remove('show');last=performance.now();}
+  function togglePause(){paused?unpause():pauseGame();}
+  document.getElementById('btnPauseSide').addEventListener('click',pauseGame);
+  document.getElementById('btnResumePause').addEventListener('click',unpause);
+  document.addEventListener('keydown',e=>{if(e.code==='Escape'||e.code==='KeyP')togglePause();});
 
   function toCanvasXY(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*(cv.width/r.width),y:(e.clientY-r.top)*(cv.height/r.height)};}
   cv.addEventListener('pointerdown',e=>{if(state!=='running')return;const p=toCanvasXY(e);joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
