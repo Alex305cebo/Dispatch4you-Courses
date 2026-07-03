@@ -115,6 +115,7 @@
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
       <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart" id="btnStart">Начать заново</button>
+      <button class="ostart" id="btnCharOpen" style="border-color:#38bdf8;color:#7dd3fc;">🦸 Персонаж: <span id="charName">Универсал</span></button>
       <button class="ostart" id="btnMetaOpen" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
       <button class="ostart" id="btnAchiOpen" style="border-color:#facc15;color:#fde047;">🏅 Достижения</button>
       <button class="ostart sndBtn" id="btnSoundStart">🔊</button>
@@ -159,6 +160,12 @@
       <h2>🏅 Достижения <span id="achiCount" style="font-size:15px;color:#facc15;">0/10</span></h2>
       <div class="cards" id="achiList"></div>
       <button class="ostart" id="btnAchiClose">Закрыть</button>
+    </div>
+    <div id="ochar" class="overlay" style="overflow-y:auto;">
+      <h2>🦸 Выбор персонажа</h2>
+      <p>Уклон применяется поверх старта, выбор оружия остаётся.</p>
+      <div class="cards" id="charList"></div>
+      <button class="ostart" id="btnCharClose">Закрыть</button>
     </div>
     <div id="oweapon" class="overlay">
       <h2 id="weaponTitle">Новое оружие!</h2>
@@ -787,7 +794,22 @@
   function newPlayer(){
     const p=makeBasePlayer();
     applyMetaBonuses(p);
+    applyCharacter(p);
     return p;
+  }
+
+  // выбор персонажа — архетипы уклона, применяются поверх базы (не трогают выбор оружия)
+  const CHARACTERS=[
+    {id:'balanced',icon:'🎯',name:'Универсал',desc:'Сбалансированный старт, без уклона.',apply:p=>{}},
+    {id:'warrior',icon:'⚔️',name:'Воин',desc:'+30% макс. HP, +10% урона, -5% скорости.',apply:p=>{p.maxHp=Math.round(p.maxHp*1.3);p.hp=p.maxHp;p.dmgMult*=1.1;p.speed=Math.round(p.speed*0.95);}},
+    {id:'scout',icon:'🏃',name:'Разведчик',desc:'+18% скорости, +1 пробитие, +30% радиус подбора.',apply:p=>{p.speed=Math.round(p.speed*1.18);p.pierce+=1;p.pickupRadius=Math.round(p.pickupRadius*1.3);}},
+    {id:'mage',icon:'🔮',name:'Маг',desc:'+15% скорость атаки, +8% крит, но -15% макс. HP.',apply:p=>{p.atkSpeedMult*=1.15;p.critChance=Math.min(0.95,p.critChance+0.08);p.maxHp=Math.round(p.maxHp*0.85);p.hp=p.maxHp;}},
+    {id:'berserk',icon:'🩸',name:'Берсерк',desc:'+25% урона и вампиризм, но -20% макс. HP.',apply:p=>{p.dmgMult*=1.25;p.lifesteal+=0.02;p.maxHp=Math.round(p.maxHp*0.8);p.hp=p.maxHp;}},
+  ];
+  let selectedChar=localStorage.getItem('survivors-char')||'balanced';
+  function applyCharacter(p){
+    const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];
+    c.apply(p);
   }
 
   // мета-прогрессия применяется один раз здесь, поверх базовых характеристик,
@@ -2873,6 +2895,21 @@
     achiHiddenOverlays.forEach(o=>o.classList.add('show'));
     achiHiddenOverlays=[];
   });
+  // выбор персонажа
+  const ochar=document.getElementById('ochar');
+  function syncCharName(){const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];document.getElementById('charName').textContent=c.name;}
+  function renderChars(){
+    document.getElementById('charList').innerHTML=CHARACTERS.map(c=>
+      '<div class="card charCard" data-id="'+c.id+'" style="width:150px;cursor:pointer;'+(c.id===selectedChar?'border-color:#38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.4);':'')+'">'
+      +'<b style="color:#7dd3fc;">'+c.icon+' '+c.name+'</b><span>'+c.desc+'</span></div>').join('');
+    document.querySelectorAll('.charCard').forEach(el=>el.addEventListener('click',()=>{
+      selectedChar=el.getAttribute('data-id');localStorage.setItem('survivors-char',selectedChar);
+      syncCharName();renderChars();beep(660,0.08,'sine',0.1);
+    }));
+  }
+  document.getElementById('btnCharOpen').addEventListener('click',()=>{renderChars();ostart.classList.remove('show');ochar.classList.add('show');});
+  document.getElementById('btnCharClose').addEventListener('click',()=>{ochar.classList.remove('show');ostart.classList.add('show');});
+  syncCharName();
   // persist on tab hide / refresh / close so nothing is lost
   window.addEventListener('pagehide',saveRun);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun();});
