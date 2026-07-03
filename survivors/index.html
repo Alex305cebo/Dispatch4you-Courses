@@ -726,6 +726,23 @@
   // и не зависят от везения в драфте. Кэшируем, а не считаем pow() на каждый удар
   function recalcLvlScale(){player.lvlDmgScale=Math.pow(1.026,player.level-1);}
 
+  // овердрайв / перегрузка — активный «клапан силы»: шкала копится с убийств, на 100
+  // авто-срабатывает короткий режим ярости (×2 урон, +скорость, чистка экрана)
+  function addOverdrive(v){
+    if(player.overdriveActive>0)return; // во время режима шкала не копится
+    player.overdrive=Math.min(100,(player.overdrive||0)+v);
+    if(player.overdrive>=100)activateOverdrive();
+  }
+  function activateOverdrive(){
+    player.overdrive=0;player.overdriveActive=5;
+    announce={text:'⚡ ПЕРЕГРУЗКА!',life:2,color:'#c084fc'};
+    screenFlash=Math.max(screenFlash,0.5);camShake=Math.max(camShake,10);
+    rings.push({x:player.x,y:player.y,r:0,maxR:340,life:0.8,color:'#c084fc'});
+    const R=340,dmg=rollDmg(60*player.dmgMult);
+    for(const e of enemies){if(dist(player,e)<R){e.hp-=dmg;const a=Math.atan2(e.y-player.y,e.x-player.x);if(!e.elite){e.x+=Math.cos(a)*80;e.y+=Math.sin(a)*80;}}}
+    sfxSweep(300,1400,0.4,'sawtooth',0.12,true);sfxBoom(0.4,0.22,900,80,true);
+  }
+
   function xpNeedFor(lvl){return Math.round(18*Math.pow(1.22,lvl-1));}
 
   function rollDmg(base){
@@ -906,6 +923,22 @@
     return en;
   }
 
+  // «Охотник» — редкая жирная элита-цель среди трэша (с 40 уровня). Не босс (стадий нет),
+  // но приоритетная охота: убиваем новой убойностью за пару секунд, даёт крупную награду
+  function spawnHunter(){
+    const en=spawnEnemy(false);
+    en.hunter=true;en.beh=null;en.ranged=false;en.champion=false;
+    en.hp=en.maxHp=en.maxHp*9;
+    en.dmg*=1.3;
+    en.r=Math.max(en.r*1.7,22);
+    en.speed=Math.min(150,Math.max(95,en.speed));
+    en.color='#facc15';en.glow='#fde047';
+    en.xp=Math.max(en.xp,xpForPower(en.hp,en.dmg));
+    announce={text:'⭐ ОХОТНИК вышел на поле — добудь награду!',life:2.4,color:'#facc15'};
+    beep(120,0.25,'sawtooth',0.14);
+    return en;
+  }
+
   function burst(px,py,color,n){for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
 
   function makeMinion(e){
@@ -1029,6 +1062,20 @@
       }
     }
     beep(e.elite?160:300,0.09,'sine',0.045);
+    // овердрайв копится с убийств; охотник и боссы дают крупный вклад
+    addOverdrive(e.hunter?25:(e.elite?8:1.2));
+    if(e.hunter){
+      metaState.shards+=3;saveMeta();
+      const drop=[['chest','#facc15','★'],['heal','#4ade80','+'],['magnet','#38bdf8','◎']][Math.floor(Math.random()*3)];
+      pickups.push({x:e.x+rand(-16,16),y:e.y+rand(-16,16),r:11,type:drop[0],color:drop[1],label:drop[2]});
+      if(player.level>=50){
+        const pool=RELICS.filter(r=>!(player.relics&&player.relics[r.id]));
+        if(pool.length&&Math.random()<0.4){const r=pool[Math.floor(Math.random()*pool.length)];
+          pickups.push({x:e.x+rand(-24,24),y:e.y+rand(-24,24),r:12,type:'relic',relicId:r.id,color:'#facc15',label:'◆'});}
+      }
+      announce={text:'⭐ Охотник повержен! +3 ✨',life:2.4,color:'#facc15'};
+      camShake=Math.max(camShake,9);burst(e.x,e.y,'#fde047',26);sfxChime(700,4,0.09,0.13);
+    }
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(player.explodeKillLevel&&!e.elite){
       const R=70*player.aoeMult,ed=e.maxHp*(0.1+0.04*player.explodeKillLevel);
@@ -1262,7 +1309,7 @@
   }
 
   function updateArsenal(dt){
-    const p=player,as=p.atkSpeedMult;
+    const p=player,as=p.atkSpeedMult*(p.overdriveActive>0?1.5:1);
     // fireball — big slow projectile, explodes on first hit (handled in projectile loop)
     if(p.fireballLevel){p.fireballAcc+=dt*as;
       const fEvo=p.fireballEvo;
@@ -1785,9 +1832,10 @@
     if(joy.active){mx=joy.dx;my=joy.dy;}
     if(gp.active){mx=gp.x;my=gp.y;}
     const len=Math.hypot(mx,my);
-    const hasteMul=player.hasteActive>0?1.4+player.hasteLevel*0.05:1;
+    const hasteMul=(player.hasteActive>0?1.4+player.hasteLevel*0.05:1)*(player.overdriveActive>0?1.35:1);
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*dt;player.y+=my*player.speed*hasteMul*dt;player.facing={x:mx,y:my};}
     if(player.invuln>0)player.invuln-=dt;
+    if(player.overdriveActive>0)player.overdriveActive-=dt;
     if(player.regen>0)player.hp=Math.min(player.maxHp,player.hp+player.regen*dt);
 
     // camera zoom: pull back when the field gets crowded — smoothed so bursts of
@@ -1801,6 +1849,8 @@
     // spawn (paused during a dedicated arena-boss fight like the level-8 encounter)
     const d=difficulty();
     if(!mobSpawnPaused){
+      // охотник: с 40 уровня, ~раз в 20с, не больше 2 живых одновременно
+      if(player.level>=40&&Math.random()<0.05*dt&&enemies.filter(e=>e.hunter).length<2)spawnHunter();
       if(enemies.length<ENEMY_CAP+(player.curseCapBonus||0)){
         spawnAcc+=dt*1000;
         if(spawnAcc>d.interval){spawnAcc=0;for(let i=0;i<d.count;i++)spawnEnemy(false);}
@@ -2094,6 +2144,18 @@
     x.save();x.translate(ex,ey);
     if(e.supermob){x.shadowColor='#facc15';x.shadowBlur=12;x.strokeStyle='#facc15';x.lineWidth=2;x.beginPath();x.arc(0,0,e.r+4,0,Math.PI*2);x.stroke();x.shadowBlur=0;}
     if(e.champion){x.shadowColor='#22d3ee';x.shadowBlur=14;x.strokeStyle='#22d3ee';x.lineWidth=2.5;x.beginPath();x.arc(0,0,e.r+5+Math.sin(t*5)*2,0,Math.PI*2);x.stroke();x.shadowBlur=0;}
+    if(e.hunter){
+      x.shadowColor='#facc15';x.shadowBlur=22;
+      for(let ri=0;ri<2;ri++){x.strokeStyle=ri?'rgba(253,224,71,0.5)':'#facc15';x.lineWidth=ri?2:3.5;
+        x.beginPath();x.arc(0,0,e.r+6+ri*6+Math.sin(t*4)*3,0,Math.PI*2);x.stroke();}
+      x.shadowBlur=0;
+      x.save();x.rotate(t*1.2);
+      for(let i=0;i<4;i++){const a=i*(Math.PI/2);x.fillStyle='#fde047';
+        x.beginPath();x.moveTo(Math.cos(a)*(e.r+16),Math.sin(a)*(e.r+16));
+        x.lineTo(Math.cos(a+0.16)*(e.r+8),Math.sin(a+0.16)*(e.r+8));
+        x.lineTo(Math.cos(a-0.16)*(e.r+8),Math.sin(a-0.16)*(e.r+8));x.closePath();x.fill();}
+      x.restore();
+    }
     // behavior telegraphs
     if(e.armT!=null){x.globalAlpha=0.5+0.5*Math.sin(t*30);x.fillStyle='#fff';x.beginPath();x.arc(0,0,e.r+6,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     if(e.cm==='aim'){x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;x.setLineDash([5,5]);x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(e.ca)*260,Math.sin(e.ca)*260);x.stroke();x.setLineDash([]);}
@@ -2198,6 +2260,7 @@
     pickups.forEach(pk=>edgeArrow(pk.x,pk.y,pk.r,pk.color));
     // bosses: bigger pulsing arrows in the boss's color
     enemies.forEach(e=>{if(e.elite)edgeArrow(e.x,e.y,e.r,e.color,1.7+0.25*Math.sin(t*6));});
+    enemies.forEach(e=>{if(e.hunter)edgeArrow(e.x,e.y,e.r,'#facc15',1.6+0.3*Math.sin(t*6));});
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
   }
@@ -2217,6 +2280,15 @@
     // XP bar
     x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(pad+8,pad+22,w-16,5);
     x.fillStyle='#4D96FF';x.fillRect(pad+8,pad+22,(w-16)*Math.max(0,Math.min(1,player.xp/player.xpNeed)),5);
+    // overdrive bar (purple) — fills with kills; flashes label while active
+    x.fillStyle='rgba(255,255,255,0.12)';x.fillRect(pad+8,pad+29,w-16,3);
+    if(player.overdriveActive>0){
+      x.fillStyle='#c084fc';x.fillRect(pad+8,pad+29,w-16,3);
+      x.fillStyle='#e9d5ff';x.font='bold 8px system-ui,sans-serif';x.textAlign='right';x.textBaseline='middle';
+      x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w-8,pad+27);x.textAlign='center';
+    }else{
+      x.fillStyle='#a855f7';x.fillRect(pad+8,pad+29,(w-16)*Math.max(0,Math.min(1,(player.overdrive||0)/100)),3);
+    }
     // row 1: level + lives + time
     x.textAlign='left';x.font='bold 12px system-ui,sans-serif';
     x.fillStyle='#e8ebf2';x.fillText('Ур. '+player.level,pad+8,pad+38);
