@@ -116,6 +116,7 @@
       <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart" id="btnStart">Начать заново</button>
       <button class="ostart" id="btnMetaOpen" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
+      <button class="ostart sndBtn" id="btnSoundStart">🔊</button>
       <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
         <p style="color:#fbbf24;font-size:12px;margin:0;">⚠ Ты во встроенном браузере чата — страница может скроллиться и мешать управлению.</p>
         <button class="ostart" id="btnOpenExternal" style="border-color:#f59e0b;color:#fbbf24;">🌐 Открыть в браузере</button>
@@ -194,6 +195,7 @@
     <div class="box full" style="padding:8px 10px;display:flex;gap:6px;">
       <button id="btnFinishSide" style="padding:8px;">⏹ Завершить</button>
       <button id="btnMenuSide" style="padding:8px;">☰ Меню</button>
+      <button class="sndBtn" id="btnSoundSide" style="padding:8px;width:auto;flex:0 0 auto;">🔊</button>
     </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
     <p class="credit">created by Ilya Ce</p>
@@ -322,17 +324,67 @@
     lbHiddenOverlays=[];
   });
 
-  let actx=null,compressor=null,lastBeepAt=0,lastFxAt=0;
+  let actx=null,compressor=null,lastBeepAt=0,lastFxAt=0,masterGain=null,musicNodes=null,musicTimer=null;
   const FX_GAP=0.045; // мин. интервал между фоновыми звуками оружия — гасит какофонию при массовом одновременном огне
+  let soundOn=(localStorage.getItem('survivors-sound')||'1')==='1';
   function ensureAudio(){
     if(!actx){
       try{
         actx=new (window.AudioContext||window.webkitAudioContext)();
         compressor=actx.createDynamicsCompressor();
         compressor.threshold.value=-24;compressor.ratio.value=8;
-        compressor.connect(actx.destination);
+        masterGain=actx.createGain();masterGain.gain.value=soundOn?1:0;
+        compressor.connect(masterGain);masterGain.connect(actx.destination);
+        if(soundOn)startMusic();
       }catch(e){}
     }else if(actx.state==='suspended')actx.resume();
+  }
+  function applySound(){
+    localStorage.setItem('survivors-sound',soundOn?'1':'0');
+    if(masterGain)masterGain.gain.value=soundOn?1:0;
+    if(soundOn){if(!musicNodes)startMusic();}else stopMusic();
+    document.querySelectorAll('.sndBtn').forEach(b=>b.textContent=soundOn?'🔊':'🔇');
+  }
+  function toggleSound(){soundOn=!soundOn;ensureAudio();applySound();}
+  // ambient-музыка: мягкий фильтрованный дрон (тоника+квинта) + редкие ноты пентатоники,
+  // медленно меняющий аккорд. Тихо и генеративно, без файлов; глушится мастер-громкостью
+  const MUSIC_ROOTS=[110,98,123.47,87.31]; // A2 G2 B2 F2 — медленная смена «настроения»
+  let musicRootIdx=0;
+  function startMusic(){
+    if(!actx||musicNodes)return;
+    const drone=actx.createGain();drone.gain.value=0.028;drone.connect(compressor);
+    const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=700;lp.connect(drone);
+    const root=MUSIC_ROOTS[musicRootIdx];
+    const o1=actx.createOscillator(),o2=actx.createOscillator();
+    o1.type='sawtooth';o2.type='sawtooth';
+    o1.frequency.value=root;o2.frequency.value=root*1.5;o2.detune.value=6;
+    o1.connect(lp);o2.connect(lp);o1.start();o2.start();
+    // медленное «дыхание» громкости
+    const lfo=actx.createOscillator(),lfoG=actx.createGain();
+    lfo.frequency.value=0.08;lfoG.gain.value=0.012;lfo.connect(lfoG);lfoG.connect(drone.gain);lfo.start();
+    musicNodes={o1,o2,lfo,lp,drone,lfoG};
+    // редкие мягкие ноты пентатоники поверх дрона
+    const scale=[0,3,5,7,10,12];
+    musicTimer=setInterval(()=>{
+      if(!actx||!musicNodes)return;
+      if(Math.random()<0.55){
+        const r=MUSIC_ROOTS[musicRootIdx]*2;
+        const semi=scale[Math.floor(Math.random()*scale.length)];
+        const f=r*Math.pow(2,semi/12);
+        const t0=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
+        o.type='sine';o.frequency.value=f;o.connect(g);g.connect(compressor);
+        g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(0.03,t0+0.4);g.gain.exponentialRampToValueAtTime(0.001,t0+2.4);
+        o.start(t0);o.stop(t0+2.5);
+      }
+      if(Math.random()<0.25){musicRootIdx=(musicRootIdx+1)%MUSIC_ROOTS.length;
+        const nr=MUSIC_ROOTS[musicRootIdx];
+        musicNodes.o1.frequency.setTargetAtTime(nr,actx.currentTime,1.5);
+        musicNodes.o2.frequency.setTargetAtTime(nr*1.5,actx.currentTime,1.5);}
+    },2600);
+  }
+  function stopMusic(){
+    if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+    if(musicNodes){try{musicNodes.o1.stop();musicNodes.o2.stop();musicNodes.lfo.stop();}catch(e){}musicNodes=null;}
   }
   function beep(freq,dur,type,gain){
     if(!actx)return;
@@ -2795,6 +2847,10 @@
   }
   document.addEventListener('keydown',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=true;e.preventDefault();}});
   document.addEventListener('keyup',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=false;e.preventDefault();}});
+  document.getElementById('btnSoundStart').addEventListener('click',toggleSound);
+  document.getElementById('btnSoundSide').addEventListener('click',toggleSound);
+  document.addEventListener('keydown',e=>{if(e.code==='KeyM')toggleSound();});
+  document.querySelectorAll('.sndBtn').forEach(b=>b.textContent=soundOn?'🔊':'🔇');
 
   function toCanvasXY(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*(cv.width/r.width),y:(e.clientY-r.top)*(cv.height/r.height)};}
   cv.addEventListener('pointerdown',e=>{if(state!=='running')return;const p=toCanvasXY(e);joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
