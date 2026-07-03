@@ -298,7 +298,8 @@
     lbHiddenOverlays=[];
   });
 
-  let actx=null,compressor=null,lastBeepAt=0;
+  let actx=null,compressor=null,lastBeepAt=0,lastFxAt=0;
+  const FX_GAP=0.045; // мин. интервал между фоновыми звуками оружия — гасит какофонию при массовом одновременном огне
   function ensureAudio(){
     if(!actx){
       try{
@@ -320,9 +321,14 @@
     o.start(t0);o.stop(t0+dur);
   }
   // richer synth: pitch sweep (lasers, magnets, ui) — beep can't bend frequency
-  function sfxSweep(f1,f2,dur,type,gain){
+  function sfxSweep(f1,f2,dur,type,gain,important){
     if(!actx)return;
     const t0=actx.currentTime;
+    if(!important){
+      if(t0-lastFxAt<FX_GAP)return;
+      lastFxAt=t0;
+      const j=0.97+Math.random()*0.06;f1*=j;f2*=j;
+    }
     const o=actx.createOscillator(),g=actx.createGain();
     o.type=type||'sine';
     o.frequency.setValueAtTime(f1,t0);o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t0+dur);
@@ -331,9 +337,13 @@
     o.start(t0);o.stop(t0+dur);
   }
   // filtered noise burst — real "boom" for explosions instead of a sawtooth honk
-  function sfxBoom(dur,gain,cut1,cut2){
+  function sfxBoom(dur,gain,cut1,cut2,important){
     if(!actx)return;
     const t0=actx.currentTime;
+    if(!important){
+      if(t0-lastFxAt<FX_GAP)return;
+      lastFxAt=t0;
+    }
     const n=Math.floor(actx.sampleRate*dur);
     const buf=actx.createBuffer(1,n,actx.sampleRate);
     const d=buf.getChannelData(0);
@@ -988,9 +998,11 @@
     const dmg=rollDmg((14+player.chainLevel*6)*(evo?2:1)*player.dmgMult);
     const jumps=1+player.chainLevel+player.pierce+(evo?4:0);
     const width=2+player.chainLevel*0.5+(evo?2:0);
+    let firedAnyBolt=false;
     for(let volley=0;volley<player.projCount;volley++){
       let target=nearestEnemy(450);
       if(!target)break;
+      firedAnyBolt=true;
       const hit=new Set();
       let from={x:player.x,y:player.y};
       for(let i=0;i<jumps&&target;i++){
@@ -1002,7 +1014,7 @@
         for(const e of enemies){if(hit.has(e))continue;const d=dist(from,e);if(d<bd){bd=d;target=e;}}
       }
     }
-    sfxSweep(900,480,0.09,'triangle',0.04);
+    if(firedAnyBolt)sfxSweep(900,480,0.09,'triangle',0.04);
   }
 
   function updateMines(dt){
@@ -1225,7 +1237,7 @@
       const R=3*Math.max(W,H);
       gems.forEach(g=>g.magnet=true);
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
-      sfxSweep(500,1400,0.35,'sine',0.1);
+      sfxSweep(500,1400,0.35,'sine',0.1,true);
     }
     else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
     else if(pk.type==='weapon'){
@@ -1382,7 +1394,7 @@
     state='superwarning';
     superWarnText.textContent='На уровне '+nextLevel+' появится СУПЕРБОСС — намного опаснее обычных боссов, и приведёт с собой подкрепление.';
     osuperwarn.classList.add('show');
-    sfxBoom(0.45,0.26,600,55);setTimeout(()=>beep(100,0.4,'sawtooth',0.15),200);
+    sfxBoom(0.45,0.26,600,55,true);setTimeout(()=>beep(100,0.4,'sawtooth',0.15),200);
   }
 
   function spawnSuperboss(atLevel){
@@ -1421,7 +1433,7 @@
     announce={text:'⚠ БОСС УРОВНЯ 8: '+en.skinName+' ⚠',life:3.2,color:'#f97316'};
     rings.push({x:player.x,y:player.y,r:0,maxR:700,life:1.3});
     camShake=Math.max(camShake,14);screenFlash=Math.max(screenFlash,0.6);
-    sfxBoom(0.7,0.3,450,45);sfxSweep(60,140,0.6,'sawtooth',0.12);
+    sfxBoom(0.7,0.3,450,45,true);sfxSweep(60,140,0.6,'sawtooth',0.12,true);
     return en;
   }
 
@@ -1463,7 +1475,7 @@
           const a=i/10*Math.PI*2;
           enemyProjectiles.push({x:e.x,y:e.y,vx:Math.cos(a)*170,vy:Math.sin(a)*170,dmg:Math.round(e.dmg*0.3),r:7,life:2,color:'#fb923c',boss:true});
         }
-        sfxBoom(0.25,0.16,800,90);
+        sfxBoom(0.25,0.16,800,90,true);
       }
       announce={text:(e.skinName||'Босс')+': стадия '+e.stage+'/'+e.stageCount+'!',life:1.4,color:e.color};
       beep(260+e.stage*18,0.15,'square',0.1);
@@ -1490,7 +1502,7 @@
     if(!isContact&&player.barrierLevel&&player.barrierCd<=0){
       player.barrierCd=14-player.barrierLevel*1.5;
       rings.push({x:player.x,y:player.y,r:0,maxR:60,life:0.5,color:'#38bdf8'});
-      sfxSweep(700,1200,0.12,'sine',0.09);return;
+      sfxSweep(700,1200,0.12,'sine',0.09,true);return;
     }
     const mitig=(player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1)*(1-0.05*player.armorLevel);
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
@@ -1499,7 +1511,7 @@
       const a=Math.atan2(player.y-fy,player.x-fx);
       player.x+=Math.cos(a)*force;player.y+=Math.sin(a)*force;
     }
-    if(!isContact)sfxSweep(200,70,0.18,'sawtooth',0.1);
+    if(!isContact)sfxSweep(200,70,0.18,'sawtooth',0.1,true);
     if(player.hp<=0){
       if(lives>1){
         lives--;
@@ -1507,7 +1519,7 @@
         player.invuln=2;
         announce={text:'💔 Жизнь потеряна! Осталось: '+lives,life:2.5,color:'#ff2d55'};
         camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.5);
-        sfxBoom(0.45,0.26,600,55);
+        sfxBoom(0.45,0.26,600,55,true);
         if(player.secondWindLevel){
           const R=280,swd=60*player.secondWindLevel;
           for(const e of enemies){
@@ -1537,7 +1549,7 @@
     overSession.textContent='Сессия: '+sessionName();
     overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills;
     oover.classList.add('show');
-    if(died){sfxSweep(420,45,0.9,'sawtooth',0.14);sfxBoom(0.7,0.2,500,40);}
+    if(died){sfxSweep(420,45,0.9,'sawtooth',0.14,true);sfxBoom(0.7,0.2,500,40,true);}
     else sfxChime(523,4,0.09,0.11);
     setTimeout(refreshTop3,1500);
   }
@@ -1602,7 +1614,7 @@
         player.chronoCd=15;freezeT=1+0.4*player.chronoLevel;
         announce={text:'⏱ ХРОНОСФЕРА!',life:1.4,color:'#c4b5fd'};
         rings.push({x:player.x,y:player.y,r:0,maxR:500,life:1,color:'#c4b5fd'});
-        sfxSweep(400,1600,0.4,'sine',0.1);
+        sfxSweep(400,1600,0.4,'sine',0.1,true);
       }
     }
     if(freezeT>0)freezeT-=dt;
