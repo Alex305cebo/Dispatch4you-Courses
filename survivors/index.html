@@ -129,6 +129,11 @@
       <p id="levelSub" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
       <div class="cards" id="cards"></div>
     </div>
+    <div id="ocurse" class="overlay">
+      <h2 style="color:#ff6b6b;">⚠ ПРОКЛЯТИЕ</h2>
+      <p>Забег усложняется — выбери один модификатор до конца сессии.</p>
+      <div class="cards" id="curseCards"></div>
+    </div>
     <div id="ocooldown" class="overlay">
       <h2 id="cooldownMsg">Приготовься</h2>
       <div id="cooldownNum" style="font-size:64px;font-weight:700;color:#4D96FF;text-shadow:0 0 20px rgba(77,150,255,0.6);">3</div>
@@ -543,6 +548,41 @@
   ];
   function readyEvolutions(){return EVOLUTIONS.filter(e=>e.ready(player));}
 
+  // эндгейм-проклятия: с 50 уровня, раз в 10 уровней — выбор одного модификатора рана.
+  // каждое проклятие — риск и награда в одном, эффекты стакаются при повторном выборе
+  const CURSES=[
+    {id:'bloodpact',name:'🩸 Кровавый пакт',desc:'Враги на 18% быстрее — но опыт с кристаллов +50%.',
+      apply:p=>{p.curseEnemySpdMul=(p.curseEnemySpdMul||1)*1.18;p.curseXpMul=(p.curseXpMul||1)*1.5;}},
+    {id:'fragile',name:'💔 Хрупкость',desc:'Получаемый урон +20% — но шанс крита +8%.',
+      apply:p=>{p.curseDmgTakenMul=(p.curseDmgTakenMul||1)*1.2;p.critChance=Math.min(0.95,p.critChance+0.08);}},
+    {id:'hive',name:'🐝 Улей',desc:'Толпа может быть больше (+40 к потолку) — но шанс двойного опыта с убийств выше.',
+      apply:p=>{p.curseCapBonus=(p.curseCapBonus||0)+40;p.lootLevel=(p.lootLevel||0)+1;}},
+    {id:'obsession',name:'😡 Одержимость',desc:'Враги наносят на 15% больше урона — но и ты наносишь на 15% больше.',
+      apply:p=>{p.curseEnemyDmgMul=(p.curseEnemyDmgMul||1)*1.15;p.dmgMult*=1.15;}},
+  ];
+  function showCurseChoice(){
+    state='curse';
+    const curseCardsEl=document.getElementById('curseCards');
+    curseCardsEl.innerHTML='';
+    const copy=CURSES.slice();
+    const picks=[];
+    for(let i=0;i<2&&copy.length;i++)picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);
+    picks.forEach(c=>{
+      const el=document.createElement('div');el.className='card';
+      el.style.borderColor='#ef4444';
+      el.innerHTML='<b style="color:#ff6b6b;">'+c.name+'</b><span>'+c.desc+'</span>';
+      el.onclick=()=>{
+        c.apply(player);
+        announce={text:'Проклятие принято: '+c.name,life:2.6,color:'#ff6b6b'};
+        camShake=Math.max(camShake,6);sfxBoom(0.35,0.2,650,60,true);
+        document.getElementById('ocurse').classList.remove('show');
+        state='running';last=performance.now();raf=requestAnimationFrame(loop);
+      };
+      curseCardsEl.appendChild(el);
+    });
+    document.getElementById('ocurse').classList.add('show');
+  }
+
   const PICKUP_TYPES=[
     {id:'chest',color:'#facc15',label:'★'},
     {id:'heal',color:'#4ade80',label:'+'},
@@ -558,7 +598,7 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay;
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse;
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let gp={active:false,x:0,y:0};
 
@@ -594,7 +634,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -606,12 +646,12 @@
   const SAVE_KEY='survivors-run';
   let saveAcc=0;
   function saveRun(){
-    if(!player||!(state==='running'||state==='shop'||state==='levelup'||state==='cooldown'||state==='weaponpopup'))return;
+    if(!player||!(state==='running'||state==='shop'||state==='levelup'||state==='cooldown'||state==='weaponpopup'||state==='curse'))return;
     try{
       localStorage.setItem(SAVE_KEY,JSON.stringify({
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
-        pendingLevel8Boss,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
+        pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
         safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
@@ -642,7 +682,7 @@
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=s.lives!=null?s.lives:3;zoom=baseZoom;enemyCountSmoothed=0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
-    pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;
+    pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
     mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
@@ -725,13 +765,13 @@
     const skin=elite?BOSS_SKINS[(bn-1)%BOSS_SKINS.length]:null;
     const hpMulL=levelHpMul(player.level),dmgMulL=levelDmgMul(player.level);
     const champion=!elite&&player.level>=8&&Math.random()<0.05;
-    const wb=player.waveBuff||1;
+    const wb=player.waveBuff||1,ceSpd=player.curseEnemySpdMul||1,ceDmg=player.curseEnemyDmgMul||1;
     const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb;
-    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb;
+    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
       // outrun glues to you permanently, which is what made fast spawns miserable
-      hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7:Math.min(170,base.speed*d.spdMul*Math.min(1.5,wb)),
+      hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7*ceSpd:Math.min(170,base.speed*d.spdMul*Math.min(1.5,wb)*ceSpd),
       beh:elite?null:base.beh||null,champion:champion,
       dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1)*(champion?1.4:1),
       color:elite?skin.color:base.color,glow:elite?skin.glow:null,skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
@@ -1265,7 +1305,7 @@
   }
 
   function grantXp(v){
-    player.xp+=v;
+    player.xp+=Math.round(v*(player.curseXpMul||1));
     while(player.xp>=player.xpNeed){
       player.xp-=player.xpNeed;
       levelUpOnce();
@@ -1282,6 +1322,7 @@
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
     if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
     if(player.level%10===0){pendingEvent=player.level;eventDelay=7;}
+    if(player.level>=50&&player.level%10===0){pendingCurse=player.level;}
     if(player.level%10===1&&player.level>1){
       announce={text:'— АКТ '+(Math.floor(player.level/10)+1)+' —',life:2.5,color:'#e8ebf2'};
     }
@@ -1355,7 +1396,7 @@
   }
 
   function startCooldown(){
-    if(!pendingBossLevel&&!pendingSuperboss&&!pendingLevel8Boss&&!pendingSuperWarning){
+    if(!pendingBossLevel&&!pendingSuperboss&&!pendingLevel8Boss&&!pendingSuperWarning&&!pendingCurse){
       freezeT=Math.max(freezeT,2);
       state='running';last=performance.now();raf=requestAnimationFrame(loop);
       return;
@@ -1402,6 +1443,11 @@
     if(pendingSuperWarning){
       const lvl=pendingSuperWarning;pendingSuperWarning=null;
       showSuperWarning(lvl+1);
+      return;
+    }
+    if(pendingCurse){
+      pendingCurse=null;
+      showCurseChoice();
       return;
     }
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
@@ -1521,7 +1567,7 @@
       rings.push({x:player.x,y:player.y,r:0,maxR:60,life:0.5,color:'#38bdf8'});
       sfxSweep(700,1200,0.12,'sine',0.09,true);return;
     }
-    const mitig=(player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1)*(1-0.05*player.armorLevel);
+    const mitig=(player.level>25?Math.max(0.5,1-(player.level-25)*0.01):1)*(1-0.05*player.armorLevel)*(player.curseDmgTakenMul||1);
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
     player.hp-=dmg*mitig;player.noHitT=0;camShake=Math.max(camShake,isContact?2:3);
     if(force){
@@ -1599,7 +1645,7 @@
     // spawn (paused during a dedicated arena-boss fight like the level-8 encounter)
     const d=difficulty();
     if(!mobSpawnPaused){
-      if(enemies.length<ENEMY_CAP){
+      if(enemies.length<ENEMY_CAP+(player.curseCapBonus||0)){
         spawnAcc+=dt*1000;
         if(spawnAcc>d.interval){spawnAcc=0;for(let i=0;i<d.count;i++)spawnEnemy(false);}
       }else{
@@ -2340,7 +2386,7 @@
   document.getElementById('btnSuperWarnOk').addEventListener('click',()=>{
     osuperwarn.classList.remove('show');
     beep(523,0.1,'sine',0.12);
-    state='running';last=performance.now();raf=requestAnimationFrame(loop);
+    resumeAfterCooldown(); // на уровнях кратных 50 здесь же может ждать проклятие — не терять его
   });
 
 
