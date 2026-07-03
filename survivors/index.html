@@ -114,6 +114,7 @@
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
       <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
       <button class="ostart" id="btnStart">Начать заново</button>
+      <button class="ostart" id="btnMetaOpen" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
       <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
         <p style="color:#fbbf24;font-size:12px;margin:0;">⚠ Ты во встроенном браузере чата — страница может скроллиться и мешать управлению.</p>
         <button class="ostart" id="btnOpenExternal" style="border-color:#f59e0b;color:#fbbf24;">🌐 Открыть в браузере</button>
@@ -133,6 +134,13 @@
       <h2 style="color:#ff6b6b;">⚠ ПРОКЛЯТИЕ</h2>
       <p>Забег усложняется — выбери один модификатор до конца сессии.</p>
       <div class="cards" id="curseCards"></div>
+    </div>
+    <div id="ometa" class="overlay" style="overflow-y:auto;">
+      <h2 style="color:#e9d5ff;">✨ Мета-прогрессия</h2>
+      <p>Постоянные бонусы за очки, заработанные во всех прошлых забегах — остаются навсегда.</p>
+      <p style="color:#e9d5ff;font-weight:700;font-size:15px;margin:-8px 0 0;">Эссенция: <span id="metaShardsBalance">0</span> ✨</p>
+      <div class="cards" id="metaCards"></div>
+      <button class="ostart" id="btnMetaClose">Закрыть</button>
     </div>
     <div id="ocooldown" class="overlay">
       <h2 id="cooldownMsg">Приготовься</h2>
@@ -157,6 +165,7 @@
       <button class="ostart" id="btnRetry">🔄 Новая игра</button>
       <button class="ostart" id="btnLbFromOver">🏆 Таблица лидеров</button>
       <button class="ostart" id="btnHistoryFromOver">📜 Мои сессии</button>
+      <button class="ostart" id="btnMetaFromOver" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия</button>
     </div>
     <div id="olb" class="overlay">
       <h2>🏆 Таблица лидеров</h2>
@@ -215,6 +224,11 @@
   const osuperwarn=document.getElementById('osuperwarn'),superWarnText=document.getElementById('superWarnText');
 
   let best=parseFloat(localStorage.getItem('survivors-best')||'0');
+  // мета-прогрессия: постоянная валюта и покупки, переживают удаление сохранённого забега
+  const META_KEY='survivors-meta';
+  function loadMeta(){try{const m=JSON.parse(localStorage.getItem(META_KEY));return m&&typeof m==='object'?{shards:m.shards||0,unlocks:m.unlocks||{}}:{shards:0,unlocks:{}};}catch(e){return{shards:0,unlocks:{}};}}
+  function saveMeta(){try{localStorage.setItem(META_KEY,JSON.stringify(metaState));}catch(e){}}
+  let metaState=loadMeta();
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
   function fsVal(v){return typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
@@ -577,6 +591,44 @@
     {id:'relic_luck',name:'🍀 Клевер удачи',desc:'Заметно больше полезных предметов и шансов на двойной опыт.',
       apply:p=>{p.luckLevel=(p.luckLevel||0)+3;p.lootLevel=(p.lootLevel||0)+2;}},
   ];
+
+  // мета-прогрессия — постоянные бонусы за эссенцию, накопленную за все прошлые забеги.
+  // применяются в newPlayer() один раз при старте нового рана, до 5 уровней каждый
+  const META_UPGRADES=[
+    {id:'vitality',name:'❤️ Живучесть',desc:'+10 к макс. HP за уровень.',max:5,costBase:8},
+    {id:'power',name:'⚔️ Мощь',desc:'+4% урона за уровень.',max:5,costBase:10},
+    {id:'speed',name:'👟 Прыть',desc:'+3% скорости за уровень.',max:5,costBase:8},
+    {id:'crit',name:'🎯 Меткость',desc:'+3% шанса крита за уровень.',max:5,costBase:10},
+    {id:'armor',name:'🛡 Стойкость',desc:'-3% получаемого урона за уровень.',max:5,costBase:10},
+  ];
+  function metaCost(u,lvl){return (lvl+1)*u.costBase;}
+  function showMetaShop(){
+    document.getElementById('metaShardsBalance').textContent=metaState.shards;
+    const cardsEl=document.getElementById('metaCards');
+    cardsEl.innerHTML='';
+    META_UPGRADES.forEach(u=>{
+      const lvl=metaState.unlocks[u.id]||0;
+      const maxed=lvl>=u.max;
+      const cost=maxed?0:metaCost(u,lvl);
+      const afford=!maxed&&metaState.shards>=cost;
+      const el=document.createElement('div');el.className='card';
+      el.style.borderColor='#c084fc';
+      el.innerHTML='<b style="color:#e9d5ff;">'+u.name+'</b>'
+        +'<span style="display:block;color:#c084fc;font-weight:600;margin-bottom:4px;">Ур. '+lvl+'/'+u.max+(maxed?'':' · '+cost+' ✨')+'</span>'
+        +'<span>'+u.desc+'</span>';
+      if(maxed||!afford)el.style.opacity='0.5';
+      if(!maxed&&afford){
+        el.onclick=()=>{
+          metaState.shards-=cost;metaState.unlocks[u.id]=lvl+1;saveMeta();
+          beep(660,0.08,'sine',0.1);
+          showMetaShop();
+        };
+      }else{
+        el.style.pointerEvents='none';
+      }
+      cardsEl.appendChild(el);
+    });
+  }
   function showCurseChoice(){
     state='curse';
     const curseCardsEl=document.getElementById('curseCards');
@@ -620,6 +672,24 @@
   let gp={active:false,x:0,y:0};
 
   function newPlayer(){
+    const p=makeBasePlayer();
+    applyMetaBonuses(p);
+    return p;
+  }
+
+  // мета-прогрессия применяется один раз здесь, поверх базовых характеристик,
+  // и не трогает баланс самого забега (проклятия/реликвии/волны усиления)
+  function applyMetaBonuses(p){
+    const mu=metaState.unlocks;
+    const vit=mu.vitality||0,pow=mu.power||0,spd=mu.speed||0,crit=mu.crit||0,arm=mu.armor||0;
+    p.maxHp+=10*vit;p.hp=p.maxHp;
+    p.dmgMult*=Math.pow(1.04,pow);
+    p.speed=Math.round(p.speed*(1+0.03*spd));
+    p.critChance=Math.min(0.95,p.critChance+0.03*crit);
+    if(arm)p.curseDmgTakenMul=(p.curseDmgTakenMul||1)*Math.pow(0.97,arm);
+  }
+
+  function makeBasePlayer(){
     return {x:0,y:0,r:14,hp:100,maxHp:100,speed:180,dmg:18,fireRate:550,fireAcc:0,
       projSpeed:420,projCount:1,pierce:0,pickupRadius:40,regen:0,
       dmgMult:1,atkSpeedMult:1,projSpeedMult:1,critChance:0,critMult:2,aoeMult:1,lifesteal:0,
@@ -1641,9 +1711,11 @@
     archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
     if(t>0)submitScore('survivors',sessionName(),t,{level:player.level,kills:kills});
     clearRun();
+    const metaEarned=Math.floor(player.level/2)+Math.floor(kills/50)+Math.floor(t/60);
+    metaState.shards+=metaEarned;saveMeta();
     overTitle.textContent=died?'☠ Ты погиб':'Сессия завершена';
     overSession.textContent='Сессия: '+sessionName();
-    overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills;
+    overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills+' · +'+metaEarned+' ✨ эссенции';
     oover.classList.add('show');
     if(died){sfxSweep(420,45,0.9,'sawtooth',0.14,true);sfxBoom(0.7,0.2,500,40,true);}
     else sfxChime(523,4,0.09,0.11);
@@ -2406,6 +2478,22 @@
     histHiddenOverlays.forEach(o=>o.classList.add('show'));
     histHiddenOverlays=[];
   });
+  const ometa=document.getElementById('ometa');
+  let metaHiddenOverlays=[];
+  function openMetaShop(){
+    metaHiddenOverlays=Array.from(document.querySelectorAll('.overlay.show')).filter(o=>o!==ometa);
+    metaHiddenOverlays.forEach(o=>o.classList.remove('show'));
+    showMetaShop();
+    ometa.classList.add('show');
+  }
+  document.getElementById('btnMetaOpen').addEventListener('click',openMetaShop);
+  document.getElementById('btnMetaFromOver').addEventListener('click',openMetaShop);
+  document.getElementById('btnMetaClose').addEventListener('click',()=>{
+    ometa.classList.remove('show');
+    metaHiddenOverlays.forEach(o=>o.classList.add('show'));
+    metaHiddenOverlays=[];
+  });
+  document.getElementById('metaShardsStart').textContent=metaState.shards;
   // persist on tab hide / refresh / close so nothing is lost
   window.addEventListener('pagehide',saveRun);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun();});
