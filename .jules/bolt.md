@@ -1,0 +1,3 @@
+## 2026-07-02 - [Event Delegation vs MutationObserver]
+**Learning:** In `interactive-feedback.js`, the legacy implementation used a `MutationObserver` to scan the entire DOM and attach multiple individual event listeners to every interactive element. This resulted in O(N) overhead during initialization and every DOM change. Refactoring to Global Event Delegation on `document` achieved O(1) performance and simplified the code by removing the need for a MutationObserver and manual re-initialization.
+**Action:** Use Global Event Delegation for interactive visual feedback systems to ensure O(1) initialization and automatic support for dynamically injected elements.
