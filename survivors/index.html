@@ -843,6 +843,7 @@
       explodeKillLevel:0,chillLevel:0,rearLevel:0,chronoLevel:0,chronoCd:15,
       bladeEvo:false,chainEvo:false,mineEvo:false,fireballEvo:false,laserEvo:false,droneEvo:false,gunEvo:false,
       lvlDmgScale:1,overdrive:0,overdriveActive:0,combo:0,comboT:0,comboBest:0,
+      starfallLevel:0,starfallAcc:0,singularityLevel:0,singularityAcc:0,
       level:1,xp:0,xpNeed:xpNeedFor(1),invuln:0,facing:{x:1,y:0}};
   }
 
@@ -947,6 +948,8 @@
     if(player.combo==null)player.combo=0;
     if(player.comboT==null)player.comboT=0;
     if(player.comboBest==null)player.comboBest=0;
+    if(player.starfallLevel==null){player.starfallLevel=0;player.starfallAcc=0;}
+    if(player.singularityLevel==null){player.singularityLevel=0;player.singularityAcc=0;}
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
     updateHud();
     return true;
@@ -1554,6 +1557,8 @@
     for(const pl of pools){pl.life-=dt;
       if(pl.tornado){let bn=null,bd=560;for(const e of enemies){const d=dist(pl,e);if(d<bd){bd=d;bn=e;}}
         if(bn){const a=Math.atan2(bn.y-pl.y,bn.x-pl.x);pl.x+=Math.cos(a)*pl.spd*dt;pl.y+=Math.sin(a)*pl.spd*dt;}}
+      if(pl.singularity){const R=pl.r*3.2;for(const e of enemies){if(e.elite&&e.hp>e.maxHp*0.5)continue;const d=dist(pl,e);
+        if(d<R&&d>1){const a=Math.atan2(pl.y-e.y,pl.x-e.x);const pull=Math.min(140,pl.pull)*dt;e.x+=Math.cos(a)*pull;e.y+=Math.sin(a)*pull;}}}
       for(const e of enemies){if(dist(pl,e)<pl.r+e.r*0.4){e.hp-=pl.dps*dt;if(pl.slow)e.slowT=Math.max(e.slowT||0,0.35);}}}
     pools=pools.filter(pl=>pl.life>0);
     // meteors — telegraphed strike on a random enemy
@@ -1614,6 +1619,23 @@
           projectiles.push({x:tu.x,y:tu.y,vx:Math.cos(a)*460,vy:Math.sin(a)*460,r:4,life:0.9,pierceLeft:0,hitSet:new Set(),
             dmg:rollDmg((8+5*p.turretLevel)*p.dmgMult),color:'#fbbf24'});}}}
     turrets=turrets.filter(tu=>tu.life>0);
+    // ★ ЭКСКЛЮЗИВНОЕ (только из Хранилища) ★
+    // 🌠 Звездопад — залп самонаводящихся звёзд по случайным врагам
+    if(p.starfallLevel){p.starfallAcc+=dt*as;
+      if(p.starfallAcc>=2.4-p.starfallLevel*0.15){p.starfallAcc=0;
+        const n=5+p.starfallLevel,dmg=(22+10*p.starfallLevel)*p.dmgMult;
+        for(let i=0;i<n;i++){const a=rand(0,Math.PI*2),sp=180*p.projSpeedMult;
+          projectiles.push({x:p.x+Math.cos(a)*30,y:p.y+Math.sin(a)*30,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+            r:6,life:3.2,pierceLeft:1,hitSet:new Set(),dmg:rollDmg(dmg),homing:true,star:true,color:'#fde047'});}
+        sfxSweep(900,1500,0.12,'sine',0.05);}}
+    // 🕳 Сингулярность — чёрная дыра: стягивает и жжёт врагов
+    if(p.singularityLevel){p.singularityAcc+=dt*as;
+      if(p.singularityAcc>=7-p.singularityLevel*0.5){p.singularityAcc=0;
+        const a=rand(0,Math.PI*2);
+        pools.push({x:p.x+Math.cos(a)*90,y:p.y+Math.sin(a)*90,r:(52+8*p.singularityLevel)*p.aoeMult,
+          life:4+0.5*p.singularityLevel,dps:(18+9*p.singularityLevel)*p.dmgMult,
+          singularity:true,slow:true,pull:120+15*p.singularityLevel,color:'#a855f7'});
+        sfxSweep(200,60,0.5,'sawtooth',0.09);}}
   }
 
   function spawnPickup(){
@@ -2647,7 +2669,8 @@
       const tl=Math.min(30,Math.hypot(p.vx,p.vy)*0.045);
       if(tl>5){x.globalAlpha=0.4;x.fillStyle=pc;x.beginPath();x.moveTo(-tl,0);x.lineTo(0,-p.r*0.8);x.lineTo(0,p.r*0.8);x.closePath();x.fill();x.globalAlpha=1;}
       x.fillStyle=pc;x.shadowColor=pc;x.shadowBlur=6;
-      if(p.fireball||p.homing){x.beginPath();x.arc(0,0,p.r,0,Math.PI*2);x.fill();}
+      if(p.star){x.rotate(t*6);x.beginPath();for(let i=0;i<5;i++){const a=i/5*Math.PI*2-Math.PI/2;x.lineTo(Math.cos(a)*p.r*1.4,Math.sin(a)*p.r*1.4);x.lineTo(Math.cos(a+Math.PI/5)*p.r*0.6,Math.sin(a+Math.PI/5)*p.r*0.6);}x.closePath();x.fill();}
+      else if(p.fireball||p.homing){x.beginPath();x.arc(0,0,p.r,0,Math.PI*2);x.fill();}
       else{x.beginPath();x.ellipse(0,0,p.r*1.6,p.r*0.75,0,0,Math.PI*2);x.fill();}
       x.restore();
     });
