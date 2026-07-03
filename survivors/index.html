@@ -119,15 +119,23 @@
       <button class="ostart btn-danger" id="btnSuperWarnOk">Понял, готов</button>
     </div>
     <div id="oover" class="overlay">
-      <h2>Ты погиб</h2>
+      <h2 id="overTitle">Сессия завершена</h2>
+      <p id="overSession" style="color:#4D96FF;font-weight:600;margin:-6px 0 0;"></p>
       <p id="overStats"></p>
-      <button class="ostart" id="btnRetry">Заново</button>
-      <button class="ostart" id="btnLbFromOver">Таблица лидеров</button>
+      <p style="color:#4ade80;font-size:12px;margin:-6px 0 0;">✓ Сессия сохранена в архив и рейтинг</p>
+      <button class="ostart" id="btnRetry">🔄 Новая игра</button>
+      <button class="ostart" id="btnLbFromOver">🏆 Таблица лидеров</button>
+      <button class="ostart" id="btnHistoryFromOver">📜 Мои сессии</button>
     </div>
     <div id="olb" class="overlay">
       <h2>Таблица лидеров</h2>
       <div id="lbList" style="font-size:13px;color:var(--muted);max-height:280px;overflow:auto;width:100%;max-width:300px;">Загрузка…</div>
       <button class="ostart" id="btnLbClose">Закрыть</button>
+    </div>
+    <div id="ohistory" class="overlay">
+      <h2>📜 Мои сессии</h2>
+      <div id="histList" style="font-size:13px;color:var(--muted);max-height:300px;overflow:auto;width:100%;max-width:340px;">Пока нет сессий.</div>
+      <button class="ostart" id="btnHistClose">Закрыть</button>
     </div>
   </div>
   <div class="side">
@@ -138,7 +146,8 @@
         <button id="btnLbSide" style="width:auto;padding:6px 10px;font-size:11px;white-space:nowrap;">Лидеры</button>
       </div>
     </div>
-    <div class="box full" style="padding:8px 10px;">
+    <div class="box full" style="padding:8px 10px;display:flex;gap:6px;">
+      <button id="btnFinishSide" style="padding:8px;">⏹ Завершить</button>
       <button id="btnMenuSide" style="padding:8px;">☰ Меню</button>
     </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
@@ -165,6 +174,7 @@
   const baseZoom=isMobileDevice?0.62:1;
   const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
   const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
+  const overTitle=document.getElementById('overTitle'),overSession=document.getElementById('overSession');
   const levelTitle=document.getElementById('levelTitle'),levelSub=document.getElementById('levelSub');
   const ocooldown=document.getElementById('ocooldown'),cooldownMsg=document.getElementById('cooldownMsg'),cooldownNum=document.getElementById('cooldownNum');
   const oweapon=document.getElementById('oweapon'),weaponTitle=document.getElementById('weaponTitle'),weaponDesc=document.getElementById('weaponDesc');
@@ -192,8 +202,13 @@
     }catch(e){console.error('rename records failed',e);}
   }
   let playerName=localStorage.getItem('survivors-name')||'';
+  // per-run session tag: every run gets its own code, so each game and each player
+  // stays distinct in the leaderboard and the archive even with the same base name
+  let sessionTag=null;
+  function newSessionTag(){const a='ABCDEFGHJKMNPQRSTUVWXYZ23456789';let r='';for(let i=0;i<4;i++)r+=a[Math.floor(Math.random()*a.length)];return r;}
+  function sessionName(){return playerName+(sessionTag?' #'+sessionTag:'');}
   const playerNameEl=document.getElementById('splayername');
-  function renderPlayerName(){playerNameEl.textContent=playerName||'—';}
+  function renderPlayerName(){playerNameEl.textContent=(playerName||'—')+(sessionTag?' · #'+sessionTag:'');}
   renderPlayerName();
   document.getElementById('btnRename').addEventListener('click',()=>{
     const n=prompt('Имя для таблицы лидеров:',playerName);
@@ -512,13 +527,27 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
   }
   function hasSave(){try{return !!localStorage.getItem(SAVE_KEY);}catch(e){return false;}}
   function clearRun(){try{localStorage.removeItem(SAVE_KEY);}catch(e){}}
+  // --- append-only session archive: a finished/interrupted session is written here
+  // and is never overwritten or deleted by the game ---
+  const HIST_KEY='survivors-history';
+  function readHistory(){try{return JSON.parse(localStorage.getItem(HIST_KEY)||'[]')||[];}catch(e){return[];}}
+  function archiveSession(rec){try{const h=readHistory();h.push(rec);localStorage.setItem(HIST_KEY,JSON.stringify(h));}catch(e){}}
+  // a run abandoned mid-way (new game started over an unfinished save) is archived
+  // and submitted to the leaderboard too, so no session ever disappears
+  function archiveAbandonedSave(){
+    let sv;try{sv=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){sv=null;}
+    if(!sv||!sv.player||!(sv.t>0))return;
+    const rec={tag:sv.sessionTag||newSessionTag(),name:playerName,time:Math.round(sv.t),level:sv.player.level||1,kills:sv.kills||0,date:Date.now(),end:'прервана'};
+    archiveSession(rec);
+    submitScore('survivors',(playerName||'Игрок')+' #'+rec.tag,sv.t,{level:rec.level,kills:rec.kills});
+  }
   function loadRun(){
     let s;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){s=null;}
     if(!s||!s.player)return false;
@@ -534,6 +563,7 @@
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
+    sessionTag=s.sessionTag||newSessionTag();renderPlayerName();
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
     updateHud();
     return true;
@@ -1386,15 +1416,22 @@
     updateHud();
   }
 
-  function gameOver(){
+  function endSession(reason){
+    const died=reason!=='finish';
     state='over';
+    olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
+    if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
+    archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
+    if(t>0)submitScore('survivors',sessionName(),t,{level:player.level,kills:kills});
     clearRun();
-    if(t>best){best=t;localStorage.setItem('survivors-best',String(best));bestEl.textContent=fmtTime(best);}
+    overTitle.textContent=died?'☠ Ты погиб':'Сессия завершена';
+    overSession.textContent='Сессия: '+sessionName();
     overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills;
     oover.classList.add('show');
-    sfxSweep(420,45,0.9,'sawtooth',0.14);sfxBoom(0.7,0.2,500,40);
-    if(t>0)submitScore('survivors',playerName,t,{level:player.level,kills:kills});
+    if(died){sfxSweep(420,45,0.9,'sawtooth',0.14);sfxBoom(0.7,0.2,500,40);}
+    else sfxChime(523,4,0.09,0.11);
   }
+  function gameOver(){endSession('death');}
 
   function step(dt){
     t+=dt;
@@ -2089,7 +2126,8 @@
       localStorage.setItem('survivors-name',playerName);
       renderPlayerName();
     }
-    clearRun();ensureAudio();reset();
+    archiveAbandonedSave();clearRun();ensureAudio();reset();
+    sessionTag=newSessionTag();renderPlayerName();
     chosenStartWeapons.forEach(w=>{w.done=true;w.apply(player);});
     ostart.classList.remove('show');oover.classList.remove('show');olevel.classList.remove('show');
     document.getElementById('oweaponchoice').classList.remove('show');
@@ -2115,6 +2153,29 @@
   document.getElementById('btnResume').addEventListener('click',resumeRun);
   document.getElementById('btnRetry').addEventListener('click',showWeaponChoice);
   document.getElementById('btnMenuSide').addEventListener('click',showMenu);
+  document.getElementById('btnFinishSide').addEventListener('click',()=>{
+    if(state!=='running')return;
+    endSession('finish');
+  });
+  const ohistory=document.getElementById('ohistory'),histListEl=document.getElementById('histList');
+  let histHiddenOverlays=[];
+  function showHistory(){
+    histHiddenOverlays=Array.from(document.querySelectorAll('.overlay.show')).filter(o=>o!==ohistory);
+    histHiddenOverlays.forEach(o=>o.classList.remove('show'));
+    ohistory.classList.add('show');
+    const h=readHistory().slice().reverse().slice(0,50);
+    histListEl.innerHTML=h.length?h.map(r=>{
+      const d=new Date(r.date||0);
+      const ds=d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+      return '<div style="display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-bottom:1px solid var(--border);"><span>'+escapeHtml((r.name||'Игрок')+' #'+(r.tag||'????'))+'<br><span style="font-size:11px;">'+ds+' · '+escapeHtml(r.end||'')+'</span></span><span style="color:var(--text);font-weight:500;white-space:nowrap;">'+fmtTime(Number(r.time)||0)+' · ур.'+(r.level||1)+' · ⚔'+(r.kills||0)+'</span></div>';
+    }).join(''):'Пока нет завершённых сессий.';
+  }
+  document.getElementById('btnHistoryFromOver').addEventListener('click',showHistory);
+  document.getElementById('btnHistClose').addEventListener('click',()=>{
+    ohistory.classList.remove('show');
+    histHiddenOverlays.forEach(o=>o.classList.add('show'));
+    histHiddenOverlays=[];
+  });
   // persist on tab hide / refresh / close so nothing is lost
   window.addEventListener('pagehide',saveRun);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun();});
