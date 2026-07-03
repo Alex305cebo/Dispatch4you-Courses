@@ -680,6 +680,9 @@
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
+  let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
+  function doHitStop(d){hitStop=Math.max(hitStop,d);}
+  function flashFx(intensity,color){fxFlash=Math.max(fxFlash,intensity);fxFlashColor=color;}
   let gp={active:false,x:0,y:0};
 
   function newPlayer(){
@@ -736,6 +739,7 @@
   function activateOverdrive(){
     player.overdrive=0;player.overdriveActive=5;
     announce={text:'⚡ ПЕРЕГРУЗКА!',life:2,color:'#c084fc'};
+    flashFx(0.6,'192,132,252');doHitStop(0.12);
     screenFlash=Math.max(screenFlash,0.5);camShake=Math.max(camShake,10);
     rings.push({x:player.x,y:player.y,r:0,maxR:340,life:0.8,color:'#c084fc'});
     const R=340,dmg=rollDmg(60*player.dmgMult);
@@ -751,12 +755,16 @@
     if(player.berserkActive>0)base*=1.4+player.berserkLevel*0.05;
     if(player.rageLevel&&player.hp<player.maxHp*0.35)base*=1+0.12*player.rageLevel;
     if(player.momentumLevel)base*=1+Math.min(0.1*player.momentumLevel,0.02*player.noHitT);
-    return Math.random()<player.critChance?base*player.critMult:base;
+    if(Math.random()<player.critChance){
+      if(critFlashCd<=0){flashFx(0.16,'253,224,71');critFlashCd=0.5;} // редкий мягкий золотой засвет, без строба
+      return base*player.critMult;
+    }
+    return base;
   }
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
@@ -806,7 +814,7 @@
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=s.lives!=null?s.lives:3;zoom=baseZoom;enemyCountSmoothed=0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
-    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
@@ -1062,6 +1070,7 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);
+    if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
     if(player.lootLevel&&Math.random()<0.12*player.lootLevel)gems.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:5,val:Math.max(1,Math.round(e.xp/2))});
     if(e.beh==='split'&&!e.child){
@@ -1515,6 +1524,8 @@
 
   function levelUpOnce(){
     player.level++;
+    flashFx(0.7,'77,150,255'); // вспышка левелапа — голубая
+    rings.push({x:player.x,y:player.y,r:0,maxR:160,life:0.6,color:'#4D96FF'});
     pendingLevelUps++;
     if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;}
     if(player.level%25===0){pendingSuperWarning=player.level;}
@@ -1787,7 +1798,7 @@
         player.hp=Math.round(player.maxHp*(player.relics&&player.relics.relic_phoenix?1:0.5));
         player.invuln=2;
         announce={text:'💔 Жизнь потеряна! Осталось: '+lives,life:2.5,color:'#ff2d55'};
-        camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.5);
+        camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.5);doHitStop(0.16);
         sfxBoom(0.45,0.26,600,55,true);
         if(player.secondWindLevel){
           const R=280,swd=60*player.secondWindLevel;
@@ -2111,6 +2122,8 @@
 
     if(camShake>0)camShake*=0.78;
     if(screenFlash>0)screenFlash=Math.max(0,screenFlash-dt*1.5);
+    if(fxFlash>0)fxFlash=Math.max(0,fxFlash-dt*3.5);
+    if(critFlashCd>0)critFlashCd-=dt;
     updateHud();
   }
 
@@ -2432,9 +2445,13 @@
     // enemies
     enemies.forEach(e=>{
       groundShadow(e.x,e.y,e.r);
+      // squash-stretch: короткий «поп» при получении урона (сплющивается по X, растёт по Y)
+      const sq=e.hitFlash>0?e.hitFlash*7:0;
+      if(sq>0.01){x.save();x.translate(e.x,e.y);x.scale(1+sq*0.28,1-sq*0.16);x.translate(-e.x,-e.y);}
       if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
       if(e.hitFlash>0){x.save();x.globalAlpha=Math.min(0.75,e.hitFlash*7);x.fillStyle='#fff';x.beginPath();x.arc(e.x,e.y,e.r*1.05,0,Math.PI*2);x.fill();x.restore();}
+      if(sq>0.01)x.restore();
       if(e.hp<e.maxHp){
         if(e.elite&&e.stageCount){
           // one solid bar per boss "life" — it drains fully, then the next of the
@@ -2559,10 +2576,13 @@
       x.fillText(announce.text,W/2,92);x.restore();
     }
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
+    if(fxFlash>0){x.fillStyle='rgba('+fxFlashColor+','+(fxFlash*0.28)+')';x.fillRect(0,0,W,H);}
   }
 
   function loop(now){
-    const dt=Math.min(0.05,(now-last)/1000);last=now;
+    const real=Math.min(0.05,(now-last)/1000);last=now;
+    let dt=real;
+    if(hitStop>0){hitStop-=real;dt=real*0.18;} // микро-слоу-мо на «сочных» моментах
     if(state==='running')step(dt);
     draw();
     if(state==='running')raf=requestAnimationFrame(loop);
