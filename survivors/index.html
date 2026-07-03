@@ -558,7 +558,8 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay;
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc;
+  const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let gp={active:false,x:0,y:0};
 
   function newPlayer(){
@@ -574,7 +575,7 @@
       laserLevel:0,laserAcc:0,shardLevel:0,shardAcc:0,droneLevel:0,droneAcc:0,
       acidLevel:0,acidAcc:0,meteorLevel:0,meteorAcc:0,ghostLevel:0,ghostAcc:0,turretLevel:0,turretAcc:0,
       daggerLevel:0,daggerAcc:0,tornadoLevel:0,tornadoAcc:0,hammerLevel:0,hammerAcc:0,
-      luckLevel:0,lootLevel:0,slowHitLevel:0,
+      luckLevel:0,lootLevel:0,slowHitLevel:0,waveBuff:1,
       barrierLevel:0,barrierCd:0,thornsLevel:0,greedLevel:0,wisdomLevel:0,secondWindLevel:0,
       auraHasteLevel:0,momentumLevel:0,noHitT:0,rageLevel:0,armorLevel:0,dodgeLevel:0,
       explodeKillLevel:0,chillLevel:0,rearLevel:0,chronoLevel:0,chronoCd:15,
@@ -593,7 +594,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    t=0;spawnAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -611,7 +612,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
@@ -645,7 +646,7 @@
     mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
-    eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;
+    eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
     sessionTag=s.sessionTag||newSessionTag();renderPlayerName();
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
@@ -700,6 +701,21 @@
   // spawn distance in world units: past the visible half-diagonal (zoom-aware),
   // so mobs never pop into view on zoomed-out mobile screens
   function offscreenRad(extra){return Math.hypot((W/2)/zoom,(H/2)/zoom)+120+rand(0,extra||160);}
+  // толпа упёрлась в потолок (ENEMY_CAP) — вместо ещё большей орды раз в WAVE_INTERVAL
+  // усиливаем тех, кто уже на поле, и поднимаем базовую силу будущих спавнов
+  function triggerWaveBuff(){
+    player.waveBuff=(player.waveBuff||1)*1.1;
+    for(const e of enemies){
+      if(e.elite||e.superboss)continue; // боссы уже масштабируются отдельно — не дублируем
+      const ratio=e.hp/e.maxHp;
+      e.maxHp*=1.1;e.hp=e.maxHp*ratio;
+      e.dmg*=1.07;e.speed=Math.min(220,e.speed*1.03);
+    }
+    announce={text:'⚠ ВОЛНА УСИЛЕНИЯ — толпа стала опаснее!',life:2.2,color:'#ef4444'};
+    rings.push({x:player.x,y:player.y,r:0,maxR:900,life:1.2,color:'#ef4444'});
+    camShake=Math.max(camShake,8);
+    sfxBoom(0.4,0.22,700,60,true);
+  }
   function spawnEnemy(elite,bossNumber){
     const ang=rand(0,Math.PI*2),rad=offscreenRad();
     const d=difficulty();
@@ -709,12 +725,13 @@
     const skin=elite?BOSS_SKINS[(bn-1)%BOSS_SKINS.length]:null;
     const hpMulL=levelHpMul(player.level),dmgMulL=levelDmgMul(player.level);
     const champion=!elite&&player.level>=8&&Math.random()<0.05;
-    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level);
-    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1);
+    const wb=player.waveBuff||1;
+    const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb;
+    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
       // outrun glues to you permanently, which is what made fast spawns miserable
-      hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7:Math.min(170,base.speed*d.spdMul),
+      hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7:Math.min(170,base.speed*d.spdMul*Math.min(1.5,wb)),
       beh:elite?null:base.beh||null,champion:champion,
       dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1)*(champion?1.4:1),
       color:elite?skin.color:base.color,glow:elite?skin.glow:null,skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
@@ -1582,8 +1599,14 @@
     // spawn (paused during a dedicated arena-boss fight like the level-8 encounter)
     const d=difficulty();
     if(!mobSpawnPaused){
-      spawnAcc+=dt*1000;
-      if(spawnAcc>d.interval){spawnAcc=0;for(let i=0;i<d.count;i++)spawnEnemy(false);}
+      if(enemies.length<ENEMY_CAP){
+        spawnAcc+=dt*1000;
+        if(spawnAcc>d.interval){spawnAcc=0;for(let i=0;i<d.count;i++)spawnEnemy(false);}
+      }else{
+        spawnAcc=Math.min(spawnAcc,d.interval); // не копим спавн-долг, пока переполнено
+        waveAcc+=dt*1000;
+        if(waveAcc>=WAVE_INTERVAL){waveAcc=0;triggerWaveBuff();}
+      }
     }
 
     pickupAcc+=dt;
