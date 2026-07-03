@@ -721,7 +721,7 @@
       auraHasteLevel:0,momentumLevel:0,noHitT:0,rageLevel:0,armorLevel:0,dodgeLevel:0,
       explodeKillLevel:0,chillLevel:0,rearLevel:0,chronoLevel:0,chronoCd:15,
       bladeEvo:false,chainEvo:false,mineEvo:false,fireballEvo:false,laserEvo:false,droneEvo:false,gunEvo:false,
-      lvlDmgScale:1,overdrive:0,overdriveActive:0,
+      lvlDmgScale:1,overdrive:0,overdriveActive:0,combo:0,comboT:0,comboBest:0,
       level:1,xp:0,xpNeed:xpNeedFor(1),invuln:0,facing:{x:1,y:0}};
   }
 
@@ -1096,8 +1096,15 @@
       }
     }
     beep(e.elite?160:300,0.09,'sine',0.045);
-    // овердрайв копится с убийств; охотник и боссы дают крупный вклад
-    addOverdrive(e.hunter?25:(e.elite?8:1.2));
+    // комбо: серия убийств без паузы — награда за агрессию, ускоряет овердрайв
+    player.combo++;player.comboT=2.5;
+    if(player.combo>player.comboBest)player.comboBest=player.combo;
+    if(player.combo>0&&player.combo%25===0){
+      flashFx(0.2,'250,204,21');spawnFloater(player.x,player.y-player.r-14,'КОМБО x'+player.combo,true);
+      addOverdrive(10);
+    }
+    // овердрайв копится с убийств; охотник и боссы дают крупный вклад; комбо усиливает поток
+    addOverdrive((e.hunter?25:(e.elite?8:1.2))*(1+Math.min(0.6,player.combo*0.012)));
     if(e.hunter){
       metaState.shards+=3;saveMeta();
       const drop=[['chest','#facc15','★'],['heal','#4ade80','+'],['magnet','#38bdf8','◎']][Math.floor(Math.random()*3)];
@@ -1849,7 +1856,7 @@
     metaState.shards+=metaEarned;saveMeta();
     overTitle.textContent=died?'☠ Ты погиб':'Сессия завершена';
     overSession.textContent='Сессия: '+sessionName();
-    overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills+' · +'+metaEarned+' ✨ эссенции';
+    overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills+' · макс. комбо x'+(player.comboBest||0)+' · +'+metaEarned+' ✨ эссенции';
     oover.classList.add('show');
     if(died){sfxSweep(420,45,0.9,'sawtooth',0.14,true);sfxBoom(0.7,0.2,500,40,true);}
     else sfxChime(523,4,0.09,0.11);
@@ -1922,6 +1929,7 @@
 
     // passives housekeeping
     player.noHitT+=dt;
+    if(player.comboT>0){player.comboT-=dt;if(player.comboT<=0)player.combo=0;}
     if(player.barrierCd>0)player.barrierCd-=dt;
     if(player.chronoLevel){
       player.chronoCd-=dt;
@@ -2366,6 +2374,17 @@
       x.font='9px system-ui,sans-serif';
     }
     x.restore();
+    // комбо-индикатор (справа сверху) — растёт с серией, мигает на пике
+    if(player.combo>=5){
+      x.save();
+      const scale=1+Math.min(0.5,player.combo*0.006),warm=player.comboT/2.5;
+      x.textAlign='right';x.textBaseline='top';
+      x.font='bold '+Math.round(22*scale)+'px system-ui,sans-serif';
+      x.fillStyle=player.combo>=50?'#facc15':(player.combo>=25?'#fb923c':'#e8ebf2');
+      x.globalAlpha=0.5+0.5*warm;x.shadowColor='#000';x.shadowBlur=4;
+      x.fillText('🔥 x'+player.combo,W-12,10);
+      x.restore();
+    }
   }
 
   function draw(){
