@@ -785,6 +785,7 @@
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
+  let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Хранилище»
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
   function doHitStop(d){hitStop=Math.max(hitStop,d);}
@@ -888,6 +889,7 @@
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
+    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -899,6 +901,7 @@
   const SAVE_KEY='survivors-run';
   let saveAcc=0;
   function saveRun(){
+    if(inVault)return; // не сохраняем половинчатое состояние Хранилища
     if(!player||!(state==='running'||state==='shop'||state==='levelup'||state==='cooldown'||state==='weaponpopup'||state==='curse'))return;
     try{
       localStorage.setItem(SAVE_KEY,JSON.stringify({
@@ -1074,6 +1077,54 @@
     return en;
   }
 
+  // ===== Бонус-рейд «Хранилище» =====
+  const VAULT_BONUSES=[
+    {name:'💥 Ярость',desc:'+50% урона до конца забега',apply:p=>{p.dmgMult*=1.5;}},
+    {name:'🎯 Залп',desc:'+2 снаряда',apply:p=>{p.projCount=Math.min(8,p.projCount+2);}},
+    {name:'❤️ Мощь жизни',desc:'+80 макс. HP и полное лечение',apply:p=>{p.maxHp+=80;p.hp=p.maxHp;}},
+    {name:'⚡ Скорострел',desc:'+30% скорости атаки',apply:p=>{p.atkSpeedMult*=1.3;}},
+    {name:'🏹 Прорыв',desc:'+2 пробитие, +25% охват',apply:p=>{p.pierce+=2;p.aoeMult*=1.25;}},
+    {name:'💫 Точность',desc:'+15% крита, +40% урон крита',apply:p=>{p.critChance=Math.min(0.95,p.critChance+0.15);p.critMult+=0.4;}},
+  ];
+  const EXCLUSIVE_WEAPONS=[
+    {id:'starfall',name:'🌠 Звездопад',desc:'Залп самонаводящихся звёзд',has:p=>p.starfallLevel>0,apply:p=>p.starfallLevel=1},
+    {id:'singularity',name:'🕳 Сингулярность',desc:'Чёрная дыра стягивает и жжёт',has:p=>p.singularityLevel>0,apply:p=>p.singularityLevel=1},
+  ];
+  function enterVault(){
+    vaultStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
+    enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];
+    portal=null;safeZone=null;mobSpawnPaused=true;
+    player.x+=60000;player.y+=60000;player.invuln=Math.max(player.invuln,1.2);
+    inVault=true;vaultT=20;vaultCleared=false;
+    const g=spawnEnemy(true,3);
+    g.hp=g.maxHp=tierAvgHp(player.level)*levelHpMul(player.level)*8;
+    g.dmg*=0.8;g.guardian=true;g.pauseSpawns=false;
+    g.x=player.x-320;g.y=player.y;g.color='#a855f7';g.glow='#c084fc';g.skinName='Страж Хранилища';
+    announce={text:'🏛 ХРАНИЛИЩЕ — одолей Стража за 20с!',life:3,color:'#c084fc'};
+    camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.4);
+    sfxSweep(200,900,0.5,'sawtooth',0.12,true);
+  }
+  function exitVault(){
+    if(!vaultStash)return;
+    enemies=vaultStash.enemies;projectiles=vaultStash.projectiles;enemyProjectiles=vaultStash.enemyProjectiles;
+    pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
+    player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
+    inVault=false;vaultStash=null;
+  }
+  function rollVaultReward(){
+    const notOwned=EXCLUSIVE_WEAPONS.filter(w=>!w.has(player));
+    if(Math.random()<0.5||notOwned.length===0){
+      const b=VAULT_BONUSES[Math.floor(Math.random()*VAULT_BONUSES.length)];
+      b.apply(player);
+      announce={text:'🎁 СУПЕР-БОНУС: '+b.name+' — '+b.desc,life:3.4,color:'#fde047'};
+    }else{
+      const w=notOwned[Math.floor(Math.random()*notOwned.length)];
+      w.apply(player);
+      announce={text:'⚔ ЭКСКЛЮЗИВ: '+w.name+' — '+w.desc,life:3.6,color:'#a855f7'};
+    }
+    flashFx(0.5,'250,204,21');camShake=Math.max(camShake,10);sfxChime(660,5,0.09,0.13);
+  }
+
   function burst(px,py,color,n){if(particles.length>600)return;for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
   // осколки при смерти — разлетаются кусочками цвета врага + белые искры
   function deathShards(e){
@@ -1210,6 +1261,12 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
+    if(e.guardian&&inVault&&!vaultCleared){
+      // выход отложен на начало следующего кадра: exitVault переприсваивает enemies,
+      // а мы сейчас внутри enemies.filter(), чей результат затёр бы восстановление
+      vaultCleared=true;doHitStop(0.25);screenFlash=Math.max(screenFlash,0.6);burst(e.x,e.y,'#c084fc',36);
+      rollVaultReward();return;
+    }
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
     if(player.lootLevel&&Math.random()<0.12*player.lootLevel)gems.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:5,val:Math.max(1,Math.round(e.xp/2))});
@@ -2117,6 +2174,27 @@
       }
     }
 
+    // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
+    if(inVault){
+      if(vaultCleared){exitVault();} // Страж повержен на прошлом кадре — безопасно восстановить орду
+      else{vaultT-=dt;
+        if(vaultT<=0){announce={text:'⌛ Страж выстоял — Хранилище закрылось',life:2.6,color:'#8891a3'};exitVault();}}
+    }else{
+      if(!portal&&player.level>=12){
+        portalAcc+=dt;
+        if(portalAcc>=70){portalAcc=0;
+          const a=rand(0,Math.PI*2),d0=rand(500,800);
+          portal={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:60,life:18};
+          announce={text:'🌀 Портал в Хранилище — успей войти!',life:3,color:'#c084fc'};
+          sfxSweep(300,1200,0.4,'sine',0.1,true);
+        }
+      }else if(portal){
+        portal.life-=dt;
+        if(portal.life<=0){portal=null;announce={text:'Портал закрылся',life:1.4,color:'#8891a3'};}
+        else if(dist(player,portal)<portal.r)enterVault();
+      }
+    }
+
     // enemies
     // ponytail: cap how many touching mobs contribute contact dps at once — a swarm should
     // scale danger with size, but not let an unbounded mob count one-shot the player
@@ -2478,6 +2556,7 @@
     enemies.forEach(e=>{if(e.hunter)edgeArrow(e.x,e.y,e.r,'#facc15',1.6+0.3*Math.sin(t*6));});
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
+    if(portal)edgeArrow(portal.x,portal.y,portal.r,'#c084fc',1.7+0.3*Math.sin(t*6));
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
@@ -2560,6 +2639,19 @@
       x.fillText('🛡',0,-2);
       x.font='bold 11px system-ui,sans-serif';x.fillStyle='#bbf7d0';
       x.fillText(Math.ceil(safeZone.life)+'с',0,22);
+      x.restore();
+    }
+    // портал в Хранилище — вращающаяся фиолетовая воронка
+    if(portal){
+      x.save();x.translate(portal.x,portal.y);
+      x.shadowColor='#c084fc';x.shadowBlur=24;
+      for(let ri=0;ri<3;ri++){x.globalAlpha=0.7-ri*0.2;x.strokeStyle='#c084fc';x.lineWidth=3/zoom;
+        x.beginPath();x.arc(0,0,portal.r-ri*10-Math.sin(t*3+ri)*4,0,Math.PI*2);x.stroke();}
+      x.shadowBlur=0;x.globalAlpha=0.9;x.rotate(t*2);
+      for(let i=0;i<6;i++){const a=i*(Math.PI/3);x.strokeStyle='#e9d5ff';x.lineWidth=2/zoom;
+        x.beginPath();x.moveTo(Math.cos(a)*portal.r*0.3,Math.sin(a)*portal.r*0.3);x.lineTo(Math.cos(a)*portal.r*0.85,Math.sin(a)*portal.r*0.85);x.stroke();}
+      x.rotate(-t*2);x.globalAlpha=1;x.fillStyle='#fff';x.font='22px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText('🌀',0,-2);x.font='bold 11px system-ui,sans-serif';x.fillStyle='#e9d5ff';x.fillText(Math.ceil(portal.life)+'с',0,portal.r*0.55);
       x.restore();
     }
     // acid pools (under everything else)
@@ -2759,8 +2851,8 @@
       const vg=x.createRadialGradient(W/2,H/2,Math.min(W,H)*0.36,W/2,H/2,Math.max(W,H)*0.72);
       vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.5)');
       x.fillStyle=vg;x.fillRect(0,0,W,H);
-      const wash=ACT_WASH[Math.floor((player.level-1)/10)%ACT_WASH.length];
-      x.globalAlpha=0.05+0.02*Math.sin(t*1.5);x.fillStyle='rgb('+wash+')';x.fillRect(0,0,W,H);x.globalAlpha=1;
+      const wash=inVault?'168,85,247':ACT_WASH[Math.floor((player.level-1)/10)%ACT_WASH.length];
+      x.globalAlpha=(inVault?0.13:0.05)+0.02*Math.sin(t*1.5);x.fillStyle='rgb('+wash+')';x.fillRect(0,0,W,H);x.globalAlpha=1;
       const hpp=player.hp/player.maxHp;
       if(hpp<0.35){
         const a=((0.35-hpp)/0.35)*(0.32+0.2*Math.sin(t*6));
