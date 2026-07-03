@@ -2268,6 +2268,8 @@
 
   // one tint per act — the world subtly shifts colour every 10 levels
   const ACT_TINTS=['rgba(255,255,255,0.04)','rgba(77,150,255,0.06)','rgba(74,222,128,0.06)','rgba(250,204,21,0.06)','rgba(249,115,22,0.06)','rgba(244,63,94,0.06)','rgba(168,85,247,0.07)','rgba(34,211,238,0.07)','rgba(232,121,249,0.07)','rgba(255,45,85,0.08)'];
+  // rgb-версии тех же оттенков для полноэкранного тинта по «акту» (виньетка)
+  const ACT_WASH=['120,130,150','77,150,255','74,222,128','250,204,21','249,115,22','244,63,94','168,85,247','34,211,238','232,121,249','255,45,85'];
   function drawGrid(){
     const g=40;
     const halfW=(W/2)/zoom,halfH=(H/2)/zoom;
@@ -2566,6 +2568,21 @@
       x.beginPath();x.moveTo(10,0);x.lineTo(-4,-7);x.lineTo(-4,7);x.closePath();x.fill();
       x.restore();
     }
+    // виньетка + лёгкий тинт по «акту» + красный пульс при низком HP — атмосфера и читаемость
+    {
+      const vg=x.createRadialGradient(W/2,H/2,Math.min(W,H)*0.36,W/2,H/2,Math.max(W,H)*0.72);
+      vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.5)');
+      x.fillStyle=vg;x.fillRect(0,0,W,H);
+      const wash=ACT_WASH[Math.floor((player.level-1)/10)%ACT_WASH.length];
+      x.globalAlpha=0.05+0.02*Math.sin(t*1.5);x.fillStyle='rgb('+wash+')';x.fillRect(0,0,W,H);x.globalAlpha=1;
+      const hpp=player.hp/player.maxHp;
+      if(hpp<0.35){
+        const a=((0.35-hpp)/0.35)*(0.32+0.2*Math.sin(t*6));
+        const dv=x.createRadialGradient(W/2,H/2,Math.min(W,H)*0.28,W/2,H/2,Math.max(W,H)*0.7);
+        dv.addColorStop(0,'rgba(0,0,0,0)');dv.addColorStop(1,'rgba(220,20,40,'+Math.max(0,a).toFixed(3)+')');
+        x.fillStyle=dv;x.fillRect(0,0,W,H);
+      }
+    }
     drawHudOverlay();
     if(announce){
       const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));
@@ -2790,15 +2807,29 @@
 (function(){
   const bg=document.getElementById('bgfx'),bx=bg.getContext('2d');
   const COLORS=['#2DD4E8','#FFC94D','#B388FF','#66E39A','#FF6B6B','#4D96FF','#FFA24D','#4DD0C4','#F06BB0','#7BC96F','#A177E0'];
-  let W,H,parts;
+  let W,H,parts,nebula;
   function resize(){W=bg.width=innerWidth;H=bg.height=innerHeight;}
-  function mk(){return{x:Math.random()*W,y:Math.random()*H,r:1.5+Math.random()*2.5,vy:0.15+Math.random()*0.35,vx:(Math.random()-0.5)*0.15,col:COLORS[Math.floor(Math.random()*COLORS.length)],a:0.3+Math.random()*0.5,tw:Math.random()*Math.PI*2};}
+  // pf — сила параллакса (дальние звёзды двигаются медленнее ближних → глубина)
+  function mk(){return{x:Math.random(),y:Math.random(),r:1.2+Math.random()*2.6,vy:0.15+Math.random()*0.35,col:COLORS[Math.floor(Math.random()*COLORS.length)],a:0.3+Math.random()*0.5,tw:Math.random()*Math.PI*2,pf:0.03+Math.random()*0.12};}
+  function mkNeb(){return{x:Math.random(),y:Math.random(),r:200+Math.random()*260,col:COLORS[Math.floor(Math.random()*COLORS.length)],pf:0.015+Math.random()*0.03};}
   window.addEventListener('resize',resize);
-  resize();parts=Array.from({length:80},mk);
+  resize();parts=Array.from({length:90},mk);nebula=Array.from({length:3},mkNeb);
+  const mod=(a,n)=>((a%n)+n)%n;
   function loop(){
     const g=bx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0b0e17');g.addColorStop(1,'#05060a');
     bx.fillStyle=g;bx.fillRect(0,0,W,H);
-    parts.forEach(p=>{p.y-=p.vy;p.x+=p.vx;p.tw+=0.02;if(p.y<-10){p.y=H+10;p.x=Math.random()*W;}if(p.x<-10)p.x=W+10;if(p.x>W+10)p.x=-10;bx.globalAlpha=p.a*(0.6+0.4*Math.sin(p.tw));bx.fillStyle=p.col;bx.beginPath();bx.arc(p.x,p.y,p.r,0,Math.PI*2);bx.fill();});
+    const cx=(typeof player!=='undefined'&&player)?player.x:0,cy=(typeof player!=='undefined'&&player)?player.y:0;
+    // туманность — крупные мягкие пятна, самый дальний слой
+    nebula.forEach(n=>{
+      const nx=mod(n.x*W-cx*n.pf,W+n.r*2)-n.r,ny=mod(n.y*H-cy*n.pf,H+n.r*2)-n.r;
+      const rg=bx.createRadialGradient(nx,ny,0,nx,ny,n.r);
+      rg.addColorStop(0,n.col+'22');rg.addColorStop(1,n.col+'00');
+      bx.fillStyle=rg;bx.beginPath();bx.arc(nx,ny,n.r,0,Math.PI*2);bx.fill();
+    });
+    // звёзды с параллаксом + лёгким дрейфом вверх
+    parts.forEach(p=>{p.y-=p.vy/H;p.tw+=0.02;if(p.y<0)p.y+=1;
+      const sx=mod(p.x*W-cx*p.pf,W),sy=mod(p.y*H-cy*p.pf,H);
+      bx.globalAlpha=p.a*(0.6+0.4*Math.sin(p.tw));bx.fillStyle=p.col;bx.beginPath();bx.arc(sx,sy,p.r,0,Math.PI*2);bx.fill();});
     bx.globalAlpha=1;
     requestAnimationFrame(loop);
   }
