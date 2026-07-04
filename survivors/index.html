@@ -802,7 +802,8 @@
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
-  let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Хранилище»
+  let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
+  let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
   function doHitStop(d){hitStop=Math.max(hitStop,d);}
@@ -938,7 +939,7 @@
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
-    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;
+    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1146,39 +1147,114 @@
     {id:'starfall',name:'🌠 Звездопад',desc:'Залп самонаводящихся звёзд',has:p=>p.starfallLevel>0,apply:p=>p.starfallLevel=1},
     {id:'singularity',name:'🕳 Сингулярность',desc:'Чёрная дыра стягивает и жжёт',has:p=>p.singularityLevel>0,apply:p=>p.singularityLevel=1},
   ];
+  // генерация лабиринта (recursive backtracker) + пара выбитых стен для циклов
+  function genMaze(cols,rows){
+    const R=[],B=[];
+    for(let r=0;r<rows;r++){R.push(Array(cols).fill(true));B.push(Array(cols).fill(true));}
+    const vis=Array.from({length:rows},()=>Array(cols).fill(false));
+    const st=[[0,0]];vis[0][0]=true;
+    while(st.length){
+      const cur=st[st.length-1],r=cur[0],c=cur[1];
+      const opts=[];
+      if(r>0&&!vis[r-1][c])opts.push([r-1,c,'U']);
+      if(r<rows-1&&!vis[r+1][c])opts.push([r+1,c,'D']);
+      if(c>0&&!vis[r][c-1])opts.push([r,c-1,'L']);
+      if(c<cols-1&&!vis[r][c+1])opts.push([r,c+1,'R']);
+      if(!opts.length){st.pop();continue;}
+      const nx=opts[Math.floor(Math.random()*opts.length)],nr=nx[0],nc=nx[1],d=nx[2];
+      if(d==='U')B[nr][nc]=false;else if(d==='D')B[r][c]=false;
+      else if(d==='L')R[nr][nc]=false;else R[r][c]=false;
+      vis[nr][nc]=true;st.push([nr,nc]);
+    }
+    for(let k=0;k<3;k++){R[Math.floor(Math.random()*rows)][Math.floor(Math.random()*(cols-1))]=false;}
+    return {R:R,B:B};
+  }
+  const MZ_COLS=5,MZ_ROWS=4,MZ_CELL=300,MZ_WT=36;
   function enterVault(){
     vaultStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
     enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];
     portal=null;safeZone=null;mobSpawnPaused=true;
-    player.x+=60000;player.y+=60000;player.invuln=Math.max(player.invuln,1.2);
-    inVault=true;vaultT=20;vaultCleared=false;
-    const g=spawnEnemy(true,3);
-    g.hp=g.maxHp=tierAvgHp(player.level)*levelHpMul(Math.floor(player.level/5)*5)*8;
-    g.dmg*=0.8;g.guardian=true;g.pauseSpawns=false;
-    g.x=player.x-320;g.y=player.y;g.color='#a855f7';g.glow='#c084fc';g.skinName='Страж Хранилища';
-    announce={text:'🏛 ХРАНИЛИЩЕ — одолей Стража за 20с!',life:3,color:'#c084fc'};
+    const ox=player.x+60000,oy=player.y+60000;
+    inVault=true;vaultT=60;vaultCleared=false;
+    // стены
+    const mz=genMaze(MZ_COLS,MZ_ROWS);
+    vaultWalls=[];
+    vaultWalls.push({x:ox-MZ_WT,y:oy-MZ_WT,w:MZ_COLS*MZ_CELL+2*MZ_WT,h:MZ_WT});
+    vaultWalls.push({x:ox-MZ_WT,y:oy+MZ_ROWS*MZ_CELL,w:MZ_COLS*MZ_CELL+2*MZ_WT,h:MZ_WT});
+    vaultWalls.push({x:ox-MZ_WT,y:oy,w:MZ_WT,h:MZ_ROWS*MZ_CELL});
+    vaultWalls.push({x:ox+MZ_COLS*MZ_CELL,y:oy,w:MZ_WT,h:MZ_ROWS*MZ_CELL});
+    for(let r=0;r<MZ_ROWS;r++)for(let c=0;c<MZ_COLS;c++){
+      if(c<MZ_COLS-1&&mz.R[r][c])vaultWalls.push({x:ox+(c+1)*MZ_CELL-MZ_WT/2,y:oy+r*MZ_CELL,w:MZ_WT,h:MZ_CELL});
+      if(r<MZ_ROWS-1&&mz.B[r][c])vaultWalls.push({x:ox+c*MZ_CELL,y:oy+(r+1)*MZ_CELL-MZ_WT/2,w:MZ_CELL,h:MZ_WT});
+    }
+    // игрок — в стартовой комнате, выход — в дальней
+    player.x=ox+MZ_CELL/2;player.y=oy+MZ_CELL/2;player.invuln=Math.max(player.invuln,1.2);
+    vaultExit={x:ox+(MZ_COLS-1)*MZ_CELL+MZ_CELL/2,y:oy+(MZ_ROWS-1)*MZ_CELL+MZ_CELL/2,r:46};
+    // население комнат: паки мобов, «необычные» мини-боссы (роняют сундуки), пустые передышки
+    for(let r=0;r<MZ_ROWS;r++)for(let c=0;c<MZ_COLS;c++){
+      if(r===0&&c===0)continue;
+      if(r===MZ_ROWS-1&&c===MZ_COLS-1)continue;
+      const cx=ox+c*MZ_CELL+MZ_CELL/2,cy=oy+r*MZ_CELL+MZ_CELL/2;
+      const roll=Math.random();
+      if(roll<0.5){
+        const n=2+Math.floor(Math.random()*3);
+        for(let i=0;i<n;i++){const e=spawnEnemy(false);e.x=cx+rand(-85,85);e.y=cy+rand(-85,85);}
+      }else if(roll<0.72){
+        const b=spawnEnemy(true,2+Math.floor(Math.random()*4));
+        b.hp=b.maxHp=b.maxHp*0.35;b.r=Math.min(b.r,42);b.x=cx;b.y=cy;b.pauseSpawns=false;
+        b.skinName='Страж лабиринта';
+      }
+    }
+    announce={text:'🏛 ЛАБИРИНТ — найди выход за 60с! Мини-боссы роняют сундуки',life:3.4,color:'#c084fc'};
     camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.4);
     sfxSweep(200,900,0.5,'sawtooth',0.12,true);
   }
+  // столкновения со стенами лабиринта
+  function collideCircleWalls(o){
+    for(const w of vaultWalls){
+      const cx=Math.max(w.x,Math.min(o.x,w.x+w.w)),cy=Math.max(w.y,Math.min(o.y,w.y+w.h));
+      const dx=o.x-cx,dy=o.y-cy,d2=dx*dx+dy*dy;
+      if(d2<o.r*o.r){
+        if(d2<0.0001){o.y=w.y-o.r;continue;}
+        const d=Math.sqrt(d2),push=(o.r-d)/d;
+        o.x+=dx*push;o.y+=dy*push;
+      }
+    }
+  }
+  function pointInWalls(px,py){for(const w of vaultWalls){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}return false;}
   function exitVault(){
     if(!vaultStash)return;
     enemies=vaultStash.enemies;projectiles=vaultStash.projectiles;enemyProjectiles=vaultStash.enemyProjectiles;
     pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
     player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
-    inVault=false;vaultStash=null;
+    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;
   }
   function rollVaultReward(){
+    // супер-ценный приз за прохождение лабиринта
     const notOwned=EXCLUSIVE_WEAPONS.filter(w=>!w.has(player));
-    if(Math.random()<0.5||notOwned.length===0){
-      const b=VAULT_BONUSES[Math.floor(Math.random()*VAULT_BONUSES.length)];
-      b.apply(player);
-      announce={text:'🎁 СУПЕР-БОНУС: '+b.name+' — '+b.desc,life:3.4,color:'#fde047'};
-    }else{
+    let msg;
+    if(notOwned.length&&Math.random()<0.4){
       const w=notOwned[Math.floor(Math.random()*notOwned.length)];
-      w.apply(player);
-      announce={text:'⚔ ЭКСКЛЮЗИВ: '+w.name+' — '+w.desc,life:3.6,color:'#a855f7'};
+      w.apply(player);msg='⚔ ЭКСКЛЮЗИВ: '+w.name+' — '+w.desc;
+    }else{
+      const roll=Math.random();
+      if(roll<0.3&&lives<5){lives++;msg='💖 ЛЕГЕНДАРНЫЙ ПРИЗ: +1 жизнь!';}
+      else if(roll<0.6){
+        const pool=RELICS.filter(r=>!(player.relics&&player.relics[r.id]));
+        if(pool.length){const r=pool[Math.floor(Math.random()*pool.length)];
+          player.relics=player.relics||{};player.relics[r.id]=true;r.apply(player);
+          msg='💠 РЕЛИКВИЯ: '+r.name+' — '+r.desc;}
+        else{metaState.shards+=15;msg='✨ +15 эссенции!';}
+      }else{
+        const b=VAULT_BONUSES[Math.floor(Math.random()*VAULT_BONUSES.length)];
+        b.apply(player);b.apply(player); // двойной супер-бонус — это лабиринт, а не арена
+        msg='🏆 ДВОЙНОЙ СУПЕР-БОНУС: '+b.name+' — '+b.desc+' (×2)';
+      }
     }
-    flashFx(0.5,'250,204,21');camShake=Math.max(camShake,10);sfxChime(660,5,0.09,0.13);
+    metaState.shards+=5;saveMeta(); // + всегда эссенция за прохождение
+    announce={text:msg,life:4,color:'#fde047'};
+    flashFx(0.6,'250,204,21');camShake=Math.max(camShake,12);doHitStop(0.15);
+    sfxChime(660,6,0.09,0.14);
   }
 
   function burst(px,py,color,n){if(particles.length>600)return;for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
@@ -1317,12 +1393,6 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
-    if(e.guardian&&inVault&&!vaultCleared){
-      // выход отложен на начало следующего кадра: exitVault переприсваивает enemies,
-      // а мы сейчас внутри enemies.filter(), чей результат затёр бы восстановление
-      vaultCleared=true;doHitStop(0.25);screenFlash=Math.max(screenFlash,0.6);burst(e.x,e.y,'#c084fc',36);
-      rollVaultReward();return;
-    }
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
     if(player.lootLevel&&Math.random()<0.12*player.lootLevel)gems.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:5,val:Math.max(1,Math.round(e.xp/2))});
@@ -2147,6 +2217,7 @@
     const len=Math.hypot(mx,my);
     const hasteMul=(player.hasteActive>0?1.4+player.hasteLevel*0.05:1)*(player.overdriveActive>0?1.35:1);
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*dt;player.y+=my*player.speed*hasteMul*dt;player.facing={x:mx,y:my};}
+    if(inVault)collideCircleWalls(player);
     if(player.invuln>0)player.invuln-=dt;
     if(player.overdriveActive>0)player.overdriveActive-=dt;
     // след для шлейфа во время перегрузки (короткий кольцевой буфер)
@@ -2238,16 +2309,19 @@
 
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
     if(inVault){
-      if(vaultCleared){exitVault();} // Страж повержен на прошлом кадре — безопасно восстановить орду
-      else{vaultT-=dt;
-        if(vaultT<=0){announce={text:'⌛ Страж выстоял — Хранилище закрылось',life:2.6,color:'#8891a3'};exitVault();}}
+      vaultT-=dt;
+      if(vaultExit&&dist(player,vaultExit)<vaultExit.r+player.r){
+        rollVaultReward();exitVault();
+      }else if(vaultT<=0){
+        announce={text:'⌛ Лабиринт схлопнулся — выход не найден',life:2.6,color:'#8891a3'};exitVault();
+      }
     }else{
       if(!portal&&player.level>=12){
         portalAcc+=dt;
         if(portalAcc>=70){portalAcc=0;
           const a=rand(0,Math.PI*2),d0=rand(500,800);
           portal={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:60,life:18};
-          announce={text:'🌀 Портал в Хранилище — успей войти!',life:3,color:'#c084fc'};
+          announce={text:'🌀 Портал в ЛАБИРИНТ — успей войти!',life:3,color:'#c084fc'};
           sfxSweep(300,1200,0.4,'sine',0.1,true);
         }
       }else if(portal){
@@ -2282,6 +2356,7 @@
         if(e.slowT>0)spd*=0.5;
         if(player.chillLevel&&d<130)spd*=1-0.08*player.chillLevel;
         moveEnemy(e,dt,d,spd);
+        if(inVault)collideCircleWalls(e);
       }
       if(d<player.r+e.r){
         if(player.thornsLevel)e.hp-=6*player.thornsLevel*player.dmgMult*dt;
@@ -2350,6 +2425,7 @@
     // enemy projectiles (fizzle at the safe-zone border — it's actually safe inside)
     for(const ep of enemyProjectiles){
       ep.x+=ep.vx*dt;ep.y+=ep.vy*dt;ep.life-=dt;
+      if(inVault&&pointInWalls(ep.x,ep.y)){ep.dead=true;continue;}
       if(safeZone&&dist(safeZone,ep)<safeZone.r){ep.dead=true;burst(ep.x,ep.y,'#4ade80',3);continue;}
       if(dist(player,ep)<player.r+ep.r){hurtPlayer(ep.dmg,ep.x,ep.y,ep.boss?14:0,ep.boss);ep.dead=true;burst(ep.x,ep.y,'#a855f7',5);}
     }
@@ -2407,6 +2483,7 @@
         }
       }
       p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+      if(inVault&&pointInWalls(p.x,p.y)){p.life=0;p.pierceLeft=-1;burst(p.x,p.y,'#c084fc',2);continue;}
       for(const e of enemies){
         if(p.pierceLeft<0||p.hitSet.has(e))continue;
         if(dist(p,e)<p.r+e.r){
@@ -2633,6 +2710,7 @@
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,'#c084fc',1.7+0.3*Math.sin(t*6));
+    if(inVault&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
@@ -2702,6 +2780,24 @@
     x.scale(zoom,zoom);
     x.translate(-player.x,-player.y);
     drawGrid();
+    // лабиринт: стены и светящийся выход
+    if(inVault){
+      for(const w of vaultWalls){
+        x.fillStyle='#181030';x.fillRect(w.x,w.y,w.w,w.h);
+        x.strokeStyle='rgba(192,132,252,0.5)';x.lineWidth=2;x.strokeRect(w.x,w.y,w.w,w.h);
+      }
+      if(vaultExit){
+        x.save();x.translate(vaultExit.x,vaultExit.y);
+        x.shadowColor='#4ade80';x.shadowBlur=22;
+        for(let ri=0;ri<3;ri++){x.globalAlpha=0.85-ri*0.22;x.strokeStyle='#4ade80';x.lineWidth=3/zoom;
+          x.beginPath();x.arc(0,0,vaultExit.r-ri*10+Math.sin(t*3+ri)*3,0,Math.PI*2);x.stroke();}
+        x.shadowBlur=0;x.globalAlpha=1;
+        x.fillStyle='#fff';x.font='24px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+        x.fillText('🚪',0,-2);
+        x.font='bold 11px system-ui,sans-serif';x.fillStyle='#bbf7d0';x.fillText('ВЫХОД',0,vaultExit.r*0.8);
+        x.restore();
+      }
+    }
     // safe zone (under everything)
     if(safeZone){
       const fade=Math.min(1,safeZone.life/2);
@@ -2958,6 +3054,13 @@
       }
     }
     drawHudOverlay();
+    if(inVault){
+      x.save();x.textAlign='center';x.textBaseline='top';
+      x.font='bold 15px system-ui,sans-serif';
+      x.fillStyle=vaultT<10?'#ff2d55':'#c084fc';x.shadowColor='#000';x.shadowBlur=4;
+      x.fillText('🏛 ЛАБИРИНТ · выход за '+Math.max(0,Math.ceil(vaultT))+'с',W/2,40);
+      x.restore();
+    }
     if(announce){
       const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));
       // auto-fit the font so long banners never run off-screen, and sit below the HUD panel
