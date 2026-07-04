@@ -499,6 +499,15 @@
   }
 
   function fmtTime(s){s=Math.floor(s);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+  // компактный формат больших чисел для HUD: 1.2K, 3.4M, 1.1B (и '∞' как страховка)
+  function fmtNum(n){
+    if(!isFinite(n))return '∞';
+    const a=Math.abs(n);
+    if(a>=1e9)return (n/1e9).toFixed(a>=1e10?0:1)+'B';
+    if(a>=1e6)return (n/1e6).toFixed(a>=1e7?0:1)+'M';
+    if(a>=1e4)return Math.round(n/1e3)+'K';
+    return String(Math.round(n));
+  }
   function rand(a,b){return a+Math.random()*(b-a);}
   function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
 
@@ -945,7 +954,27 @@
 
   // гарантированный рост убойности по уровню — киллы остаются быстрыми даже без карт «Урон»,
   // и не зависят от везения в драфте. Кэшируем, а не считаем pow() на каждый удар
-  function recalcLvlScale(){player.lvlDmgScale=Math.pow(1.026,player.level-1);}
+  // рост по уровню ограничен: экспонента иначе к 1739 ур. давала гигантские числа.
+  // выше 400 ур. — линейная докрутка вместо экспоненты (стат не улетает в бесконечность)
+  function recalcLvlScale(){
+    const L=Math.max(1,player.level-1);
+    player.lvlDmgScale=L<=400?Math.pow(1.026,L):Math.pow(1.026,400)*(1+(L-400)*0.01);
+  }
+  // СОФТ-КАП всех боевых статов — гарантирует конечные читаемые числа и убивает
+  // петлю «Infinity урон → NaN HP мобов → мобы бессмертны → взрывной опыт → ещё урон».
+  // Вызывается каждый кадр (дёшево) и ловит ЛЮБОЙ источник роста (карты/реликвии/волны)
+  const STAT_CAPS={dmg:1e8,dmgMult:2e5,maxHp:5e6,speed:600,pickupRadius:400};
+  function capStats(){
+    const p=player;
+    for(const k in STAT_CAPS){if(!isFinite(p[k])||p[k]>STAT_CAPS[k])p[k]=STAT_CAPS[k];}
+    p.aoeMult=Math.min(isFinite(p.aoeMult)?p.aoeMult:3,3);        // Рад ≤ 300%
+    p.atkSpeedMult=Math.min(isFinite(p.atkSpeedMult)?p.atkSpeedMult:4,4);
+    p.projSpeedMult=Math.min(isFinite(p.projSpeedMult)?p.projSpeedMult:4,4);
+    p.critChance=Math.min(isFinite(p.critChance)?p.critChance:0.95,0.95);
+    p.critMult=Math.min(isFinite(p.critMult)?p.critMult:2,5);
+    if(!isFinite(p.lvlDmgScale))recalcLvlScale();
+    if(p.hp>p.maxHp)p.hp=p.maxHp;
+  }
 
   // овердрайв / перегрузка — активный «клапан силы»: шкала копится с убийств, на 100
   // авто-срабатывает короткий режим ярости (×2 урон, +скорость, чистка экрана)
@@ -1124,7 +1153,8 @@
     let dps=shot*(1000/p.fireRate)*(p.projCount||1);
     const w=(p.bladeLevel||0)+(p.chainLevel||0)+(p.mineLevel||0)+(p.fireballLevel||0)+(p.boomLevel||0)+(p.frostLevel||0)+(p.laserLevel||0)+(p.shardLevel||0)+(p.droneLevel||0)+(p.acidLevel||0)+(p.meteorLevel||0)+(p.ghostLevel||0)+(p.turretLevel||0)+(p.daggerLevel||0)+(p.tornadoLevel||0)+(p.hammerLevel||0)+(p.starfallLevel||0)+(p.singularityLevel||0)+(p.auraLevel||0);
     dps*=1+0.12*w;
-    return Math.max(40,dps);
+    if(!isFinite(dps))dps=1e9; // страховка — коридор HP не должен получить Infinity/NaN
+    return Math.max(40,Math.min(dps,1e10));
   }
   // «коридор живучести»: HP каждого моба при спавне зажимается в секундах огня игрока —
   // потолок спасает от неубиваемых губок, пол — от «мобы испаряются». Кривые сложности
@@ -1133,8 +1163,9 @@
     const dps=estPlayerDps();
     const lim=en.superboss?[10,26]:en.elite?[4,12]:en.hunter?[2.5,6]:en.champion?[1.2,4]:[0.4,1.9];
     const was=Math.max(1,en.maxHp);
-    en.maxHp=Math.max(dps*lim[0],Math.min(en.maxHp,dps*lim[1]));
+    en.maxHp=Math.max(dps*lim[0],Math.min(isFinite(en.maxHp)?en.maxHp:dps*lim[1],dps*lim[1]));
     en.hp=en.hp/was*en.maxHp;
+    if(!isFinite(en.hp)||en.hp<=0)en.hp=en.maxHp; // защита от NaN/0 (иначе моб бессмертен или мёртв)
     en.xp=Math.max(en.xp||1,xpForPower(en.maxHp,en.dmg));
   }
   // ponytail: d.hpMul is time-based and caps at 6x within ~4 min, well before a fresh
@@ -1194,7 +1225,7 @@
       // outrun glues to you permanently, which is what made fast spawns miserable
       hp:finalHp,maxHp:finalHp,speed:elite?base.speed*d.spdMul*0.7*ceSpd:Math.min(170,base.speed*d.spdMul*Math.min(1.5,wb)*ceSpd),
       beh:elite?null:base.beh||null,champion:champion,
-      dmg:finalDmg,r:base.r*(elite?1.8+bn*0.12:1)*(champion?1.4:1),
+      dmg:finalDmg,r:base.r*(elite?1.8+Math.min(8,bn)*0.12:1)*(champion?1.4:1),
       color:elite?skin.color:(tint?tint.color:base.color),glow:elite?skin.glow:(tint?tint.glow:null),
       skinShape:elite?skin.shape:base.shape,skinName:elite?skin.name:null,
       xp:xpForPower(finalHp,finalDmg),elite:!!elite,bossNumber:bn,shootCd:elite?rand(0.8,1.6):0,
@@ -2336,7 +2367,7 @@
     const dmg=tierAvgDmg(atLevel)*14*(1+Math.floor(atLevel/4)*0.08);
     const ang=rand(0,Math.PI*2),rad=offscreenRad(40);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
-      hp,maxHp:hp,speed:55*d.spdMul*0.65,dmg,r:40+superNumber*6,
+      hp,maxHp:hp,speed:55*d.spdMul*0.65,dmg,r:40+Math.min(8,superNumber)*6,
       color:'#ff2d55',glow:'#ff2d55',skinShape:'super',skinName:'Апокалипсис',
       xp:xpForPower(hp,dmg)*2,elite:true,superboss:true,superNumber,bossNumber:6,
       stageCount:BOSS_STAGES,stage:BOSS_STAGES,
@@ -2512,6 +2543,7 @@
 
   function step(dt){
     t+=dt;
+    capStats(); // софт-кап статов каждый кадр — числа всегда конечны и читаемы
     // autosave the run every ~2s so a refresh/close loses at most a couple seconds
     saveAcc+=dt;if(saveAcc>=2){saveAcc=0;saveRun();}
     // input
@@ -3220,7 +3252,7 @@
     hudBar(pad+8,pad+8,w-16,13,player.hp/player.maxHp,player.hp/player.maxHp<0.3?'#ff2d55':'#ef4444');
     x.fillStyle='#fff';x.font='bold 9px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
     x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=2;
-    x.fillText(Math.max(0,Math.round(player.hp))+' / '+Math.round(player.maxHp),pad+w/2,pad+15);
+    x.fillText(fmtNum(Math.max(0,player.hp))+' / '+fmtNum(player.maxHp),pad+w/2,pad+15);
     x.shadowBlur=0;
     // XP: синий бар
     hudBar(pad+8,pad+25,w-16,7,player.xp/player.xpNeed,'#4D96FF');
@@ -3239,13 +3271,13 @@
     x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+130,pad+51);
     // строка: убийства + мобов на поле
     x.font='11px system-ui,sans-serif';
-    x.fillStyle='#9aa4b5';x.fillText('☠ '+kills,pad+8,pad+65);
-    x.fillStyle='#fca5a5';x.fillText('👾 мобов: '+enemies.length,pad+70,pad+65);
-    // боевые статы сеткой
+    x.fillStyle='#9aa4b5';x.fillText('☠ '+fmtNum(kills),pad+8,pad+65);
+    x.fillStyle='#fca5a5';x.fillText('👾 мобов: '+enemies.length,pad+72,pad+65);
+    // боевые статы сеткой (крупные числа — компактно)
     const col=[pad+8,pad+70,pad+130];
     x.font='9px system-ui,sans-serif';
     const cells=[
-      ['Урон',Math.round(player.dmg)],['Атк',(1000/player.fireRate).toFixed(1)],['Скор',Math.round(player.speed)],
+      ['Урон',fmtNum(player.dmg)],['Атк',(1000/player.fireRate).toFixed(1)],['Скор',Math.round(player.speed)],
       ['Крит',Math.round(player.critChance*100)+'%'],['Проб',player.pierce],['Рад',Math.round(player.aoeMult*100)+'%']
     ];
     for(let i=0;i<6;i++){
@@ -3269,7 +3301,7 @@
       x.shadowColor=col;x.shadowBlur=ti>=0?10+ti*3:5;
       x.font='bold '+Math.round(21*scale)+'px system-ui,sans-serif';
       x.fillStyle=col;
-      x.fillText('🔥 x'+player.combo,W-12,8);
+      x.fillText('🔥 x'+fmtNum(player.combo),W-12,8);
       // подпись: название тира или пояснение
       x.shadowBlur=0;x.textBaseline='top';
       x.font='bold 10px system-ui,sans-serif';x.fillStyle=col;x.globalAlpha=0.9;
