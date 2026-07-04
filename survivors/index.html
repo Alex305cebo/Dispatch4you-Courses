@@ -842,47 +842,40 @@
     {id:'berserk',icon:'🩸',name:'Берсерк',avatar:'assets/avatars/owner.png',desc:'+25% урона и вампиризм, но -20% макс. HP.',apply:p=>{p.dmgMult*=1.25;p.lifesteal+=0.02;p.maxHp=Math.round(p.maxHp*0.8);p.hp=p.maxHp;}},
   ];
   function playerAvatar(){const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];return getImg(c.avatar);}
-  // враги-эмодзи по форме тела (с откатом на векторную фигуру, если картинка не загружена)
-  // ЖИВАЯ анимация на canvas: спрайт-листы (кадры в полосу), нарезанные из
-  // Google Noto Animated Emoji (CC BY 4.0). drawImage анимированного webp дал бы
-  // только первый кадр — поэтому листаем кадры сами, работает на любом устройстве.
-  const ANIM_SPRITES={
-    airplane:{file:'assets/anim/airplane.png',frames:24,size:128,fps:14.2},
-    spider:{file:'assets/anim/spider.png',frames:24,size:96,fps:12.7},
-    bat:{file:'assets/anim/bat.png',frames:24,size:96,fps:25.6},
-    ogre:{file:'assets/anim/ogre.png',frames:24,size:96,fps:9.4},
-    crab:{file:'assets/anim/crab.png',frames:24,size:96,fps:8.8},
-    alien_monster:{file:'assets/anim/alien_monster.png',frames:4,size:96,fps:5.1},
-    ghost:{file:'assets/anim/ghost.png',frames:24,size:96,fps:10.8},
-    skull:{file:'assets/anim/skull.png',frames:24,size:96,fps:4},
-    microbe:{file:'assets/anim/microbe.png',frames:24,size:96,fps:21.3},
-    red_heart:{file:'assets/anim/red_heart.png',frames:24,size:96,fps:13.7},
-    shark:{file:'assets/anim/shark.png',frames:24,size:96,fps:6.5},
-    dragon:{file:'assets/anim/dragon.png',frames:24,size:160,fps:13},
-    t_rex:{file:'assets/anim/t_rex.png',frames:24,size:160,fps:16.3},
-    alien:{file:'assets/anim/alien.png',frames:24,size:160,fps:9.1},
-    exploding_head:{file:'assets/anim/exploding_head.png',frames:24,size:160,fps:9.3},
-    gift:{file:'assets/anim/gift.png',frames:24,size:96,fps:10.3},
-    bomb:{file:'assets/anim/bomb.png',frames:24,size:96,fps:11.5},
-    gem_stone:{file:'assets/anim/gem_stone.png',frames:24,size:96,fps:19.2},
-    comet:{file:'assets/anim/comet.png',frames:24,size:96,fps:15.4},
-  };
-  // форма тела врага -> анимированный эмодзи-спрайт
-  const SHAPE_SPRITE={blob:'spider',triangle:'bat',square:'ogre',shield:'crab',star:'alien_monster',diamond:'ghost',hex:'skull',ring:'microbe',cross:'red_heart',fang:'shark'};
-  // рисует кадр анимации: seed рассинхронизирует толпу, чтобы не дёргались хором
-  const ANIM_PAD=2; // прозрачный зазор в листах — без него сэмплер «протаскивал» края соседнего кадра
-  function drawAnim(key,cx,cy,drawR,seed){
-    const sp=ANIM_SPRITES[key];if(!sp)return false;
-    const im=getImg(sp.file);if(!imgReady(im))return false;
-    const fi=Math.floor(t*sp.fps+(seed||0))%sp.frames;
-    const cell=sp.size+ANIM_PAD*2;
-    const pb=x.shadowBlur;x.shadowBlur=0; // тень размывала спрайт грязным ореолом
-    x.drawImage(im,fi*cell+ANIM_PAD,ANIM_PAD,sp.size,sp.size,cx-drawR,cy-drawR,drawR*2,drawR*2);
+  // враги — НАТИВНЫЕ цветные эмодзи системы (Apple Color Emoji / Segoe UI Emoji /
+  // Noto Color Emoji): чёткие в любом размере и ничего не тянут по сети.
+  // Глиф один раз рендерится в offscreen-canvas (кэш) и растягивается на весь квадрат
+  // по фактическим метрикам; дальше — быстрый drawImage, живость даём трансформациями.
+  const EMOJI_FONT='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif';
+  const EMOJI_CACHE=new Map();
+  function emojiSprite(gl){
+    let cv=EMOJI_CACHE.get(gl); if(cv)return cv;
+    cv=document.createElement('canvas'); const S=144; cv.width=S; cv.height=S;
+    const g=cv.getContext('2d');
+    g.textAlign='center'; g.textBaseline='alphabetic'; g.font='100px '+EMOJI_FONT;
+    g.fillStyle='#e8ebf2'; // цвет для обычных текстовых глифов-фолбэков; цветные эмодзи его игнорируют
+    const m=g.measureText(gl);
+    const w=(m.actualBoundingBoxLeft||0)+(m.actualBoundingBoxRight||0);
+    const h=(m.actualBoundingBoxAscent||0)+(m.actualBoundingBoxDescent||0);
+    const k=(w>4&&h>4)?(S-10)/Math.max(w,h):1.2;
+    g.font=Math.max(20,Math.floor(100*k))+'px '+EMOJI_FONT;
+    const m2=g.measureText(gl);
+    const ox=S/2+((m2.actualBoundingBoxLeft||0)-(m2.actualBoundingBoxRight||0))/2;
+    const oy=((m2.actualBoundingBoxAscent||0)+(m2.actualBoundingBoxDescent||0))>4
+      ? S/2+((m2.actualBoundingBoxAscent||0)-(m2.actualBoundingBoxDescent||0))/2
+      : S*0.78; // фолбэк, если браузер не отдал метрики глифа
+    g.fillText(gl,ox,oy);
+    EMOJI_CACHE.set(gl,cv); return cv;
+  }
+  function drawEmoji(gl,cx,cy,drawR){
+    const cv=emojiSprite(gl);
+    const pb=x.shadowBlur;x.shadowBlur=0; // тень размывала глиф грязным ореолом
+    x.drawImage(cv,cx-drawR,cy-drawR,drawR*2,drawR*2);
     x.shadowBlur=pb;
     return true;
   }
-  // предзагрузка всех листов на старте — мобы не «проявляются» посреди боя
-  Object.values(ANIM_SPRITES).forEach(sp=>getImg(sp.file));
+  // форма тела врага -> эмодзи
+  const SHAPE_EMOJI={blob:'🕷️',triangle:'🦇',square:'👹',shield:'🦀',star:'👾',diamond:'👻',hex:'💀',ring:'🦠',cross:'🦂',fang:'🦈'};
   let selectedChar=localStorage.getItem('survivors-char')||'balanced';
   function applyCharacter(p){
     const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];
@@ -2582,15 +2575,16 @@
     updateHud();
   }
 
-  const BOSS_SPRITE={spiky:'dragon',horns:'t_rex',blocky:'alien',eyes:'alien_monster',super:'exploding_head'};
+  const BOSS_EMOJI={spiky:'🐉',horns:'🦖',blocky:'👽',eyes:'👾',super:'🤯'};
   function drawBoss(ex,ey,e){
     x.save();x.translate(ex,ey);
-    // босс — живой анимированный монстр; фолбэк — прежние векторные формы ниже
-    const bKey=BOSS_SPRITE[e.skinShape];
-    if(bKey&&ANIM_SPRITES[bKey]&&imgReady(getImg(ANIM_SPRITES[bKey].file))){
+    // босс — крупный эмодзи на «жетоне»; фолбэк — прежние векторные формы ниже
+    const bKey=BOSS_EMOJI[e.skinShape];
+    if(bKey){
       if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
       const R=e.r*1.35;
       x.fillStyle='#0e1322';x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();
+      x.globalAlpha=0.2;x.fillStyle=e.color;x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();x.globalAlpha=1;
       x.shadowColor=e.glow;x.shadowBlur=18;
       x.strokeStyle=e.color;x.lineWidth=5;
       x.beginPath();x.arc(0,0,R+Math.sin(t*3)*3,0,Math.PI*2);x.stroke();
@@ -2600,7 +2594,8 @@
       x.save();
       if(player.x<ex)x.scale(-1,1);
       x.rotate(Math.sin(t*2+e._aseed)*0.05);
-      drawAnim(bKey,0,0,R*0.9,e._aseed);
+      const bpu=1+0.05*Math.sin(t*3+e._aseed);x.scale(bpu,bpu);
+      drawEmoji(bKey,0,0,R*0.8);
       x.restore();
       x.restore();return;
     }
@@ -2676,21 +2671,22 @@
     // behavior telegraphs
     if(e.armT!=null){x.globalAlpha=0.5+0.5*Math.sin(t*30);x.fillStyle='#fff';x.beginPath();x.arc(0,0,e.r+6,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     if(e.cm==='aim'){x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;x.setLineDash([5,5]);x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(e.ca)*260,Math.sin(e.ca)*260);x.stroke();x.setLineDash([]);}
-    // враг — ЖИВОЙ анимированный эмодзи-спрайт; иначе векторная фигура ниже (фолбэк)
-    const sKey=SHAPE_SPRITE[e.skinShape];
-    if(sKey&&ANIM_SPRITES[sKey]&&imgReady(getImg(ANIM_SPRITES[sKey].file))){
+    // враг — нативный эмодзи на «жетоне»; иначе векторная фигура ниже (фолбэк)
+    const sKey=SHAPE_EMOJI[e.skinShape];
+    if(sKey){
       if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
-      // «жетон»: тёмный диск + яркое цветное кольцо — эмодзи читается на любом фоне,
-      // цвет кольца показывает тир/акт/усиления
+      // «жетон»: тёмный диск с лёгкой подкраской + цветное кольцо —
+      // эмодзи читается на любом фоне, цвет кольца показывает тир/акт/усиления
       const R=e.r*1.45;
       x.fillStyle='#0e1322';x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();
-      x.strokeStyle=e.color;x.lineWidth=Math.max(2.5,e.r*0.16);
-      x.shadowColor=e.color;x.shadowBlur=8;
-      x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.stroke();x.shadowBlur=0;
+      x.globalAlpha=0.22;x.fillStyle=e.color;x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      x.strokeStyle=e.color;x.lineWidth=Math.max(2,e.r*0.14);
+      x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.stroke();
       x.save();
       if(player.x<ex)x.scale(-1,1);
       x.rotate(Math.sin(t*3+e._aseed)*0.07);
-      drawAnim(sKey,0,0,R*0.88,e._aseed);
+      const pu=1+0.06*Math.sin(t*4+e._aseed);x.scale(pu,pu);
+      drawEmoji(sKey,0,0,R*0.82);
       x.restore();
       x.restore();return;
     }
@@ -2753,15 +2749,10 @@
       for(let i=0;i<6;i++){const a=i*(Math.PI/3);x.beginPath();x.moveTo(Math.cos(a)*19,Math.sin(a)*19);x.lineTo(Math.cos(a)*25,Math.sin(a)*25);x.stroke();}
       x.restore();x.globalAlpha=1;
     }
-    // сам предмет: ЖИВОЙ анимированный спрайт, если есть; иначе крупный эмодзи-глиф
-    const PSPRITE={chest:'gift',heal:'red_heart',nuke:'bomb',relic:'gem_stone'};
-    const pk_s=PSPRITE[pk.type];
-    if(!(pk_s&&drawAnim(pk_s,0,0,rare?19:17,Math.floor(px)%24))){
-      x.font=(rare?30:27)+'px system-ui,\"Apple Color Emoji\",\"Segoe UI Emoji\",sans-serif';
-      x.textAlign='center';x.textBaseline='middle';
-      x.shadowColor='rgba(0,0,0,0.55)';x.shadowBlur=4;
-      x.fillText(PICKUP_EMOJI[pk.type]||'✦',0,1);
-    }
+    // сам предмет: чёткий кэшированный эмодзи-глиф с лёгким покачиванием
+    x.save();x.rotate(Math.sin(t*2.5+px*0.05)*0.12);
+    drawEmoji(PICKUP_EMOJI[pk.type]||'✦',0,0,(rare?19:17)*pulse);
+    x.restore();
     x.restore();
   }
 
@@ -2997,10 +2988,7 @@
       x.beginPath();x.arc(m.x,m.y,m.blastR,0,Math.PI*2);x.stroke();x.setLineDash([]);
       x.globalAlpha=1;
       x.save();x.translate(m.x,m.y-m.tt*400);x.rotate(Math.PI*0.75);
-      if(!drawAnim('comet',0,0,16,Math.floor(m.x)%24)){
-        x.fillStyle='#fb923c';x.shadowColor='#fb923c';x.shadowBlur=10;
-        x.beginPath();x.arc(0,0,10,0,Math.PI*2);x.fill();
-      }
+      drawEmoji('☄️',0,0,16);
       x.restore();x.restore();
     });
     // turrets
@@ -3033,7 +3021,7 @@
       if(sq>0.01){x.save();x.translate(e.x,e.y);x.scale(1+sq*0.28,1-sq*0.16);x.translate(-e.x,-e.y);}
       if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
-      if(e.hitFlash>0){x.save();x.globalAlpha=Math.min(0.6,e.hitFlash*6);x.fillStyle='#fff';x.beginPath();x.arc(e.x,e.y,e.r*(SHAPE_SPRITE[e.skinShape]?1.35:1.05),0,Math.PI*2);x.fill();x.restore();}
+      if(e.hitFlash>0){x.save();x.globalAlpha=Math.min(0.6,e.hitFlash*6);x.fillStyle='#fff';x.beginPath();x.arc(e.x,e.y,e.r*(SHAPE_EMOJI[e.skinShape]?1.35:1.05),0,Math.PI*2);x.fill();x.restore();}
       if(sq>0.01)x.restore();
       if(e.hp<e.maxHp){
         if(e.elite&&e.stageCount){
@@ -3134,8 +3122,8 @@
     x.globalAlpha=(player.invuln>0)?(Math.floor(t*20)%2?0.4:1):1;
     x.shadowColor=player.berserkActive>0?'#f97316':(player.shieldActive>0?'#38bdf8':(player.hasteActive>0?'#4ade80':'#4D96FF'));
     x.shadowBlur=14;
-    // герой — ЖИВОЙ анимированный самолёт, плавно поворачивается носом по курсу.
-    // плавность: копим сглаженный угол в player._hAng (эмодзи «смотрит» ↗, поэтому +45°)
+    // герой — ракета 🚀, плавно поворачивается носом по курсу.
+    // плавность: копим сглаженный угол в player._hAng (глиф «смотрит» ↗, поэтому +45°)
     {
       const want=Math.atan2(player.facing.y,player.facing.x);
       if(player._hAng==null)player._hAng=want;
@@ -3144,22 +3132,12 @@
       // жетон героя: тёмный диск + синее кольцо — виден на любом фоне
       const HR=player.r*2.1;
       x.fillStyle='#0e1322';x.beginPath();x.arc(player.x,player.y,HR,0,Math.PI*2);x.fill();
+      x.globalAlpha=0.18;x.fillStyle='#4D96FF';x.beginPath();x.arc(player.x,player.y,HR,0,Math.PI*2);x.fill();x.globalAlpha=1;
       x.strokeStyle='#4D96FF';x.lineWidth=3;
       x.beginPath();x.arc(player.x,player.y,HR,0,Math.PI*2);x.stroke();
       x.save();x.translate(player.x,player.y);x.rotate(player._hAng+Math.PI/4);
-      const heroDrawn=drawAnim('airplane',0,0,HR*0.92,0);
+      drawEmoji('🚀',0,0,HR*0.8);
       x.restore();
-      if(!heroDrawn){
-        const av=playerAvatar();
-        if(imgReady(av)){
-          const R=player.r*1.7;
-          x.save();x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.clip();
-          x.drawImage(av,player.x-R,player.y-R,R*2,R*2);x.restore();
-          x.strokeStyle='#4D96FF';x.lineWidth=2.5;x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.stroke();
-        }else{
-          x.fillStyle='#e8ebf2';x.beginPath();x.arc(player.x,player.y,player.r,0,Math.PI*2);x.fill();
-        }
-      }
     }
     x.shadowBlur=0;
     x.globalAlpha=1;
