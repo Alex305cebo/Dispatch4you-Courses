@@ -192,6 +192,7 @@
     </div>
     <div id="olb" class="overlay">
       <h2>🏆 Таблица лидеров</h2>
+      <p style="color:var(--muted);font-size:11px;margin:-6px 0 8px;max-width:340px;text-align:center;">Очки = уровень + убийства + время + серия без урона + боссы + опыт</p>
       <div id="lbPodium" class="lb-podium"></div>
       <div id="lbList" style="font-size:13px;color:var(--muted);max-height:240px;overflow:auto;width:100%;max-width:340px;">Загрузка…</div>
       <button class="ostart" id="btnLbClose">Закрыть</button>
@@ -262,8 +263,20 @@
   let metaState=loadMeta();
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
   function fsVal(v){return typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:v}):{stringValue:String(v)};}
+  // === СОСТАВНОЙ РЕЙТИНГ ===
+  // рекорд — не «только время» и не «только киллы», а взвешенная сумма всех измерений
+  // забега: глубина прокачки (уровень), объём (киллы), выносливость (время), скилл
+  // (серия без урона), сложные цели (боссы/охотники), жадность (собранный опыт).
+  const SCORE_W={level:1000,kills:6,time:3,combo:35,bosses:400,hunters:250,gems:2};
+  function scoreFrom(o){
+    return Math.round(
+      (o.level||1)*SCORE_W.level + (o.kills||0)*SCORE_W.kills + (o.time||0)*SCORE_W.time +
+      (o.combo||0)*SCORE_W.combo + (o.bosses||0)*SCORE_W.bosses + (o.hunters||0)*SCORE_W.hunters +
+      (o.gems||0)*SCORE_W.gems);
+  }
+  function currentRun(){return {level:player.level,kills,time:Math.round(t),combo:player.comboBest||0,bosses:bossKills,hunters:hunterKills,gems:gemsCollected};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
-  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),level:num(f.level),kills:num(f.kills)};});list.sort((a,b)=>b.score-a.score||b.level-a.level||b.kills-a.kills);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
+  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),level:num(f.level),kills:num(f.kills),time:num(f.time),combo:num(f.combo),bosses:num(f.bosses),hunters:num(f.hunters),gems:num(f.gems)};});list.sort((a,b)=>b.score-a.score||b.level-a.level||b.kills-a.kills);return list.slice(0,limit||10);}catch(e){console.error('leaderboard fetch failed',e);return[];}}
   function sanitizeName(n){return(n||'').toString().replace(/[\x00-\x1f<>]/g,'').trim().slice(0,20)||'Игрок';}
   function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
   // renames every existing leaderboard record from the old name to the new one
@@ -307,7 +320,7 @@
   async function refreshTop3(){
     const rows=await fetchLeaderboard('survivors',3);
     lbTop3El.innerHTML=rows.length?rows.map((r,i)=>
-      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+'</span><span class="sc">'+fmtTime(Number(r.score)||0)+'</span></div>'
+      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+'</span><span class="sc">'+fmtNum(Number(r.score)||0)+'</span></div>'
     ).join(''):'<div>Пока пусто — стань первым!</div>';
   }
   refreshTop3();setInterval(refreshTop3,60000);
@@ -317,8 +330,8 @@
     return '<div class="p" style="border-color:'+st[0]+';padding-top:'+st[1]+';'+(i===0?'box-shadow:0 0 14px rgba(250,204,21,0.25);':'')+'">'
       +'<span class="medal">'+MEDALS[i]+'</span>'
       +'<span class="nm">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+'</span>'
-      +'<span class="sc" style="color:'+st[0]+';">'+fmtTime(Number(r.score)||0)+'</span>'
-      +'<span class="ex">ур.'+(r.level||1)+' · ⚔'+(r.kills||0)+'</span></div>';
+      +'<span class="sc" style="color:'+st[0]+';">'+fmtNum(Number(r.score)||0)+'</span>'
+      +'<span class="ex">ур.'+(r.level||1)+' · ⚔'+fmtNum(r.kills||0)+(r.bosses?' · 👑'+r.bosses:'')+'</span></div>';
   }
   function lbRow(r,i){
     const mine=isMyRecord(r.name);
@@ -326,8 +339,8 @@
       +(mine?'background:rgba(77,150,255,0.12);border-left:3px solid #4D96FF;':'')+'">'
       +'<span style="width:20px;text-align:right;color:var(--muted);font-weight:700;">'+(i+1)+'</span>'
       +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
-      +'<span style="white-space:nowrap;color:var(--text);font-weight:700;">'+fmtTime(Number(r.score)||0)+'</span>'
-      +'<span style="white-space:nowrap;font-size:10px;color:var(--muted);">ур.'+(r.level||1)+' ⚔'+(r.kills||0)+'</span></div>';
+      +'<span style="white-space:nowrap;color:var(--text);font-weight:700;">'+fmtNum(Number(r.score)||0)+'</span>'
+      +'<span style="white-space:nowrap;font-size:10px;color:var(--muted);">ур.'+(r.level||1)+' ⚔'+fmtNum(r.kills||0)+(r.time?' ⏱'+fmtTime(r.time):'')+(r.combo?' 🔥'+fmtNum(r.combo):'')+'</span></div>';
   }
   async function showLeaderboard(){
     if(state==='running'){lbResumeRunning=true;state='leaderboard';}
@@ -828,7 +841,7 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
@@ -1011,7 +1024,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     points=0;shopBought={};
@@ -1030,7 +1043,7 @@
     try{
       localStorage.setItem(SAVE_KEY,JSON.stringify({
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
-        t,spawnAcc,kills,lives,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
+        t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
         safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
@@ -1051,7 +1064,8 @@
     if(!sv||!sv.player||!(sv.t>0))return;
     const rec={tag:sv.sessionTag||newSessionTag(),name:playerName,time:Math.round(sv.t),level:sv.player.level||1,kills:sv.kills||0,date:Date.now(),end:'прервана'};
     archiveSession(rec);
-    submitScore('survivors',(playerName||'Игрок')+' #'+rec.tag,sv.t,{level:rec.level,kills:rec.kills});
+    const o={level:sv.player.level||1,kills:sv.kills||0,time:Math.round(sv.t),combo:sv.player.comboBest||0,bosses:sv.bossKills||0,hunters:sv.hunterKills||0,gems:sv.gemsCollected||0};
+    submitScore('survivors',(playerName||'Игрок')+' #'+rec.tag,scoreFrom(o),{level:o.level,kills:o.kills,time:o.time,combo:o.combo,bosses:o.bosses,hunters:o.hunters,gems:o.gems});
   }
   function loadRun(){
     let s;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){s=null;}
@@ -1068,6 +1082,7 @@
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];fxq=[];
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=s.lives!=null?s.lives:3;zoom=baseZoom;enemyCountSmoothed=0;
+    bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
     mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;
@@ -1688,6 +1703,7 @@
   function comboTierInfo(n){let ti=-1;for(let i=0;i<COMBO_TIERS.length;i++)if(n>=COMBO_TIERS[i].min)ti=i;return ti;}
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
+    if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
     // анимация смерти: замороженный разбивается льдинками, обычный — эмодзи-«поп»
     const dGl=SHAPE_EMOJI[e.skinShape]||BOSS_EMOJI[e.skinShape];
     if(e.slowT>0)fxIceShatter(e);else if(dGl)fxDeathPop(e,dGl);
@@ -2519,7 +2535,7 @@
     olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
     archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
-    if(t>0)submitScore('survivors',sessionName(),t,{level:player.level,kills:kills});
+    if(t>0){const run=currentRun();submitScore('survivors',sessionName(),scoreFrom(run),{level:run.level,kills:run.kills,time:run.time,combo:run.combo,bosses:run.bosses,hunters:run.hunters,gems:run.gems});}
     // эссенция — по дельте с прошлого чекпоинта, а не по абсолюту: иначе повторные
     // Завершить→Продолжить без нового прогресса фармили бы её бесконечно
     const dLevel=player.level-lastCheckpointLevel,dKills=kills-lastCheckpointKills,dT=t-lastCheckpointT;
@@ -2528,7 +2544,7 @@
     metaState.shards+=metaEarned;saveMeta();
     overTitle.textContent=died?'☠ Ты погиб':'Сессия завершена';
     overSession.textContent='Сессия: '+sessionName();
-    overStats.textContent='Продержался '+fmtTime(t)+' · уровень '+player.level+' · убийств '+kills+' · лучшая серия без урона x'+(player.comboBest||0)+' · +'+metaEarned+' ✨ эссенции';
+    overStats.textContent='🏆 '+fmtNum(scoreFrom(currentRun()))+' очков · продержался '+fmtTime(t)+' · ур.'+player.level+' · ☠'+fmtNum(kills)+' · 👑'+bossKills+' боссов · 🔥серия x'+fmtNum(player.comboBest||0)+' · +'+metaEarned+' ✨';
     oover.classList.add('show');
     if(died){sfxSweep(420,45,0.9,'sawtooth',0.14,true);sfxBoom(0.7,0.2,500,40,true);}
     else sfxChime(523,4,0.09,0.11);
@@ -2871,7 +2887,7 @@
         const a=Math.atan2(player.y-g.y,player.x-g.x);
         g.x+=Math.cos(a)*(280+gemMagnetR)*dt;g.y+=Math.sin(a)*(280+gemMagnetR)*dt;
       }
-      if(dist(player,g)<player.r+g.r){grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));g.dead=true;if(challenge&&challenge.type==='gems')challenge.progress++;
+      if(dist(player,g)<player.r+g.r){grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));g.dead=true;gemsCollected++;if(challenge&&challenge.type==='gems')challenge.progress++;
         // искры-звёздочки при сборе кристалла
         if(particles.length<560)for(let i=0;i<3;i++){const a=rand(0,Math.PI*2);
           particles.push({x:g.x,y:g.y,vx:Math.cos(a)*1.5,vy:Math.sin(a)*1.5-1.8,life:0.5,color:'#93c5fd',sz:1.5+Math.random()*1.5});}}
