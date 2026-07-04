@@ -984,7 +984,7 @@
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
-    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];challenge=null;challengeAcc=0;
+    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1108,6 +1108,13 @@
   // урон врагов теперь заметно растёт (было кап ×4) — чтобы на 40+ толпа снова была смертельна
   // и «смысл» возвращался: убиваешь быстро, но и погибнуть реально
   function levelDmgMul(L){return Math.min(10,1+L*0.06);}
+  // смягчённый охват для РАЗМЕРОВ эффектов: при «Рад 297%» всё раздувалось до
+  // пол-экрана и поле выглядело перегруженным. sqrt сжимает рост, потолок 1.7×.
+  // (урон-механики свой aoeMult не теряют — режем именно визуальные/зонные радиусы)
+  function softAoe(m){return Math.min(1.7,Math.sqrt(m||1));}
+  // ПОТОЛОК СКОРОСТРЕЛЬНОСТИ: арсенал-оружие не может бить быстрее ×3.2 базового темпа
+  // (иначе на эндгейме atkSpeedMult раздувался, оружие спамило и игра тонула в снарядах)
+  function atkSpd(){return Math.min(3.2,player.atkSpeedMult||1);}
   // === ГЛОБАЛЬНЫЙ БАЛАНС ЖИВУЧЕСТИ ===
   // оценка РЕАЛЬНОГО DPS игрока: пушка (урон × темп × снаряды × крит × рост по уровню)
   // плюс ~1/5 пушки за каждый уровень дополнительного оружия
@@ -1278,11 +1285,15 @@
     mnx-=T*2;mny-=T*2;mxx+=T*2;mxy+=T*2;
     const cols=Math.ceil((mxx-mnx)/T),rows=Math.ceil((mxy-mny)/T);
     vaultWalls=[];
+    // СЕТКА проходимости: O(1) проверка стен (pointInWalls/inWalk/losClear) — без неё
+    // марш луча по ~95 стенам × врагов × оружий на 86 уровне вешал лабиринт
+    vaultGrid=new Uint8Array(cols*rows); vgOx=mnx;vgOy=mny;vgT=T;vgCols=cols;vgRows=rows;
     for(let r=0;r<rows;r++){
       let runStart=-1;
       for(let c=0;c<=cols;c++){
         const tx=mnx+c*T,ty=mny+r*T;
         const open=c<cols&&walk.some(w=>tx<w.x+w.w&&tx+T>w.x&&ty<w.y+w.h&&ty+T>w.y);
+        if(open)vaultGrid[r*cols+c]=1;
         if(!open&&c<cols){if(runStart<0)runStart=c;}
         else if(runStart>=0){
           vaultWalls.push({x:mnx+runStart*T,y:ty,w:(c-runStart)*T,h:T});
@@ -1357,7 +1368,15 @@
   }
   // проходимая зона лабиринта (комнаты+коридоры) — страховка от «выпал за стены»
   let vaultWalk=[];
-  function inWalk(px,py){for(const w of vaultWalk){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}return false;}
+  // сетка проходимости для O(1) проверок (заполняется в genDungeon)
+  let vaultGrid=null,vgOx=0,vgOy=0,vgT=64,vgCols=0,vgRows=0;
+  function gridWalkable(px,py){
+    if(!vaultGrid)return true;
+    const c=Math.floor((px-vgOx)/vgT),r=Math.floor((py-vgOy)/vgT);
+    if(c<0||r<0||c>=vgCols||r>=vgRows)return false;
+    return vaultGrid[r*vgCols+c]===1;
+  }
+  function inWalk(px,py){return gridWalkable(px,py);}
   // ближайшая проходимая точка к (px,py): клампим внутрь ближайшего прямоугольника зоны
   function nearestWalkPoint(px,py){
     let best=null,bd=Infinity;
@@ -1378,12 +1397,14 @@
     if(!p)p=nearestWalkPoint(o.x,o.y);
     if(p){o.x=p.x;o.y=p.y;o._gx=p.x;o._gy=p.y;}
   }
-  function pointInWalls(px,py){for(const w of vaultWalls){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}return false;}
-  // линия видимости: сквозь стены лабиринта не проходит ни урон, ни взрыв
+  // O(1) через сетку: точка в стене = непроходимый тайл
+  function pointInWalls(px,py){return vaultGrid?!gridWalkable(px,py):false;}
+  // линия видимости: сквозь стены лабиринта не проходит ни урон, ни взрыв.
+  // теперь каждый шаг — O(1) (тайл), а не скан всех стен — иначе лабиринт вешал игру
   function losClear(x1,y1,x2,y2){
-    if(!inVault)return true;
-    const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/22);
-    for(let i=1;i<n;i++){if(pointInWalls(x1+(x2-x1)*i/n,y1+(y2-y1)*i/n))return false;}
+    if(!inVault||!vaultGrid)return true;
+    const d=Math.hypot(x2-x1,y2-y1),n=Math.min(60,Math.ceil(d/28));
+    for(let i=1;i<n;i++){if(!gridWalkable(x1+(x2-x1)*i/n,y1+(y2-y1)*i/n))return false;}
     return true;
   }
   function exitVault(){
@@ -1391,7 +1412,7 @@
     enemies=vaultStash.enemies;projectiles=vaultStash.projectiles;enemyProjectiles=vaultStash.enemyProjectiles;
     pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
     player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
-    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];
+    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;
   }
   function rollVaultReward(){
     // супер-ценный приз за прохождение лабиринта
@@ -1682,7 +1703,7 @@
     }
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(player.explodeKillLevel&&!e.elite){
-      const R=70*player.aoeMult,ed=e.maxHp*(0.1+0.04*player.explodeKillLevel);
+      const R=70*softAoe(player.aoeMult),ed=e.maxHp*(0.1+0.04*player.explodeKillLevel);
       for(const o of enemies){if(o!==e&&dist(e,o)<R&&losClear(e.x,e.y,o.x,o.y))o.hp-=ed;}
       burst(e.x,e.y,'#fb923c',10);
     }
@@ -1796,11 +1817,11 @@
 
   function applyAura(dt){
     if(!player.auraLevel)return;
-    player.auraAcc+=dt*player.atkSpeedMult;
+    player.auraAcc+=dt*atkSpd();
     if(player.auraAcc<1)return;
     player.auraAcc=0;
     const dmg=rollDmg(player.auraDmg*player.dmgMult);
-    const R=player.auraRadius*player.aoeMult;
+    const R=player.auraRadius*softAoe(player.aoeMult);
     rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1});
     for(const e of enemies){if(dist(player,e)<R){e.hp-=dmg;}}
   }
@@ -1811,8 +1832,8 @@
     player.bladeAngle+=dt*(evo?4.5:3)*player.projSpeedMult;
     const perRing=player.bladeLevel+(evo?2:0),ringCount=Math.min(evo?5:3,player.projCount+(evo?2:0));
     const dmg=rollDmg((8+player.bladeLevel*5)*(evo?2:1)*player.dmgMult);
-    const hitCd=0.3/player.atkSpeedMult;
-    const reach=(8+player.bladeLevel*2)*(evo?1.6:1)*player.aoeMult;
+    const hitCd=0.3/atkSpd();
+    const reach=(8+player.bladeLevel*2)*(evo?1.6:1)*softAoe(player.aoeMult);
     for(let ring=0;ring<ringCount;ring++){
       const R=50+player.bladeLevel*6+ring*22,dir=ring%2===0?1:-1;
       for(let i=0;i<perRing;i++){
@@ -1829,7 +1850,7 @@
   function updateChain(dt){
     if(!player.chainLevel)return;
     const evo=player.chainEvo;
-    player.chainAcc+=dt*1000*player.atkSpeedMult;
+    player.chainAcc+=dt*1000*atkSpd();
     const interval=Math.max(evo?200:400,1200-player.chainLevel*120)*(evo?0.6:1);
     if(player.chainAcc<interval)return;
     player.chainAcc=0;
@@ -1859,12 +1880,12 @@
   function updateMines(dt){
     if(!player.mineLevel)return;
     const evo=player.mineEvo;
-    player.mineAcc+=dt*player.atkSpeedMult;
+    player.mineAcc+=dt*atkSpd();
     const interval=Math.max(evo?1:2.5,6-player.mineLevel*0.6)*(evo?0.5:1);
     if(player.mineAcc<interval)return;
     player.mineAcc=0;
     const dmg=rollDmg((20+player.mineLevel*14)*(evo?1.8:1)*player.dmgMult);
-    const blastR=(60+player.mineLevel*8)*(1+player.pierce*0.15)*(evo?1.7:1)*player.aoeMult;
+    const blastR=Math.min(200,(60+player.mineLevel*8)*(1+player.pierce*0.15)*(evo?1.7:1)*softAoe(player.aoeMult));
     for(let i=0;i<player.projCount;i++){
       mines.push({x:player.x+rand(-14,14),y:player.y+rand(-14,14),r:10+player.mineLevel*2,armed:false,armT:0.5,life:evo?24:8,
         dmg,blastR});
@@ -1913,7 +1934,7 @@
   }
 
   function updateArsenal(dt){
-    const p=player,as=p.atkSpeedMult*(p.overdriveActive>0?1.5:1);
+    const p=player,as=atkSpd()*(p.overdriveActive>0?1.5:1);
     // fireball — big slow projectile, explodes on first hit (handled in projectile loop)
     if(p.fireballLevel){p.fireballAcc+=dt*as;
       const fEvo=p.fireballEvo;
@@ -1922,7 +1943,7 @@
           const shots=fEvo?2:1;
           for(let s=0;s<shots;s++){const aa=a+(fEvo?(s-0.5)*0.25:0);
             projectiles.push({x:p.x,y:p.y,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:fEvo?13:9,life:2.6,pierceLeft:fEvo?3:0,hitSet:new Set(),
-              dmg:rollDmg((26+12*p.fireballLevel)*(fEvo?2.2:1)*p.dmgMult),fireball:true,fireballEvo:fEvo,blastR:(65+10*p.fireballLevel)*(fEvo?2:1)*p.aoeMult,color:fEvo?'#fb7185':'#f97316'});}
+              dmg:rollDmg((26+12*p.fireballLevel)*(fEvo?2.2:1)*p.dmgMult),fireball:true,fireballEvo:fEvo,blastR:Math.min(190,(65+10*p.fireballLevel)*(fEvo?2:1)*softAoe(p.aoeMult)),color:fEvo?'#fb7185':'#f97316'});}
           sfxSweep(220,140,0.12,'sine',0.05);}}}
     // boomerang — летит в БЛИЖАЙШЕГО врага (не по курсу движения) и возвращается;
     // hitSet сбрасывается каждые 0.45с — в толпе пилит многократно, как циркулярка.
@@ -1935,7 +1956,7 @@
         const e=nearestEnemy(560);
         const base=e?Math.atan2(e.y-p.y,e.x-p.x):Math.atan2(p.facing.y,p.facing.x);
         for(let i=0;i<n;i++){const a=base+i*(Math.PI*2/n);
-          boomers.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:(13+p.boomLevel)*(bEvo?1.5:1)*p.aoeMult,phase:0,rehit:0.45,
+          boomers.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:Math.min(30,(13+p.boomLevel)*(bEvo?1.35:1)*softAoe(p.aoeMult)),phase:0,rehit:0.45,
             dmg:rollDmg((20+10*p.boomLevel)*(bEvo?1.8:1)*p.dmgMult),hitSet:new Set(),life:6});}
         sfxSweep(480,720,0.08,'sine',0.03);}}
     for(const b of boomers){
@@ -1959,7 +1980,7 @@
     // frost nova — periodic ring: damage + slow (замороженные мобы синеют и получают ❄)
     if(p.frostLevel){p.frostAcc+=dt*as;
       if(p.frostAcc>=4.2-p.frostLevel*0.4){p.frostAcc=0;
-        const R=(120+18*p.frostLevel)*p.aoeMult,dmg=rollDmg((18+9*p.frostLevel)*p.dmgMult);
+        const R=Math.min(300,(120+18*p.frostLevel)*softAoe(p.aoeMult)),dmg=rollDmg((18+9*p.frostLevel)*p.dmgMult);
         rings.push({x:p.x,y:p.y,r:0,maxR:R,life:1,color:'#7dd3fc'});
         rings.push({x:p.x,y:p.y,r:0,maxR:R*0.7,life:0.8,color:'#e0f2fe'});
         for(const e of enemies){if(dist(p,e)<R&&losClear(p.x,p.y,e.x,e.y)){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,2.6);}}
@@ -2004,7 +2025,7 @@
     // acid pools — lingering damage zones dropped at the player's feet
     if(p.acidLevel){p.acidAcc+=dt*as;
       if(p.acidAcc>=4.5-p.acidLevel*0.35){p.acidAcc=0;
-        pools.push({x:p.x,y:p.y,r:(55+8*p.acidLevel)*p.aoeMult,life:4+0.4*p.acidLevel,dps:(8+5*p.acidLevel)*p.dmgMult});
+        pools.push({x:p.x,y:p.y,r:Math.min(135,(55+8*p.acidLevel)*softAoe(p.aoeMult)),life:4+0.4*p.acidLevel,dps:(8+5*p.acidLevel)*p.dmgMult});
         beep(240,0.1,'sine',0.06);}}
     for(const pl of pools){pl.life-=dt;
       if(pl.tornado){let bn=null,bd=560;for(const e of enemies){const d=dist(pl,e);if(d<bd){bd=d;bn=e;}}
@@ -2017,7 +2038,7 @@
     if(p.meteorLevel){p.meteorAcc+=dt*as;
       if(p.meteorAcc>=5.5-p.meteorLevel*0.4&&enemies.length){p.meteorAcc=0;
         const e=enemies[Math.floor(Math.random()*enemies.length)];
-        meteors.push({x:e.x,y:e.y,tt:0.7,blastR:(80+12*p.meteorLevel)*p.aoeMult,dmg:rollDmg((40+20*p.meteorLevel)*p.dmgMult)});}}
+        meteors.push({x:e.x,y:e.y,tt:0.7,blastR:Math.min(210,(80+12*p.meteorLevel)*softAoe(p.aoeMult)),dmg:rollDmg((40+20*p.meteorLevel)*p.dmgMult)});}}
     for(const m of meteors){m.tt-=dt;
       if(m.tt<=0){
         for(const e of enemies){if(dist(m,e)<m.blastR&&losClear(m.x,m.y,e.x,e.y))e.hp-=m.dmg;}
@@ -2044,14 +2065,14 @@
     if(p.tornadoLevel){p.tornadoAcc+=dt*as;
       if(p.tornadoAcc>=7.5-p.tornadoLevel*0.55){p.tornadoAcc=0;
         const tEvo=p.tornadoEvo,a=rand(0,Math.PI*2);
-        pools.push({x:p.x+Math.cos(a)*50,y:p.y+Math.sin(a)*50,r:(48+7*p.tornadoLevel)*(tEvo?1.6:1)*p.aoeMult,
+        pools.push({x:p.x+Math.cos(a)*50,y:p.y+Math.sin(a)*50,r:Math.min(150,(48+7*p.tornadoLevel)*(tEvo?1.5:1)*softAoe(p.aoeMult)),
           life:(5+0.5*p.tornadoLevel)*(tEvo?1.4:1),dps:(9+6*p.tornadoLevel)*(tEvo?1.8:1)*p.dmgMult,
           tornado:true,slow:true,spd:70+(tEvo?45:0),color:tEvo?'#818cf8':'#a5b4fc'});
         sfxSweep(280,520,0.3,'sine',0.05);}}
     // hammer — frontal shockwave: damage + knockback + brief slow
     if(p.hammerLevel){p.hammerAcc+=dt*as;
       if(p.hammerAcc>=4.2-p.hammerLevel*0.3){p.hammerAcc=0;
-        const R=(130+16*p.hammerLevel)*p.aoeMult,dmg=rollDmg((24+12*p.hammerLevel)*p.dmgMult);
+        const R=Math.min(280,(130+16*p.hammerLevel)*softAoe(p.aoeMult)),dmg=rollDmg((24+12*p.hammerLevel)*p.dmgMult);
         const fa=Math.atan2(p.facing.y,p.facing.x);
         rings.push({x:p.x+p.facing.x*R*0.35,y:p.y+p.facing.y*R*0.35,r:0,maxR:R*0.85,life:0.5,color:'#fbbf24'});
         for(const e of enemies){const d=dist(p,e);
@@ -2086,7 +2107,7 @@
     if(p.singularityLevel){p.singularityAcc+=dt*as;
       if(p.singularityAcc>=7-p.singularityLevel*0.5){p.singularityAcc=0;
         const a=rand(0,Math.PI*2);
-        pools.push({x:p.x+Math.cos(a)*90,y:p.y+Math.sin(a)*90,r:(52+8*p.singularityLevel)*p.aoeMult,
+        pools.push({x:p.x+Math.cos(a)*90,y:p.y+Math.sin(a)*90,r:Math.min(150,(52+8*p.singularityLevel)*softAoe(p.aoeMult)),
           life:4+0.5*p.singularityLevel,dps:(18+9*p.singularityLevel)*p.dmgMult,
           singularity:true,slow:true,pull:120+15*p.singularityLevel,color:'#a855f7'});
         sfxSweep(200,60,0.5,'sawtooth',0.09);}}
@@ -2458,7 +2479,7 @@
 
   function endSession(reason){
     const died=reason!=='finish';
-    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultT=0;}
+    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultT=0;}
     // смерть (кончились все жизни) — путь назад закрыт, только новая игра.
     // ручное «Завершить» (жизни ещё есть) — снимок сохраняется, «Продолжить» его загрузит
     if(died)clearRun();else saveRun();
@@ -3520,7 +3541,7 @@
       x.shadowBlur=0;x.globalAlpha=1;
     }
     // aura
-    if(player.auraLevel){x.strokeStyle='rgba(77,150,255,0.25)';x.lineWidth=2/zoom;x.beginPath();x.arc(player.x,player.y,player.auraRadius*player.aoeMult,0,Math.PI*2);x.stroke();}
+    if(player.auraLevel){x.strokeStyle='rgba(77,150,255,0.25)';x.lineWidth=2/zoom;x.beginPath();x.arc(player.x,player.y,player.auraRadius*softAoe(player.aoeMult),0,Math.PI*2);x.stroke();}
     // blades
     if(player.bladeLevel){
       const perRing=player.bladeLevel,ringCount=Math.min(3,player.projCount);
