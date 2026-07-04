@@ -822,6 +822,7 @@
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
+  let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
@@ -886,8 +887,8 @@
     og.fillStyle='#dbe6f5';og.fillRect(0,0,S,S); // светлый силуэт
     fin=document.createElement('canvas');fin.width=S;fin.height=S;
     const fg=fin.getContext('2d');
-    fg.globalAlpha=0.6;
-    [[2.5,0],[-2.5,0],[0,2.5],[0,-2.5],[1.8,1.8],[-1.8,1.8],[1.8,-1.8],[-1.8,-1.8]]
+    fg.globalAlpha=0.8;
+    [[3,0],[-3,0],[0,3],[0,-3],[2.2,2.2],[-2.2,2.2],[2.2,-2.2],[-2.2,-2.2]]
       .forEach(o=>fg.drawImage(oc,o[0],o[1]));
     fg.globalAlpha=1;fg.drawImage(cv,0,0);
     EMOJI_CACHE.set(key,fin); return fin;
@@ -983,7 +984,7 @@
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
-    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;challenge=null;challengeAcc=0;
+    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];challenge=null;challengeAcc=0;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1303,34 +1304,33 @@
     player._gx=player._gy=null; // сброс страховочной точки прошлого лабиринта
     const last=centers[centers.length-1];
     vaultExit={x:last.x,y:last.y,r:50};
-    // HP жителей лабиринта — от общей оценки DPS игрока (см. estPlayerDps):
-    // обычный моб умирает за ~2с огня, страж — за ~9с
+    // мобы НЕ спавнятся все сразу у входа (толпа убивала игрока на пороге) —
+    // копим ТОЧКИ спавна, мобы материализуются по мере продвижения (см. step)
     const dps=estPlayerDps();
-    const mobCap=Math.max(45,dps*2.1),bossCap=Math.max(400,dps*9);
-    const tune=e2=>{e2.hp=e2.maxHp=Math.min(e2.maxHp,mobCap);};
-    // КОРИДОРЫ: мобы вдоль сегментов
+    const bossCap=Math.max(400,dps*9);
+    vaultSpawns=[];
+    // КОРИДОРЫ: точки вдоль сегментов
     dg.corr.forEach(seg=>{
       const len=Math.hypot(seg.p2.x-seg.p1.x,seg.p2.y-seg.p1.y);
       const n=Math.min(6,Math.floor(len/230));
       for(let i=1;i<=n;i++){
         const k=i/(n+1);
-        const e=spawnEnemy(false);tune(e);
-        e.x=seg.p1.x+(seg.p2.x-seg.p1.x)*k+rand(-40,40);
-        e.y=seg.p1.y+(seg.p2.y-seg.p1.y)*k+rand(-40,40);
+        vaultSpawns.push({x:seg.p1.x+(seg.p2.x-seg.p1.x)*k+rand(-40,40),
+          y:seg.p1.y+(seg.p2.y-seg.p1.y)*k+rand(-40,40)});
       }
     });
-    // КОМНАТЫ (кроме стартовой и выходной): спящий страж + пара мобов
+    // КОМНАТЫ (кроме стартовой и выходной): спящий страж (реальный) + точки пары мобов
     for(let i=1;i<centers.length-1;i++){
       const c=centers[i];
       const b=spawnEnemy(true,2+Math.floor(Math.random()*4));
       b.hp=b.maxHp=Math.min(b.maxHp*0.35,bossCap);b.r=Math.min(b.r,44);b.x=c.x;b.y=c.y;b.pauseSpawns=false;
       b.modSummon=0;b.msT=0; // стражи не призывают подкрепление
       b.skinName='Страж лабиринта';b.sleep=true;
-      for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);tune(e);e.x=c.x+rand(-140,140);e.y=c.y+rand(-140,140);e.sleep=true;}
+      for(let k2=0;k2<2;k2++)vaultSpawns.push({x:c.x+rand(-140,140),y:c.y+rand(-140,140)});
     }
-    // выходная комната: маленькая охрана у самого выхода
-    for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);tune(e);e.x=last.x+rand(-130,130);e.y=last.y+rand(-130,130);e.sleep=true;}
-    vaultTotal=enemies.length;
+    // выходная комната: точки охраны у самого выхода
+    for(let k2=0;k2<2;k2++)vaultSpawns.push({x:last.x+rand(-130,130),y:last.y+rand(-130,130)});
+    vaultTotal=enemies.length+vaultSpawns.length;
     announce={text:'🏛 ЛАБИРИНТ — уничтожь всех ('+vaultTotal+')! Стражи ждут в комнатах',life:3.6,color:'#c084fc'};
     camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.4);
     sfxSweep(200,900,0.5,'sawtooth',0.12,true);
@@ -1380,7 +1380,7 @@
     enemies=vaultStash.enemies;projectiles=vaultStash.projectiles;enemyProjectiles=vaultStash.enemyProjectiles;
     pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
     player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
-    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];
+    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];
   }
   function rollVaultReward(){
     // супер-ценный приз за прохождение лабиринта
@@ -1731,8 +1731,7 @@
     sfxChime(440,4,0.09,0.11);
     setTimeout(()=>{
       oweapon.classList.remove('show');
-      if(pendingLevelUps>0)showLevelUp();
-      else startCooldown();
+      startCooldown(); // накопленные карточки откроются на следующем уровне, не сейчас
     },2800);
   }
 
@@ -2432,7 +2431,7 @@
 
   function endSession(reason){
     const died=reason!=='finish';
-    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultT=0;}
+    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultT=0;}
     // смерть (кончились все жизни) — путь назад закрыт, только новая игра.
     // ручное «Завершить» (жизни ещё есть) — снимок сохраняется, «Продолжить» его загрузит
     if(died)clearRun();else saveRun();
@@ -2517,8 +2516,7 @@
 
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
     if(t-lastLevelUpAt>=90){
-      levelUpOnce();
-      if(pendingLevelUps>0&&state==='running')showLevelUp();
+      levelUpOnce(); // карточки НЕ открываем посреди боя — покажутся на ближайшем уровне от опыта
     }
 
     fire(dt);
@@ -2571,7 +2569,17 @@
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
     if(inVault){
       vaultT+=dt; // просто счёт времени внутри (без лимита)
-      const left=enemies.length+pendingSpawns.length;
+      // материализация отложенных точек: моб появляется, когда игрок подходит
+      for(const sp2 of vaultSpawns){
+        if(dist(player,sp2)<430){
+          sp2.done=true;
+          const e=spawnEnemy(false);
+          e.x=sp2.x;e.y=sp2.y;e._gx=sp2.x;e._gy=sp2.y;
+          burst(sp2.x,sp2.y,'#c084fc',10);
+        }
+      }
+      if(vaultSpawns.some(s2=>s2.done))vaultSpawns=vaultSpawns.filter(s2=>!s2.done);
+      const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
       if(!vaultCleared&&left===0){
         vaultCleared=true;
         announce={text:'🏆 ЛАБИРИНТ ЗАЧИЩЕН! Иди к выходу 🚪',life:3,color:'#4ade80'};
@@ -3120,8 +3128,9 @@
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,'#c084fc',1.7+0.3*Math.sin(t*6));
     if(inVault){
-      // стрелки на оставшихся мобов — последнего всегда можно найти
+      // стрелки на оставшихся мобов и будущие точки спавна — последнего всегда можно найти
       enemies.forEach(e=>edgeArrow(e.x,e.y,e.r,e.elite?'#f87171':'#fca5a5',e.elite?1.5:1));
+      vaultSpawns.forEach(s2=>edgeArrow(s2.x,s2.y,10,'#7c5b66',0.9));
       if(vaultCleared&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
     }
   }
@@ -3540,7 +3549,7 @@
     if(inVault){
       x.save();x.textAlign='center';x.textBaseline='top';
       x.font='bold 15px system-ui,sans-serif';
-      const vLeft=enemies.length+pendingSpawns.length;
+      const vLeft=enemies.length+pendingSpawns.length+vaultSpawns.length;
       x.fillStyle=vaultCleared?'#4ade80':'#c084fc';x.shadowColor='#000';x.shadowBlur=4;
       x.fillText(vaultCleared?'🚪 ВЫХОД ОТКРЫТ — иди к двери!':'🏛 ЛАБИРИНТ · осталось мобов: '+vLeft+(vLeft<=vaultTotal?' из '+vaultTotal:''),W/2,40);
       x.restore();
