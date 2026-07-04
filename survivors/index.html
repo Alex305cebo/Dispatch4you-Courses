@@ -516,6 +516,8 @@
   function fmtNum(n){
     if(!isFinite(n))return '∞';
     const a=Math.abs(n);
+    if(a>=1e15)return n.toExponential(1).replace('e+','e'); // 1.2e18 и выше — эндшпиль без предела
+    if(a>=1e12)return (n/1e12).toFixed(a>=1e13?0:1)+'T';
     if(a>=1e9)return (n/1e9).toFixed(a>=1e10?0:1)+'B';
     if(a>=1e6)return (n/1e6).toFixed(a>=1e7?0:1)+'M';
     if(a>=1e4)return Math.round(n/1e3)+'K';
@@ -733,8 +735,13 @@
     {id:'speed',name:'👟 Прыть',desc:'+3% скорости за уровень.',max:5,costBase:8},
     {id:'crit',name:'🎯 Меткость',desc:'+3% шанса крита за уровень.',max:5,costBase:10},
     {id:'armor',name:'🛡 Стойкость',desc:'-3% получаемого урона за уровень.',max:5,costBase:10},
+    // БЕСКОНЕЧНЫЕ тиры: когда всё остальное куплено — сюда, цена растёт каждый уровень,
+    // а бонус копится без предела. Всегда есть куда тратить эссенцию.
+    {id:'ascend',name:'🌌 Восхождение',desc:'+8% ко ВСЕМУ урону за уровень. Бесконечно — каждый раз дороже.',max:Infinity,costBase:40,growth:1.16,endless:true},
+    {id:'bulwark',name:'🔆 Вечный оплот',desc:'+8 HP и -1.5% урона по тебе за уровень. Бесконечно.',max:Infinity,costBase:35,growth:1.15,endless:true},
   ];
-  function metaCost(u,lvl){return (lvl+1)*u.costBase;}
+  // цена: обычные — линейно; бесконечные — геометрически (дорожают всё сильнее)
+  function metaCost(u,lvl){return u.endless?Math.round(u.costBase*Math.pow(u.growth||1.15,lvl)):(lvl+1)*u.costBase;}
 
   // достижения — открываются по итогам забега, хранятся отдельно и навсегда
   const ACHIEVEMENTS=[
@@ -770,18 +777,19 @@
     }).join('');
   }
   function showMetaShop(){
-    document.getElementById('metaShardsBalance').textContent=metaState.shards;
+    document.getElementById('metaShardsBalance').textContent=fmtNum(metaState.shards);
     const cardsEl=document.getElementById('metaCards');
     cardsEl.innerHTML='';
     META_UPGRADES.forEach(u=>{
       const lvl=metaState.unlocks[u.id]||0;
-      const maxed=lvl>=u.max;
+      const maxed=lvl>=u.max; // у бесконечных (max=Infinity) всегда false
       const cost=maxed?0:metaCost(u,lvl);
       const afford=!maxed&&metaState.shards>=cost;
+      const maxLbl=isFinite(u.max)?u.max:'∞';
       const el=document.createElement('div');el.className='card';
-      el.style.borderColor='#c084fc';
-      el.innerHTML='<b style="color:#e9d5ff;">'+u.name+'</b>'
-        +'<span style="display:block;color:#c084fc;font-weight:600;margin-bottom:4px;">Ур. '+lvl+'/'+u.max+(maxed?'':' · '+cost+' ✨')+'</span>'
+      el.style.borderColor=u.endless?'#fde047':'#c084fc';
+      el.innerHTML='<b style="color:'+(u.endless?'#fef08a':'#e9d5ff')+';">'+u.name+'</b>'
+        +'<span style="display:block;color:'+(u.endless?'#fde047':'#c084fc')+';font-weight:600;margin-bottom:4px;">Ур. '+lvl+'/'+maxLbl+(maxed?'':' · '+fmtNum(cost)+' ✨')+'</span>'
         +'<span>'+u.desc+'</span>';
       if(maxed||!afford)el.style.opacity='0.5';
       if(!maxed&&afford){
@@ -934,11 +942,12 @@
   function applyMetaBonuses(p){
     const mu=metaState.unlocks;
     const vit=mu.vitality||0,pow=mu.power||0,spd=mu.speed||0,crit=mu.crit||0,arm=mu.armor||0;
-    p.maxHp+=10*vit;p.hp=p.maxHp;
-    p.dmgMult*=Math.pow(1.04,pow);
+    const asc=mu.ascend||0,bul=mu.bulwark||0; // бесконечные тиры
+    p.maxHp+=10*vit+8*bul;p.hp=p.maxHp;
+    p.dmgMult*=Math.pow(1.04,pow)*Math.pow(1.08,asc);
     p.speed=Math.round(p.speed*(1+0.03*spd));
     p.critChance=Math.min(0.95,p.critChance+0.03*crit);
-    if(arm)p.curseDmgTakenMul=(p.curseDmgTakenMul||1)*Math.pow(0.97,arm);
+    if(arm||bul)p.curseDmgTakenMul=(p.curseDmgTakenMul||1)*Math.pow(0.97,arm)*Math.pow(0.985,bul);
   }
 
   function makeBasePlayer(){
@@ -975,7 +984,10 @@
   // СОФТ-КАП всех боевых статов — гарантирует конечные читаемые числа и убивает
   // петлю «Infinity урон → NaN HP мобов → мобы бессмертны → взрывной опыт → ещё урон».
   // Вызывается каждый кадр (дёшево) и ловит ЛЮБОЙ источник роста (карты/реликвии/волны)
-  const STAT_CAPS={dmg:1e8,dmgMult:2e5,maxHp:5e6,speed:600,pickupRadius:400};
+  // потолки лишь ПРЕДОХРАНЯЮТ от Infinity/NaN — не ограничивают прогресс: урон/множитель/HP
+  // растут практически без предела (до 1e120), а враги масштабируются вместе (коридор HP
+  // привязан к estPlayerDps). Скорость атаки/охват/крит остаются в разумных рамках (баланс/FPS).
+  const STAT_CAPS={dmg:1e120,dmgMult:1e60,maxHp:1e60,speed:600,pickupRadius:400};
   function capStats(){
     const p=player;
     for(const k in STAT_CAPS){if(!isFinite(p[k])||p[k]>STAT_CAPS[k])p[k]=STAT_CAPS[k];}
@@ -1142,7 +1154,9 @@
   const BOSS_STAGES=10;
   const STAGE_COLORS=['#ef4444','#f97316','#eab308','#84cc16','#22c55e','#14b8a6','#0ea5e9','#6366f1','#a855f7','#ec4899'];
 
-  function xpForPower(hp,dmg){return Math.max(1,Math.round(Math.sqrt(hp*dmg)/6));}
+  // опыт за силу врага, но КОНЕЧНЫЙ: при hp·dmg > 1e308 произведение даёт Infinity →
+  // бесконечный опыт → фриз в while(grantXp). Гарантируем конечность и разумный потолок.
+  function xpForPower(hp,dmg){const pr=hp*dmg;const v=isFinite(pr)?Math.sqrt(pr)/6:1e15;return Math.max(1,Math.min(1e12,Math.round(v)));}
 
   // enemy power tracks the player's exponential upgrade curve, decelerating after 60.
   // HP-экспонента приручена (было 1.035/1.01) — иначе враги превращались в губки, т.к.
@@ -1177,8 +1191,8 @@
     let dps=shot*(1000/p.fireRate)*(p.projCount||1);
     const w=(p.bladeLevel||0)+(p.chainLevel||0)+(p.mineLevel||0)+(p.fireballLevel||0)+(p.boomLevel||0)+(p.frostLevel||0)+(p.laserLevel||0)+(p.shardLevel||0)+(p.droneLevel||0)+(p.acidLevel||0)+(p.meteorLevel||0)+(p.ghostLevel||0)+(p.turretLevel||0)+(p.daggerLevel||0)+(p.tornadoLevel||0)+(p.hammerLevel||0)+(p.starfallLevel||0)+(p.singularityLevel||0)+(p.auraLevel||0);
     dps*=1+0.12*w;
-    if(!isFinite(dps))dps=1e9; // страховка — коридор HP не должен получить Infinity/NaN
-    return Math.max(40,Math.min(dps,1e10));
+    if(!isFinite(dps))dps=1e250; // страховка — коридор HP не должен получить Infinity/NaN
+    return Math.max(40,Math.min(dps,1e250)); // враги без реального лимита (масштабируются с уроном)
   }
   // «коридор живучести»: HP каждого моба при спавне зажимается в секундах огня игрока —
   // потолок спасает от неубиваемых губок, пол — от «мобы испаряются». Кривые сложности
@@ -2232,8 +2246,10 @@
   }
 
   function grantXp(v){
-    player.xp+=Math.round(v*(player.curseXpMul||1));
-    while(player.xp>=player.xpNeed){
+    const add=Math.round(v*(player.curseXpMul||1));
+    player.xp+=isFinite(add)?add:0;
+    let guard=0; // предохранитель от зависания на экстремальных числах
+    while(player.xp>=player.xpNeed&&isFinite(player.xpNeed)&&guard++<2000){
       player.xp-=player.xpNeed;
       levelUpOnce();
       player.xpNeed=xpNeedFor(player.level);
