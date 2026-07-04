@@ -913,7 +913,7 @@
       barrierLevel:0,barrierCd:0,thornsLevel:0,greedLevel:0,wisdomLevel:0,secondWindLevel:0,
       auraHasteLevel:0,momentumLevel:0,noHitT:0,rageLevel:0,armorLevel:0,dodgeLevel:0,
       explodeKillLevel:0,chillLevel:0,rearLevel:0,chronoLevel:0,chronoCd:15,
-      bladeEvo:false,chainEvo:false,mineEvo:false,fireballEvo:false,laserEvo:false,droneEvo:false,gunEvo:false,
+      bladeEvo:false,chainEvo:false,mineEvo:false,fireballEvo:false,laserEvo:false,droneEvo:false,gunEvo:false,daggerEvo:false,tornadoEvo:false,boomEvo:false,
       lvlDmgScale:1,overdrive:0,overdriveActive:0,combo:0,comboT:0,comboBest:0,
       starfallLevel:0,starfallAcc:0,singularityLevel:0,singularityAcc:0,
       level:1,xp:0,xpNeed:xpNeedFor(1),invuln:0,facing:{x:1,y:0}};
@@ -1003,7 +1003,14 @@
   function loadRun(){
     let s;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){s=null;}
     if(!s||!s.player)return false;
-    player=s.player;
+    // сейв старой версии может не содержать полей, добавленных позже — тогда
+    // p.чтотоAcc+=dt даёт NaN и оружие/механика ТИХО умирает навсегда
+    // («ледяная волна не работает»). Кладём сохранённое поверх свежих дефолтов
+    // и лечим любые не-числа.
+    const baseP=newPlayer(),savedP=s.player;
+    player=Object.assign(baseP,savedP);
+    for(const k in player){const v=player[k];
+      if(typeof v==='number'&&!isFinite(v))player[k]=(typeof baseP[k]==='number'&&isFinite(baseP[k]))?baseP[k]:0;}
     enemies=s.enemies||[];gems=s.gems||[];pickups=s.pickups||[];mines=s.mines||[];pools=s.pools||[];
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];
@@ -1021,7 +1028,7 @@
     boomers.forEach(b=>{if(!(b.hitSet instanceof Set))b.hitSet=new Set();});
     challenge=null; // челлендж не переживает перезагрузку — начнётся новый по таймеру
     sessionTag=s.sessionTag||newSessionTag();renderPlayerName();
-    if(player.lvlDmgScale==null)recalcLvlScale(); // старые сейвы без поля
+    if(savedP.lvlDmgScale==null)recalcLvlScale(); // в сейве поля не было — дефолт 1 неверен для высоких уровней
     if(player.overdrive==null)player.overdrive=0;
     if(player.overdriveActive==null)player.overdriveActive=0;
     if(player.combo==null)player.combo=0;
@@ -1727,12 +1734,13 @@
       for(const e of enemies){if(b.hitSet.has(e))continue;if(dist(b,e)<b.r+e.r){e.hp-=b.dmg;b.hitSet.add(e);burst(b.x,b.y,'#fde047',3);}}
     }
     boomers=boomers.filter(b=>!b.dead&&b.life>0);
-    // frost nova — periodic ring: damage + slow
+    // frost nova — periodic ring: damage + slow (замороженные мобы синеют и получают ❄)
     if(p.frostLevel){p.frostAcc+=dt*as;
-      if(p.frostAcc>=5-p.frostLevel*0.4){p.frostAcc=0;
-        const R=(110+15*p.frostLevel)*p.aoeMult,dmg=rollDmg((10+6*p.frostLevel)*p.dmgMult);
+      if(p.frostAcc>=4.2-p.frostLevel*0.4){p.frostAcc=0;
+        const R=(120+18*p.frostLevel)*p.aoeMult,dmg=rollDmg((18+9*p.frostLevel)*p.dmgMult);
         rings.push({x:p.x,y:p.y,r:0,maxR:R,life:1,color:'#7dd3fc'});
-        for(const e of enemies){if(dist(p,e)<R){e.hp-=dmg;e.slowT=2;}}
+        rings.push({x:p.x,y:p.y,r:0,maxR:R*0.7,life:0.8,color:'#e0f2fe'});
+        for(const e of enemies){if(dist(p,e)<R){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,2.6);}}
         sfxSweep(1200,400,0.25,'sine',0.08);}}
     // laser — instant beam through the nearest enemy, hits everything on the line
     if(p.laserLevel){p.laserAcc+=dt*as;
@@ -2691,12 +2699,16 @@
     if(sKey){
       if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
       const R=e.r*1.55;
+      // заморозка/замедление видимы: ледяной диск под мобом + снежинка
+      if(e.slowT>0){x.globalAlpha=Math.min(0.35,e.slowT*0.3);x.fillStyle='#7dd3fc';
+        x.beginPath();x.arc(0,0,R*0.95,0,Math.PI*2);x.fill();x.globalAlpha=1;}
       x.save();
       if(player.x<ex)x.scale(-1,1);
       x.rotate(Math.sin(t*3+e._aseed)*0.09);
       const pu=1+0.06*Math.sin(t*4+e._aseed);x.scale(pu,pu);
       drawEmoji(sKey,0,0,R);
       x.restore();
+      if(e.slowT>0.15)drawEmoji('❄️',R*0.6,-R*0.6,Math.max(6,R*0.34));
       x.restore();return;
     }
     x.fillStyle=e.color;
@@ -3275,12 +3287,27 @@
     if(fxFlash>0){x.fillStyle='rgba('+fxFlashColor+','+(fxFlash*0.28)+')';x.fillRect(0,0,W,H);}
   }
 
+  // одна необработанная ошибка в step/draw раньше молча убивала rAF-цикл — игра
+  // «зависала». Ловим её, пропускаем кадр и показываем текст, чтобы можно было починить.
+  let lastLoopErr='',loopErrN=0;
   function loop(now){
     const real=Math.min(0.05,(now-last)/1000);last=now;
     let dt=real;
     if(hitStop>0){hitStop-=real;dt=real*0.18;} // микро-слоу-мо на «сочных» моментах
-    if(state==='running'&&!paused)step(dt);
-    draw();
+    try{
+      if(state==='running'&&!paused)step(dt);
+      draw();
+    }catch(err){
+      loopErrN++;lastLoopErr=String(err&&err.message||err);
+      if(loopErrN<=3)console.error('game frame error:',err);
+    }
+    if(lastLoopErr){
+      x.save();x.setTransform(1,0,0,1,0,0);x.globalAlpha=0.85;
+      x.fillStyle='#7f1d1d';x.fillRect(0,H-22,W,22);
+      x.fillStyle='#fecaca';x.font='11px monospace';x.textAlign='left';x.textBaseline='middle';
+      x.fillText('⚠ '+loopErrN+'× '+lastLoopErr.slice(0,120)+' — сделай скриншот этой строки',8,H-11);
+      x.restore();
+    }
     if(state==='running')raf=requestAnimationFrame(loop); // RAF крутится и на паузе — чтобы можно было снять
   }
 
