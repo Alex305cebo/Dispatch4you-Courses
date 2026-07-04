@@ -1247,6 +1247,7 @@
         corr.push({p1:p1,p2:p2});
       });
     }
+    vaultWalk=walk; // проходимая зона — для страховки keepInWalk
     // стены: тайлуем ограничивающий прямоугольник, всё непроходимое — стена
     let mnx=1e18,mny=1e18,mxx=-1e18,mxy=-1e18;
     walk.forEach(r=>{mnx=Math.min(mnx,r.x);mny=Math.min(mny,r.y);mxx=Math.max(mxx,r.x+r.w);mxy=Math.max(mxy,r.y+r.h);});
@@ -1276,6 +1277,7 @@
     const centers=dg.centers;
     // игрок — в стартовой комнате, выход — в последней
     player.x=centers[0].x;player.y=centers[0].y;player.invuln=Math.max(player.invuln,1.2);
+    player._gx=player._gy=null; // сброс страховочной точки прошлого лабиринта
     const last=centers[centers.length-1];
     vaultExit={x:last.x,y:last.y,r:50};
     // КОРИДОРЫ: мобы вдоль сегментов
@@ -1310,11 +1312,31 @@
       const cx=Math.max(w.x,Math.min(o.x,w.x+w.w)),cy=Math.max(w.y,Math.min(o.y,w.y+w.h));
       const dx=o.x-cx,dy=o.y-cy,d2=dx*dx+dy*dy;
       if(d2<o.r*o.r){
-        if(d2<0.0001){o.y=w.y-o.r;continue;}
+        if(d2<0.0001){
+          // центр внутри стены (толпа вдавила): выходим к БЛИЖАЙШЕЙ грани,
+          // а не всегда вверх — иначе мобов выбрасывало за пределы лабиринта
+          const pl=o.x-w.x,pr=w.x+w.w-o.x,pt=o.y-w.y,pb2=w.y+w.h-o.y;
+          const m=Math.min(pl,pr,pt,pb2);
+          if(m===pl)o.x=w.x-o.r;else if(m===pr)o.x=w.x+w.w+o.r;
+          else if(m===pt)o.y=w.y-o.r;else o.y=w.y+w.h+o.r;
+          continue;
+        }
         const d=Math.sqrt(d2),push=(o.r-d)/d;
         o.x+=dx*push;o.y+=dy*push;
       }
     }
+  }
+  // проходимая зона лабиринта (комнаты+коридоры) — страховка от «выпал за стены»
+  let vaultWalk=[];
+  function inWalk(px,py){for(const w of vaultWalk){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}return false;}
+  // вернуть объект в проходимую зону: на последнюю валидную точку или в ближайшую комнату
+  function keepInWalk(o){
+    if(!inVault||!vaultWalk.length)return;
+    if(inWalk(o.x,o.y)){o._gx=o.x;o._gy=o.y;return;}
+    if(o._gx!=null){o.x=o._gx;o.y=o._gy;return;}
+    let best=null,bd=Infinity;
+    for(const w of vaultWalk){const cx=w.x+w.w/2,cy=w.y+w.h/2;const d=(cx-o.x)**2+(cy-o.y)**2;if(d<bd){bd=d;best={x:cx,y:cy};}}
+    if(best){o.x=best.x;o.y=best.y;o._gx=best.x;o._gy=best.y;}
   }
   function pointInWalls(px,py){for(const w of vaultWalls){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}return false;}
   // линия видимости: сквозь стены лабиринта не проходит ни урон, ни взрыв
@@ -1329,7 +1351,7 @@
     enemies=vaultStash.enemies;projectiles=vaultStash.projectiles;enemyProjectiles=vaultStash.enemyProjectiles;
     pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
     player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
-    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;
+    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];
   }
   function rollVaultReward(){
     // супер-ценный приз за прохождение лабиринта
@@ -1981,7 +2003,8 @@
         for(const e of enemies){const d=dist(p,e);
           if(d<R&&losClear(p.x,p.y,e.x,e.y)){const a=Math.atan2(e.y-p.y,e.x-p.x);let da=Math.abs(a-fa);if(da>Math.PI)da=Math.PI*2-da;
             if(da<1.05){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,0.5);
-              if(!e.elite){e.x+=Math.cos(a)*75;e.y+=Math.sin(a)*75;}}}}
+              if(!e.elite){const kx=e.x+Math.cos(a)*75,ky=e.y+Math.sin(a)*75;
+                if(!inVault||inWalk(kx,ky)){e.x=kx;e.y=ky;}}}}}
         camShake=Math.max(camShake,5);sfxBoom(0.3,0.18,600,80);}}
     // turrets — stationary guns with a lifespan; на 4+ ур. пули пробивают
     if(p.turretLevel){p.turretAcc+=dt*as;
@@ -2373,7 +2396,7 @@
 
   function endSession(reason){
     const died=reason!=='finish';
-    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultT=0;}
+    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultT=0;}
     // смерть (кончились все жизни) — путь назад закрыт, только новая игра.
     // ручное «Завершить» (жизни ещё есть) — снимок сохраняется, «Продолжить» его загрузит
     if(died)clearRun();else saveRun();
@@ -2417,7 +2440,7 @@
     const len=Math.hypot(mx,my);
     const hasteMul=(player.hasteActive>0?1.4+player.hasteLevel*0.05:1)*(player.overdriveActive>0?1.35:1);
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*dt;player.y+=my*player.speed*hasteMul*dt;player.facing={x:mx,y:my};}
-    if(inVault)collideCircleWalls(player);
+    if(inVault){collideCircleWalls(player);keepInWalk(player);}
     if(player.invuln>0)player.invuln-=dt;
     if(player.overdriveActive>0)player.overdriveActive-=dt;
     // след для шлейфа во время перегрузки (короткий кольцевой буфер)
@@ -2599,7 +2622,7 @@
         if(e.slowT>0)spd*=0.5;
         if(player.chillLevel&&d<130)spd*=1-0.08*player.chillLevel;
         moveEnemy(e,dt,d,spd);
-        if(inVault)collideCircleWalls(e);
+        if(inVault){collideCircleWalls(e);keepInWalk(e);}
       }
       if(d<player.r+e.r){
         if(player.thornsLevel)e.hp-=6*player.thornsLevel*player.dmgMult*dt;
