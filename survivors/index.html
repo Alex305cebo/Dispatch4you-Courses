@@ -842,13 +842,12 @@
   function getImg(src){let im=imgCache[src];if(!im){im=new Image();im.src=src;imgCache[src]=im;}return im;}
   function imgReady(im){return im&&im.complete&&im.naturalWidth>0;}
   const CHARACTERS=[
-    {id:'balanced',icon:'🎯',name:'Универсал',avatar:'assets/avatars/dispatcher.png',desc:'Сбалансированный старт, без уклона.',apply:p=>{}},
-    {id:'warrior',icon:'⚔️',name:'Воин',avatar:'assets/avatars/driver.png',desc:'+30% макс. HP, +10% урона, -5% скорости.',apply:p=>{p.maxHp=Math.round(p.maxHp*1.3);p.hp=p.maxHp;p.dmgMult*=1.1;p.speed=Math.round(p.speed*0.95);}},
-    {id:'scout',icon:'🏃',name:'Разведчик',avatar:'assets/avatars/broker.png',desc:'+18% скорости, +1 пробитие, +30% радиус подбора.',apply:p=>{p.speed=Math.round(p.speed*1.18);p.pierce+=1;p.pickupRadius=Math.round(p.pickupRadius*1.3);}},
-    {id:'mage',icon:'🔮',name:'Маг',avatar:'assets/avatars/accountant.png',desc:'+15% скорость атаки, +8% крит, но -15% макс. HP.',apply:p=>{p.atkSpeedMult*=1.15;p.critChance=Math.min(0.95,p.critChance+0.08);p.maxHp=Math.round(p.maxHp*0.85);p.hp=p.maxHp;}},
-    {id:'berserk',icon:'🩸',name:'Берсерк',avatar:'assets/avatars/owner.png',desc:'+25% урона и вампиризм, но -20% макс. HP.',apply:p=>{p.dmgMult*=1.25;p.lifesteal+=0.02;p.maxHp=Math.round(p.maxHp*0.8);p.hp=p.maxHp;}},
+    {id:'balanced',icon:'🎯',name:'Универсал',desc:'Сбалансированный старт, без уклона.',apply:p=>{}},
+    {id:'warrior',icon:'⚔️',name:'Воин',desc:'+30% макс. HP, +10% урона, -5% скорости.',apply:p=>{p.maxHp=Math.round(p.maxHp*1.3);p.hp=p.maxHp;p.dmgMult*=1.1;p.speed=Math.round(p.speed*0.95);}},
+    {id:'scout',icon:'🏃',name:'Разведчик',desc:'+18% скорости, +1 пробитие, +30% радиус подбора.',apply:p=>{p.speed=Math.round(p.speed*1.18);p.pierce+=1;p.pickupRadius=Math.round(p.pickupRadius*1.3);}},
+    {id:'mage',icon:'🔮',name:'Маг',desc:'+15% скорость атаки, +8% крит, но -15% макс. HP.',apply:p=>{p.atkSpeedMult*=1.15;p.critChance=Math.min(0.95,p.critChance+0.08);p.maxHp=Math.round(p.maxHp*0.85);p.hp=p.maxHp;}},
+    {id:'berserk',icon:'🩸',name:'Берсерк',desc:'+25% урона и вампиризм, но -20% макс. HP.',apply:p=>{p.dmgMult*=1.25;p.lifesteal+=0.02;p.maxHp=Math.round(p.maxHp*0.8);p.hp=p.maxHp;}},
   ];
-  function playerAvatar(){const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];return getImg(c.avatar);}
   // враги — НАТИВНЫЕ цветные эмодзи системы (Apple Color Emoji / Segoe UI Emoji /
   // Noto Color Emoji): чёткие в любом размере и ничего не тянут по сети.
   // Глиф один раз рендерится в offscreen-canvas (кэш) и растягивается на весь квадрат
@@ -3722,8 +3721,8 @@
   function renderChars(){
     document.getElementById('charList').innerHTML=CHARACTERS.map(c=>
       '<div class="card charCard" data-id="'+c.id+'" style="width:150px;cursor:pointer;text-align:center;'+(c.id===selectedChar?'border-color:#38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.4);':'')+'">'
-      +'<img src="'+c.avatar+'" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid #38bdf8;margin:0 auto 6px;display:block;background:#0c0f18;">'
-      +'<b style="color:#7dd3fc;">'+c.icon+' '+c.name+'</b><span>'+c.desc+'</span></div>').join('');
+      +'<div style="width:72px;height:72px;border-radius:50%;border:2px solid #38bdf8;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:42px;line-height:1;background:#0c0f18;">'+c.icon+'</div>'
+      +'<b style="color:#7dd3fc;">'+c.name+'</b><span>'+c.desc+'</span></div>').join('');
     document.querySelectorAll('.charCard').forEach(el=>el.addEventListener('click',()=>{
       selectedChar=el.getAttribute('data-id');localStorage.setItem('survivors-char',selectedChar);
       syncCharName();renderChars();beep(660,0.08,'sine',0.1);
