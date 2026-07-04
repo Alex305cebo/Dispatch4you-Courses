@@ -830,7 +830,32 @@
   ];
   function playerAvatar(){const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];return getImg(c.avatar);}
   // враги-эмодзи по форме тела (с откатом на векторную фигуру, если картинка не загружена)
-  const SHAPE_EMOJI={blob:'assets/emojis/angry.webp',triangle:'assets/emojis/rage.webp',square:'assets/emojis/tired.webp',shield:'assets/emojis/worried.webp',star:'assets/emojis/exploding.webp',diamond:'assets/emojis/neutral.webp',fang:'assets/emojis/rage.webp',hex:'assets/emojis/sad.webp'};
+  // ЖИВАЯ анимация на canvas: спрайт-листы (кадры в полосу), нарезанные из
+  // Google Noto Animated Emoji (CC BY 4.0). drawImage анимированного webp дал бы
+  // только первый кадр — поэтому листаем кадры сами, работает на любом устройстве.
+  const ANIM_SPRITES={
+    airplane:{file:'assets/anim/airplane.png',frames:24,size:128,fps:14.2},
+    spider:{file:'assets/anim/spider.png',frames:24,size:96,fps:12.7},
+    bat:{file:'assets/anim/bat.png',frames:24,size:96,fps:25.6},
+    ogre:{file:'assets/anim/ogre.png',frames:24,size:96,fps:9.4},
+    crab:{file:'assets/anim/crab.png',frames:24,size:96,fps:8.8},
+    alien_monster:{file:'assets/anim/alien_monster.png',frames:4,size:96,fps:5.1},
+    ghost:{file:'assets/anim/ghost.png',frames:24,size:96,fps:10.8},
+    skull:{file:'assets/anim/skull.png',frames:24,size:96,fps:4},
+    microbe:{file:'assets/anim/microbe.png',frames:24,size:96,fps:21.3},
+    red_heart:{file:'assets/anim/red_heart.png',frames:24,size:96,fps:13.7},
+    shark:{file:'assets/anim/shark.png',frames:24,size:96,fps:6.5},
+  };
+  // форма тела врага -> анимированный эмодзи-спрайт
+  const SHAPE_SPRITE={blob:'spider',triangle:'bat',square:'ogre',shield:'crab',star:'alien_monster',diamond:'ghost',hex:'skull',ring:'microbe',cross:'red_heart',fang:'shark'};
+  // рисует кадр анимации: seed рассинхронизирует толпу, чтобы не дёргались хором
+  function drawAnim(key,cx,cy,drawR,seed){
+    const sp=ANIM_SPRITES[key];if(!sp)return false;
+    const im=getImg(sp.file);if(!imgReady(im))return false;
+    const fi=Math.floor(t*sp.fps+(seed||0))%sp.frames;
+    x.drawImage(im,fi*sp.size,0,sp.size,sp.size,cx-drawR,cy-drawR,drawR*2,drawR*2);
+    return true;
+  }
   let selectedChar=localStorage.getItem('survivors-char')||'balanced';
   function applyCharacter(p){
     const c=CHARACTERS.find(c=>c.id===selectedChar)||CHARACTERS[0];
@@ -2488,13 +2513,19 @@
     // behavior telegraphs
     if(e.armT!=null){x.globalAlpha=0.5+0.5*Math.sin(t*30);x.fillStyle='#fff';x.beginPath();x.arc(0,0,e.r+6,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     if(e.cm==='aim'){x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;x.setLineDash([5,5]);x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(e.ca)*260,Math.sin(e.ca)*260);x.stroke();x.setLineDash([]);}
-    // враг-эмодзи из нашей коллекции (если картинка загружена) — иначе векторная фигура ниже
-    const em=SHAPE_EMOJI[e.skinShape]?getImg(SHAPE_EMOJI[e.skinShape]):null;
-    if(em&&imgReady(em)){
-      // цветная подложка-ореол под эмодзи (сохраняет цвет тира/акта)
-      x.globalAlpha=0.5;x.fillStyle=e.color;x.beginPath();x.arc(0,0,e.r*1.05,0,Math.PI*2);x.fill();x.globalAlpha=1;
-      const R=e.r*1.25;x.drawImage(em,-R,-R,R*2,R*2);
-      x.restore();return;
+    // враг — ЖИВОЙ анимированный эмодзи-спрайт; иначе векторная фигура ниже (фолбэк)
+    const sKey=SHAPE_SPRITE[e.skinShape];
+    if(sKey){
+      if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
+      // цветная подложка-ореол (сохраняет читаемость цвета тира/акта/волн)
+      x.globalAlpha=0.45;x.fillStyle=e.color;x.beginPath();x.arc(0,0,e.r*1.02,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      x.save();
+      // зеркалим по направлению к игроку (смотрят на цель) + лёгкое «дыхание»-покачивание
+      if(player.x<ex)x.scale(-1,1);
+      x.rotate(Math.sin(t*3+e._aseed)*0.08);
+      const drawn=drawAnim(sKey,0,0,e.r*1.35,e._aseed);
+      x.restore();
+      if(drawn){x.restore();return;}
     }
     x.fillStyle=e.color;
     if(e.skinShape==='triangle'){
@@ -2873,21 +2904,31 @@
       x.globalAlpha=1;
     }
     x.globalAlpha=(player.invuln>0)?(Math.floor(t*20)%2?0.4:1):1;
-    const av=playerAvatar();
     x.shadowColor=player.berserkActive>0?'#f97316':(player.shieldActive>0?'#38bdf8':(player.hasteActive>0?'#4ade80':'#4D96FF'));
     x.shadowBlur=14;
-    if(imgReady(av)){
-      // герой — аватар из нашей коллекции; круглый клип + свечение-кольцо
-      const R=player.r*1.7;
-      x.save();x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.clip();
-      x.drawImage(av,player.x-R,player.y-R,R*2,R*2);x.restore();
-      x.strokeStyle='#4D96FF';x.lineWidth=2.5;x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.stroke();
-    }else{
-      x.fillStyle='#e8ebf2';x.beginPath();x.arc(player.x,player.y,player.r,0,Math.PI*2);x.fill();
+    // герой — ЖИВОЙ анимированный самолёт, плавно поворачивается носом по курсу.
+    // плавность: копим сглаженный угол в player._hAng (эмодзи «смотрит» ↗, поэтому +45°)
+    {
+      const want=Math.atan2(player.facing.y,player.facing.x);
+      if(player._hAng==null)player._hAng=want;
+      let da=want-player._hAng;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;
+      player._hAng+=da*0.18;
+      x.save();x.translate(player.x,player.y);x.rotate(player._hAng+Math.PI/4);
+      const heroDrawn=drawAnim('airplane',0,0,player.r*1.9,0);
+      x.restore();
+      if(!heroDrawn){
+        const av=playerAvatar();
+        if(imgReady(av)){
+          const R=player.r*1.7;
+          x.save();x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.clip();
+          x.drawImage(av,player.x-R,player.y-R,R*2,R*2);x.restore();
+          x.strokeStyle='#4D96FF';x.lineWidth=2.5;x.beginPath();x.arc(player.x,player.y,R,0,Math.PI*2);x.stroke();
+        }else{
+          x.fillStyle='#e8ebf2';x.beginPath();x.arc(player.x,player.y,player.r,0,Math.PI*2);x.fill();
+        }
+      }
     }
     x.shadowBlur=0;
-    // индикатор направления
-    x.strokeStyle='#4D96FF';x.lineWidth=2;x.beginPath();x.moveTo(player.x,player.y);x.lineTo(player.x+player.facing.x*(player.r*1.9),player.y+player.facing.y*(player.r*1.9));x.stroke();
     x.globalAlpha=1;
     x.restore();
     drawOffscreenIndicators();
