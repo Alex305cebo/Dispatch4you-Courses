@@ -874,8 +874,27 @@
     g.fillText(gl,ox,oy);
     EMOJI_CACHE.set(gl,cv); return cv;
   }
-  function drawEmoji(gl,cx,cy,drawR){
-    const cv=emojiSprite(gl);
+  // вариант со светлым контуром-«стикером»: тёмные глифы (паук 🕷️, мышь 🦇)
+  // читаются на тёмном поле. Контур строится один раз из силуэта глифа (кэш)
+  function emojiSpriteOutlined(gl){
+    const key=gl+'|o';
+    let fin=EMOJI_CACHE.get(key); if(fin)return fin;
+    const cv=emojiSprite(gl),S=cv.width;
+    const oc=document.createElement('canvas');oc.width=S;oc.height=S;
+    const og=oc.getContext('2d');
+    og.drawImage(cv,0,0);
+    og.globalCompositeOperation='source-in';
+    og.fillStyle='#dbe6f5';og.fillRect(0,0,S,S); // светлый силуэт
+    fin=document.createElement('canvas');fin.width=S;fin.height=S;
+    const fg=fin.getContext('2d');
+    fg.globalAlpha=0.6;
+    [[2.5,0],[-2.5,0],[0,2.5],[0,-2.5],[1.8,1.8],[-1.8,1.8],[1.8,-1.8],[-1.8,-1.8]]
+      .forEach(o=>fg.drawImage(oc,o[0],o[1]));
+    fg.globalAlpha=1;fg.drawImage(cv,0,0);
+    EMOJI_CACHE.set(key,fin); return fin;
+  }
+  function drawEmoji(gl,cx,cy,drawR,outlined){
+    const cv=outlined?emojiSpriteOutlined(gl):emojiSprite(gl);
     const pb=x.shadowBlur;x.shadowBlur=0; // тень размывала глиф грязным ореолом
     x.drawImage(cv,cx-drawR,cy-drawR,drawR*2,drawR*2);
     x.shadowBlur=pb;
@@ -1372,7 +1391,7 @@
         // эмодзи моба раздувается, вращаясь, и тает
         x.save();x.translate(f.x,f.y);x.globalAlpha=1-k;
         x.rotate(f.rot*k);const s=1+k*0.9;x.scale(s,s);
-        drawEmoji(f.gl,0,0,f.r);
+        drawEmoji(f.gl,0,0,f.r,true);
         x.restore();
       }else if(f.kind==='ice'){
         // замороженный моб разбивается на льдинки
@@ -2784,7 +2803,7 @@
       if(player.x<ex)x.scale(-1,1);
       x.rotate(Math.sin(t*2+e._aseed)*0.05);
       const bpu=1+0.05*Math.sin(t*3+e._aseed);x.scale(bpu,bpu);
-      drawEmoji(bKey,0,0,R*0.8);
+      drawEmoji(bKey,0,0,R*0.8,true);
       x.restore();
       if(e.sleep)drawEmoji('💤',R*0.6,-R*0.75,Math.max(8,R*0.3));
       x.restore();return;
@@ -2865,7 +2884,7 @@
     const sKey=SHAPE_EMOJI[e.skinShape];
     if(sKey){
       if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
-      const R=e.r*1.55;
+      const R=Math.max(e.r*1.55,13); // нижний предел: мелкий паук в начале — не точка
       // заморозка/замедление видимы: ледяной диск под мобом + снежинка
       if(e.slowT>0){x.globalAlpha=Math.min(0.35,e.slowT*0.3);x.fillStyle='#7dd3fc';
         x.beginPath();x.arc(0,0,R*0.95,0,Math.PI*2);x.fill();x.globalAlpha=1;}
@@ -2873,7 +2892,7 @@
       if(player.x<ex)x.scale(-1,1);
       x.rotate(Math.sin(t*3+e._aseed)*0.09);
       const pu=1+0.06*Math.sin(t*4+e._aseed);x.scale(pu,pu);
-      drawEmoji(sKey,0,0,R);
+      drawEmoji(sKey,0,0,R,true);
       x.restore();
       if(e.slowT>0.15)drawEmoji('❄️',R*0.6,-R*0.6,Math.max(6,R*0.34));
       if(e.sleep)drawEmoji('💤',R*0.55,-R*0.7,Math.max(6,R*0.32));
