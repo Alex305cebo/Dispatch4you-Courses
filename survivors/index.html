@@ -1108,6 +1108,28 @@
   // урон врагов теперь заметно растёт (было кап ×4) — чтобы на 40+ толпа снова была смертельна
   // и «смысл» возвращался: убиваешь быстро, но и погибнуть реально
   function levelDmgMul(L){return Math.min(10,1+L*0.06);}
+  // === ГЛОБАЛЬНЫЙ БАЛАНС ЖИВУЧЕСТИ ===
+  // оценка РЕАЛЬНОГО DPS игрока: пушка (урон × темп × снаряды × крит × рост по уровню)
+  // плюс ~1/5 пушки за каждый уровень дополнительного оружия
+  function estPlayerDps(){
+    const p=player;
+    const shot=p.dmg*(p.lvlDmgScale||1)*(1+(p.critChance||0)*((p.critMult||2)-1));
+    let dps=shot*(1000/p.fireRate)*(p.projCount||1);
+    const w=(p.bladeLevel||0)+(p.chainLevel||0)+(p.mineLevel||0)+(p.fireballLevel||0)+(p.boomLevel||0)+(p.frostLevel||0)+(p.laserLevel||0)+(p.shardLevel||0)+(p.droneLevel||0)+(p.acidLevel||0)+(p.meteorLevel||0)+(p.ghostLevel||0)+(p.turretLevel||0)+(p.daggerLevel||0)+(p.tornadoLevel||0)+(p.hammerLevel||0)+(p.starfallLevel||0)+(p.singularityLevel||0)+(p.auraLevel||0);
+    dps*=1+0.12*w;
+    return Math.max(40,dps);
+  }
+  // «коридор живучести»: HP каждого моба при спавне зажимается в секундах огня игрока —
+  // потолок спасает от неубиваемых губок, пол — от «мобы испаряются». Кривые сложности
+  // работают ВНУТРИ коридора, но не могут его пробить.
+  function clampMobHp(en){
+    const dps=estPlayerDps();
+    const lim=en.superboss?[10,26]:en.elite?[4,12]:en.hunter?[2.5,6]:en.champion?[1.2,4]:[0.4,1.9];
+    const was=Math.max(1,en.maxHp);
+    en.maxHp=Math.max(dps*lim[0],Math.min(en.maxHp,dps*lim[1]));
+    en.hp=en.hp/was*en.maxHp;
+    en.xp=Math.max(en.xp||1,xpForPower(en.maxHp,en.dmg));
+  }
   // ponytail: d.hpMul is time-based and caps at 6x within ~4 min, well before a fresh
   // player reaches level 10 — taper it down early so mobs aren't unkillable on a slow start
   function earlyGameHpEase(L){return L<10?0.5+0.05*L:1;}
@@ -1171,6 +1193,7 @@
       xp:xpForPower(finalHp,finalDmg),elite:!!elite,bossNumber:bn,shootCd:elite?rand(0.8,1.6):0,
       stageCount:elite?BOSS_STAGES:0,stage:elite?BOSS_STAGES:0,
       ranged:!elite&&!!base.ranged,rangedCd:!elite&&base.ranged?rand(1,2):0};
+    clampMobHp(en); // всегда в коридоре живучести относительно урона игрока
     enemies.push(en);
     return en;
   }
@@ -1184,6 +1207,7 @@
     en.dmg*=1.3;
     en.r=Math.max(en.r*1.7,22);
     en.speed=Math.min(150,Math.max(95,en.speed));
+    clampMobHp(en); // как охотник: свой коридор (2.5–7с огня)
     en.color='#facc15';en.glow='#fde047';
     en.xp=Math.max(en.xp,xpForPower(en.hp,en.dmg));
     announce={text:'⭐ ОХОТНИК вышел на поле — добудь награду!',life:2.4,color:'#facc15'};
@@ -1280,11 +1304,9 @@
     player._gx=player._gy=null; // сброс страховочной точки прошлого лабиринта
     const last=centers[centers.length-1];
     vaultExit={x:last.x,y:last.y,r:50};
-    // HP жителей лабиринта масштабируем от РЕАЛЬНОГО урона игрока, а не от
-    // глобальной сложности (та растёт от времени и делала мобов неубиваемыми):
-    // обычный моб умирает за ~2с огня из пушки, страж — за ~9с
-    const shot=player.dmg*(player.lvlDmgScale||1)*(1+(player.critChance||0)*((player.critMult||2)-1));
-    const dps=Math.max(40,shot*(1000/player.fireRate)*(player.projCount||1)*0.8+30);
+    // HP жителей лабиринта — от общей оценки DPS игрока (см. estPlayerDps):
+    // обычный моб умирает за ~2с огня, страж — за ~9с
+    const dps=estPlayerDps();
     const mobCap=Math.max(45,dps*2.1),bossCap=Math.max(400,dps*9);
     const tune=e2=>{e2.hp=e2.maxHp=Math.min(e2.maxHp,mobCap);};
     // КОРИДОРЫ: мобы вдоль сегментов
@@ -1605,9 +1627,11 @@
       // killed splitters break into two faster halves (queued — we're inside the filter pass)
       for(let i=0;i<2;i++){
         const hp=e.maxHp*0.35;
-        pendingSpawns.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:e.r*0.6,hp,maxHp:hp,
+        const ch={x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:e.r*0.6,hp,maxHp:hp,
           speed:Math.min(170,e.speed*1.4),dmg:e.dmg*0.6,color:e.color,skinShape:e.skinShape,
-          child:true,xp:Math.max(1,Math.round(e.xp*0.3)),elite:false});
+          child:true,xp:Math.max(1,Math.round(e.xp*0.3)),elite:false};
+        clampMobHp(ch);
+        pendingSpawns.push(ch);
       }
     }
     beep(e.elite?160:300,0.09,'sine',0.045);
@@ -2274,6 +2298,7 @@
       xp:xpForPower(hp,dmg)*2,elite:true,superboss:true,superNumber,bossNumber:6,
       stageCount:BOSS_STAGES,stage:BOSS_STAGES,
       shootCd:rand(0.5,1),summonCd:10,phase66:false,phase33:false};
+    clampMobHp(en);
     enemies.push(en);
     announce={text:'⚠ СУПЕРБОСС: '+en.skinName+' ⚠',life:3.5,color:'#ff2d55'};
     rings.push({x:player.x,y:player.y,r:0,maxR:900,life:1.4});
@@ -2293,6 +2318,7 @@
       xp:xpForPower(hp,dmg)*1.5,elite:true,superboss:true,pauseSpawns:true,bossNumber:3,
       stageCount:BOSS_STAGES,stage:BOSS_STAGES,
       shootCd:rand(0.6,1.2),summonCd:8,phase66:false,phase33:false};
+    clampMobHp(en);
     enemies.push(en);
     mobSpawnPaused=true;
     announce={text:'⚠ БОСС УРОВНЯ 8: '+en.skinName+' ⚠',life:3.2,color:'#f97316'};
@@ -2307,7 +2333,8 @@
     for(let i=0;i<n;i++){
       const add=spawnEnemy(false);
       add.x=e.x+rand(-60,60);add.y=e.y+rand(-60,60);
-      add.hp=add.maxHp=add.hp*1.8;add.dmg*=1.4;add.xp=xpForPower(add.hp,add.dmg);
+      add.hp=add.maxHp=add.hp*1.8;add.dmg*=1.4;
+      clampMobHp(add);
       add.supermob=true;
     }
     announce={text:'Босс призывает подкрепление!',life:1.8,color:'#facc15'};
