@@ -1280,13 +1280,20 @@
     player._gx=player._gy=null; // сброс страховочной точки прошлого лабиринта
     const last=centers[centers.length-1];
     vaultExit={x:last.x,y:last.y,r:50};
+    // HP жителей лабиринта масштабируем от РЕАЛЬНОГО урона игрока, а не от
+    // глобальной сложности (та растёт от времени и делала мобов неубиваемыми):
+    // обычный моб умирает за ~2с огня из пушки, страж — за ~9с
+    const shot=player.dmg*(player.lvlDmgScale||1)*(1+(player.critChance||0)*((player.critMult||2)-1));
+    const dps=Math.max(40,shot*(1000/player.fireRate)*(player.projCount||1)*0.8+30);
+    const mobCap=Math.max(45,dps*2.1),bossCap=Math.max(400,dps*9);
+    const tune=e2=>{e2.hp=e2.maxHp=Math.min(e2.maxHp,mobCap);};
     // КОРИДОРЫ: мобы вдоль сегментов
     dg.corr.forEach(seg=>{
       const len=Math.hypot(seg.p2.x-seg.p1.x,seg.p2.y-seg.p1.y);
       const n=Math.min(6,Math.floor(len/230));
       for(let i=1;i<=n;i++){
         const k=i/(n+1);
-        const e=spawnEnemy(false);
+        const e=spawnEnemy(false);tune(e);
         e.x=seg.p1.x+(seg.p2.x-seg.p1.x)*k+rand(-40,40);
         e.y=seg.p1.y+(seg.p2.y-seg.p1.y)*k+rand(-40,40);
       }
@@ -1295,12 +1302,13 @@
     for(let i=1;i<centers.length-1;i++){
       const c=centers[i];
       const b=spawnEnemy(true,2+Math.floor(Math.random()*4));
-      b.hp=b.maxHp=b.maxHp*0.35;b.r=Math.min(b.r,44);b.x=c.x;b.y=c.y;b.pauseSpawns=false;
+      b.hp=b.maxHp=Math.min(b.maxHp*0.35,bossCap);b.r=Math.min(b.r,44);b.x=c.x;b.y=c.y;b.pauseSpawns=false;
+      b.modSummon=0;b.msT=0; // стражи не призывают подкрепление
       b.skinName='Страж лабиринта';b.sleep=true;
-      for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);e.x=c.x+rand(-140,140);e.y=c.y+rand(-140,140);e.sleep=true;}
+      for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);tune(e);e.x=c.x+rand(-140,140);e.y=c.y+rand(-140,140);e.sleep=true;}
     }
     // выходная комната: маленькая охрана у самого выхода
-    for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);e.x=last.x+rand(-130,130);e.y=last.y+rand(-130,130);e.sleep=true;}
+    for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);tune(e);e.x=last.x+rand(-130,130);e.y=last.y+rand(-130,130);e.sleep=true;}
     vaultTotal=enemies.length;
     announce={text:'🏛 ЛАБИРИНТ — уничтожь всех ('+vaultTotal+')! Стражи ждут в комнатах',life:3.6,color:'#c084fc'};
     camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.4);
@@ -2189,7 +2197,8 @@
   }
 
   function startCooldown(){
-    if(!pendingBossLevel&&!pendingSuperboss&&!pendingLevel8Boss&&!pendingSuperWarning&&!pendingCurse){
+    // в лабиринте боссы-рубежи/супербоссы/проклятия НЕ спавнятся — флаги ждут выхода
+    if(inVault||(!pendingBossLevel&&!pendingSuperboss&&!pendingLevel8Boss&&!pendingSuperWarning&&!pendingCurse)){
       freezeT=Math.max(freezeT,2);
       state='running';last=performance.now();raf=requestAnimationFrame(loop);
       return;
@@ -2294,6 +2303,7 @@
   }
 
   function summonAdds(e,n){
+    if(inVault)return; // в лабиринте подкреплений нет — цель «убить всех» должна быть конечной
     for(let i=0;i<n;i++){
       const add=spawnEnemy(false);
       add.x=e.x+rand(-60,60);add.y=e.y+rand(-60,60);
@@ -2472,8 +2482,10 @@
       }
     }
 
-    pickupAcc+=dt;
-    if(pickupAcc>pickupInterval){pickupAcc=0;pickupInterval=rand(14,20)/(1+0.13*(player.luckLevel||0));spawnPickup();}
+    if(!inVault){ // в лабиринте усиления не спавнятся (могут упасть за стены)
+      pickupAcc+=dt;
+      if(pickupAcc>pickupInterval){pickupAcc=0;pickupInterval=rand(14,20)/(1+0.13*(player.luckLevel||0));spawnPickup();}
+    }
 
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
 
@@ -2507,13 +2519,13 @@
     if(freezeT>0)freezeT-=dt;
 
     // scheduled wave event (delayed a few seconds past the level-up so it doesn't stack the boss intro)
-    if(pendingEvent){
+    if(pendingEvent&&!inVault){ // в лабиринте события ждут выхода
       eventDelay-=dt;
       if(eventDelay<=0){const lvl=pendingEvent;pendingEvent=null;fireEvent(lvl);}
     }
 
     // safe zone: a periodic sanctuary — enemies can't enter, and the shop only works inside
-    if(!safeZone){
+    if(!safeZone&&!inVault){
       safeZoneAcc+=dt;
       if(safeZoneAcc>=45){
         safeZoneAcc=0;
@@ -3504,7 +3516,7 @@
       x.font='bold 15px system-ui,sans-serif';
       const vLeft=enemies.length+pendingSpawns.length;
       x.fillStyle=vaultCleared?'#4ade80':'#c084fc';x.shadowColor='#000';x.shadowBlur=4;
-      x.fillText(vaultCleared?'🚪 ВЫХОД ОТКРЫТ — иди к двери!':'🏛 ЛАБИРИНТ · осталось мобов: '+vLeft+' из '+vaultTotal,W/2,40);
+      x.fillText(vaultCleared?'🚪 ВЫХОД ОТКРЫТ — иди к двери!':'🏛 ЛАБИРИНТ · осталось мобов: '+vLeft+(vLeft<=vaultTotal?' из '+vaultTotal:''),W/2,40);
       x.restore();
     }else if(challenge){
       x.save();x.textAlign='center';x.textBaseline='top';
