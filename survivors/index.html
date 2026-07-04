@@ -2598,8 +2598,16 @@
       if(eventDelay<=0){const lvl=pendingEvent;pendingEvent=null;fireEvent(lvl);}
     }
 
-    // safe zone: a periodic sanctuary — enemies can't enter, and the shop only works inside
-    if(!safeZone&&!inVault){
+    // safe zone: a periodic sanctuary — enemies can't enter, and the shop only works inside.
+    // ВАЖНО: тикаем существующую зону, только если она есть; спавним новую лишь вне лабиринта.
+    // (раньше условие !safeZone&&!inVault роняло else на safeZone.life при null в лабиринте)
+    if(safeZone){
+      safeZone.life-=dt;
+      if(safeZone.life<=0){
+        safeZone=null;
+        announce={text:'Безопасная зона исчезла',life:1.6,color:'#8891a3'};
+      }
+    }else if(!inVault){
       safeZoneAcc+=dt;
       if(safeZoneAcc>=45){
         safeZoneAcc=0;
@@ -2607,12 +2615,6 @@
         safeZone={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:150,life:25};
         announce={text:'🛡 Безопасная зона — передышка!',life:2.6,color:'#4ade80'};
         sfxChime(392,4,0.09,0.1);
-      }
-    }else{
-      safeZone.life-=dt;
-      if(safeZone.life<=0){
-        safeZone=null;
-        announce={text:'Безопасная зона исчезла',life:1.6,color:'#8891a3'};
       }
     }
 
