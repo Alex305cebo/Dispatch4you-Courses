@@ -2589,18 +2589,18 @@
     const bKey=BOSS_SPRITE[e.skinShape];
     if(bKey&&ANIM_SPRITES[bKey]&&imgReady(getImg(ANIM_SPRITES[bKey].file))){
       if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
-      // цветное кольцо — читаемость цвета скина/стадии
-      x.shadowColor=e.glow;x.shadowBlur=20;
-      x.strokeStyle=e.color;x.lineWidth=4;
-      x.beginPath();x.arc(0,0,e.r*1.15+Math.sin(t*3)*3,0,Math.PI*2);x.stroke();
-      if(e.superboss){x.strokeStyle='rgba(255,45,85,'+(0.5+0.15*Math.sin(t*4))+')';x.lineWidth=5;
-        x.beginPath();x.arc(0,0,e.r*1.45,0,Math.PI*2);x.stroke();}
+      const R=e.r*1.35;
+      x.fillStyle='#0e1322';x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();
+      x.shadowColor=e.glow;x.shadowBlur=18;
+      x.strokeStyle=e.color;x.lineWidth=5;
+      x.beginPath();x.arc(0,0,R+Math.sin(t*3)*3,0,Math.PI*2);x.stroke();
+      if(e.superboss){x.strokeStyle='rgba(255,45,85,'+(0.5+0.15*Math.sin(t*4))+')';x.lineWidth=6;
+        x.beginPath();x.arc(0,0,R*1.22,0,Math.PI*2);x.stroke();}
       x.shadowBlur=0;
-      x.globalAlpha=0.35;x.fillStyle=e.color;x.beginPath();x.arc(0,0,e.r*1.05,0,Math.PI*2);x.fill();x.globalAlpha=1;
       x.save();
       if(player.x<ex)x.scale(-1,1);
       x.rotate(Math.sin(t*2+e._aseed)*0.05);
-      drawAnim(bKey,0,0,e.r*1.3,e._aseed);
+      drawAnim(bKey,0,0,R*0.9,e._aseed);
       x.restore();
       x.restore();return;
     }
@@ -2678,17 +2678,21 @@
     if(e.cm==='aim'){x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;x.setLineDash([5,5]);x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(e.ca)*260,Math.sin(e.ca)*260);x.stroke();x.setLineDash([]);}
     // враг — ЖИВОЙ анимированный эмодзи-спрайт; иначе векторная фигура ниже (фолбэк)
     const sKey=SHAPE_SPRITE[e.skinShape];
-    if(sKey){
+    if(sKey&&ANIM_SPRITES[sKey]&&imgReady(getImg(ANIM_SPRITES[sKey].file))){
       if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
-      // цветная подложка-ореол (сохраняет читаемость цвета тира/акта/волн)
-      x.globalAlpha=0.45;x.fillStyle=e.color;x.beginPath();x.arc(0,0,e.r*1.02,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      // «жетон»: тёмный диск + яркое цветное кольцо — эмодзи читается на любом фоне,
+      // цвет кольца показывает тир/акт/усиления
+      const R=e.r*1.45;
+      x.fillStyle='#0e1322';x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();
+      x.strokeStyle=e.color;x.lineWidth=Math.max(2.5,e.r*0.16);
+      x.shadowColor=e.color;x.shadowBlur=8;
+      x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.stroke();x.shadowBlur=0;
       x.save();
-      // зеркалим по направлению к игроку (смотрят на цель) + лёгкое «дыхание»-покачивание
       if(player.x<ex)x.scale(-1,1);
-      x.rotate(Math.sin(t*3+e._aseed)*0.08);
-      const drawn=drawAnim(sKey,0,0,e.r*1.35,e._aseed);
+      x.rotate(Math.sin(t*3+e._aseed)*0.07);
+      drawAnim(sKey,0,0,R*0.88,e._aseed);
       x.restore();
-      if(drawn){x.restore();return;}
+      x.restore();return;
     }
     x.fillStyle=e.color;
     if(e.skinShape==='triangle'){
@@ -3137,8 +3141,13 @@
       if(player._hAng==null)player._hAng=want;
       let da=want-player._hAng;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;
       player._hAng+=da*0.18;
+      // жетон героя: тёмный диск + синее кольцо — виден на любом фоне
+      const HR=player.r*2.1;
+      x.fillStyle='#0e1322';x.beginPath();x.arc(player.x,player.y,HR,0,Math.PI*2);x.fill();
+      x.strokeStyle='#4D96FF';x.lineWidth=3;
+      x.beginPath();x.arc(player.x,player.y,HR,0,Math.PI*2);x.stroke();
       x.save();x.translate(player.x,player.y);x.rotate(player._hAng+Math.PI/4);
-      const heroDrawn=drawAnim('airplane',0,0,player.r*1.9,0);
+      const heroDrawn=drawAnim('airplane',0,0,HR*0.92,0);
       x.restore();
       if(!heroDrawn){
         const av=playerAvatar();
@@ -3468,7 +3477,7 @@
   function resize(){W=bg.width=innerWidth;H=bg.height=innerHeight;}
   // pf — сила параллакса (дальние звёзды двигаются медленнее ближних → глубина)
   function mk(){return{x:Math.random(),y:Math.random(),r:1.2+Math.random()*2.6,vy:0.15+Math.random()*0.35,col:COLORS[Math.floor(Math.random()*COLORS.length)],a:0.3+Math.random()*0.5,tw:Math.random()*Math.PI*2,pf:0.03+Math.random()*0.12};}
-  function mkNeb(){return{x:Math.random(),y:Math.random(),r:200+Math.random()*260,col:COLORS[Math.floor(Math.random()*COLORS.length)],pf:0.015+Math.random()*0.03};}
+  function mkNeb(){return{x:Math.random(),y:Math.random(),r:140+Math.random()*160,col:COLORS[Math.floor(Math.random()*COLORS.length)],pf:0.015+Math.random()*0.03};}
   window.addEventListener('resize',resize);
   resize();parts=Array.from({length:90},mk);nebula=Array.from({length:3},mkNeb);
   const mod=(a,n)=>((a%n)+n)%n;
@@ -3480,7 +3489,7 @@
     nebula.forEach(n=>{
       const nx=mod(n.x*W-cx*n.pf,W+n.r*2)-n.r,ny=mod(n.y*H-cy*n.pf,H+n.r*2)-n.r;
       const rg=bx.createRadialGradient(nx,ny,0,nx,ny,n.r);
-      rg.addColorStop(0,n.col+'22');rg.addColorStop(1,n.col+'00');
+      rg.addColorStop(0,n.col+'0d');rg.addColorStop(1,n.col+'00');
       bx.fillStyle=rg;bx.beginPath();bx.arc(nx,ny,n.r,0,Math.PI*2);bx.fill();
     });
     // звёзды с параллаксом + лёгким дрейфом вверх
