@@ -804,6 +804,7 @@
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
+  let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
   function doHitStop(d){hitStop=Math.max(hitStop,d);}
@@ -939,7 +940,7 @@
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
-    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;
+    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;challenge=null;challengeAcc=0;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1406,6 +1407,7 @@
       }
     }
     beep(e.elite?160:300,0.09,'sine',0.045);
+    if(challenge&&challenge.type==='kills')challenge.progress++;
     // комбо: серия убийств без паузы — награда за агрессию, ускоряет овердрайв
     player.combo++;player.comboT=2.5;
     if(player.combo>player.comboBest)player.comboBest=player.combo;
@@ -2142,6 +2144,7 @@
     const mitig=(1-0.05*player.armorLevel)*(player.curseDmgTakenMul||1);
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
     player.hp-=dmg*mitig;player.noHitT=0;camShake=Math.max(camShake,isContact?2:3);
+    if(challenge&&challenge.type==='nohit')challenge.failed=true;
     if(force){
       const a=Math.atan2(player.y-fy,player.x-fx);
       player.x+=Math.cos(a)*force;player.y+=Math.sin(a)*force;
@@ -2316,6 +2319,38 @@
         announce={text:'⌛ Лабиринт схлопнулся — выход не найден',life:2.6,color:'#8891a3'};exitVault();
       }
     }else{
+      // мини-челленджи: каждые ~75с короткое испытание с наградой
+      if(!challenge){
+        challengeAcc+=dt;
+        if(challengeAcc>=75&&player.level>=5){
+          challengeAcc=0;
+          const kinds=[
+            {type:'kills',goal:Math.max(25,Math.round(12+player.level*1.6)),time:25,label:'Убей'},
+            {type:'nohit',goal:0,time:18,label:'Не получай урона'},
+            {type:'gems',goal:15,time:22,label:'Собери кристаллы'},
+          ];
+          challenge=Object.assign({progress:0,failed:false},kinds[Math.floor(Math.random()*kinds.length)]);
+          const txt=challenge.type==='kills'?('⚔ ЧЕЛЛЕНДЖ: убей '+challenge.goal+' за '+challenge.time+'с!')
+            :challenge.type==='nohit'?('🛡 ЧЕЛЛЕНДЖ: не получай урона '+challenge.time+'с!')
+            :('💎 ЧЕЛЛЕНДЖ: собери '+challenge.goal+' кристаллов за '+challenge.time+'с!');
+          announce={text:txt,life:3,color:'#38bdf8'};
+          sfxChime(587,3,0.09,0.11);
+        }
+      }else{
+        challenge.time-=dt;
+        const done=challenge.type==='nohit'?(!challenge.failed&&challenge.time<=0):(challenge.progress>=challenge.goal);
+        if(done){
+          let msg;
+          if(challenge.type==='kills'){addOverdrive(100);msg='⚡ Челлендж выполнен — ПЕРЕГРУЗКА!';}
+          else if(challenge.type==='nohit'){player.maxHp+=15;player.hp=Math.min(player.maxHp,player.hp+40);msg='🛡 Челлендж выполнен: +15 макс. HP и лечение!';}
+          else{gems.forEach(g=>g.magnet=true);metaState.shards+=3;saveMeta();msg='💎 Челлендж выполнен: магнит + 3 ✨!';}
+          announce={text:msg,life:3,color:'#4ade80'};flashFx(0.35,'74,222,128');sfxChime(660,4,0.09,0.12);
+          challenge=null;
+        }else if(challenge.time<=0||challenge.failed){
+          announce={text:'Челлендж провален',life:1.8,color:'#8891a3'};
+          challenge=null;
+        }
+      }
       if(!portal&&player.level>=12){
         portalAcc+=dt;
         if(portalAcc>=70){portalAcc=0;
@@ -2466,7 +2501,7 @@
         const a=Math.atan2(player.y-g.y,player.x-g.x);
         g.x+=Math.cos(a)*(280+gemMagnetR)*dt;g.y+=Math.sin(a)*(280+gemMagnetR)*dt;
       }
-      if(dist(player,g)<player.r+g.r){grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));g.dead=true;}
+      if(dist(player,g)<player.r+g.r){grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));g.dead=true;if(challenge&&challenge.type==='gems')challenge.progress++;}
     }
     gems=gems.filter(g=>!g.dead);
 
@@ -2675,6 +2710,38 @@
   const ACT_TINTS=['rgba(255,255,255,0.04)','rgba(77,150,255,0.06)','rgba(74,222,128,0.06)','rgba(250,204,21,0.06)','rgba(249,115,22,0.06)','rgba(244,63,94,0.06)','rgba(168,85,247,0.07)','rgba(34,211,238,0.07)','rgba(232,121,249,0.07)','rgba(255,45,85,0.08)'];
   // rgb-версии тех же оттенков для полноэкранного тинта по «акту» (виньетка)
   const ACT_WASH=['120,130,150','77,150,255','74,222,128','250,204,21','249,115,22','244,63,94','168,85,247','34,211,238','232,121,249','255,45,85'];
+  // декор поля: кристаллы/камни/кости/грибы, детерминированно из хэша клетки —
+  // бесконечная россыпь без хранения, поле не выглядит пустым
+  function propHash(ix,iy){let h=(ix*374761393+iy*668265263)|0;h=(h^(h>>13))*1274126177|0;return ((h^(h>>16))>>>0)/4294967295;}
+  function drawProps(){
+    const g=220,halfW=(W/2)/zoom,halfH=(H/2)/zoom;
+    const x0=Math.floor((player.x-halfW)/g),x1=Math.ceil((player.x+halfW)/g);
+    const y0=Math.floor((player.y-halfH)/g),y1=Math.ceil((player.y+halfH)/g);
+    for(let iy=y0;iy<=y1;iy++)for(let ix=x0;ix<=x1;ix++){
+      const h=propHash(ix,iy);
+      if(h>0.30)continue;
+      const px=ix*g+(propHash(ix+7,iy)*g*0.7)+g*0.15, py=iy*g+(propHash(ix,iy+7)*g*0.7)+g*0.15;
+      const kind=Math.floor(h*100)%4, sc=0.7+propHash(ix+3,iy+3)*0.6;
+      x.save();x.translate(px,py);x.scale(sc,sc);x.globalAlpha=0.5;
+      if(kind===0){ // кристалл
+        x.fillStyle='#233a63';x.beginPath();x.moveTo(0,-11);x.lineTo(6,0);x.lineTo(0,11);x.lineTo(-6,0);x.closePath();x.fill();
+        x.fillStyle='#3b5a94';x.beginPath();x.moveTo(0,-11);x.lineTo(6,0);x.lineTo(0,2);x.closePath();x.fill();
+      }else if(kind===1){ // камни
+        x.fillStyle='#1d2536';x.beginPath();x.arc(-4,2,6,0,Math.PI*2);x.fill();
+        x.beginPath();x.arc(5,4,4,0,Math.PI*2);x.fill();
+      }else if(kind===2){ // кости
+        x.strokeStyle='#3a4258';x.lineWidth=3;x.lineCap='round';
+        x.beginPath();x.moveTo(-7,-4);x.lineTo(7,4);x.stroke();
+        x.beginPath();x.arc(-7,-4,2.5,0,Math.PI*2);x.arc(7,4,2.5,0,Math.PI*2);x.fillStyle='#3a4258';x.fill();
+      }else{ // гриб-светлячок
+        x.fillStyle='#274036';x.fillRect(-1.5,0,3,7);
+        x.fillStyle='#2f6b52';x.beginPath();x.arc(0,0,6,Math.PI,0);x.fill();
+        x.globalAlpha=0.35+0.2*Math.sin(t*2+ix*3+iy);x.fillStyle='#4ade80';x.beginPath();x.arc(0,-2,2,0,Math.PI*2);x.fill();
+      }
+      x.restore();
+    }
+    x.globalAlpha=1;
+  }
   function drawGrid(){
     const g=40;
     const halfW=(W/2)/zoom,halfH=(H/2)/zoom;
@@ -2780,6 +2847,7 @@
     x.scale(zoom,zoom);
     x.translate(-player.x,-player.y);
     drawGrid();
+    drawProps();
     // лабиринт: стены и светящийся выход
     if(inVault){
       for(const w of vaultWalls){
@@ -3059,6 +3127,13 @@
       x.font='bold 15px system-ui,sans-serif';
       x.fillStyle=vaultT<10?'#ff2d55':'#c084fc';x.shadowColor='#000';x.shadowBlur=4;
       x.fillText('🏛 ЛАБИРИНТ · выход за '+Math.max(0,Math.ceil(vaultT))+'с',W/2,40);
+      x.restore();
+    }else if(challenge){
+      x.save();x.textAlign='center';x.textBaseline='top';
+      x.font='bold 13px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
+      x.fillStyle=challenge.time<6?'#fb923c':'#38bdf8';
+      const prog=challenge.type==='nohit'?'':' ('+challenge.progress+'/'+challenge.goal+')';
+      x.fillText('🎯 '+challenge.label+prog+' · '+Math.max(0,Math.ceil(challenge.time))+'с',W/2,40);
       x.restore();
     }
     if(announce){
