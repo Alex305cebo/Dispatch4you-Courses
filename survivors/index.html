@@ -603,7 +603,7 @@
     {id:'explodekill',name:'🎆 Взрывной финал',desc:'Убитые враги взрываются.',rarity:'rare',cond:p=>p.explodeKillLevel<5,apply:p=>p.explodeKillLevel++},
     {id:'chrono',name:'⏳ Хроносфера',desc:'Периодически замораживает всех врагов.',rarity:'rare',cond:p=>p.chronoLevel<5,apply:p=>p.chronoLevel++},
     {id:'fireball_up',name:'🔥 Огненный шар',desc:'Больше урона, шире взрыв.',rarity:'mid',cond:p=>p.fireballLevel>0&&p.fireballLevel<5,apply:p=>p.fireballLevel++},
-    {id:'boom_up',name:'🪃 Бумеранг',desc:'Летает чаще, бьёт больнее.',rarity:'mid',cond:p=>p.boomLevel>0&&p.boomLevel<5,apply:p=>p.boomLevel++},
+    {id:'boom_up',name:'🪃 Бумеранг',desc:'Чаще и больнее; с 3 ур. — вторая пила.',rarity:'mid',cond:p=>p.boomLevel>0&&p.boomLevel<5,apply:p=>p.boomLevel++},
     {id:'frost_up',name:'❄️ Ледяная волна',desc:'Шире волна, сильнее холод.',rarity:'mid',cond:p=>p.frostLevel>0&&p.frostLevel<5,apply:p=>p.frostLevel++},
     {id:'laser_up',name:'💠 Лазер',desc:'Толще луч, больше урона.',rarity:'mid',cond:p=>p.laserLevel>0&&p.laserLevel<5,apply:p=>p.laserLevel++},
     {id:'shard_up',name:'✨ Осколки',desc:'Больше осколков в залпе.',rarity:'mid',cond:p=>p.shardLevel>0&&p.shardLevel<5,apply:p=>p.shardLevel++},
@@ -629,7 +629,7 @@
     {id:'chain',name:'⚡ Молния',desc:'Бьёт врага и прыгает на соседних.',apply:p=>p.chainLevel=1},
     {id:'mine',name:'💣 Мины',desc:'Остаются позади и взрываются.',apply:p=>p.mineLevel=1},
     {id:'fireball',name:'🔥 Огненный шар',desc:'Летит во врага и взрывается по области.',apply:p=>p.fireballLevel=1},
-    {id:'boom',name:'🪃 Бумеранг',desc:'Летит вперёд и возвращается — режет дважды.',apply:p=>p.boomLevel=1},
+    {id:'boom',name:'🪃 Бумеранг',desc:'Летит во врага и возвращается, пилит всех на пути.',apply:p=>p.boomLevel=1},
     {id:'frost',name:'❄️ Ледяная волна',desc:'Ранит и замедляет всех вокруг.',apply:p=>p.frostLevel=1},
     {id:'laser',name:'💠 Лазер',desc:'Прожигает всех врагов на линии.',apply:p=>p.laserLevel=1},
     {id:'shard',name:'✨ Осколки',desc:'Залп во все стороны.',apply:p=>p.shardLevel=1},
@@ -662,6 +662,8 @@
       wlvl:'',cat:'multi',ready:p=>(shopBought.multi||0)>=5&&(shopBought.rate||0)>=4&&!p.gunEvo,apply:p=>p.gunEvo=true},
     {id:'dagger',flag:'daggerEvo',name:'⭐ Веер смерти',desc:'Кинжалы пробивают, веер вдвое шире и больнее.',
       wlvl:'daggerLevel',cat:'speed',ready:p=>p.daggerLevel>=5&&(shopBought.speed||0)>=3&&!p.daggerEvo,apply:p=>p.daggerEvo=true},
+    {id:'boom',flag:'boomEvo',name:'⭐ Циркулярка',desc:'Три гигантские пилы: шире, чаще, режут без остановки.',
+      wlvl:'boomLevel',cat:'projspeed',ready:p=>p.boomLevel>=5&&(shopBought.projspeed||0)>=3&&!p.boomEvo,apply:p=>p.boomEvo=true},
     {id:'tornado',flag:'tornadoEvo',name:'⭐ Ураган',desc:'Смерч огромный, быстрый и живёт дольше.',
       wlvl:'tornadoLevel',cat:'aoe',ready:p=>p.tornadoLevel>=5&&(shopBought.aoe||0)>=3&&!p.tornadoEvo,apply:p=>p.tornadoEvo=true},
   ];
@@ -1696,22 +1698,31 @@
             projectiles.push({x:p.x,y:p.y,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:fEvo?13:9,life:2.6,pierceLeft:fEvo?3:0,hitSet:new Set(),
               dmg:rollDmg((26+12*p.fireballLevel)*(fEvo?2.2:1)*p.dmgMult),fireball:true,fireballEvo:fEvo,blastR:(65+10*p.fireballLevel)*(fEvo?2:1)*p.aoeMult,color:fEvo?'#fb7185':'#f97316'});}
           sfxSweep(220,140,0.12,'sine',0.05);}}}
-    // boomerang — out along facing, decelerates, comes back; hits on both passes
+    // boomerang — летит в БЛИЖАЙШЕГО врага (не по курсу движения) и возвращается;
+    // hitSet сбрасывается каждые 0.45с — в толпе пилит многократно, как циркулярка.
+    // с 3 ур. — вторая пила в противоположную сторону, эво добавляет третью
     if(p.boomLevel){p.boomAcc+=dt*as;
-      if(p.boomAcc>=2.6-p.boomLevel*0.2){p.boomAcc=0;
-        const sp=340*p.projSpeedMult;
-        boomers.push({x:p.x,y:p.y,vx:p.facing.x*sp,vy:p.facing.y*sp,r:11*p.aoeMult,phase:0,
-          dmg:rollDmg((16+8*p.boomLevel)*p.dmgMult),hitSet:new Set(),life:5});
+      const bEvo=p.boomEvo;
+      if(p.boomAcc>=(2.4-p.boomLevel*0.22)*(bEvo?0.75:1)){p.boomAcc=0;
+        const sp=360*p.projSpeedMult;
+        const n=(p.boomLevel>=3?2:1)+(bEvo?1:0);
+        const e=nearestEnemy(560);
+        const base=e?Math.atan2(e.y-p.y,e.x-p.x):Math.atan2(p.facing.y,p.facing.x);
+        for(let i=0;i<n;i++){const a=base+i*(Math.PI*2/n);
+          boomers.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:(13+p.boomLevel)*(bEvo?1.5:1)*p.aoeMult,phase:0,rehit:0.45,
+            dmg:rollDmg((20+10*p.boomLevel)*(bEvo?1.8:1)*p.dmgMult),hitSet:new Set(),life:6});}
         sfxSweep(480,720,0.08,'sine',0.03);}}
     for(const b of boomers){
       if(b.phase===0){
         b.vx*=Math.pow(0.08,dt);b.vy*=Math.pow(0.08,dt);
         if(Math.hypot(b.vx,b.vy)<40){b.phase=1;b.hitSet.clear();}
       }else{
-        const a=Math.atan2(p.y-b.y,p.x-b.x),sp=420*p.projSpeedMult;
+        const a=Math.atan2(p.y-b.y,p.x-b.x),sp=430*p.projSpeedMult;
         b.vx=Math.cos(a)*sp;b.vy=Math.sin(a)*sp;
-        if(dist(p,b)<p.r+6)b.dead=true;
+        if(dist(p,b)<p.r+8)b.dead=true;
       }
+      b.rehit=(b.rehit??0.45)-dt;
+      if(b.rehit<=0){b.hitSet.clear();b.rehit=p.boomEvo?0.3:0.45;}
       b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
       for(const e of enemies){if(b.hitSet.has(e))continue;if(dist(b,e)<b.r+e.r){e.hp-=b.dmg;b.hitSet.add(e);burst(b.x,b.y,'#fde047',3);}}
     }
@@ -1738,13 +1749,13 @@
             bolts.push({x1:p.x,y1:p.y,x2:p.x+ux*L,y2:p.y+uy*L,life:0.25,width:4+p.laserLevel,color:lEvo?'#a78bfa':'#f43f5e'});
           }
           sfxSweep(1800,300,0.15,'sawtooth',0.07);}}}
-    // shards — radial burst
+    // shards — radial burst; пробивают 1 врага и живут дольше, иначе залп бесполезен
     if(p.shardLevel){p.shardAcc+=dt*as;
       if(p.shardAcc>=3-p.shardLevel*0.25){p.shardAcc=0;
-        const n=6+2*p.shardLevel,sp=300*p.projSpeedMult,dmg=rollDmg((9+5*p.shardLevel)*p.dmgMult);
+        const n=6+2*p.shardLevel,sp=320*p.projSpeedMult,dmg=rollDmg((11+6*p.shardLevel)*p.dmgMult);
         const off=rand(0,Math.PI*2);
         for(let i=0;i<n;i++){const a=off+i/n*Math.PI*2;
-          projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:4,life:0.8,pierceLeft:0,hitSet:new Set(),dmg,color:'#f0abfc'});}
+          projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:5,life:1.15,pierceLeft:1,hitSet:new Set(),dmg,color:'#f0abfc'});}
         sfxSweep(650,880,0.05,'sine',0.03);}}
     // drones — orbiting companions that snipe the nearest enemy
     if(p.droneLevel){p.droneAcc+=dt*as;
@@ -1814,18 +1825,18 @@
             if(da<1.05){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,0.5);
               if(!e.elite){e.x+=Math.cos(a)*75;e.y+=Math.sin(a)*75;}}}}
         camShake=Math.max(camShake,5);sfxBoom(0.3,0.18,600,80);}}
-    // turrets — stationary guns with a lifespan
+    // turrets — stationary guns with a lifespan; на 4+ ур. пули пробивают
     if(p.turretLevel){p.turretAcc+=dt*as;
-      if(p.turretAcc>=9-p.turretLevel*0.6){p.turretAcc=0;
-        turrets.push({x:p.x,y:p.y,life:8+p.turretLevel,fireAcc:0});
+      if(p.turretAcc>=8-p.turretLevel*0.6){p.turretAcc=0;
+        turrets.push({x:p.x,y:p.y,life:8+p.turretLevel*1.5,fireAcc:0});
         beep(340,0.1,'sine',0.05);}}
     for(const tu of turrets){tu.life-=dt;tu.fireAcc+=dt*as;
-      if(tu.fireAcc>=0.45){
-        let bestE=null,bd=330;
+      if(tu.fireAcc>=0.36){
+        let bestE=null,bd=390;
         for(const e of enemies){const d=dist(tu,e);if(d<bd){bd=d;bestE=e;}}
         if(bestE){tu.fireAcc=0;const a=Math.atan2(bestE.y-tu.y,bestE.x-tu.x);
-          projectiles.push({x:tu.x,y:tu.y,vx:Math.cos(a)*460,vy:Math.sin(a)*460,r:4,life:0.9,pierceLeft:0,hitSet:new Set(),
-            dmg:rollDmg((8+5*p.turretLevel)*p.dmgMult),color:'#fbbf24'});}}}
+          projectiles.push({x:tu.x,y:tu.y,vx:Math.cos(a)*460,vy:Math.sin(a)*460,r:4,life:0.9,pierceLeft:p.turretLevel>=4?1:0,hitSet:new Set(),
+            dmg:rollDmg((11+7*p.turretLevel)*p.dmgMult),color:'#fbbf24'});}}}
     turrets=turrets.filter(tu=>tu.life>0);
     // ★ ЭКСКЛЮЗИВНОЕ (только из Хранилища) ★
     // 🌠 Звездопад — залп самонаводящихся звёзд по случайным врагам
