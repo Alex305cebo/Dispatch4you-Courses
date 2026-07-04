@@ -42,7 +42,7 @@
   .hint{grid-column:1/-1;font-size:11px;color:var(--muted);line-height:1.4;margin:0;text-align:center;}
   .credit{grid-column:1/-1;font-size:10px;color:var(--muted);opacity:0.7;text-align:center;margin:2px 0 0;}
   @media (min-width:820px) and (min-height:480px){
-    .wrap{grid-template-columns:1fr 210px;grid-template-rows:1fr;}
+    .wrap{grid-template-columns:1fr 236px;grid-template-rows:1fr;}
     .side{grid-template-columns:1fr;max-height:none;}
     .box{padding:12px 16px;}
     .label{font-size:13px;margin-bottom:4px;}
@@ -58,7 +58,7 @@
     .overlay p{font-size:12px;max-width:280px;}
   }
   /* лидерборд: большая золотая кнопка + топ-3 в панели, пьедестал в попапе */
-  .lb-btn{width:100%;padding:11px 8px;font-size:14px;font-weight:800;letter-spacing:0.5px;color:#1a1305;
+  .lb-btn{width:100%;padding:11px 4px;font-size:12.5px;font-weight:800;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#1a1305;
     background:linear-gradient(135deg,#fde047,#f59e0b);border:1px solid #fbbf24;border-radius:10px;cursor:pointer;
     box-shadow:0 0 16px rgba(250,204,21,0.3);text-shadow:0 1px 0 rgba(255,255,255,0.25);}
   .lb-btn:hover{background:linear-gradient(135deg,#fef08a,#fbbf24);}
@@ -211,10 +211,10 @@
       <button id="btnLbSide" class="lb-btn">🏆 ТАБЛИЦА ЛИДЕРОВ</button>
       <div id="lbTop3" class="lb-top3">Загрузка…</div>
     </div>
-    <div class="box full" style="padding:8px 10px;display:flex;gap:6px;">
+    <div class="box full" style="padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;min-width:0;">
       <button id="btnPauseSide" style="padding:8px;width:auto;flex:0 0 auto;">⏸</button>
-      <button id="btnFinishSide" style="padding:8px;">⏹ Завершить</button>
-      <button id="btnMenuSide" style="padding:8px;">☰ Меню</button>
+      <button id="btnFinishSide" style="padding:8px 6px;flex:1 1 auto;min-width:0;white-space:nowrap;">⏹ Завершить</button>
+      <button id="btnMenuSide" style="padding:8px 6px;flex:1 1 auto;min-width:0;white-space:nowrap;">☰ Меню</button>
       <button class="sndBtn" id="btnSoundSide" style="padding:8px;width:auto;flex:0 0 auto;">🔊</button>
     </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
@@ -231,6 +231,11 @@
   }
   let W=640,H=480;
   const cv=document.getElementById('sboard'),x=cv.getContext('2d');
+  // roundRect появился в Safari 16 / Chrome 99 — полифилл для старых браузеров
+  if(!x.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x0,y0,w0,h0,r0){
+    r0=Math.min(r0,Math.abs(w0)/2,Math.abs(h0)/2);
+    this.moveTo(x0+r0,y0);this.arcTo(x0+w0,y0,x0+w0,y0+h0,r0);this.arcTo(x0+w0,y0+h0,x0,y0+h0,r0);
+    this.arcTo(x0,y0+h0,x0,y0,r0);this.arcTo(x0,y0,x0+w0,y0,r0);this.closePath();return this;};}
   function resizeCanvas(){
     const rect=cv.parentElement.getBoundingClientRect();
     const rw=Math.max(1,rect.width),rh=Math.max(1,rect.height);
@@ -1181,64 +1186,102 @@
     {id:'singularity',name:'🕳 Сингулярность',desc:'Чёрная дыра стягивает и жжёт',has:p=>p.singularityLevel>0,apply:p=>p.singularityLevel=1},
   ];
   // генерация лабиринта (recursive backtracker) + пара выбитых стен для циклов
-  function genMaze(cols,rows){
-    const R=[],B=[];
-    for(let r=0;r<rows;r++){R.push(Array(cols).fill(true));B.push(Array(cols).fill(true));}
-    const vis=Array.from({length:rows},()=>Array(cols).fill(false));
-    const st=[[0,0]];vis[0][0]=true;
-    while(st.length){
-      const cur=st[st.length-1],r=cur[0],c=cur[1];
-      const opts=[];
-      if(r>0&&!vis[r-1][c])opts.push([r-1,c,'U']);
-      if(r<rows-1&&!vis[r+1][c])opts.push([r+1,c,'D']);
-      if(c>0&&!vis[r][c-1])opts.push([r,c-1,'L']);
-      if(c<cols-1&&!vis[r][c+1])opts.push([r,c+1,'R']);
-      if(!opts.length){st.pop();continue;}
-      const nx=opts[Math.floor(Math.random()*opts.length)],nr=nx[0],nc=nx[1],d=nx[2];
-      if(d==='U')B[nr][nc]=false;else if(d==='D')B[r][c]=false;
-      else if(d==='L')R[nr][nc]=false;else R[r][c]=false;
-      vis[nr][nc]=true;st.push([nr,nc]);
+  // === ЛАБИРИНТ: длинные коридоры с поворотами, между ними комнаты с боссами ===
+  // структура: стартовая комната → L-коридор → комната → … → финальная комната (выход).
+  // В коридорах — мобы, в комнатах — спящие стражи. Цель — уничтожить ВСЕХ.
+  let vaultTotal=0;
+  function genDungeon(ox,oy){
+    const ROOM=430,CORW=160,T=64; // комната, ширина коридора, тайл стен
+    // змейка центров комнат: шаги по диагонали решётки → коридор между ними с поворотом
+    const centers=[{x:ox,y:oy}];
+    const N=4; // комнат после стартовой (последняя — выход)
+    let dx=1,dy=0;
+    for(let i=0;i<N;i++){
+      for(let tries=0;tries<12;tries++){
+        // случайный поворот направления (без разворота на 180°)
+        let nx=dx,ny=dy;
+        if(Math.random()<0.45){
+          if(dx!==0){nx=0;ny=Math.random()<0.5?1:-1;}else{ny=0;nx=Math.random()<0.5?1:-1;}
+        }
+        const stepX=nx*(850+Math.random()*350),stepY=ny*(850+Math.random()*350);
+        // диагональное смещение добавляет поворот внутри коридора
+        const jog=(Math.random()<0.7?1:0)*(Math.random()<0.5?1:-1)*(500+Math.random()*300);
+        const cand={x:centers[i].x+stepX+(nx===0?jog:0),y:centers[i].y+stepY+(ny===0?jog:0)};
+        if(centers.every(c=>Math.hypot(c.x-cand.x,c.y-cand.y)>780)){
+          centers.push(cand);dx=nx;dy=ny;break;
+        }
+        if(tries===11)centers.push({x:centers[i].x+dx*1200,y:centers[i].y+dy*1200});
+      }
     }
-    for(let k=0;k<3;k++){R[Math.floor(Math.random()*rows)][Math.floor(Math.random()*(cols-1))]=false;}
-    return {R:R,B:B};
+    // проходимые прямоугольники: комнаты + Г-образные коридоры между соседними
+    const walk=[];
+    centers.forEach(c=>walk.push({x:c.x-ROOM/2,y:c.y-ROOM/2,w:ROOM,h:ROOM}));
+    const corr=[]; // сегменты коридоров (для расселения мобов)
+    for(let i=0;i<centers.length-1;i++){
+      const a=centers[i],b=centers[i+1];
+      const corner=Math.random()<0.5?{x:b.x,y:a.y}:{x:a.x,y:b.y};
+      [[a,corner],[corner,b]].forEach(seg=>{
+        const [p1,p2]=seg;
+        const rx=Math.min(p1.x,p2.x)-CORW/2,ry=Math.min(p1.y,p2.y)-CORW/2;
+        const rw=Math.abs(p2.x-p1.x)+CORW,rh=Math.abs(p2.y-p1.y)+CORW;
+        walk.push({x:rx,y:ry,w:rw,h:rh});
+        corr.push({p1:p1,p2:p2});
+      });
+    }
+    // стены: тайлуем ограничивающий прямоугольник, всё непроходимое — стена
+    let mnx=1e18,mny=1e18,mxx=-1e18,mxy=-1e18;
+    walk.forEach(r=>{mnx=Math.min(mnx,r.x);mny=Math.min(mny,r.y);mxx=Math.max(mxx,r.x+r.w);mxy=Math.max(mxy,r.y+r.h);});
+    mnx-=T*2;mny-=T*2;mxx+=T*2;mxy+=T*2;
+    const cols=Math.ceil((mxx-mnx)/T),rows=Math.ceil((mxy-mny)/T);
+    vaultWalls=[];
+    for(let r=0;r<rows;r++){
+      let runStart=-1;
+      for(let c=0;c<=cols;c++){
+        const tx=mnx+c*T,ty=mny+r*T;
+        const open=c<cols&&walk.some(w=>tx<w.x+w.w&&tx+T>w.x&&ty<w.y+w.h&&ty+T>w.y);
+        if(!open&&c<cols){if(runStart<0)runStart=c;}
+        else if(runStart>=0){
+          vaultWalls.push({x:mnx+runStart*T,y:ty,w:(c-runStart)*T,h:T});
+          runStart=-1;
+        }
+      }
+    }
+    return {centers,corr};
   }
-  const MZ_COLS=5,MZ_ROWS=4,MZ_CELL=300,MZ_WT=36;
   function enterVault(){
     vaultStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
     enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];
     portal=null;safeZone=null;mobSpawnPaused=true;
-    const ox=player.x+60000,oy=player.y+60000;
-    inVault=true;vaultT=60;vaultCleared=false;
-    // стены
-    const mz=genMaze(MZ_COLS,MZ_ROWS);
-    vaultWalls=[];
-    vaultWalls.push({x:ox-MZ_WT,y:oy-MZ_WT,w:MZ_COLS*MZ_CELL+2*MZ_WT,h:MZ_WT});
-    vaultWalls.push({x:ox-MZ_WT,y:oy+MZ_ROWS*MZ_CELL,w:MZ_COLS*MZ_CELL+2*MZ_WT,h:MZ_WT});
-    vaultWalls.push({x:ox-MZ_WT,y:oy,w:MZ_WT,h:MZ_ROWS*MZ_CELL});
-    vaultWalls.push({x:ox+MZ_COLS*MZ_CELL,y:oy,w:MZ_WT,h:MZ_ROWS*MZ_CELL});
-    for(let r=0;r<MZ_ROWS;r++)for(let c=0;c<MZ_COLS;c++){
-      if(c<MZ_COLS-1&&mz.R[r][c])vaultWalls.push({x:ox+(c+1)*MZ_CELL-MZ_WT/2,y:oy+r*MZ_CELL,w:MZ_WT,h:MZ_CELL});
-      if(r<MZ_ROWS-1&&mz.B[r][c])vaultWalls.push({x:ox+c*MZ_CELL,y:oy+(r+1)*MZ_CELL-MZ_WT/2,w:MZ_CELL,h:MZ_WT});
-    }
-    // игрок — в стартовой комнате, выход — в дальней
-    player.x=ox+MZ_CELL/2;player.y=oy+MZ_CELL/2;player.invuln=Math.max(player.invuln,1.2);
-    vaultExit={x:ox+(MZ_COLS-1)*MZ_CELL+MZ_CELL/2,y:oy+(MZ_ROWS-1)*MZ_CELL+MZ_CELL/2,r:46};
-    // население комнат: паки мобов, «необычные» мини-боссы (роняют сундуки), пустые передышки
-    for(let r=0;r<MZ_ROWS;r++)for(let c=0;c<MZ_COLS;c++){
-      if(r===0&&c===0)continue;
-      if(r===MZ_ROWS-1&&c===MZ_COLS-1)continue;
-      const cx=ox+c*MZ_CELL+MZ_CELL/2,cy=oy+r*MZ_CELL+MZ_CELL/2;
-      const roll=Math.random();
-      if(roll<0.5){
-        const n=2+Math.floor(Math.random()*3);
-        for(let i=0;i<n;i++){const e=spawnEnemy(false);e.x=cx+rand(-85,85);e.y=cy+rand(-85,85);}
-      }else if(roll<0.72){
-        const b=spawnEnemy(true,2+Math.floor(Math.random()*4));
-        b.hp=b.maxHp=b.maxHp*0.35;b.r=Math.min(b.r,42);b.x=cx;b.y=cy;b.pauseSpawns=false;
-        b.skinName='Страж лабиринта';
+    inVault=true;vaultT=0;vaultCleared=false;
+    const dg=genDungeon(player.x+60000,player.y+60000);
+    const centers=dg.centers;
+    // игрок — в стартовой комнате, выход — в последней
+    player.x=centers[0].x;player.y=centers[0].y;player.invuln=Math.max(player.invuln,1.2);
+    const last=centers[centers.length-1];
+    vaultExit={x:last.x,y:last.y,r:50};
+    // КОРИДОРЫ: мобы вдоль сегментов
+    dg.corr.forEach(seg=>{
+      const len=Math.hypot(seg.p2.x-seg.p1.x,seg.p2.y-seg.p1.y);
+      const n=Math.min(6,Math.floor(len/230));
+      for(let i=1;i<=n;i++){
+        const k=i/(n+1);
+        const e=spawnEnemy(false);
+        e.x=seg.p1.x+(seg.p2.x-seg.p1.x)*k+rand(-40,40);
+        e.y=seg.p1.y+(seg.p2.y-seg.p1.y)*k+rand(-40,40);
       }
+    });
+    // КОМНАТЫ (кроме стартовой и выходной): спящий страж + пара мобов
+    for(let i=1;i<centers.length-1;i++){
+      const c=centers[i];
+      const b=spawnEnemy(true,2+Math.floor(Math.random()*4));
+      b.hp=b.maxHp=b.maxHp*0.35;b.r=Math.min(b.r,44);b.x=c.x;b.y=c.y;b.pauseSpawns=false;
+      b.skinName='Страж лабиринта';b.sleep=true;
+      for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);e.x=c.x+rand(-140,140);e.y=c.y+rand(-140,140);e.sleep=true;}
     }
-    announce={text:'🏛 ЛАБИРИНТ — найди выход за 60с! Мини-боссы роняют сундуки',life:3.4,color:'#c084fc'};
+    // выходная комната: маленькая охрана у самого выхода
+    for(let k2=0;k2<2;k2++){const e=spawnEnemy(false);e.x=last.x+rand(-130,130);e.y=last.y+rand(-130,130);e.sleep=true;}
+    vaultTotal=enemies.length;
+    announce={text:'🏛 ЛАБИРИНТ — уничтожь всех ('+vaultTotal+')! Стражи ждут в комнатах',life:3.6,color:'#c084fc'};
     camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.4);
     sfxSweep(200,900,0.5,'sawtooth',0.12,true);
   }
@@ -1255,6 +1298,13 @@
     }
   }
   function pointInWalls(px,py){for(const w of vaultWalls){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}return false;}
+  // линия видимости: сквозь стены лабиринта не проходит ни урон, ни взрыв
+  function losClear(x1,y1,x2,y2){
+    if(!inVault)return true;
+    const d=Math.hypot(x2-x1,y2-y1),n=Math.ceil(d/22);
+    for(let i=1;i<n;i++){if(pointInWalls(x1+(x2-x1)*i/n,y1+(y2-y1)*i/n))return false;}
+    return true;
+  }
   function exitVault(){
     if(!vaultStash)return;
     enemies=vaultStash.enemies;projectiles=vaultStash.projectiles;enemyProjectiles=vaultStash.enemyProjectiles;
@@ -1537,7 +1587,7 @@
     if(player.lifesteal>0)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*player.lifesteal);
     if(player.explodeKillLevel&&!e.elite){
       const R=70*player.aoeMult,ed=e.maxHp*(0.1+0.04*player.explodeKillLevel);
-      for(const o of enemies){if(o!==e&&dist(e,o)<R)o.hp-=ed;}
+      for(const o of enemies){if(o!==e&&dist(e,o)<R&&losClear(e.x,e.y,o.x,o.y))o.hp-=ed;}
       burst(e.x,e.y,'#fb923c',10);
     }
     if(e.pauseSpawns){mobSpawnPaused=false;announce={text:'Босс уровня 8 повержен!',life:2.4,color:'#f97316'};}
@@ -1694,6 +1744,7 @@
     let firedAnyBolt=false;
     for(let volley=0;volley<player.projCount;volley++){
       let target=nearestEnemy(450);
+      if(target&&!losClear(player.x,player.y,target.x,target.y))target=null;
       if(!target)break;
       firedAnyBolt=true;
       const hit=new Set();
@@ -1704,7 +1755,7 @@
         burst(target.x,target.y,'#38bdf8',4);
         from=target;target=null;
         let bd=140;
-        for(const e of enemies){if(hit.has(e))continue;const d=dist(from,e);if(d<bd){bd=d;target=e;}}
+        for(const e of enemies){if(hit.has(e))continue;const d=dist(from,e);if(d<bd&&losClear(from.x,from.y,e.x,e.y)){bd=d;target=e;}}
       }
     }
     if(firedAnyBolt)sfxSweep(900,480,0.09,'triangle',0.04);
@@ -1804,6 +1855,7 @@
       b.rehit=(b.rehit??0.45)-dt;
       if(b.rehit<=0){b.hitSet.clear();b.rehit=p.boomEvo?0.3:0.45;}
       b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+      if(inVault&&pointInWalls(b.x,b.y)){b.phase=1;b.hitSet.clear();} // от стены пила отскакивает назад
       (b.tr??(b.tr=[])).push(b.x,b.y);if(b.tr.length>16)b.tr.splice(0,2); // тающий след
       for(const e of enemies){if(b.hitSet.has(e))continue;if(dist(b,e)<b.r+e.r){e.hp-=b.dmg;b.hitSet.add(e);burst(b.x,b.y,'#fde047',3);}}
     }
@@ -1814,7 +1866,7 @@
         const R=(120+18*p.frostLevel)*p.aoeMult,dmg=rollDmg((18+9*p.frostLevel)*p.dmgMult);
         rings.push({x:p.x,y:p.y,r:0,maxR:R,life:1,color:'#7dd3fc'});
         rings.push({x:p.x,y:p.y,r:0,maxR:R*0.7,life:0.8,color:'#e0f2fe'});
-        for(const e of enemies){if(dist(p,e)<R){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,2.6);}}
+        for(const e of enemies){if(dist(p,e)<R&&losClear(p.x,p.y,e.x,e.y)){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,2.6);}}
         sfxSweep(1200,400,0.25,'sine',0.08);}}
     // laser — instant beam through the nearest enemy, hits everything on the line
     if(p.laserLevel){p.laserAcc+=dt*as;
@@ -1826,9 +1878,12 @@
           const beams=lEvo?[-0.28,0,0.28]:[0];
           for(const off of beams){
             const a=baseA+off,ux=Math.cos(a),uy=Math.sin(a);
+            // в лабиринте луч упирается в стену и дальше не жжёт
+            let Lw=L;
+            if(inVault){for(let dd=14;dd<L;dd+=18){if(pointInWalls(p.x+ux*dd,p.y+uy*dd)){Lw=dd;break;}}}
             for(const o of enemies){const rx=o.x-p.x,ry=o.y-p.y,proj=rx*ux+ry*uy;
-              if(proj>0&&proj<L&&Math.abs(rx*uy-ry*ux)<thr+o.r)o.hp-=dmg;}
-            bolts.push({x1:p.x,y1:p.y,x2:p.x+ux*L,y2:p.y+uy*L,life:0.25,width:4+p.laserLevel,color:lEvo?'#a78bfa':'#f43f5e'});
+              if(proj>0&&proj<Lw&&Math.abs(rx*uy-ry*ux)<thr+o.r)o.hp-=dmg;}
+            bolts.push({x1:p.x,y1:p.y,x2:p.x+ux*Lw,y2:p.y+uy*Lw,life:0.25,width:4+p.laserLevel,color:lEvo?'#a78bfa':'#f43f5e'});
           }
           sfxSweep(1800,300,0.15,'sawtooth',0.07);}}}
     // shards — radial burst; пробивают 1 врага и живут дольше, иначе залп бесполезен
@@ -1869,7 +1924,7 @@
         meteors.push({x:e.x,y:e.y,tt:0.7,blastR:(80+12*p.meteorLevel)*p.aoeMult,dmg:rollDmg((40+20*p.meteorLevel)*p.dmgMult)});}}
     for(const m of meteors){m.tt-=dt;
       if(m.tt<=0){
-        for(const e of enemies){if(dist(m,e)<m.blastR)e.hp-=m.dmg;}
+        for(const e of enemies){if(dist(m,e)<m.blastR&&losClear(m.x,m.y,e.x,e.y))e.hp-=m.dmg;}
         fxBoomAnim(m.x,m.y,m.blastR,'#fb923c');
         burst(m.x,m.y,'#fb923c',18);camShake=Math.max(camShake,6);sfxBoom(0.4,0.25,700,60);m.dead=true;}}
     meteors=meteors.filter(m=>!m.dead);
@@ -1904,7 +1959,7 @@
         const fa=Math.atan2(p.facing.y,p.facing.x);
         rings.push({x:p.x+p.facing.x*R*0.35,y:p.y+p.facing.y*R*0.35,r:0,maxR:R*0.85,life:0.5,color:'#fbbf24'});
         for(const e of enemies){const d=dist(p,e);
-          if(d<R){const a=Math.atan2(e.y-p.y,e.x-p.x);let da=Math.abs(a-fa);if(da>Math.PI)da=Math.PI*2-da;
+          if(d<R&&losClear(p.x,p.y,e.x,e.y)){const a=Math.atan2(e.y-p.y,e.x-p.x);let da=Math.abs(a-fa);if(da>Math.PI)da=Math.PI*2-da;
             if(da<1.05){e.hp-=dmg;e.slowT=Math.max(e.slowT||0,0.5);
               if(!e.elite){e.x+=Math.cos(a)*75;e.y+=Math.sin(a)*75;}}}}
         camShake=Math.max(camShake,5);sfxBoom(0.3,0.18,600,80);}}
@@ -1963,7 +2018,7 @@
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
       sfxSweep(500,1400,0.35,'sine',0.1,true);
     }
-    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});fxBoomAnim(player.x,player.y,380,'#f87171');camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
+    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380&&losClear(player.x,player.y,e.x,e.y))e.hp-=70;});fxBoomAnim(player.x,player.y,380,'#f87171');camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
     else if(pk.type==='weapon'){
       const rem=WEAPON_UNLOCKS.filter(w=>!w.done);
       const w=rem[Math.floor(Math.random()*rem.length)];
@@ -2431,11 +2486,15 @@
 
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
     if(inVault){
-      vaultT-=dt;
-      if(vaultExit&&dist(player,vaultExit)<vaultExit.r+player.r){
+      vaultT+=dt; // просто счёт времени внутри (без лимита)
+      const left=enemies.length+pendingSpawns.length;
+      if(!vaultCleared&&left===0){
+        vaultCleared=true;
+        announce={text:'🏆 ЛАБИРИНТ ЗАЧИЩЕН! Иди к выходу 🚪',life:3,color:'#4ade80'};
+        flashFx(0.5,'74,222,128');sfxChime(660,3,0.09,0.12);
+      }
+      if(vaultCleared&&vaultExit&&dist(player,vaultExit)<vaultExit.r+player.r){
         rollVaultReward();exitVault();
-      }else if(vaultT<=0){
-        announce={text:'⌛ Лабиринт схлопнулся — выход не найден',life:2.6,color:'#8891a3'};exitVault();
       }
     }else{
       // мини-челленджи: каждые ~75с короткое испытание с наградой
@@ -2493,6 +2552,13 @@
     let touchSum=0,touchN=0;
     for(const e of enemies){
       const d=dist(player,e);
+      // спящий страж комнаты: не двигается и не атакует, пока игрок не подойдёт
+      if(e.sleep){
+        const woke=e.hp<e.maxHp||(d<340&&(!inVault||losClear(player.x,player.y,e.x,e.y)));
+        if(woke){e.sleep=false;
+          if(e.elite){announce={text:'⚔ Страж проснулся!',life:1.6,color:'#f87171'};camShake=Math.max(camShake,4);}}
+        else continue;
+      }
       if(e.slowT>0)e.slowT-=dt;
       // juice: враг вспыхивает при получении урона + всплывающие числа (троттлинг, у экрана, с общим капом)
       const dmgTaken=(e._lastHp!=null?e._lastHp-e.hp:0);
@@ -2592,7 +2658,7 @@
       let triggered=m.life<=0;
       for(const e of enemies){if(dist(m,e)<m.r+e.r){triggered=true;break;}}
       if(triggered){
-        for(const e of enemies){if(dist(m,e)<m.blastR)e.hp-=m.dmg;}
+        for(const e of enemies){if(dist(m,e)<m.blastR&&losClear(m.x,m.y,e.x,e.y))e.hp-=m.dmg;}
         fxBoomAnim(m.x,m.y,m.blastR,'#f97316');
         burst(m.x,m.y,'#f97316',14);camShake=Math.max(camShake,5);sfxBoom(0.3,0.22,800,80);
         m.dead=true;
@@ -2650,7 +2716,7 @@
         if(p.pierceLeft<0||p.hitSet.has(e))continue;
         if(dist(p,e)<p.r+e.r){
           if(p.fireball){
-            for(const o of enemies){if(dist(p,o)<p.blastR)o.hp-=p.dmg;}
+            for(const o of enemies){if(dist(p,o)<p.blastR&&losClear(p.x,p.y,o.x,o.y))o.hp-=p.dmg;}
             fxBoomAnim(p.x,p.y,p.blastR,p.fireballEvo?'#fb7185':'#f97316');
             burst(p.x,p.y,p.color||'#f97316',14);camShake=Math.max(camShake,4);sfxBoom(0.25,0.18,900,100);
             // Метеор-Шар (evo): pierces through and detonates again instead of dying on first hit
@@ -2716,6 +2782,7 @@
       const bpu=1+0.05*Math.sin(t*3+e._aseed);x.scale(bpu,bpu);
       drawEmoji(bKey,0,0,R*0.8);
       x.restore();
+      if(e.sleep)drawEmoji('💤',R*0.6,-R*0.75,Math.max(8,R*0.3));
       x.restore();return;
     }
     x.shadowColor=e.glow;x.shadowBlur=16;x.fillStyle=e.color;
@@ -2805,6 +2872,7 @@
       drawEmoji(sKey,0,0,R);
       x.restore();
       if(e.slowT>0.15)drawEmoji('❄️',R*0.6,-R*0.6,Math.max(6,R*0.34));
+      if(e.sleep)drawEmoji('💤',R*0.55,-R*0.7,Math.max(6,R*0.32));
       x.restore();return;
     }
     x.fillStyle=e.color;
@@ -2967,51 +3035,68 @@
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,'#c084fc',1.7+0.3*Math.sin(t*6));
-    if(inVault&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
+    if(inVault){
+      // стрелки на оставшихся мобов — последнего всегда можно найти
+      enemies.forEach(e=>edgeArrow(e.x,e.y,e.r,e.elite?'#f87171':'#fca5a5',e.elite?1.5:1));
+      if(vaultCleared&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
+    }
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
   // the page layout scrolls or squeezes on small screens
+  // скруглённый прогресс-бар с рамкой — единый стиль для всей панели
+  function hudBar(bx,by,bw,bh,frac,color,back){
+    const r=bh/2;
+    x.fillStyle=back||'rgba(255,255,255,0.10)';
+    x.beginPath();x.roundRect(bx,by,bw,bh,r);x.fill();
+    const fw=bw*Math.max(0,Math.min(1,frac));
+    if(fw>0){x.fillStyle=color;x.beginPath();x.roundRect(bx,by,Math.max(fw,3),bh,Math.min(r,Math.max(fw,3)/2));x.fill();}
+    x.strokeStyle='rgba(255,255,255,0.14)';x.lineWidth=1;
+    x.beginPath();x.roundRect(bx+0.5,by+0.5,bw-1,bh-1,r);x.stroke();
+  }
   function drawHudOverlay(){
-    const pad=8,w=176,h=88;
+    const pad=8,w=190,h=108;
     x.save();
-    x.globalAlpha=0.62;x.fillStyle='#0b0e17';x.fillRect(pad,pad,w,h);
-    x.globalAlpha=1;x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=1;x.strokeRect(pad+0.5,pad+0.5,w-1,h-1);
-    // HP bar + numbers
-    x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(pad+8,pad+8,w-16,10);
-    x.fillStyle='#ef4444';x.fillRect(pad+8,pad+8,(w-16)*Math.max(0,Math.min(1,player.hp/player.maxHp)),10);
+    x.globalAlpha=0.68;x.fillStyle='#0b0e17';
+    x.beginPath();x.roundRect(pad,pad,w,h,10);x.fill();
+    x.globalAlpha=1;x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=1;
+    x.beginPath();x.roundRect(pad+0.5,pad+0.5,w-1,h-1,10);x.stroke();
+    // HP: крупный бар с числами
+    hudBar(pad+8,pad+8,w-16,13,player.hp/player.maxHp,player.hp/player.maxHp<0.3?'#ff2d55':'#ef4444');
     x.fillStyle='#fff';x.font='bold 9px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-    x.fillText(Math.max(0,Math.round(player.hp))+'/'+Math.round(player.maxHp),pad+w/2,pad+13.5);
-    // XP bar
-    x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(pad+8,pad+22,w-16,5);
-    x.fillStyle='#4D96FF';x.fillRect(pad+8,pad+22,(w-16)*Math.max(0,Math.min(1,player.xp/player.xpNeed)),5);
-    // overdrive bar (purple) — fills with kills; flashes label while active
-    x.fillStyle='rgba(255,255,255,0.12)';x.fillRect(pad+8,pad+29,w-16,3);
+    x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=2;
+    x.fillText(Math.max(0,Math.round(player.hp))+' / '+Math.round(player.maxHp),pad+w/2,pad+15);
+    x.shadowBlur=0;
+    // XP: синий бар
+    hudBar(pad+8,pad+25,w-16,7,player.xp/player.xpNeed,'#4D96FF');
+    // Перегрузка: фиолетовый бар
     if(player.overdriveActive>0){
-      x.fillStyle='#c084fc';x.fillRect(pad+8,pad+29,w-16,3);
-      x.fillStyle='#e9d5ff';x.font='bold 8px system-ui,sans-serif';x.textAlign='right';x.textBaseline='middle';
-      x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w-8,pad+27);x.textAlign='center';
+      hudBar(pad+8,pad+35,w-16,5,1,'#c084fc');
+      x.fillStyle='#e9d5ff';x.font='bold 8px system-ui,sans-serif';x.textAlign='right';
+      x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w-10,pad+32);
     }else{
-      x.fillStyle='#a855f7';x.fillRect(pad+8,pad+29,(w-16)*Math.max(0,Math.min(1,(player.overdrive||0)/100)),3);
+      hudBar(pad+8,pad+35,w-16,5,(player.overdrive||0)/100,'#a855f7');
     }
-    // row 1: level + lives + time
-    x.textAlign='left';x.font='bold 12px system-ui,sans-serif';
-    x.fillStyle='#e8ebf2';x.fillText('Ур. '+player.level,pad+8,pad+38);
-    x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+62,pad+38);
-    x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+124,pad+38);
-    // row 2: kills
-    x.fillStyle='#9aa4b5';x.font='11px system-ui,sans-serif';x.fillText('Убийств: '+kills,pad+8,pad+52);
-    // combat stats — always visible even when the sidebar is hidden on phones
-    const col=[pad+8,pad+66,pad+122];
+    // строка: уровень · жизни · время
+    x.textAlign='left';x.font='bold 12px system-ui,sans-serif';x.textBaseline='middle';
+    x.fillStyle='#e8ebf2';x.fillText('Ур. '+player.level,pad+8,pad+51);
+    x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+62,pad+51);
+    x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+130,pad+51);
+    // строка: убийства + мобов на поле
+    x.font='11px system-ui,sans-serif';
+    x.fillStyle='#9aa4b5';x.fillText('☠ '+kills,pad+8,pad+65);
+    x.fillStyle='#fca5a5';x.fillText('👾 мобов: '+enemies.length,pad+70,pad+65);
+    // боевые статы сеткой
+    const col=[pad+8,pad+70,pad+130];
     x.font='9px system-ui,sans-serif';
     const cells=[
       ['Урон',Math.round(player.dmg)],['Атк',(1000/player.fireRate).toFixed(1)],['Скор',Math.round(player.speed)],
       ['Крит',Math.round(player.critChance*100)+'%'],['Проб',player.pierce],['Рад',Math.round(player.aoeMult*100)+'%']
     ];
     for(let i=0;i<6;i++){
-      const cx=col[i%3],cy=pad+(i<3?64:78);
+      const cx=col[i%3],cy=pad+(i<3?80:94);
       x.fillStyle='#8891a3';x.fillText(cells[i][0],cx,cy);
-      x.fillStyle='#e8ebf2';x.font='bold 9px system-ui,sans-serif';x.fillText(cells[i][1],cx+28,cy);
+      x.fillStyle='#e8ebf2';x.font='bold 9px system-ui,sans-serif';x.fillText(cells[i][1],cx+27,cy);
       x.font='9px system-ui,sans-serif';
     }
     x.restore();
@@ -3046,14 +3131,16 @@
         x.strokeStyle='rgba(192,132,252,0.5)';x.lineWidth=2;x.strokeRect(w.x,w.y,w.w,w.h);
       }
       if(vaultExit){
+        const open=vaultCleared,ecol=open?'#4ade80':'#64748b';
         x.save();x.translate(vaultExit.x,vaultExit.y);
-        x.shadowColor='#4ade80';x.shadowBlur=22;
-        for(let ri=0;ri<3;ri++){x.globalAlpha=0.85-ri*0.22;x.strokeStyle='#4ade80';x.lineWidth=3/zoom;
-          x.beginPath();x.arc(0,0,vaultExit.r-ri*10+Math.sin(t*3+ri)*3,0,Math.PI*2);x.stroke();}
+        x.shadowColor=ecol;x.shadowBlur=open?22:6;
+        for(let ri=0;ri<3;ri++){x.globalAlpha=(open?0.85:0.45)-ri*0.18;x.strokeStyle=ecol;x.lineWidth=3/zoom;
+          x.beginPath();x.arc(0,0,vaultExit.r-ri*10+(open?Math.sin(t*3+ri)*3:0),0,Math.PI*2);x.stroke();}
         x.shadowBlur=0;x.globalAlpha=1;
         x.fillStyle='#fff';x.font='24px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-        x.fillText('🚪',0,-2);
-        x.font='bold 11px system-ui,sans-serif';x.fillStyle='#bbf7d0';x.fillText('ВЫХОД',0,vaultExit.r*0.8);
+        x.fillText(open?'🚪':'🔒',0,-2);
+        x.font='bold 11px system-ui,sans-serif';x.fillStyle=open?'#bbf7d0':'#94a3b8';
+        x.fillText(open?'ВЫХОД':'УБЕЙ ВСЕХ',0,vaultExit.r*0.8);
         x.restore();
       }
     }
@@ -3369,8 +3456,9 @@
     if(inVault){
       x.save();x.textAlign='center';x.textBaseline='top';
       x.font='bold 15px system-ui,sans-serif';
-      x.fillStyle=vaultT<10?'#ff2d55':'#c084fc';x.shadowColor='#000';x.shadowBlur=4;
-      x.fillText('🏛 ЛАБИРИНТ · выход за '+Math.max(0,Math.ceil(vaultT))+'с',W/2,40);
+      const vLeft=enemies.length+pendingSpawns.length;
+      x.fillStyle=vaultCleared?'#4ade80':'#c084fc';x.shadowColor='#000';x.shadowBlur=4;
+      x.fillText(vaultCleared?'🚪 ВЫХОД ОТКРЫТ — иди к двери!':'🏛 ЛАБИРИНТ · осталось мобов: '+vLeft+' из '+vaultTotal,W/2,40);
       x.restore();
     }else if(challenge){
       x.save();x.textAlign='center';x.textBaseline='top';
