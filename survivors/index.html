@@ -1003,6 +1003,11 @@
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
+    // JSON.stringify превращает Set в {} — после загрузки p.hitSet.has() падал бы
+    // с TypeError и замораживал игру. Возрождаем настоящие Set-ы.
+    projectiles.forEach(p=>{if(!(p.hitSet instanceof Set))p.hitSet=new Set();});
+    boomers.forEach(b=>{if(!(b.hitSet instanceof Set))b.hitSet=new Set();});
+    challenge=null; // челлендж не переживает перезагрузку — начнётся новый по таймеру
     sessionTag=s.sessionTag||newSessionTag();renderPlayerName();
     if(player.lvlDmgScale==null)recalcLvlScale(); // старые сейвы без поля
     if(player.overdrive==null)player.overdrive=0;
@@ -2185,6 +2190,7 @@
 
   function endSession(reason){
     const died=reason!=='finish';
+    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultT=0;}
     // смерть (кончились все жизни) — путь назад закрыт, только новая игра.
     // ручное «Завершить» (жизни ещё есть) — снимок сохраняется, «Продолжить» его загрузит
     if(died)clearRun();else saveRun();
