@@ -957,7 +957,7 @@
   }
 
   function reset(){
-    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
+    player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;challenge=null;challengeAcc=0;
@@ -1013,7 +1013,7 @@
       if(typeof v==='number'&&!isFinite(v))player[k]=(typeof baseP[k]==='number'&&isFinite(baseP[k]))?baseP[k]:0;}
     enemies=s.enemies||[];gems=s.gems||[];pickups=s.pickups||[];mines=s.mines||[];pools=s.pools||[];
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
-    boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];
+    boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];fxq=[];
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=s.lives!=null?s.lives:3;zoom=baseZoom;enemyCountSmoothed=0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
@@ -1304,6 +1304,75 @@
     for(let i=0;i<4;i++){const a=rand(0,Math.PI*2),sp=1+Math.random()*2.5;
       particles.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:0.55,color:Math.random()<0.4?'#fff':color,sz:1.5+Math.random()*2});}
   }
+  // === АНИМИРОВАННЫЕ ЭФФЕКТЫ (fxq) ===
+  // единый массив на все типы: поп смерти (эмодзи), взрыв, ледяное разбитие,
+  // крит-звезда, лучи левелапа. В сейв не пишутся (как particles).
+  let fxq=[];
+  function addFx(o){if(fxq.length<300)fxq.push(o);}
+  function fxDeathPop(e,gl){addFx({kind:'pop',x:e.x,y:e.y,gl:gl,r:e.r*1.55,rot:rand(-3,3),life:0.28,maxLife:0.28});}
+  function fxIceShatter(e){addFx({kind:'ice',x:e.x,y:e.y,r:e.r,life:0.45,maxLife:0.45,seed:Math.random()*7});}
+  function fxBoomAnim(bx,by,R,col){addFx({kind:'boom',x:bx,y:by,R:R,col:col||'#f97316',life:0.42,maxLife:0.42,seed:Math.random()*7});}
+  function fxCritStar(cx,cy){addFx({kind:'crit',x:cx,y:cy,life:0.18,maxLife:0.18,rot:rand(0,Math.PI)});}
+  function fxLevelUp(){addFx({kind:'lvl',x:player.x,y:player.y,life:0.6,maxLife:0.6});}
+  function updateFx(dt){for(const f of fxq)f.life-=dt;fxq=fxq.filter(f=>f.life>0);}
+  function drawFx(){
+    for(const f of fxq){
+      const k=1-f.life/f.maxLife; // прогресс 0→1
+      if(f.kind==='pop'){
+        // эмодзи моба раздувается, вращаясь, и тает
+        x.save();x.translate(f.x,f.y);x.globalAlpha=1-k;
+        x.rotate(f.rot*k);const s=1+k*0.9;x.scale(s,s);
+        drawEmoji(f.gl,0,0,f.r);
+        x.restore();
+      }else if(f.kind==='ice'){
+        // замороженный моб разбивается на льдинки
+        x.save();x.translate(f.x,f.y);
+        x.globalAlpha=(1-k)*0.9;x.fillStyle='#bae6fd';
+        for(let i=0;i<6;i++){
+          const a=f.seed+i*1.047,d=f.r*(0.3+k*2.2);
+          x.save();x.translate(Math.cos(a)*d,Math.sin(a)*d+k*k*26);x.rotate(a+k*4);
+          x.beginPath();x.moveTo(0,-4);x.lineTo(3.5,3);x.lineTo(-3.5,3);x.closePath();x.fill();
+          x.restore();
+        }
+        x.globalAlpha=1-k;
+        drawEmoji('❄️',0,-f.r*0.4-k*14,7+k*4);
+        x.restore();
+      }else if(f.kind==='boom'){
+        // трёхслойный взрыв: белое ядро → огненный шар с рваным краем → дым
+        x.save();x.translate(f.x,f.y);
+        if(k<0.4){x.globalAlpha=1-k/0.4;x.fillStyle='#fff';
+          x.beginPath();x.arc(0,0,f.R*0.35*(0.3+k*1.6),0,Math.PI*2);x.fill();}
+        x.globalAlpha=(1-k)*0.8;x.fillStyle=f.col;
+        x.beginPath();
+        for(let i=0;i<=14;i++){const a=i/14*Math.PI*2;
+          const rr=f.R*(0.35+k*0.65)*(1+0.14*Math.sin(a*5+f.seed*9));
+          i?x.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):x.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}
+        x.closePath();x.fill();
+        x.globalAlpha=(1-k)*0.35;x.strokeStyle='#94a3b8';x.lineWidth=6*(1-k)+2;
+        x.beginPath();x.arc(0,0,f.R*(0.5+k*0.75),0,Math.PI*2);x.stroke();
+        x.restore();
+      }else if(f.kind==='crit'){
+        // жёлтая звезда-вспышка: два перекрещенных ромба, scale in-out
+        x.save();x.translate(f.x,f.y);x.rotate(f.rot);
+        const s=k<0.5?k*2:2-k*2;
+        x.globalAlpha=0.95;x.fillStyle='#fde047';
+        for(let i=0;i<2;i++){x.rotate(Math.PI/4);
+          x.beginPath();x.moveTo(0,-13*s);x.lineTo(3.5*s,0);x.lineTo(0,13*s);x.lineTo(-3.5*s,0);x.closePath();x.fill();}
+        x.restore();
+      }else if(f.kind==='lvl'){
+        // золотой радиальный всплеск левелапа
+        x.save();x.translate(f.x,f.y);
+        x.globalAlpha=(1-k)*0.9;x.strokeStyle='#fde047';x.lineWidth=3;
+        for(let i=0;i<12;i++){const a=i*(Math.PI/6);
+          const r0=20+k*90,r1=r0+18*(1-k);
+          x.beginPath();x.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);x.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);x.stroke();}
+        x.globalAlpha=(1-k)*0.5;
+        x.beginPath();x.arc(0,0,20+k*110,0,Math.PI*2);x.stroke();
+        x.restore();
+      }
+    }
+    x.globalAlpha=1;
+  }
 
   // псевдо-3D: приплюснутая тень под телом, чуть ниже центра — даёт ощущение объёма/земли
   function groundShadow(gx,gy,r){
@@ -1315,6 +1384,7 @@
   // всплывающие числа урона — взлетают над врагом и тают
   function spawnFloater(fx,fy,val,crit){
     floaters.push({x:fx+rand(-4,4),y:fy,vy:-38,life:0.75,val:val,crit:!!crit});
+    if(crit&&typeof val==='number')fxCritStar(fx,fy); // звезда-вспышка на крите
   }
 
   function makeMinion(e){
@@ -1426,6 +1496,9 @@
 
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
+    // анимация смерти: замороженный разбивается льдинками, обычный — эмодзи-«поп»
+    const dGl=SHAPE_EMOJI[e.skinShape]||BOSS_EMOJI[e.skinShape];
+    if(e.slowT>0)fxIceShatter(e);else if(dGl)fxDeathPop(e,dGl);
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
     gems.push({x:e.x+rand(-8,8),y:e.y+rand(-8,8),r:5,val:Math.max(1,Math.round(e.xp/2))*(e.champion?4:1)});
     if(player.lootLevel&&Math.random()<0.12*player.lootLevel)gems.push({x:e.x+rand(-14,14),y:e.y+rand(-14,14),r:5,val:Math.max(1,Math.round(e.xp/2))});
@@ -1731,6 +1804,7 @@
       b.rehit=(b.rehit??0.45)-dt;
       if(b.rehit<=0){b.hitSet.clear();b.rehit=p.boomEvo?0.3:0.45;}
       b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
+      (b.tr??(b.tr=[])).push(b.x,b.y);if(b.tr.length>16)b.tr.splice(0,2); // тающий след
       for(const e of enemies){if(b.hitSet.has(e))continue;if(dist(b,e)<b.r+e.r){e.hp-=b.dmg;b.hitSet.add(e);burst(b.x,b.y,'#fde047',3);}}
     }
     boomers=boomers.filter(b=>!b.dead&&b.life>0);
@@ -1796,6 +1870,7 @@
     for(const m of meteors){m.tt-=dt;
       if(m.tt<=0){
         for(const e of enemies){if(dist(m,e)<m.blastR)e.hp-=m.dmg;}
+        fxBoomAnim(m.x,m.y,m.blastR,'#fb923c');
         burst(m.x,m.y,'#fb923c',18);camShake=Math.max(camShake,6);sfxBoom(0.4,0.25,700,60);m.dead=true;}}
     meteors=meteors.filter(m=>!m.dead);
     // ghost orb — homing, pierces everything (steering in the projectile loop)
@@ -1888,7 +1963,7 @@
       rings.push({x:player.x,y:player.y,r:0,maxR:R,life:1.2});
       sfxSweep(500,1400,0.35,'sine',0.1,true);
     }
-    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
+    else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380)e.hp-=70;});fxBoomAnim(player.x,player.y,380,'#f87171');camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
     else if(pk.type==='weapon'){
       const rem=WEAPON_UNLOCKS.filter(w=>!w.done);
       const w=rem[Math.floor(Math.random()*rem.length)];
@@ -1919,6 +1994,7 @@
     player.level++;
     flashFx(0.7,'77,150,255'); // вспышка левелапа — голубая
     rings.push({x:player.x,y:player.y,r:0,maxR:160,life:0.6,color:'#4D96FF'});
+    fxLevelUp(); // золотой радиальный всплеск
     pendingLevelUps++;
     if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;
       // рубеж сложности: враги делают шаг вверх — предупреждаем и даём передышку (+20% HP),
@@ -2517,6 +2593,7 @@
       for(const e of enemies){if(dist(m,e)<m.r+e.r){triggered=true;break;}}
       if(triggered){
         for(const e of enemies){if(dist(m,e)<m.blastR)e.hp-=m.dmg;}
+        fxBoomAnim(m.x,m.y,m.blastR,'#f97316');
         burst(m.x,m.y,'#f97316',14);camShake=Math.max(camShake,5);sfxBoom(0.3,0.22,800,80);
         m.dead=true;
       }
@@ -2548,7 +2625,10 @@
         const a=Math.atan2(player.y-g.y,player.x-g.x);
         g.x+=Math.cos(a)*(280+gemMagnetR)*dt;g.y+=Math.sin(a)*(280+gemMagnetR)*dt;
       }
-      if(dist(player,g)<player.r+g.r){grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));g.dead=true;if(challenge&&challenge.type==='gems')challenge.progress++;}
+      if(dist(player,g)<player.r+g.r){grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));g.dead=true;if(challenge&&challenge.type==='gems')challenge.progress++;
+        // искры-звёздочки при сборе кристалла
+        if(particles.length<560)for(let i=0;i<3;i++){const a=rand(0,Math.PI*2);
+          particles.push({x:g.x,y:g.y,vx:Math.cos(a)*1.5,vy:Math.sin(a)*1.5-1.8,life:0.5,color:'#93c5fd',sz:1.5+Math.random()*1.5});}}
     }
     gems=gems.filter(g=>!g.dead);
 
@@ -2571,6 +2651,7 @@
         if(dist(p,e)<p.r+e.r){
           if(p.fireball){
             for(const o of enemies){if(dist(p,o)<p.blastR)o.hp-=p.dmg;}
+            fxBoomAnim(p.x,p.y,p.blastR,p.fireballEvo?'#fb7185':'#f97316');
             burst(p.x,p.y,p.color||'#f97316',14);camShake=Math.max(camShake,4);sfxBoom(0.25,0.18,900,100);
             // Метеор-Шар (evo): pierces through and detonates again instead of dying on first hit
             if(p.fireballEvo&&p.pierceLeft>0){p.hitSet.add(e);p.pierceLeft--;continue;}
@@ -2585,6 +2666,21 @@
 
     // particles / rings
     particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.15;p.life-=dt/0.6;});
+    updateFx(dt);
+    // выхлоп ракеты героя: пламя и дым позади по курсу, только в движении
+    {
+      const pdx=player.x-(player._px??player.x),pdy=player.y-(player._py??player.y);
+      if(Math.hypot(pdx,pdy)>0.5&&particles.length<520){
+        const ba=(player._hAng??0)+Math.PI;
+        for(let i=0;i<2;i++){
+          const ja=ba+rand(-0.28,0.28),d0=player.r*1.7;
+          particles.push({x:player.x+Math.cos(ja)*d0,y:player.y+Math.sin(ja)*d0,
+            vx:Math.cos(ja)*rand(1,2.4),vy:Math.sin(ja)*rand(1,2.4)-0.5,
+            life:0.5,color:Math.random()<0.55?'#fb923c':'#94a3b8',sz:1.5+Math.random()*2.5});
+        }
+      }
+      player._px=player.x;player._py=player.y;
+    }
     particles=particles.filter(p=>p.life>0);
     floaters.forEach(f=>{f.y+=f.vy*dt;f.vy*=0.92;f.life-=dt;});
     floaters=floaters.filter(f=>f.life>0);
@@ -3089,8 +3185,16 @@
       x.fillRect(-6,-6,12,12);x.shadowBlur=0;
       x.fillStyle='#1a2130';x.beginPath();x.arc(0,0,3,0,Math.PI*2);x.fill();x.restore();
     });
-    // boomerangs
+    // boomerangs (+ тающий след за пилой)
     boomers.forEach(b=>{
+      if(b.tr&&b.tr.length>=4){
+        x.strokeStyle='#fde047';x.lineCap='round';
+        for(let i=2;i<b.tr.length;i+=2){
+          x.globalAlpha=0.3*(i/b.tr.length);x.lineWidth=1.5+2.5*(i/b.tr.length);
+          x.beginPath();x.moveTo(b.tr[i-2],b.tr[i-1]);x.lineTo(b.tr[i],b.tr[i+1]);x.stroke();
+        }
+        x.globalAlpha=1;
+      }
       x.save();x.translate(b.x,b.y);x.rotate(t*14);x.fillStyle='#fde047';x.shadowColor='#fde047';x.shadowBlur=8;
       x.fillRect(-b.r,-3,b.r*2,6);x.fillRect(-3,-b.r,6,b.r*2);x.restore();
     });
@@ -3203,6 +3307,7 @@
       }
       x.shadowBlur=0;
     }
+    drawFx(); // анимированные эффекты — поверх мобов, под героем
     // player
     groundShadow(player.x,player.y,player.r);
     // шлейф-афтеримейдж во время перегрузки
