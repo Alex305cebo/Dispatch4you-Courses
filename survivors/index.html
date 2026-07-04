@@ -1862,7 +1862,7 @@
     const pool=hasWeapon?[...PICKUP_TYPES,{id:'weapon',color:'#eab308',label:'⚔'}]:PICKUP_TYPES;
     const type=pool[Math.floor(Math.random()*pool.length)];
     const ang=rand(0,Math.PI*2),rad=rand(160,260);
-    pickups.push({x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,r:11,type:type.id,color:type.color,label:type.label});
+    pickups.push({x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,r:11,type:type.id,color:type.color,label:type.label,life:26});
   }
 
   function openChest(){
@@ -2517,8 +2517,12 @@
     bolts.forEach(b=>b.life-=dt);
     bolts=bolts.filter(b=>b.life>0);
 
-    // pickups
+    // pickups: живут ограниченное время — в конце моргают, потом
+    // исчезают, и на поле тут же появляется другой
     for(const pk of pickups){
+      if(pk.life==null)pk.life=26; // страховка для старых сохранений
+      pk.life-=dt;
+      if(pk.life<=0){pk.dead=true;spawnPickup();continue;}
       if(dist(player,pk)<player.r+pk.r+player.pickupRadius*0.4){collectPickup(pk);pk.dead=true;}
     }
     pickups=pickups.filter(p=>!p.dead);
@@ -2682,22 +2686,16 @@
     // behavior telegraphs
     if(e.armT!=null){x.globalAlpha=0.5+0.5*Math.sin(t*30);x.fillStyle='#fff';x.beginPath();x.arc(0,0,e.r+6,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     if(e.cm==='aim'){x.strokeStyle='rgba(255,255,255,0.7)';x.lineWidth=2;x.setLineDash([5,5]);x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(e.ca)*260,Math.sin(e.ca)*260);x.stroke();x.setLineDash([]);}
-    // враг — нативный эмодзи на «жетоне»; иначе векторная фигура ниже (фолбэк)
+    // враг — чистый нативный эмодзи (без жетона); иначе векторная фигура ниже (фолбэк)
     const sKey=SHAPE_EMOJI[e.skinShape];
     if(sKey){
       if(e._aseed==null)e._aseed=Math.floor(Math.random()*24);
-      // «жетон»: тёмный диск с лёгкой подкраской + цветное кольцо —
-      // эмодзи читается на любом фоне, цвет кольца показывает тир/акт/усиления
-      const R=e.r*1.45;
-      x.fillStyle='#0e1322';x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();
-      x.globalAlpha=0.22;x.fillStyle=e.color;x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.fill();x.globalAlpha=1;
-      x.strokeStyle=e.color;x.lineWidth=Math.max(2,e.r*0.14);
-      x.beginPath();x.arc(0,0,R,0,Math.PI*2);x.stroke();
+      const R=e.r*1.55;
       x.save();
       if(player.x<ex)x.scale(-1,1);
-      x.rotate(Math.sin(t*3+e._aseed)*0.07);
+      x.rotate(Math.sin(t*3+e._aseed)*0.09);
       const pu=1+0.06*Math.sin(t*4+e._aseed);x.scale(pu,pu);
-      drawEmoji(sKey,0,0,R*0.82);
+      drawEmoji(sKey,0,0,R);
       x.restore();
       x.restore();return;
     }
@@ -2741,24 +2739,30 @@
 
   // крупные цветные эмодзи вместо мелких значков — ярче, объёмнее, заметнее на поле
   const PICKUP_EMOJI={chest:'🎁',heal:'❤️',magnet:'🧲',nuke:'💣',weapon:'⚔️',relic:'💎'};
+  // последние секунды жизни пикап (и его стрелка на краю экрана) моргает
+  function pickupBlink(pk){
+    if(pk.life==null||pk.life>7)return 1;
+    return 0.25+0.75*Math.abs(Math.sin(t*(pk.life<3?9:5)));
+  }
   function drawPickup(px,py,pk){
     const bob=Math.sin(t*3+px*0.05)*3;                 // мягкое парение над землёй
     const pulse=0.85+0.15*Math.sin(t*4+py*0.05);       // пульс свечения
     const rare=pk.type==='relic'||pk.type==='weapon';
+    const blf=pickupBlink(pk);
     x.save();x.translate(px,py+bob);
     // тень на земле (псевдо-объём)
-    x.globalAlpha=0.28;x.fillStyle='#000';x.beginPath();x.ellipse(0,16-bob,10,3.5,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+    x.globalAlpha=0.28*blf;x.fillStyle='#000';x.beginPath();x.ellipse(0,16-bob,10,3.5,0,0,Math.PI*2);x.fill();
     // светящийся ореол
     x.shadowColor=pk.color;x.shadowBlur=18;
-    x.globalAlpha=0.4*pulse;x.fillStyle=pk.color;
+    x.globalAlpha=0.4*pulse*blf;x.fillStyle=pk.color;
     x.beginPath();x.arc(0,0,16*pulse,0,Math.PI*2);x.fill();
-    x.globalAlpha=1;x.shadowBlur=0;
+    x.globalAlpha=blf;x.shadowBlur=0;
     // вращающееся кольцо искр для редких (оружие/реликвия)
     if(rare){
-      x.strokeStyle=pk.color;x.lineWidth=2;x.globalAlpha=0.65*pulse;
+      x.strokeStyle=pk.color;x.lineWidth=2;x.globalAlpha=0.65*pulse*blf;
       x.save();x.rotate(t*1.2);
       for(let i=0;i<6;i++){const a=i*(Math.PI/3);x.beginPath();x.moveTo(Math.cos(a)*19,Math.sin(a)*19);x.lineTo(Math.cos(a)*25,Math.sin(a)*25);x.stroke();}
-      x.restore();x.globalAlpha=1;
+      x.restore();x.globalAlpha=blf;
     }
     // сам предмет: чёткий кэшированный эмодзи-глиф с лёгким покачиванием
     x.save();x.rotate(Math.sin(t*2.5+px*0.05)*0.12);
@@ -2803,6 +2807,23 @@
     }
     x.globalAlpha=1;
   }
+  // живой, но ненавязчивый фон: дрейфующие мерцающие пылинки-светлячки.
+  // детерминированы хэшем клетки — бесконечное поле без хранения состояния
+  function drawMotes(){
+    const g=240,halfW=(W/2)/zoom,halfH=(H/2)/zoom;
+    const x0=Math.floor((player.x-halfW)/g)-1,x1=Math.ceil((player.x+halfW)/g)+1;
+    const y0=Math.floor((player.y-halfH)/g)-1,y1=Math.ceil((player.y+halfH)/g)+1;
+    for(let iy=y0;iy<=y1;iy++)for(let ix=x0;ix<=x1;ix++){
+      const h=propHash(ix+13,iy+29);
+      if(h>0.55)continue;
+      const px=ix*g+g*0.5+Math.sin(t*0.25*(0.4+h)+h*40)*52;
+      const py=iy*g+g*0.5+Math.cos(t*0.2*(0.4+h)+h*70)*44;
+      x.globalAlpha=0.08+0.14*(0.5+0.5*Math.sin(t*(0.7+h)+h*90));
+      x.fillStyle=h<0.18?'#7dd3fc':(h<0.36?'#86efac':'#c4b5fd');
+      x.beginPath();x.arc(px,py,1.4+h*2.4,0,Math.PI*2);x.fill();
+    }
+    x.globalAlpha=1;
+  }
   function drawGrid(){
     const g=40;
     const halfW=(W/2)/zoom,halfH=(H/2)/zoom;
@@ -2831,7 +2852,7 @@
   }
 
   function drawOffscreenIndicators(){
-    pickups.forEach(pk=>edgeArrow(pk.x,pk.y,pk.r,pk.color));
+    pickups.forEach(pk=>{x.globalAlpha=pickupBlink(pk);edgeArrow(pk.x,pk.y,pk.r,pk.color);x.globalAlpha=1;});
     // bosses: bigger pulsing arrows in the boss's color
     enemies.forEach(e=>{if(e.elite)edgeArrow(e.x,e.y,e.r,e.color,1.7+0.25*Math.sin(t*6));});
     enemies.forEach(e=>{if(e.hunter)edgeArrow(e.x,e.y,e.r,'#facc15',1.6+0.3*Math.sin(t*6));});
@@ -2909,6 +2930,7 @@
     x.translate(-player.x,-player.y);
     drawGrid();
     drawProps();
+    drawMotes();
     // лабиринт: стены и светящийся выход
     if(inVault){
       for(const w of vaultWalls){
@@ -2955,10 +2977,57 @@
       x.fillText('🌀',0,-2);x.font='bold 11px system-ui,sans-serif';x.fillStyle='#e9d5ff';x.fillText(Math.ceil(portal.life)+'с',0,portal.r*0.55);
       x.restore();
     }
-    // acid pools (under everything else)
+    // лужи/зоны (под всем остальным): у каждой свой характер
     pools.forEach(pl=>{
-      x.globalAlpha=0.22+0.08*Math.sin(t*6);
-      x.fillStyle=pl.color||'#84cc16';x.beginPath();x.arc(pl.x,pl.y,pl.r,0,Math.PI*2);x.fill();
+      x.save();x.translate(pl.x,pl.y);
+      const fade=Math.min(1,pl.life); // плавное растворение в конце
+      if(pl.tornado){
+        // смерч: крутящаяся воронка из дуг + мусор, который она поднимает
+        const col=pl.color||'#a5b4fc';
+        for(let i=0;i<3;i++){
+          const rr=pl.r*(0.38+0.3*i),w0=t*(6-i*1.3)+i*2.1;
+          x.globalAlpha=(0.55-0.13*i)*fade;
+          x.strokeStyle=col;x.lineWidth=3.5-i*0.8;
+          x.beginPath();x.arc(0,0,rr,w0,w0+Math.PI*1.35);x.stroke();
+        }
+        x.fillStyle=col;
+        for(let i=0;i<7;i++){
+          const a=t*(4+i*0.6)+i*0.9,rr=pl.r*(0.22+0.11*i);
+          x.globalAlpha=0.5*fade;
+          x.beginPath();x.arc(Math.cos(a)*rr,Math.sin(a)*rr*0.85,2.4,0,Math.PI*2);x.fill();
+        }
+      }else if(pl.singularity){
+        // чёрная дыра: тёмное ядро + закрученные втягивающие рукава
+        x.globalAlpha=0.75*fade;x.fillStyle='#12071f';
+        x.beginPath();x.arc(0,0,pl.r*0.55,0,Math.PI*2);x.fill();
+        x.strokeStyle=pl.color||'#a855f7';
+        for(let i=0;i<2;i++){
+          const w0=-t*5+i*Math.PI;
+          x.globalAlpha=0.6*fade;x.lineWidth=3;
+          x.beginPath();
+          for(let k=0;k<=12;k++){const a=w0+k*0.28,rr=pl.r*(1.15-k*0.06);
+            k?x.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):x.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}
+          x.stroke();
+        }
+      }else{
+        // кислота: пузырящаяся лужа с неровным «живым» краем
+        const wob=k=>{x.beginPath();
+          for(let i=0;i<=16;i++){const a=i/16*Math.PI*2;
+            const rr=pl.r*k*(1+0.06*Math.sin(a*3+t*2.2+pl.x*0.05));
+            i?x.lineTo(Math.cos(a)*rr,Math.sin(a)*rr):x.moveTo(Math.cos(a)*rr,Math.sin(a)*rr);}
+          x.closePath();};
+        x.globalAlpha=0.3*fade;x.fillStyle='#3f6212';wob(1);x.fill();
+        x.globalAlpha=0.32*fade;x.fillStyle='#84cc16';wob(0.68);x.fill();
+        // пузыри: растут и лопаются
+        x.strokeStyle='#d9f99d';x.lineWidth=1.5;
+        for(let i=0;i<5;i++){
+          const ph=(t*0.6+i*0.23+pl.x*0.01)%1;
+          const a=i*2.51+pl.y*0.07,rr=pl.r*(0.15+0.5*((i*53%7)/7));
+          x.globalAlpha=0.55*(1-ph)*fade;
+          x.beginPath();x.arc(Math.cos(a)*rr,Math.sin(a)*rr,1.5+ph*4.5,0,Math.PI*2);x.stroke();
+        }
+      }
+      x.restore();
     });
     x.globalAlpha=1;
     // rings
