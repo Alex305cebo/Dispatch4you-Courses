@@ -266,7 +266,18 @@
   let best=parseFloat(localStorage.getItem('survivors-best')||'0');
   // мета-прогрессия: постоянная валюта и покупки, переживают удаление сохранённого забега
   const META_KEY='survivors-meta';
-  function loadMeta(){try{const m=JSON.parse(localStorage.getItem(META_KEY));return m&&typeof m==='object'?{shards:m.shards||0,unlocks:m.unlocks||{}}:{shards:0,unlocks:{}};}catch(e){return{shards:0,unlocks:{}};}}
+  // META_VERSION: набор ID мета-апгрейдов сменился (бесконечные тиры → конечные ступени
+  // I/II/III) — старые сохранённые уровни для новых ID бессмысленны. Бампнули версию —
+  // у КАЖДОГО игрока при первой загрузке этой версии мета-прогрессия обнулится один раз.
+  const META_VERSION=2;
+  function loadMeta(){
+    try{
+      const v=parseInt(localStorage.getItem('survivors-meta-v')||'1',10);
+      if(v<META_VERSION){localStorage.setItem('survivors-meta-v',String(META_VERSION));localStorage.setItem(META_KEY,JSON.stringify({shards:0,unlocks:{}}));return{shards:0,unlocks:{}};}
+      const m=JSON.parse(localStorage.getItem(META_KEY));
+      return m&&typeof m==='object'?{shards:m.shards||0,unlocks:m.unlocks||{}}:{shards:0,unlocks:{}};
+    }catch(e){return{shards:0,unlocks:{}};}
+  }
   function saveMeta(){try{localStorage.setItem(META_KEY,JSON.stringify(metaState));}catch(e){}}
   let metaState=loadMeta();
   const FS_BASE='https://firestore.googleapis.com/v1/projects/dispatch-games/databases/(default)/documents';
@@ -324,11 +335,17 @@
   const MEDALS=['🥇','🥈','🥉'];
   function isMyRecord(name){return !!playerName&&(name===playerName||name.indexOf(playerName+' #')===0);}
   function milestoneBadge(level){return level>=100?'👑':level>=75?'💎':level>=50?'🔥':'';}
+  // особая метка для аккаунтов создателей игры в таблице лидеров
+  function isCreatorName(name){
+    const base=(name||'').split(' #')[0].trim().toLowerCase();
+    return base.startsWith('ilya')||base.startsWith('alexxx')||base.startsWith('алекс');
+  }
+  function creatorBadge(name){return isCreatorName(name)?' <span style="color:#fde047;font-size:10px;font-weight:700;">★ создатель</span>':'';}
   // always-visible top-3 under the sidebar button — everyone sees the current leaders
   async function refreshTop3(){
     const rows=await fetchLeaderboard('survivors',3);
     lbTop3El.innerHTML=rows.length?rows.map((r,i)=>
-      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+'</span><span class="sc">'+fmtNum(Number(r.score)||0)+'</span></div>'
+      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+'</span><span class="sc">'+fmtNum(Number(r.score)||0)+'</span></div>'
     ).join(''):'<div>Пока пусто — стань первым!</div>';
   }
   refreshTop3();setInterval(refreshTop3,60000);
@@ -337,7 +354,7 @@
     if(!r)return '<div class="p" style="opacity:0.3;padding-top:'+st[1]+';"><span class="medal">'+MEDALS[i]+'</span><span class="nm">—</span></div>';
     return '<div class="p" style="border-color:'+st[0]+';padding-top:'+st[1]+';'+(i===0?'box-shadow:0 0 14px rgba(250,204,21,0.25);':'')+'">'
       +'<span class="medal">'+MEDALS[i]+'</span>'
-      +'<span class="nm">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+'</span>'
+      +'<span class="nm">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+'</span>'
       +'<span class="sc" style="color:'+st[0]+';">'+fmtNum(Number(r.score)||0)+'</span>'
       +'<span class="ex">ур.'+(r.level||1)+' · ⚔'+fmtNum(r.kills||0)+(r.bosses?' · 👑'+r.bosses:'')+'</span></div>';
   }
@@ -346,7 +363,7 @@
     return '<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-bottom:1px solid var(--border);'
       +(mine?'background:rgba(77,150,255,0.12);border-left:3px solid #4D96FF;':'')+'">'
       +'<span style="width:20px;text-align:right;color:var(--muted);font-weight:700;">'+(i+1)+'</span>'
-      +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
+      +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
       +'<span style="white-space:nowrap;color:var(--text);font-weight:700;">'+fmtNum(Number(r.score)||0)+'</span>'
       +'<span style="white-space:nowrap;font-size:10px;color:var(--muted);">ур.'+(r.level||1)+' ⚔'+fmtNum(r.kills||0)+(r.time?' ⏱'+fmtTime(r.time):'')+(r.combo?' 🔥'+fmtNum(r.combo):'')+'</span></div>';
   }
@@ -752,19 +769,30 @@
 
   // мета-прогрессия — постоянные бонусы за эссенцию, накопленную за все прошлые забеги.
   // применяются в newPlayer() один раз при старте нового рана, до 5 уровней каждый
+  // Мета-прогрессия — три КОНЕЧНЫЕ ступени на каждую характеристику (не бесконечно —
+  // бесконечный рост обесценивает смысл прогресса). Когда ступень полностью прокачана,
+  // открывается следующая: лучше эффект за уровень, но и дороже. После III ступени
+  // для этой характеристики апгрейдов больше нет — прогресс завершён осознанно.
   const META_UPGRADES=[
     {id:'vitality',name:'❤️ Живучесть',desc:'+10 к макс. HP за уровень.',max:5,costBase:8},
     {id:'power',name:'⚔️ Мощь',desc:'+4% урона за уровень.',max:5,costBase:10},
     {id:'speed',name:'👟 Прыть',desc:'+3% скорости за уровень.',max:5,costBase:8},
     {id:'crit',name:'🎯 Меткость',desc:'+3% шанса крита за уровень.',max:5,costBase:10},
     {id:'armor',name:'🛡 Стойкость',desc:'-3% получаемого урона за уровень.',max:5,costBase:10},
-    // БЕСКОНЕЧНЫЕ тиры: когда всё остальное куплено — сюда, цена растёт каждый уровень,
-    // а бонус копится без предела. Всегда есть куда тратить эссенцию.
-    {id:'ascend',name:'🌌 Восхождение',desc:'+8% ко ВСЕМУ урону за уровень. Бесконечно — каждый раз дороже.',max:Infinity,costBase:40,growth:1.16,endless:true},
-    {id:'bulwark',name:'🔆 Вечный оплот',desc:'+8 HP и -1.5% урона по тебе за уровень. Бесконечно.',max:Infinity,costBase:35,growth:1.15,endless:true},
+    // Ступень II — открывается, когда ступень I полностью прокачана
+    {id:'vitality2',name:'❤️‍🔥 Несокрушимость',desc:'+22 к макс. HP за уровень. Ступень II.',max:5,costBase:60,tierOf:'vitality'},
+    {id:'power2',name:'⚔️ Свирепость',desc:'+9% урона за уровень. Ступень II.',max:5,costBase:75,tierOf:'power'},
+    {id:'speed2',name:'👟 Стремительность',desc:'+6% скорости за уровень. Ступень II.',max:5,costBase:55,tierOf:'speed'},
+    {id:'crit2',name:'🎯 Точность',desc:'+6% шанса крита за уровень. Ступень II.',max:5,costBase:70,tierOf:'crit'},
+    {id:'armor2',name:'🛡 Броня',desc:'-6% получаемого урона за уровень. Ступень II.',max:5,costBase:70,tierOf:'armor'},
+    // Ступень III — финальная, самая мощная и дорогая. Дальше для этой ветки — всё.
+    {id:'vitality3',name:'👑 Бессмертие',desc:'+50 к макс. HP за уровень. Ступень III — финальная.',max:5,costBase:400,tierOf:'vitality2'},
+    {id:'power3',name:'👑 Разрушение',desc:'+18% урона за уровень. Ступень III — финальная.',max:5,costBase:500,tierOf:'power2'},
+    {id:'speed3',name:'👑 Вихрь',desc:'+12% скорости за уровень. Ступень III — финальная.',max:5,costBase:350,tierOf:'speed2'},
+    {id:'crit3',name:'👑 Приговор',desc:'+12% шанса крита за уровень. Ступень III — финальная.',max:5,costBase:450,tierOf:'crit2'},
+    {id:'armor3',name:'👑 Эгида',desc:'-12% получаемого урона за уровень. Ступень III — финальная.',max:5,costBase:450,tierOf:'armor2'},
   ];
-  // цена: обычные — линейно; бесконечные — геометрически (дорожают всё сильнее)
-  function metaCost(u,lvl){return u.endless?Math.round(u.costBase*Math.pow(u.growth||1.15,lvl)):(lvl+1)*u.costBase;}
+  function metaCost(u,lvl){return (lvl+1)*u.costBase;}
 
   // достижения — открываются по итогам забега, хранятся отдельно и навсегда
   // Достижения — длинная КОНЕЧНАЯ эскалирующая лестница: когда лёгкие взяты,
@@ -814,20 +842,27 @@
         +'<span>'+ac.desc+(on?' ✓':'')+'</span></div>';
     }).join('');
   }
+  // ступень видна, только если у неё нет родителя (базовая) или родитель уже полностью
+  // прокачан — так «что-то лучше и дороже» появляется именно после полного завершения
+  function metaTierUnlocked(u){
+    if(!u.tierOf)return true;
+    const prev=META_UPGRADES.find(x=>x.id===u.tierOf);
+    return !!prev&&(metaState.unlocks[u.tierOf]||0)>=prev.max;
+  }
   function showMetaShop(){
     document.getElementById('metaShardsBalance').textContent=fmtNum(metaState.shards);
     const cardsEl=document.getElementById('metaCards');
     cardsEl.innerHTML='';
-    META_UPGRADES.forEach(u=>{
+    META_UPGRADES.filter(metaTierUnlocked).forEach(u=>{
       const lvl=metaState.unlocks[u.id]||0;
-      const maxed=lvl>=u.max; // у бесконечных (max=Infinity) всегда false
+      const maxed=lvl>=u.max;
       const cost=maxed?0:metaCost(u,lvl);
       const afford=!maxed&&metaState.shards>=cost;
-      const maxLbl=isFinite(u.max)?u.max:'∞';
+      const tierColor=u.tierOf?(META_UPGRADES.find(x=>x.id===u.tierOf).tierOf?'#fde047':'#fb923c'):'#c084fc';
       const el=document.createElement('div');el.className='card';
-      el.style.borderColor=u.endless?'#fde047':'#c084fc';
-      el.innerHTML='<b style="color:'+(u.endless?'#fef08a':'#e9d5ff')+';">'+u.name+'</b>'
-        +'<span style="display:block;color:'+(u.endless?'#fde047':'#c084fc')+';font-weight:600;margin-bottom:4px;">Ур. '+lvl+'/'+maxLbl+(maxed?'':' · '+fmtNum(cost)+' ✨')+'</span>'
+      el.style.borderColor=tierColor;
+      el.innerHTML='<b style="color:'+tierColor+';">'+u.name+'</b>'
+        +'<span style="display:block;color:'+tierColor+';font-weight:600;margin-bottom:4px;">Ур. '+lvl+'/'+u.max+(maxed?' · ЗАВЕРШЕНО':' · '+fmtNum(cost)+' ✨')+'</span>'
         +'<span>'+u.desc+'</span>';
       if(maxed||!afford)el.style.opacity='0.5';
       if(!maxed&&afford){
@@ -981,12 +1016,13 @@
   function applyMetaBonuses(p){
     const mu=metaState.unlocks;
     const vit=mu.vitality||0,pow=mu.power||0,spd=mu.speed||0,crit=mu.crit||0,arm=mu.armor||0;
-    const asc=mu.ascend||0,bul=mu.bulwark||0; // бесконечные тиры
-    p.maxHp+=10*vit+8*bul;p.hp=p.maxHp;
-    p.dmgMult*=Math.pow(1.04,pow)*Math.pow(1.08,asc);
-    p.speed=Math.round(p.speed*(1+0.03*spd));
-    p.critChance=Math.min(0.95,p.critChance+0.03*crit);
-    if(arm||bul)p.curseDmgTakenMul=(p.curseDmgTakenMul||1)*Math.pow(0.97,arm)*Math.pow(0.985,bul);
+    const vit2=mu.vitality2||0,pow2=mu.power2||0,spd2=mu.speed2||0,crit2=mu.crit2||0,arm2=mu.armor2||0;
+    const vit3=mu.vitality3||0,pow3=mu.power3||0,spd3=mu.speed3||0,crit3=mu.crit3||0,arm3=mu.armor3||0;
+    p.maxHp+=10*vit+22*vit2+50*vit3;p.hp=p.maxHp;
+    p.dmgMult*=Math.pow(1.04,pow)*Math.pow(1.09,pow2)*Math.pow(1.18,pow3);
+    p.speed=Math.round(p.speed*(1+0.03*spd+0.06*spd2+0.12*spd3));
+    p.critChance=Math.min(0.95,p.critChance+0.03*crit+0.06*crit2+0.12*crit3);
+    if(arm||arm2||arm3)p.curseDmgTakenMul=(p.curseDmgTakenMul||1)*Math.pow(0.97,arm)*Math.pow(0.94,arm2)*Math.pow(0.88,arm3);
   }
 
   function makeBasePlayer(){
