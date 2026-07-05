@@ -285,6 +285,15 @@
   }
   let W=640,H=480;
   const cv=document.getElementById('sboard'),x=cv.getContext('2d');
+  // ЗАЩИТА: отрицательный радиус arc/ellipse кидает исключение и убивает кадр
+  // (видели «radius provided (-1.06) is negative» в бою). Клампим к 0 глобально —
+  // дуга нулевого радиуса просто не рисуется, игра не замечает.
+  (function(){
+    const A=CanvasRenderingContext2D.prototype.arc;
+    CanvasRenderingContext2D.prototype.arc=function(ax,ay,ar,a0,a1,ccw){return A.call(this,ax,ay,ar>0?ar:0,a0,a1,ccw);};
+    const E=CanvasRenderingContext2D.prototype.ellipse;
+    CanvasRenderingContext2D.prototype.ellipse=function(ax,ay,rx,ry,rot,a0,a1,ccw){return E.call(this,ax,ay,rx>0?rx:0,ry>0?ry:0,rot,a0,a1,ccw);};
+  })();
   // roundRect появился в Safari 16 / Chrome 99 — полифилл для старых браузеров
   if(!x.roundRect){CanvasRenderingContext2D.prototype.roundRect=function(x0,y0,w0,h0,r0){
     r0=Math.min(r0,Math.abs(w0)/2,Math.abs(h0)/2);
