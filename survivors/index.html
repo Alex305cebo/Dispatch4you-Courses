@@ -110,13 +110,15 @@
   .btn-danger{background:#7f1d2e;border-color:#ff2d55;color:#fff;}
   .btn-danger:hover{background:#9a2436;}
   @keyframes warnpulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
-  /* мигающая кнопка накопленных улучшений (Вариант А — игра не прерывается сама) */
-  #btnPendingUp{display:none;position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:6;
-    width:auto;max-width:90%;padding:8px 16px;font-weight:800;font-size:13px;color:#fff;cursor:pointer;white-space:nowrap;
-    background:linear-gradient(135deg,#4D96FF,#a855f7);border:1px solid #7dd3fc;border-radius:999px;
-    box-shadow:0 3px 16px rgba(77,150,255,0.5);animation:pupblink 1.1s ease-in-out infinite;}
-  #btnPendingUp:hover{filter:brightness(1.1);}
-  @keyframes pupblink{0%,100%{opacity:1;transform:translateX(-50%) scale(1);}50%{opacity:0.6;transform:translateX(-50%) scale(0.96);}}
+  /* режим «кнопки»: две пилюли сверху — «выбрать одно» и «выбрать всё» */
+  #pendingBtns{display:none;position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:6;
+    gap:8px;justify-content:center;flex-wrap:wrap;width:max-content;max-width:94%;
+    animation:pupblink 1.2s ease-in-out infinite;}
+  .pupBtn{padding:8px 15px;font-weight:800;font-size:13px;color:#fff;cursor:pointer;white-space:nowrap;border-radius:999px;}
+  #btnPendingUp{background:linear-gradient(135deg,#4D96FF,#a855f7);border:1px solid #7dd3fc;box-shadow:0 3px 16px rgba(77,150,255,0.5);}
+  #btnPendingAll{background:linear-gradient(135deg,#16a34a,#4ade80);border:1px solid #86efac;box-shadow:0 3px 16px rgba(74,222,128,0.4);}
+  .pupBtn:hover{filter:brightness(1.1);}
+  @keyframes pupblink{0%,100%{opacity:1;transform:translateX(-50%) scale(1);}50%{opacity:0.78;transform:translateX(-50%) scale(0.98);}}
   /* only the narrow single-column (phone) layout hides sidebar stats and leans on the
      on-canvas HUD; tablets wide enough for the side-by-side layout keep the full sidebar */
   @media (hover:none) and (pointer:coarse) and (max-width:819px){
@@ -131,7 +133,10 @@
 <div class="wrap">
   <div class="arena">
     <canvas id="sboard" width="640" height="480"></canvas>
-    <button id="btnPendingUp">⬆ Очки улучшений</button>
+    <div id="pendingBtns">
+      <button id="btnPendingUp" class="pupBtn">⬆ Выбрать одно</button>
+      <button id="btnPendingAll" class="pupBtn">✨ Выбрать всё</button>
+    </div>
     <div id="ostart" class="overlay show">
       <h2>Выжившие</h2>
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле, выбирай улучшения, продержись как можно дольше.</p>
@@ -161,7 +166,7 @@
       <div class="cards" id="cards"></div>
       <div class="menu-col" style="margin-top:2px;">
         <button class="ostart primary" id="btnDonePick">✓ Готово</button>
-        <button class="ostart" id="btnAutoPick" style="color:#4ade80;">🎲 Авто — потратить все очки</button>
+        <button class="ostart" id="btnAutoPick" style="color:#4ade80;">🎲 Авто — применить всё</button>
       </div>
     </div>
     <div id="ocurse" class="overlay">
@@ -445,7 +450,7 @@
   let optChoice=(localStorage.getItem('survivors-choice')||'1')==='1';
   function applyChoiceOpt(){
     localStorage.setItem('survivors-choice',optChoice?'1':'0');
-    document.querySelectorAll('.choiceBtn').forEach(b=>b.textContent=optChoice?'🎯 Улучшения: выбор':'⚡ Улучшения: авто');
+    document.querySelectorAll('.choiceBtn').forEach(b=>b.textContent=optChoice?'🎯 Улучшения: авто-выбор':'🔘 Улучшения: кнопки');
   }
   function toggleChoiceOpt(){optChoice=!optChoice;applyChoiceOpt();if(typeof updatePendingBtn==='function'){updatePendingBtn();updateHubPoints();}}
   // Музыка: 1) если рядом лежит файл assets/music/calm.mp3 — играем его (положи любой
@@ -1167,7 +1172,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;weaponGet=null;autoToasts=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];singlePick=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -2387,7 +2392,7 @@
     chestPending=true;pendingLevelUps++;
     // сундук больше НЕ прерывает бой мгновенно: выбор улучшений (все накопленные
     // подряд) откроется после следующего повышения уровня
-    announce={text:'🎁 Сундук: +1 очко улучшений!',life:2.2,color:'#facc15'};
+    announce={text:'🎁 Сундук: +1 улучшение на выбор!',life:2.2,color:'#facc15'};
     sfxChime(520,3,0.07,0.1);
   }
 
@@ -2487,45 +2492,48 @@
     if(label&&player&&floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-24,vy:-30,life:1,val:'+'+n+'⬆ '+label,crit:true});
     updatePendingBtn();updateHubPoints();
   }
-  // кнопка очков улучшений (верх поля) — компактная пилюля, обновляем DOM при изменении
-  const btnPendingUp=document.getElementById('btnPendingUp');
+  // режим «кнопки»: две пилюли сверху — «Выбрать одно» / «Выбрать всё»
+  const pendingBtns=document.getElementById('pendingBtns');
+  const btnPendingUp=document.getElementById('btnPendingUp'),btnPendingAll=document.getElementById('btnPendingAll');
   const btnDonePick=document.getElementById('btnDonePick'),btnAutoPick=document.getElementById('btnAutoPick');
   let _pupLast='';
   function updatePendingBtn(){
-    // ручной магазин удалён: осталось два режима — «выбор» (карты) и «авто» (сами применяются),
-    // поэтому верхняя кнопка-пилюля больше не нужна ни в одном из них
-    if(_pupLast!=='')_pupLast='';
-    btnPendingUp.style.display='none';
+    // кнопки видны только в режиме «кнопки» (optChoice=false), в бою, когда есть накопленные выборы
+    const show=!optChoice&&state==='running'&&!paused&&pendingLevelUps>0&&player&&!player.dying;
+    const key=show?('m'+pendingLevelUps):'';
+    if(key===_pupLast)return;
+    _pupLast=key;
+    pendingBtns.style.display=show?'flex':'none';
+    if(show){
+      btnPendingUp.textContent='⬆ Выбрать одно ('+pendingLevelUps+')';
+      btnPendingAll.textContent='✨ Выбрать всё ('+pendingLevelUps+')';
+    }
   }
-  // очки улучшений в «хабе» (боковая панель) — тоже скрыты (очки тратятся сразу)
   const hubPointsEl=document.getElementById('hubPoints'),hubPointsBox=document.getElementById('hubPointsBox');
-  function updateHubPoints(){
-    if(hubPointsBox)hubPointsBox.style.display='none';
-  }
+  function updateHubPoints(){ if(hubPointsBox)hubPointsBox.style.display='none'; }
+  // «Выбрать одно» — открыть выбор из 3 карт ровно на один раз
   btnPendingUp.addEventListener('click',()=>{
-    if(state==='running'&&pendingLevelUps>0){state='levelup';showLevelUp();updatePendingBtn();}
+    if(state==='running'&&pendingLevelUps>=UP_COST){state='levelup';singlePick=true;renderShop();olevel.classList.add('show');updatePendingBtn();}
   });
+  // «Выбрать всё» — применить все накопленные выборы сразу (эволюции в приоритете) + плашки
+  btnPendingAll.addEventListener('click',()=>{
+    if(state!=='running'||pendingLevelUps<UP_COST)return;
+    let guard=0,applied=false;
+    while(pendingLevelUps>=UP_COST&&guard++<300){const r=autoApplyOne();pendingLevelUps-=UP_COST;pushAutoToast(r.text,r.color);applied=true;}
+    chestPending=false;
+    if(applied){sfxChime(523,4,0.08,0.1);flashFx(0.16,'74,222,128');}
+    updatePendingBtn();
+  });
+  // «Готово» в модалке выбора — просто закрыть (оставшиеся выборы ждут в кнопках)
   document.getElementById('btnDonePick').addEventListener('click',()=>{
-    // закрыть магазин, оставить неистраченные очки (кнопка вверху останется)
-    olevel.classList.remove('show');updatePendingBtn();updateHubPoints();startCooldown();
+    singlePick=false;olevel.classList.remove('show');updatePendingBtn();startCooldown();
   });
-  // «Авто»: потратить все очки одним нажатием (эволюции — в приоритете)
+  // «Авто» в модалке — применить всё оставшееся сразу
   document.getElementById('btnAutoPick').addEventListener('click',()=>{
     let guard=0;
-    while(pendingLevelUps>=4&&guard++<2000){
-      const evos=readyEvolutions();
-      if(evos.length){evos[0].apply(player);}
-      else{
-        const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
-        if(pool.length){const u=pool[Math.floor(Math.random()*pool.length)];u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;}
-        else player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25); // всё на максимуме — лечение
-      }
-      pendingLevelUps-=4;
-    }
-    chestPending=false;
-    sfxChime(523,4,0.08,0.1);
-    olevel.classList.remove('show');updatePendingBtn();updateHubPoints();
-    startCooldown();
+    while(pendingLevelUps>=UP_COST&&guard++<300){const r=autoApplyOne();pendingLevelUps-=UP_COST;pushAutoToast(r.text,r.color);}
+    chestPending=false;singlePick=false;sfxChime(523,4,0.08,0.1);
+    olevel.classList.remove('show');updatePendingBtn();startCooldown();
   });
 
   // === МАГАЗИН УЛУЧШЕНИЙ ЗА ОЧКИ ===
@@ -2537,13 +2545,17 @@
     renderShop();
     olevel.classList.add('show');
   }
-  const UP_COST=4; // стоимость одной покупки в очках улучшений
+  const UP_COST=1; // каждый уровень/сундук = один выбор (без системы очков)
+  let singlePick=false; // режим «кнопки»: «Выбрать одно» открывает выбор ровно на 1 раз
   // диспетчер режима «выбор» — карточный выбор (в режиме «авто» модалка не открывается)
   function renderShop(){ renderChoice(); }
   function buyPoint(){
     pendingLevelUps=Math.max(0,pendingLevelUps-UP_COST);
-    if(pendingLevelUps<UP_COST){olevel.classList.remove('show');startCooldown();}
+    // авто-выбор: если ещё есть выборы — сразу показываем следующие 3 карты; иначе закрываем.
+    // режим «кнопки» (singlePick): после одного выбора закрываем, остальное — на кнопках.
+    if(pendingLevelUps<UP_COST||singlePick){singlePick=false;olevel.classList.remove('show');startCooldown();}
     else renderShop();
+    updatePendingBtn();
   }
   // мелкая плашка сверху в авто-режиме
   function pushAutoToast(text,color){
@@ -2559,19 +2571,15 @@
       return {text:u.name,color:(RARITY_INFO[u.rarity]||RARITY_INFO.common).color};}
     player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);return {text:'💚 +25% HP',color:'#4ade80'};
   }
-  // вызывается каждый кадр после step: «выбор» открывает карты, «авто» сам применяет + плашки
+  // вызывается каждый кадр после step: авто-выбор сам открывает карты; режим «кнопки» ждёт нажатий
   function maybeOpenChoice(){
+    updatePendingBtn(); // держим кнопки актуальными по мере накопления выборов
     if(!(state==='running'&&!paused&&player&&!player.dying&&!inVault))return;
     if(pendingLevelUps<UP_COST)return;
     if(optChoice){
-      state='levelup';renderShop();olevel.classList.add('show');
-    }else{
-      let guard=0,applied=false;
-      while(pendingLevelUps>=UP_COST&&guard++<40){
-        const r=autoApplyOne();pendingLevelUps-=UP_COST;pushAutoToast(r.text,r.color);applied=true;
-      }
-      if(applied){sfxChime(523,3,0.07,0.09);flashFx(0.16,'74,222,128');}
+      state='levelup';singlePick=false;renderShop();olevel.classList.add('show');updatePendingBtn();
     }
+    // режим «кнопки»: ничего не открываем и не применяем — игрок жмёт «Выбрать одно/всё»
   }
   // 3 случайные карты (эволюции — в приоритете), как в классике
   function rollChoice(){
@@ -2584,10 +2592,11 @@
     return opts;
   }
   function renderChoice(){
-    btnDonePick.style.display='none';btnAutoPick.style.display='none'; // выбор обязателен, без «Авто»
-    levelTitle.innerHTML='⬆ Уровень! · <span style="color:#4ade80;">'+pendingLevelUps+' оч.</span>';
+    // Готово — закрыть (остальные выборы ждут); Авто — применить всё оставшееся сразу
+    btnDonePick.style.display='';btnAutoPick.style.display=pendingLevelUps>UP_COST?'':'none';
+    levelTitle.innerHTML='⬆ Уровень! · <span style="color:#4ade80;">выборов: '+pendingLevelUps+'</span>';
     levelSub.style.display='block';
-    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Выбери одно улучшение';
+    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Выбери одно улучшение из трёх';
     chestPending=false;
     cardsEl.innerHTML='';
     const offer=rollChoice();
@@ -2872,7 +2881,7 @@
     if(died)clearRun();else saveRun();
     document.getElementById('btnContinueFromOver').style.display=died?'none':'';
     state='over';
-    btnPendingUp.style.display='none';_pupLast='';if(hubPointsBox)hubPointsBox.style.display='none'; // прячем игровые индикаторы очков
+    pendingBtns.style.display='none';_pupLast='';singlePick=false;if(hubPointsBox)hubPointsBox.style.display='none'; // прячем игровые индикаторы
     olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
     archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
