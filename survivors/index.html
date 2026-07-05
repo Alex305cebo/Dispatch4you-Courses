@@ -969,7 +969,6 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
-  let weaponGet=null; // крупная плашка «новое оружие подобрано» (drawHudOverlay)
   let autoToasts=[]; // мелкие плашки сверху в авто-режиме улучшений («✓ применено …»)
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
@@ -1172,7 +1171,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;weaponGet=null;autoToasts=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];singlePick=false;
@@ -1234,7 +1233,7 @@
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
-    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;weaponGet=null;autoToasts=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
@@ -2039,13 +2038,10 @@
   }
 
   function showWeaponPopup(w,title){
-    // БЕЗ модалки и паузы: оружие выдаётся мгновенно, бой не прерывается —
-    // но подбор показываем КРУПНО по центру (эмодзи + название + описание), чтобы было
-    // сразу понятно, что именно собрано. Плашка сама всплывает и гаснет (drawHudOverlay).
-    const parts=String(w.name).split(' ');
-    const emoji=parts[0],nm=parts.slice(1).join(' ')||w.name;
-    weaponGet={head:title||'⚔ НОВОЕ ОРУЖИЕ',emoji:emoji,name:nm,desc:w.desc||'',life:3.2,max:3.2};
-    flashFx(0.35,'250,204,21');camShake=Math.max(camShake,5);
+    // БЕЗ модалки и паузы: подбор оружия — компактная золотая иконка в полосе баффов
+    // (стиль WoW) + короткая подпись у иконки. Никаких больших панелей поверх игры.
+    pushAutoToast(w.name,'#fde047',{big:true,life:5});
+    flashFx(0.3,'250,204,21');camShake=Math.max(camShake,4);
     sfxChime(440,4,0.09,0.11);
   }
 
@@ -2559,10 +2555,23 @@
     else renderShop();
     updatePendingBtn();
   }
-  // мелкая плашка сверху в авто-режиме
-  function pushAutoToast(text,color){
-    autoToasts.push({text:text,color:color||'#4ade80',life:2.6,max:2.6});
-    while(autoToasts.length>4)autoToasts.shift();
+  // компактные иконки-«баффы» сверху (стиль WoW): квадратик с эмодзи и цветной рамкой.
+  // Повторы агрегируются в одну иконку с бейджем ×N (чтобы «Выбрать всё» не заливало экран).
+  function pushAutoToast(text,color,opts){
+    opts=opts||{};
+    const sp=String(text).trim().split(' ');
+    const emoji=sp[0],label=sp.slice(1).join(' ');
+    const life=opts.life||4;
+    for(let i=0;i<autoToasts.length;i++){
+      const it=autoToasts[i];
+      if(it.emoji===emoji&&it.label===label){ // тот же бафф — усиливаем бейдж и обновляем жизнь
+        it.count=(it.count||1)+1;it.life=it.max;
+        autoToasts.splice(i,1);autoToasts.push(it); // новейший — в конец (справа)
+        return;
+      }
+    }
+    autoToasts.push({emoji:emoji,label:label,color:color||'#4ade80',life:life,max:life,count:1,big:!!opts.big});
+    while(autoToasts.length>8)autoToasts.shift();
   }
   // авто-режим: применить одно улучшение (эволюции в приоритете) и вернуть подпись для плашки
   function autoApplyOne(){
@@ -2981,7 +2990,6 @@
     }
 
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
-    if(weaponGet){weaponGet.life-=dt;if(weaponGet.life<=0)weaponGet=null;}
     if(autoToasts.length){for(let i=autoToasts.length-1;i>=0;i--){autoToasts[i].life-=dt;if(autoToasts[i].life<=0)autoToasts.splice(i,1);}}
 
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
@@ -4158,52 +4166,48 @@
       topY+=shown.length*(fs+5)+8;
     }
     if(autoToasts.length){
-      // стопка мелких плашек «что применилось» — продолжает стек ниже анонса
+      // ПОЛОСА БАФФОВ (стиль WoW): ряд компактных квадратных иконок по центру сверху.
+      // Иконка: эмодзи + цветная рамка (редкость), бейдж ×N при повторах, золотая — оружие.
+      // Подпись показывается только у НОВЕЙШЕЙ иконки и быстро гаснет — ничего не загораживает.
+      const n=autoToasts.length;
+      const s=W<640?28:34,gap=5;
+      const totalW=n*s+(n-1)*gap;
+      let ix=W/2-totalW/2;
       x.save();x.textAlign='center';x.textBaseline='middle';
-      const fs=Math.min(15,Math.max(11,Math.round(W/46)));
-      x.font='700 '+fs+'px system-ui,sans-serif';
-      for(let i=autoToasts.length-1;i>=0;i--){
-        const tt=autoToasts[i],a=Math.min(1,tt.life/0.5);
-        const tw=x.measureText(tt.text).width,pw=tw+26,ph=fs+11;
-        x.globalAlpha=a*0.92;
+      for(let i=0;i<n;i++){
+        const it=autoToasts[i],a=Math.min(1,it.life/0.5);
+        const born=it.max-it.life;
+        const pop=born<0.18?1+0.30*(1-born/0.18):1; // короткий «панч» при появлении
+        const cx2=ix+s/2,cy2=topY+s/2,hs=s*pop/2;
+        x.globalAlpha=a*0.95;
         x.beginPath();
-        if(x.roundRect)x.roundRect(W/2-pw/2,topY,pw,ph,ph/2);else x.rect(W/2-pw/2,topY,pw,ph);
-        x.fillStyle='rgba(8,10,18,0.82)';x.fill();
-        x.lineWidth=1.5;x.strokeStyle=tt.color;x.stroke();
-        x.globalAlpha=a;x.fillStyle=tt.color;x.fillText(tt.text,W/2,topY+ph/2+1);
-        topY+=ph+5;
+        if(x.roundRect)x.roundRect(cx2-hs,cy2-hs,hs*2,hs*2,7);else x.rect(cx2-hs,cy2-hs,hs*2,hs*2);
+        x.fillStyle='rgba(8,10,18,0.72)';x.fill();
+        x.lineWidth=it.big?2:1.5;x.strokeStyle=it.color;
+        if(it.big){x.shadowColor=it.color;x.shadowBlur=8;}
+        x.stroke();x.shadowBlur=0;
+        x.font=Math.round(s*0.60*pop)+'px system-ui,sans-serif';x.fillStyle='#fff';
+        x.fillText(it.emoji,cx2,cy2+1);
+        if((it.count||1)>1){ // бейдж ×N в углу
+          const br=Math.max(7,s*0.22),bx=cx2+hs-br*0.4,by=cy2+hs-br*0.4;
+          x.beginPath();x.arc(bx,by,br,0,Math.PI*2);x.fillStyle=it.color;x.fill();
+          x.font='bold '+Math.round(br*1.05)+'px system-ui,sans-serif';x.fillStyle='#0b0e17';
+          x.fillText(it.count>99?'99':it.count,bx,by+0.5);
+        }
+        ix+=s+gap;
       }
-      x.restore();topY+=4;
-    }
-    if(weaponGet){
-      // компактная полупрозрачная плашка подбора оружия — встаёт ПОД стеком, не поверх него
-      const g=weaponGet,appear=g.max-g.life;
-      const inT=Math.min(1,appear/0.22),ease=1-Math.pow(1-inT,3);
-      const sc=0.82+0.18*ease;
-      const alpha=(g.life<0.5?Math.max(0,g.life/0.5):1)*0.92;
-      const emojiFs=Math.min(44,Math.round(W/11));
-      const nameFs=Math.min(21,Math.round(W/26));
-      const descFs=Math.min(13,Math.round(W/50));
-      const headFs=Math.min(11,Math.round(W/60));
-      const hH=headFs*1.5,eH=emojiFs*1.0,nH=nameFs*1.2,dH=g.desc?descFs*1.6:0;
-      const contentH=hH+eH+nH+dH,padX=18,padY=11;
-      x.save();
-      x.translate(W/2,Math.max(topY+(contentH/2+padY)*sc+8,H*0.16));x.scale(sc,sc);x.globalAlpha=Math.max(0,Math.min(1,alpha));
-      x.textAlign='center';x.textBaseline='middle';
-      x.font='700 '+nameFs+'px system-ui,sans-serif';const nameW=x.measureText(g.name).width;
-      x.font=descFs+'px system-ui,sans-serif';const descW=g.desc?x.measureText(g.desc).width:0;
-      const innerW=Math.min(W*0.7,Math.max(nameW,descW,emojiFs*1.3,150));
-      const panelW=innerW+padX*2,panelH=contentH+padY*2;
-      x.beginPath();
-      if(x.roundRect)x.roundRect(-panelW/2,-panelH/2,panelW,panelH,14);else x.rect(-panelW/2,-panelH/2,panelW,panelH);
-      x.fillStyle='rgba(8,10,18,0.48)';x.fill();
-      x.lineWidth=1.5;x.strokeStyle='rgba(250,204,21,0.75)';x.shadowColor='rgba(250,204,21,0.4)';x.shadowBlur=10;x.stroke();x.shadowBlur=0;
-      let cy=-contentH/2;
-      x.fillStyle='#fde047';x.font='700 '+headFs+'px system-ui,sans-serif';x.fillText(g.head,0,cy+hH/2);cy+=hH;
-      x.font=emojiFs+'px system-ui,sans-serif';x.fillStyle='#fff';x.fillText(g.emoji,0,cy+eH/2);cy+=eH;
-      x.font='700 '+nameFs+'px system-ui,sans-serif';x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=5;x.fillText(g.name,0,cy+nH/2);x.shadowBlur=0;cy+=nH;
-      if(g.desc){x.font=descFs+'px system-ui,sans-serif';x.fillStyle='#c4d0e0';x.fillText(g.desc,0,cy+dH/2);}
+      // короткая подпись новейшей иконки (имя баффа/оружия), гаснет за ~1.8с
+      const newest=autoToasts[n-1],age=newest.max-newest.life;
+      let labelH=0;
+      if(age<1.8&&(newest.label||'').length){
+        x.globalAlpha=Math.max(0,1-age/1.8);
+        x.font='bold 11px system-ui,sans-serif';x.textBaseline='top';
+        x.fillStyle=newest.color;x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=3;
+        x.fillText(newest.label,W/2,topY+s+4);
+        labelH=16;
+      }
       x.restore();
+      topY+=s+4+labelH;
     }
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
     if(fxFlash>0){x.fillStyle='rgba('+fxFlashColor+','+(fxFlash*0.28)+')';x.fillRect(0,0,W,H);}
