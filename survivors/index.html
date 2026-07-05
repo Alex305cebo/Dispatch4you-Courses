@@ -536,6 +536,20 @@
     if(musicEl){try{musicEl.pause();}catch(e){}}
     musicNodes=null;
   }
+  // iOS/Safari глушит AudioContext при сворачивании браузера («suspended»/«interrupted») —
+  // при возврате на вкладку/первом касании возобновляем контекст и музыку
+  function resumeAudioIfNeeded(){
+    if(!actx)return;
+    if(actx.state==='suspended'||actx.state==='interrupted'){
+      try{actx.resume().then(()=>{if(soundOn&&!musicNodes)startMusic();}).catch(()=>{});}catch(e){}
+    }
+    if(soundOn&&musicNodes==='file'&&musicEl&&musicEl.paused){try{musicEl.play().catch(()=>{});}catch(e){}}
+    if(soundOn&&!musicNodes&&actx.state==='running')startMusic();
+  }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeAudioIfNeeded();});
+  window.addEventListener('pageshow',resumeAudioIfNeeded);
+  window.addEventListener('focus',resumeAudioIfNeeded);
+  document.addEventListener('pointerdown',resumeAudioIfNeeded,true);
   function beep(freq,dur,type,gain){
     if(!actx)return;
     const t0=actx.currentTime;
@@ -1942,10 +1956,13 @@
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
-    // выборы за врагов — скромно: супербосс и босс по +1; охотник/чемпион/рубежи убийств — 0
-    // (иначе накапливалось слишком много, как 35 на 15 ур. от толпы)
-    if(e.superboss)addUpPoints(1,'СУПЕРБОСС');
-    else if(e.elite)addUpPoints(1,'босс');
+    // боссы и супербоссы НЕ дают выбор улучшений — вместо этого роняют БОЛЬШОЙ кристалл
+    // опыта. Сбалансировано долей текущего уровня: босс ~45% полосы, супербосс ~90%
+    if(e.elite||e.superboss){
+      const bonus=Math.max(10,Math.round(player.xpNeed*(e.superboss?0.9:0.45)));
+      gems.push({x:e.x,y:e.y,r:e.superboss?14:11,val:bonus,big:true,hue:e.superboss?'#ff2d55':'#facc15'});
+      if(floaters.length<40)floaters.push({x:e.x,y:e.y-30,vy:-30,life:1.2,val:'💎 КРИСТАЛЛ ОПЫТА',crit:true});
+    }
     // анимация смерти: замороженный разбивается льдинками, обычный — эмодзи-«поп»
     if(e.slowT>0)fxIceShatter(e);else fxDeathPop(e);
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
@@ -3925,9 +3942,24 @@
     pickups.forEach(pk=>{drawPickup(pk.x,pk.y,pk);});
     // gems
     gems.forEach(g=>{
-      x.save();x.translate(g.x,g.y);x.rotate(Math.PI/4);
-      x.fillStyle='#4D96FF';x.shadowColor='#4D96FF';x.shadowBlur=6;
-      x.fillRect(-g.r,-g.r,g.r*2,g.r*2);
+      x.save();x.translate(g.x,g.y);
+      if(g.big){
+        // БОЛЬШОЙ кристалл с босса: гранёный ромб с бликом, пульсом и ярким свечением
+        const pu=1+0.1*Math.sin(t*3+g.x*0.01),col=g.hue||'#facc15';
+        x.rotate(Math.sin(t*1.5+g.x*0.02)*0.15);
+        x.shadowColor=col;x.shadowBlur=20;
+        x.fillStyle=col;
+        x.beginPath();x.moveTo(0,-g.r*1.5*pu);x.lineTo(g.r*pu,0);x.lineTo(0,g.r*1.5*pu);x.lineTo(-g.r*pu,0);x.closePath();x.fill();
+        x.shadowBlur=0;
+        x.fillStyle='rgba(255,255,255,0.5)'; // грань-блик
+        x.beginPath();x.moveTo(0,-g.r*1.5*pu);x.lineTo(g.r*pu,0);x.lineTo(0,0);x.closePath();x.fill();
+        x.strokeStyle='rgba(255,255,255,0.8)';x.lineWidth=1.5;
+        x.beginPath();x.moveTo(0,-g.r*1.5*pu);x.lineTo(0,g.r*1.5*pu);x.moveTo(-g.r*pu,0);x.lineTo(g.r*pu,0);x.stroke();
+      }else{
+        x.rotate(Math.PI/4);
+        x.fillStyle='#4D96FF';x.shadowColor='#4D96FF';x.shadowBlur=6;
+        x.fillRect(-g.r,-g.r,g.r*2,g.r*2);
+      }
       x.restore();
     });
     // mines
