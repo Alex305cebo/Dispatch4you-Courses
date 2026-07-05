@@ -74,22 +74,33 @@
   .lb-podium .sc{font-size:13px;font-weight:800;}
   .lb-podium .ex{font-size:10px;color:var(--muted);}
   #olb{overflow-y:auto;}
-  .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(5,6,10,0.82);border-radius:12px;text-align:center;padding:20px;}
+  .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at center,rgba(12,16,28,0.86),rgba(5,6,10,0.94));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border-radius:12px;text-align:center;padding:20px;}
   .overlay.show{display:flex;}
   /* выбор оружия: центр, если помещается; скролл без обрезки сверху, если нет */
   #oweaponchoice{overflow-y:auto;justify-content:flex-start;}
   #oweaponchoice h2{margin-top:auto;}
   #oweaponchoice #weaponChoiceList{margin-bottom:auto;}
-  .overlay h2{margin:0;font-weight:600;font-size:22px;}
-  .overlay p{margin:0;color:var(--muted);font-size:14px;max-width:340px;line-height:1.5;}
+  .overlay h2{margin:0 0 2px;font-weight:800;font-size:30px;letter-spacing:0.5px;
+    background:linear-gradient(135deg,#7dd3fc,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .overlay p{margin:0;color:var(--muted);font-size:13px;max-width:360px;line-height:1.55;}
   .cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
   .card{width:150px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:left;}
   .card:hover{background:var(--panel2);border-color:#4D96FF;}
   .gp-focus{outline:3px solid #4D96FF;outline-offset:2px;}
   .card b{display:block;font-size:14px;margin-bottom:6px;color:#4D96FF;}
   .card span{font-size:12px;color:var(--muted);line-height:1.4;}
-  .ostart{padding:10px 22px;font-size:15px;background:var(--panel2);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;}
-  .ostart:hover{background:#242c3a;}
+  /* стартовое меню — аккуратная колонка кнопок фиксированной ширины, не на весь экран */
+  .menu-col{display:flex;flex-direction:column;gap:9px;width:min(340px,86vw);margin-top:4px;}
+  .ostart{width:min(340px,86vw);box-sizing:border-box;padding:13px 18px;font-size:15px;font-weight:600;text-align:center;
+    background:linear-gradient(180deg,rgba(30,37,54,0.95),rgba(18,23,36,0.95));color:var(--text);
+    border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:transform .08s,border-color .15s,box-shadow .15s;
+    box-shadow:0 2px 8px rgba(0,0,0,0.25);}
+  .menu-col .ostart{width:100%;}
+  .ostart:hover{transform:translateY(-2px);border-color:#4D96FF;box-shadow:0 6px 18px rgba(77,150,255,0.22);}
+  .ostart:active{transform:translateY(0);}
+  .ostart.primary{background:linear-gradient(135deg,#4D96FF,#a855f7);border-color:#7dd3fc;color:#fff;font-weight:800;box-shadow:0 4px 16px rgba(77,150,255,0.4);}
+  .ostart.primary:hover{box-shadow:0 8px 24px rgba(168,85,247,0.45);}
+  .ostart.small{width:auto;padding:10px 16px;}
   #osuperwarn{background:rgba(30,3,8,0.92);border:2px solid #ff2d55;}
   #osuperwarn h2{color:#ff2d55;font-size:26px;animation:warnpulse 0.8s ease-in-out infinite;}
   #osuperwarn p{color:#ff8fa3;}
@@ -119,18 +130,20 @@
     <button id="btnPendingUp">⬆ УЛУЧШЕНИЕ</button>
     <div id="ostart" class="overlay show">
       <h2>Выжившие</h2>
-      <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
-      <button class="ostart" id="btnResume" style="display:none;border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
-      <button class="ostart" id="btnStart">Начать заново</button>
-      <button class="ostart" id="btnCharOpen" style="border-color:#38bdf8;color:#7dd3fc;">🦸 Персонаж: <span id="charName">Универсал</span></button>
-      <button class="ostart" id="btnMetaOpen" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
-      <button class="ostart" id="btnAchiOpen" style="border-color:#facc15;color:#fde047;">🏅 Достижения</button>
-      <button class="ostart sndBtn" id="btnSoundStart">🔊</button>
+      <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле, выбирай улучшения, продержись как можно дольше.</p>
+      <div class="menu-col">
+        <button class="ostart primary" id="btnResume" style="display:none;">▶ Продолжить</button>
+        <button class="ostart primary" id="btnStart">🎮 Начать заново</button>
+        <button class="ostart" id="btnCharOpen" style="color:#7dd3fc;">🦸 Персонаж: <span id="charName">Универсал</span></button>
+        <button class="ostart" id="btnMetaOpen" style="color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
+        <button class="ostart" id="btnAchiOpen" style="color:#fde047;">🏅 Достижения</button>
+        <button class="ostart sndBtn" id="btnSoundStart" style="align-self:center;width:auto;padding:10px 20px;">🔊 Звук</button>
+      </div>
       <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
         <p style="color:#fbbf24;font-size:12px;margin:0;">⚠ Ты во встроенном браузере чата — страница может скроллиться и мешать управлению.</p>
-        <button class="ostart" id="btnOpenExternal" style="border-color:#f59e0b;color:#fbbf24;">🌐 Открыть в браузере</button>
+        <button class="ostart" id="btnOpenExternal" style="color:#fbbf24;">🌐 Открыть в браузере</button>
       </div>
-      <p style="font-size:11px;color:var(--muted);opacity:0.75;margin-top:6px;">created by Ilya Ce</p>
+      <p style="font-size:11px;color:var(--muted);opacity:0.75;margin-top:8px;">created by Ilya Ce</p>
     </div>
     <div id="oweaponchoice" class="overlay">
       <h2>Выбери 2 оружия</h2>
@@ -191,12 +204,14 @@
       <p id="overSession" style="color:#4D96FF;font-weight:600;margin:-6px 0 0;"></p>
       <p id="overStats"></p>
       <p style="color:#4ade80;font-size:12px;margin:-6px 0 0;">✓ Сессия сохранена в архив и рейтинг</p>
-      <button class="ostart" id="btnContinueFromOver" style="border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
-      <button class="ostart" id="btnRetry">🔄 Новая игра</button>
-      <button class="ostart" id="btnLbFromOver">🏆 Таблица лидеров</button>
-      <button class="ostart" id="btnHistoryFromOver">📜 Мои сессии</button>
-      <button class="ostart" id="btnAchiFromOver" style="border-color:#facc15;color:#fde047;">🏅 Достижения</button>
-      <button class="ostart" id="btnMetaFromOver" style="border-color:#c084fc;color:#e9d5ff;">✨ Мета-прогрессия</button>
+      <div class="menu-col">
+        <button class="ostart primary" id="btnContinueFromOver" style="display:none;">▶ Продолжить</button>
+        <button class="ostart primary" id="btnRetry">🔄 Новая игра</button>
+        <button class="ostart" id="btnLbFromOver">🏆 Таблица лидеров</button>
+        <button class="ostart" id="btnHistoryFromOver">📜 Мои сессии</button>
+        <button class="ostart" id="btnAchiFromOver" style="color:#fde047;">🏅 Достижения</button>
+        <button class="ostart" id="btnMetaFromOver" style="color:#e9d5ff;">✨ Мета-прогрессия</button>
+      </div>
     </div>
     <div id="olb" class="overlay">
       <h2>🏆 Таблица лидеров</h2>
