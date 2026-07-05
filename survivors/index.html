@@ -1018,6 +1018,7 @@
   // «ЛЕС» — особый уровень после 30-го: reskin лабиринта (деревья + улочки).
   // На 29 уровне — «прорыв к лесу»: фикс. волна мобов со счётчиком сверху; зачистил — в лес.
   let vaultTheme='dungeon',forestPending=false,forestGate=false,forestDone=false,forestGateTotal=0,forestTrees=[];
+  let pendingMegaBoss=false,megaDone=false; // МЕГА-БОСС 50 уровня (финал акта)
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
@@ -1219,7 +1220,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1238,7 +1239,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
@@ -1283,6 +1284,8 @@
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
     forestDone=s.forestDone||false;forestPending=false;forestGate=false;vaultTheme='dungeon';forestTrees=[];
+    pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;
+    enemies.forEach(en=>{if(en.megaboss){en._shArmed=false;armMegaShield(en);}});
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
     // JSON.stringify превращает Set в {} — после загрузки p.hitSet.has() падал бы
     // с TypeError и замораживал игру. Возрождаем настоящие Set-ы.
@@ -2007,6 +2010,14 @@
       gems.push({x:e.x,y:e.y,r:e.superboss?14:11,val:bonus,big:true,hue:e.superboss?'#ff2d55':'#facc15'});
       if(floaters.length<40)floaters.push({x:e.x,y:e.y-30,vy:-30,life:1.2,val:'💎 КРИСТАЛЛ ОПЫТА',crit:true});
     }
+    if(e.megaboss){ // финал акта: гигантский кристалл + выборы + эссенция
+      megaDone=true;mobSpawnPaused=false;
+      gems.push({x:e.x+20,y:e.y,r:16,val:Math.max(20,Math.round(player.xpNeed*1.8)),big:true,hue:'#7dd3fc'});
+      addUpPoints(3,'МЕГА-БОСС');
+      metaState.shards+=25;saveMeta();
+      announce={text:'🏆 ХРОНОС ПОВЕРЖЕН — АКТ ПРОЙДЕН! Впереди новые глубины…',life:6,color:'#fde047'};
+      flashFx(0.8,'253,224,71');camShake=Math.max(camShake,20);
+    }
     // анимация смерти: замороженный разбивается льдинками, обычный — эмодзи-«поп»
     if(e.slowT>0)fxIceShatter(e);else fxDeathPop(e);
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
@@ -2059,7 +2070,7 @@
       for(const o of enemies){if(o!==e&&dist(e,o)<R&&losClear(e.x,e.y,o.x,o.y))o.hp-=ed;}
       burst(e.x,e.y,'#fb923c',10);
     }
-    if(e.pauseSpawns){mobSpawnPaused=false;announce={text:'Босс уровня 8 повержен!',life:2.4,color:'#f97316'};}
+    if(e.pauseSpawns&&!e.megaboss){mobSpawnPaused=false;announce={text:'Босс уровня 8 повержен!',life:2.4,color:'#f97316'};}
     if(e.elite){
       pickups.push({x:e.x+rand(-16,16),y:e.y+rand(-16,16),r:11,type:'chest',color:'#facc15',label:'★'});
       if(e.superboss){
@@ -2521,7 +2532,10 @@
     rings.push({x:player.x,y:player.y,r:0,maxR:160,life:0.6,color:'#4D96FF'});
     fxLevelUp(); // золотой радиальный всплеск
     pendingLevelUps++;
-    if(player.level%5===0){pendingLevelUps+=2;pendingBossLevel=player.level;
+    if(player.level===40&&!megaDone)announce={text:'⚔ ВНИМАНИЕ: на 50 уровне ждёт МЕГА-БОСС ХРОНОС!',life:5,color:'#ff2d55'};
+    if(player.level===45&&!megaDone)announce={text:'☠ МЕГА-БОСС всё ближе — 5 уровней до встречи!',life:4,color:'#ff2d55'};
+    if(player.level===50&&!megaDone)pendingMegaBoss=true;
+    if(player.level%5===0&&!(player.level===50&&!megaDone)){pendingLevelUps+=2;pendingBossLevel=player.level;
       // рубеж сложности: враги делают шаг вверх — предупреждаем и даём передышку (+20% HP),
       // чтобы полоса оставалась играбельной
       announce={text:'⚠ РУБЕЖ '+player.level+' — враги стали сильнее!',life:3,color:'#f59e0b'};
@@ -2826,6 +2840,106 @@
     return en;
   }
 
+  // === МЕГА-БОСС 50 УРОВНЯ: «ХРОНОС, Пожиратель Актов» ===
+  // 4 формы (трансформация по четвертям HP), щит с трещинами, лечение, быстрые летуны.
+  // Баланс привязан к estPlayerDps(): бой ~35-45 секунд при любом билде.
+  const MEGA_FORMS=[
+    {name:'ХРОНОС · Форма Стали',color:'#94a3b8',rMul:1,spdMul:1,cd:2.2,attack:e=>bossFan(e,6)},
+    {name:'ХРОНОС · Форма Бури',color:'#38bdf8',rMul:1.08,spdMul:1.15,cd:2.3,attack:e=>{Math.random()<0.5?bossSpiral(e):bossNovaGap(e);}},
+    {name:'ХРОНОС · Форма Магмы',color:'#fb923c',rMul:1.16,spdMul:1.05,cd:2.1,attack:e=>{Math.random()<0.6?bossSlam(e):bossFan(e,7);}},
+    {name:'ХРОНОС · ЯРОСТЬ',color:'#ff2d55',rMul:1.25,spdMul:1.3,cd:1.5,attack:e=>{const r2=Math.random();if(r2<0.34)bossSpiral(e);else if(r2<0.67)bossNovaGap(e);else bossSlam(e);}},
+  ];
+  function spawnMegaFlyers(e,n){
+    const dps=estPlayerDps();
+    for(let i=0;i<n;i++){
+      const m=spawnEnemy(false);
+      m.x=e.x+rand(-40,40);m.y=e.y+rand(-40,40);
+      m.hp=m.maxHp=Math.max(8,dps*0.45);
+      m.speed=250+rand(0,60);m.r=9;m.color='#f0abfc';m.glow='#f0abfc';
+      m.shape='fang';m.beh='flank';m.dmg=Math.max(6,Math.round((e.dmg||20)*0.25));
+      m.flyer=true;m.xp=Math.max(2,Math.round(m.maxHp/8));
+    }
+    burst(e.x,e.y,'#f0abfc',14);
+    announce={text:'🦇 Хронос выпускает рой!',life:1.4,color:'#f0abfc'};
+  }
+  // щит Хроноса: сеттер на hp — ЛЮБОЙ источник урона (e.hp-=dmg где угодно) сначала
+  // сжигает щит; лечение (hp+=) проходит насквозь. Никакой зависимости от порядка кадра.
+  function armMegaShield(en){
+    if(en._shArmed)return;en._shArmed=true;
+    en._hpReal=en.hp;
+    Object.defineProperty(en,'hp',{configurable:true,
+      get(){return this._hpReal;},
+      set(v){
+        const taken=this._hpReal-v;
+        if(taken>0&&this.shieldHp>0){
+          this.shieldHp-=taken;this._shieldHitT=0.15;
+          if(this.shieldHp<=0){this.shieldHp=0;this.shieldCd=this.shieldRe;this._shieldBroke=true;}
+          return; // урон полностью ушёл в щит
+        }
+        this._hpReal=v;
+      }});
+  }
+  function spawnMegaBoss(){
+    const dps=estPlayerDps();
+    const hp=Math.max(3000,dps*26);
+    const dmg=tierAvgDmg(50)*16;
+    const ang=rand(0,Math.PI*2),rad=offscreenRad(60);
+    const sh=Math.max(600,dps*5);
+    const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
+      hp,maxHp:hp,speed:60,dmg,r:52,baseR:52,baseSpeed:60,
+      color:'#94a3b8',glow:'#94a3b8',skinShape:'super',skinName:'ХРОНОС · Форма Стали',
+      xp:xpForPower(hp,dmg)*3,elite:true,megaboss:true,bossNumber:8,pauseSpawns:true,
+      shieldMax:sh,shieldHp:sh,shieldRe:18,shieldCd:0,_shieldHitT:0,
+      megaStage:1,megaShootCd:1.2,flyerCd:6,healCd:11,shootCd:1e9,summonCd:1e9};
+    armMegaShield(en);
+    enemies.push(en);
+    mobSpawnPaused=true; // арена: обычный спавн стоит, пока Хронос жив
+    announce={text:'☠ МЕГА-БОСС: ХРОНОС, Пожиратель Актов ☠',life:4.5,color:'#ff2d55'};
+    rings.push({x:player.x,y:player.y,r:0,maxR:1100,life:1.6});
+    camShake=Math.max(camShake,22);screenFlash=1;
+    sfxBoom(0.6,0.35,300,40,true);setTimeout(()=>beep(45,0.9,'sawtooth',0.25),250);
+    return en;
+  }
+  function updateMegaBoss(e,dt){
+    // щит поглощает урон через сеттер hp (armMegaShield); тут — эффекты и перезарядка
+    if(e._shieldBroke){
+      e._shieldBroke=false;
+      burst(e.x,e.y,'#7dd3fc',26);camShake=Math.max(camShake,8);
+      announce={text:'💥 ЩИТ ХРОНОСА РАЗБИТ — бей!',life:2,color:'#7dd3fc'};
+      sfxBoom(0.35,0.22,900,120,true);
+    }
+    if(e._shieldHitT>0)e._shieldHitT-=dt;
+    if(e.shieldHp<=0){e.shieldCd-=dt;if(e.shieldCd<=0){e.shieldHp=e.shieldMax;
+      announce={text:'🛡 Хронос восстановил щит!',life:1.6,color:'#7dd3fc'};rings.push({x:e.x,y:e.y,r:0,maxR:e.r+60,life:0.6,color:'#7dd3fc'});}}
+    // СТАДИИ: 4 формы по четвертям HP — трансформация меняет облик, скорость и атаки
+    const st=Math.max(1,Math.min(4,5-Math.ceil(e.hp/e.maxHp*4)));
+    if(st!==e.megaStage){
+      e.megaStage=st;
+      const F=MEGA_FORMS[st-1];
+      e.color=F.color;e.glow=F.color;e.skinName=F.name;e.r=e.baseR*F.rMul;e.speed=e.baseSpeed*F.spdMul;
+      burst(e.x,e.y,F.color,34);camShake=Math.max(camShake,12);screenFlash=Math.max(screenFlash,0.5);
+      announce={text:'⚡ ТРАНСФОРМАЦИЯ: '+F.name+'!',life:2.6,color:F.color};
+      spawnMegaFlyers(e,3+st);
+      sfxSweep(120,700,0.5,'sawtooth',0.14,true);
+    }
+    // атаки текущей формы
+    e.megaShootCd-=dt;
+    if(e.megaShootCd<=0){const F=MEGA_FORMS[(e.megaStage||1)-1];F.attack(e);e.megaShootCd=F.cd;}
+    // рой летунов периодически
+    e.flyerCd-=dt;
+    if(e.flyerCd<=0){e.flyerCd=9;spawnMegaFlyers(e,3);}
+    // периодическое лечение (5% макс. HP)
+    e.healCd-=dt;
+    if(e.healCd<=0){
+      e.healCd=11;
+      const heal=Math.min(e.maxHp-e.hp,e.maxHp*0.05);
+      if(heal>0){e.hp+=heal;
+        if(floaters.length<40)floaters.push({x:e.x,y:e.y-e.r-14,vy:-26,life:1,val:'💚 +'+fmtNum(Math.round(heal)),crit:false});
+        rings.push({x:e.x,y:e.y,r:0,maxR:e.r+70,life:0.7,color:'#4ade80'});
+      }
+    }
+  }
+
   function spawnLevel8Boss(){
     const d=difficulty();
     const hp=tierAvgHp(8)*30*d.hpMul;
@@ -3016,7 +3130,8 @@
         const mod=BOSS_MODS[Math.floor(Math.random()*BOSS_MODS.length)];mod.apply(boss);
         announce={text:'⚔ БОСС: '+boss.skinName+' ['+mod.name+']! Уровень '+lvl,life:3,color:'#ff2d55'};
         beep(90,0.4,'sawtooth',0.18);camShake=Math.max(camShake,10);
-      }else if(pendingSuperboss){const lvl=pendingSuperboss;pendingSuperboss=null;spawnSuperboss(lvl);}
+      }else if(pendingMegaBoss){pendingMegaBoss=false;spawnMegaBoss();}
+      else if(pendingSuperboss){const lvl=pendingSuperboss;pendingSuperboss=null;spawnSuperboss(lvl);}
       else if(pendingLevel8Boss){pendingLevel8Boss=false;spawnLevel8Boss();}
       if(pendingSuperWarning){
         announce={text:'⚠ Скоро СУПЕРБОСС (уровень '+(pendingSuperWarning+1)+') — готовься!',life:4,color:'#ff2d55'};
@@ -3268,8 +3383,11 @@
       if(e._bladeCd>0)e._bladeCd-=dt;
       if(frozen)continue;
       if(e.elite){
-        e.shootCd-=dt;
-        if(e.shootCd<=0){bossShoot(e);e.shootCd=Math.max(1,2.6-e.bossNumber*0.15);}
+        if(e.megaboss)updateMegaBoss(e,dt);
+        else{
+          e.shootCd-=dt;
+          if(e.shootCd<=0){bossShoot(e);e.shootCd=Math.max(1,2.6-e.bossNumber*0.15);}
+        }
         if(e._atk&&e._atk.type==='spiral'){ // спираль: два рукава, угол крутится
           e._atk.t-=dt;e._atk.acc+=dt;
           while(e._atk.acc>=0.07){e._atk.acc-=0.07;
@@ -3282,7 +3400,7 @@
           if(e._atk.t<=0)e._atk=null;
         }
         if(e.modSummon){e.msT-=dt;if(e.msT<=0){e.msT=e.modSummon;summonAdds(e,2);}}
-        checkBossStage(e);
+        if(!e.megaboss)checkBossStage(e);
         if(e.superboss)updateSuperboss(e,dt);
       }else if(e.ranged){
         e.rangedCd-=dt;
@@ -3826,10 +3944,12 @@
     }
     // строка: уровень · жизни · время
     const y1=pad+(mobile?41:51);
-    x.textAlign='left';x.font='bold '+(mobile?11:12)+'px system-ui,sans-serif';x.textBaseline='middle';
-    x.fillStyle='#e8ebf2';x.fillText('Ур. '+player.level+((player.ascTier||0)>0?' 🌟'+player.ascTier:''),bx,y1);
-    x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+(mobile?50:62),y1);
-    x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+(mobile?104:130),y1);
+    x.textAlign='left';x.textBaseline='middle';
+    x.font='bold '+(mobile?12:14)+'px system-ui,sans-serif';
+    x.fillStyle='#7dd3fc';x.fillText('Ур. '+player.level+(megaDone?'':'/50')+((player.ascTier||0)>0?' 🌟'+player.ascTier:''),bx,y1);
+    x.font='bold '+(mobile?11:12)+'px system-ui,sans-serif';
+    x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+(mobile?66:84),y1);
+    x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+(mobile?108:138),y1);
     // строка: убийства + мобов на поле
     const y2=pad+(mobile?53:65);
     x.font=(mobile?10:11)+'px system-ui,sans-serif';
@@ -4113,6 +4233,29 @@
       if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
       if(sq>0.01)x.restore();
+      if(e.megaboss&&e.shieldHp>0){
+        // пузырь щита: голубая сфера, ТРЕЩИНЫ проступают по мере урона, вспышка при попадании
+        const sr=e.r+16,frac=Math.max(0,e.shieldHp/e.shieldMax);
+        x.save();x.translate(e.x,e.y);
+        const hit=e._shieldHitT>0?0.45:0;
+        x.globalAlpha=0.18+0.10*Math.sin(t*4)+hit;
+        x.fillStyle='#7dd3fc';x.beginPath();x.arc(0,0,sr,0,Math.PI*2);x.fill();
+        x.globalAlpha=0.9;x.strokeStyle='#7dd3fc';x.lineWidth=2.5;x.shadowColor='#7dd3fc';x.shadowBlur=12;
+        x.beginPath();x.arc(0,0,sr,0,Math.PI*2);x.stroke();x.shadowBlur=0;
+        const cracks=Math.floor((1-frac)*9);
+        x.strokeStyle='rgba(224,242,254,0.85)';x.lineWidth=1.5;
+        for(let ci=0;ci<cracks;ci++){
+          const a0=ci*2.399+1.7;
+          let cx2=Math.cos(a0)*sr,cy2=Math.sin(a0)*sr,a2=a0+Math.PI+0.5*Math.sin(ci*7);
+          x.beginPath();x.moveTo(cx2,cy2);
+          for(let s3=0;s3<3;s3++){const len=sr*(0.25+0.12*s3);cx2+=Math.cos(a2)*len*0.4;cy2+=Math.sin(a2)*len*0.4;x.lineTo(cx2,cy2);a2+=(s3%2?0.7:-0.7);}
+          x.stroke();
+        }
+        x.restore();x.globalAlpha=1;
+        const bw=Math.min(220,e.r*3.4),bh=5,bx0=e.x-bw/2,by0=e.y-e.r-32;
+        x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(bx0,by0,bw,bh);
+        x.fillStyle='#7dd3fc';x.fillRect(bx0,by0,bw*frac,bh);
+      }
       if(e.hp<e.maxHp){
         if(e.elite&&e.stageCount){
           // one solid bar per boss "life" — it drains fully, then the next of the
