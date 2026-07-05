@@ -3861,12 +3861,15 @@
       x.fillStyle='#4ade80';x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.fill();
       x.globalAlpha=0.7*fade;x.strokeStyle='#4ade80';x.lineWidth=2.5/zoom;x.setLineDash([12,8]);
       x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.stroke();x.setLineDash([]);
-      // rest marker + countdown in the middle
+      // маркер отдыха + КРУПНЫЙ отсчёт по центру (масштаб не зависит от зума — всегда читается)
       x.globalAlpha=fade;x.translate(safeZone.x,safeZone.y);
-      x.fillStyle='#fff';x.font='22px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-      x.fillText('🛡',0,-2);
-      x.font='bold 11px system-ui,sans-serif';x.fillStyle='#bbf7d0';
-      x.fillText(Math.ceil(safeZone.life)+'с',0,22);
+      const szs=1/zoom; // компенсируем отдалённую камеру
+      x.fillStyle='#fff';x.font=Math.round(26*szs)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText('🛡',0,-20*szs);
+      x.font='bold '+Math.round(30*szs)+'px system-ui,sans-serif';x.fillStyle='#bbf7d0';
+      x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=6;
+      x.fillText(Math.ceil(safeZone.life)+'с',0,14*szs);
+      x.shadowBlur=0;
       x.restore();
     }
     // портал в Хранилище — вращающаяся фиолетовая воронка
