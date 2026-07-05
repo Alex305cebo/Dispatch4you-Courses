@@ -264,6 +264,10 @@
   const osuperwarn=document.getElementById('osuperwarn'),superWarnText=document.getElementById('superWarnText');
 
   let best=parseFloat(localStorage.getItem('survivors-best')||'0');
+  // СЕЗОН таблицы лидеров: сменили формулу очков и баланс — старые записи несравнимы.
+  // Новый ключ игры = чистая таблица (Firestore не даёт удалять записи анонимно, а сезон
+  // делает это правильно: старые очки просто не показываются, новые копятся с нуля).
+  const LB_GAME='survivors-s2';
   // мета-прогрессия: постоянная валюта и покупки, переживают удаление сохранённого забега
   const META_KEY='survivors-meta';
   // META_VERSION: набор ID мета-апгрейдов сменился (бесконечные тиры → конечные ступени
@@ -327,7 +331,7 @@
     playerName=sanitizeName(n);
     localStorage.setItem('survivors-name',playerName);
     renderPlayerName();
-    if(old&&old!==playerName)renameRecords('survivors',old,playerName);
+    if(old&&old!==playerName)renameRecords(LB_GAME,old,playerName);
   });
   let lbResumeRunning=false,lbHiddenOverlays=[];
   const olb=document.getElementById('olb'),lbListEl=document.getElementById('lbList'),lbPodiumEl=document.getElementById('lbPodium');
@@ -343,7 +347,7 @@
   function creatorBadge(name){return isCreatorName(name)?' <span style="color:#fde047;font-size:10px;font-weight:700;">★ создатель</span>':'';}
   // always-visible top-3 under the sidebar button — everyone sees the current leaders
   async function refreshTop3(){
-    const rows=await fetchLeaderboard('survivors',3);
+    const rows=await fetchLeaderboard(LB_GAME,3);
     lbTop3El.innerHTML=rows.length?rows.map((r,i)=>
       '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+'</span><span class="sc">'+fmtNum(Number(r.score)||0)+'</span></div>'
     ).join(''):'<div>Пока пусто — стань первым!</div>';
@@ -373,7 +377,7 @@
     lbHiddenOverlays.forEach(o=>o.classList.remove('show'));
     olb.classList.add('show');
     lbPodiumEl.innerHTML='';lbListEl.textContent='Загрузка…';
-    const rows=await fetchLeaderboard('survivors',10);
+    const rows=await fetchLeaderboard(LB_GAME,10);
     if(!rows.length){lbListEl.textContent='Пока никто не играл — стань первым!';return;}
     lbPodiumEl.innerHTML=podiumCell(rows[1],1)+podiumCell(rows[0],0)+podiumCell(rows[2],2);
     lbListEl.innerHTML=rows.length>3?rows.slice(3).map((r,i)=>lbRow(r,i+3)).join(''):'<div style="text-align:center;padding:6px 0;">Займи место в десятке!</div>';
@@ -1157,7 +1161,7 @@
     const rec={tag:sv.sessionTag||newSessionTag(),name:playerName,time:Math.round(sv.t),level:sv.player.level||1,kills:sv.kills||0,date:Date.now(),end:'прервана'};
     archiveSession(rec);
     const o={level:sv.player.level||1,kills:sv.kills||0,time:Math.round(sv.t),combo:sv.player.comboBest||0,bosses:sv.bossKills||0,hunters:sv.hunterKills||0,gems:sv.gemsCollected||0};
-    submitScore('survivors',(playerName||'Игрок')+' #'+rec.tag,scoreFrom(o),{level:o.level,kills:o.kills,time:o.time,combo:o.combo,bosses:o.bosses,hunters:o.hunters,gems:o.gems});
+    submitScore(LB_GAME,(playerName||'Игрок')+' #'+rec.tag,scoreFrom(o),{level:o.level,kills:o.kills,time:o.time,combo:o.combo,bosses:o.bosses,hunters:o.hunters,gems:o.gems});
   }
   function loadRun(){
     let s;try{s=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){s=null;}
@@ -2696,7 +2700,7 @@
     olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
     archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
-    if(t>0){const run=currentRun();submitScore('survivors',sessionName(),scoreFrom(run),{level:run.level,kills:run.kills,time:run.time,combo:run.combo,bosses:run.bosses,hunters:run.hunters,gems:run.gems});}
+    if(t>0){const run=currentRun();submitScore(LB_GAME,sessionName(),scoreFrom(run),{level:run.level,kills:run.kills,time:run.time,combo:run.combo,bosses:run.bosses,hunters:run.hunters,gems:run.gems});}
     // эссенция — по дельте с прошлого чекпоинта, а не по абсолюту: иначе повторные
     // Завершить→Продолжить без нового прогресса фармили бы её бесконечно
     const dLevel=player.level-lastCheckpointLevel,dKills=kills-lastCheckpointKills,dT=t-lastCheckpointT;
