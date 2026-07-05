@@ -966,6 +966,9 @@
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
+  // «ЛЕС» — особый уровень после 30-го: reskin лабиринта (деревья + улочки).
+  // На 29 уровне — «прорыв к лесу»: фикс. волна мобов со счётчиком сверху; зачистил — в лес.
+  let vaultTheme='dungeon',forestPending=false,forestGate=false,forestDone=false,forestGateTotal=0,forestTrees=[];
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
@@ -1164,6 +1167,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;weaponGet=null;autoToasts=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1182,7 +1186,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
@@ -1226,6 +1230,7 @@
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
+    forestDone=s.forestDone||false;forestPending=false;forestGate=false;vaultTheme='dungeon';forestTrees=[];
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
     // JSON.stringify превращает Set в {} — после загрузки p.hitSet.has() падал бы
     // с TypeError и замораживал игру. Возрождаем настоящие Set-ы.
@@ -1499,12 +1504,24 @@
     }
     return {centers,corr};
   }
-  function enterVault(){
+  function enterVault(theme){
+    vaultTheme=theme||'dungeon';
+    const forest=vaultTheme==='forest';
     vaultStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
     enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];
-    portal=null;safeZone=null;mobSpawnPaused=true;
+    portal=null;safeZone=null;mobSpawnPaused=true;forestGate=false;
     inVault=true;vaultT=0;vaultCleared=false;
     const dg=genDungeon(player.x+60000,player.y+60000);
+    // деревья для лесной темы: расставляем по стенам-«лесополосам» (кап 500 для производительности)
+    forestTrees=[];
+    if(forest){
+      for(const w of vaultWalls){
+        for(let ty=w.y+30;ty<w.y+w.h;ty+=54)for(let tx=w.x+28;tx<w.x+w.w;tx+=54){
+          if(forestTrees.length>=500)break;
+          forestTrees.push({x:tx+((tx*7)%16)-8,y:ty+((ty*5)%12)-6,r:14+((tx+ty)%9)});
+        }
+      }
+    }
     const centers=dg.centers;
     // игрок — в стартовой комнате, выход — в последней
     player.x=centers[0].x;player.y=centers[0].y;player.invuln=Math.max(player.invuln,1.2);
@@ -1548,14 +1565,30 @@
       const g=spawnEnemy(true,6);
       g.hp=g.maxHp=Math.min(g.maxHp*1.6,bossCap*1.8);g.r=Math.min(g.r+8,54);
       g.x=last.x;g.y=last.y;g.pauseSpawns=false;g.superboss=true;g.skinShape='super';
-      g.color='#ff2d55';g.glow='#ff2d55';g.modSummon=0;g.msT=0;g.sleep=true;
-      g.skinName='Хранитель Лабиринта';g.dmg*=1.5;
+      g.color=forest?'#16a34a':'#ff2d55';g.glow=forest?'#22c55e':'#ff2d55';g.modSummon=0;g.msT=0;g.sleep=true;
+      g.skinName=forest?'Лесной Хозяин':'Хранитель Лабиринта';g.dmg*=1.5;
       for(let k2=0;k2<4;k2++)vaultSpawns.push({x:last.x+rand(-170,170),y:last.y+rand(-170,170)});
     }
     vaultTotal=enemies.length+vaultSpawns.length;
-    announce={text:'🏛 ЛАБИРИНТ ('+centers.length+' залов)! Пробейся к Хранителю — уничтожь всех ('+vaultTotal+')',life:4,color:'#c084fc'};
-    camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.4);
+    announce=forest
+      ?{text:'🌲 ЛЕС ('+centers.length+' полян)! Пробейся по улочкам к Лесному Хозяину — уничтожь всех ('+vaultTotal+')',life:4,color:'#4ade80'}
+      :{text:'🏛 ЛАБИРИНТ ('+centers.length+' залов)! Пробейся к Хранителю — уничтожь всех ('+vaultTotal+')',life:4,color:'#c084fc'};
+    camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,forest?0.4:0.4);
     sfxSweep(200,900,0.5,'sawtooth',0.12,true);
+  }
+  // «Прорыв к лесу» на 29 уровне: фиксированная волна мобов, обычный спавн выключен,
+  // сверху — счётчик оставшихся. Зачистил всех → вход в ЛЕС (enterVault('forest')).
+  function startForestGate(){
+    mobSpawnPaused=true;pendingSpawns=[];
+    const N=28;
+    for(let i=0;i<N;i++){
+      const e=spawnEnemy(false);
+      const a=Math.random()*Math.PI*2,r=rand(340,660);
+      e.x=player.x+Math.cos(a)*r;e.y=player.y+Math.sin(a)*r;
+    }
+    forestGate=true;forestGateTotal=enemies.length;
+    announce={text:'🌲 ПРОРЫВ К ЛЕСУ! Уничтожь всю волну — за ней Лес ('+forestGateTotal+')',life:4,color:'#4ade80'};
+    flashFx(0.4,'74,222,128');camShake=Math.max(camShake,8);sfxSweep(200,700,0.4,'sawtooth',0.12,true);
   }
   // столкновения со стенами лабиринта
   function collideCircleWalls(o){
@@ -1624,6 +1657,7 @@
     pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
     player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
     inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;
+    vaultTheme='dungeon';forestTrees=[];forestGate=false;
   }
   function rollVaultReward(){
     // СУПЕР-ПРИЗ за победу над Хранителем — гарантированно ценный и частично УНИКАЛЬНЫЙ
@@ -2412,6 +2446,8 @@
     if(player.level%25===0){pendingSuperWarning=player.level;}
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
     if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
+    // достиг 29 — запускаем «прорыв к лесу» (один раз за забег): фикс. волна, потом ЛЕС на 30
+    if(player.level===29&&!forestDone){forestPending=true;}
     if(player.level%10===0){pendingEvent=player.level;eventDelay=7;}
     if(player.level>=50&&player.level%10===0){pendingCurse=player.level;}
     if(player.level%10===1&&player.level>1){
@@ -2829,7 +2865,8 @@
 
   function endSession(reason){
     const died=reason!=='finish';
-    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultT=0;}
+    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultT=0;vaultTheme='dungeon';forestTrees=[];}
+    forestGate=false;
     // смерть (кончились все жизни) — путь назад закрыт, только новая игра.
     // ручное «Завершить» (жизни ещё есть) — снимок сохраняется, «Продолжить» его загрузит
     if(died)clearRun();else saveRun();
@@ -2992,6 +3029,12 @@
       }
     }
 
+    // «Прорыв к лесу» (29 ур.): стартуем волну; как зачистил всех — уходим в ЛЕС (30)
+    if(forestPending&&!inVault&&!paused){forestPending=false;startForestGate();}
+    if(forestGate&&!inVault){
+      const gleft=enemies.length+pendingSpawns.length;
+      if(gleft===0){forestGate=false;forestDone=true;enterVault('forest');}
+    }
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
     if(inVault){
       vaultT+=dt; // просто счёт времени внутри (без лимита)
@@ -3159,7 +3202,7 @@
       enemies=elites.concat(enemies.filter(e=>!e.elite).slice(0,240-elites.length));
     }
     // self-heal: never let a leaked pause flag starve the field of enemies
-    if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns)&&!inVault)mobSpawnPaused=false;
+    if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns)&&!inVault&&!forestGate)mobSpawnPaused=false;
 
     // enemy projectiles (fizzle at the safe-zone border — it's actually safe inside)
     for(const ep of enemyProjectiles){
@@ -3703,21 +3746,35 @@
     drawGrid();
     drawProps();
     drawMotes();
-    // лабиринт: стены и светящийся выход
+    // лабиринт / ЛЕС: стены (или деревья) и светящийся выход
     if(inVault){
-      for(const w of vaultWalls){
-        x.fillStyle='#181030';x.fillRect(w.x,w.y,w.w,w.h);
-        x.strokeStyle='rgba(192,132,252,0.5)';x.lineWidth=2;x.strokeRect(w.x,w.y,w.w,w.h);
+      const forest=vaultTheme==='forest';
+      if(forest){
+        // травяной подтон под проходимой зоной
+        const hw=(W/2)/zoom,hh=(H/2)/zoom;
+        x.fillStyle='rgba(24,58,32,0.32)';x.fillRect(player.x-hw,player.y-hh,hw*2,hh*2);
+        // стены-«лесополосы»: тёмная земля + стволы и кроны деревьев
+        for(const w of vaultWalls){x.fillStyle='#12251a';x.fillRect(w.x,w.y,w.w,w.h);}
+        for(const tr of forestTrees){
+          x.fillStyle='#3a2a17';x.fillRect(tr.x-2,tr.y-1,4,tr.r*0.7); // ствол
+          x.fillStyle='#1f6b34';x.beginPath();x.arc(tr.x,tr.y,tr.r,0,Math.PI*2);x.fill(); // крона
+          x.fillStyle='#2f8a45';x.beginPath();x.arc(tr.x-tr.r*0.32,tr.y-tr.r*0.32,tr.r*0.55,0,Math.PI*2);x.fill(); // блик
+        }
+      }else{
+        for(const w of vaultWalls){
+          x.fillStyle='#181030';x.fillRect(w.x,w.y,w.w,w.h);
+          x.strokeStyle='rgba(192,132,252,0.5)';x.lineWidth=2;x.strokeRect(w.x,w.y,w.w,w.h);
+        }
       }
       if(vaultExit){
-        const open=vaultCleared,ecol=open?'#4ade80':'#64748b';
+        const open=vaultCleared,ecol=open?'#4ade80':(forest?'#3f6212':'#64748b');
         x.save();x.translate(vaultExit.x,vaultExit.y);
         x.shadowColor=ecol;x.shadowBlur=open?22:6;
         for(let ri=0;ri<3;ri++){x.globalAlpha=(open?0.85:0.45)-ri*0.18;x.strokeStyle=ecol;x.lineWidth=3/zoom;
           x.beginPath();x.arc(0,0,vaultExit.r-ri*10+(open?Math.sin(t*3+ri)*3:0),0,Math.PI*2);x.stroke();}
         x.shadowBlur=0;x.globalAlpha=1;
         x.fillStyle='#fff';x.font='24px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-        x.fillText(open?'🚪':'🔒',0,-2);
+        x.fillText(open?(forest?'🌲':'🚪'):'🔒',0,-2);
         x.font='bold 11px system-ui,sans-serif';x.fillStyle=open?'#bbf7d0':'#94a3b8';
         x.fillText(open?'ВЫХОД':'УБЕЙ ВСЕХ',0,vaultExit.r*0.8);
         x.restore();
@@ -4044,11 +4101,21 @@
     }
     drawHudOverlay();
     if(inVault){
+      const forest=vaultTheme==='forest';
       x.save();x.textAlign='center';x.textBaseline='top';
       x.font='bold 15px system-ui,sans-serif';
       const vLeft=enemies.length+pendingSpawns.length+vaultSpawns.length;
-      x.fillStyle=vaultCleared?'#4ade80':'#c084fc';x.shadowColor='#000';x.shadowBlur=4;
-      x.fillText(vaultCleared?'🚪 ВЫХОД ОТКРЫТ — иди к двери!':'🏛 ЛАБИРИНТ · осталось мобов: '+vLeft+(vLeft<=vaultTotal?' из '+vaultTotal:''),W/2,40);
+      x.fillStyle=vaultCleared?'#4ade80':(forest?'#4ade80':'#c084fc');x.shadowColor='#000';x.shadowBlur=4;
+      const head=forest?'🌲 ЛЕС':'🏛 ЛАБИРИНТ';
+      const clr=forest?'🌲 ЛЕС ПРОЙДЕН — иди к выходу!':'🚪 ВЫХОД ОТКРЫТ — иди к двери!';
+      x.fillText(vaultCleared?clr:head+' · осталось мобов: '+vLeft+(vLeft<=vaultTotal?' из '+vaultTotal:''),W/2,40);
+      x.restore();
+    }else if(forestGate){
+      x.save();x.textAlign='center';x.textBaseline='top';
+      x.font='bold 15px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
+      const gLeft=enemies.length+pendingSpawns.length;
+      x.fillStyle='#4ade80';
+      x.fillText('🌲 ПРОРЫВ К ЛЕСУ · осталось мобов: '+gLeft+' из '+forestGateTotal,W/2,40);
       x.restore();
     }else if(challenge){
       x.save();x.textAlign='center';x.textBaseline='top';
