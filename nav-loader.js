@@ -1,14 +1,131 @@
 ﻿/**
- * nav-loader.js v10.1 — Unified compact logo for all screens
+ * nav-loader.js v10.2 — Unified compact logo for all screens
  * Loads nav.html, injects into #nav-placeholder, handles mobile menu
+ * v10.2: + site-wide content protection (copy/right-click/screenshot deterrent)
  */
 (function () {
     var isSubfolder = window.location.pathname.includes('/pages/');
     var BASE = isSubfolder ? '../' : '';
 
+    // ── Content protection ─────────────────────────────────────────
+    // ponytail: inlined here instead of a separate site-protection.js — this
+    // IIFE already runs on every public page, so one block covers the whole
+    // static site with zero per-page edits. Moderate level: never touches form
+    // fields. Screenshot part is best-effort only (browser can't truly block).
+    function isEditable(el) {
+        for (; el && el !== document; el = el.parentElement) {
+            if (!el.tagName) continue;
+            var t = el.tagName;
+            if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT') return true;
+            if (el.isContentEditable) return true;
+            if (el.classList && el.classList.contains('allow-select')) return true;
+        }
+        return false;
+    }
+
+    var warnOpen = false;
+    function showCopyrightWarning() {
+        if (warnOpen) return;
+        warnOpen = true;
+        var ov = document.createElement('div');
+        ov.setAttribute('style', 'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:rgba(3,6,14,.72);backdrop-filter:blur(6px);padding:20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;');
+        ov.innerHTML = '<div style="max-width:440px;width:100%;background:#0b0f1a;border:1px solid rgba(6,182,212,.4);border-radius:18px;padding:30px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);">' +
+            '<div style="font-size:34px;margin-bottom:12px;">©️🔒</div>' +
+            '<div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:12px;">Материал защищён авторским правом</div>' +
+            '<div style="font-size:14px;line-height:1.6;color:rgba(255,255,255,.82);margin-bottom:22px;">Все материалы курса <b style="color:#06b6d4;">Dispatch4You</b> защищены авторским правом. Копирование, распространение и воспроизведение запрещены и преследуются по закону. Нарушение влечёт ответственность согласно действующему законодательству.</div>' +
+            '<button id="d4y-warn-ok" style="padding:11px 30px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:100px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Понятно</button>' +
+            '</div>';
+        function close() { warnOpen = false; if (ov.parentNode) ov.parentNode.removeChild(ov); }
+        ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
+        document.body.appendChild(ov);
+        var ok = document.getElementById('d4y-warn-ok');
+        if (ok) ok.onclick = close;
+    }
+
+    function initContentProtection() {
+        // CSS: disable selection/drag site-wide, but keep form fields usable
+        var st = document.createElement('style');
+        st.textContent = 'body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}' +
+            'input,textarea,select,[contenteditable="true"],.allow-select,.allow-select *{-webkit-user-select:text!important;-moz-user-select:text!important;-ms-user-select:text!important;user-select:text!important;}' +
+            'img{-webkit-user-drag:none;-khtml-user-drag:none;-moz-user-drag:none;-o-user-drag:none;user-drag:none;}';
+        (document.head || document.documentElement).appendChild(st);
+
+        // Right-click: block the menu silently (no modal — it would pop up on
+        // every accidental click). Warning is reserved for actual copy attempts.
+        document.addEventListener('contextmenu', function (e) {
+            if (isEditable(e.target)) return;
+            e.preventDefault();
+        }, true);
+
+        function blockCopy(e) {
+            if (isEditable(e.target)) return;
+            e.preventDefault();
+            showCopyrightWarning();
+        }
+        document.addEventListener('copy', blockCopy, true);
+        document.addEventListener('cut', blockCopy, true);
+
+        document.addEventListener('selectstart', function (e) {
+            if (!isEditable(e.target)) e.preventDefault();
+        }, true);
+        document.addEventListener('dragstart', function (e) {
+            if (!isEditable(e.target)) e.preventDefault();
+        }, true);
+
+        document.addEventListener('keydown', function (e) {
+            if (isEditable(e.target)) return;
+            var k = (e.key || '').toLowerCase();
+            if ((e.ctrlKey || e.metaKey) && (k === 'c' || k === 'x')) {
+                e.preventDefault();
+                showCopyrightWarning();
+            }
+        }, true);
+
+        // Best-effort anti-screenshot.
+        // ponytail: catches only the PrintScreen key; can't stop Snipping Tool,
+        // phone shots, or a camera. Upgrade path: none client-side (platform limit).
+        function onPrintScreen(e) {
+            if (e.key !== 'PrintScreen') return;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText('').catch(function () {});
+                }
+            } catch (err) { /* clipboard API needs https / permission */ }
+            showCopyrightWarning();
+        }
+        document.addEventListener('keydown', onPrintScreen, true);
+        document.addEventListener('keyup', onPrintScreen, true);
+    }
+
+    initContentProtection();
+
+    // ponytail: one check — forms breaking hinges entirely on isEditable().
+    // Run with ?d4yselftest=1 in the URL; silent otherwise.
+    if (window.location.search.indexOf('d4yselftest') !== -1) {
+        var mk = function (tag, attrs) {
+            var e = document.createElement(tag);
+            if (attrs) for (var a in attrs) e.setAttribute(a, attrs[a]);
+            return e;
+        };
+        var wrap = mk('div'), inp = mk('input'), ta = mk('textarea'),
+            plain = mk('p'), ce = mk('div', { contenteditable: 'true' }),
+            ceChild = mk('span'), allow = mk('div', { class: 'allow-select' });
+        ce.appendChild(ceChild);
+        [inp, ta, plain, ce, allow].forEach(function (n) { wrap.appendChild(n); });
+        document.body.appendChild(wrap);
+        console.assert(isEditable(inp) === true, 'input editable');
+        console.assert(isEditable(ta) === true, 'textarea editable');
+        console.assert(isEditable(ce) === true, 'contenteditable editable');
+        console.assert(isEditable(ceChild) === true, 'child of contenteditable editable');
+        console.assert(isEditable(allow) === true, 'allow-select passes');
+        console.assert(isEditable(plain) === false, 'plain p NOT editable');
+        document.body.removeChild(wrap);
+        console.log('[d4y] isEditable self-check done');
+    }
+
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
-        fetch(BASE + 'nav.html?v=10.1')
+        fetch(BASE + 'nav.html?v=10.2')
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
             .catch(function () { inject(NAV_INLINE.replace(/\{\{BASE\}\}/g, BASE)); });
