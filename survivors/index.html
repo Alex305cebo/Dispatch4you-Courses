@@ -759,24 +759,39 @@
   function metaCost(u,lvl){return u.endless?Math.round(u.costBase*Math.pow(u.growth||1.15,lvl)):(lvl+1)*u.costBase;}
 
   // достижения — открываются по итогам забега, хранятся отдельно и навсегда
+  // Достижения — длинная КОНЕЧНАЯ эскалирующая лестница: когда лёгкие взяты,
+  // остаются всё более сложные. Каждое даёт эссенцию (essence) в мета-прогрессию.
   const ACHIEVEMENTS=[
-    {id:'surv3',icon:'🌱',name:'Новичок',desc:'Продержись 3 минуты',ok:s=>s.time>=180},
-    {id:'surv10',icon:'⏳',name:'Стойкий',desc:'Продержись 10 минут',ok:s=>s.time>=600},
-    {id:'surv20',icon:'🏔',name:'Марафонец',desc:'Продержись 20 минут',ok:s=>s.time>=1200},
-    {id:'kill500',icon:'⚔️',name:'Боец',desc:'500 убийств за забег',ok:s=>s.kills>=500},
-    {id:'kill2000',icon:'💀',name:'Жнец',desc:'2000 убийств за забег',ok:s=>s.kills>=2000},
-    {id:'lvl25',icon:'📈',name:'Ветеран',desc:'Достигни 25 уровня',ok:s=>s.level>=25},
-    {id:'lvl50',icon:'👑',name:'Легенда',desc:'Достигни 50 уровня',ok:s=>s.level>=50},
-    {id:'lvl100',icon:'🌌',name:'Покоритель',desc:'Достигни 100 уровня (Акт 2)',ok:s=>s.level>=100},
-    {id:'combo50',icon:'🔥',name:'Комбо-мастер',desc:'Комбо x50',ok:s=>s.combo>=50},
-    {id:'combo100',icon:'⚡',name:'Неудержимый',desc:'Комбо x100',ok:s=>s.combo>=100},
+    {id:'surv3',icon:'🌱',name:'Новичок',desc:'Продержись 3 минуты',ok:s=>s.time>=180,essence:5},
+    {id:'surv10',icon:'⏳',name:'Стойкий',desc:'Продержись 10 минут',ok:s=>s.time>=600,essence:10},
+    {id:'surv20',icon:'🏔',name:'Марафонец',desc:'Продержись 20 минут',ok:s=>s.time>=1200,essence:20},
+    {id:'surv40',icon:'🕰',name:'Несокрушимый',desc:'Продержись 40 минут',ok:s=>s.time>=2400,essence:40},
+    {id:'surv60',icon:'♾',name:'Вечный',desc:'Продержись 60 минут',ok:s=>s.time>=3600,essence:70},
+    {id:'kill500',icon:'⚔️',name:'Боец',desc:'500 убийств за забег',ok:s=>s.kills>=500,essence:5},
+    {id:'kill2000',icon:'💀',name:'Жнец',desc:'2000 убийств',ok:s=>s.kills>=2000,essence:15},
+    {id:'kill10k',icon:'☠️',name:'Палач',desc:'10 000 убийств',ok:s=>s.kills>=10000,essence:35},
+    {id:'kill50k',icon:'🩸',name:'Апокалипсис',desc:'50 000 убийств',ok:s=>s.kills>=50000,essence:80},
+    {id:'lvl25',icon:'📈',name:'Ветеран',desc:'25 уровень',ok:s=>s.level>=25,essence:5},
+    {id:'lvl50',icon:'👑',name:'Легенда',desc:'50 уровень',ok:s=>s.level>=50,essence:12},
+    {id:'lvl100',icon:'🌌',name:'Покоритель',desc:'100 уровень',ok:s=>s.level>=100,essence:25},
+    {id:'lvl250',icon:'🪐',name:'Титан',desc:'250 уровень',ok:s=>s.level>=250,essence:50},
+    {id:'lvl500',icon:'✨',name:'Божество',desc:'500 уровень',ok:s=>s.level>=500,essence:100},
+    {id:'combo50',icon:'🔥',name:'Комбо-мастер',desc:'Серия без урона x50',ok:s=>s.combo>=50,essence:8},
+    {id:'combo100',icon:'⚡',name:'Неудержимый',desc:'Серия x100',ok:s=>s.combo>=100,essence:18},
+    {id:'combo500',icon:'🌟',name:'Безупречный',desc:'Серия x500',ok:s=>s.combo>=500,essence:45},
+    {id:'boss10',icon:'🐉',name:'Убийца боссов',desc:'10 боссов за забег',ok:s=>(s.bosses||0)>=10,essence:15},
+    {id:'boss50',icon:'🦖',name:'Гроза боссов',desc:'50 боссов',ok:s=>(s.bosses||0)>=50,essence:45},
+    {id:'asc1',icon:'🌠',name:'Восходящий',desc:'1-е Восхождение',ok:s=>(s.asc||0)>=1,essence:30},
+    {id:'asc4',icon:'💫',name:'Вознесённый',desc:'4-е Восхождение',ok:s=>(s.asc||0)>=4,essence:90},
+    {id:'asc8',icon:'👁',name:'Трансцендент',desc:'Максимум Восхождений (8)',ok:s=>(s.asc||0)>=8,essence:200},
+    {id:'vault3',icon:'🏛',name:'Расхититель',desc:'Печать Лабиринта x3',ok:s=>(s.seals||0)>=3,essence:60},
   ];
   function loadAchis(){try{return JSON.parse(localStorage.getItem('survivors-achis'))||{};}catch(e){return {};}}
   function saveAchis(a){try{localStorage.setItem('survivors-achis',JSON.stringify(a));}catch(e){}}
   function evalAchievements(stats){
-    const a=loadAchis();const unlocked=[];
-    ACHIEVEMENTS.forEach(ac=>{if(!a[ac.id]&&ac.ok(stats)){a[ac.id]=Date.now();unlocked.push(ac);}});
-    if(unlocked.length)saveAchis(a);
+    const a=loadAchis();const unlocked=[];let essence=0;
+    ACHIEVEMENTS.forEach(ac=>{if(!a[ac.id]&&ac.ok(stats)){a[ac.id]=Date.now();unlocked.push(ac);essence+=ac.essence||0;}});
+    if(unlocked.length){saveAchis(a);if(essence){metaState.shards+=essence;saveMeta();}}
     return unlocked;
   }
   function showAchievements(){
@@ -2615,7 +2630,7 @@
     else sfxChime(523,4,0.09,0.11);
     setTimeout(refreshTop3,1500);
     // достижения по итогам забега — показать новые строкой в статистике
-    const newAchis=evalAchievements({time:t,level:player.level,kills:kills,combo:player.comboBest||0});
+    const newAchis=evalAchievements({time:t,level:player.level,kills:kills,combo:player.comboBest||0,bosses:bossKills,asc:player.ascTier||0,seals:player.vaultSeals||0});
     if(newAchis.length){
       overStats.textContent+=' · 🏅 +'+newAchis.length+': '+newAchis.map(a=>a.icon+' '+a.name).join(', ');
     }
