@@ -2900,10 +2900,13 @@
     if(player._trail.length>16)player._trail.splice(0,2);
     if(player.regen>0)player.hp=Math.min(player.maxHp,player.hp+player.regen*dt);
 
-    // camera zoom: pull back when the field gets crowded — smoothed so bursts of
-    // spawns/deaths (mines, nova bursts) don't yank the view around every frame
+    // Камера: близкий зум только в самом начале (до 5 ур.), дальше плавно отдаляется,
+    // чтобы видеть большое поле; чем больше мобов — тем дальше. Всё сглажено (без рывков).
     enemyCountSmoothed+=(enemies.length-enemyCountSmoothed)*Math.min(1,dt*0.12);
-    const targetZoom=Math.max(0.55,Math.min(baseZoom,baseZoom-Math.max(0,enemyCountSmoothed-25)/200));
+    const lp=Math.max(0,Math.min(1,((player.level||1)-5)/7)); // 0 до 5-го, 1 к 12-му уровню
+    const levelZoom=baseZoom*(1-0.40*lp);                     // близко (×1.0) → далеко (×0.60)
+    const crowd=Math.max(0,enemyCountSmoothed-20)/180;         // толпа добавляет отдаления
+    const targetZoom=Math.max(baseZoom*0.42,levelZoom-crowd*baseZoom);
     const zoomDelta=(targetZoom-zoom)*Math.min(1,dt*0.3);
     const zoomMaxStep=0.15*dt;
     zoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
@@ -3588,6 +3591,16 @@
   }
 
   function drawOffscreenIndicators(){
+    if(inVault){
+      // В лабиринте — минимум стрелок, чтобы не захламлять края экрана:
+      // всегда только на финального Хранителя, а на остальных врагов — лишь когда
+      // осталось мало (искать последних). Плюс стрелка на открытый выход.
+      const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
+      enemies.forEach(e=>{if(e.superboss)edgeArrow(e.x,e.y,e.r,'#ff2d55',1.7+0.25*Math.sin(t*6));});
+      if(left<=8)enemies.forEach(e=>{if(!e.superboss)edgeArrow(e.x,e.y,e.r,e.elite?'#f87171':'#fca5a5',e.elite?1.3:1);});
+      if(vaultCleared&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
+      return;
+    }
     pickups.forEach(pk=>{x.globalAlpha=pickupBlink(pk);edgeArrow(pk.x,pk.y,pk.r,pk.color);x.globalAlpha=1;});
     // bosses: bigger pulsing arrows in the boss's color
     enemies.forEach(e=>{if(e.elite)edgeArrow(e.x,e.y,e.r,e.color,1.7+0.25*Math.sin(t*6));});
@@ -3595,15 +3608,6 @@
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,'#c084fc',1.7+0.3*Math.sin(t*6));
-    if(inVault){
-      const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
-      // стрелки на боссов-стражей — всегда (их мало, помогают ориентироваться).
-      // на обычных мобов — только когда осталось мало (≤6), чтобы найти последних;
-      // при большой толпе стрелки на каждого захламляли бы весь экран.
-      enemies.forEach(e=>{if(e.elite)edgeArrow(e.x,e.y,e.r,'#f87171',1.4);});
-      if(left<=6)enemies.forEach(e=>{if(!e.elite)edgeArrow(e.x,e.y,e.r,'#fca5a5',1);});
-      if(vaultCleared&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
-    }
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
