@@ -1919,8 +1919,10 @@
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
-    // выборы улучшений даются ТОЛЬКО за уровни опыта и сундуки — за убийства/комбо больше не капают,
-    // иначе их накапливалось слишком много (напр. 35 на 15 уровне из-за большого комбо и толпы)
+    // выборы за врагов — скромно: супербосс и босс по +1; охотник/чемпион/рубежи убийств — 0
+    // (иначе накапливалось слишком много, как 35 на 15 ур. от толпы)
+    if(e.superboss)addUpPoints(1,'СУПЕРБОСС');
+    else if(e.elite)addUpPoints(1,'босс');
     // анимация смерти: замороженный разбивается льдинками, обычный — эмодзи-«поп»
     if(e.slowT>0)fxIceShatter(e);else fxDeathPop(e);
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
@@ -1945,10 +1947,13 @@
     player.combo++;player.comboT=1.2;
     if(player.combo>player.comboBest)player.comboBest=player.combo;
     const newTier=comboTierInfo(player.combo);
-    if(newTier>prevTier&&newTier>=0){ // взяли новый тир серии БЕЗ УРОНА — эффект (выборы за это больше не даём)
+    if(newTier>prevTier&&newTier>=0){ // взяли новый тир серии БЕЗ УРОНА — эффект + скромный бонус
       const ct=COMBO_TIERS[newTier];
       flashFx(0.28,ct.fx);spawnFloater(player.x,player.y-player.r-16,'🔥 '+ct.name+' · СЕРИЯ x'+player.combo,true);
       addOverdrive(12);camShake=Math.max(camShake,4);sfxChime(560,4,0.08,0.12);player._comboPunch=1.6;
+      // +1 выбор за каждый новый тир, но лишь ПЕРВЫЙ раз за забег (без фарма пересборкой серии)
+      const awarded=player.comboTierAwarded==null?-1:player.comboTierAwarded;
+      if(newTier>awarded){player.comboTierAwarded=newTier;addUpPoints(1,'серия без урона');}
     }
     // овердрайв копится с убийств; охотник и боссы дают крупный вклад; комбо усиливает поток
     addOverdrive((e.hunter?25:(e.elite?8:1.2))*(1+Math.min(0.6,player.combo*0.012)));
