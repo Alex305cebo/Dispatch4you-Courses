@@ -4220,6 +4220,9 @@
       x.restore();
       if(!mobile)topY+=s+4+labelH; // на мобильных стек не двигаем — иконки живут рядом с хабом
     }
+    // буллет-тайм: едва заметный голубой оттенок, пока мир замедлен (нет управления)
+    if(bulletTime<0.9&&state==='running'&&!paused)
+      {x.fillStyle='rgba(96,150,255,'+((0.9-bulletTime)*0.10).toFixed(3)+')';x.fillRect(0,0,W,H);}
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
     if(fxFlash>0){x.fillStyle='rgba('+fxFlashColor+','+(fxFlash*0.28)+')';x.fillRect(0,0,W,H);}
     // низкое HP (<30%) — пульсирующая красная виньетка-«сердцебиение» по краям экрана
@@ -4234,6 +4237,7 @@
   // одна необработанная ошибка в step/draw раньше молча убивала rAF-цикл — игра
   // «зависала». Ловим её, пропускаем кадр и показываем текст, чтобы можно было починить.
   let lastLoopErr='',loopErrN=0;
+  let bulletTime=1; // «буллет-тайм»: 1 = обычная скорость, 1/3 = мир замедлен (нет управления)
   function loop(now){
     const real=Math.min(0.05,(now-last)/1000);last=now;
     let dt=real;
@@ -4243,6 +4247,12 @@
       zoom+=(Math.min(1.7,baseZoom*1.65)-zoom)*Math.min(1,real*4);
       if(deathCine<=0){deathCine=0;gameOver();}
     }
+    // БУЛЛЕТ-ТАЙМ: отпустил управление — мир течёт в 3 раза медленнее; снова ведёшь
+    // (тач по экрану, WASD/стрелки, геймпад) — скорость плавно возвращается к обычной
+    const ctrlHeld=(joy&&joy.active)||(typeof gp!=='undefined'&&gp.active)||
+      (keys&&(keys.left||keys.right||keys.up||keys.down||keys.a||keys.d||keys.w||keys.s));
+    bulletTime+=((ctrlHeld?1:1/3)-bulletTime)*Math.min(1,real*10);
+    if(state==='running'&&!paused&&deathCine<=0&&hitStop<=0)dt*=bulletTime;
     try{
       if(state==='running'&&!paused){step(dt);maybeOpenChoice();}
       draw();
