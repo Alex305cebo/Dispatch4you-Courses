@@ -120,7 +120,15 @@
   #btnPendingUp{background:linear-gradient(135deg,#4D96FF,#a855f7);border:1px solid #7dd3fc;box-shadow:0 2px 12px rgba(77,150,255,0.45);}
   #btnPendingAll{background:linear-gradient(135deg,#16a34a,#4ade80);border:1px solid #86efac;box-shadow:0 2px 12px rgba(74,222,128,0.35);}
   .pupBtn:hover{filter:brightness(1.1);}
+  .pupBtn{transition:font-size .5s ease,padding .5s ease,box-shadow .5s ease;}
   @media (max-width:600px){.pupBtn{font-size:11px;padding:6px 10px;}#pendingBtns{bottom:10px;gap:6px;}}
+  /* долго не выбираешь улучшения — кнопки становятся крупнее и заметно светятся */
+  #pendingBtns.urge1 .pupBtn{font-size:14px;padding:9px 17px;box-shadow:0 0 14px rgba(250,204,21,0.55);}
+  #pendingBtns.urge2 .pupBtn{font-size:16px;padding:11px 21px;box-shadow:0 0 22px rgba(250,204,21,0.9);}
+  #pendingBtns.urge1{animation:pupurge 1.1s ease-in-out infinite;}
+  #pendingBtns.urge2{animation:pupurge 0.7s ease-in-out infinite;}
+  @keyframes pupurge{0%,100%{filter:drop-shadow(0 0 4px rgba(250,204,21,0.5));transform:translateX(-50%) scale(1);}
+    50%{filter:drop-shadow(0 0 16px rgba(250,204,21,1));transform:translateX(-50%) scale(1.07);}}
   @keyframes pupblink{0%,100%{opacity:1;transform:translateX(-50%) scale(1);}50%{opacity:0.82;transform:translateX(-50%) scale(0.985);}}
   /* only the narrow single-column (phone) layout hides sidebar stats and leans on the
      on-canvas HUD; tablets wide enough for the side-by-side layout keep the full sidebar */
@@ -2496,12 +2504,16 @@
   const btnDonePick=document.getElementById('btnDonePick'),btnAutoPick=document.getElementById('btnAutoPick');
   let _pupLast='';
   function updatePendingBtn(){
-    // кнопки видны только в режиме «кнопки» (optChoice=false), в бою, когда есть накопленные выборы
+    // кнопки видны только в режиме «кнопки» (optChoice=false), в бою, когда есть накопленные выборы.
+    // Долго не выбираешь — кнопки «нетерпеливеют»: с 8с крупнее и светятся, с 20с — ещё сильнее.
     const show=!optChoice&&state==='running'&&!paused&&pendingLevelUps>0&&player&&!player.dying;
-    const key=show?('m'+pendingLevelUps):'';
+    const urge=show?(pendingIdleT>20?2:pendingIdleT>8?1:0):0;
+    const key=show?('m'+pendingLevelUps+'u'+urge):'';
     if(key===_pupLast)return;
     _pupLast=key;
     pendingBtns.style.display=show?'flex':'none';
+    pendingBtns.classList.toggle('urge1',urge===1);
+    pendingBtns.classList.toggle('urge2',urge===2);
     if(show){
       btnPendingUp.textContent='⬆ Одно ('+pendingLevelUps+')';
       btnPendingAll.textContent='✨ Всё ('+pendingLevelUps+')';
@@ -2545,6 +2557,7 @@
   }
   const UP_COST=1; // каждый уровень/сундук = один выбор (без системы очков)
   let singlePick=false; // режим «кнопки»: «Выбрать одно» открывает выбор ровно на 1 раз
+  let pendingIdleT=0; // сколько РЕАЛЬНЫХ секунд копятся невыбранные улучшения (кнопки «нетерпеливеют»)
   // диспетчер режима «выбор» — карточный выбор (в режиме «авто» модалка не открывается)
   function renderShop(){ renderChoice(); }
   function buyPoint(){
@@ -4255,6 +4268,8 @@
     if(state==='running'&&!paused&&deathCine<=0&&hitStop<=0)dt*=bulletTime;
     try{
       if(state==='running'&&!paused){step(dt);maybeOpenChoice();}
+      // таймер «нетерпеливых» кнопок: копится в РЕАЛЬНОМ времени (буллет-тайм не тормозит его)
+      if(state==='running'&&!paused&&!optChoice&&pendingLevelUps>0)pendingIdleT+=real;else pendingIdleT=0;
       draw();
     }catch(err){
       loopErrN++;lastLoopErr=String(err&&err.message||err);
