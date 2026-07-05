@@ -96,6 +96,12 @@
   .btn-danger{background:#7f1d2e;border-color:#ff2d55;color:#fff;}
   .btn-danger:hover{background:#9a2436;}
   @keyframes warnpulse{0%,100%{opacity:1;}50%{opacity:0.45;}}
+  /* мигающая кнопка накопленных улучшений (Вариант А — игра не прерывается сама) */
+  #btnPendingUp{display:none;position:absolute;top:56px;left:50%;transform:translateX(-50%);z-index:6;
+    padding:9px 18px;font-weight:800;font-size:14px;color:#fff;cursor:pointer;white-space:nowrap;
+    background:linear-gradient(135deg,#4D96FF,#a855f7);border:1px solid #7dd3fc;border-radius:12px;
+    box-shadow:0 0 18px rgba(77,150,255,0.55);animation:pupblink 1.1s ease-in-out infinite;}
+  @keyframes pupblink{0%,100%{opacity:1;transform:translateX(-50%) scale(1);}50%{opacity:0.6;transform:translateX(-50%) scale(0.96);}}
   /* only the narrow single-column (phone) layout hides sidebar stats and leans on the
      on-canvas HUD; tablets wide enough for the side-by-side layout keep the full sidebar */
   @media (hover:none) and (pointer:coarse) and (max-width:819px){
@@ -110,6 +116,7 @@
 <div class="wrap">
   <div class="arena">
     <canvas id="sboard" width="640" height="480"></canvas>
+    <button id="btnPendingUp">⬆ УЛУЧШЕНИЕ</button>
     <div id="ostart" class="overlay show">
       <h2>Выжившие</h2>
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле (сундуки, лечение, магнит, бомба, новое оружие — золотой меч), выбирай улучшения, продержись как можно дольше.</p>
@@ -134,6 +141,7 @@
       <h2 id="levelTitle">Новый уровень!</h2>
       <p id="levelSub" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
       <div class="cards" id="cards"></div>
+      <button class="ostart" id="btnAutoPick" style="border-color:#4ade80;color:#4ade80;">🎲 Авто — разобрать все</button>
     </div>
     <div id="ocurse" class="overlay">
       <h2 style="color:#ff6b6b;">⚠ ПРОКЛЯТИЕ</h2>
@@ -1055,7 +1063,7 @@
     sfxSweep(300,1400,0.4,'sawtooth',0.12,true);sfxBoom(0.4,0.22,900,80,true);
   }
 
-  function xpNeedFor(lvl){return Math.round(18*Math.pow(1.22,lvl-1));}
+  function xpNeedFor(lvl){return Math.round(26*Math.pow(1.26,lvl-1));} // медленнее: уровни идут реже
 
   function rollDmg(base){
     base*=player.lvlDmgScale||1;
@@ -1901,16 +1909,11 @@
   }
 
   function showWeaponPopup(w,title){
-    state='weaponpopup';
-    weaponTitle.textContent=title||('Новое оружие: '+w.name+'!');
-    weaponDesc.textContent=w.desc;
-    drawWeaponIcon(w.id);
-    oweapon.classList.add('show');
+    // БЕЗ модалки и паузы: оружие выдаётся мгновенно, бой не прерывается —
+    // короткая надпись на поле + золотая вспышка
+    announce={text:title||('⚔ Новое оружие: '+w.name+' — '+w.desc),life:3.4,color:'#fde047'};
+    flashFx(0.3,'250,204,21');camShake=Math.max(camShake,4);
     sfxChime(440,4,0.09,0.11);
-    setTimeout(()=>{
-      oweapon.classList.remove('show');
-      startCooldown(); // накопленные карточки откроются на следующем уровне, не сейчас
-    },2800);
   }
 
   function nearestEnemy(range){
@@ -2258,7 +2261,7 @@
     chestPending=true;pendingLevelUps++;
     // сундук больше НЕ прерывает бой мгновенно: выбор улучшений (все накопленные
     // подряд) откроется после следующего повышения уровня
-    announce={text:'🎁 +1 улучшение — выбор после уровня!',life:2.2,color:'#facc15'};
+    announce={text:'🎁 +1 улучшение — жми кнопку «УЛУЧШЕНИЕ» вверху!',life:2.2,color:'#facc15'};
     sfxChime(520,3,0.07,0.1);
   }
 
@@ -2298,7 +2301,7 @@
       levelUpOnce();
       player.xpNeed=xpNeedFor(player.level);
     }
-    if(pendingLevelUps>0&&state==='running')showLevelUp();
+    // Вариант А: карточки НЕ открываются сами — копятся в мигающую кнопку «УЛУЧШЕНИЕ ×N»
   }
 
   function levelUpOnce(){
@@ -2354,6 +2357,37 @@
     olevel.classList.remove('show');
     if(pendingLevelUps>0)showLevelUp();else startCooldown();
   }
+  // мигающая кнопка накопленных улучшений — обновляем DOM только при изменении
+  const btnPendingUp=document.getElementById('btnPendingUp');
+  let _pupLast='';
+  function updatePendingBtn(){
+    const s2=(state==='running'&&pendingLevelUps>0&&!player.dying)?('⬆ УЛУЧШЕНИЕ ×'+pendingLevelUps):'';
+    if(s2===_pupLast)return;
+    _pupLast=s2;
+    btnPendingUp.style.display=s2?'block':'none';
+    if(s2)btnPendingUp.textContent=s2;
+  }
+  btnPendingUp.addEventListener('click',()=>{
+    if(state==='running'&&pendingLevelUps>0){state='levelup';showLevelUp();updatePendingBtn();}
+  });
+  // «Авто»: разобрать все накопленные улучшения одним нажатием (эволюции — в приоритете)
+  document.getElementById('btnAutoPick').addEventListener('click',()=>{
+    let guard=0;
+    while(pendingLevelUps>0&&guard++<400){
+      const evos=readyEvolutions();
+      if(evos.length){evos[0].apply(player);}
+      else{
+        const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
+        if(pool.length){const u=pool[Math.floor(Math.random()*pool.length)];u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;}
+        else player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25); // всё на максимуме — лечение
+      }
+      pendingLevelUps--;
+    }
+    chestPending=false;
+    sfxChime(523,4,0.08,0.1);
+    olevel.classList.remove('show');
+    startCooldown();
+  });
 
   function showLevelUp(){
     const evos=readyEvolutions();
@@ -2399,25 +2433,11 @@
   }
 
   function startCooldown(){
-    // в лабиринте боссы-рубежи/супербоссы/проклятия НЕ спавнятся — флаги ждут выхода
-    if(inVault||(!pendingBossLevel&&!pendingSuperboss&&!pendingLevel8Boss&&!pendingSuperWarning&&!pendingCurse)){
-      freezeT=Math.max(freezeT,2);
-      state='running';last=performance.now();raf=requestAnimationFrame(loop);
-      return;
-    }
-    state='cooldown';
-    let secs=3;
-    cooldownMsg.textContent=pendingBossLevel?'Босс приближается!':'Приготовься';
-    cooldownNum.textContent=secs;
-    ocooldown.classList.add('show');
-    const iv=setInterval(()=>{
-      secs--;
-      if(secs<=0){
-        clearInterval(iv);
-        ocooldown.classList.remove('show');
-        resumeAfterCooldown();
-      }else{cooldownNum.textContent=secs;beep(440,0.06,'sine',0.08);}
-    },1000);
+    // Вариант А: экрана отсчёта больше НЕТ. Боссы спавнятся прямо в step с надписью.
+    // Единственный оставшийся выбор — проклятие (раз в 10 уровней после 50-го).
+    if(pendingCurse&&!inVault){pendingCurse=null;showCurseChoice();return;}
+    freezeT=Math.max(freezeT,2);
+    state='running';last=performance.now();raf=requestAnimationFrame(loop);
   }
 
   const BOSS_MODS=[
@@ -2665,7 +2685,22 @@
   function step(dt){
     t+=dt;
     capStats(); // софт-кап статов каждый кадр — числа всегда конечны и читаемы
-    maybeAscend(); // всё на максимуме + урон в лимите → Восхождение (лимит ×10)
+    maybeAscend(); // все улучшения на максимуме → Восхождение
+    // Вариант А: боссы-рубежи выходят СРАЗУ с надписью на поле — без экрана отсчёта
+    if(!inVault){
+      if(pendingBossLevel){const lvl=pendingBossLevel;pendingBossLevel=null;
+        const boss=spawnEnemy(true,lvl/5);
+        const mod=BOSS_MODS[Math.floor(Math.random()*BOSS_MODS.length)];mod.apply(boss);
+        announce={text:'⚔ БОСС: '+boss.skinName+' ['+mod.name+']! Уровень '+lvl,life:3,color:'#ff2d55'};
+        beep(90,0.4,'sawtooth',0.18);camShake=Math.max(camShake,10);
+      }else if(pendingSuperboss){const lvl=pendingSuperboss;pendingSuperboss=null;spawnSuperboss(lvl);}
+      else if(pendingLevel8Boss){pendingLevel8Boss=false;spawnLevel8Boss();}
+      if(pendingSuperWarning){
+        announce={text:'⚠ Скоро СУПЕРБОСС (уровень '+(pendingSuperWarning+1)+') — готовься!',life:4,color:'#ff2d55'};
+        flashFx(0.4,'255,45,85');pendingSuperWarning=null;
+      }
+    }
+    updatePendingBtn(); // мигающая кнопка «УЛУЧШЕНИЕ ×N»
     // autosave the run every ~2s so a refresh/close loses at most a couple seconds
     saveAcc+=dt;if(saveAcc>=2){saveAcc=0;saveRun();}
     // input
@@ -2718,8 +2753,8 @@
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
 
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
-    if(t-lastLevelUpAt>=90){
-      levelUpOnce(); // карточки НЕ открываем посреди боя — покажутся на ближайшем уровне от опыта
+    if(t-lastLevelUpAt>=150){ // реже: гарантированный уровень раз в 2.5 минуты
+      levelUpOnce(); // карточки НЕ открываем посреди боя — копятся в кнопку «УЛУЧШЕНИЕ»
     }
 
     fire(dt);
