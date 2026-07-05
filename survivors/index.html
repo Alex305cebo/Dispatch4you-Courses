@@ -1182,7 +1182,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0; // новый забег начинается с БЛИЗКОГО зумаlastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];singlePick=false;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -2523,7 +2523,7 @@
   function updateHubPoints(){ if(hubPointsBox)hubPointsBox.style.display='none'; }
   // «Выбрать одно» — открыть выбор из 3 карт ровно на один раз
   btnPendingUp.addEventListener('click',()=>{
-    if(state==='running'&&pendingLevelUps>=UP_COST){state='levelup';singlePick=true;renderShop();olevel.classList.add('show');updatePendingBtn();}
+    if(state==='running'&&pendingLevelUps>=UP_COST){state='levelup';renderShop();olevel.classList.add('show');updatePendingBtn();}
   });
   // «Выбрать всё» — применить все накопленные выборы сразу (эволюции в приоритете) + плашки
   btnPendingAll.addEventListener('click',()=>{
@@ -2536,13 +2536,13 @@
   });
   // «Готово» в модалке выбора — просто закрыть (оставшиеся выборы ждут в кнопках)
   document.getElementById('btnDonePick').addEventListener('click',()=>{
-    singlePick=false;olevel.classList.remove('show');updatePendingBtn();startCooldown();
+    olevel.classList.remove('show');updatePendingBtn();startCooldown();
   });
   // «Авто» в модалке — применить всё оставшееся сразу
   document.getElementById('btnAutoPick').addEventListener('click',()=>{
     let guard=0;
     while(pendingLevelUps>=UP_COST&&guard++<300){const r=autoApplyOne();pendingLevelUps-=UP_COST;pushAutoToast(r.text,r.color);}
-    chestPending=false;singlePick=false;sfxChime(523,4,0.08,0.1);
+    chestPending=false;sfxChime(523,4,0.08,0.1);
     olevel.classList.remove('show');updatePendingBtn();startCooldown();
   });
 
@@ -2556,15 +2556,14 @@
     olevel.classList.add('show');
   }
   const UP_COST=1; // каждый уровень/сундук = один выбор (без системы очков)
-  let singlePick=false; // режим «кнопки»: «Выбрать одно» открывает выбор ровно на 1 раз
   let pendingIdleT=0; // сколько РЕАЛЬНЫХ секунд копятся невыбранные улучшения (кнопки «нетерпеливеют»)
   // диспетчер режима «выбор» — карточный выбор (в режиме «авто» модалка не открывается)
   function renderShop(){ renderChoice(); }
   function buyPoint(){
     pendingLevelUps=Math.max(0,pendingLevelUps-UP_COST);
-    // авто-выбор: если ещё есть выборы — сразу показываем следующие 3 карты; иначе закрываем.
-    // режим «кнопки» (singlePick): после одного выбора закрываем, остальное — на кнопках.
-    if(pendingLevelUps<UP_COST||singlePick){singlePick=false;olevel.classList.remove('show');startCooldown();}
+    // после выбора сразу показываем СЛЕДУЮЩИЙ набор из 3, пока есть накопленные выборы
+    // (в любом режиме); закрываем только когда всё выбрано или нажато «Готово»
+    if(pendingLevelUps<UP_COST){olevel.classList.remove('show');startCooldown();}
     else renderShop();
     updatePendingBtn();
   }
@@ -2601,7 +2600,7 @@
     if(!(state==='running'&&!paused&&player&&!player.dying&&!inVault))return;
     if(pendingLevelUps<UP_COST)return;
     if(optChoice){
-      state='levelup';singlePick=false;renderShop();olevel.classList.add('show');updatePendingBtn();
+      state='levelup';renderShop();olevel.classList.add('show');updatePendingBtn();
     }
     // режим «кнопки»: ничего не открываем и не применяем — игрок жмёт «Выбрать одно/всё»
   }
@@ -2905,7 +2904,7 @@
     if(died)clearRun();else saveRun();
     document.getElementById('btnContinueFromOver').style.display=died?'none':'';
     state='over';
-    pendingBtns.style.display='none';_pupLast='';singlePick=false;if(hubPointsBox)hubPointsBox.style.display='none'; // прячем игровые индикаторы
+    pendingBtns.style.display='none';_pupLast='';if(hubPointsBox)hubPointsBox.style.display='none'; // прячем игровые индикаторы
     olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
     archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
