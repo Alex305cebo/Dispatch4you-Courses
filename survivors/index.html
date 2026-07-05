@@ -84,6 +84,9 @@
     background:linear-gradient(135deg,#7dd3fc,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent;}
   .overlay p{margin:0;color:var(--muted);font-size:13px;max-width:360px;line-height:1.55;}
   .cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+  /* магазин улучшений за очки — прокручиваемая сетка всех доступных апгрейдов */
+  #olevel .cards{max-height:56vh;overflow-y:auto;overflow-x:hidden;padding:6px;align-content:flex-start;width:min(720px,94vw);}
+  #olevel .card{width:150px;padding:10px;}
   .card{width:150px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;text-align:left;}
   .card:hover{background:var(--panel2);border-color:#4D96FF;}
   .gp-focus{outline:3px solid #4D96FF;outline-offset:2px;}
@@ -128,7 +131,7 @@
 <div class="wrap">
   <div class="arena">
     <canvas id="sboard" width="640" height="480"></canvas>
-    <button id="btnPendingUp">⬆ УЛУЧШЕНИЕ</button>
+    <button id="btnPendingUp">⬆ Очки улучшений</button>
     <div id="ostart" class="overlay show">
       <h2>Выжившие</h2>
       <p>WASD / стрелки — движение. Оружие стреляет само. Собирай синие кристаллы опыта и предметы на земле, выбирай улучшения, продержись как можно дольше.</p>
@@ -152,10 +155,13 @@
       <div class="cards" id="weaponChoiceList"></div>
     </div>
     <div id="olevel" class="overlay">
-      <h2 id="levelTitle">Новый уровень!</h2>
+      <h2 id="levelTitle">🛒 Улучшения</h2>
       <p id="levelSub" style="display:none;color:#4D96FF;font-size:13px;margin:-8px 0 0;"></p>
       <div class="cards" id="cards"></div>
-      <button class="ostart" id="btnAutoPick" style="border-color:#4ade80;color:#4ade80;">🎲 Авто — разобрать все</button>
+      <div class="menu-col" style="margin-top:2px;">
+        <button class="ostart primary" id="btnDonePick">✓ Готово</button>
+        <button class="ostart" id="btnAutoPick" style="color:#4ade80;">🎲 Авто — потратить все очки</button>
+      </div>
     </div>
     <div id="ocurse" class="overlay">
       <h2 style="color:#ff6b6b;">⚠ ПРОКЛЯТИЕ</h2>
@@ -241,6 +247,9 @@
       <button id="btnFinishSide" style="padding:8px 6px;flex:1 1 auto;min-width:0;white-space:nowrap;">⏹ Завершить</button>
       <button id="btnMenuSide" style="padding:8px 6px;flex:1 1 auto;min-width:0;white-space:nowrap;">☰ Меню</button>
       <button class="sndBtn" id="btnSoundSide" style="padding:8px;width:auto;flex:0 0 auto;">🔊</button>
+    </div>
+    <div id="hubPointsBox" class="box full" style="display:none;padding:8px 10px;text-align:center;border:1px solid #4D96FF;background:rgba(77,150,255,0.1);">
+      <span id="hubPoints" style="color:#7dd3fc;font-weight:700;font-size:13px;"></span>
     </div>
     <p class="hint">WASD / стрелки — движение · на телефоне — тяни пальцем по полю</p>
     <p class="credit">created by Ilya Ce</p>
@@ -1855,6 +1864,13 @@
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
+    // ОЧКИ УЛУЧШЕНИЙ за сильных врагов: супербосс +5, босс +3, охотник +2, чемпион +1
+    if(e.superboss)addUpPoints(5,'СУПЕРБОСС');
+    else if(e.elite)addUpPoints(3,'босс');
+    else if(e.hunter)addUpPoints(2,'охотник');
+    else if(e.champion)addUpPoints(1,'чемпион');
+    // рубеж убийств: каждые 250 — +1 очко
+    if(kills%250===0)addUpPoints(1,'250 убийств');
     // анимация смерти: замороженный разбивается льдинками, обычный — эмодзи-«поп»
     if(e.slowT>0)fxIceShatter(e);else fxDeathPop(e);
     if(e.elite)doHitStop(e.superboss?0.2:0.12);else if(e.hunter)doHitStop(0.1);
@@ -1879,10 +1895,11 @@
     player.combo++;player.comboT=1.2;
     if(player.combo>player.comboBest)player.comboBest=player.combo;
     const newTier=comboTierInfo(player.combo);
-    if(newTier>prevTier&&newTier>=0){ // взяли новый тир — эффект
+    if(newTier>prevTier&&newTier>=0){ // взяли новый тир серии БЕЗ УРОНА — эффект + очки улучшений
       const ct=COMBO_TIERS[newTier];
       flashFx(0.28,ct.fx);spawnFloater(player.x,player.y-player.r-16,'🔥 '+ct.name+' · СЕРИЯ x'+player.combo,true);
       addOverdrive(12);camShake=Math.max(camShake,4);sfxChime(560,4,0.08,0.12);player._comboPunch=1.6;
+      addUpPoints(newTier+1,'серия без урона'); // чем выше тир — тем больше очков за избегание урона
     }
     // овердрайв копится с убийств; охотник и боссы дают крупный вклад; комбо усиливает поток
     addOverdrive((e.hunter?25:(e.elite?8:1.2))*(1+Math.min(0.6,player.combo*0.012)));
@@ -1966,8 +1983,8 @@
 
   function showWeaponPopup(w,title){
     // БЕЗ модалки и паузы: оружие выдаётся мгновенно, бой не прерывается —
-    // короткая надпись на поле + золотая вспышка
-    announce={text:title||('⚔ Новое оружие: '+w.name+' — '+w.desc),life:3.4,color:'#fde047'};
+    // короткая надпись на поле + золотая вспышка (без длинного описания, чтобы не растягивать)
+    announce={text:title||('⚔ Новое оружие: '+w.name+'!'),life:3,color:'#fde047'};
     flashFx(0.3,'250,204,21');camShake=Math.max(camShake,4);
     sfxChime(440,4,0.09,0.11);
   }
@@ -2317,7 +2334,7 @@
     chestPending=true;pendingLevelUps++;
     // сундук больше НЕ прерывает бой мгновенно: выбор улучшений (все накопленные
     // подряд) откроется после следующего повышения уровня
-    announce={text:'🎁 +1 улучшение — жми кнопку «УЛУЧШЕНИЕ» вверху!',life:2.2,color:'#facc15'};
+    announce={text:'🎁 Сундук: +1 очко улучшений!',life:2.2,color:'#facc15'};
     sfxChime(520,3,0.07,0.1);
   }
 
@@ -2408,28 +2425,41 @@
   }
 
 
-  function pickChosen(){
-    pendingLevelUps--;
-    olevel.classList.remove('show');
-    if(pendingLevelUps>0)showLevelUp();else startCooldown();
+  // начисление ОЧКОВ улучшений из любого источника (+ короткий флоатер над героем)
+  function addUpPoints(n,label){
+    if(!(n>0))return;
+    pendingLevelUps=(pendingLevelUps||0)+n;
+    if(label&&player&&floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-24,vy:-30,life:1,val:'+'+n+'⬆ '+label,crit:true});
+    updatePendingBtn();updateHubPoints();
   }
-  // мигающая кнопка накопленных улучшений — обновляем DOM только при изменении
+  // кнопка очков улучшений (верх поля) — компактная пилюля, обновляем DOM при изменении
   const btnPendingUp=document.getElementById('btnPendingUp');
   let _pupLast='';
   function updatePendingBtn(){
-    const s2=(state==='running'&&pendingLevelUps>0&&!player.dying)?('⬆ УЛУЧШЕНИЕ ×'+pendingLevelUps):'';
+    const s2=(state==='running'&&pendingLevelUps>0&&!player.dying)?('⬆ Очки улучшений: '+pendingLevelUps):'';
     if(s2===_pupLast)return;
     _pupLast=s2;
     btnPendingUp.style.display=s2?'block':'none';
     if(s2)btnPendingUp.textContent=s2;
   }
+  // очки улучшений в «хабе» (боковая панель)
+  const hubPointsEl=document.getElementById('hubPoints'),hubPointsBox=document.getElementById('hubPointsBox');
+  function updateHubPoints(){
+    const show=(state==='running'||state==='levelup')&&pendingLevelUps>0;
+    if(hubPointsBox)hubPointsBox.style.display=show?'block':'none';
+    if(hubPointsEl)hubPointsEl.textContent=show?('⬆ Очки улучшений: '+pendingLevelUps):'';
+  }
   btnPendingUp.addEventListener('click',()=>{
     if(state==='running'&&pendingLevelUps>0){state='levelup';showLevelUp();updatePendingBtn();}
   });
-  // «Авто»: разобрать все накопленные улучшения одним нажатием (эволюции — в приоритете)
+  document.getElementById('btnDonePick').addEventListener('click',()=>{
+    // закрыть магазин, оставить неистраченные очки (кнопка вверху останется)
+    olevel.classList.remove('show');updatePendingBtn();updateHubPoints();startCooldown();
+  });
+  // «Авто»: потратить все очки одним нажатием (эволюции — в приоритете)
   document.getElementById('btnAutoPick').addEventListener('click',()=>{
     let guard=0;
-    while(pendingLevelUps>0&&guard++<400){
+    while(pendingLevelUps>0&&guard++<2000){
       const evos=readyEvolutions();
       if(evos.length){evos[0].apply(player);}
       else{
@@ -2441,51 +2471,53 @@
     }
     chestPending=false;
     sfxChime(523,4,0.08,0.1);
-    olevel.classList.remove('show');
+    olevel.classList.remove('show');updatePendingBtn();updateHubPoints();
     startCooldown();
   });
 
+  // === МАГАЗИН УЛУЧШЕНИЙ ЗА ОЧКИ ===
+  // pendingLevelUps = очки улучшений (за уровни/боссов/серию без урона/сундуки).
+  // Игрок сам тратит очки на ЛЮБЫЕ доступные улучшения — карточки больше не навязываются.
   function showLevelUp(){
+    if(pendingLevelUps<=0){olevel.classList.remove('show');startCooldown();return;}
+    state='levelup';
+    renderUpgradeShop();
+    olevel.classList.add('show');
+  }
+  function buyPoint(){
+    pendingLevelUps=Math.max(0,pendingLevelUps-1);
+    updatePendingBtn();updateHubPoints();
+    if(pendingLevelUps<=0){olevel.classList.remove('show');startCooldown();}
+    else renderUpgradeShop();
+  }
+  function renderUpgradeShop(){
     const evos=readyEvolutions();
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
-    if(pool.length===0&&evos.length===0){
-      // everything available is maxed (damage is uncapped so this is rare) — heal a bit
-      // instead of freezing on an empty card screen, and move straight on
-      player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);
-      pendingLevelUps=0;chestPending=false;
-      olevel.classList.remove('show');
-      startCooldown();
-      return;
-    }
-    state='levelup';
-    const boss=pendingBossLevel===player.level;
-    if(chestPending){levelTitle.textContent='Сундук! Выбери бонус';chestPending=false;}
-    else levelTitle.textContent=boss?'Босс-уровень '+player.level+'!':'Уровень '+player.level+'!';
-    if(pendingLevelUps>1){levelSub.style.display='block';levelSub.textContent='Осталось выборов: '+pendingLevelUps;}
-    else levelSub.style.display='none';
+    levelTitle.innerHTML='🛒 Улучшения · <span style="color:#4ade80;">'+pendingLevelUps+' оч.</span>';
+    levelSub.style.display='block';
+    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Трать очки на любые улучшения (1 очко = 1 покупка)';
+    chestPending=false;
     cardsEl.innerHTML='';
-    // a ready evolution takes the first, highlighted slot (the VS "chest evolution" moment)
-    const evo=evos.length?evos[Math.floor(Math.random()*evos.length)]:null;
-    const normalSlots=evo?2:3;
-    const picks=[];const copy=pool.slice();
-    for(let i=0;i<normalSlots&&copy.length;i++){picks.push(copy.splice(Math.floor(Math.random()*copy.length),1)[0]);}
-    if(evo){
-      const el=document.createElement('div');el.className='card';
-      el.style.borderColor='#facc15';el.style.boxShadow='0 0 14px rgba(250,204,21,0.5)';el.style.background='rgba(250,204,21,0.08)';
-      el.innerHTML='<b style="color:#facc15;">'+evo.name+'</b><span style="display:block;color:#fde047;font-weight:600;margin-bottom:4px;">ЭВОЛЮЦИЯ ОРУЖИЯ</span><span>'+evo.desc+'</span>';
-      el.onclick=()=>{evo.apply(player);announce={text:evo.name+'!',life:2.4,color:'#facc15'};sfxChime(660,5,0.09,0.12);camShake=Math.max(camShake,6);pickChosen();};
-      cardsEl.appendChild(el);
+    if(pool.length===0&&evos.length===0){
+      const el=document.createElement('div');el.className='card';el.style.borderColor='#4ade80';
+      el.innerHTML='<b style="color:#4ade80;">💚 Лечение</b><span style="display:block;color:#4ade80;font-weight:600;margin-bottom:4px;">1 очко</span><span>Всё прокачано — очко даёт +25% HP</span>';
+      el.onclick=()=>{player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);sfxChime(523,3,0.08,0.1);buyPoint();};
+      cardsEl.appendChild(el);return;
     }
-    picks.forEach(u=>{
-      const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;
-      const lvl=upgradeLevel(u);
+    evos.forEach(evo=>{
       const el=document.createElement('div');el.className='card';
-      el.style.borderColor=ri.color;
-      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур. '+lvl+'/'+upgradeMaxLabel(u)+'</span><span>'+u.desc+'</span>';
-      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;sfxChime(523,3,0.08,0.1);pickChosen();};
+      el.style.borderColor='#facc15';el.style.boxShadow='0 0 12px rgba(250,204,21,0.4)';el.style.background='rgba(250,204,21,0.08)';
+      el.innerHTML='<b style="color:#facc15;">'+evo.name+'</b><span style="display:block;color:#fde047;font-weight:600;margin-bottom:4px;">⭐ ЭВОЛЮЦИЯ · 1 очко</span><span>'+evo.desc+'</span>';
+      el.onclick=()=>{evo.apply(player);announce={text:evo.name+'!',life:2.4,color:'#facc15'};sfxChime(660,5,0.09,0.12);camShake=Math.max(camShake,6);buyPoint();};
       cardsEl.appendChild(el);
     });
-    olevel.classList.add('show');
+    pool.forEach(u=>{
+      const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;const lvl=upgradeLevel(u);
+      const el=document.createElement('div');el.className='card';el.style.borderColor=ri.color;
+      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур.'+lvl+'/'+upgradeMaxLabel(u)+' · 1 очко</span><span>'+u.desc+'</span>';
+      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;sfxChime(523,3,0.08,0.1);buyPoint();};
+      cardsEl.appendChild(el);
+    });
   }
 
   function startCooldown(){
@@ -2713,6 +2745,7 @@
     if(died)clearRun();else saveRun();
     document.getElementById('btnContinueFromOver').style.display=died?'none':'';
     state='over';
+    btnPendingUp.style.display='none';_pupLast='';if(hubPointsBox)hubPointsBox.style.display='none'; // прячем игровые индикаторы очков
     olevel.classList.remove('show');ocooldown.classList.remove('show');oweapon.classList.remove('show');
     if(t>best){best=t;localStorage.setItem('survivors-best',String(best));}
     archiveSession({tag:sessionTag||newSessionTag(),name:playerName,time:Math.round(t),level:player.level,kills:kills,date:Date.now(),end:died?'смерть':'завершена'});
@@ -2756,7 +2789,7 @@
         flashFx(0.4,'255,45,85');pendingSuperWarning=null;
       }
     }
-    updatePendingBtn(); // мигающая кнопка «УЛУЧШЕНИЕ ×N»
+    updatePendingBtn();updateHubPoints(); // кнопка очков вверху + строка в хабе
     // autosave the run every ~2s so a refresh/close loses at most a couple seconds
     saveAcc+=dt;if(saveAcc>=2){saveAcc=0;saveRun();}
     // input
@@ -2880,7 +2913,7 @@
       const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
       if(!vaultCleared&&left===0){
         vaultCleared=true;
-        announce={text:'🏆 ЛАБИРИНТ ЗАЧИЩЕН! Иди к выходу 🚪',life:3,color:'#4ade80'};
+        announce={text:'🏆 ЛАБИРИНТ ЗАЧИЩЕН! Иди к выходу 🚪',life:3,color:'#4ade80'};addUpPoints(5,'лабиринт');
         flashFx(0.5,'74,222,128');sfxChime(660,3,0.09,0.12);
       }
       if(vaultCleared&&vaultExit&&dist(player,vaultExit)<vaultExit.r+player.r){
@@ -2913,6 +2946,7 @@
           else if(challenge.type==='nohit'){player.maxHp+=15;player.hp=Math.min(player.maxHp,player.hp+40);msg='🛡 Челлендж выполнен: +15 макс. HP и лечение!';}
           else{gems.forEach(g=>g.magnet=true);metaState.shards+=3;saveMeta();msg='💎 Челлендж выполнен: магнит + 3 ✨!';}
           announce={text:msg,life:3,color:'#4ade80'};flashFx(0.35,'74,222,128');sfxChime(660,4,0.09,0.12);
+          addUpPoints(2,'челлендж');
           challenge=null;
         }else if(challenge.time<=0||challenge.failed){
           announce={text:'Челлендж провален',life:1.8,color:'#8891a3'};
@@ -3927,11 +3961,18 @@
     }
     if(announce){
       const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));
-      // auto-fit the font so long banners never run off-screen, and sit below the HUD panel
-      let fs=26;x.font='bold '+fs+'px system-ui,sans-serif';
-      while(x.measureText(announce.text).width>W-24&&fs>12){fs-=1;x.font='bold '+fs+'px system-ui,sans-serif';}
-      x.textAlign='center';x.textBaseline='alphabetic';x.fillStyle=ac;x.shadowColor=ac;x.shadowBlur=12;
-      x.fillText(announce.text,W/2,92);x.restore();
+      // компактный центрированный баннер: перенос по словам (до 2 строк), ширина ≤60% экрана —
+      // не растягивается на весь экран и не наезжает на HUD
+      const maxW=Math.min(W*0.6,560);
+      const fs=Math.min(22,Math.max(14,Math.round(W/40)));
+      x.font='bold '+fs+'px system-ui,sans-serif';
+      const words=String(announce.text).split(' ');const lines=[];let cur='';
+      for(const w of words){const test=cur?cur+' '+w:w;if(x.measureText(test).width>maxW&&cur){lines.push(cur);cur=w;}else cur=test;}
+      if(cur)lines.push(cur);
+      const shown=lines.slice(0,2);
+      x.textAlign='center';x.textBaseline='alphabetic';x.fillStyle=ac;x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=6;
+      shown.forEach((ln,i)=>{x.shadowColor='rgba(0,0,0,0.7)';x.fillText(ln,W/2,84+i*(fs+5));x.shadowColor=ac;x.shadowBlur=10;x.fillText(ln,W/2,84+i*(fs+5));});
+      x.restore();
     }
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
     if(fxFlash>0){x.fillStyle='rgba('+fxFlashColor+','+(fxFlash*0.28)+')';x.fillRect(0,0,W,H);}
