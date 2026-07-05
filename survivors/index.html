@@ -3504,9 +3504,12 @@
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,'#c084fc',1.7+0.3*Math.sin(t*6));
     if(inVault){
-      // стрелки на оставшихся мобов и будущие точки спавна — последнего всегда можно найти
-      enemies.forEach(e=>edgeArrow(e.x,e.y,e.r,e.elite?'#f87171':'#fca5a5',e.elite?1.5:1));
-      vaultSpawns.forEach(s2=>edgeArrow(s2.x,s2.y,10,'#7c5b66',0.9));
+      const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
+      // стрелки на боссов-стражей — всегда (их мало, помогают ориентироваться).
+      // на обычных мобов — только когда осталось мало (≤6), чтобы найти последних;
+      // при большой толпе стрелки на каждого захламляли бы весь экран.
+      enemies.forEach(e=>{if(e.elite)edgeArrow(e.x,e.y,e.r,'#f87171',1.4);});
+      if(left<=6)enemies.forEach(e=>{if(!e.elite)edgeArrow(e.x,e.y,e.r,'#fca5a5',1);});
       if(vaultCleared&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
     }
   }
