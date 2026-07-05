@@ -886,6 +886,7 @@
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
+  let deathCine=0; // кинематографичная слоу-мо смерть: >0 = идёт, по завершении gameOver()
   function doHitStop(d){hitStop=Math.max(hitStop,d);}
   function flashFx(intensity,color){fxFlash=Math.max(fxFlash,intensity);fxFlashColor=color;}
   let gp={active:false,x:0,y:0};
@@ -1071,7 +1072,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     points=0;shopBought={};
@@ -1132,7 +1133,7 @@
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
-    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
@@ -1151,6 +1152,7 @@
     if(player.comboBest==null)player.comboBest=0;
     if(player.starfallLevel==null){player.starfallLevel=0;player.starfallAcc=0;}
     if(player.singularityLevel==null){player.singularityLevel=0;player.singularityAcc=0;}
+    player.dying=false;if(player.invuln>5)player.invuln=1; // сейв, пойманный посреди слоу-мо смерти
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
     updateHud();
     return true;
@@ -1635,6 +1637,12 @@
           x.beginPath();x.moveTo(Math.cos(a)*r0,Math.sin(a)*r0);x.lineTo(Math.cos(a)*r1,Math.sin(a)*r1);x.stroke();}
         x.globalAlpha=(1-k)*0.5;
         x.beginPath();x.arc(0,0,20+k*110,0,Math.PI*2);x.stroke();
+        x.restore();
+      }else if(f.kind==='hitdir'){
+        // направленная отметка удара: красная дуга у героя со стороны источника урона
+        x.save();x.translate(player.x,player.y);
+        x.globalAlpha=(1-k)*0.85;x.strokeStyle='#ff2d55';x.lineWidth=4;
+        x.beginPath();x.arc(0,0,player.r*2.2+k*8,f.a-0.6,f.a+0.6);x.stroke();
         x.restore();
       }
     }
@@ -2558,6 +2566,7 @@
   function updateHud(){}
 
   function hurtPlayer(dmg,fx,fy,force,isBossHit,isContact){
+    if(player.dying)return; // идёт слоу-мо смерти — добивания не считаем
     // contact dps from a swarm ignores the regular 0.5s hit-mercy (that's what let a mob wall
     // deal no more damage than a single mob), but still respects the longer post-life-loss mercy
     if(player.invuln>(isContact?1:0))return;
@@ -2569,7 +2578,16 @@
     }
     const mitig=(1-0.05*player.armorLevel)*(player.curseDmgTakenMul||1);
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
-    player.hp-=dmg*mitig;player.noHitT=0;camShake=Math.max(camShake,isContact?2:3);
+    const dealt=dmg*mitig;
+    player.hp-=dealt;player.noHitT=0;camShake=Math.max(camShake,isContact?2:3);
+    // === ИНДИКАТОРЫ ПОЛУЧЕННОГО УРОНА ===
+    // красная вспышка экрана (сила зависит от тяжести удара)
+    flashFx(Math.min(0.5,0.14+dealt/Math.max(1,player.maxHp)*0.9),'255,45,85');
+    // красная цифра урона над героем
+    if(floaters.length<40)floaters.push({x:player.x+rand(-5,5),y:player.y-player.r-8,vy:-34,life:0.8,val:'-'+fmtNum(dealt),hurt:true});
+    // направленная отметка: красная дуга со стороны источника удара
+    if(fx!=null&&fy!=null)addFx({kind:'hitdir',x:player.x,y:player.y,a:Math.atan2(fy-player.y,fx-player.x),life:0.35,maxLife:0.35});
+    player._hurtT=0.4; // корабль коротко подсвечивается красным
     // серия без урона прервана — если была заметной, показываем это
     if(player.combo>=10){spawnFloater(player.x,player.y-player.r-16,'💔 Серия x'+player.combo+' прервана',true);flashFx(0.18,'148,163,184');}
     player.combo=0;player.comboT=0;
@@ -2596,7 +2614,14 @@
           rings.push({x:player.x,y:player.y,r:0,maxR:R,life:0.8,color:'#f97316'});
         }
       }else{
-        gameOver();
+        // === СЛОУ-МО СМЕРТИ ===: время замирает, камера наезжает, красная вспышка,
+        // корабль взрывается — и только потом экран смерти
+        player.dying=true;player.invuln=999;deathCine=1.7;
+        flashFx(0.85,'255,45,85');camShake=Math.max(camShake,16);screenFlash=Math.max(screenFlash,0.7);
+        fxBoomAnim(player.x,player.y,120,'#ff2d55');
+        for(let i=0;i<24&&particles.length<600;i++){const a2=rand(0,Math.PI*2),sp2=1.5+Math.random()*4;
+          particles.push({x:player.x,y:player.y,vx:Math.cos(a2)*sp2,vy:Math.sin(a2)*sp2,life:1.4,color:Math.random()<0.5?'#ff5d73':'#e8eefc',sz:2.5+Math.random()*4});}
+        sfxBoom(0.9,0.3,400,35,true);sfxSweep(500,40,1.4,'sawtooth',0.12,true);
       }
     }else if(!isContact){
       player.invuln=0.5;
@@ -2709,6 +2734,7 @@
     player.noHitT+=dt;
     if(player.comboT>0)player.comboT-=dt; // серию сбрасывает только урон, не пауза
     if(player._comboPunch>0)player._comboPunch=Math.max(0,player._comboPunch-dt*4);
+    if(player._hurtT>0)player._hurtT=Math.max(0,player._hurtT-dt*2.5);
     if(player.barrierCd>0)player.barrierCd-=dt;
     if(player.chronoLevel){
       player.chronoCd-=dt;
@@ -3701,8 +3727,8 @@
       x.textAlign='center';x.textBaseline='middle';
       floaters.forEach(f=>{
         x.globalAlpha=Math.max(0,Math.min(1,f.life/0.6));
-        x.font='bold '+(f.crit?17:12)+'px system-ui,sans-serif';
-        x.fillStyle=f.crit?'#fde047':'#fff';x.shadowColor='rgba(0,0,0,0.7)';x.shadowBlur=3;
+        x.font='bold '+(f.hurt?15:(f.crit?17:12))+'px system-ui,sans-serif';
+        x.fillStyle=f.hurt?'#ff5d73':(f.crit?'#fde047':'#fff');x.shadowColor='rgba(0,0,0,0.7)';x.shadowBlur=3;
         x.fillText(f.val,f.x,f.y);
       });
       x.shadowBlur=0;x.globalAlpha=1;
@@ -3756,6 +3782,11 @@
       // кабина
       x.fillStyle='#1e3a8a';x.beginPath();x.ellipse(0,-HR*0.35,HR*0.28,HR*0.42,0,0,Math.PI*2);x.fill();
       x.fillStyle='#7dd3fc';x.globalAlpha=0.8;x.beginPath();x.ellipse(0,-HR*0.4,HR*0.15,HR*0.24,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      // получил урон — корабль коротко вспыхивает красным; при смерти горит и гаснет
+      if(player._hurtT>0||player.dying){
+        x.globalAlpha=player.dying?0.7:Math.min(0.6,player._hurtT*1.6);
+        x.fillStyle='#ff2d55';x.beginPath();x.arc(0,0,HR*1.05,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      }
       x.restore();
     }
     x.shadowBlur=0;
@@ -3813,6 +3844,13 @@
     }
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
     if(fxFlash>0){x.fillStyle='rgba('+fxFlashColor+','+(fxFlash*0.28)+')';x.fillRect(0,0,W,H);}
+    // низкое HP (<30%) — пульсирующая красная виньетка-«сердцебиение» по краям экрана
+    if(state==='running'&&player&&player.hp>0&&player.hp<player.maxHp*0.3){
+      const pu=0.10+0.08*Math.sin(t*6);
+      const vg=x.createRadialGradient(W/2,H/2,Math.min(W,H)*0.34,W/2,H/2,Math.max(W,H)*0.72);
+      vg.addColorStop(0,'rgba(255,45,85,0)');vg.addColorStop(1,'rgba(255,45,85,'+pu+')');
+      x.fillStyle=vg;x.fillRect(0,0,W,H);
+    }
   }
 
   // одна необработанная ошибка в step/draw раньше молча убивала rAF-цикл — игра
@@ -3822,6 +3860,11 @@
     const real=Math.min(0.05,(now-last)/1000);last=now;
     let dt=real;
     if(hitStop>0){hitStop-=real;dt=real*0.18;} // микро-слоу-мо на «сочных» моментах
+    if(deathCine>0){ // слоу-мо смерти: время почти замирает, камера наезжает на героя
+      dt=real*0.1;deathCine-=real;
+      zoom+=(Math.min(1.7,baseZoom*1.65)-zoom)*Math.min(1,real*4);
+      if(deathCine<=0){deathCine=0;gameOver();}
+    }
     try{
       if(state==='running'&&!paused)step(dt);
       draw();
