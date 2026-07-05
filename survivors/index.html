@@ -1011,6 +1011,7 @@
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
   let autoToasts=[]; // мелкие плашки сверху в авто-режиме улучшений («✓ применено …»)
+  let telegraphs=[]; // PoE-стиль: красные круги-предупреждения ударов боссов по земле
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
@@ -1215,7 +1216,7 @@
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     // (зум ×1.30 — близкий стартовый план нового забега)
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];
@@ -1277,7 +1278,7 @@
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
-    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
@@ -1559,7 +1560,7 @@
     vaultTheme=theme||'dungeon';
     const forest=vaultTheme==='forest';
     vaultStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
-    enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];
+    enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];telegraphs=[];
     portal=null;safeZone=null;mobSpawnPaused=true;forestGate=false;
     inVault=true;vaultT=0;vaultCleared=false;
     const dg=genDungeon(player.x+60000,player.y+60000);
@@ -1707,7 +1708,7 @@
     enemies=vaultStash.enemies;projectiles=vaultStash.projectiles;enemyProjectiles=vaultStash.enemyProjectiles;
     pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
     player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
-    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;
+    inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;telegraphs=[];
     vaultTheme='dungeon';forestTrees=[];forestGate=false;
   }
   function rollVaultReward(){
@@ -1934,8 +1935,17 @@
     }
   }
 
+  // Атаки боссов в стиле PoE2: не только веер — чередуются 4 паттерна.
   function bossShoot(e){
     const bn=e.bossNumber||1;
+    const roll=Math.random();
+    if(roll<0.35)bossFan(e,bn);
+    else if(roll<0.60)bossSpiral(e);
+    else if(roll<0.80)bossNovaGap(e);
+    else bossSlam(e);
+  }
+  // 1) классический веер в игрока
+  function bossFan(e,bn){
     const ang=Math.atan2(player.y-e.y,player.x-e.x);
     const n=Math.min(7,3+bn);
     const spread=0.24;
@@ -1945,6 +1955,31 @@
         dmg:Math.round(e.dmg*0.35),r:7,life:3,color:'#a855f7',boss:true});
     }
     beep(140,0.16,'triangle',0.08);
+  }
+  // 2) спираль: ~1.2с крутится и сыплет снаряды двумя рукавами (тикается в апдейте босса)
+  function bossSpiral(e){
+    e._atk={type:'spiral',t:1.2,a:Math.random()*Math.PI*2,acc:0};
+    beep(180,0.2,'sawtooth',0.09);
+  }
+  // 3) кольцо с БРЕШЬЮ: полный залп по кругу, но с безопасным проходом ~60°
+  function bossNovaGap(e){
+    const n=22,gap=Math.random()*Math.PI*2,half=0.55;
+    for(let i=0;i<n;i++){
+      const a=i/n*Math.PI*2;
+      const d=Math.abs((((a-gap)%(Math.PI*2))+Math.PI*3)%(Math.PI*2)-Math.PI);
+      if(d<half)continue; // брешь — сюда можно прошмыгнуть
+      enemyProjectiles.push({x:e.x,y:e.y,vx:Math.cos(a)*165,vy:Math.sin(a)*165,dmg:Math.round(e.dmg*0.3),r:7,life:2.6,color:'#fb7185',boss:true});
+    }
+    beep(90,0.25,'sawtooth',0.12);
+  }
+  // 4) телеграф-удары по земле: красные круги (один прямо под игроком), ~1с на уворот
+  function bossSlam(e){
+    const r=e.superboss?95:75,k=e.superboss?4:3;
+    for(let i=0;i<k;i++){
+      const tx=i===0?player.x:player.x+rand(-170,170),ty=i===0?player.y:player.y+rand(-170,170);
+      telegraphs.push({x:tx,y:ty,r:r,t:1.0,max:1.0,dmg:Math.round(e.dmg*0.6),color:'#ff2d55'});
+    }
+    beep(70,0.3,'sine',0.12);
   }
 
   function mobShoot(e){
@@ -3042,6 +3077,16 @@
     }
 
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
+    // телеграфы боссов: таймер вышел — взрыв, урон если стоишь в круге
+    for(let ti2=telegraphs.length-1;ti2>=0;ti2--){
+      const tg=telegraphs[ti2];tg.t-=dt;
+      if(tg.t<=0){
+        fxBoomAnim(tg.x,tg.y,tg.r,tg.color);camShake=Math.max(camShake,5);
+        if(dist(player,tg)<tg.r+player.r*0.4)hurtPlayer(tg.dmg,tg.x,tg.y,0,true);
+        sfxBoom(0.3,0.2,700,80,true);
+        telegraphs.splice(ti2,1);
+      }
+    }
     if(autoToasts.length){for(let i=autoToasts.length-1;i>=0;i--){autoToasts[i].life-=dt;if(autoToasts[i].life<=0)autoToasts.splice(i,1);}}
 
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
@@ -3225,6 +3270,17 @@
       if(e.elite){
         e.shootCd-=dt;
         if(e.shootCd<=0){bossShoot(e);e.shootCd=Math.max(1,2.6-e.bossNumber*0.15);}
+        if(e._atk&&e._atk.type==='spiral'){ // спираль: два рукава, угол крутится
+          e._atk.t-=dt;e._atk.acc+=dt;
+          while(e._atk.acc>=0.07){e._atk.acc-=0.07;
+            for(const s2 of[0,Math.PI]){
+              const a2=e._atk.a+s2;
+              enemyProjectiles.push({x:e.x,y:e.y,vx:Math.cos(a2)*150,vy:Math.sin(a2)*150,dmg:Math.round(e.dmg*0.25),r:6,life:2.4,color:'#c084fc',boss:true});
+            }
+            e._atk.a+=0.5;
+          }
+          if(e._atk.t<=0)e._atk=null;
+        }
         if(e.modSummon){e.msT-=dt;if(e.msT<=0){e.msT=e.modSummon;summonAdds(e,2);}}
         checkBossStage(e);
         if(e.superboss)updateSuperboss(e,dt);
@@ -3894,6 +3950,18 @@
       x.fillText('🌀',0,-2);x.font='bold 11px system-ui,sans-serif';x.fillStyle='#e9d5ff';x.fillText(Math.ceil(portal.life)+'с',0,portal.r*0.55);
       x.restore();
     }
+    // телеграфы боссов: пульсирующий красный круг, внутренний диск растёт до удара
+    telegraphs.forEach(tg=>{
+      const k=1-tg.t/tg.max;
+      x.save();x.translate(tg.x,tg.y);
+      x.globalAlpha=0.16+0.10*Math.sin(t*10);
+      x.fillStyle=tg.color;x.beginPath();x.arc(0,0,tg.r,0,Math.PI*2);x.fill();
+      x.globalAlpha=0.85;x.strokeStyle=tg.color;x.lineWidth=2.5/zoom;
+      x.beginPath();x.arc(0,0,tg.r,0,Math.PI*2);x.stroke();
+      x.globalAlpha=0.35;x.fillStyle=tg.color;
+      x.beginPath();x.arc(0,0,tg.r*k,0,Math.PI*2);x.fill();
+      x.restore();x.globalAlpha=1;
+    });
     // лужи/зоны (под всем остальным): у каждой свой характер
     pools.forEach(pl=>{
       x.save();x.translate(pl.x,pl.y);
