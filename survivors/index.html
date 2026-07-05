@@ -141,6 +141,7 @@
         <button class="ostart" id="btnCharOpen" style="color:#7dd3fc;">🦸 Персонаж: <span id="charName">Универсал</span></button>
         <button class="ostart" id="btnMetaOpen" style="color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
         <button class="ostart" id="btnAchiOpen" style="color:#fde047;">🏅 Достижения</button>
+        <button class="ostart choiceBtn" id="btnChoiceStart" style="color:#93c5fd;">🎯 Улучшения: выбор</button>
         <button class="ostart sndBtn" id="btnSoundStart" style="align-self:center;width:auto;padding:10px 20px;">🔊 Звук</button>
       </div>
       <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
@@ -182,6 +183,7 @@
     <div id="opause" class="overlay">
       <h2>⏸ Пауза</h2>
       <button class="ostart" id="btnResumePause" style="border-color:#4ade80;color:#4ade80;">▶ Продолжить</button>
+      <button class="ostart choiceBtn" id="btnChoicePause" style="color:#93c5fd;">🎯 Улучшения: выбор</button>
       <button class="ostart sndBtn" id="btnSoundPause">🔊</button>
     </div>
     <div id="oachi" class="overlay" style="overflow-y:auto;">
@@ -438,6 +440,14 @@
     document.querySelectorAll('.sndBtn').forEach(b=>b.textContent=soundOn?'🔊':'🔇');
   }
   function toggleSound(){soundOn=!soundOn;ensureAudio();applySound();}
+  // Настройка выдачи улучшений: true = «давать выбор» (классика: уровень → выбор карт),
+  // false = «очки» (магазин-накопление: две кнопки сверху, тратишь сам — все сразу / по одному).
+  let optChoice=(localStorage.getItem('survivors-choice')||'1')==='1';
+  function applyChoiceOpt(){
+    localStorage.setItem('survivors-choice',optChoice?'1':'0');
+    document.querySelectorAll('.choiceBtn').forEach(b=>b.textContent=optChoice?'🎯 Улучшения: выбор':'🛒 Улучшения: очки');
+  }
+  function toggleChoiceOpt(){optChoice=!optChoice;applyChoiceOpt();if(typeof updatePendingBtn==='function'){updatePendingBtn();updateHubPoints();}}
   // Музыка: 1) если рядом лежит файл assets/music/calm.mp3 — играем его (положи любой
   // свой трек, игра подхватит сама); 2) иначе — спокойный генеративный ambient:
   // мягкие triangle/sine аккорды, медленное арпеджио, без пил и барабанов.
@@ -2434,9 +2444,11 @@
   }
   // кнопка очков улучшений (верх поля) — компактная пилюля, обновляем DOM при изменении
   const btnPendingUp=document.getElementById('btnPendingUp');
+  const btnDonePick=document.getElementById('btnDonePick'),btnAutoPick=document.getElementById('btnAutoPick');
   let _pupLast='';
   function updatePendingBtn(){
-    const s2=(state==='running'&&pendingLevelUps>0&&!player.dying)?('⬆ Очки улучшений: '+pendingLevelUps):'';
+    // верхняя кнопка очков — только в режиме «очки» (в режиме «выбор» карты открываются сами)
+    const s2=(!optChoice&&state==='running'&&pendingLevelUps>0&&!player.dying)?('⬆ Очки улучшений: '+pendingLevelUps):'';
     if(s2===_pupLast)return;
     _pupLast=s2;
     btnPendingUp.style.display=s2?'block':'none';
@@ -2445,7 +2457,7 @@
   // очки улучшений в «хабе» (боковая панель)
   const hubPointsEl=document.getElementById('hubPoints'),hubPointsBox=document.getElementById('hubPointsBox');
   function updateHubPoints(){
-    const show=(state==='running'||state==='levelup')&&pendingLevelUps>0;
+    const show=!optChoice&&(state==='running'||state==='levelup')&&pendingLevelUps>0;
     if(hubPointsBox)hubPointsBox.style.display=show?'block':'none';
     if(hubPointsEl)hubPointsEl.textContent=show?('⬆ Очки улучшений: '+pendingLevelUps):'';
   }
@@ -2481,17 +2493,65 @@
   function showLevelUp(){
     if(pendingLevelUps<=0){olevel.classList.remove('show');startCooldown();return;}
     state='levelup';
-    renderUpgradeShop();
+    renderShop();
     olevel.classList.add('show');
   }
   const UP_COST=4; // стоимость одной покупки в очках улучшений
+  // единый диспетчер: режим «выбор» → карточный выбор; режим «очки» → магазин-накопление
+  function renderShop(){ if(optChoice) renderChoice(); else renderUpgradeShop(); }
   function buyPoint(){
     pendingLevelUps=Math.max(0,pendingLevelUps-UP_COST);
     updatePendingBtn();updateHubPoints();
     if(pendingLevelUps<UP_COST){olevel.classList.remove('show');startCooldown();}
-    else renderUpgradeShop();
+    else renderShop();
+  }
+  // авто-открытие выбора в режиме «выбор»: как только очков хватает — сразу предлагаем карты
+  function maybeOpenChoice(){
+    if(optChoice&&state==='running'&&!paused&&player&&!player.dying&&!inVault&&pendingLevelUps>=UP_COST){
+      state='levelup';renderShop();olevel.classList.add('show');updatePendingBtn();
+    }
+  }
+  // 3 случайные карты (эволюции — в приоритете), как в классике
+  function rollChoice(){
+    const evos=readyEvolutions();
+    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
+    const opts=[];
+    evos.forEach(e=>{if(opts.length<3)opts.push({evo:e});});
+    const sh=pool.slice();for(let i=sh.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const t=sh[i];sh[i]=sh[j];sh[j]=t;}
+    for(const u of sh){if(opts.length>=3)break;opts.push({u});}
+    return opts;
+  }
+  function renderChoice(){
+    btnDonePick.style.display='none';btnAutoPick.style.display='none'; // выбор обязателен, без «Авто»
+    levelTitle.innerHTML='⬆ Уровень! · <span style="color:#4ade80;">'+pendingLevelUps+' оч.</span>';
+    levelSub.style.display='block';
+    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Выбери одно улучшение';
+    chestPending=false;
+    cardsEl.innerHTML='';
+    const offer=rollChoice();
+    if(offer.length===0){
+      const el=document.createElement('div');el.className='card';el.style.borderColor='#4ade80';
+      el.innerHTML='<b style="color:#4ade80;">💚 Лечение</b><span style="display:block;color:#4ade80;font-weight:600;margin-bottom:4px;">+25% HP</span><span>Всё прокачано — восстанови здоровье</span>';
+      el.onclick=()=>{player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);sfxChime(523,3,0.08,0.1);buyPoint();};
+      cardsEl.appendChild(el);return;
+    }
+    offer.forEach(o=>{
+      const el=document.createElement('div');el.className='card';
+      if(o.evo){
+        el.style.borderColor='#facc15';el.style.boxShadow='0 0 12px rgba(250,204,21,0.4)';el.style.background='rgba(250,204,21,0.08)';
+        el.innerHTML='<b style="color:#facc15;">'+o.evo.name+'</b><span style="display:block;color:#fde047;font-weight:600;margin-bottom:4px;">⭐ ЭВОЛЮЦИЯ</span><span>'+o.evo.desc+'</span>';
+        el.onclick=()=>{o.evo.apply(player);announce={text:o.evo.name+'!',life:2.4,color:'#facc15'};sfxChime(660,5,0.09,0.12);camShake=Math.max(camShake,6);buyPoint();};
+      }else{
+        const u=o.u,ri=RARITY_INFO[u.rarity]||RARITY_INFO.common,lvl=upgradeLevel(u);
+        el.style.borderColor=ri.color;
+        el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур.'+lvl+'/'+upgradeMaxLabel(u)+'</span><span>'+u.desc+'</span>';
+        el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;sfxChime(523,3,0.08,0.1);buyPoint();};
+      }
+      cardsEl.appendChild(el);
+    });
   }
   function renderUpgradeShop(){
+    btnDonePick.style.display='';btnAutoPick.style.display=''; // режим «очки»: доступны «Готово»/«Авто»
     const evos=readyEvolutions();
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
     const canBuy=pendingLevelUps>=UP_COST;
@@ -4005,7 +4065,7 @@
       if(deathCine<=0){deathCine=0;gameOver();}
     }
     try{
-      if(state==='running'&&!paused)step(dt);
+      if(state==='running'&&!paused){step(dt);maybeOpenChoice();}
       draw();
     }catch(err){
       loopErrN++;lastLoopErr=String(err&&err.message||err);
@@ -4210,6 +4270,9 @@
   document.getElementById('btnSoundPause').addEventListener('click',toggleSound);
   document.addEventListener('keydown',e=>{if(e.code==='KeyM')toggleSound();});
   document.querySelectorAll('.sndBtn').forEach(b=>b.textContent=soundOn?'🔊':'🔇');
+  document.getElementById('btnChoiceStart').addEventListener('click',toggleChoiceOpt);
+  document.getElementById('btnChoicePause').addEventListener('click',toggleChoiceOpt);
+  applyChoiceOpt();
   // пауза
   let paused=false;
   const opause=document.getElementById('opause');
