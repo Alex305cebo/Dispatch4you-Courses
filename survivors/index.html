@@ -441,11 +441,11 @@
   }
   function toggleSound(){soundOn=!soundOn;ensureAudio();applySound();}
   // Настройка выдачи улучшений: true = «давать выбор» (классика: уровень → выбор карт),
-  // false = «очки» (магазин-накопление: две кнопки сверху, тратишь сам — все сразу / по одному).
+  // false = «авто» (улучшения применяются сами, сверху всплывают плашки о применённом).
   let optChoice=(localStorage.getItem('survivors-choice')||'1')==='1';
   function applyChoiceOpt(){
     localStorage.setItem('survivors-choice',optChoice?'1':'0');
-    document.querySelectorAll('.choiceBtn').forEach(b=>b.textContent=optChoice?'🎯 Улучшения: выбор':'🛒 Улучшения: очки');
+    document.querySelectorAll('.choiceBtn').forEach(b=>b.textContent=optChoice?'🎯 Улучшения: выбор':'⚡ Улучшения: авто');
   }
   function toggleChoiceOpt(){optChoice=!optChoice;applyChoiceOpt();if(typeof updatePendingBtn==='function'){updatePendingBtn();updateHubPoints();}}
   // Музыка: 1) если рядом лежит файл assets/music/calm.mp3 — играем его (положи любой
@@ -712,7 +712,7 @@
     {id:'loot',name:'💎 Добыча',desc:'Шанс двойного кристалла опыта с убийства.',rarity:'mid',cond:p=>(p.lootLevel||0)<5,apply:p=>p.lootLevel=(p.lootLevel||0)+1},
     {id:'slowhit',name:'🕸 Липкие снаряды',desc:'Попадания снарядов замедляют врагов.',rarity:'rare',cond:p=>(p.slowHitLevel||0)<3,apply:p=>p.slowHitLevel=(p.slowHitLevel||0)+1},
   ];
-  const RARITY_INFO={common:{cost:100,label:'Нередкое',color:'#8891a3',maxLevel:6},mid:{cost:250,label:'Среднее',color:'#4D96FF',maxLevel:5},rare:{cost:500,label:'Редкое',color:'#a855f7',maxLevel:5}};
+  const RARITY_INFO={common:{cost:100,label:'Нередкое',color:'#8891a3',maxLevel:16},mid:{cost:250,label:'Среднее',color:'#4D96FF',maxLevel:15},rare:{cost:500,label:'Редкое',color:'#a855f7',maxLevel:12}};
   function upgradeLevel(u){return shopBought[u.id]||0;}
   function upgradeMaxLevel(u){const base=u.maxLevel!=null?u.maxLevel:(RARITY_INFO[u.rarity]||RARITY_INFO.common).maxLevel;return isFinite(base)?base*((player.ascTier||0)+1):base;}
   // Восхождение — КОНЕЧНОЕ число кругов (не бесконечно). Урон качается без лимита отдельно,
@@ -961,6 +961,8 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
+  let weaponGet=null; // крупная плашка «новое оружие подобрано» (drawHudOverlay)
+  let autoToasts=[]; // мелкие плашки сверху в авто-режиме улучшений («✓ применено …»)
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
@@ -1106,7 +1108,10 @@
   // лимит урона = 100M × 10^tier. Когда всё оружие/улучшения на максимуме И урон упёрся
   // в лимит — происходит Восхождение: лимит ×10, а максимумы улучшений/оружия растут,
   // так что всё качается заново и становится сильнее. Числа остаются конечными.
-  function wmax(p){return 5*(((p||player).ascTier||0)+1);} // потолок уровня оружия/улучшения
+  function wmax(p){return 15*(((p||player).ascTier||0)+1);} // потолок уровня оружия/улучшения (стало намного больше)
+  // страховка: интервал между выстрелами оружия не должен уходить в ноль/минус на высоких
+  // уровнях (иначе оружие стреляет каждый кадр → лавина снарядов и просадка/зависание)
+  function wgap(v,floor){const f=floor||0.22;return v>f?v:f;}
   function capStats(){
     const p=player;
     for(const k in STAT_CAPS){if(!isFinite(p[k])||p[k]>STAT_CAPS[k])p[k]=STAT_CAPS[k];}
@@ -1138,7 +1143,8 @@
     sfxSweep(300,1400,0.4,'sawtooth',0.12,true);sfxBoom(0.4,0.22,900,80,true);
   }
 
-  function xpNeedFor(lvl){return Math.round(26*Math.pow(1.26,lvl-1));} // медленнее: уровни идут реже
+  // прокачка нарочно медленная: ×2 до 15 уровня, ×5 после — уровни идут заметно реже
+  function xpNeedFor(lvl){const base=26*Math.pow(1.26,lvl-1);const mult=lvl>=15?5:2;return Math.round(base*mult);}
 
   function rollDmg(base){
     base*=player.lvlDmgScale||1;
@@ -1155,7 +1161,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;weaponGet=null;autoToasts=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     points=0;shopBought={};
@@ -1216,7 +1222,7 @@
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
-    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;weaponGet=null;autoToasts=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
@@ -1993,9 +1999,12 @@
 
   function showWeaponPopup(w,title){
     // БЕЗ модалки и паузы: оружие выдаётся мгновенно, бой не прерывается —
-    // короткая надпись на поле + золотая вспышка (без длинного описания, чтобы не растягивать)
-    announce={text:title||('⚔ Новое оружие: '+w.name+'!'),life:3,color:'#fde047'};
-    flashFx(0.3,'250,204,21');camShake=Math.max(camShake,4);
+    // но подбор показываем КРУПНО по центру (эмодзи + название + описание), чтобы было
+    // сразу понятно, что именно собрано. Плашка сама всплывает и гаснет (drawHudOverlay).
+    const parts=String(w.name).split(' ');
+    const emoji=parts[0],nm=parts.slice(1).join(' ')||w.name;
+    weaponGet={head:title||'⚔ НОВОЕ ОРУЖИЕ',emoji:emoji,name:nm,desc:w.desc||'',life:3.2,max:3.2};
+    flashFx(0.35,'250,204,21');camShake=Math.max(camShake,5);
     sfxChime(440,4,0.09,0.11);
   }
 
@@ -2157,7 +2166,7 @@
     // fireball — big slow projectile, explodes on first hit (handled in projectile loop)
     if(p.fireballLevel){p.fireballAcc+=dt*as;
       const fEvo=p.fireballEvo;
-      if(p.fireballAcc>=(3.4-p.fireballLevel*0.3)*(fEvo?0.6:1)){const e=nearestEnemy(520);
+      if(p.fireballAcc>=wgap((3.4-p.fireballLevel*0.3)*(fEvo?0.6:1))){const e=nearestEnemy(520);
         if(e){p.fireballAcc=0;const a=Math.atan2(e.y-p.y,e.x-p.x),sp=240*p.projSpeedMult;
           const shots=fEvo?2:1;
           for(let s=0;s<shots;s++){const aa=a+(fEvo?(s-0.5)*0.25:0);
@@ -2169,7 +2178,7 @@
     // с 3 ур. — вторая пила в противоположную сторону, эво добавляет третью
     if(p.boomLevel){p.boomAcc+=dt*as;
       const bEvo=p.boomEvo;
-      if(p.boomAcc>=(2.4-p.boomLevel*0.22)*(bEvo?0.75:1)){p.boomAcc=0;
+      if(p.boomAcc>=wgap((2.4-p.boomLevel*0.22)*(bEvo?0.75:1))){p.boomAcc=0;
         const sp=520*p.projSpeedMult; // высокая стартовая скорость = дальний вылет (~350-400px)
         const n=(p.boomLevel>=3?2:1)+(bEvo?1:0);
         const e=nearestEnemy(560);
@@ -2198,7 +2207,7 @@
     boomers=boomers.filter(b=>!b.dead&&b.life>0);
     // frost nova — periodic ring: damage + slow (замороженные мобы синеют и получают ❄)
     if(p.frostLevel){p.frostAcc+=dt*as;
-      if(p.frostAcc>=4.2-p.frostLevel*0.4){p.frostAcc=0;
+      if(p.frostAcc>=wgap(4.2-p.frostLevel*0.4)){p.frostAcc=0;
         const R=Math.min(300,(120+18*p.frostLevel)*softAoe(p.aoeMult)),dmg=rollDmg((18+9*p.frostLevel)*p.dmgMult);
         rings.push({x:p.x,y:p.y,r:0,maxR:R,life:1,color:'#7dd3fc'});
         rings.push({x:p.x,y:p.y,r:0,maxR:R*0.7,life:0.8,color:'#e0f2fe'});
@@ -2206,7 +2215,7 @@
         sfxSweep(1200,400,0.25,'sine',0.08);}}
     // laser — instant beam through the nearest enemy, hits everything on the line
     if(p.laserLevel){p.laserAcc+=dt*as;
-      if(p.laserAcc>=2.8-p.laserLevel*0.22){const e=nearestEnemy(460);
+      if(p.laserAcc>=wgap(2.8-p.laserLevel*0.22)){const e=nearestEnemy(460);
         if(e){p.laserAcc=0;
           const lEvo=p.laserEvo;
           const baseA=Math.atan2(e.y-p.y,e.x-p.x),L=460,thr=(15+2*p.laserLevel)*p.aoeMult;
@@ -2224,7 +2233,7 @@
           sfxSweep(1800,300,0.15,'sawtooth',0.07);}}}
     // shards — radial burst; пробивают 1 врага и живут дольше, иначе залп бесполезен
     if(p.shardLevel){p.shardAcc+=dt*as;
-      if(p.shardAcc>=3-p.shardLevel*0.25){p.shardAcc=0;
+      if(p.shardAcc>=wgap(3-p.shardLevel*0.25)){p.shardAcc=0;
         const n=6+2*p.shardLevel,sp=320*p.projSpeedMult,dmg=rollDmg((11+6*p.shardLevel)*p.dmgMult);
         const off=rand(0,Math.PI*2);
         for(let i=0;i<n;i++){const a=off+i/n*Math.PI*2;
@@ -2233,7 +2242,7 @@
     // drones — orbiting companions that snipe the nearest enemy
     if(p.droneLevel){p.droneAcc+=dt*as;
       const dEvo=p.droneEvo;
-      if(p.droneAcc>=(1.4-p.droneLevel*0.1)*(dEvo?0.5:1)){p.droneAcc=0;
+      if(p.droneAcc>=wgap((1.4-p.droneLevel*0.1)*(dEvo?0.5:1))){p.droneAcc=0;
         const n=1+Math.floor((p.droneLevel-1)/2)+(dEvo?2:0);
         for(let i=0;i<n;i++){
           const a=t*1.6+i*(Math.PI*2/n),dx0=p.x+Math.cos(a)*46,dy0=p.y+Math.sin(a)*46;
@@ -2243,7 +2252,7 @@
               dmg:rollDmg((10+6*p.droneLevel)*(dEvo?1.5:1)*p.dmgMult),color:'#4ade80'});}}}}
     // acid pools — lingering damage zones dropped at the player's feet
     if(p.acidLevel){p.acidAcc+=dt*as;
-      if(p.acidAcc>=4.5-p.acidLevel*0.35){p.acidAcc=0;
+      if(p.acidAcc>=wgap(4.5-p.acidLevel*0.35)){p.acidAcc=0;
         pools.push({x:p.x,y:p.y,r:Math.min(135,(55+8*p.acidLevel)*softAoe(p.aoeMult)),life:4+0.4*p.acidLevel,dps:(8+5*p.acidLevel)*p.dmgMult});
         beep(240,0.1,'sine',0.06);}}
     for(const pl of pools){pl.life-=dt;
@@ -2255,7 +2264,7 @@
     pools=pools.filter(pl=>pl.life>0);
     // meteors — telegraphed strike on a random enemy
     if(p.meteorLevel){p.meteorAcc+=dt*as;
-      if(p.meteorAcc>=5.5-p.meteorLevel*0.4&&enemies.length){p.meteorAcc=0;
+      if(p.meteorAcc>=wgap(5.5-p.meteorLevel*0.4)&&enemies.length){p.meteorAcc=0;
         const e=enemies[Math.floor(Math.random()*enemies.length)];
         meteors.push({x:e.x,y:e.y,tt:0.7,blastR:Math.min(210,(80+12*p.meteorLevel)*softAoe(p.aoeMult)),dmg:rollDmg((40+20*p.meteorLevel)*p.dmgMult)});}}
     for(const m of meteors){m.tt-=dt;
@@ -2266,14 +2275,14 @@
     meteors=meteors.filter(m=>!m.dead);
     // ghost orb — homing, pierces everything (steering in the projectile loop)
     if(p.ghostLevel){p.ghostAcc+=dt*as;
-      if(p.ghostAcc>=3.2-p.ghostLevel*0.25){p.ghostAcc=0;
+      if(p.ghostAcc>=wgap(3.2-p.ghostLevel*0.25)){p.ghostAcc=0;
         const a=rand(0,Math.PI*2),sp=220*p.projSpeedMult;
         projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:8,life:4,pierceLeft:999,hitSet:new Set(),
           dmg:rollDmg((14+7*p.ghostLevel)*p.dmgMult),homing:true,color:'#c4b5fd'});
         beep(600,0.1,'sine',0.05);}}
     // daggers — fast fan along facing direction
     if(p.daggerLevel){p.daggerAcc+=dt*as;
-      if(p.daggerAcc>=1.5-p.daggerLevel*0.09){p.daggerAcc=0;
+      if(p.daggerAcc>=wgap(1.5-p.daggerLevel*0.09)){p.daggerAcc=0;
         const dgEvo=p.daggerEvo;
         const base=Math.atan2(p.facing.y,p.facing.x),n=(2+p.daggerLevel)+(dgEvo?3:0),sp=520*p.projSpeedMult;
         const dmg=rollDmg((7+4*p.daggerLevel)*(dgEvo?1.7:1)*p.dmgMult);
@@ -2282,7 +2291,7 @@
         sfxSweep(700,950,0.04,'sine',0.025);}}
     // tornado — a wandering damage/slow zone that chases the nearest enemy
     if(p.tornadoLevel){p.tornadoAcc+=dt*as;
-      if(p.tornadoAcc>=7.5-p.tornadoLevel*0.55){p.tornadoAcc=0;
+      if(p.tornadoAcc>=wgap(7.5-p.tornadoLevel*0.55)){p.tornadoAcc=0;
         const tEvo=p.tornadoEvo,a=rand(0,Math.PI*2);
         pools.push({x:p.x+Math.cos(a)*50,y:p.y+Math.sin(a)*50,r:Math.min(150,(48+7*p.tornadoLevel)*(tEvo?1.5:1)*softAoe(p.aoeMult)),
           life:(5+0.5*p.tornadoLevel)*(tEvo?1.4:1),dps:(9+6*p.tornadoLevel)*(tEvo?1.8:1)*p.dmgMult,
@@ -2290,7 +2299,7 @@
         sfxSweep(280,520,0.3,'sine',0.05);}}
     // hammer — frontal shockwave: damage + knockback + brief slow
     if(p.hammerLevel){p.hammerAcc+=dt*as;
-      if(p.hammerAcc>=4.2-p.hammerLevel*0.3){p.hammerAcc=0;
+      if(p.hammerAcc>=wgap(4.2-p.hammerLevel*0.3)){p.hammerAcc=0;
         const R=Math.min(280,(130+16*p.hammerLevel)*softAoe(p.aoeMult)),dmg=rollDmg((24+12*p.hammerLevel)*p.dmgMult);
         const fa=Math.atan2(p.facing.y,p.facing.x);
         rings.push({x:p.x+p.facing.x*R*0.35,y:p.y+p.facing.y*R*0.35,r:0,maxR:R*0.85,life:0.5,color:'#fbbf24'});
@@ -2302,7 +2311,7 @@
         camShake=Math.max(camShake,5);sfxBoom(0.3,0.18,600,80);}}
     // turrets — stationary guns with a lifespan; на 4+ ур. пули пробивают
     if(p.turretLevel){p.turretAcc+=dt*as;
-      if(p.turretAcc>=8-p.turretLevel*0.6){p.turretAcc=0;
+      if(p.turretAcc>=wgap(8-p.turretLevel*0.6)){p.turretAcc=0;
         turrets.push({x:p.x,y:p.y,life:8+p.turretLevel*1.5,fireAcc:0});
         beep(340,0.1,'sine',0.05);}}
     for(const tu of turrets){tu.life-=dt;tu.fireAcc+=dt*as;
@@ -2316,7 +2325,7 @@
     // ★ ЭКСКЛЮЗИВНОЕ (только из Хранилища) ★
     // 🌠 Звездопад — залп самонаводящихся звёзд по случайным врагам
     if(p.starfallLevel){p.starfallAcc+=dt*as;
-      if(p.starfallAcc>=2.4-p.starfallLevel*0.15){p.starfallAcc=0;
+      if(p.starfallAcc>=wgap(2.4-p.starfallLevel*0.15)){p.starfallAcc=0;
         const n=5+p.starfallLevel,dmg=(22+10*p.starfallLevel)*p.dmgMult;
         for(let i=0;i<n;i++){const a=rand(0,Math.PI*2),sp=180*p.projSpeedMult;
           projectiles.push({x:p.x+Math.cos(a)*30,y:p.y+Math.sin(a)*30,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
@@ -2324,7 +2333,7 @@
         sfxSweep(900,1500,0.12,'sine',0.05);}}
     // 🕳 Сингулярность — чёрная дыра: стягивает и жжёт врагов
     if(p.singularityLevel){p.singularityAcc+=dt*as;
-      if(p.singularityAcc>=7-p.singularityLevel*0.5){p.singularityAcc=0;
+      if(p.singularityAcc>=wgap(7-p.singularityLevel*0.5)){p.singularityAcc=0;
         const a=rand(0,Math.PI*2);
         pools.push({x:p.x+Math.cos(a)*90,y:p.y+Math.sin(a)*90,r:Math.min(150,(52+8*p.singularityLevel)*softAoe(p.aoeMult)),
           life:4+0.5*p.singularityLevel,dps:(18+9*p.singularityLevel)*p.dmgMult,
@@ -2447,19 +2456,15 @@
   const btnDonePick=document.getElementById('btnDonePick'),btnAutoPick=document.getElementById('btnAutoPick');
   let _pupLast='';
   function updatePendingBtn(){
-    // верхняя кнопка очков — только в режиме «очки» (в режиме «выбор» карты открываются сами)
-    const s2=(!optChoice&&state==='running'&&pendingLevelUps>0&&!player.dying)?('⬆ Очки улучшений: '+pendingLevelUps):'';
-    if(s2===_pupLast)return;
-    _pupLast=s2;
-    btnPendingUp.style.display=s2?'block':'none';
-    if(s2)btnPendingUp.textContent=s2;
+    // ручной магазин удалён: осталось два режима — «выбор» (карты) и «авто» (сами применяются),
+    // поэтому верхняя кнопка-пилюля больше не нужна ни в одном из них
+    if(_pupLast!=='')_pupLast='';
+    btnPendingUp.style.display='none';
   }
-  // очки улучшений в «хабе» (боковая панель)
+  // очки улучшений в «хабе» (боковая панель) — тоже скрыты (очки тратятся сразу)
   const hubPointsEl=document.getElementById('hubPoints'),hubPointsBox=document.getElementById('hubPointsBox');
   function updateHubPoints(){
-    const show=!optChoice&&(state==='running'||state==='levelup')&&pendingLevelUps>0;
-    if(hubPointsBox)hubPointsBox.style.display=show?'block':'none';
-    if(hubPointsEl)hubPointsEl.textContent=show?('⬆ Очки улучшений: '+pendingLevelUps):'';
+    if(hubPointsBox)hubPointsBox.style.display='none';
   }
   btnPendingUp.addEventListener('click',()=>{
     if(state==='running'&&pendingLevelUps>0){state='levelup';showLevelUp();updatePendingBtn();}
@@ -2497,18 +2502,39 @@
     olevel.classList.add('show');
   }
   const UP_COST=4; // стоимость одной покупки в очках улучшений
-  // единый диспетчер: режим «выбор» → карточный выбор; режим «очки» → магазин-накопление
-  function renderShop(){ if(optChoice) renderChoice(); else renderUpgradeShop(); }
+  // диспетчер режима «выбор» — карточный выбор (в режиме «авто» модалка не открывается)
+  function renderShop(){ renderChoice(); }
   function buyPoint(){
     pendingLevelUps=Math.max(0,pendingLevelUps-UP_COST);
-    updatePendingBtn();updateHubPoints();
     if(pendingLevelUps<UP_COST){olevel.classList.remove('show');startCooldown();}
     else renderShop();
   }
-  // авто-открытие выбора в режиме «выбор»: как только очков хватает — сразу предлагаем карты
+  // мелкая плашка сверху в авто-режиме
+  function pushAutoToast(text,color){
+    autoToasts.push({text:text,color:color||'#4ade80',life:2.6,max:2.6});
+    while(autoToasts.length>4)autoToasts.shift();
+  }
+  // авто-режим: применить одно улучшение (эволюции в приоритете) и вернуть подпись для плашки
+  function autoApplyOne(){
+    const evos=readyEvolutions();
+    if(evos.length){const e=evos[0];e.apply(player);return {text:'⭐ '+e.name,color:'#facc15'};}
+    const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
+    if(pool.length){const u=pool[Math.floor(Math.random()*pool.length)];u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;
+      return {text:u.name,color:(RARITY_INFO[u.rarity]||RARITY_INFO.common).color};}
+    player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);return {text:'💚 +25% HP',color:'#4ade80'};
+  }
+  // вызывается каждый кадр после step: «выбор» открывает карты, «авто» сам применяет + плашки
   function maybeOpenChoice(){
-    if(optChoice&&state==='running'&&!paused&&player&&!player.dying&&!inVault&&pendingLevelUps>=UP_COST){
-      state='levelup';renderShop();olevel.classList.add('show');updatePendingBtn();
+    if(!(state==='running'&&!paused&&player&&!player.dying&&!inVault))return;
+    if(pendingLevelUps<UP_COST)return;
+    if(optChoice){
+      state='levelup';renderShop();olevel.classList.add('show');
+    }else{
+      let guard=0,applied=false;
+      while(pendingLevelUps>=UP_COST&&guard++<40){
+        const r=autoApplyOne();pendingLevelUps-=UP_COST;pushAutoToast(r.text,r.color);applied=true;
+      }
+      if(applied){sfxChime(523,3,0.07,0.09);flashFx(0.16,'74,222,128');}
     }
   }
   // 3 случайные карты (эволюции — в приоритете), как в классике
@@ -2904,6 +2930,8 @@
     }
 
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
+    if(weaponGet){weaponGet.life-=dt;if(weaponGet.life<=0)weaponGet=null;}
+    if(autoToasts.length){for(let i=autoToasts.length-1;i>=0;i--){autoToasts[i].life-=dt;if(autoToasts[i].life<=0)autoToasts.splice(i,1);}}
 
     // guaranteed level-up cadence: mobs must keep getting tougher even if XP is scarce
     if(t-lastLevelUpAt>=150){ // реже: гарантированный уровень раз в 2.5 минуты
@@ -4039,6 +4067,55 @@
       const shown=lines.slice(0,2);
       x.textAlign='center';x.textBaseline='alphabetic';x.fillStyle=ac;x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=6;
       shown.forEach((ln,i)=>{x.shadowColor='rgba(0,0,0,0.7)';x.fillText(ln,W/2,84+i*(fs+5));x.shadowColor=ac;x.shadowBlur=10;x.fillText(ln,W/2,84+i*(fs+5));});
+      x.restore();
+    }
+    if(autoToasts.length){
+      // авто-режим: стопка мелких плашек сверху «что применилось» (новые — выше)
+      x.save();x.textAlign='center';x.textBaseline='middle';
+      const fs=Math.min(16,Math.max(12,Math.round(W/42)));
+      x.font='700 '+fs+'px system-ui,sans-serif';
+      let ty=H<520?54:64;
+      for(let i=autoToasts.length-1;i>=0;i--){
+        const tt=autoToasts[i],a=Math.min(1,tt.life/0.5);
+        const tw=x.measureText(tt.text).width,pw=tw+28,ph=fs+13;
+        x.globalAlpha=a*0.92;
+        x.beginPath();
+        if(x.roundRect)x.roundRect(W/2-pw/2,ty,pw,ph,ph/2);else x.rect(W/2-pw/2,ty,pw,ph);
+        x.fillStyle='rgba(8,10,18,0.82)';x.fill();
+        x.lineWidth=1.5;x.strokeStyle=tt.color;x.stroke();
+        x.globalAlpha=a;x.fillStyle=tt.color;x.fillText(tt.text,W/2,ty+ph/2+1);
+        ty+=ph+6;
+      }
+      x.restore();
+    }
+    if(weaponGet){
+      // КРУПНАЯ плашка подбора оружия: эмодзи + название + описание, всплывает и гаснет
+      const g=weaponGet,appear=g.max-g.life;
+      const inT=Math.min(1,appear/0.22),ease=1-Math.pow(1-inT,3);
+      const sc=0.72+0.28*ease;
+      const alpha=g.life<0.6?Math.max(0,g.life/0.6):1;
+      const emojiFs=Math.min(78,Math.round(W/6.5));
+      const nameFs=Math.min(34,Math.round(W/17));
+      const descFs=Math.min(16,Math.round(W/36));
+      const headFs=Math.min(14,Math.round(W/46));
+      const hH=headFs*1.6,eH=emojiFs*1.02,nH=nameFs*1.25,dH=g.desc?descFs*1.7:0;
+      const contentH=hH+eH+nH+dH,padX=28,padY=18;
+      x.save();
+      x.translate(W/2,H*0.30);x.scale(sc,sc);x.globalAlpha=Math.max(0,Math.min(1,alpha));
+      x.textAlign='center';x.textBaseline='middle';
+      x.font='700 '+nameFs+'px system-ui,sans-serif';const nameW=x.measureText(g.name).width;
+      x.font=descFs+'px system-ui,sans-serif';const descW=g.desc?x.measureText(g.desc).width:0;
+      const innerW=Math.min(W*0.82,Math.max(nameW,descW,emojiFs*1.4,180));
+      const panelW=innerW+padX*2,panelH=contentH+padY*2;
+      x.beginPath();
+      if(x.roundRect)x.roundRect(-panelW/2,-panelH/2,panelW,panelH,18);else x.rect(-panelW/2,-panelH/2,panelW,panelH);
+      x.fillStyle='rgba(8,10,18,0.88)';x.fill();
+      x.lineWidth=2.5;x.strokeStyle='rgba(250,204,21,0.9)';x.shadowColor='rgba(250,204,21,0.55)';x.shadowBlur=18;x.stroke();x.shadowBlur=0;
+      let cy=-contentH/2;
+      x.fillStyle='#fde047';x.font='700 '+headFs+'px system-ui,sans-serif';x.fillText(g.head,0,cy+hH/2);cy+=hH;
+      x.font=emojiFs+'px system-ui,sans-serif';x.fillStyle='#fff';x.fillText(g.emoji,0,cy+eH/2);cy+=eH;
+      x.font='700 '+nameFs+'px system-ui,sans-serif';x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=6;x.fillText(g.name,0,cy+nH/2);x.shadowBlur=0;cy+=nH;
+      if(g.desc){x.font=descFs+'px system-ui,sans-serif';x.fillStyle='#9fb0c6';x.fillText(g.desc,0,cy+dH/2);}
       x.restore();
     }
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
