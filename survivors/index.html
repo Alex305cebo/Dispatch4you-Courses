@@ -458,7 +458,9 @@
   function toggleSound(){soundOn=!soundOn;ensureAudio();applySound();}
   // Настройка выдачи улучшений: true = «давать выбор» (классика: уровень → выбор карт),
   // false = «авто» (улучшения применяются сами, сверху всплывают плашки о применённом).
-  let optChoice=(localStorage.getItem('survivors-choice')||'1')==='1';
+  // по умолчанию — режим «кнопки» (две кнопки внизу, выбор карточек не открывается сам);
+  // в меню/паузе можно переключить на «авто-выбор»
+  let optChoice=(localStorage.getItem('survivors-choice')||'0')==='1';
   function applyChoiceOpt(){
     localStorage.setItem('survivors-choice',optChoice?'1':'0');
     document.querySelectorAll('.choiceBtn').forEach(b=>b.textContent=optChoice?'🎯 Улучшения: авто-выбор':'🔘 Улучшения: кнопки');
@@ -677,53 +679,59 @@
     return Math.min(ENEMY_TIERS.length-1,Math.floor(lvl/5));
   }
 
+  // Растянутая прокачка: 15–16 покупок ≈ прежние 5–6 уровней силы (потолки подняли,
+  // а сила за покупку снижена). Уровневые прокачки растут дробным шагом UP_STEP;
+  // целочисленные счётчики (+1 снаряд и т.п.) срабатывают каждой 3-й покупкой.
+  const UP_STEP=0.3;
+  function upStep(p,k){p[k]=Math.min(wmax(p),Math.round(((p[k]||0)+UP_STEP)*100)/100);}
+  function every3(id){return (((shopBought[id]||0)+1)%3)===0;}
   const UPGRADES=[
-    {id:'dmg',name:'💪 Урон',desc:'Всё оружие бьёт на 35% сильнее.',rarity:'mid',maxLevel:Infinity,apply:p=>{p.dmg=Math.round(p.dmg*1.35);p.dmgMult*=1.35;}},
-    {id:'rate',name:'⚡ Темп огня',desc:'Всё оружие стреляет на 18% чаще.',rarity:'common',apply:p=>{p.fireRate=Math.max(120,Math.round(p.fireRate*0.82));p.atkSpeedMult/=0.82;}},
-    {id:'speed',name:'👟 Скорость',desc:'Передвигаешься на 12% быстрее.',rarity:'common',apply:p=>p.speed=Math.round(p.speed*1.12)},
-    {id:'hp',name:'❤️ Здоровье',desc:'+20 к запасу HP и лечит 30.',rarity:'common',apply:p=>{p.maxHp+=20;p.hp=Math.min(p.maxHp,p.hp+30);}},
-    {id:'multi',name:'🎯 Мультивыстрел',desc:'+1 снаряд в каждом залпе.',rarity:'mid',cond:p=>p.projCount<6,apply:p=>p.projCount++},
-    {id:'pierce',name:'🏹 Пробитие',desc:'Атаки пробивают на 1 врага больше.',rarity:'common',cond:p=>p.pierce<6,apply:p=>p.pierce++},
-    {id:'pickup',name:'🧲 Магнетизм',desc:'Опыт и предметы притягиваются издалека.',rarity:'common',apply:p=>p.pickupRadius=Math.round(p.pickupRadius*1.3)},
-    {id:'regen',name:'💚 Регенерация',desc:'+1 HP в секунду.',rarity:'rare',apply:p=>p.regen+=1},
-    {id:'aura',name:'🔥 Аура урона',desc:'Жжёт врагов вокруг тебя каждую секунду.',rarity:'rare',apply:p=>{p.auraLevel=(p.auraLevel||0)+1;p.auraDmg=p.auraLevel*8;p.auraRadius=60+p.auraLevel*10;}},
-    {id:'projspeed',name:'🚀 Быстрые снаряды',desc:'Снаряды летят на 20% быстрее.',rarity:'common',apply:p=>{p.projSpeed=Math.round(p.projSpeed*1.2);p.projSpeedMult*=1.2;}},
-    {id:'crit',name:'💥 Крит. шанс',desc:'+12% шанс удара двойной силы.',rarity:'common',cond:p=>p.critChance<0.72,apply:p=>p.critChance+=0.12},
-    {id:'aoe',name:'💫 Охват',desc:'Взрывы и удары накрывают на 15% шире.',rarity:'common',apply:p=>p.aoeMult*=1.15},
-    {id:'lifesteal',name:'🩸 Вампиризм',desc:'Каждое убийство немного лечит.',rarity:'rare',cond:p=>p.lifesteal<0.08,apply:p=>p.lifesteal+=0.015},
-    {id:'berserk',name:'😡 Ярость',desc:'Периодически резко усиливает урон.',rarity:'common',cond:p=>p.berserkLevel<wmax(p),apply:p=>p.berserkLevel++},
-    {id:'haste',name:'💨 Ускорение',desc:'Периодически разгоняет тебя и снаряды.',rarity:'common',cond:p=>p.hasteLevel<wmax(p),apply:p=>p.hasteLevel++},
-    {id:'shield',name:'🛡 Щит',desc:'Периодически даёт неуязвимость.',rarity:'mid',cond:p=>p.shieldLevel<wmax(p),apply:p=>p.shieldLevel++},
-    {id:'blades_up',name:'🗡 Клинки',desc:'Ещё клинок, больше урона.',rarity:'mid',cond:p=>p.bladeLevel>0&&p.bladeLevel<wmax(p),apply:p=>p.bladeLevel++},
-    {id:'chain_up',name:'⚡ Молния',desc:'Больше урона и прыжков.',rarity:'mid',cond:p=>p.chainLevel>0&&p.chainLevel<wmax(p),apply:p=>p.chainLevel++},
-    {id:'mines_up',name:'💣 Мины',desc:'Мощнее взрыв, ставятся чаще.',rarity:'mid',cond:p=>p.mineLevel>0&&p.mineLevel<wmax(p),apply:p=>p.mineLevel++},
-    {id:'critdmg',name:'⚔️ Крит. урон',desc:'Криты бьют на 40% сильнее.',rarity:'common',cond:p=>p.critMult<4.4,apply:p=>p.critMult+=0.4},
-    {id:'rage',name:'🩹 Ярость раненого',desc:'+12% урона, пока HP ниже 35%.',rarity:'common',cond:p=>p.rageLevel<wmax(p),apply:p=>p.rageLevel++},
-    {id:'armor',name:'🪨 Броня',desc:'Получаешь на 5% меньше урона.',rarity:'common',cond:p=>p.armorLevel<6,apply:p=>p.armorLevel++},
-    {id:'wisdom',name:'📘 Мудрость',desc:'+15% опыта с кристаллов.',rarity:'mid',cond:p=>p.wisdomLevel<wmax(p),apply:p=>p.wisdomLevel++},
-    {id:'dodge',name:'🌀 Уклонение',desc:'+6% шанс увернуться от удара.',rarity:'mid',cond:p=>p.dodgeLevel<wmax(p),apply:p=>p.dodgeLevel++},
-    {id:'thorns',name:'🌵 Шипы',desc:'Враги вплотную получают урон.',rarity:'mid',cond:p=>p.thornsLevel<wmax(p),apply:p=>p.thornsLevel++},
-    {id:'momentum',name:'🏁 Разгон',desc:'Урон растёт, пока тебя не бьют.',rarity:'mid',cond:p=>p.momentumLevel<wmax(p),apply:p=>p.momentumLevel++},
-    {id:'chill',name:'❄️ Мороз',desc:'Замедляет врагов рядом с тобой.',rarity:'mid',cond:p=>p.chillLevel<wmax(p),apply:p=>p.chillLevel++},
-    {id:'rear',name:'🔙 Тыловой залп',desc:'Пушка стреляет ещё и назад.',rarity:'mid',cond:p=>p.rearLevel<wmax(p),apply:p=>p.rearLevel++},
-    {id:'aurahaste',name:'⏱ Быстрые ауры',desc:'Ярость, ускорение и щит — чаще.',rarity:'mid',cond:p=>(p.berserkLevel>0||p.hasteLevel>0||p.shieldLevel>0)&&p.auraHasteLevel<wmax(p),apply:p=>p.auraHasteLevel++},
-    {id:'secondwind',name:'💢 Второе дыхание',desc:'Потерял жизнь — взрыв раскидывает всех.',rarity:'mid',cond:p=>p.secondWindLevel<wmax(p),apply:p=>p.secondWindLevel++},
-    {id:'barrier',name:'🔮 Барьер',desc:'Блокирует один удар, потом перезаряжается.',rarity:'rare',cond:p=>p.barrierLevel<wmax(p),apply:p=>p.barrierLevel++},
-    {id:'explodekill',name:'🎆 Взрывной финал',desc:'Убитые враги взрываются.',rarity:'rare',cond:p=>p.explodeKillLevel<wmax(p),apply:p=>p.explodeKillLevel++},
-    {id:'chrono',name:'⏳ Хроносфера',desc:'Периодически замораживает всех врагов.',rarity:'rare',cond:p=>p.chronoLevel<wmax(p),apply:p=>p.chronoLevel++},
-    {id:'fireball_up',name:'🔥 Огненный шар',desc:'Больше урона, шире взрыв.',rarity:'mid',cond:p=>p.fireballLevel>0&&p.fireballLevel<wmax(p),apply:p=>p.fireballLevel++},
-    {id:'boom_up',name:'🪃 Бумеранг',desc:'Чаще и больнее; с 3 ур. — вторая пила.',rarity:'mid',cond:p=>p.boomLevel>0&&p.boomLevel<wmax(p),apply:p=>p.boomLevel++},
-    {id:'frost_up',name:'❄️ Ледяная волна',desc:'Шире волна, сильнее холод.',rarity:'mid',cond:p=>p.frostLevel>0&&p.frostLevel<wmax(p),apply:p=>p.frostLevel++},
-    {id:'laser_up',name:'💠 Лазер',desc:'Толще луч, больше урона.',rarity:'mid',cond:p=>p.laserLevel>0&&p.laserLevel<wmax(p),apply:p=>p.laserLevel++},
-    {id:'shard_up',name:'✨ Осколки',desc:'Больше осколков в залпе.',rarity:'mid',cond:p=>p.shardLevel>0&&p.shardLevel<wmax(p),apply:p=>p.shardLevel++},
-    {id:'drone_up',name:'🛸 Дрон',desc:'Стреляет чаще; на 3 и 5 ур. — ещё дрон.',rarity:'mid',cond:p=>p.droneLevel>0&&p.droneLevel<wmax(p),apply:p=>p.droneLevel++},
-    {id:'acid_up',name:'🧪 Кислота',desc:'Едче, шире, дольше.',rarity:'mid',cond:p=>p.acidLevel>0&&p.acidLevel<wmax(p),apply:p=>p.acidLevel++},
-    {id:'meteor_up',name:'☄️ Метеорит',desc:'Падают чаще и мощнее.',rarity:'mid',cond:p=>p.meteorLevel>0&&p.meteorLevel<wmax(p),apply:p=>p.meteorLevel++},
-    {id:'ghost_up',name:'👻 Сфера',desc:'Больше урона, чаще запуск.',rarity:'mid',cond:p=>p.ghostLevel>0&&p.ghostLevel<wmax(p),apply:p=>p.ghostLevel++},
-    {id:'turret_up',name:'🗼 Турель',desc:'Живёт дольше, бьёт сильнее.',rarity:'mid',cond:p=>p.turretLevel>0&&p.turretLevel<wmax(p),apply:p=>p.turretLevel++},
-    {id:'dagger_up',name:'🔪 Кинжалы',desc:'Больше кинжалов, чаще броски.',rarity:'mid',cond:p=>p.daggerLevel>0&&p.daggerLevel<wmax(p),apply:p=>p.daggerLevel++},
-    {id:'tornado_up',name:'🌪 Торнадо',desc:'Крупнее, дольше, больнее.',rarity:'mid',cond:p=>p.tornadoLevel>0&&p.tornadoLevel<wmax(p),apply:p=>p.tornadoLevel++},
-    {id:'hammer_up',name:'🔨 Молот',desc:'Шире волна, сильнее удар.',rarity:'mid',cond:p=>p.hammerLevel>0&&p.hammerLevel<wmax(p),apply:p=>p.hammerLevel++},
+    {id:'dmg',name:'💪 Урон',desc:'Всё оружие бьёт на 12% сильнее.',rarity:'mid',maxLevel:Infinity,apply:p=>{p.dmg=Math.max(p.dmg+1,Math.round(p.dmg*1.12));p.dmgMult*=1.12;}},
+    {id:'rate',name:'⚡ Темп огня',desc:'Всё оружие стреляет на 7% чаще.',rarity:'common',apply:p=>{p.fireRate=Math.max(120,Math.round(p.fireRate*0.93));p.atkSpeedMult/=0.93;}},
+    {id:'speed',name:'👟 Скорость',desc:'Передвигаешься на 5% быстрее.',rarity:'common',apply:p=>p.speed=Math.round(p.speed*1.05)},
+    {id:'hp',name:'❤️ Здоровье',desc:'+8 к запасу HP и лечит 12.',rarity:'common',apply:p=>{p.maxHp+=8;p.hp=Math.min(p.maxHp,p.hp+12);}},
+    {id:'multi',name:'🎯 Мультивыстрел',desc:'Каждая 3-я покупка: +1 снаряд в залпе.',rarity:'mid',cond:p=>p.projCount<6,apply:p=>{if(every3('multi'))p.projCount++;}},
+    {id:'pierce',name:'🏹 Пробитие',desc:'Каждая 3-я покупка: +1 пробитие.',rarity:'common',cond:p=>p.pierce<6,apply:p=>{if(every3('pierce'))p.pierce++;}},
+    {id:'pickup',name:'🧲 Магнетизм',desc:'Опыт и предметы притягиваются издалека.',rarity:'common',apply:p=>p.pickupRadius=Math.round(p.pickupRadius*1.1)},
+    {id:'regen',name:'💚 Регенерация',desc:'+0.4 HP в секунду.',rarity:'rare',apply:p=>p.regen+=0.4},
+    {id:'aura',name:'🔥 Аура урона',desc:'Жжёт врагов вокруг тебя каждую секунду.',rarity:'rare',apply:p=>{upStep(p,'auraLevel');p.auraDmg=p.auraLevel*8;p.auraRadius=60+p.auraLevel*10;}},
+    {id:'projspeed',name:'🚀 Быстрые снаряды',desc:'Снаряды летят на 7% быстрее.',rarity:'common',apply:p=>{p.projSpeed=Math.round(p.projSpeed*1.07);p.projSpeedMult*=1.07;}},
+    {id:'crit',name:'💥 Крит. шанс',desc:'+4.5% шанс удара двойной силы.',rarity:'common',cond:p=>p.critChance<0.72,apply:p=>p.critChance+=0.045},
+    {id:'aoe',name:'💫 Охват',desc:'Взрывы и удары накрывают на 5% шире.',rarity:'common',apply:p=>p.aoeMult*=1.055},
+    {id:'lifesteal',name:'🩸 Вампиризм',desc:'Каждое убийство немного лечит.',rarity:'rare',cond:p=>p.lifesteal<0.08,apply:p=>p.lifesteal+=0.006},
+    {id:'berserk',name:'😡 Ярость',desc:'Периодически резко усиливает урон.',rarity:'common',cond:p=>p.berserkLevel<wmax(p),apply:p=>upStep(p,'berserkLevel')},
+    {id:'haste',name:'💨 Ускорение',desc:'Периодически разгоняет тебя и снаряды.',rarity:'common',cond:p=>p.hasteLevel<wmax(p),apply:p=>upStep(p,'hasteLevel')},
+    {id:'shield',name:'🛡 Щит',desc:'Периодически даёт неуязвимость.',rarity:'mid',cond:p=>p.shieldLevel<wmax(p),apply:p=>upStep(p,'shieldLevel')},
+    {id:'blades_up',name:'🗡 Клинки',desc:'Ещё клинок, больше урона.',rarity:'mid',cond:p=>p.bladeLevel>0&&p.bladeLevel<wmax(p),apply:p=>upStep(p,'bladeLevel')},
+    {id:'chain_up',name:'⚡ Молния',desc:'Больше урона и прыжков.',rarity:'mid',cond:p=>p.chainLevel>0&&p.chainLevel<wmax(p),apply:p=>upStep(p,'chainLevel')},
+    {id:'mines_up',name:'💣 Мины',desc:'Мощнее взрыв, ставятся чаще.',rarity:'mid',cond:p=>p.mineLevel>0&&p.mineLevel<wmax(p),apply:p=>upStep(p,'mineLevel')},
+    {id:'critdmg',name:'⚔️ Крит. урон',desc:'Криты бьют на 15% сильнее.',rarity:'common',cond:p=>p.critMult<4.4,apply:p=>p.critMult+=0.15},
+    {id:'rage',name:'🩹 Ярость раненого',desc:'+12% урона, пока HP ниже 35%.',rarity:'common',cond:p=>p.rageLevel<wmax(p),apply:p=>upStep(p,'rageLevel')},
+    {id:'armor',name:'🪨 Броня',desc:'Получаешь на 1.5% меньше урона.',rarity:'common',cond:p=>p.armorLevel<wmax(p)*0.9,apply:p=>upStep(p,'armorLevel')},
+    {id:'wisdom',name:'📘 Мудрость',desc:'+15% опыта с кристаллов.',rarity:'mid',cond:p=>p.wisdomLevel<wmax(p),apply:p=>upStep(p,'wisdomLevel')},
+    {id:'dodge',name:'🌀 Уклонение',desc:'+6% шанс увернуться от удара.',rarity:'mid',cond:p=>p.dodgeLevel<wmax(p),apply:p=>upStep(p,'dodgeLevel')},
+    {id:'thorns',name:'🌵 Шипы',desc:'Враги вплотную получают урон.',rarity:'mid',cond:p=>p.thornsLevel<wmax(p),apply:p=>upStep(p,'thornsLevel')},
+    {id:'momentum',name:'🏁 Разгон',desc:'Урон растёт, пока тебя не бьют.',rarity:'mid',cond:p=>p.momentumLevel<wmax(p),apply:p=>upStep(p,'momentumLevel')},
+    {id:'chill',name:'❄️ Мороз',desc:'Замедляет врагов рядом с тобой.',rarity:'mid',cond:p=>p.chillLevel<wmax(p),apply:p=>upStep(p,'chillLevel')},
+    {id:'rear',name:'🔙 Тыловой залп',desc:'Каждая 3-я покупка: ещё залп назад.',rarity:'mid',cond:p=>(shopBought.rear||0)<15,apply:p=>{if(every3('rear'))p.rearLevel++;}},
+    {id:'aurahaste',name:'⏱ Быстрые ауры',desc:'Ярость, ускорение и щит — чаще.',rarity:'mid',cond:p=>(p.berserkLevel>0||p.hasteLevel>0||p.shieldLevel>0)&&p.auraHasteLevel<wmax(p),apply:p=>upStep(p,'auraHasteLevel')},
+    {id:'secondwind',name:'💢 Второе дыхание',desc:'Потерял жизнь — взрыв раскидывает всех.',rarity:'mid',cond:p=>p.secondWindLevel<wmax(p),apply:p=>upStep(p,'secondWindLevel')},
+    {id:'barrier',name:'🔮 Барьер',desc:'Блокирует один удар, потом перезаряжается.',rarity:'rare',cond:p=>p.barrierLevel<wmax(p),apply:p=>upStep(p,'barrierLevel')},
+    {id:'explodekill',name:'🎆 Взрывной финал',desc:'Убитые враги взрываются.',rarity:'rare',cond:p=>p.explodeKillLevel<wmax(p),apply:p=>upStep(p,'explodeKillLevel')},
+    {id:'chrono',name:'⏳ Хроносфера',desc:'Периодически замораживает всех врагов.',rarity:'rare',cond:p=>p.chronoLevel<wmax(p),apply:p=>upStep(p,'chronoLevel')},
+    {id:'fireball_up',name:'🔥 Огненный шар',desc:'Больше урона, шире взрыв.',rarity:'mid',cond:p=>p.fireballLevel>0&&p.fireballLevel<wmax(p),apply:p=>upStep(p,'fireballLevel')},
+    {id:'boom_up',name:'🪃 Бумеранг',desc:'Чаще и больнее; с 3 ур. — вторая пила.',rarity:'mid',cond:p=>p.boomLevel>0&&p.boomLevel<wmax(p),apply:p=>upStep(p,'boomLevel')},
+    {id:'frost_up',name:'❄️ Ледяная волна',desc:'Шире волна, сильнее холод.',rarity:'mid',cond:p=>p.frostLevel>0&&p.frostLevel<wmax(p),apply:p=>upStep(p,'frostLevel')},
+    {id:'laser_up',name:'💠 Лазер',desc:'Толще луч, больше урона.',rarity:'mid',cond:p=>p.laserLevel>0&&p.laserLevel<wmax(p),apply:p=>upStep(p,'laserLevel')},
+    {id:'shard_up',name:'✨ Осколки',desc:'Больше осколков в залпе.',rarity:'mid',cond:p=>p.shardLevel>0&&p.shardLevel<wmax(p),apply:p=>upStep(p,'shardLevel')},
+    {id:'drone_up',name:'🛸 Дрон',desc:'Стреляет чаще; на 3 и 5 ур. — ещё дрон.',rarity:'mid',cond:p=>p.droneLevel>0&&p.droneLevel<wmax(p),apply:p=>upStep(p,'droneLevel')},
+    {id:'acid_up',name:'🧪 Кислота',desc:'Едче, шире, дольше.',rarity:'mid',cond:p=>p.acidLevel>0&&p.acidLevel<wmax(p),apply:p=>upStep(p,'acidLevel')},
+    {id:'meteor_up',name:'☄️ Метеорит',desc:'Падают чаще и мощнее.',rarity:'mid',cond:p=>p.meteorLevel>0&&p.meteorLevel<wmax(p),apply:p=>upStep(p,'meteorLevel')},
+    {id:'ghost_up',name:'👻 Сфера',desc:'Больше урона, чаще запуск.',rarity:'mid',cond:p=>p.ghostLevel>0&&p.ghostLevel<wmax(p),apply:p=>upStep(p,'ghostLevel')},
+    {id:'turret_up',name:'🗼 Турель',desc:'Живёт дольше, бьёт сильнее.',rarity:'mid',cond:p=>p.turretLevel>0&&p.turretLevel<wmax(p),apply:p=>upStep(p,'turretLevel')},
+    {id:'dagger_up',name:'🔪 Кинжалы',desc:'Больше кинжалов, чаще броски.',rarity:'mid',cond:p=>p.daggerLevel>0&&p.daggerLevel<wmax(p),apply:p=>upStep(p,'daggerLevel')},
+    {id:'tornado_up',name:'🌪 Торнадо',desc:'Крупнее, дольше, больнее.',rarity:'mid',cond:p=>p.tornadoLevel>0&&p.tornadoLevel<wmax(p),apply:p=>upStep(p,'tornadoLevel')},
+    {id:'hammer_up',name:'🔨 Молот',desc:'Шире волна, сильнее удар.',rarity:'mid',cond:p=>p.hammerLevel>0&&p.hammerLevel<wmax(p),apply:p=>upStep(p,'hammerLevel')},
     {id:'luck',name:'🍀 Удача',desc:'Полезные предметы появляются чаще.',rarity:'mid',cond:p=>(p.luckLevel||0)<5,apply:p=>p.luckLevel=(p.luckLevel||0)+1},
     {id:'loot',name:'💎 Добыча',desc:'Шанс двойного кристалла опыта с убийства.',rarity:'mid',cond:p=>(p.lootLevel||0)<5,apply:p=>p.lootLevel=(p.lootLevel||0)+1},
     {id:'slowhit',name:'🕸 Липкие снаряды',desc:'Попадания снарядов замедляют врагов.',rarity:'rare',cond:p=>(p.slowHitLevel||0)<3,apply:p=>p.slowHitLevel=(p.slowHitLevel||0)+1},
@@ -1126,7 +1134,9 @@
   // лимит урона = 100M × 10^tier. Когда всё оружие/улучшения на максимуме И урон упёрся
   // в лимит — происходит Восхождение: лимит ×10, а максимумы улучшений/оружия растут,
   // так что всё качается заново и становится сильнее. Числа остаются конечными.
-  function wmax(p){return 15*(((p||player).ascTier||0)+1);} // потолок уровня оружия/улучшения (стало намного больше)
+  // внутренний потолок СИЛЫ уровня оружия/улучшения (дробный шаг UP_STEP растягивает
+  // его на ~15-16 покупок — покупок много, а сила растёт постепенно)
+  function wmax(p){return 5*(((p||player).ascTier||0)+1);}
   // страховка: интервал между выстрелами оружия не должен уходить в ноль/минус на высоких
   // уровнях (иначе оружие стреляет каждый кадр → лавина снарядов и просадка/зависание)
   function wgap(v,floor){const f=floor||0.22;return v>f?v:f;}
