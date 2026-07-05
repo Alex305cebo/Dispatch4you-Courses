@@ -2459,7 +2459,7 @@
   // «Авто»: потратить все очки одним нажатием (эволюции — в приоритете)
   document.getElementById('btnAutoPick').addEventListener('click',()=>{
     let guard=0;
-    while(pendingLevelUps>0&&guard++<2000){
+    while(pendingLevelUps>=4&&guard++<2000){
       const evos=readyEvolutions();
       if(evos.length){evos[0].apply(player);}
       else{
@@ -2467,7 +2467,7 @@
         if(pool.length){const u=pool[Math.floor(Math.random()*pool.length)];u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;}
         else player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25); // всё на максимуме — лечение
       }
-      pendingLevelUps--;
+      pendingLevelUps-=4;
     }
     chestPending=false;
     sfxChime(523,4,0.08,0.1);
@@ -2484,39 +2484,43 @@
     renderUpgradeShop();
     olevel.classList.add('show');
   }
+  const UP_COST=4; // стоимость одной покупки в очках улучшений
   function buyPoint(){
-    pendingLevelUps=Math.max(0,pendingLevelUps-1);
+    pendingLevelUps=Math.max(0,pendingLevelUps-UP_COST);
     updatePendingBtn();updateHubPoints();
-    if(pendingLevelUps<=0){olevel.classList.remove('show');startCooldown();}
+    if(pendingLevelUps<UP_COST){olevel.classList.remove('show');startCooldown();}
     else renderUpgradeShop();
   }
   function renderUpgradeShop(){
     const evos=readyEvolutions();
     const pool=UPGRADES.filter(u=>(!u.cond||u.cond(player))&&upgradeLevel(u)<upgradeMaxLevel(u));
+    const canBuy=pendingLevelUps>=UP_COST;
+    // помечаем карточку доступной/недоступной по цене
+    const gate=el=>{if(!canBuy){el.style.opacity='0.45';el.style.filter='grayscale(0.6)';el.style.cursor='not-allowed';el.style.pointerEvents='none';}};
     levelTitle.innerHTML='🛒 Улучшения · <span style="color:#4ade80;">'+pendingLevelUps+' оч.</span>';
     levelSub.style.display='block';
-    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Трать очки на любые улучшения (1 очко = 1 покупка)';
+    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+(canBuy?'Трать очки на любые улучшения (4 очка = 1 покупка)':'Недостаточно очков — накопи ещё (4 очка = 1 покупка)');
     chestPending=false;
     cardsEl.innerHTML='';
     if(pool.length===0&&evos.length===0){
       const el=document.createElement('div');el.className='card';el.style.borderColor='#4ade80';
-      el.innerHTML='<b style="color:#4ade80;">💚 Лечение</b><span style="display:block;color:#4ade80;font-weight:600;margin-bottom:4px;">1 очко</span><span>Всё прокачано — очко даёт +25% HP</span>';
-      el.onclick=()=>{player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);sfxChime(523,3,0.08,0.1);buyPoint();};
-      cardsEl.appendChild(el);return;
+      el.innerHTML='<b style="color:#4ade80;">💚 Лечение</b><span style="display:block;color:#4ade80;font-weight:600;margin-bottom:4px;">4 очка</span><span>Всё прокачано — очки дают +25% HP</span>';
+      el.onclick=()=>{if(pendingLevelUps<UP_COST)return;player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.25);sfxChime(523,3,0.08,0.1);buyPoint();};
+      gate(el);cardsEl.appendChild(el);return;
     }
     evos.forEach(evo=>{
       const el=document.createElement('div');el.className='card';
       el.style.borderColor='#facc15';el.style.boxShadow='0 0 12px rgba(250,204,21,0.4)';el.style.background='rgba(250,204,21,0.08)';
-      el.innerHTML='<b style="color:#facc15;">'+evo.name+'</b><span style="display:block;color:#fde047;font-weight:600;margin-bottom:4px;">⭐ ЭВОЛЮЦИЯ · 1 очко</span><span>'+evo.desc+'</span>';
-      el.onclick=()=>{evo.apply(player);announce={text:evo.name+'!',life:2.4,color:'#facc15'};sfxChime(660,5,0.09,0.12);camShake=Math.max(camShake,6);buyPoint();};
-      cardsEl.appendChild(el);
+      el.innerHTML='<b style="color:#facc15;">'+evo.name+'</b><span style="display:block;color:#fde047;font-weight:600;margin-bottom:4px;">⭐ ЭВОЛЮЦИЯ · 4 очка</span><span>'+evo.desc+'</span>';
+      el.onclick=()=>{if(pendingLevelUps<UP_COST)return;evo.apply(player);announce={text:evo.name+'!',life:2.4,color:'#facc15'};sfxChime(660,5,0.09,0.12);camShake=Math.max(camShake,6);buyPoint();};
+      gate(el);cardsEl.appendChild(el);
     });
     pool.forEach(u=>{
       const ri=RARITY_INFO[u.rarity]||RARITY_INFO.common;const lvl=upgradeLevel(u);
       const el=document.createElement('div');el.className='card';el.style.borderColor=ri.color;
-      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур.'+lvl+'/'+upgradeMaxLabel(u)+' · 1 очко</span><span>'+u.desc+'</span>';
-      el.onclick=()=>{u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;sfxChime(523,3,0.08,0.1);buyPoint();};
-      cardsEl.appendChild(el);
+      el.innerHTML='<b>'+u.name+'</b><span style="display:block;color:'+ri.color+';font-weight:600;margin-bottom:4px;">'+ri.label+' · Ур.'+lvl+'/'+upgradeMaxLabel(u)+' · 4 очка</span><span>'+u.desc+'</span>';
+      el.onclick=()=>{if(pendingLevelUps<UP_COST)return;u.apply(player);shopBought[u.id]=(shopBought[u.id]||0)+1;sfxChime(523,3,0.08,0.1);buyPoint();};
+      gate(el);cardsEl.appendChild(el);
     });
   }
 
