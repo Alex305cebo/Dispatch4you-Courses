@@ -2940,10 +2940,10 @@
     // Камера: близкий зум только в самом начале (до 5 ур.), дальше плавно отдаляется,
     // чтобы видеть большое поле; чем больше мобов — тем дальше. Всё сглажено (без рывков).
     enemyCountSmoothed+=(enemies.length-enemyCountSmoothed)*Math.min(1,dt*0.12);
-    const lp=Math.max(0,Math.min(1,((player.level||1)-5)/7)); // 0 до 5-го, 1 к 12-му уровню
-    const levelZoom=baseZoom*(1-0.40*lp);                     // близко (×1.0) → далеко (×0.60)
-    const crowd=Math.max(0,enemyCountSmoothed-20)/180;         // толпа добавляет отдаления
-    const targetZoom=Math.max(baseZoom*0.42,levelZoom-crowd*baseZoom);
+    const lp=Math.max(0,Math.min(1,((player.level||1)-5)/8)); // 0 до 5-го, 1 к 13-му уровню
+    const levelZoom=baseZoom*(1-0.22*lp);                     // близко (×1.0) → умеренно (×0.78)
+    const crowd=Math.min(0.10,Math.max(0,enemyCountSmoothed-25)/500); // толпа отдаляет ещё, но не более чем на 0.10
+    const targetZoom=Math.max(baseZoom*0.68,levelZoom-crowd*baseZoom); // ограничение: дальше ×0.68 не отдаляем
     const zoomDelta=(targetZoom-zoom)*Math.min(1,dt*0.3);
     const zoomMaxStep=0.15*dt;
     zoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
@@ -4160,33 +4160,33 @@
       x.restore();
     }
     if(weaponGet){
-      // КРУПНАЯ плашка подбора оружия: эмодзи + название + описание, всплывает и гаснет
+      // компактная полупрозрачная плашка подбора оружия сверху — не закрывает игру
       const g=weaponGet,appear=g.max-g.life;
       const inT=Math.min(1,appear/0.22),ease=1-Math.pow(1-inT,3);
-      const sc=0.72+0.28*ease;
-      const alpha=g.life<0.6?Math.max(0,g.life/0.6):1;
-      const emojiFs=Math.min(78,Math.round(W/6.5));
-      const nameFs=Math.min(34,Math.round(W/17));
-      const descFs=Math.min(16,Math.round(W/36));
-      const headFs=Math.min(14,Math.round(W/46));
-      const hH=headFs*1.6,eH=emojiFs*1.02,nH=nameFs*1.25,dH=g.desc?descFs*1.7:0;
-      const contentH=hH+eH+nH+dH,padX=28,padY=18;
+      const sc=0.82+0.18*ease;
+      const alpha=(g.life<0.5?Math.max(0,g.life/0.5):1)*0.92;
+      const emojiFs=Math.min(44,Math.round(W/11));
+      const nameFs=Math.min(21,Math.round(W/26));
+      const descFs=Math.min(13,Math.round(W/50));
+      const headFs=Math.min(11,Math.round(W/60));
+      const hH=headFs*1.5,eH=emojiFs*1.0,nH=nameFs*1.2,dH=g.desc?descFs*1.6:0;
+      const contentH=hH+eH+nH+dH,padX=18,padY=11;
       x.save();
-      x.translate(W/2,H*0.30);x.scale(sc,sc);x.globalAlpha=Math.max(0,Math.min(1,alpha));
+      x.translate(W/2,H*0.17);x.scale(sc,sc);x.globalAlpha=Math.max(0,Math.min(1,alpha));
       x.textAlign='center';x.textBaseline='middle';
       x.font='700 '+nameFs+'px system-ui,sans-serif';const nameW=x.measureText(g.name).width;
       x.font=descFs+'px system-ui,sans-serif';const descW=g.desc?x.measureText(g.desc).width:0;
-      const innerW=Math.min(W*0.82,Math.max(nameW,descW,emojiFs*1.4,180));
+      const innerW=Math.min(W*0.7,Math.max(nameW,descW,emojiFs*1.3,150));
       const panelW=innerW+padX*2,panelH=contentH+padY*2;
       x.beginPath();
-      if(x.roundRect)x.roundRect(-panelW/2,-panelH/2,panelW,panelH,18);else x.rect(-panelW/2,-panelH/2,panelW,panelH);
-      x.fillStyle='rgba(8,10,18,0.88)';x.fill();
-      x.lineWidth=2.5;x.strokeStyle='rgba(250,204,21,0.9)';x.shadowColor='rgba(250,204,21,0.55)';x.shadowBlur=18;x.stroke();x.shadowBlur=0;
+      if(x.roundRect)x.roundRect(-panelW/2,-panelH/2,panelW,panelH,14);else x.rect(-panelW/2,-panelH/2,panelW,panelH);
+      x.fillStyle='rgba(8,10,18,0.48)';x.fill();
+      x.lineWidth=1.5;x.strokeStyle='rgba(250,204,21,0.75)';x.shadowColor='rgba(250,204,21,0.4)';x.shadowBlur=10;x.stroke();x.shadowBlur=0;
       let cy=-contentH/2;
       x.fillStyle='#fde047';x.font='700 '+headFs+'px system-ui,sans-serif';x.fillText(g.head,0,cy+hH/2);cy+=hH;
       x.font=emojiFs+'px system-ui,sans-serif';x.fillStyle='#fff';x.fillText(g.emoji,0,cy+eH/2);cy+=eH;
-      x.font='700 '+nameFs+'px system-ui,sans-serif';x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=6;x.fillText(g.name,0,cy+nH/2);x.shadowBlur=0;cy+=nH;
-      if(g.desc){x.font=descFs+'px system-ui,sans-serif';x.fillStyle='#9fb0c6';x.fillText(g.desc,0,cy+dH/2);}
+      x.font='700 '+nameFs+'px system-ui,sans-serif';x.fillStyle='#fff';x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=5;x.fillText(g.name,0,cy+nH/2);x.shadowBlur=0;cy+=nH;
+      if(g.desc){x.font=descFs+'px system-ui,sans-serif';x.fillStyle='#c4d0e0';x.fillText(g.desc,0,cy+dH/2);}
       x.restore();
     }
     if(screenFlash>0){x.fillStyle='rgba(255,45,85,'+(screenFlash*0.35)+')';x.fillRect(0,0,W,H);}
