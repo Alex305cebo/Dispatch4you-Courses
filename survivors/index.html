@@ -2028,11 +2028,23 @@
     e._atk={type:'beam',warm:0.7,t:3.0,a:Math.atan2(player.y-e.y,player.x-e.x),spd:(Math.random()<0.5?1:-1)*0.55,acc:0,len:560};
     beep(120,0.3,'sawtooth',0.1);
   }
-  // ГОРЯЩАЯ ПОЛ-АРЕНЫ: 1.2с предупреждение, затем 3с огонь на половине поля от босса
+  // ОГНЕННЫЕ ЗОНЫ: компактные, разнообразные, честно уклоняемые (не пол-экрана).
+  // Три вида по очереди: конус от босса, кольцо огня с безопасным центром, огненная полоса.
   function bossHalfBurn(e){
-    const a=Math.random()*Math.PI*2;
-    fireZones.push({x:e.x,y:e.y,dx:Math.cos(a),dy:Math.sin(a),warm:1.2,t:3,acc:0,dmg:Math.round(e.dmg*0.35)});
-    announce={text:'🔥 Половина поля вспыхнет — беги!',life:1.6,color:'#fb923c'};
+    if(fireZones.length>=2)return; // не заваливаем поле огнём
+    const dmg=Math.round(e.dmg*0.32),r=Math.random();
+    if(r<0.45){ // КОНУС: сектор пламени от босса в случайную сторону — отойди вбок
+      const a=Math.atan2(player.y-e.y,player.x-e.x)+rand(-0.5,0.5);
+      fireZones.push({kind:'cone',x:e.x,y:e.y,ang:a,half:0.6,R:520,warm:1.2,t:3,acc:0,dmg});
+      announce={text:'🔥 Конус пламени — уйди вбок!',life:1.5,color:'#fb923c'};
+    }else if(r<0.78){ // КОЛЬЦО: горит бублик, центр безопасен — замри в центре или беги наружу
+      fireZones.push({kind:'ring',x:player.x,y:player.y,rIn:135,R:330,warm:1.3,t:3,acc:0,dmg});
+      announce={text:'🔥 Кольцо огня — в центр или наружу!',life:1.5,color:'#fb923c'};
+    }else{ // ПОЛОСА: горящий коридор через поле — перепрыгни/обойди
+      const a=Math.random()*Math.PI*2;
+      fireZones.push({kind:'lane',x:player.x+rand(-120,120),y:player.y+rand(-120,120),ang:a,half:70,R:900,warm:1.2,t:2.6,acc:0,dmg});
+      announce={text:'🔥 Огненная полоса — сойди с линии!',life:1.5,color:'#fb923c'};
+    }
     beep(80,0.3,'sine',0.12);
   }
   // 1) классический веер в игрока
@@ -3430,8 +3442,12 @@
       if(lives>1){
         lives--;
         player.hp=Math.round(player.maxHp*(player.relics&&player.relics.relic_phoenix?1:0.5));
-        player.invuln=2;
-        announce={text:'💔 Жизнь потеряна! Осталось: '+lives,life:2.5,color:'#ff2d55'};
+        player.invuln=3; // 3с неуязвимости — есть шанс вырваться из-под спама
+        // РАСЧИСТКА: враги и вражеские снаряды рядом отлетают, чтобы было куда убежать
+        for(const e of enemies){const de=dist(player,e);if(de<210&&!e.megaboss){const a=Math.atan2(e.y-player.y,e.x-player.x);e.x+=Math.cos(a)*150;e.y+=Math.sin(a)*150;}}
+        enemyProjectiles=enemyProjectiles.filter(pr=>dist(player,pr)>170);
+        rings.push({x:player.x,y:player.y,r:0,maxR:230,life:0.8,color:'#7dd3fc'});
+        announce={text:'💔 Жизнь потеряна! Осталось: '+lives+' · 3с неуязвимости — беги!',life:2.8,color:'#ff2d55'};
         camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,0.5);doHitStop(0.16);
         sfxBoom(0.45,0.26,600,55,true);
         if(player.secondWindLevel){
@@ -3596,14 +3612,18 @@
         telegraphs.splice(ti2,1);
       }
     }
-    // горящая пол-арены: предупреждение → огонь; тикающий урон, если стоишь на горящей стороне
+    // огненные зоны: предупреждение → огонь; тикающий урон, если стоишь в горящей области
     for(let fi=fireZones.length-1;fi>=0;fi--){
       const fz=fireZones[fi];
       if(fz.warm>0){fz.warm-=dt;continue;}
       fz.t-=dt;fz.acc+=dt;
       if(fz.acc>=0.5){fz.acc=0;
-        const side=(player.x-fz.x)*fz.dx+(player.y-fz.y)*fz.dy;
-        if(side>0&&dist(player,fz)<900)hurtPlayer(fz.dmg,fz.x,fz.y,0,true);
+        const dx=player.x-fz.x,dy=player.y-fz.y,d=Math.hypot(dx,dy);
+        let inside=false;
+        if(fz.kind==='ring'){inside=d>fz.rIn&&d<fz.R;}
+        else if(fz.kind==='cone'){if(d<fz.R){let da=Math.atan2(dy,dx)-fz.ang;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;inside=Math.abs(da)<fz.half;}}
+        else if(fz.kind==='lane'){const ux=Math.cos(fz.ang),uy=Math.sin(fz.ang);const along=dx*ux+dy*uy,perp=Math.abs(-dx*uy+dy*ux);inside=Math.abs(along)<fz.R&&perp<fz.half;}
+        if(inside)hurtPlayer(fz.dmg,fz.x,fz.y,0,true);
       }
       if(fz.t<=0)fireZones.splice(fi,1);
     }
@@ -4741,34 +4761,46 @@
       x.fillText(Math.ceil(rf.t)+'с',0,0);
       x.restore();
     });
-    // горящая пол-арены: ПОЛУКРУГ (радиус 900) от босса — рисуем ровно ту зону, где бьёт урон
+    // ОГНЕННЫЕ ЗОНЫ: конус / кольцо / полоса — компактные, с градиентом и языками пламени
+    const flameTongue=(fx2,fy2,ph,sc)=>{x.beginPath();x.moveTo(fx2,fy2+7*sc);x.lineTo(fx2-5*sc,fy2+2*sc);x.lineTo(fx2,fy2-(9+4*Math.sin(t*12+ph))*sc);x.lineTo(fx2+5*sc,fy2+2*sc);x.closePath();x.fill();};
     fireZones.forEach(fz=>{
-      const ang=Math.atan2(fz.dy,fz.dx),R2=900;
-      x.save();x.translate(fz.x,fz.y);x.rotate(ang);
-      if(fz.warm>0){ // предупреждение: мигающий полудиск + штриховая кромка
-        x.globalAlpha=0.12+0.07*Math.sin(t*12);
-        x.fillStyle='#fb923c';
-        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.closePath();x.fill();
-        x.globalAlpha=0.85;x.strokeStyle='#fb923c';x.lineWidth=3/zoom;x.setLineDash([16,10]);
-        x.beginPath();x.moveTo(0,-R2);x.lineTo(0,R2);x.stroke();
-        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.stroke();x.setLineDash([]);
-        x.globalAlpha=1;x.fillStyle='#fb923c';x.font='bold '+Math.round(26/zoom)+'px system-ui,sans-serif';
-        x.textAlign='center';x.textBaseline='middle';x.fillText('🔥',R2*0.45,0);
-      }else{ // горит: огненный полудиск + языки пламени по площади
-        x.globalAlpha=0.20+0.07*Math.sin(t*9);
-        x.fillStyle='#f97316';
-        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.closePath();x.fill();
-        x.globalAlpha=0.55;x.strokeStyle='#fde047';x.lineWidth=2.5/zoom;
-        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.closePath();x.stroke();
-        // мерцающие «языки пламени» внутри зоны (детерминированные позиции)
-        x.fillStyle='#fde047';
-        for(let i=0;i<14;i++){
-          const fa=-Math.PI/2+((i*0.53)%1)*Math.PI,fr=R2*(0.15+((i*0.37)%1)*0.8);
-          const fx2=Math.cos(fa)*fr,fy2=Math.sin(fa)*fr;
-          x.globalAlpha=0.25+0.25*Math.sin(t*10+i*2.2);
-          x.beginPath();x.moveTo(fx2,fy2+7);x.lineTo(fx2-5,fy2+2);x.lineTo(fx2,fy2-9-4*Math.sin(t*12+i));x.lineTo(fx2+5,fy2+2);x.closePath();x.fill();
-        }
+      const warm=fz.warm>0,flick=0.5+0.5*Math.abs(Math.sin(t*9));
+      const hot=warm?'#fb923c':'#f97316',edge=warm?'#fdba74':'#fde047';
+      x.save();x.translate(fz.x,fz.y);
+      if(fz.kind==='ring'){
+        // КОЛЬЦО: радиальный градиент — прозрачный центр (безопасно) → огненная кайма
+        const g=x.createRadialGradient(0,0,fz.rIn*0.6,0,0,fz.R);
+        g.addColorStop(0,'rgba(249,115,22,0)');g.addColorStop(Math.min(0.85,fz.rIn/fz.R),'rgba(249,115,22,0)');
+        g.addColorStop(Math.min(0.92,fz.rIn/fz.R+0.06),warm?'rgba(251,146,60,0.28)':'rgba(249,115,22,0.5)');g.addColorStop(1,'rgba(253,224,71,0)');
+        x.globalAlpha=warm?0.6+0.2*Math.sin(t*12):1;x.fillStyle=g;x.beginPath();x.arc(0,0,fz.R,0,Math.PI*2);x.fill();
+        // кромки
+        x.globalAlpha=warm?0.5+0.3*Math.sin(t*12):0.7;x.strokeStyle=edge;x.lineWidth=2.5/zoom;
+        if(warm)x.setLineDash([14,9]);
+        x.beginPath();x.arc(0,0,fz.R,0,Math.PI*2);x.stroke();x.setLineDash([]);
+        x.strokeStyle='#4ade80';x.lineWidth=2/zoom;x.globalAlpha=0.7;x.beginPath();x.arc(0,0,fz.rIn,0,Math.PI*2);x.stroke(); // безопасный центр
+        if(!warm){x.fillStyle=edge;for(let i=0;i<16;i++){const a=i/16*Math.PI*2,rr=(fz.rIn+fz.R)/2;x.globalAlpha=0.3+0.3*Math.sin(t*10+i*1.7);flameTongue(Math.cos(a)*rr,Math.sin(a)*rr,i,1.2);}}
+      }else if(fz.kind==='cone'){
+        x.rotate(fz.ang);
+        // КОНУС: сектор с градиентом от вершины
+        const g=x.createRadialGradient(0,0,10,0,0,fz.R);
+        g.addColorStop(0,warm?'rgba(251,146,60,0.35)':'rgba(249,115,22,0.6)');g.addColorStop(0.7,warm?'rgba(251,146,60,0.18)':'rgba(249,115,22,0.32)');g.addColorStop(1,'rgba(253,224,71,0)');
+        x.globalAlpha=warm?0.55+0.2*Math.sin(t*12):1;x.fillStyle=g;
+        x.beginPath();x.moveTo(0,0);x.arc(0,0,fz.R,-fz.half,fz.half);x.closePath();x.fill();
+        x.globalAlpha=warm?0.6+0.3*Math.sin(t*12):0.7;x.strokeStyle=edge;x.lineWidth=2.5/zoom;
+        if(warm)x.setLineDash([14,9]);
+        x.beginPath();x.moveTo(0,0);x.lineTo(Math.cos(-fz.half)*fz.R,Math.sin(-fz.half)*fz.R);x.moveTo(0,0);x.lineTo(Math.cos(fz.half)*fz.R,Math.sin(fz.half)*fz.R);x.stroke();x.setLineDash([]);
+        if(!warm){x.fillStyle=edge;for(let i=0;i<12;i++){const a=(-fz.half)+(i/11)*(fz.half*2),rr=fz.R*(0.3+0.6*((i*0.37)%1));x.globalAlpha=0.3+0.3*Math.sin(t*10+i*2.1);flameTongue(Math.cos(a)*rr,Math.sin(a)*rr,i,1.2);}}
+      }else{ // lane: горящая полоса
+        x.rotate(fz.ang);
+        const g=x.createLinearGradient(0,-fz.half,0,fz.half);
+        g.addColorStop(0,'rgba(253,224,71,0)');g.addColorStop(0.5,warm?'rgba(251,146,60,0.32)':'rgba(249,115,22,0.55)');g.addColorStop(1,'rgba(253,224,71,0)');
+        x.globalAlpha=warm?0.55+0.2*Math.sin(t*12):1;x.fillStyle=g;x.fillRect(-fz.R,-fz.half,fz.R*2,fz.half*2);
+        x.globalAlpha=warm?0.6+0.3*Math.sin(t*12):0.6;x.strokeStyle=edge;x.lineWidth=2/zoom;
+        if(warm)x.setLineDash([14,9]);
+        x.beginPath();x.moveTo(-fz.R,-fz.half);x.lineTo(fz.R,-fz.half);x.moveTo(-fz.R,fz.half);x.lineTo(fz.R,fz.half);x.stroke();x.setLineDash([]);
+        if(!warm){x.fillStyle=edge;for(let i=0;i<16;i++){const px2=-fz.R+(i/15)*fz.R*2;x.globalAlpha=0.3+0.3*Math.sin(t*10+i*1.9);flameTongue(px2,(((i*0.37)%1)-0.5)*fz.half,i,1.1);}}
       }
+      if(warm){x.globalAlpha=1;x.fillStyle=hot;x.font='bold '+Math.round(22/zoom)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🔥',0,0);}
       x.restore();x.globalAlpha=1;
     });
     // телеграфы боссов: пульсирующий красный круг, внутренний диск растёт до удара
@@ -4995,11 +5027,19 @@
           x.fillStyle='#fde047';x.fillRect(bx0,by0+barH+2,barW*Math.min(1,(e.stunned>0?1:(e.stun||0)/(e.maxHp*0.22))),4);
           x.shadowBlur=0;
           x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1.5;x.strokeRect(bx0+0.75,by0+0.75,barW-1.5,barH-1.5);
-          x.fillStyle='#fff';x.font='bold 12px system-ui,sans-serif';x.textAlign='center';
-          x.fillText(e.stage+'/'+e.stageCount,e.x,by0-5);
+          // ПИПСЫ СТАДИЙ: по кружку на стадию — сразу видно, сколько стадий и сколько осталось
+          const pn=Math.min(8,e.stageCount),pr=3.4,pgap=10,ptot=(pn-1)*pgap,py=by0-9;
+          for(let i=0;i<pn;i++){
+            const px2=e.x-ptot/2+i*pgap,alive=(pn-i)<=e.stage; // остались верхние стадии
+            x.beginPath();x.arc(px2,py,pr,0,Math.PI*2);
+            x.fillStyle=alive?stageColor:'rgba(0,0,0,0.5)';x.fill();
+            x.strokeStyle='rgba(255,255,255,0.6)';x.lineWidth=1;x.stroke();
+          }
         }else{
-          x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2,3);
-          x.fillStyle='#4ade80';x.fillRect(e.x-e.r,e.y-e.r-8,e.r*2*Math.max(0,e.hp/e.maxHp),3);
+          // обычные мобы: полоска HP чуть заметнее (фон + рамка), видно даже в толпе
+          const mw=e.r*2,mh=4,mx=e.x-e.r,my=e.y-e.r-9,hpf=Math.max(0,e.hp/e.maxHp);
+          x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(mx-1,my-1,mw+2,mh+2);
+          x.fillStyle=hpf<0.3?'#ff6b6b':hpf<0.6?'#fbbf24':'#4ade80';x.fillRect(mx,my,mw*hpf,mh);
         }
       }
     });
@@ -5227,8 +5267,22 @@
       x.font='bold 15px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
       x.fillStyle=mb.shieldHp>0?'#7dd3fc':'#ff2d55';
       const pct=Math.max(0,Math.round(mb.hp/mb.maxHp*100));
-      x.fillText('☠ '+(mb.skinName||'ХРОНОС')+' · '+pct+'%'+(mb.shieldHp>0?' · 🛡 щит':''),W/2,topY);
-      x.restore();topY+=24;
+      // число стадий: истинная форма — 3, обычный бой — 4 (+ фаза «истинная форма» как отдельная веха)
+      const nSt=mb.megaPhase==='true'?3:4,curSt=Math.max(1,Math.min(nSt,mb.megaStage||1));
+      const phaseTag=mb.act2boss?(mb.megaPhase==='true'?' · ИСТИННАЯ ФОРМА':' · ФАЗА 1/2'):'';
+      x.fillText('☠ '+(mb.skinName||'ХРОНОС')+' · '+pct+'% · стадия '+curSt+'/'+nSt+(mb.shieldHp>0?' · 🛡':'')+phaseTag,W/2,topY);
+      // СЕГМЕНТИРОВАННАЯ ПОЛОСА HP: видно, сколько стадий и на какой сейчас босс
+      const bw=Math.min(360,W*0.6),bh=10,bx0=W/2-bw/2,by0=topY+20,seg=bw/nSt,gap=3;
+      const frac=Math.max(0,mb.hp/mb.maxHp),fillSeg=frac*nSt; // сколько сегментов «полны» снизу вверх
+      for(let i=0;i<nSt;i++){
+        const sx=bx0+i*seg,sw=seg-gap;
+        x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(sx,by0,sw,bh);
+        const segFill=Math.max(0,Math.min(1,fillSeg-i)); // доля заполнения этого сегмента
+        if(segFill>0){x.fillStyle=(i+1===curSt)?'#ff2d55':'#fb7185';x.fillRect(sx,by0,sw*segFill,bh);}
+        x.strokeStyle='rgba(255,255,255,0.35)';x.lineWidth=1;x.strokeRect(sx+0.5,by0+0.5,sw-1,bh-1);
+      }
+      if(mb.shieldHp>0&&mb.shieldMax){x.fillStyle='#7dd3fc';x.fillRect(bx0,by0+bh+2,bw*Math.max(0,mb.shieldHp/mb.shieldMax),3);}
+      x.restore();topY+=40;
     }else if(forestGate){
       x.save();x.textAlign='center';x.textBaseline='top';
       x.font='bold 15px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
