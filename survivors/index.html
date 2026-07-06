@@ -1023,7 +1023,7 @@
   // «ЛЕС» — особый уровень после 30-го: reskin лабиринта (деревья + улочки).
   // На 29 уровне — «прорыв к лесу»: фикс. волна мобов со счётчиком сверху; зачистил — в лес.
   let vaultTheme='dungeon',forestPending=false,forestGate=false,forestDone=false,forestGateTotal=0,forestTrees=[];
-  let pendingMegaBoss=false,megaDone=false; // МЕГА-БОСС 50 уровня (финал акта)
+  let pendingMegaBoss=false,megaDone=false,megaFought=false; // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
@@ -1226,7 +1226,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1245,7 +1245,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
@@ -1290,7 +1290,11 @@
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
     forestDone=s.forestDone||false;forestPending=false;forestGate=false;vaultTheme='dungeon';forestTrees=[];
-    pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;
+    pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
+    // РЕВАНШ: в старых версиях Хронос мог погибнуть «за кадром» в толпе — бой не состоялся.
+    // Такому сейву возвращаем встречу: арена откроется сразу после продолжения.
+    if(megaDone&&!megaFought){megaDone=false;pendingMegaBoss=true;
+      setTimeout(()=>{announce={text:'⚡ ХРОНОС ЖАЖДЕТ НАСТОЯЩЕГО БОЯ — РЕВАНШ!',life:5,color:'#ff2d55'};},600);}
     enemies.forEach(en=>{if(en.megaboss){en._shArmed=false;armMegaShield(en);}});
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
     // JSON.stringify превращает Set в {} — после загрузки p.hitSet.has() падал бы
@@ -2043,7 +2047,7 @@
       flashFx(0.35,'192,132,252');sfxChime(700,4,0.09,0.12);
     }
     if(e.megaboss){ // финал акта: гигантский кристалл + выборы + эссенция
-      megaDone=true;mobSpawnPaused=false;
+      megaDone=true;megaFought=true;mobSpawnPaused=false;
       gems.push({x:e.x+20,y:e.y,r:16,val:Math.max(20,Math.round(player.xpNeed*1.8)),big:true,hue:'#7dd3fc'});
       addUpPoints(3,'МЕГА-БОСС');
       metaState.shards+=25;saveMeta();
