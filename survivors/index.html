@@ -66,13 +66,24 @@
   .lb-top3 .row{display:flex;justify-content:space-between;gap:6px;align-items:baseline;}
   .lb-top3 .row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
   .lb-top3 .row .sc{color:var(--text);font-weight:700;white-space:nowrap;}
-  .lb-podium{display:flex;align-items:flex-end;gap:8px;justify-content:center;width:100%;max-width:340px;}
-  .lb-podium .p{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 6px;
+  .lb-podium{display:flex;align-items:flex-end;gap:10px;justify-content:center;width:100%;max-width:400px;margin-top:2px;}
+  .lb-podium .p{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px 10px;position:relative;
+    background:linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015));
     border-radius:10px 10px 0 0;background:var(--panel2);border:1px solid var(--border);border-bottom:none;min-width:0;}
-  .lb-podium .medal{font-size:24px;line-height:1;}
-  .lb-podium .nm{font-size:11px;color:var(--text);font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .lb-podium .sc{font-size:13px;font-weight:800;}
-  .lb-podium .ex{font-size:10px;color:var(--muted);}
+  .lb-podium .p.first{transform:translateY(-10px);padding-top:20px;}
+  .lb-podium .crown{position:absolute;top:-15px;font-size:22px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));}
+  .lb-podium .medal{font-size:27px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));}
+  .lb-podium .nm{font-size:12px;color:var(--text);font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-podium .sc{font-size:16px;font-weight:900;letter-spacing:0.3px;}
+  .lb-podium .ex{font-size:10px;color:var(--muted);text-align:center;line-height:1.35;}
+  /* строки 4-10 */
+  .lb-row{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:10px;margin-bottom:4px;background:rgba(255,255,255,0.025);}
+  .lb-row .rk{width:24px;height:24px;flex:0 0 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:12px;background:rgba(255,255,255,0.06);color:var(--muted);}
+  .lb-row .rnm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:600;font-size:13px;}
+  .lb-row .rsc{white-space:nowrap;color:#7dd3fc;font-weight:800;font-size:13px;}
+  .lb-row .rex{white-space:nowrap;font-size:10px;color:var(--muted);}
+  .lb-row.mine{background:rgba(77,150,255,0.14);outline:1px solid rgba(77,150,255,0.5);}
   #olb{overflow-y:auto;}
   .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at center,rgba(12,16,28,0.86),rgba(5,6,10,0.94));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border-radius:12px;text-align:center;padding:20px;}
   .overlay.show{display:flex;}
@@ -240,9 +251,9 @@
     </div>
     <div id="olb" class="overlay">
       <h2>🏆 Таблица лидеров</h2>
-      <p style="color:var(--muted);font-size:11px;margin:-6px 0 8px;max-width:340px;text-align:center;">Очки = уровень + убийства + время + серия без урона + боссы + опыт</p>
+      <p style="color:var(--muted);font-size:11px;margin:-6px 0 12px;max-width:400px;text-align:center;">Очки = уровень + убийства + время + серия без урона + боссы + опыт</p>
       <div id="lbPodium" class="lb-podium"></div>
-      <div id="lbList" style="font-size:13px;color:var(--muted);max-height:240px;overflow:auto;width:100%;max-width:340px;">Загрузка…</div>
+      <div id="lbList" style="font-size:13px;color:var(--muted);max-height:260px;overflow:auto;width:100%;max-width:400px;margin-top:10px;">Загрузка…</div>
       <button class="ostart" id="btnLbClose">Закрыть</button>
     </div>
     <div id="ohistory" class="overlay">
@@ -413,22 +424,24 @@
   }
   refreshTop3();setInterval(refreshTop3,60000);
   function podiumCell(r,i){
-    const st=[['#facc15','18px'],['#9ca3af','10px'],['#b45309','5px']][i];
-    if(!r)return '<div class="p" style="opacity:0.3;padding-top:'+st[1]+';"><span class="medal">'+MEDALS[i]+'</span><span class="nm">—</span></div>';
-    return '<div class="p" style="border-color:'+st[0]+';padding-top:'+st[1]+';'+(i===0?'box-shadow:0 0 14px rgba(250,204,21,0.25);':'')+'">'
+    const col=['#facc15','#cbd5e1','#e08a3c'][i];
+    const first=i===0;
+    if(!r)return '<div class="p'+(first?' first':'')+'" style="opacity:0.3;"><span class="medal">'+MEDALS[i]+'</span><span class="nm">—</span></div>';
+    return '<div class="p'+(first?' first':'')+'" style="border-color:'+col+';box-shadow:0 0 '+(first?22:12)+'px '+hexA(col,first?0.35:0.18)+';">'
+      +(first?'<span class="crown">👑</span>':'')
       +'<span class="medal">'+MEDALS[i]+'</span>'
       +'<span class="nm">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+'</span>'
-      +'<span class="sc" style="color:'+st[0]+';">'+fmtNum(Number(r.score)||0)+'</span>'
-      +'<span class="ex">ур.'+(r.level||1)+' · ⚔'+fmtNum(r.kills||0)+(r.bosses?' · 👑'+r.bosses:'')+'</span></div>';
+      +'<span class="sc" style="color:'+col+';">'+fmtNum(Number(r.score)||0)+'</span>'
+      +'<span class="ex">ур.'+(r.level||1)+' · ⚔'+fmtNum(r.kills||0)+(r.bosses?'<br>👑'+r.bosses+' боссов':'')+'</span></div>';
   }
+  function hexA(hex,a){const h=hex.replace('#','');const n=parseInt(h,16);return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')';}
   function lbRow(r,i){
     const mine=isMyRecord(r.name);
-    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-bottom:1px solid var(--border);'
-      +(mine?'background:rgba(77,150,255,0.12);border-left:3px solid #4D96FF;':'')+'">'
-      +'<span style="width:20px;text-align:right;color:var(--muted);font-weight:700;">'+(i+1)+'</span>'
-      +'<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
-      +'<span style="white-space:nowrap;color:var(--text);font-weight:700;">'+fmtNum(Number(r.score)||0)+'</span>'
-      +'<span style="white-space:nowrap;font-size:10px;color:var(--muted);">ур.'+(r.level||1)+' ⚔'+fmtNum(r.kills||0)+(r.time?' ⏱'+fmtTime(r.time):'')+(r.combo?' 🔥'+fmtNum(r.combo):'')+'</span></div>';
+    return '<div class="lb-row'+(mine?' mine':'')+'">'
+      +'<span class="rk">'+(i+1)+'</span>'
+      +'<span class="rnm">'+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')
+        +'<br><span class="rex">ур.'+(r.level||1)+' · ⚔'+fmtNum(r.kills||0)+(r.time?' · ⏱'+fmtTime(r.time):'')+(r.bosses?' · 👑'+r.bosses:'')+'</span></span>'
+      +'<span class="rsc">'+fmtNum(Number(r.score)||0)+'</span></div>';
   }
   async function showLeaderboard(){
     if(state==='running'){lbResumeRunning=true;state='leaderboard';}
