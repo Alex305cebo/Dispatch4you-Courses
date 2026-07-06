@@ -1043,6 +1043,7 @@
   let vaultTheme='dungeon',forestPending=false,forestGate=false,forestDone=false,forestGateTotal=0,forestTrees=[];
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
+  let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
@@ -1245,7 +1246,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1264,7 +1265,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
@@ -1310,6 +1311,7 @@
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
     forestDone=s.forestDone||false;forestPending=false;forestGate=false;vaultTheme='dungeon';forestTrees=[];
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
+    act=s.act||1;finale=null;act2Tower=null;
     // РЕВАНШ: в старых версиях Хронос мог погибнуть «за кадром» в толпе — бой не состоялся.
     // Такому сейву возвращаем встречу: арена откроется сразу после продолжения.
     if(megaDone&&!megaFought){megaDone=false;pendingMegaBoss=true;
@@ -1477,7 +1479,7 @@
     // sqrt смягчает, чтобы апгрейды всё же ощущались; к боссам не применяем (у них свои множители)
     const powCouple=elite?1:Math.sqrt(player.dmgMult||1);
     const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb*postMul*powCouple;
-    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg*postMul;
+    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg*postMul*(act===2?1.45:1);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
       // outrun glues to you permanently, which is what made fast spawns miserable
@@ -2247,6 +2249,24 @@
   function fire(dt){
     player.fireAcc+=dt*1000;
     if(player.fireAcc<player.fireRate)return;
+    // КОРАБЛЬ АКТА 2: два крыловых орудия — каждое само наводится на СВОЕГО ближайшего врага
+    if(player.ship2){
+      const tg=twoNearest(520);
+      if(!tg[0]){return;}
+      player.fireAcc=0;
+      const fa=player._hAng||0,ux=Math.cos(fa),uy=Math.sin(fa),nx=-uy,ny=ux;
+      const span=player.r*1.55,fwd=player.r*0.4,sp2=player.projSpeed*(player.hasteActive>0?1.3:1);
+      const cannons=[{x:player.x+nx*span+ux*fwd,y:player.y+ny*span+uy*fwd,tgt:tg[0]},
+                     {x:player.x-nx*span+ux*fwd,y:player.y-ny*span+uy*fwd,tgt:tg[1]||tg[0]}];
+      for(const c of cannons){
+        const a2=Math.atan2(c.tgt.y-c.y,c.tgt.x-c.x),n2=player.projCount,spr=0.14;
+        for(let i=0;i<n2;i++){const aa=a2+spr*(i-(n2-1)/2);
+          projectiles.push({x:c.x,y:c.y,vx:Math.cos(aa)*sp2,vy:Math.sin(aa)*sp2,dmg:rollDmg(player.dmg),pierceLeft:player.pierce,r:5*player.aoeMult,life:1.2,hitSet:new Set(),color:'#7dd3fc'});}
+        sparkHit(c.x,c.y,'#7dd3fc');
+      }
+      player._lastShotT=t;
+      return;
+    }
     const target=nearestEnemy(500);
     if(!target)return;
     player.fireAcc=0;
@@ -3034,6 +3054,76 @@
         this._hpReal=v;
       }});
   }
+  // === ФИНАЛ АКТА 1 → АКТ 2 ===
+  function finaleTick(real){
+    if(!finale)return;
+    const F=finale,b=F.boss;
+    F.t-=real;
+    camShake=Math.max(camShake,F.phase==='fire'?16:6);
+    if(F.phase==='charge'){
+      // Хронос копит энергию: ядро разгорается, луч-телеграф на игрока
+      if(b){b.x+=(player.x+180-b.x)*Math.min(1,real*1.5);b.y+=(player.y-b.y)*Math.min(1,real*1.5);}
+      if(F.t<=0){F.phase='fire';F.t=1.0;
+        player.hp=Math.max(1,Math.round(player.maxHp*0.20)); // сносит до 20%
+        screenFlash=1;flashFx(0.9,'255,45,85');camShake=Math.max(camShake,26);
+        sfxBoom(0.7,0.4,200,40,true);
+        for(let i=0;i<50;i++)particles.push({x:player.x+rand(-20,20),y:player.y+rand(-20,20),vx:rand(-6,6),vy:rand(-6,6),life:1,color:i%2?'#fff':'#ff2d55',sz:3+Math.random()*4});
+        announce={text:'💥 ПРЯМОЕ ПОПАДАНИЕ! Корабль повреждён…',life:2.4,color:'#ff2d55'};
+      }
+    }else if(F.phase==='fire'){
+      if(F.t<=0){F.phase='teleport';F.t=1.2;
+        announce={text:'🌀 ТЕЛЕПОРТ… ',life:2,color:'#7dd3fc'};sfxSweep(1400,200,0.9,'sine',0.14,true);
+      }
+    }else{ // teleport: корабль закручивается в портал
+      zoom+=(Math.min(2.4,baseZoom*2.2)-zoom)*Math.min(1,real*3);
+      player._spin=(player._spin||0)+real*18;
+      if(F.t<=0){finale=null;zoom=baseZoom*1.3;player._spin=0;enterAct2();}
+    }
+  }
+  function drawFinale(){
+    if(!finale)return;const F=finale,b=F.boss;
+    x.save();
+    if(F.phase==='charge'&&b){
+      // растущее ядро на Хроносе + пунктирный телеграф к игроку
+      const k=1-Math.max(0,F.t)/1.6;
+      x.globalAlpha=0.5+0.4*Math.sin(t*20);x.strokeStyle='#ff2d55';x.lineWidth=(2+6*k)/zoom;x.setLineDash([14,10]);
+      x.beginPath();x.moveTo(b.x,b.y);x.lineTo(player.x,player.y);x.stroke();x.setLineDash([]);
+      x.globalAlpha=1;x.fillStyle='#fff';x.shadowColor='#ff2d55';x.shadowBlur=30;
+      x.beginPath();x.arc(b.x,b.y,10+34*k,0,Math.PI*2);x.fill();x.shadowBlur=0;
+    }else if(F.phase==='fire'&&b){
+      // ГИГАНТСКИЙ ЛАЗЕР Хронос→игрок
+      const ang=Math.atan2(player.y-b.y,player.x-b.x);
+      x.save();x.translate(b.x,b.y);x.rotate(ang);
+      const L=Math.hypot(player.x-b.x,player.y-b.y)+40,w=26+10*Math.sin(t*40);
+      const g=x.createLinearGradient(0,-w,0,w);
+      g.addColorStop(0,'rgba(255,45,85,0)');g.addColorStop(0.5,'rgba(255,255,255,0.95)');g.addColorStop(1,'rgba(255,45,85,0)');
+      x.fillStyle=g;x.shadowColor='#ff2d55';x.shadowBlur=40;x.fillRect(0,-w,L,w*2);x.shadowBlur=0;
+      x.fillStyle='#fff';x.fillRect(0,-w*0.3,L,w*0.6);
+      x.restore();
+    }else if(F.phase==='teleport'){
+      const k=1-Math.max(0,F.t)/1.2;
+      x.globalAlpha=k;x.fillStyle='#fff';x.fillRect(0,0,W,H); // белая вспышка перехода
+    }
+    x.restore();
+  }
+  function enterAct2(){
+    act=2;megaDone=true;megaFought=true;
+    enemies=[];enemyProjectiles=[];projectiles=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];
+    mobSpawnPaused=false;
+    player.wounded=true; // раненый: искры и дым, пока не починит башня
+    player.invuln=Math.max(player.invuln,4);
+    act2Tower={x:player.x+130,y:player.y-10,r:36,progress:0};
+    announce={text:'— АКТ 2: РАЗЛОМ — долети до БАШНИ, она починит корабль',life:6,color:'#ff2d55'};
+    flashFx(0.6,'244,63,94');screenFlash=0.5;
+    state='running';last=performance.now();
+  }
+  // два ближайших РАЗНЫХ врага (для двух орудий)
+  function twoNearest(range){
+    let a=null,b=null,ad=range,bd=range;
+    for(const e of enemies){const d=dist(player,e);
+      if(d<ad){bd=ad;b=a;ad=d;a=e;}else if(d<bd){bd=d;b=e;}}
+    return [a,b];
+  }
   function spawnMegaBoss(){
     const dps=estPlayerDps();
     const hp=Math.max(9000,dps*60); // ОЧЕНЬ много жизней: ~минута чистого DPS + щит/лечение/неуязвимости
@@ -3061,6 +3151,16 @@
     return en;
   }
   function updateMegaBoss(e,dt){
+    // ФИНАЛ АКТА 1: Хронос на <3% HP не умирает — стреляет супер-лазером и телепортирует тебя в Акт 2
+    if(act===1&&!e.finaleDone&&e.hp<=e.maxHp*0.03){
+      e.finaleDone=true;e.invulnT=1e9;e.shieldHp=0; // больше не умирает и не бьётся
+      finale={phase:'charge',t:1.6,boss:e};
+      announce={text:'☠ ХРОНОС ЗАРЯЖАЕТ СУПЕР-ЛАЗЕР…',life:2,color:'#ff2d55'};
+      sfxSweep(80,1200,1.4,'sawtooth',0.16,true);
+      return;
+    }
+    if(finale)return; // во время катсцены босс замер
+
     // щит поглощает урон через сеттер hp (armMegaShield); тут — эффекты и перезарядка
     if(e._shieldBroke){
       e._shieldBroke=false;
@@ -3342,6 +3442,20 @@
     if(inVault){collideCircleWalls(player);keepInWalk(player);}
     if(forestField)collideTrees(player);
     if(player.invuln>0)player.invuln-=dt;
+    if(player.wounded&&Math.random()<0.7)particles.push({x:player.x+rand(-10,10),y:player.y+rand(-6,10),vx:rand(-1.2,1.2),vy:rand(-2.2,-0.4),life:0.8,color:Math.random()<0.5?'#f97316':'#64748b',sz:2+Math.random()*3});
+    if(act2Tower){ // башня Акта 2 чинит и трансформирует корабль
+      if(dist(player,act2Tower)<act2Tower.r+player.r+34){
+        act2Tower.progress=Math.min(1,act2Tower.progress+dt/2.6);
+        if(Math.random()<0.5)particles.push({x:act2Tower.x+rand(-14,14),y:act2Tower.y-30,vx:0,vy:-1.5,life:0.6,color:'#7dd3fc',sz:2.5});
+        if(act2Tower.progress>=1){
+          player.ship2=true;player.wounded=false;player.hp=player.maxHp;
+          act2Tower=null;
+          announce={text:'⚡ КОРАБЛЬ ВОССТАНОВЛЕН — ДВА КРЫЛОВЫХ ОРУДИЯ!',life:5,color:'#7dd3fc'};
+          flashFx(0.7,'125,211,252');camShake=Math.max(camShake,16);
+          for(let i=0;i<40;i++)particles.push({x:player.x,y:player.y,vx:rand(-5,5),vy:rand(-5,5),life:1,color:'#7dd3fc',sz:3});
+        }
+      }
+    }
     if(player.altarT>0)player.altarT-=dt;
     if(player.altarSlowT>0){player.altarSlowT-=dt;}
     if(player.overdriveActive>0)player.overdriveActive-=dt;
@@ -4839,6 +4953,29 @@
       const HR=player.r*1.7;
       x.save();x.translate(player.x,player.y);x.rotate(player._hAng+Math.PI/2); // нос корабля смотрит вверх → по курсу
       x.lineJoin='round';x.lineCap='round';
+      if(player.ship2){
+        // КОРАБЛЬ АКТА 2 (Arwing-стиль): стреловидный истребитель, пушки на кончиках крыльев
+        const fireGlow=(t-(player._lastShotT||0))<0.08;
+        // твин-выхлоп
+        x.globalAlpha=0.75;x.fillStyle='#7dd3fc';
+        for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.22,HR*0.7);x.lineTo(sg*HR*0.1,HR*(1.05+0.25*Math.sin(t*30+sg)));x.lineTo(sg*HR*0.34,HR*0.7);x.closePath();x.fill();}
+        x.globalAlpha=1;
+        // крылья (скошены назад)
+        x.fillStyle='#2563eb';
+        for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.18,-HR*0.12);x.lineTo(sg*HR*1.35,HR*0.55);x.lineTo(sg*HR*1.24,HR*0.92);x.lineTo(sg*HR*0.16,HR*0.5);x.closePath();x.fill();}
+        // акцент-полосы
+        x.strokeStyle='#93c5fd';x.lineWidth=2;for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.9,HR*0.6);x.lineTo(sg*HR*0.22,HR*0.28);x.stroke();}
+        // фюзеляж
+        x.fillStyle='#e8eefc';x.beginPath();x.moveTo(0,-HR*1.35);x.quadraticCurveTo(HR*0.32,-HR*0.15,HR*0.2,HR*0.6);x.lineTo(-HR*0.2,HR*0.6);x.quadraticCurveTo(-HR*0.32,-HR*0.15,0,-HR*1.35);x.closePath();x.fill();
+        // ПУШКИ на кончиках крыльев
+        for(const sg of[-1,1]){const wx=sg*HR*1.28,wy=HR*0.62;
+          x.fillStyle='#0f172a';x.fillRect(wx-HR*0.1,wy-HR*0.5,HR*0.2,HR*0.62);
+          x.fillStyle=fireGlow?'#fde047':'#7dd3fc';x.shadowColor=fireGlow?'#fde047':'#7dd3fc';x.shadowBlur=fireGlow?10:4;
+          x.fillRect(wx-HR*0.05,wy-HR*0.72,HR*0.1,HR*0.3);x.shadowBlur=0;}
+        // кабина
+        x.fillStyle='#0c1a3a';x.beginPath();x.ellipse(0,-HR*0.5,HR*0.2,HR*0.48,0,0,Math.PI*2);x.fill();
+        x.fillStyle='#7dd3fc';x.globalAlpha=0.85;x.beginPath();x.ellipse(0,-HR*0.6,HR*0.11,HR*0.28,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      }else{
       // выхлоп двигателя
       x.globalAlpha=0.7;x.fillStyle='#38bdf8';x.beginPath();x.moveTo(-HR*0.35,HR*0.7);x.lineTo(0,HR*(1.1+0.25*Math.sin(t*30)));x.lineTo(HR*0.35,HR*0.7);x.closePath();x.fill();x.globalAlpha=1;
       // корпус
@@ -4849,6 +4986,7 @@
       // кабина
       x.fillStyle='#1e3a8a';x.beginPath();x.ellipse(0,-HR*0.35,HR*0.28,HR*0.42,0,0,Math.PI*2);x.fill();
       x.fillStyle='#7dd3fc';x.globalAlpha=0.8;x.beginPath();x.ellipse(0,-HR*0.4,HR*0.15,HR*0.24,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      }
       // получил урон — корабль коротко вспыхивает красным; при смерти горит и гаснет
       if(player._hurtT>0||player.dying){
         x.globalAlpha=player.dying?0.7:Math.min(0.6,player._hurtT*1.6);
@@ -4859,6 +4997,21 @@
     x.shadowBlur=0;
     x.globalAlpha=1;
     x.restore();
+    // БАШНЯ-ПОЧИНКА Акта 2
+    if(act2Tower){
+      const T2=act2Tower;x.save();x.translate(T2.x,T2.y);
+      x.shadowColor='#7dd3fc';x.shadowBlur=18;
+      x.fillStyle='#1e293b';x.beginPath();x.moveTo(-T2.r*0.55,T2.r);x.lineTo(-T2.r*0.3,-T2.r*0.9);x.lineTo(T2.r*0.3,-T2.r*0.9);x.lineTo(T2.r*0.55,T2.r);x.closePath();x.fill();
+      x.fillStyle='#7dd3fc';x.beginPath();x.arc(0,-T2.r*0.9,T2.r*0.42,0,Math.PI*2);x.fill();x.shadowBlur=0;
+      // кольцо прогресса
+      x.strokeStyle='#0b0e17';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,T2.r+8,0,Math.PI*2);x.stroke();
+      x.strokeStyle='#4ade80';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,T2.r+8,-Math.PI/2,-Math.PI/2+Math.PI*2*T2.progress);x.stroke();
+      x.fillStyle='#fff';x.font='bold '+Math.round(13/zoom)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(T2.progress>0?Math.round(T2.progress*100)+'%':'🔧 ПОДЛЕТИ',0,T2.r+26);
+      x.restore();
+      if(!vaultCleared){x.save();edgeArrow(T2.x,T2.y,T2.r,'#4ade80',1.6);x.restore();}
+    }
+    drawFinale();
     drawOffscreenIndicators();
     // movement indicator: a chevron orbiting the player instead of a joystick pad —
     // on touch screens the finger sits right on top of the player, a pad there is invisible
@@ -4875,8 +5028,8 @@
       const vg=x.createRadialGradient(W/2,H/2,Math.min(W,H)*0.36,W/2,H/2,Math.max(W,H)*0.72);
       vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.5)');
       x.fillStyle=vg;x.fillRect(0,0,W,H);
-      const wash=inVault?'168,85,247':ACT_WASH[Math.floor((player.level-1)/10)%ACT_WASH.length];
-      x.globalAlpha=(inVault?0.13:0.05)+0.02*Math.sin(t*1.5);x.fillStyle='rgb('+wash+')';x.fillRect(0,0,W,H);x.globalAlpha=1;
+      const wash=act===2?'190,24,60':(inVault?'168,85,247':ACT_WASH[Math.floor((player.level-1)/10)%ACT_WASH.length]);
+      x.globalAlpha=(inVault?0.13:act===2?0.14:0.05)+0.02*Math.sin(t*1.5);x.fillStyle='rgb('+wash+')';x.fillRect(0,0,W,H);x.globalAlpha=1;
       const hpp=player.hp/player.maxHp;
       if(hpp<0.35){
         const a=((0.35-hpp)/0.35)*(0.32+0.2*Math.sin(t*6));
@@ -5022,7 +5175,8 @@
     bulletTime+=((ctrlHeld?1:1/3)-bulletTime)*Math.min(1,real*10);
     if(state==='running'&&!paused&&deathCine<=0&&hitStop<=0)dt*=bulletTime;
     try{
-      if(state==='running'&&!paused){step(dt);maybeOpenChoice();}
+      if(finale){finaleTick(real);}
+      else if(state==='running'&&!paused){step(dt);maybeOpenChoice();}
       // таймер «нетерпеливых» кнопок: копится в РЕАЛЬНОМ времени (буллет-тайм не тормозит его)
       if(state==='running'&&!paused&&!optChoice&&pendingLevelUps>0)pendingIdleT+=real;else pendingIdleT=0;
       draw();
