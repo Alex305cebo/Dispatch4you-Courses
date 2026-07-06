@@ -1045,6 +1045,7 @@
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
+  let act2Base=null; // БАЗА Акта 2: здание, что починило корабль — остаётся в мире как ориентир
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
@@ -1247,7 +1248,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1266,7 +1267,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,act2Base,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
@@ -1313,7 +1314,9 @@
     forestDone=s.forestDone||false;forestPending=false;forestGate=false;vaultTheme='dungeon';forestTrees=[];
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
     act=s.act||1;finale=null;act2Tower=null;
-    mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;
+    mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;act2Base=s.act2Base||null;
+    // подстраховка: сейв во время починки (ещё раненый, башни нет) — возвращаем башню рядом
+    if(act===2&&player.wounded&&!player.ship2&&!act2Base){act2Tower={x:player.x+130,y:player.y-10,r:46,progress:0};}
     // РЕВАНШ: в старых версиях Хронос мог погибнуть «за кадром» в толпе — бой не состоялся.
     // Такому сейву возвращаем встречу: арена откроется сразу после продолжения.
     if(megaDone&&!megaFought){megaDone=false;pendingMegaBoss=true;
@@ -2267,7 +2270,7 @@
       if(!tg[0]){return;}
       player.fireAcc=0;
       const fa=player._hAng||0,ux=Math.cos(fa),uy=Math.sin(fa),nx=-uy,ny=ux;
-      const span=player.r*1.55,fwd=player.r*0.4,sp2=player.projSpeed*(player.hasteActive>0?1.3:1);
+      const span=player.r*1.95,fwd=player.r*0.5,sp2=player.projSpeed*(player.hasteActive>0?1.3:1); // под увеличенный корабль
       const cannons=[{x:player.x+nx*span+ux*fwd,y:player.y+ny*span+uy*fwd,tgt:tg[0]},
                      {x:player.x-nx*span+ux*fwd,y:player.y-ny*span+uy*fwd,tgt:tg[1]||tg[0]}];
       for(const c of cannons){
@@ -3083,50 +3086,83 @@
     if(!finale)return;
     const F=finale,b=F.boss;
     F.t-=real;
-    camShake=Math.max(camShake,F.phase==='fire'?16:6);
-    if(F.phase==='charge'){
-      // Хронос копит энергию: ядро разгорается, луч-телеграф на игрока
-      if(b){b.x+=(player.x+180-b.x)*Math.min(1,real*1.5);b.y+=(player.y-b.y)*Math.min(1,real*1.5);}
-      if(F.t<=0){F.phase='fire';F.t=1.0;
+    // step() во время катсцены НЕ идёт → гасим вспышки здесь, иначе они «залипают» и топят лазер в красном
+    if(screenFlash>0)screenFlash=Math.max(0,screenFlash-real*1.6);
+    if(fxFlash>0)fxFlash=Math.max(0,fxFlash-real*3.5);
+    camShake=Math.max(camShake,F.phase==='fire'?20:F.phase==='charge'?8:5);
+    if(b){b.x+=(player.x+240-b.x)*Math.min(1,real*1.3);b.y+=(player.y-70-b.y)*Math.min(1,real*1.3);} // Хронос выходит на позицию
+    if(F.phase==='win'){
+      // Хронос содрогается — «почти конец», игрок выдыхает
+      if(b&&Math.random()<0.6)burst(b.x+rand(-b.r,b.r),b.y+rand(-b.r,b.r),'#fff',2);
+      if(F.t<=0){F.phase='charge';F.t=2.6; // ДОЛГИЙ заряд — его нельзя не заметить
+        announce={text:'☠ ХРОНОС ЗАРЯЖАЕТ СУПЕР-ЛАЗЕР — УКЛОНИТЬСЯ НЕЛЬЗЯ!',life:2.8,color:'#ff2d55'};
+        sfxSweep(70,1300,2.4,'sawtooth',0.17,true);
+      }
+    }else if(F.phase==='charge'){
+      // энергия стягивается в ядро — ясный, растущий телеграф
+      if(b&&Math.random()<0.7){const a=rand(0,6.283),d=140+rand(0,90);
+        particles.push({x:b.x+Math.cos(a)*d,y:b.y+Math.sin(a)*d,vx:-Math.cos(a)*120,vy:-Math.sin(a)*120,life:0.55,color:'#ff2d55',sz:3});}
+      if(F.t<=0){F.phase='fire';F.t=1.8; // ДОЛГИЙ выстрел
         player.hp=Math.max(1,Math.round(player.maxHp*0.20)); // сносит до 20%
-        screenFlash=1;flashFx(0.9,'255,45,85');camShake=Math.max(camShake,26);
-        sfxBoom(0.7,0.4,200,40,true);
-        for(let i=0;i<50;i++)particles.push({x:player.x+rand(-20,20),y:player.y+rand(-20,20),vx:rand(-6,6),vy:rand(-6,6),life:1,color:i%2?'#fff':'#ff2d55',sz:3+Math.random()*4});
-        announce={text:'💥 ПРЯМОЕ ПОПАДАНИЕ! Корабль повреждён…',life:2.4,color:'#ff2d55'};
+        screenFlash=0.6;flashFx(0.6,'255,45,85');camShake=Math.max(camShake,32);hitStop=0.3;
+        sfxBoom(0.85,0.55,180,40,true);
+        for(let i=0;i<80;i++)particles.push({x:player.x+rand(-26,26),y:player.y+rand(-26,26),vx:rand(-7,7),vy:rand(-7,7),life:1,color:i%2?'#fff':'#ff2d55',sz:3+Math.random()*5});
+        announce={text:'💥 СУПЕР-ЛАЗЕР! Корабль пробит — осталось 20% прочности!',life:3,color:'#ff2d55'};
       }
     }else if(F.phase==='fire'){
-      if(F.t<=0){F.phase='teleport';F.t=1.2;
-        announce={text:'🌀 ТЕЛЕПОРТ… ',life:2,color:'#7dd3fc'};sfxSweep(1400,200,0.9,'sine',0.14,true);
+      // держим луч — искры с корабля весь выстрел
+      if(Math.random()<0.8)particles.push({x:player.x+rand(-28,28),y:player.y+rand(-28,28),vx:rand(-4,4),vy:rand(-4,4),life:0.6,color:Math.random()<0.5?'#fff':'#ff2d55',sz:3});
+      if(F.t<=0){F.phase='teleport';F.t=2.2;
+        announce={text:'🌀 ВЗРЫВ РАЗЛОМА ЗАТЯГИВАЕТ ТЕБЯ — переход в АКТ 2…',life:2.8,color:'#7dd3fc'};
+        sfxSweep(1500,180,1.6,'sine',0.15,true);
       }
-    }else{ // teleport: корабль закручивается в портал
-      zoom+=(Math.min(2.4,baseZoom*2.2)-zoom)*Math.min(1,real*3);
-      player._spin=(player._spin||0)+real*18;
+    }else{ // teleport: корабль закручивается в портал, экран белеет
+      zoom+=(Math.min(2.4,baseZoom*2.2)-zoom)*Math.min(1,real*2.0);
+      player._spin=(player._spin||0)+real*16;
+      if(Math.random()<0.6)particles.push({x:player.x+rand(-34,34),y:player.y+rand(-34,34),vx:rand(-2,2),vy:rand(-3,-0.5),life:0.7,color:'#7dd3fc',sz:3});
       if(F.t<=0){finale=null;zoom=baseZoom*1.3;player._spin=0;enterAct2();}
     }
   }
   function drawFinale(){
     if(!finale)return;const F=finale,b=F.boss;
+    // ВАЖНО: на этом этапе кадра камера уже снята (экранные координаты). Возвращаем мировую
+    // трансформацию, чтобы луч рисовался в мире (Хронос→игрок), а не в сырых пикселях.
     x.save();
-    if(F.phase==='charge'&&b){
-      // растущее ядро на Хроносе + пунктирный телеграф к игроку
-      const k=1-Math.max(0,F.t)/1.6;
-      x.globalAlpha=0.5+0.4*Math.sin(t*20);x.strokeStyle='#ff2d55';x.lineWidth=(2+6*k)/zoom;x.setLineDash([14,10]);
-      x.beginPath();x.moveTo(b.x,b.y);x.lineTo(player.x,player.y);x.stroke();x.setLineDash([]);
-      x.globalAlpha=1;x.fillStyle='#fff';x.shadowColor='#ff2d55';x.shadowBlur=30;
-      x.beginPath();x.arc(b.x,b.y,10+34*k,0,Math.PI*2);x.fill();x.shadowBlur=0;
+    let fsx=0,fsy=0;if(camShake>0.3){fsx=Math.sin(t*47)*camShake*0.6;fsy=Math.cos(t*41)*camShake*0.6;}
+    x.translate(W/2+fsx,H/2+fsy);x.scale(zoom,zoom);x.translate(-player.x,-player.y);
+    if((F.phase==='win'||F.phase==='charge')&&b){
+      // толстый пульсирующий телеграф-луч Хронос→игрок + растущее ядро (нельзя не заметить).
+      // БЕЛОЕ ядро в красной обводке — иначе красный луч теряется на красном фоне катсцены.
+      const k=F.phase==='charge'?1-Math.max(0,F.t)/2.6:0.12;
+      const pulse=0.55+0.45*Math.abs(Math.sin(t*11));
+      x.globalAlpha=pulse;
+      x.strokeStyle='#ff2d55';x.lineWidth=10+34*k;x.shadowColor='#ff2d55';x.shadowBlur=34;
+      x.beginPath();x.moveTo(b.x,b.y);x.lineTo(player.x,player.y);x.stroke();
+      x.strokeStyle='#fff';x.lineWidth=3+10*k;x.shadowColor='#fff';x.shadowBlur=18;
+      x.beginPath();x.moveTo(b.x,b.y);x.lineTo(player.x,player.y);x.stroke();x.shadowBlur=0;
+      x.globalAlpha=1;x.fillStyle='#fff';x.shadowColor='#ff2d55';x.shadowBlur=46;
+      x.beginPath();x.arc(b.x,b.y,16+54*k,0,Math.PI*2);x.fill();x.shadowBlur=0;
     }else if(F.phase==='fire'&&b){
-      // ГИГАНТСКИЙ ЛАЗЕР Хронос→игрок
-      const ang=Math.atan2(player.y-b.y,player.x-b.x);
-      x.save();x.translate(b.x,b.y);x.rotate(ang);
-      const L=Math.hypot(player.x-b.x,player.y-b.y)+40,w=26+10*Math.sin(t*40);
-      const g=x.createLinearGradient(0,-w,0,w);
-      g.addColorStop(0,'rgba(255,45,85,0)');g.addColorStop(0.5,'rgba(255,255,255,0.95)');g.addColorStop(1,'rgba(255,45,85,0)');
-      x.fillStyle=g;x.shadowColor='#ff2d55';x.shadowBlur=40;x.fillRect(0,-w,L,w*2);x.shadowBlur=0;
-      x.fillStyle='#fff';x.fillRect(0,-w*0.3,L,w*0.6);
-      x.restore();
+      // ГИГАНТСКИЙ бело-раскалённый лазер Хронос→игрок и дальше за экран.
+      // Рисуем толстыми линиями (как телеграф — гарантированно видно), продлевая за игрока.
+      const ex=player.x-(b.x-player.x)*4,ey=player.y-(b.y-player.y)*4;
+      const wob=1+0.18*Math.sin(t*40);
+      x.lineCap='round';x.globalAlpha=1;
+      x.strokeStyle='#ff2d55';x.lineWidth=80*wob;x.shadowColor='#ff2d55';x.shadowBlur=60;
+      x.beginPath();x.moveTo(b.x,b.y);x.lineTo(ex,ey);x.stroke();
+      x.strokeStyle='#ff8fa3';x.lineWidth=44*wob;x.shadowBlur=40;
+      x.beginPath();x.moveTo(b.x,b.y);x.lineTo(ex,ey);x.stroke();
+      x.strokeStyle='#fff';x.lineWidth=20*wob;x.shadowColor='#fff';x.shadowBlur=26;
+      x.beginPath();x.moveTo(b.x,b.y);x.lineTo(ex,ey);x.stroke();x.shadowBlur=0;
+      // вспышка в точке попадания
+      x.fillStyle='#fff';x.shadowColor='#ff2d55';x.shadowBlur=40;
+      x.beginPath();x.arc(player.x,player.y,26+8*Math.sin(t*30),0,Math.PI*2);x.fill();x.shadowBlur=0;
     }else if(F.phase==='teleport'){
-      const k=1-Math.max(0,F.t)/1.2;
-      x.globalAlpha=k;x.fillStyle='#fff';x.fillRect(0,0,W,H); // белая вспышка перехода
+      // белая вспышка перехода — в ЭКРАННЫХ координатах (иначе не покрывала экран)
+      const k=1-Math.max(0,F.t)/2.2;
+      x.save();x.setTransform(1,0,0,1,0,0);
+      x.globalAlpha=Math.min(1,k*1.3);x.fillStyle='#fff';x.fillRect(0,0,W,H);
+      x.restore();
     }
     x.restore();
   }
@@ -3137,8 +3173,8 @@
     mobSpawnPaused=false;
     player.wounded=true; // раненый: искры и дым, пока не починит башня
     player.invuln=Math.max(player.invuln,4);
-    act2Tower={x:player.x+130,y:player.y-10,r:36,progress:0};
-    announce={text:'— АКТ 2: РАЗЛОМ — долети до БАШНИ, она починит корабль',life:6,color:'#ff2d55'};
+    act2Tower={x:player.x+150,y:player.y-10,r:46,progress:0};act2Base=null;
+    announce={text:'— АКТ 2: РАЗЛОМ — долети до БАЗЫ, она починит корабль',life:6,color:'#ff2d55'};
     flashFx(0.6,'244,63,94');screenFlash=0.5;
     state='running';last=performance.now();
   }
@@ -3181,9 +3217,10 @@
     // ФИНАЛ АКТА 1: Хронос на <3% HP не умирает — стреляет супер-лазером и телепортирует тебя в Акт 2
     if(act===1&&!e.finaleDone&&e.hp<=e.maxHp*0.03){
       e.finaleDone=true;e.invulnT=1e9;e.shieldHp=0; // больше не умирает и не бьётся
-      finale={phase:'charge',t:1.6,boss:e};
-      announce={text:'☠ ХРОНОС ЗАРЯЖАЕТ СУПЕР-ЛАЗЕР…',life:2,color:'#ff2d55'};
-      sfxSweep(80,1200,1.4,'sawtooth',0.16,true);
+      finale={phase:'win',t:1.8,boss:e};
+      announce={text:'☠ ХРОНОС ПОЧТИ ПОВЕРЖЕН… но он делает ПОСЛЕДНИЙ ХОД!',life:2.6,color:'#fde047'};
+      hitStop=0.5;camShake=Math.max(camShake,14);
+      sfxBoom(0.5,0.4,240,50,true);
       return;
     }
     if(finale)return; // во время катсцены босс замер
@@ -3498,7 +3535,7 @@
         if(Math.random()<0.5)particles.push({x:act2Tower.x+rand(-14,14),y:act2Tower.y-30,vx:0,vy:-1.5,life:0.6,color:'#7dd3fc',sz:2.5});
         if(act2Tower.progress>=1){
           player.ship2=true;player.wounded=false;player.hp=player.maxHp;
-          act2Tower=null;
+          act2Base={x:act2Tower.x,y:act2Tower.y,r:act2Tower.r};act2Tower=null; // база остаётся в мире
           announce={text:'⚡ КОРАБЛЬ ВОССТАНОВЛЕН — ДВА КРЫЛОВЫХ ОРУДИЯ!',life:5,color:'#7dd3fc'};
           flashFx(0.7,'125,211,252');camShake=Math.max(camShake,16);
           for(let i=0;i<40;i++)particles.push({x:player.x,y:player.y,vx:rand(-5,5),vy:rand(-5,5),life:1,color:'#7dd3fc',sz:3});
@@ -5048,7 +5085,7 @@
       if(player._hAng==null)player._hAng=want;
       let da=want-player._hAng;while(da>Math.PI)da-=2*Math.PI;while(da<-Math.PI)da+=2*Math.PI;
       player._hAng+=da*0.2;
-      const HR=player.r*1.7;
+      const HR=player.r*(player.ship2?2.15:1.7); // корабль Акта 2 крупнее — заметно мощнее
       x.save();x.translate(player.x,player.y);x.rotate(player._hAng+Math.PI/2); // нос корабля смотрит вверх → по курсу
       x.lineJoin='round';x.lineCap='round';
       if(player.ship2){
@@ -5095,19 +5132,48 @@
     x.shadowBlur=0;
     x.globalAlpha=1;
     x.restore();
-    // БАШНЯ-ПОЧИНКА Акта 2
-    if(act2Tower){
-      const T2=act2Tower;x.save();x.translate(T2.x,T2.y);
-      x.shadowColor='#7dd3fc';x.shadowBlur=18;
-      x.fillStyle='#1e293b';x.beginPath();x.moveTo(-T2.r*0.55,T2.r);x.lineTo(-T2.r*0.3,-T2.r*0.9);x.lineTo(T2.r*0.3,-T2.r*0.9);x.lineTo(T2.r*0.55,T2.r);x.closePath();x.fill();
-      x.fillStyle='#7dd3fc';x.beginPath();x.arc(0,-T2.r*0.9,T2.r*0.42,0,Math.PI*2);x.fill();x.shadowBlur=0;
-      // кольцо прогресса
-      x.strokeStyle='#0b0e17';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,T2.r+8,0,Math.PI*2);x.stroke();
-      x.strokeStyle='#4ade80';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,T2.r+8,-Math.PI/2,-Math.PI/2+Math.PI*2*T2.progress);x.stroke();
-      x.fillStyle='#fff';x.font='bold '+Math.round(13/zoom)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-      x.fillText(T2.progress>0?Math.round(T2.progress*100)+'%':'🔧 ПОДЛЕТИ',0,T2.r+26);
+    // СТАНЦИЯ-БАЗА Акта 2 (чинит корабль; после починки остаётся в мире ориентиром)
+    function drawStation(S,done){
+      const R=S.r;x.save();x.translate(S.x,S.y);
+      x.shadowColor='#7dd3fc';x.shadowBlur=done?24:18;
+      // посадочная платформа
+      x.fillStyle='#0f172a';x.beginPath();x.ellipse(0,R*0.72,R*1.25,R*0.42,0,0,Math.PI*2);x.fill();
+      x.strokeStyle=done?'#4ade80':'#38bdf8';x.lineWidth=3;x.stroke();
+      // корпус здания (трапеция) + боковые опоры
+      x.fillStyle='#1e293b';
+      x.beginPath();x.moveTo(-R*0.75,R*0.7);x.lineTo(-R*0.5,-R);x.lineTo(R*0.5,-R);x.lineTo(R*0.75,R*0.7);x.closePath();x.fill();
+      x.fillStyle='#334155';x.fillRect(-R*0.95,R*0.1,R*0.22,R*0.7);x.fillRect(R*0.73,R*0.1,R*0.22,R*0.7);
+      // окна-огни
+      x.fillStyle=done?'#4ade80':'#7dd3fc';
+      for(let i=0;i<3;i++)for(let j=0;j<2;j++)x.fillRect(-R*0.28+j*R*0.34,-R*0.7+i*R*0.42,R*0.18,R*0.22);
+      // антенна-маяк с пульсом
+      x.fillStyle='#475569';x.fillRect(-R*0.05,-R*1.5,R*0.1,R*0.5);
+      const pu=0.6+0.4*Math.abs(Math.sin(t*3));
+      x.fillStyle=done?'#4ade80':'#7dd3fc';x.shadowColor=done?'#4ade80':'#7dd3fc';x.shadowBlur=16;
+      x.beginPath();x.arc(0,-R*1.5,R*0.2*pu,0,Math.PI*2);x.fill();x.shadowBlur=0;
       x.restore();
-      if(!vaultCleared){x.save();edgeArrow(T2.x,T2.y,T2.r,'#4ade80',1.6);x.restore();}
+    }
+    // камера уже снята → возвращаем мировую трансформацию для станции (edgeArrow ниже — экранный)
+    const camWorld=()=>{let ssx=0,ssy=0;if(camShake>0.3){ssx=Math.sin(t*47)*camShake*0.6;ssy=Math.cos(t*41)*camShake*0.6;}x.translate(W/2+ssx,H/2+ssy);x.scale(zoom,zoom);x.translate(-player.x,-player.y);};
+    if(act2Tower){
+      const T2=act2Tower;
+      x.save();camWorld();
+      drawStation(T2,false);
+      x.save();x.translate(T2.x,T2.y);
+      x.strokeStyle='#0b0e17';x.lineWidth=6/zoom;x.beginPath();x.arc(0,0,T2.r+14,0,Math.PI*2);x.stroke();
+      x.strokeStyle='#4ade80';x.lineWidth=6/zoom;x.beginPath();x.arc(0,0,T2.r+14,-Math.PI/2,-Math.PI/2+Math.PI*2*T2.progress);x.stroke();
+      x.fillStyle='#fff';x.font='bold '+Math.round(14/zoom)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(T2.progress>0?'🔧 '+Math.round(T2.progress*100)+'%':'🔧 ПОДЛЕТИ К БАЗЕ',0,T2.r+34);
+      x.restore();x.restore();
+      x.save();edgeArrow(T2.x,T2.y,T2.r,'#4ade80',1.6);x.restore();
+    }else if(act2Base){
+      const B=act2Base;
+      x.save();camWorld();
+      drawStation(B,true);
+      x.save();x.translate(B.x,B.y);
+      x.fillStyle='#4ade80';x.globalAlpha=0.9;x.font='bold '+Math.round(12/zoom)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText('🛰 БАЗА',0,B.r+30);x.globalAlpha=1;x.restore();x.restore();
+      x.save();edgeArrow(B.x,B.y,B.r,'#4ade80',1.1);x.restore(); // ориентир, даже когда далеко
     }
     drawFinale();
     drawOffscreenIndicators();
