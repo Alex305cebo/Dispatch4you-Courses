@@ -5439,6 +5439,57 @@
   }
   requestAnimationFrame(gpPoll);
 
+  // === DEV/ТЕСТ-ПАНЕЛЬ (только по ?dev=1) — быстрая проверка позднего геймплея (40+ ур.) ===
+  (function(){
+    let devMode=false;
+    try{devMode=new URLSearchParams(location.search).has('dev');}catch(e){}
+    if(!devMode)return;
+    function ensureRun(){ if(state!=='running'&&state!=='levelup'){ start(); } }
+    // прокачать игрока до уровня lvl и выдать ups улучшений (чтобы бой на 40+ был честным)
+    function boost(lvl,ups){
+      ensureRun();
+      if(lvl>player.level)player.level=lvl;
+      player.xpNeed=xpNeedFor(player.level);player.xp=0;
+      for(let i=0;i<ups;i++)autoApplyOne();
+      player.hp=player.maxHp;lives=3;pendingLevelUps=0;
+      try{recalcLvlScale();}catch(e){}
+      try{updatePendingBtn();}catch(e){}
+    }
+    function toChronos(){
+      boost(Math.max(player.level,48),50);
+      if(!enemies.some(e=>e.megaboss)){pendingMegaBoss=false;spawnMegaBoss();}
+      announce={text:'🛠 DEV: арена Хроноса',life:2.5,color:'#7dd3fc'};
+    }
+    function toFinale(){
+      toChronos();
+      const mb=enemies.find(e=>e.megaboss);
+      if(mb){mb.invulnT=0;mb.shieldHp=0;mb._hpReal=mb.maxHp*0.02;} // <3% → следующий кадр запустит финал
+      announce={text:'🛠 DEV: финал Хроноса → Акт 2',life:2.5,color:'#ff2d55'};
+    }
+    const acts=[
+      ['▶ Старт·45',()=>boost(45,55)],
+      ['+5 ур',()=>boost(player.level+5,6)],
+      ['+10 апгр',()=>{ensureRun();for(let i=0;i<10;i++)autoApplyOne();player.hp=player.maxHp;}],
+      ['☠ Хронос',toChronos],
+      ['🌀 Акт 2',toFinale],
+    ];
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;left:8px;bottom:8px;z-index:9999;display:flex;flex-direction:column;gap:4px;'+
+      'font:600 12px system-ui,sans-serif;background:rgba(10,14,23,.82);border:1px solid #334155;border-radius:10px;padding:6px;max-width:150px;';
+    const head=document.createElement('div');
+    head.textContent='🛠 DEV';head.style.cssText='color:#7dd3fc;cursor:pointer;text-align:center;user-select:none;';
+    const body=document.createElement('div');body.style.cssText='display:flex;flex-direction:column;gap:4px;';
+    head.onclick=()=>{body.style.display=body.style.display==='none'?'flex':'none';};
+    acts.forEach(([label,fn])=>{
+      const b=document.createElement('button');b.textContent=label;
+      b.style.cssText='background:#1e293b;color:#e8eefc;border:1px solid #475569;border-radius:7px;padding:6px 8px;cursor:pointer;';
+      b.onmouseenter=()=>b.style.borderColor='#7dd3fc';b.onmouseleave=()=>b.style.borderColor='#475569';
+      b.onclick=(ev)=>{ev.preventDefault();ev.stopPropagation();try{fn();}catch(e){console.error('dev',e);}};
+      body.appendChild(b);
+    });
+    wrap.appendChild(head);wrap.appendChild(body);document.body.appendChild(wrap);
+  })();
+
   resizeCanvas();reset();draw();
 })();
 (function(){
