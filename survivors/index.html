@@ -1044,6 +1044,7 @@
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
+  let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
@@ -1246,7 +1247,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1265,7 +1266,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       }));
     }catch(e){}
@@ -1312,6 +1313,7 @@
     forestDone=s.forestDone||false;forestPending=false;forestGate=false;vaultTheme='dungeon';forestTrees=[];
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
     act=s.act||1;finale=null;act2Tower=null;
+    mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;
     // РЕВАНШ: в старых версиях Хронос мог погибнуть «за кадром» в толпе — бой не состоялся.
     // Такому сейву возвращаем встречу: арена откроется сразу после продолжения.
     if(megaDone&&!megaFought){megaDone=false;pendingMegaBoss=true;
@@ -1492,6 +1494,7 @@
       stageCount:elite?3:0,stage:elite?3:0,invulnT:0,shipA:0,
       ranged:!elite&&!!base.ranged,rangedCd:!elite&&base.ranged?rand(1,2):0};
     clampMobHp(en); // всегда в коридоре живучести относительно урона игрока
+    if(act===2&&!elite){en.glow='#f43f5e';en.maxHp=en.hp=en.maxHp*1.12;} // АКТ 2: багровое свечение + чуть живучее
     if(elite&&!en.superboss){ // обычные боссы получают щит и неуязвимость на трансформациях (как мини-Хронос)
       en.shieldMax=en.shieldHp=Math.round(en.maxHp*0.28);en.shieldRe=14;en.shieldCd=0;en._shieldHitT=0;
       armMegaShield(en);
@@ -2114,11 +2117,20 @@
     }
     if(e.megaboss){ // финал акта: гигантский кристалл + выборы + эссенция
       megaDone=true;megaFought=true;mobSpawnPaused=false;
-      gems.push({x:e.x+20,y:e.y,r:16,val:bossXp(0.8),big:true,hue:'#7dd3fc'});
-      addUpPoints(3,'МЕГА-БОСС');
-      metaState.shards+=25;saveMeta();
-      announce={text:'🏆 ХРОНОС ПОВЕРЖЕН — АКТ ПРОЙДЕН! Впереди новые глубины…',life:6,color:'#fde047'};
-      flashFx(0.8,'253,224,71');camShake=Math.max(camShake,20);
+      if(e.act2boss){ // истинная форма повержена — Акт 2 покорён
+        mega2Done=true;mega2Pending=false;
+        gems.push({x:e.x+20,y:e.y,r:18,val:bossXp(1.0),big:true,hue:'#f43f5e'});
+        addUpPoints(4,'ХРОНОС ИСТИННЫЙ');
+        metaState.shards+=40;saveMeta();
+        announce={text:'🏆 ХРОНОС ИСТИННЫЙ ПОВЕРЖЕН — АКТ 2 ПОКОРЁН! Разлом стихает…',life:6,color:'#fde047'};
+        flashFx(0.9,'253,224,71');camShake=Math.max(camShake,24);
+      }else{
+        gems.push({x:e.x+20,y:e.y,r:16,val:bossXp(0.8),big:true,hue:'#7dd3fc'});
+        addUpPoints(3,'МЕГА-БОСС');
+        metaState.shards+=25;saveMeta();
+        announce={text:'🏆 ХРОНОС ПОВЕРЖЕН — АКТ ПРОЙДЕН! Впереди новые глубины…',life:6,color:'#fde047'};
+        flashFx(0.8,'253,224,71');camShake=Math.max(camShake,20);
+      }
     }
     // анимация смерти: замороженный разбивается льдинками, обычный — эмодзи-«поп»
     if(e.slowT>0)fxIceShatter(e);else fxDeathPop(e);
@@ -2673,6 +2685,11 @@
     if(player.level===40&&!megaDone)announce={text:'⚔ ВНИМАНИЕ: на 50 уровне ждёт МЕГА-БОСС ХРОНОС!',life:5,color:'#ff2d55'};
     if(player.level===45&&!megaDone)announce={text:'☠ МЕГА-БОСС всё ближе — 5 уровней до встречи!',life:4,color:'#ff2d55'};
     if(player.level===50&&!megaDone)pendingMegaBoss=true;
+    // БОСС АКТА 2: обновлённый Хронос появляется через несколько уровней после починки корабля
+    if(act===2&&player.ship2&&!mega2Done&&act2BossLvl){
+      if(player.level===act2BossLvl-3)announce={text:'☠ РАЗЛОМ ДРОЖИТ… ХРОНОС ПРОБУЖДАЕТСЯ — 3 уровня!',life:4,color:'#f43f5e'};
+      if(player.level>=act2BossLvl&&!enemies.some(e=>e.megaboss)){mega2Pending=true;}
+    }
     if(player.level%5===0&&!(player.level===50&&!megaDone)){pendingLevelUps+=2;pendingBossLevel=player.level;
       // рубеж сложности: враги делают шаг вверх — предупреждаем и даём передышку (+20% HP),
       // чтобы полоса оставалась играбельной
@@ -3023,6 +3040,13 @@
     {name:'ХРОНОС · Форма Магмы',color:'#fb923c',rMul:1.16,spdMul:1.05,cd:2.1,attack:e=>{const r2=Math.random();if(r2<0.45)bossSlam(e);else if(r2<0.75)bossHalfBurn(e);else bossFan(e,7);}},
     {name:'ХРОНОС · ЯРОСТЬ',color:'#ff2d55',rMul:1.25,spdMul:1.3,cd:1.5,attack:e=>{const r2=Math.random();if(r2<0.25)bossSpiral(e);else if(r2<0.5)bossNovaGap(e);else if(r2<0.75)bossSlam(e);else bossBeam(e);}},
   ];
+  // ИСТИННАЯ ФОРМА (только Акт 2): 3 доп. стадии — другой корабль, лучше и опаснее.
+  // Атаки комбинированные: сразу по 2 паттерна и быстрее перезарядка — настоящий финальный вызов.
+  const MEGA_FORMS2=[
+    {name:'ХРОНОС · ИСТИННАЯ ФОРМА',color:'#a855f7',rMul:1.18,spdMul:1.4,cd:1.2,attack:e=>{bossFan(e,7);bossSpiral(e);}},
+    {name:'ХРОНОС · РАЗЛОМ ВРЕМЁН',color:'#f43f5e',rMul:1.24,spdMul:1.55,cd:1.0,attack:e=>{bossNovaGap(e);const r2=Math.random();if(r2<0.5)bossSlam(e);else bossHalfBurn(e);}},
+    {name:'ХРОНОС · КОНЕЦ ВРЕМЁН',color:'#fde047',rMul:1.3,spdMul:1.7,cd:0.8,attack:e=>{bossBeam(e);bossNovaGap(e);if(Math.random()<0.6)bossSlam(e);}},
+  ];
   function spawnMegaFlyers(e,n){
     const dps=estPlayerDps();
     for(let i=0;i<n;i++){
@@ -3108,6 +3132,7 @@
   }
   function enterAct2(){
     act=2;megaDone=true;megaFought=true;
+    mega2Done=false;mega2Pending=false;act2BossLvl=player.level+8; // босс Акта 2 ждёт через 8 уровней
     enemies=[];enemyProjectiles=[];projectiles=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];
     mobSpawnPaused=false;
     player.wounded=true; // раненый: искры и дым, пока не починит башня
@@ -3126,25 +3151,27 @@
   }
   function spawnMegaBoss(){
     const dps=estPlayerDps();
-    const hp=Math.max(9000,dps*60); // ОЧЕНЬ много жизней: ~минута чистого DPS + щит/лечение/неуязвимости
-    const dmg=tierAvgDmg(50)*16;
+    const a2=act===2; // Акт 2: обновлённый Хронос — крепче, злее, и с истинной формой в конце
+    const hp=a2?Math.max(16000,dps*95):Math.max(9000,dps*60); // ОЧЕНЬ много жизней: щит/лечение/неуязвимости
+    const dmg=(a2?tierAvgDmg(50)*22:tierAvgDmg(50)*16);
     // АРЕНА: Хронос «поглощает» обычных мобов — поле очищается, бой не пропустить
     enemies=enemies.filter(e2=>e2.elite);
     enemyProjectiles=[];
-    burst(player.x,player.y,'#94a3b8',30);
+    burst(player.x,player.y,a2?'#f43f5e':'#94a3b8',30);
     const ang=rand(0,Math.PI*2),rad=360; // на экране, а не за его краем
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
-      hp,maxHp:hp,speed:55,dmg,r:110,baseR:110,baseSpeed:55,shipA:0,invulnT:0,
+      hp,maxHp:hp,speed:a2?62:55,dmg,r:a2?124:110,baseR:a2?124:110,baseSpeed:a2?62:55,shipA:0,invulnT:0,
       guns:[{ox:120,oy:0},{ox:10,oy:-64},{ox:10,oy:64},{ox:-88,oy:-46},{ox:-88,oy:46}].map(g=>({ox:g.ox,oy:g.oy,cd:rand(0.6,2.2),burst:0,bt:0})),
-      color:'#94a3b8',glow:'#94a3b8',skinShape:'super',skinName:'ХРОНОС · Форма Стали',
+      color:a2?'#be123c':'#94a3b8',glow:a2?'#f43f5e':'#94a3b8',skinShape:'super',skinName:a2?'ХРОНОС · ПРОБУЖДЁННЫЙ':'ХРОНОС · Форма Стали',
       xp:xpForPower(hp,dmg)*3,elite:true,megaboss:true,bossNumber:8,pauseSpawns:true,
-      shieldMax:Math.max(1200,dps*8),shieldHp:Math.max(1200,dps*8),shieldRe:18,shieldCd:0,_shieldHitT:0,
-      megaStage:1,megaShootCd:1.2,flyerCd:6,healCd:11,shootCd:1e9,summonCd:1e9};
+      shieldMax:Math.max(1200,dps*(a2?12:8)),shieldHp:Math.max(1200,dps*(a2?12:8)),shieldRe:a2?15:18,shieldCd:0,_shieldHitT:0,
+      megaStage:1,megaShootCd:1.2,flyerCd:6,healCd:11,shootCd:1e9,summonCd:1e9,
+      act2boss:a2,megaPhase:a2?'ship':null,maxHpTrue:a2?Math.max(12000,dps*70):0}; // истинная форма: второй бар HP
     armMegaShield(en);
     enemies.push(en);
     mobSpawnPaused=true; // арена: обычный спавн стоит, пока Хронос жив
-    announce={text:'☠ МЕГА-БОСС: ХРОНОС, Пожиратель Актов ☠',life:4.5,color:'#ff2d55'};
-    rings.push({x:player.x,y:player.y,r:0,maxR:1100,life:1.6});
+    announce={text:a2?'☠ БОСС АКТА 2: ХРОНОС ПРОБУЖДЁННЫЙ ☠':'☠ МЕГА-БОСС: ХРОНОС, Пожиратель Актов ☠',life:4.5,color:a2?'#f43f5e':'#ff2d55'};
+    rings.push({x:player.x,y:player.y,r:0,maxR:1100,life:1.6,color:a2?'#f43f5e':null});
     camShake=Math.max(camShake,22);screenFlash=1;hitStop=0.35; // мгновение слоу-мо — взгляд на босса
     player.invuln=Math.max(player.invuln,1.2);
     sfxBoom(0.6,0.35,300,40,true);setTimeout(()=>beep(45,0.9,'sawtooth',0.25),250);
@@ -3161,6 +3188,26 @@
     }
     if(finale)return; // во время катсцены босс замер
 
+    // ПРОБУЖДЕНИЕ (Акт 2): на <2% первого бара Хронос не умирает — раскрывает ИСТИННУЮ ФОРМУ
+    // (другой корабль) со вторым баром HP и тремя новыми, более опасными стадиями.
+    if(e.act2boss&&e.megaPhase==='ship'&&!e.awoke&&e.hp<=e.maxHp*0.02){
+      e.awoke=true;e.megaPhase='true';
+      e.maxHp=e.maxHpTrue;e._hpReal=e.maxHp; // полный второй бар
+      e.shieldMax=e.shieldHp=Math.round(e.maxHp*0.2);e.shieldCd=0;
+      e.invulnT=3.2;e.megaStage=0;e._formsPhase='ship'; // форс-триггер первой истинной стадии
+      e.guns=e.guns.concat([{ox:60,oy:-88,cd:1,burst:0,bt:0},{ox:60,oy:88,cd:1,burst:0,bt:0}]); // +2 пушки
+      e.baseR=Math.round(e.baseR*1.05);
+      burst(e.x,e.y,'#a855f7',64);rings.push({x:e.x,y:e.y,r:0,maxR:1300,life:1.5,color:'#a855f7'});
+      camShake=Math.max(camShake,30);screenFlash=1;hitStop=0.42;
+      spawnMegaFlyers(e,6);
+      announce={text:'☠ ХРОНОС РАСКРЫВАЕТ ИСТИННУЮ ФОРМУ — 3 СТАДИИ ЯРОСТИ!',life:4.5,color:'#a855f7'};
+      sfxSweep(60,900,1.6,'sawtooth',0.18,true);setTimeout(()=>beep(48,1.1,'sawtooth',0.24),200);
+      return;
+    }
+
+    // текущий набор форм: ship-фаза — 4 формы, истинная форма — 3 более злых
+    const forms=e.megaPhase==='true'?MEGA_FORMS2:MEGA_FORMS;
+
     // щит поглощает урон через сеттер hp (armMegaShield); тут — эффекты и перезарядка
     if(e._shieldBroke){
       e._shieldBroke=false;
@@ -3171,13 +3218,14 @@
     if(e._shieldHitT>0)e._shieldHitT-=dt;
     if(e.shieldHp<=0){e.shieldCd-=dt;if(e.shieldCd<=0){e.shieldHp=e.shieldMax;
       announce={text:'🛡 Хронос восстановил щит!',life:1.6,color:'#7dd3fc'};rings.push({x:e.x,y:e.y,r:0,maxR:e.r+60,life:0.6,color:'#7dd3fc'});}}
-    // СТАДИИ: 4 формы по четвертям HP — трансформация меняет облик, скорость и атаки
-    const st=Math.max(1,Math.min(4,5-Math.ceil(e.hp/e.maxHp*4)));
-    if(st!==e.megaStage){
-      e.megaStage=st;
-      const F=MEGA_FORMS[st-1];
+    // СТАДИИ: формы по долям HP — трансформация меняет облик, скорость и атаки
+    const nSt=forms.length; // 4 (ship) или 3 (истинная форма)
+    const st=Math.max(1,Math.min(nSt,nSt+1-Math.ceil(e.hp/e.maxHp*nSt)));
+    if(st!==e.megaStage||e._formsPhase!==e.megaPhase){
+      e.megaStage=st;e._formsPhase=e.megaPhase;
+      const F=forms[st-1];
       e.color=F.color;e.glow=F.color;e.skinName=F.name;e.r=e.baseR*F.rMul;e.speed=e.baseSpeed*F.spdMul;
-      e.invulnT=3; // ТРАНСФОРМАЦИЯ: несколько секунд полной неуязвимости
+      e.invulnT=Math.max(e.invulnT,e.megaPhase==='true'?2.4:3); // ТРАНСФОРМАЦИЯ: неуязвимость
       burst(e.x,e.y,F.color,40);camShake=Math.max(camShake,14);screenFlash=Math.max(screenFlash,0.6);
       announce={text:'⚡ ТРАНСФОРМАЦИЯ: '+F.name+' — НЕУЯЗВИМ!',life:3,color:F.color};
       spawnMegaFlyers(e,3+st);
@@ -3211,7 +3259,7 @@
     }
     // атаки текущей формы (спец-атаки — реже, основной огонь ведут пушки)
     e.megaShootCd-=dt;
-    if(e.megaShootCd<=0){const F=MEGA_FORMS[(e.megaStage||1)-1];F.attack(e);e.megaShootCd=F.cd*1.5;}
+    if(e.megaShootCd<=0){const F=forms[Math.min(forms.length-1,(e.megaStage||1)-1)];F.attack(e);e.megaShootCd=F.cd*1.5;}
     // рой летунов периодически
     e.flyerCd-=dt;
     if(e.flyerCd<=0){e.flyerCd=9;spawnMegaFlyers(e,3);}
@@ -3419,6 +3467,7 @@
         announce={text:'⚔ БОСС: '+boss.skinName+' ['+mod.name+']! Уровень '+lvl,life:3,color:'#ff2d55'};
         beep(90,0.4,'sawtooth',0.18);camShake=Math.max(camShake,10);
       }else if(pendingMegaBoss){pendingMegaBoss=false;spawnMegaBoss();}
+      else if(mega2Pending){mega2Pending=false;spawnMegaBoss();}
       else if(pendingSuperboss){const lvl=pendingSuperboss;pendingSuperboss=null;spawnSuperboss(lvl);}
       else if(pendingLevel8Boss){pendingLevel8Boss=false;spawnLevel8Boss();}
       if(pendingSuperWarning){
@@ -4045,6 +4094,55 @@
       x.globalAlpha=0.35+0.2*Math.sin(t*14);
       x.strokeStyle='#fff';x.lineWidth=5;x.shadowColor='#fff';x.shadowBlur=22;
       x.beginPath();x.arc(0,0,150,0,Math.PI*2);x.stroke();x.shadowBlur=0;x.globalAlpha=1;
+    }
+    x.restore();
+  }
+  // ИСТИННАЯ ФОРМА Хроноса (Акт 2): другой корабль — хищный клинок с кристаллическим ядром,
+  // вращающимися лезвиями-крыльями и турелями. Опаснее и злее на вид.
+  function drawMegaShipTrue(e){
+    const scl=e.r/e.baseR;
+    x.save();x.translate(e.x,e.y);x.rotate(e.shipA||0);x.scale(scl,scl);
+    const c=e.color||'#a855f7',dk=shade(c,-0.35);
+    // двигатели — тройное пламя
+    for(const oy of[-34,0,34]){
+      const fl=16+9*Math.sin(t*24+oy);
+      x.fillStyle='rgba(244,63,94,0.7)';x.beginPath();
+      x.moveTo(-118,oy-7);x.lineTo(-118-fl,oy);x.lineTo(-118,oy+7);x.closePath();x.fill();
+    }
+    // вращающиеся лезвия-крылья (угроза)
+    x.save();x.rotate(t*0.6);
+    x.fillStyle=dk;x.shadowColor=c;x.shadowBlur=18;
+    for(let i=0;i<4;i++){x.rotate(Math.PI/2);x.beginPath();x.moveTo(30,0);x.lineTo(150,-16);x.lineTo(176,0);x.lineTo(150,16);x.closePath();x.fill();}
+    x.restore();x.shadowBlur=0;
+    // корпус-клинок (стреловидный, острый нос)
+    x.fillStyle=dk;x.shadowColor=e.glow||c;x.shadowBlur=26;
+    x.beginPath();x.moveTo(150,0);x.lineTo(30,-50);x.lineTo(-70,-64);x.lineTo(-120,-26);
+    x.lineTo(-120,26);x.lineTo(-70,64);x.lineTo(30,50);x.closePath();x.fill();x.shadowBlur=0;
+    // верхняя грань
+    x.fillStyle=c;x.beginPath();x.moveTo(128,0);x.lineTo(28,-36);x.lineTo(-62,-46);x.lineTo(-104,-18);
+    x.lineTo(-104,18);x.lineTo(-62,46);x.lineTo(28,36);x.closePath();x.fill();
+    // кристаллическое ядро (ромб, пульс)
+    const pu=0.85+0.15*Math.sin(t*6);
+    x.save();x.translate(24,0);x.rotate(Math.PI/4);
+    x.fillStyle='#0b0e17';x.fillRect(-26,-26,52,52);
+    x.fillStyle=e.glow||c;x.shadowColor=e.glow||c;x.shadowBlur=20;x.fillRect(-17*pu,-17*pu,34*pu,34*pu);
+    x.fillStyle='#fff';x.globalAlpha=0.7;x.fillRect(-7,-7,14,14);x.globalAlpha=1;x.shadowBlur=0;
+    x.restore();
+    // ТУРЕЛИ (все пушки, доворачиваются на игрока)
+    if(e.guns)for(const g of e.guns){
+      const wx2=e.x+(g.ox*Math.cos(e.shipA)-g.oy*Math.sin(e.shipA))*scl;
+      const wy2=e.y+(g.ox*Math.sin(e.shipA)+g.oy*Math.cos(e.shipA))*scl;
+      const la=Math.atan2(player.y-wy2,player.x-wx2)-(e.shipA||0);
+      x.save();x.translate(g.ox,g.oy);x.rotate(la);
+      x.fillStyle='#1e293b';x.beginPath();x.arc(0,0,12,0,Math.PI*2);x.fill();
+      x.fillStyle=g.burst>0?'#fde047':'#f43f5e';x.fillRect(0,-4,24,8);
+      x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1.5;x.beginPath();x.arc(0,0,12,0,Math.PI*2);x.stroke();
+      x.restore();
+    }
+    if(e.invulnT>0){
+      x.globalAlpha=0.35+0.2*Math.sin(t*14);
+      x.strokeStyle=c;x.lineWidth=6;x.shadowColor=c;x.shadowBlur=24;
+      x.beginPath();x.arc(0,0,160,0,Math.PI*2);x.stroke();x.shadowBlur=0;x.globalAlpha=1;
     }
     x.restore();
   }
@@ -4794,7 +4892,7 @@
       // squash-stretch: короткий «поп» при получении урона (сплющивается по X, растёт по Y)
       const sq=e.hitFlash>0?e.hitFlash*7:0;
       if(sq>0.01){x.save();x.translate(e.x,e.y);x.scale(1+sq*0.28,1-sq*0.16);x.translate(-e.x,-e.y);}
-      if(e.megaboss)drawMegaShip(e);
+      if(e.megaboss){if(e.megaPhase==='true')drawMegaShipTrue(e);else drawMegaShip(e);}
       else if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
       if(sq>0.01)x.restore();
@@ -5466,12 +5564,27 @@
       if(mb){mb.invulnT=0;mb.shieldHp=0;mb._hpReal=mb.maxHp*0.02;} // <3% → следующий кадр запустит финал
       announce={text:'🛠 DEV: финал Хроноса → Акт 2',life:2.5,color:'#ff2d55'};
     }
+    function toChronos2(){ // босс Акта 2 (обновлённый Хронос)
+      ensureRun(); // ВАЖНО: сперва старт (может сбросить act), потом выставляем Акт 2
+      act=2;megaDone=true;megaFought=true;player.ship2=true;player.wounded=false;act2Tower=null;
+      boost(Math.max(player.level,56),58);mega2Done=false; // boost().ensureRun уже no-op — act не слетает
+      enemies=enemies.filter(e=>!e.megaboss);spawnMegaBoss();
+      announce={text:'🛠 DEV: ХРОНОС ПРОБУЖДЁННЫЙ',life:2.5,color:'#f43f5e'};
+    }
+    function toTrueForm(){ // сразу истинная форма (3 доп. стадии)
+      if(!enemies.some(e=>e.megaboss&&e.act2boss))toChronos2();
+      const mb=enemies.find(e=>e.megaboss&&e.act2boss);
+      if(mb&&mb.megaPhase==='ship'){mb.invulnT=0;mb.shieldHp=0;mb._hpReal=mb.maxHp*0.02;} // <2% → пробуждение
+      announce={text:'🛠 DEV: истинная форма Хроноса',life:2.5,color:'#a855f7'};
+    }
     const acts=[
       ['▶ Старт·45',()=>boost(45,55)],
       ['+5 ур',()=>boost(player.level+5,6)],
       ['+10 апгр',()=>{ensureRun();for(let i=0;i<10;i++)autoApplyOne();player.hp=player.maxHp;}],
       ['☠ Хронос',toChronos],
       ['🌀 Акт 2',toFinale],
+      ['☠2 Хронос-2',toChronos2],
+      ['🔥 Ист.форма',toTrueForm],
     ];
     const wrap=document.createElement('div');
     wrap.style.cssText='position:fixed;left:8px;bottom:8px;z-index:9999;display:flex;flex-direction:column;gap:4px;'+
