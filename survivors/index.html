@@ -1013,6 +1013,9 @@
   let autoToasts=[]; // мелкие плашки сверху в авто-режиме улучшений («✓ применено …»)
   let telegraphs=[]; // PoE-стиль: красные круги-предупреждения ударов боссов по земле
   let fireZones=[]; // «пол-арены горит»: половина поля от точки босса
+  let cursedZones=[]; // проклятые зоны: туман с ядом/замедлением и жирным сундуком в центре
+  let rifts=[]; // разломы: волна мобов + якорь; убил якоря — награда
+  let altarAcc=0,czAcc=0,riftAcc=0; // таймеры редких событий поля
   let shrineAcc=0;
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
@@ -1207,6 +1210,7 @@
     base*=player.lvlDmgScale||1;
     if(player.overdriveActive>0)base*=2;
     if(player.berserkActive>0)base*=1.4+player.berserkLevel*0.05;
+    if(player.altarT>0)base*=1.35; // сделка жертвенника: +35% урона
     if(player.rageLevel&&player.hp<player.maxHp*0.35)base*=1+0.12*player.rageLevel;
     if(player.momentumLevel)base*=1+Math.min(0.1*player.momentumLevel,0.02*player.noHitT);
     if(Math.random()<player.critChance){
@@ -1219,7 +1223,7 @@
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     // (зум ×1.30 — близкий стартовый план нового забега)
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;
@@ -1281,7 +1285,7 @@
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
-    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
@@ -1565,7 +1569,7 @@
     vaultTheme=theme||'dungeon';
     const forest=vaultTheme==='forest';
     vaultStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
-    enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];telegraphs=[];fireZones=[];
+    enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];
     portal=null;safeZone=null;mobSpawnPaused=true;forestGate=false;
     inVault=true;vaultT=0;vaultCleared=false;
     const dg=genDungeon(player.x+60000,player.y+60000);
@@ -2030,6 +2034,13 @@
       }
       gems.push({x:e.x,y:e.y,r:e.superboss?14:11,val:bonus,big:true,hue:flawless?'#fde047':(e.superboss?'#ff2d55':'#facc15')});
       if(floaters.length<40)floaters.push({x:e.x,y:e.y-30,vy:-30,life:1.2,val:flawless?'🏅 БЕЗУПРЕЧНО ×2':'💎 КРИСТАЛЛ ОПЫТА',crit:true});
+    }
+    if(e.riftAnchor){ // якорь разлома убит — разлом закрывается с наградой
+      rifts=rifts.filter(r=>r.anchor!==e);
+      gems.push({x:e.x,y:e.y,r:12,val:Math.max(10,Math.round(player.xpNeed*0.5)),big:true,hue:'#c084fc'});
+      addUpPoints(1,'разлом');
+      announce={text:'🌀 РАЗЛОМ ЗАКРЫТ! Награда твоя',life:2.4,color:'#c084fc'};
+      flashFx(0.35,'192,132,252');sfxChime(700,4,0.09,0.12);
     }
     if(e.megaboss){ // финал акта: гигантский кристалл + выборы + эссенция
       megaDone=true;mobSpawnPaused=false;
@@ -2519,6 +2530,9 @@
       sfxSweep(500,1400,0.35,'sine',0.1,true);
     }
     else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380&&losClear(player.x,player.y,e.x,e.y))e.hp-=70;});fxBoomAnim(player.x,player.y,380,'#f87171');camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
+    else if(pk.type==='altar'){
+      showAltarChoice();
+    }
     else if(pk.type==='shrine_rage'){
       player.berserkActive=Math.max(player.berserkActive||0,12);
       announce={text:'⚡ СВЯТИЛИЩЕ ЯРОСТИ: урон усилен 12с!',life:2.4,color:'#f97316'};
@@ -2728,6 +2742,42 @@
       state='levelup';renderShop();olevel.classList.add('show');updatePendingBtn();
     }
     // режим «кнопки»: ничего не открываем и не применяем — игрок жмёт «Выбрать одно/всё»
+  }
+  // ЖЕРТВЕННИК: выбор «сделки» — минус в обмен на плюс (или уйти кнопкой «Готово»)
+  function showAltarChoice(){
+    state='levelup';
+    btnDonePick.style.display='';btnAutoPick.style.display='none';
+    levelTitle.innerHTML='⚖ <span style="color:#e879f9;">ЖЕРТВЕННИК</span>';
+    levelSub.style.display='block';
+    levelSub.textContent='Выбери сделку — или уйди («Готово»)';
+    cardsEl.innerHTML='';
+    const deals=[
+      {n:'🩸 Кровавая сделка',c:'#f87171',d:'Отдай 25% текущего HP → +35% урона на 60с.',
+        ok:()=>player.hp>player.maxHp*0.3,
+        ap:()=>{player.hp*=0.75;player.altarT=60;}},
+      {n:'🐌 Сделка тяжести',c:'#38bdf8',d:'−20% скорости на 60с → +2 выбора улучшений сразу.',
+        ok:()=>true,
+        ap:()=>{player.altarSlowT=60;addUpPoints(2,'жертвенник');}},
+      {n:'💀 Сделка души',c:'#e879f9',d:'Отдай 1 жизнь → случайная РЕЛИКВИЯ.',
+        ok:()=>lives>1,
+        ap:()=>{lives--;
+          const pool2=RELICS.filter(r=>!(player.relics&&player.relics[r.id]));
+          if(pool2.length){const r=pool2[Math.floor(Math.random()*pool2.length)];
+            player.relics=player.relics||{};player.relics[r.id]=true;r.apply(player);
+            announce={text:'💠 '+r.name+' твоя!',life:2.6,color:'#c084fc'};}
+          else gems.push({x:player.x,y:player.y-40,r:12,val:Math.round(player.xpNeed),big:true,hue:'#e879f9'});
+        }},
+    ];
+    deals.forEach(dl=>{
+      const el=document.createElement('div');el.className='card';el.style.borderColor=dl.c;
+      const can=dl.ok();
+      el.innerHTML='<b style="color:'+dl.c+';">'+dl.n+'</b><span>'+dl.d+'</span>';
+      if(!can){el.style.opacity='0.4';el.style.pointerEvents='none';}
+      el.onclick=()=>{dl.ap();sfxChime(440,4,0.09,0.11);flashFx(0.3,'232,121,249');
+        olevel.classList.remove('show');startCooldown();};
+      cardsEl.appendChild(el);
+    });
+    olevel.classList.add('show');
   }
   // 3 случайные карты (эволюции — в приоритете), как в классике
   function rollChoice(){
@@ -3186,9 +3236,12 @@
     if(gp.active){mx=gp.x;my=gp.y;}
     const len=Math.hypot(mx,my);
     const hasteMul=(player.hasteActive>0?1.4+player.hasteLevel*0.05:1)*(player.overdriveActive>0?1.35:1);
-    if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*dt;player.y+=my*player.speed*hasteMul*dt;player.facing={x:mx,y:my};}
+    const czSlow=(cursedZones.some(z=>dist(player,z)<z.r)?0.78:1)*(player.altarSlowT>0?0.8:1); // зона/сделка замедляют
+    if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*czSlow*dt;player.y+=my*player.speed*hasteMul*czSlow*dt;player.facing={x:mx,y:my};}
     if(inVault){collideCircleWalls(player);keepInWalk(player);}
     if(player.invuln>0)player.invuln-=dt;
+    if(player.altarT>0)player.altarT-=dt;
+    if(player.altarSlowT>0){player.altarSlowT-=dt;}
     if(player.overdriveActive>0)player.overdriveActive-=dt;
     // след для шлейфа во время перегрузки (короткий кольцевой буфер)
     if(!player._trail)player._trail=[];
@@ -3328,6 +3381,54 @@
         const a2=rand(0,Math.PI*2),d2=rand(220,380);
         pickups.push({x:player.x+Math.cos(a2)*d2,y:player.y+Math.sin(a2)*d2,r:13,type:k.id,color:k.color,label:k.label,life:30});
         announce={text:'✨ Святилище появилось неподалёку!',life:2,color:k.color};
+      }
+    }
+    // АЛТАРЬ-ЖЕРТВЕННИК (PoE-стиль): раз в ~70с — сделка «минус в обмен на плюс»
+    if(!inVault){
+      altarAcc+=dt;
+      if(altarAcc>=70&&player.level>=8){
+        altarAcc=0;
+        const a2=rand(0,Math.PI*2),d2=rand(260,420);
+        pickups.push({x:player.x+Math.cos(a2)*d2,y:player.y+Math.sin(a2)*d2,r:13,type:'altar',color:'#e879f9',label:'⚖',life:35});
+        announce={text:'⚖ Жертвенник появился неподалёку…',life:2,color:'#e879f9'};
+      }
+      // ПРОКЛЯТАЯ ЗОНА: туман с ядом и замедлением, в центре — жирный сундук
+      czAcc+=dt;
+      if(czAcc>=75&&player.level>=10&&cursedZones.length===0){
+        czAcc=0;
+        const a2=rand(0,Math.PI*2),d2=rand(320,520);
+        const zx=player.x+Math.cos(a2)*d2,zy=player.y+Math.sin(a2)*d2;
+        cursedZones.push({x:zx,y:zy,r:150,t:45,acc:0});
+        pickups.push({x:zx,y:zy,r:11,type:'chest',color:'#facc15',label:'★',life:45,cz:true});
+        announce={text:'☠ Проклятая зона: внутри опасно, но там сундук…',life:2.6,color:'#a855f7'};
+      }
+      // РАЗЛОМ (Breach): волна мобов + якорь; убьёшь якоря — награда
+      riftAcc+=dt;
+      if(riftAcc>=90&&player.level>=20&&rifts.length===0){
+        riftAcc=0;
+        const a2=rand(0,Math.PI*2),d2=rand(380,560);
+        const rx=player.x+Math.cos(a2)*d2,ry=player.y+Math.sin(a2)*d2;
+        const anchor=spawnEnemy(false);
+        anchor.x=rx;anchor.y=ry;anchor.champion=true;anchor.riftAnchor=true;
+        anchor.hp=anchor.maxHp=estPlayerDps()*3;anchor.r=Math.max(anchor.r,16);anchor.speed*=0.5;
+        anchor.color='#c084fc';anchor.glow='#c084fc';
+        for(let i=0;i<14;i++){const m=spawnEnemy(false);const aa=rand(0,Math.PI*2),rr=rand(40,170);m.x=rx+Math.cos(aa)*rr;m.y=ry+Math.sin(aa)*rr;}
+        rifts.push({x:rx,y:ry,r:130,t:30,anchor:anchor});
+        announce={text:'🌀 РАЗЛОМ ОТКРЫЛСЯ! Убей якоря (фиолетовый) — получишь награду',life:3.5,color:'#c084fc'};
+        camShake=Math.max(camShake,8);sfxSweep(160,800,0.5,'sawtooth',0.12,true);
+      }
+      // тик проклятых зон: яд (мягкий, не убивает ниже 5% HP) — комбо не рвёт
+      for(let ci2=cursedZones.length-1;ci2>=0;ci2--){
+        const cz=cursedZones[ci2];cz.t-=dt;cz.acc+=dt;
+        if(cz.acc>=1&&dist(player,cz)<cz.r){cz.acc=0;
+          if(player.hp>player.maxHp*0.05){player.hp-=player.maxHp*0.02;flashFx(0.08,'168,85,247');}
+        }
+        if(cz.t<=0)cursedZones.splice(ci2,1);
+      }
+      // тик разломов: время вышло — закрывается без награды
+      for(let ri2=rifts.length-1;ri2>=0;ri2--){
+        const rf=rifts[ri2];rf.t-=dt;
+        if(rf.t<=0){rifts.splice(ri2,1);announce={text:'🌀 Разлом закрылся…',life:1.6,color:'#8891a3'};}
       }
     }
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
@@ -3860,6 +3961,12 @@
       x.fillStyle=col;x.beginPath();x.moveTo(0,-r*1.1);x.lineTo(r*0.85,-r*0.2);x.lineTo(0,r*1.1);x.lineTo(-r*0.85,-r*0.2);x.closePath();x.fill();
       x.fillStyle=shade(col,0.4);x.beginPath();x.moveTo(0,-r*1.1);x.lineTo(r*0.85,-r*0.2);x.lineTo(0,-r*0.2);x.closePath();x.fill();
       x.strokeStyle='rgba(255,255,255,0.6)';x.lineWidth=1;x.beginPath();x.moveTo(-r*0.85,-r*0.2);x.lineTo(r*0.85,-r*0.2);x.stroke();
+    }else if(type==='altar'){
+      // жертвенник: чаша на постаменте с тёмным пламенем
+      x.fillStyle=shade(col,-0.35);x.fillRect(-r*0.45,r*0.2,r*0.9,r*0.5);
+      x.fillStyle=col;x.beginPath();x.arc(0,-r*0.05,r*0.5,0,Math.PI);x.fill();
+      x.fillStyle='#f0abfc';x.shadowColor='#e879f9';x.shadowBlur=10;
+      x.beginPath();x.moveTo(0,-r*0.9);x.quadraticCurveTo(r*0.3,-r*0.4,0,-r*0.1);x.quadraticCurveTo(-r*0.3,-r*0.4,0,-r*0.9);x.fill();x.shadowBlur=0;
     }else if(type&&type.indexOf('shrine')===0){
       // обелиск-святилище: колонна с сияющим навершием
       x.fillStyle=shade(col,-0.25);x.beginPath();x.moveTo(-r*0.42,r);x.lineTo(-r*0.2,-r*0.6);x.lineTo(r*0.2,-r*0.6);x.lineTo(r*0.42,r);x.closePath();x.fill();
@@ -4181,6 +4288,35 @@
       x.fillText('🌀',0,-2);x.font='bold 11px system-ui,sans-serif';x.fillStyle='#e9d5ff';x.fillText(Math.ceil(portal.life)+'с',0,portal.r*0.55);
       x.restore();
     }
+    // проклятые зоны: тёмный туман с фиолетовым ободом
+    cursedZones.forEach(cz=>{
+      const fade=Math.min(1,cz.t/3);
+      x.save();
+      const gr=x.createRadialGradient(cz.x,cz.y,cz.r*0.2,cz.x,cz.y,cz.r);
+      gr.addColorStop(0,'rgba(88,28,135,'+(0.30*fade)+')');gr.addColorStop(1,'rgba(88,28,135,0)');
+      x.fillStyle=gr;x.beginPath();x.arc(cz.x,cz.y,cz.r,0,Math.PI*2);x.fill();
+      x.globalAlpha=0.55*fade;x.strokeStyle='#a855f7';x.lineWidth=2/zoom;x.setLineDash([10,10]);
+      x.beginPath();x.arc(cz.x,cz.y,cz.r,0,Math.PI*2);x.stroke();x.setLineDash([]);
+      for(let i=0;i<5;i++){const aa=t*0.7+i*1.257;x.globalAlpha=(0.3+0.2*Math.sin(t*3+i))*fade;
+        x.fillStyle='#c084fc';x.beginPath();x.arc(cz.x+Math.cos(aa)*cz.r*0.6,cz.y+Math.sin(aa)*cz.r*0.6,3,0,Math.PI*2);x.fill();}
+      x.restore();x.globalAlpha=1;
+    });
+    // разломы: фиолетовая «трещина» из дуг + искры
+    rifts.forEach(rf=>{
+      x.save();x.translate(rf.x,rf.y);
+      const pu=1+0.06*Math.sin(t*5);
+      x.shadowColor='#c084fc';x.shadowBlur=18;
+      x.strokeStyle='#c084fc';x.lineWidth=4/zoom;
+      x.beginPath();x.arc(0,0,rf.r*0.55*pu,0.4,Math.PI-0.4);x.stroke();
+      x.beginPath();x.arc(0,0,rf.r*0.55*pu,Math.PI+0.4,Math.PI*2-0.4);x.stroke();
+      x.shadowBlur=0;x.strokeStyle='#e9d5ff';x.lineWidth=1.5/zoom;
+      x.save();x.rotate(t*0.8);
+      for(let i=0;i<4;i++){const aa=i*(Math.PI/2);x.beginPath();x.moveTo(Math.cos(aa)*rf.r*0.62,Math.sin(aa)*rf.r*0.62);x.lineTo(Math.cos(aa)*rf.r*0.8,Math.sin(aa)*rf.r*0.8);x.stroke();}
+      x.restore();
+      x.fillStyle='#e9d5ff';x.font='bold 11px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(Math.ceil(rf.t)+'с',0,0);
+      x.restore();
+    });
     // горящая пол-арены: полуплоскость от точки босса (предупреждение — штриховой край)
     fireZones.forEach(fz=>{
       const ang=Math.atan2(fz.dy,fz.dx);
