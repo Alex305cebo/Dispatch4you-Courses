@@ -216,6 +216,8 @@
     <div id="oachi" class="overlay" style="overflow-y:auto;">
       <h2>🏅 Достижения <span id="achiCount" style="font-size:15px;color:#facc15;">0/10</span></h2>
       <div class="cards" id="achiList"></div>
+      <button class="ostart" id="btnAchiReset" style="color:#fb7185;border-color:#fb7185;align-self:center;width:auto;padding:10px 18px;">🔄 Сбросить достижения</button>
+      <div style="font-size:12px;color:#8891a3;max-width:320px;text-align:center;margin:2px auto 0;">Обнулит все достижения. Пройдя их заново, снова получишь эссенцию в метапрогрессию.</div>
       <button class="ostart" id="btnAchiClose">Закрыть</button>
     </div>
     <div id="ochar" class="overlay" style="overflow-y:auto;">
@@ -5484,6 +5486,15 @@
     oachi.classList.remove('show');
     achiHiddenOverlays.forEach(o=>o.classList.add('show'));
     achiHiddenOverlays=[];
+  });
+  // СБРОС ДОСТИЖЕНИЙ: если метапрогрессия обнулилась, а достижения остались «выполнены»,
+  // эссенцию за них уже не получить. Сброс возвращает их в 0 — пройдя заново, снова копишь эссенцию.
+  document.getElementById('btnAchiReset').addEventListener('click',()=>{
+    let ok=true;try{ok=confirm('Обнулить ВСЕ достижения? Их придётся пройти заново, но за это снова дадут эссенцию.');}catch(e){}
+    if(!ok)return;
+    try{localStorage.removeItem('survivors-achis');}catch(e){}
+    showAchievements();
+    try{beep(660,0.08,'sine',0.05);setTimeout(()=>beep(880,0.1,'sine',0.05),90);}catch(e){}
   });
   // выбор персонажа
   const ochar=document.getElementById('ochar');
