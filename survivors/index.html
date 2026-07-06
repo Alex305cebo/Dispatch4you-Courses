@@ -4457,20 +4457,33 @@
       x.fillText(Math.ceil(rf.t)+'с',0,0);
       x.restore();
     });
-    // горящая пол-арены: полуплоскость от точки босса (предупреждение — штриховой край)
+    // горящая пол-арены: ПОЛУКРУГ (радиус 900) от босса — рисуем ровно ту зону, где бьёт урон
     fireZones.forEach(fz=>{
-      const ang=Math.atan2(fz.dy,fz.dx);
+      const ang=Math.atan2(fz.dy,fz.dx),R2=900;
       x.save();x.translate(fz.x,fz.y);x.rotate(ang);
-      if(fz.warm>0){ // предупреждение: мигающая кромка + лёгкая заливка
-        x.globalAlpha=0.10+0.06*Math.sin(t*12);
-        x.fillStyle='#fb923c';x.fillRect(0,-1300,1400,2600);
-        x.globalAlpha=0.8;x.strokeStyle='#fb923c';x.lineWidth=3/zoom;x.setLineDash([16,10]);
-        x.beginPath();x.moveTo(0,-1300);x.lineTo(0,1300);x.stroke();x.setLineDash([]);
-      }else{ // горит
-        x.globalAlpha=0.16+0.06*Math.sin(t*9);
-        x.fillStyle='#f97316';x.fillRect(0,-1300,1400,2600);
-        x.globalAlpha=0.5;x.strokeStyle='#fde047';x.lineWidth=2/zoom;
-        x.beginPath();x.moveTo(0,-1300);x.lineTo(0,1300);x.stroke();
+      if(fz.warm>0){ // предупреждение: мигающий полудиск + штриховая кромка
+        x.globalAlpha=0.12+0.07*Math.sin(t*12);
+        x.fillStyle='#fb923c';
+        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.closePath();x.fill();
+        x.globalAlpha=0.85;x.strokeStyle='#fb923c';x.lineWidth=3/zoom;x.setLineDash([16,10]);
+        x.beginPath();x.moveTo(0,-R2);x.lineTo(0,R2);x.stroke();
+        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.stroke();x.setLineDash([]);
+        x.globalAlpha=1;x.fillStyle='#fb923c';x.font='bold '+Math.round(26/zoom)+'px system-ui,sans-serif';
+        x.textAlign='center';x.textBaseline='middle';x.fillText('🔥',R2*0.45,0);
+      }else{ // горит: огненный полудиск + языки пламени по площади
+        x.globalAlpha=0.20+0.07*Math.sin(t*9);
+        x.fillStyle='#f97316';
+        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.closePath();x.fill();
+        x.globalAlpha=0.55;x.strokeStyle='#fde047';x.lineWidth=2.5/zoom;
+        x.beginPath();x.arc(0,0,R2,-Math.PI/2,Math.PI/2);x.closePath();x.stroke();
+        // мерцающие «языки пламени» внутри зоны (детерминированные позиции)
+        x.fillStyle='#fde047';
+        for(let i=0;i<14;i++){
+          const fa=-Math.PI/2+((i*0.53)%1)*Math.PI,fr=R2*(0.15+((i*0.37)%1)*0.8);
+          const fx2=Math.cos(fa)*fr,fy2=Math.sin(fa)*fr;
+          x.globalAlpha=0.25+0.25*Math.sin(t*10+i*2.2);
+          x.beginPath();x.moveTo(fx2,fy2+7);x.lineTo(fx2-5,fy2+2);x.lineTo(fx2,fy2-9-4*Math.sin(t*12+i));x.lineTo(fx2+5,fy2+2);x.closePath();x.fill();
+        }
       }
       x.restore();x.globalAlpha=1;
     });
