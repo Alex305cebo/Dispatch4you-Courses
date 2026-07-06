@@ -1287,7 +1287,7 @@
     enemies=s.enemies||[];gems=s.gems||[];pickups=s.pickups||[];mines=s.mines||[];pools=s.pools||[];
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];fxq=[];
-    t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=s.lives!=null?s.lives:3;zoom=baseZoom;enemyCountSmoothed=0;
+    t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=Math.min(3,s.lives!=null?s.lives:3);zoom=baseZoom;enemyCountSmoothed=0;
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
@@ -1772,8 +1772,8 @@
     // 3) УНИКАЛЬНАЯ «Печать Лабиринта» — только отсюда, складывается за каждое прохождение
     player.vaultSeals=(player.vaultSeals||0)+1;
     player.dmgMult*=1.25;player.atkSpeedMult*=1.15;player.pierce+=1;player.maxHp+=40;player.hp=player.maxHp;
-    if(lives<6)lives++;
-    parts.push('🏛 Печать Лабиринта ×'+player.vaultSeals+' (+25% урон, +15% темп, +1 пробитие, +40 HP, +1 жизнь)');
+    if(lives<3)lives++; // максимум 3 жизни: приз может восстановить потерянную, но не сверх 3
+    parts.push('🏛 Печать Лабиринта ×'+player.vaultSeals+' (+25% урон, +15% темп, +1 пробитие, +40 HP, восстановление жизни до 3)');
     metaState.shards+=12;saveMeta();
     announce={text:'🏆 СУПЕР-ПРИЗ ХРАНИТЕЛЯ: '+parts.join(' · '),life:5,color:'#fde047'};
     flashFx(0.7,'250,204,21');camShake=Math.max(camShake,14);doHitStop(0.18);
