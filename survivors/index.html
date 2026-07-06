@@ -2969,10 +2969,14 @@
     const dps=estPlayerDps();
     const hp=Math.max(3000,dps*26);
     const dmg=tierAvgDmg(50)*16;
-    const ang=rand(0,Math.PI*2),rad=offscreenRad(60);
+    // АРЕНА: Хронос «поглощает» обычных мобов — поле очищается, бой не пропустить
+    enemies=enemies.filter(e2=>e2.elite);
+    enemyProjectiles=[];
+    burst(player.x,player.y,'#94a3b8',30);
+    const ang=rand(0,Math.PI*2),rad=360; // на экране, а не за его краем
     const sh=Math.max(600,dps*5);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
-      hp,maxHp:hp,speed:60,dmg,r:52,baseR:52,baseSpeed:60,
+      hp,maxHp:hp,speed:85,dmg,r:52,baseR:52,baseSpeed:85,
       color:'#94a3b8',glow:'#94a3b8',skinShape:'super',skinName:'ХРОНОС · Форма Стали',
       xp:xpForPower(hp,dmg)*3,elite:true,megaboss:true,bossNumber:8,pauseSpawns:true,
       shieldMax:sh,shieldHp:sh,shieldRe:18,shieldCd:0,_shieldHitT:0,
@@ -2982,7 +2986,8 @@
     mobSpawnPaused=true; // арена: обычный спавн стоит, пока Хронос жив
     announce={text:'☠ МЕГА-БОСС: ХРОНОС, Пожиратель Актов ☠',life:4.5,color:'#ff2d55'};
     rings.push({x:player.x,y:player.y,r:0,maxR:1100,life:1.6});
-    camShake=Math.max(camShake,22);screenFlash=1;
+    camShake=Math.max(camShake,22);screenFlash=1;hitStop=0.35; // мгновение слоу-мо — взгляд на босса
+    player.invuln=Math.max(player.invuln,1.2);
     sfxBoom(0.6,0.35,300,40,true);setTimeout(()=>beep(45,0.9,'sawtooth',0.25),250);
     return en;
   }
@@ -4714,6 +4719,14 @@
       const head=forest?'🌲 ЛЕС':'🏛 ЛАБИРИНТ';
       const clr=forest?'🌲 ЛЕС ПРОЙДЕН — иди к выходу!':'🚪 ВЫХОД ОТКРЫТ — иди к двери!';
       x.fillText(vaultCleared?clr:head+' · осталось мобов: '+vLeft+(vLeft<=vaultTotal?' из '+vaultTotal:''),W/2,topY);
+      x.restore();topY+=24;
+    }else if(enemies.some(e2=>e2.megaboss)){
+      const mb=enemies.find(e2=>e2.megaboss);
+      x.save();x.textAlign='center';x.textBaseline='top';
+      x.font='bold 15px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
+      x.fillStyle=mb.shieldHp>0?'#7dd3fc':'#ff2d55';
+      const pct=Math.max(0,Math.round(mb.hp/mb.maxHp*100));
+      x.fillText('☠ '+(mb.skinName||'ХРОНОС')+' · '+pct+'%'+(mb.shieldHp>0?' · 🛡 щит':''),W/2,topY);
       x.restore();topY+=24;
     }else if(forestGate){
       x.save();x.textAlign='center';x.textBaseline='top';
