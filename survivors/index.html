@@ -1012,6 +1012,7 @@
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
   let autoToasts=[]; // мелкие плашки сверху в авто-режиме улучшений («✓ применено …»)
   let telegraphs=[]; // PoE-стиль: красные круги-предупреждения ударов боссов по земле
+  let shrineAcc=0;
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
@@ -1222,7 +1223,7 @@
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;
     points=0;shopBought={};
-    pickupAcc=0;pickupInterval=rand(10,16);
+    pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
     keys={};moveVec={x:0,y:0};joy={active:false,bx:0,by:0,cx:0,cy:0};
     updateHud();
@@ -2006,9 +2007,15 @@
     // боссы и супербоссы НЕ дают выбор улучшений — вместо этого роняют БОЛЬШОЙ кристалл
     // опыта. Сбалансировано долей текущего уровня: босс ~45% полосы, супербосс ~90%
     if(e.elite||e.superboss){
-      const bonus=Math.max(10,Math.round(player.xpNeed*(e.superboss?0.9:0.45)));
-      gems.push({x:e.x,y:e.y,r:e.superboss?14:11,val:bonus,big:true,hue:e.superboss?'#ff2d55':'#facc15'});
-      if(floaters.length<40)floaters.push({x:e.x,y:e.y-30,vy:-30,life:1.2,val:'💎 КРИСТАЛЛ ОПЫТА',crit:true});
+      // HONOUR: убил босса, не получив НИ ОДНОГО удара за время его жизни — награда ×2
+      const flawless=e._hitMark!=null&&(player.hitsTaken||0)===e._hitMark;
+      let bonus=Math.max(10,Math.round(player.xpNeed*(e.superboss?0.9:0.45)));
+      if(flawless){bonus*=2;
+        announce={text:'🏅 БЕЗУПРЕЧНЫЙ БОЙ — награда ×2!',life:2.6,color:'#fde047'};
+        flashFx(0.4,'253,224,71');sfxChime(880,5,0.1,0.13);
+      }
+      gems.push({x:e.x,y:e.y,r:e.superboss?14:11,val:bonus,big:true,hue:flawless?'#fde047':(e.superboss?'#ff2d55':'#facc15')});
+      if(floaters.length<40)floaters.push({x:e.x,y:e.y-30,vy:-30,life:1.2,val:flawless?'🏅 БЕЗУПРЕЧНО ×2':'💎 КРИСТАЛЛ ОПЫТА',crit:true});
     }
     if(e.megaboss){ // финал акта: гигантский кристалл + выборы + эссенция
       megaDone=true;mobSpawnPaused=false;
@@ -2498,6 +2505,21 @@
       sfxSweep(500,1400,0.35,'sine',0.1,true);
     }
     else if(pk.type==='nuke'){enemies.forEach(e=>{if(dist(player,e)<380&&losClear(player.x,player.y,e.x,e.y))e.hp-=70;});fxBoomAnim(player.x,player.y,380,'#f87171');camShake=Math.max(camShake,6);sfxBoom(0.5,0.3,1200,50);}
+    else if(pk.type==='shrine_rage'){
+      player.berserkActive=Math.max(player.berserkActive||0,12);
+      announce={text:'⚡ СВЯТИЛИЩЕ ЯРОСТИ: урон усилен 12с!',life:2.4,color:'#f97316'};
+      flashFx(0.3,'249,115,22');sfxChime(660,4,0.09,0.12);
+    }
+    else if(pk.type==='shrine_frost'){
+      freezeT=Math.max(freezeT,8);
+      announce={text:'❄ СВЯТИЛИЩЕ ЛЬДА: враги заморожены 8с!',life:2.4,color:'#38bdf8'};
+      flashFx(0.3,'56,189,248');sfxSweep(900,300,0.4,'sine',0.12,true);
+    }
+    else if(pk.type==='shrine_heal'){
+      player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.6);
+      announce={text:'✚ СВЯТИЛИЩЕ ЖИЗНИ: +60% здоровья!',life:2.4,color:'#4ade80'};
+      flashFx(0.3,'74,222,128');sfxChime(523,4,0.09,0.12);
+    }
     else if(pk.type==='weapon'){
       const rem=WEAPON_UNLOCKS.filter(w=>!w.done);
       const w=rem[Math.floor(Math.random()*rem.length)];
@@ -3035,6 +3057,7 @@
     if(isBossHit)dmg=Math.min(dmg,player.maxHp*0.2);
     const dealt=dmg*mitig;
     player.hp-=dealt;player.noHitT=0;camShake=Math.max(camShake,isContact?2:3);
+    player.hitsTaken=(player.hitsTaken||0)+1; // счётчик для «БЕЗУПРЕЧНО» (бой с боссом без урона)
     // === ИНДИКАТОРЫ ПОЛУЧЕННОГО УРОНА ===
     // красная вспышка экрана (сила зависит от тяжести удара)
     flashFx(Math.min(0.5,0.14+dealt/Math.max(1,player.maxHp)*0.9),'255,45,85');
@@ -3266,6 +3289,22 @@
       const gleft=enemies.length+pendingSpawns.length;
       if(gleft===0){forestGate=false;forestDone=true;enterVault('forest');}
     }
+    // СВЯТИЛИЩА (PoE-стиль): раз в ~45с на поле встаёт обелиск — коснись и получи мощный бафф
+    if(!inVault){
+      shrineAcc+=dt;
+      if(shrineAcc>=45&&player.level>=4){
+        shrineAcc=0;
+        const kinds=[
+          {id:'shrine_rage',color:'#f97316',label:'⚡'},
+          {id:'shrine_frost',color:'#38bdf8',label:'❄'},
+          {id:'shrine_heal',color:'#4ade80',label:'✚'},
+        ];
+        const k=kinds[Math.floor(Math.random()*kinds.length)];
+        const a2=rand(0,Math.PI*2),d2=rand(220,380);
+        pickups.push({x:player.x+Math.cos(a2)*d2,y:player.y+Math.sin(a2)*d2,r:13,type:k.id,color:k.color,label:k.label,life:30});
+        announce={text:'✨ Святилище появилось неподалёку!',life:2,color:k.color};
+      }
+    }
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
     if(inVault){
       vaultT+=dt; // просто счёт времени внутри (без лимита)
@@ -3342,6 +3381,7 @@
     // scale danger with size, but not let an unbounded mob count one-shot the player
     const CONTACT_CAP=12;
     const frozen=freezeT>0;
+      // (казнь ставится ниже по циклу — метка нужна каждому врагу)
     let touchSum=0,touchN=0;
     for(const e of enemies){
       const d=dist(player,e);
@@ -3380,9 +3420,13 @@
           touchSum+=e.dmg;touchN++;
         }
       }
+      // КАЗНЬ (PoE-стиль): обычный враг ниже 10% HP — помечается 💀, остаток HP режется
+      // вдвое (эквивалент «урон ×2 по раненым») — толпа добивается быстрее и приятнее
+      if(!e.elite&&!e._exec&&e.hp>0&&e.maxHp>0&&e.hp<e.maxHp*0.10){e._exec=true;e.hp*=0.5;}
       if(e._bladeCd>0)e._bladeCd-=dt;
       if(frozen)continue;
       if(e.elite){
+        if(e._hitMark==null)e._hitMark=player.hitsTaken||0; // для «БЕЗУПРЕЧНО»
         if(e.megaboss)updateMegaBoss(e,dt);
         else{
           e.shootCd-=dt;
@@ -3764,6 +3808,12 @@
       x.fillStyle=col;x.beginPath();x.moveTo(0,-r*1.1);x.lineTo(r*0.85,-r*0.2);x.lineTo(0,r*1.1);x.lineTo(-r*0.85,-r*0.2);x.closePath();x.fill();
       x.fillStyle=shade(col,0.4);x.beginPath();x.moveTo(0,-r*1.1);x.lineTo(r*0.85,-r*0.2);x.lineTo(0,-r*0.2);x.closePath();x.fill();
       x.strokeStyle='rgba(255,255,255,0.6)';x.lineWidth=1;x.beginPath();x.moveTo(-r*0.85,-r*0.2);x.lineTo(r*0.85,-r*0.2);x.stroke();
+    }else if(type&&type.indexOf('shrine')===0){
+      // обелиск-святилище: колонна с сияющим навершием
+      x.fillStyle=shade(col,-0.25);x.beginPath();x.moveTo(-r*0.42,r);x.lineTo(-r*0.2,-r*0.6);x.lineTo(r*0.2,-r*0.6);x.lineTo(r*0.42,r);x.closePath();x.fill();
+      x.fillStyle=col;x.shadowColor=col;x.shadowBlur=10;
+      x.beginPath();x.arc(0,-r*0.85,r*0.32,0,Math.PI*2);x.fill();x.shadowBlur=0;
+      x.fillStyle='rgba(255,255,255,0.5)';x.fillRect(-r*0.08,-r*0.5,r*0.16,r*1.3);
     }else{x.fillStyle=col;x.beginPath();x.arc(0,0,r*0.7,0,Math.PI*2);x.fill();}
   }
   // последние секунды жизни пикап (и его стрелка на краю экрана) моргает
@@ -3778,6 +3828,15 @@
     const blf=pickupBlink(pk);
     const R=rare?22:18;                                // предметы крупнее и заметнее
     x.save();x.translate(px,py+bob);
+    // ЛУЧ РЕДКОСТИ (PoE-стиль): вертикальный столб света над предметом — ценность видна издалека
+    {
+      const beamH=rare?120:70,beamW=rare?16:10;
+      const bg=x.createLinearGradient(0,-beamH,0,0);
+      bg.addColorStop(0,'rgba(0,0,0,0)');
+      const bc=pk.type==='relic'?'192,132,252':pk.type==='weapon'?'251,191,36':pk.type==='chest'?'250,204,21':pk.type&&pk.type.indexOf('shrine')===0?'125,211,252':'148,163,184';
+      bg.addColorStop(1,'rgba('+bc+','+(0.34+0.10*Math.sin(t*3+px*0.03))+')');
+      x.fillStyle=bg;x.fillRect(-beamW/2,-beamH,beamW,beamH);
+    }
     // тень на земле (псевдо-объём)
     x.globalAlpha=0.30*blf;x.fillStyle='#000';x.beginPath();x.ellipse(0,R+5-bob,R*0.65,4,0,0,Math.PI*2);x.fill();
     // широкий светящийся ореол
@@ -4233,6 +4292,10 @@
       if(e.elite)drawBoss(e.x,e.y,e);
       else drawMob(e.x,e.y,e);
       if(sq>0.01)x.restore();
+      if(e._exec&&!e.elite){ // метка казни
+        x.save();x.font='11px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
+        x.globalAlpha=0.9;x.fillText('💀',e.x,e.y-e.r-9);x.restore();x.globalAlpha=1;
+      }
       if(e.megaboss&&e.shieldHp>0){
         // пузырь щита: голубая сфера, ТРЕЩИНЫ проступают по мере урона, вспышка при попадании
         const sr=e.r+16,frac=Math.max(0,e.shieldHp/e.shieldMax);
