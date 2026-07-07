@@ -5040,14 +5040,12 @@
       for(let i=0;i<5;i++){const aa=t*0.7+i*1.257;x.globalAlpha=(0.3+0.2*Math.sin(t*3+i))*fade;
         x.fillStyle='#c084fc';x.beginPath();x.arc(cz.x+Math.cos(aa)*cz.r*0.6,cz.y+Math.sin(aa)*cz.r*0.6,3,0,Math.PI*2);x.fill();}
       x.restore();x.globalAlpha=1;
-      // сундук в центре + кольцо прогресса удержания
+      // ПРОГРЕСС УДЕРЖАНИЯ рисуем на ГРАНИЦЕ зоны (большое кольцо) — видно даже в гуще боя
       const prog=Math.max(0,Math.min(1,(cz.hold||0)/(cz.holdNeed||7)));
       x.save();x.translate(cz.x,cz.y);
-      x.strokeStyle='rgba(0,0,0,0.5)';x.lineWidth=6/zoom;x.beginPath();x.arc(0,0,34,0,Math.PI*2);x.stroke();
-      x.strokeStyle=prog>=1?'#fde047':'#facc15';x.lineWidth=6/zoom;x.beginPath();x.arc(0,0,34,-Math.PI/2,-Math.PI/2+Math.PI*2*prog);x.stroke();
-      x.font='22px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🎁',0,-1);
-      x.fillStyle='#fde047';x.font='bold '+Math.round(11/zoom)+'px system-ui,sans-serif';
-      x.fillText('удержи '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с',0,46);
+      x.strokeStyle='rgba(0,0,0,0.45)';x.lineWidth=7/zoom;x.beginPath();x.arc(0,0,cz.r,0,Math.PI*2);x.stroke();
+      x.strokeStyle=prog>=1?'#4ade80':'#facc15';x.lineWidth=7/zoom;x.shadowColor=prog>=1?'#4ade80':'#facc15';x.shadowBlur=12;
+      x.beginPath();x.arc(0,0,cz.r,-Math.PI/2,-Math.PI/2+Math.PI*2*prog);x.stroke();x.shadowBlur=0;
       x.restore();
     });
     // разломы: фиолетовая «трещина» из дуг + искры
@@ -5589,6 +5587,18 @@
     // На узких экранах стек начинается НИЖЕ компактной панели статов (низ ~98px),
     // иначе центрированный текст наезжал бы на неё.
     let topY=W<640?108:34;
+    // ЧЕЛЛЕНДЖ «УДЕРЖИ ПРОКЛЯТУЮ ЗОНУ» — понятный баннер с полосой и секундами (в бою в центре не видно)
+    if(cursedZones.length){
+      const cz=cursedZones[0],prog=Math.max(0,Math.min(1,(cz.hold||0)/(cz.holdNeed||7))),inside=dist(player,cz)<cz.r;
+      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
+      x.font='bold 15px system-ui,sans-serif';x.fillStyle=prog>=1?'#4ade80':(inside?'#fde047':'#c084fc');
+      x.fillText('🎁 УДЕРЖИ ЗОНУ ещё '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с'+(inside?'':' · ВСТАНЬ ВНУТРЬ!'),W/2,topY);
+      const bw=Math.min(300,W*0.5),bx0=W/2-bw/2,by0=topY+20,bh=9;
+      x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bx0,by0,bw,bh);
+      x.fillStyle=prog>=1?'#4ade80':'#facc15';x.fillRect(bx0,by0,bw*prog,bh);
+      x.strokeStyle='rgba(255,255,255,0.45)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
+      x.restore();topY+=36;
+    }
     if(inVault){
       const forest=vaultTheme==='forest';
       x.save();x.textAlign='center';x.textBaseline='top';
