@@ -1070,6 +1070,7 @@
   // «ЛЕС» — особый уровень после 30-го: reskin лабиринта (деревья + улочки).
   // На 29 уровне — «прорыв к лесу»: фикс. волна мобов со счётчиком сверху; зачистил — в лес.
   let vaultTheme='dungeon',forestPending=false,forestGate=false,forestDone=false,forestGateTotal=0,forestTrees=[];
+  const CAVE_LIGHT=340; // радиус света фонаря в лабиринте (мировые единицы): дальше — темнота
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
@@ -3933,6 +3934,10 @@
         let spd=e.speed;
         if(e.slowT>0)spd*=0.5;
         if(player.chillLevel&&d<130)spd*=1-0.08*player.chillLevel;
+        // ПЕЩЕРА: в темноте существа крадутся медленно; попав в круг света фонаря — БЕГУТ на свет
+        if(inVault&&vaultTheme!=='forest'&&!e.elite){
+          if(d<CAVE_LIGHT*1.12){spd*=1.6;e._lit=1;}else{spd*=0.42;e._lit=0;}
+        }
         moveEnemy(e,dt,d,spd);
         if(inVault){collideCircleWalls(e);keepInWalk(e,true);}
         if(forestField)collideTrees(e);
@@ -5338,6 +5343,20 @@
       x.save();edgeArrow(B.x,B.y,B.r,'#4ade80',1.1);x.restore(); // ориентир, даже когда далеко
     }
     drawFinale();
+    // ПЕЩЕРА: в лабиринте вокруг корабля — круг света фонаря, дальше темно
+    if(inVault&&vaultTheme!=='forest'){
+      let csx=0,csy=0;if(camShake>0.3){csx=Math.sin(t*47)*camShake*0.6;csy=Math.cos(t*41)*camShake*0.6;}
+      const cx=W/2+csx,cy=H/2+csy,flick=1+0.035*Math.sin(t*11)+0.02*Math.sin(t*23);
+      const LR=Math.min(W,H)*0.30*flick; // радиус света фонаря в экранных px
+      // темнота за кругом света (тёмно-фиолетовая, почти чёрная по краям)
+      const dg=x.createRadialGradient(cx,cy,LR*0.62,cx,cy,LR*1.65);
+      dg.addColorStop(0,'rgba(2,1,7,0)');dg.addColorStop(0.5,'rgba(2,1,7,0.62)');dg.addColorStop(1,'rgba(2,1,7,0.99)');
+      x.fillStyle=dg;x.fillRect(0,0,W,H);
+      // тёплое свечение фонаря у корабля (поверх темноты — мягкий ореол)
+      const wg=x.createRadialGradient(cx,cy,0,cx,cy,LR*0.95);
+      wg.addColorStop(0,'rgba(255,216,150,0.18)');wg.addColorStop(0.5,'rgba(255,188,110,0.07)');wg.addColorStop(1,'rgba(255,188,110,0)');
+      x.fillStyle=wg;x.fillRect(0,0,W,H);
+    }
     drawOffscreenIndicators();
     // movement indicator: a chevron orbiting the player instead of a joystick pad —
     // on touch screens the finger sits right on top of the player, a pad there is invisible
@@ -5354,8 +5373,11 @@
       const vg=x.createRadialGradient(W/2,H/2,Math.min(W,H)*0.36,W/2,H/2,Math.max(W,H)*0.72);
       vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,0.5)');
       x.fillStyle=vg;x.fillRect(0,0,W,H);
-      const wash=act===2?'190,24,60':(inVault?'168,85,247':ACT_WASH[Math.floor((player.level-1)/10)%ACT_WASH.length]);
-      x.globalAlpha=(inVault?0.13:act===2?0.14:0.05)+0.02*Math.sin(t*1.5);x.fillStyle='rgb('+wash+')';x.fillRect(0,0,W,H);x.globalAlpha=1;
+      const caveMode=inVault&&vaultTheme!=='forest';
+      if(!caveMode){ // в пещере не осветляем сцену вошем — иначе темнота теряется
+        const wash=act===2?'190,24,60':(inVault?'168,85,247':ACT_WASH[Math.floor((player.level-1)/10)%ACT_WASH.length]);
+        x.globalAlpha=(inVault?0.13:act===2?0.14:0.05)+0.02*Math.sin(t*1.5);x.fillStyle='rgb('+wash+')';x.fillRect(0,0,W,H);x.globalAlpha=1;
+      }
       const hpp=player.hp/player.maxHp;
       if(hpp<0.35){
         const a=((0.35-hpp)/0.35)*(0.32+0.2*Math.sin(t*6));
