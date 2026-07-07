@@ -2276,25 +2276,30 @@
     return best;
   }
 
+  // ТИР КОРАБЛЯ: растёт с уровнем и Восхождениями — корабль визуально «взрослеет» (Mk I…VI)
+  function shipTier(){return Math.max(1,Math.min(6,1+Math.floor((player.level-1)/15)+(player.ascTier||0)));}
+  const ROMAN=['','I','II','III','IV','V','VI'];
   function fire(dt){
     player.fireAcc+=dt*1000;
     if(player.fireAcc<player.fireRate)return;
-    // КОРАБЛЬ АКТА 2: два крыловых орудия — каждое само наводится на СВОЕГО ближайшего врага
+    // КОРАБЛЬ АКТА 2: два крыловых орудия стреляют ПО ОЧЕРЕДИ (левое → правое), вдвое чаще —
+    // суммарный темп тот же, но виден чёткий поочерёдный залп с крыльев
     if(player.ship2){
+      if(player.fireAcc<player.fireRate*0.5)return;
       const tg=twoNearest(520);
       if(!tg[0]){return;}
       player.fireAcc=0;
+      player._wing=player._wing?0:1; // 0 = правое крыло, 1 = левое
+      const w=player._wing,side=w?-1:1;
       const fa=player._hAng||0,ux=Math.cos(fa),uy=Math.sin(fa),nx=-uy,ny=ux;
-      const span=player.r*1.95,fwd=player.r*0.5,sp2=player.projSpeed*(player.hasteActive>0?1.3:1); // под увеличенный корабль
-      const cannons=[{x:player.x+nx*span+ux*fwd,y:player.y+ny*span+uy*fwd,tgt:tg[0]},
-                     {x:player.x-nx*span+ux*fwd,y:player.y-ny*span+uy*fwd,tgt:tg[1]||tg[0]}];
-      for(const c of cannons){
-        const a2=Math.atan2(c.tgt.y-c.y,c.tgt.x-c.x),n2=player.projCount,spr=0.14;
-        for(let i=0;i<n2;i++){const aa=a2+spr*(i-(n2-1)/2);
-          projectiles.push({x:c.x,y:c.y,vx:Math.cos(aa)*sp2,vy:Math.sin(aa)*sp2,dmg:rollDmg(player.dmg),pierceLeft:player.pierce,r:5*player.aoeMult,life:1.2,hitSet:new Set(),color:'#7dd3fc'});}
-        sparkHit(c.x,c.y,'#7dd3fc');
-      }
-      player._lastShotT=t;
+      const span=player.r*1.95,fwd=player.r*0.5,sp2=player.projSpeed*(player.hasteActive>0?1.3:1);
+      const cx=player.x+nx*span*side+ux*fwd,cy=player.y+ny*span*side+uy*fwd;
+      const tgt=(w?tg[1]:tg[0])||tg[0]; // каждое крыло целит в своего врага
+      const a2=Math.atan2(tgt.y-cy,tgt.x-cx),n2=player.projCount,spr=0.14;
+      for(let i=0;i<n2;i++){const aa=a2+spr*(i-(n2-1)/2);
+        projectiles.push({x:cx,y:cy,vx:Math.cos(aa)*sp2,vy:Math.sin(aa)*sp2,dmg:rollDmg(player.dmg),pierceLeft:player.pierce,r:5*player.aoeMult,life:1.2,hitSet:new Set(),color:'#7dd3fc'});}
+      sparkHit(cx,cy,'#7dd3fc');
+      player._lastShotT=t;player._shotWing=w; // подсветится только стрелявшее крыло
       return;
     }
     const target=nearestEnemy(500);
@@ -4596,10 +4601,16 @@
     const y1=pad+(mobile?41:51);
     x.textAlign='left';x.textBaseline='middle';
     x.font='bold '+(mobile?12:14)+'px system-ui,sans-serif';
-    x.fillStyle='#7dd3fc';x.fillText('Ур. '+player.level+(megaDone?'':'/50')+((player.ascTier||0)>0?' 🌟'+player.ascTier:''),bx,y1);
+    // раскладываем строку динамически, чтобы «Mk» не наезжал на жизни/время
+    let cx=bx;
+    x.fillStyle='#7dd3fc';const lvlTxt='Ур. '+player.level+(megaDone?'':'/50');
+    x.fillText(lvlTxt,cx,y1);cx+=x.measureText(lvlTxt).width+(mobile?7:9);
     x.font='bold '+(mobile?11:12)+'px system-ui,sans-serif';
-    x.fillStyle='#ff5d73';x.fillText('❤'.repeat(Math.max(0,lives)),pad+(mobile?66:84),y1);
-    x.fillStyle='#8891a3';x.fillText(fmtTime(t),pad+(mobile?108:138),y1);
+    x.fillStyle='#ff5d73';const hs='❤'.repeat(Math.max(0,lives));x.fillText(hs,cx,y1);cx+=x.measureText(hs).width+(mobile?7:9);
+    x.fillStyle='#8891a3';const tt=fmtTime(t);x.fillText(tt,cx,y1);cx+=x.measureText(tt).width+(mobile?8:11);
+    // ТИР КОРАБЛЯ (уровень персонажа/корабля наглядно): Mk I…VI
+    const stT=shipTier();x.fillStyle=stT>=5?'#fde047':(stT>=3?'#7dd3fc':'#9fb4d6');
+    x.fillText('Mk '+ROMAN[stT]+((player.ascTier||0)>0?' 🌟'+player.ascTier:''),cx,y1);
     // строка: убийства + мобов на поле
     const y2=pad+(mobile?53:65);
     x.font=(mobile?10:11)+'px system-ui,sans-serif';
@@ -5131,40 +5142,56 @@
       const HR=player.r*(player.ship2?2.15:1.7); // корабль Акта 2 крупнее — заметно мощнее
       x.save();x.translate(player.x,player.y);x.rotate(player._hAng+Math.PI/2); // нос корабля смотрит вверх → по курсу
       x.lineJoin='round';x.lineCap='round';
+      const tier=shipTier();
       if(player.ship2){
-        // КОРАБЛЬ АКТА 2 (Arwing-стиль): стреловидный истребитель, пушки на кончиках крыльев
-        const fireGlow=(t-(player._lastShotT||0))<0.08;
-        // твин-выхлоп
-        x.globalAlpha=0.75;x.fillStyle='#7dd3fc';
-        for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.22,HR*0.7);x.lineTo(sg*HR*0.1,HR*(1.05+0.25*Math.sin(t*30+sg)));x.lineTo(sg*HR*0.34,HR*0.7);x.closePath();x.fill();}
+        // КОРАБЛЬ АКТА 2 (Arwing-стиль): стреловидный истребитель, пушки на кончиках крыльев.
+        // Крылья подсвечиваются ПООЧЕРЁДНО — та, что только что стреляла.
+        const shotWingSg=player._shotWing?-1:1,recent=(t-(player._lastShotT||0))<0.12;
+        // цвет тира: с прогрессией корпус холоднее→ярче, у топ-тиров золотой акцент
+        const accent=tier>=5?'#fde047':(tier>=3?'#38bdf8':'#93c5fd');
+        // твин-выхлоп (ярче с тиром)
+        x.globalAlpha=0.75;x.fillStyle=tier>=4?'#a5f3fc':'#7dd3fc';
+        for(const sg of[-1,1]){const el=HR*(1.05+0.12*tier*0.25+0.25*Math.sin(t*30+sg));x.beginPath();x.moveTo(sg*HR*0.22,HR*0.7);x.lineTo(sg*HR*0.1,el);x.lineTo(sg*HR*0.34,HR*0.7);x.closePath();x.fill();}
         x.globalAlpha=1;
         // крылья (скошены назад)
-        x.fillStyle='#2563eb';
+        x.fillStyle=tier>=5?'#1d4ed8':'#2563eb';
         for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.18,-HR*0.12);x.lineTo(sg*HR*1.35,HR*0.55);x.lineTo(sg*HR*1.24,HR*0.92);x.lineTo(sg*HR*0.16,HR*0.5);x.closePath();x.fill();}
-        // акцент-полосы
-        x.strokeStyle='#93c5fd';x.lineWidth=2;for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.9,HR*0.6);x.lineTo(sg*HR*0.22,HR*0.28);x.stroke();}
+        // акцент-полосы (цвет по тиру)
+        x.strokeStyle=accent;x.lineWidth=2;for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.9,HR*0.6);x.lineTo(sg*HR*0.22,HR*0.28);x.stroke();}
+        // ДОП. КРЫЛЬЯ-ВИНГЛЕТЫ на высоких тирах (визуальный апгрейд)
+        if(tier>=3){x.fillStyle=tier>=5?'#fbbf24':'#1e3a8a';for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*1.24,HR*0.92);x.lineTo(sg*HR*1.5,HR*1.18);x.lineTo(sg*HR*1.16,HR*1.05);x.closePath();x.fill();}}
         // фюзеляж
         x.fillStyle='#e8eefc';x.beginPath();x.moveTo(0,-HR*1.35);x.quadraticCurveTo(HR*0.32,-HR*0.15,HR*0.2,HR*0.6);x.lineTo(-HR*0.2,HR*0.6);x.quadraticCurveTo(-HR*0.32,-HR*0.15,0,-HR*1.35);x.closePath();x.fill();
-        // ПУШКИ на кончиках крыльев
-        for(const sg of[-1,1]){const wx=sg*HR*1.28,wy=HR*0.62;
+        // ПУШКИ на кончиках крыльев — подсветка только у того крыла, что стреляло
+        for(const sg of[-1,1]){const wx=sg*HR*1.28,wy=HR*0.62,glow=recent&&sg===shotWingSg;
           x.fillStyle='#0f172a';x.fillRect(wx-HR*0.1,wy-HR*0.5,HR*0.2,HR*0.62);
-          x.fillStyle=fireGlow?'#fde047':'#7dd3fc';x.shadowColor=fireGlow?'#fde047':'#7dd3fc';x.shadowBlur=fireGlow?10:4;
-          x.fillRect(wx-HR*0.05,wy-HR*0.72,HR*0.1,HR*0.3);x.shadowBlur=0;}
+          x.fillStyle=glow?'#fde047':'#7dd3fc';x.shadowColor=glow?'#fde047':'#7dd3fc';x.shadowBlur=glow?12:4;
+          x.fillRect(wx-HR*0.05,wy-HR*0.72,HR*0.1,glow?HR*0.42:HR*0.3);x.shadowBlur=0;}
         // кабина
         x.fillStyle='#0c1a3a';x.beginPath();x.ellipse(0,-HR*0.5,HR*0.2,HR*0.48,0,0,Math.PI*2);x.fill();
-        x.fillStyle='#7dd3fc';x.globalAlpha=0.85;x.beginPath();x.ellipse(0,-HR*0.6,HR*0.11,HR*0.28,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+        x.fillStyle=tier>=5?'#fde047':'#7dd3fc';x.globalAlpha=0.85;x.beginPath();x.ellipse(0,-HR*0.6,HR*0.11,HR*0.28,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
       }else{
-      // выхлоп двигателя
-      x.globalAlpha=0.7;x.fillStyle='#38bdf8';x.beginPath();x.moveTo(-HR*0.35,HR*0.7);x.lineTo(0,HR*(1.1+0.25*Math.sin(t*30)));x.lineTo(HR*0.35,HR*0.7);x.closePath();x.fill();x.globalAlpha=1;
+      // КОРАБЛЬ АКТА 1 — тоже растёт с прогрессией (Mk I…VI)
+      const accent=tier>=5?'#fde047':(tier>=3?'#22d3ee':'#4D96FF');
+      // выхлоп двигателя (ярче с тиром)
+      x.globalAlpha=0.7;x.fillStyle=tier>=4?'#7dd3fc':'#38bdf8';x.beginPath();x.moveTo(-HR*0.35,HR*0.7);x.lineTo(0,HR*(1.1+0.06*tier+0.25*Math.sin(t*30)));x.lineTo(HR*0.35,HR*0.7);x.closePath();x.fill();x.globalAlpha=1;
+      // доп. крыльевые сопла на высоких тирах
+      if(tier>=3){x.globalAlpha=0.6;x.fillStyle='#38bdf8';for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*0.62,HR*0.62);x.lineTo(sg*HR*0.62,HR*(0.85+0.15*Math.sin(t*28+sg)));x.lineTo(sg*HR*0.78,HR*0.62);x.closePath();x.fill();}x.globalAlpha=1;}
       // корпус
       x.fillStyle='#e8eefc';x.beginPath();x.moveTo(0,-HR*1.15);x.quadraticCurveTo(HR*0.7,0,HR*0.5,HR*0.75);x.lineTo(-HR*0.5,HR*0.75);x.quadraticCurveTo(-HR*0.7,0,0,-HR*1.15);x.closePath();x.fill();
-      // крылья
-      x.fillStyle='#4D96FF';x.beginPath();x.moveTo(HR*0.45,HR*0.1);x.lineTo(HR*1.0,HR*0.7);x.lineTo(HR*0.4,HR*0.7);x.closePath();x.fill();
+      // крылья (цвет по тиру)
+      x.fillStyle=accent;x.beginPath();x.moveTo(HR*0.45,HR*0.1);x.lineTo(HR*1.0,HR*0.7);x.lineTo(HR*0.4,HR*0.7);x.closePath();x.fill();
       x.beginPath();x.moveTo(-HR*0.45,HR*0.1);x.lineTo(-HR*1.0,HR*0.7);x.lineTo(-HR*0.4,HR*0.7);x.closePath();x.fill();
+      // винглеты на кончиках крыльев (tier≥4)
+      if(tier>=4){x.fillStyle=tier>=5?'#fbbf24':'#1e3a8a';for(const sg of[-1,1]){x.beginPath();x.moveTo(sg*HR*1.0,HR*0.7);x.lineTo(sg*HR*1.1,HR*0.42);x.lineTo(sg*HR*0.86,HR*0.62);x.closePath();x.fill();}}
       // кабина
       x.fillStyle='#1e3a8a';x.beginPath();x.ellipse(0,-HR*0.35,HR*0.28,HR*0.42,0,0,Math.PI*2);x.fill();
-      x.fillStyle='#7dd3fc';x.globalAlpha=0.8;x.beginPath();x.ellipse(0,-HR*0.4,HR*0.15,HR*0.24,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
+      x.fillStyle=tier>=5?'#fde047':'#7dd3fc';x.globalAlpha=0.8;x.beginPath();x.ellipse(0,-HR*0.4,HR*0.15,HR*0.24,0,0,Math.PI*2);x.fill();x.globalAlpha=1;
       }
+      // === ФЛУРИШИ ТИРА (оба корабля): аура на 4+, золотой ореол на 6 ===
+      if(tier>=4){const ar=HR*(1.2+0.05*Math.sin(t*3));x.globalAlpha=0.22+0.08*Math.sin(t*3);x.strokeStyle=tier>=5?'#fde047':'#38bdf8';x.lineWidth=2/zoom*HR*0.4;x.beginPath();x.arc(0,0,ar,0,Math.PI*2);x.stroke();x.globalAlpha=1;}
+      if(tier>=6){x.globalAlpha=0.5+0.3*Math.sin(t*4);x.strokeStyle='#fde047';x.lineWidth=1.5;x.shadowColor='#fde047';x.shadowBlur=14;x.beginPath();x.arc(0,0,HR*1.45,0,Math.PI*2);x.stroke();x.shadowBlur=0;x.globalAlpha=1;
+        for(let i=0;i<3;i++){const a=t*1.5+i*2.094,rr=HR*1.45;x.fillStyle='#fff';x.globalAlpha=0.7;x.beginPath();x.arc(Math.cos(a)*rr,Math.sin(a)*rr,1.6,0,Math.PI*2);x.fill();}x.globalAlpha=1;}
       // получил урон — корабль коротко вспыхивает красным; при смерти горит и гаснет
       if(player._hurtT>0||player.dying){
         x.globalAlpha=player.dying?0.7:Math.min(0.6,player._hurtT*1.6);
