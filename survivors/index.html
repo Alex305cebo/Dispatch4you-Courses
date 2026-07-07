@@ -4843,66 +4843,63 @@
     // хаб: на мобильных/узких экранах — компактнее (150×92 вместо 190×108),
     // шрифты 8.5–11px остаются читаемыми, сетка статов ужата по колонкам
     const mobile=W<640;
-    const pad=mobile?6:8,w=mobile?150:190,h=mobile?106:124;
-    const bx=pad+(mobile?6:8),bw=w-(mobile?12:16);
+    const pad=8,w=mobile?168:214,h=mobile?150:164;
+    const bx=pad+11,bw=w-22,rx=pad+w-11;
+    const F=s=>Math.round(mobile?s*0.9:s);
     x.save();
-    x.globalAlpha=0.68;x.fillStyle='#0b0e17';
-    x.beginPath();x.roundRect(pad,pad,w,h,10);x.fill();
-    x.globalAlpha=1;x.strokeStyle='rgba(255,255,255,0.12)';x.lineWidth=1;
-    x.beginPath();x.roundRect(pad+0.5,pad+0.5,w-1,h-1,10);x.stroke();
-    // HP: крупный бар с числами
-    hudBar(bx,pad+(mobile?6:8),bw,mobile?11:13,player.hp/player.maxHp,player.hp/player.maxHp<0.3?'#ff2d55':'#ef4444');
-    x.fillStyle='#fff';x.font='bold '+(mobile?8.5:9)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-    x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=2;
-    x.fillText(fmtNum(Math.max(0,player.hp))+' / '+fmtNum(player.maxHp),pad+w/2,pad+(mobile?11.5:15));
-    x.shadowBlur=0;
-    // ШКАЛА МОБОВ ЗА УРОВЕНЬ: заполнена в начале уровня, УБЫВАЕТ по мере убийства (0 = новый уровень)
+    // фон: мягкий вертикальный градиент + светящаяся рамка
+    const bg=x.createLinearGradient(pad,pad,pad,pad+h);
+    bg.addColorStop(0,'rgba(24,31,52,0.86)');bg.addColorStop(1,'rgba(8,11,20,0.86)');
+    x.fillStyle=bg;x.beginPath();x.roundRect(pad,pad,w,h,13);x.fill();
+    x.strokeStyle='rgba(125,211,252,0.22)';x.lineWidth=1.3;x.beginPath();x.roundRect(pad+0.6,pad+0.6,w-1.2,h-1.2,13);x.stroke();
+    x.textBaseline='middle';
+    // === ШАПКА: уровень (крупно) + бейдж Mk ===
+    const yA=pad+F(17);
+    x.textAlign='left';x.fillStyle='#7dd3fc';x.font='800 '+F(23)+'px system-ui,sans-serif';
+    const lt='Ур. '+player.level;x.fillText(lt,bx,yA);
+    if(!megaDone){x.fillStyle='#5f7d9c';x.font='bold '+F(11)+'px system-ui,sans-serif';x.fillText('/50',bx+x.measureText(lt).width+4,yA+F(3));}
+    const stT=shipTier(),mk='Mk '+ROMAN[stT]+((player.ascTier||0)>0?' ✦'+player.ascTier:'');
+    x.font='bold '+F(11)+'px system-ui,sans-serif';const mw=x.measureText(mk).width+14;
+    const mkCol=stT>=5?'#fde047':(stT>=3?'#7dd3fc':'#93c5fd');
+    x.fillStyle='rgba(125,211,252,0.14)';x.beginPath();x.roundRect(rx-mw,yA-F(8.5),mw,F(17),8);x.fill();
+    x.fillStyle=mkCol;x.textAlign='center';x.fillText(mk,rx-mw/2,yA);
+    // === время + убийства ===
+    const yB=pad+F(37);
+    x.textAlign='left';x.fillStyle='#93a1b5';x.font='bold '+F(11)+'px system-ui,sans-serif';x.fillText('⏱ '+fmtTime(t),bx,yB);
+    x.textAlign='right';x.fillStyle='#93a1b5';x.fillText('☠ '+fmtNum(kills),rx,yB);
+    // === шкала МОБОВ за уровень (убывает) ===
     const budg=Math.max(1,levelBudget(player.level)),remain=Math.max(0,budg-killsThisLevel);
-    hudBar(bx,pad+(mobile?20:25),bw,mobile?6:7,remain/budg,'#f59e0b');
-    // Перегрузка: фиолетовый бар
+    const yC=pad+F(52);
+    x.textAlign='left';x.fillStyle='#fbbf24';x.font='bold '+F(9.5)+'px system-ui,sans-serif';x.fillText('👾 мобов до уровня: '+fmtNum(remain),bx,yC);
+    hudBar(bx,yC+F(7),bw,F(7),remain/budg,'#f59e0b');
+    // === боевые статы иконками (2 ряда × 3) ===
+    const gfs=F(11),cols=[bx,bx+(mobile?54:70),bx+(mobile?108:138)];
+    const cells=[['💪',fmtNum(player.dmg)],['⚡',(1000/player.fireRate).toFixed(1)],['👟',Math.round(player.speed)],
+      ['💥',Math.round(player.critChance*100)+'%'],['🏹',player.pierce],['◎',Math.round(player.aoeMult*100)+'%']];
+    const sy=[pad+F(78),pad+F(94)];
+    for(let i=0;i<6;i++){const c=cols[i%3],cy=sy[i<3?0:1];
+      x.textAlign='left';x.font=gfs+'px system-ui,sans-serif';x.fillStyle='#c3d0e0';x.fillText(cells[i][0],c,cy);
+      x.fillStyle='#eef3fa';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],c+F(18),cy);}
+    // === перегрузка: тонкий акцент (заряд или активна) ===
+    const yE=pad+F(108);
     if(player.overdriveActive>0){
-      hudBar(bx,pad+(mobile?29:35),bw,mobile?4:5,1,'#c084fc');
-      x.fillStyle='#e9d5ff';x.font='bold '+(mobile?7.5:8)+'px system-ui,sans-serif';x.textAlign='right';
-      x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w-(mobile?8:10),pad+(mobile?27:32));
-    }else{
-      hudBar(bx,pad+(mobile?29:35),bw,mobile?4:5,(player.overdrive||0)/100,'#a855f7');
-    }
-    // строка: уровень · время · Mk (жизни вынесены ВНИЗ панели)
-    const y1=pad+(mobile?41:51);
-    x.textAlign='left';x.textBaseline='middle';
-    x.font='bold '+(mobile?12:14)+'px system-ui,sans-serif';
-    let cx=bx;
-    x.fillStyle='#7dd3fc';const lvlTxt='Ур. '+player.level+(megaDone?'':'/50');
-    x.fillText(lvlTxt,cx,y1);cx+=x.measureText(lvlTxt).width+(mobile?9:12);
-    x.font='bold '+(mobile?11:12)+'px system-ui,sans-serif';
-    x.fillStyle='#8891a3';const tt=fmtTime(t);x.fillText(tt,cx,y1);cx+=x.measureText(tt).width+(mobile?9:12);
-    const stT=shipTier();x.fillStyle=stT>=5?'#fde047':(stT>=3?'#7dd3fc':'#9fb4d6');
-    x.fillText('Mk '+ROMAN[stT]+((player.ascTier||0)>0?' 🌟'+player.ascTier:''),cx,y1);
-    // строка: убийства + мобов ОСТАЛОСЬ за уровень
-    const y2=pad+(mobile?53:65);
-    x.font=(mobile?10:11)+'px system-ui,sans-serif';
-    x.fillStyle='#9aa4b5';x.fillText('☠ '+fmtNum(kills),bx,y2);
-    x.fillStyle='#fbbf24';x.fillText('👾 осталось: '+fmtNum(remain),pad+(mobile?56:72),y2);
-    // боевые статы сеткой — ИКОНКИ (как на картах улучшений) + крупное число, без слов
-    const col=[bx,pad+(mobile?54:70),pad+(mobile?102:130)];
-    const gfs=(mobile?9:10);
-    x.font=gfs+'px system-ui,sans-serif';x.textBaseline='middle';
-    const cells=[
-      ['💪',fmtNum(player.dmg)],['⚡',(1000/player.fireRate).toFixed(1)],['👟',Math.round(player.speed)],
-      ['💥',Math.round(player.critChance*100)+'%'],['🏹',player.pierce],['◎',Math.round(player.aoeMult*100)+'%']
-    ];
-    for(let i=0;i<6;i++){
-      const cx=col[i%3],cy=pad+(i<3?(mobile?67:81):(mobile?80:95));
-      x.font=gfs+'px system-ui,sans-serif';x.fillStyle='#cbd5e1';x.textAlign='left';x.fillText(cells[i][0],cx,cy);
-      x.fillStyle='#e8ebf2';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],cx+(mobile?17:19),cy);
-    }
-    // ЖИЗНИ — отдельной строкой ВНИЗУ панели, крупно (❤ живые, 🤍 потерянные из 3)
-    const ly=pad+(mobile?94:112);
-    x.textAlign='left';x.textBaseline='middle';
-    x.font='bold '+(mobile?9.5:10.5)+'px system-ui,sans-serif';x.fillStyle='#8891a3';x.fillText('ЖИЗНИ',bx,ly);
-    x.font=(mobile?13:15)+'px system-ui,sans-serif';
-    let hs2='';for(let i=0;i<3;i++)hs2+=(i<lives?'❤':'🤍');
-    x.fillText(hs2,bx+(mobile?42:50),ly);
+      x.fillStyle='rgba(0,0,0,0.35)';x.beginPath();x.roundRect(bx,yE,bw,F(5),F(2.5));x.fill();
+      x.fillStyle='#c084fc';x.beginPath();x.roundRect(bx,yE,bw,F(5),F(2.5));x.fill();
+      x.textAlign='center';x.fillStyle='#f3e8ff';x.font='bold '+F(7.5)+'px system-ui,sans-serif';x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w/2,yE+F(2.5));
+    }else{hudBar(bx,yE,bw,F(5),(player.overdrive||0)/100,'#a855f7');}
+    // === ЖИЗНИ ===
+    const yL=pad+F(122);
+    x.textAlign='left';x.fillStyle='#8891a3';x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText('ЖИЗНИ',bx,yL);
+    x.font=F(13)+'px system-ui,sans-serif';let hs2='';for(let i=0;i<3;i++)hs2+=(i<lives?'❤':'🤍');x.fillText(hs2,bx+F(42),yL);
+    // === HP-БАР ВНИЗУ ХАБА (толстый, с градиентом и числом) ===
+    const hf=Math.max(0,Math.min(1,player.hp/player.maxHp)),hh=F(15),hy=pad+h-hh-F(7);
+    x.fillStyle='rgba(0,0,0,0.45)';x.beginPath();x.roundRect(bx,hy,bw,hh,hh/2);x.fill();
+    const hc=hf>0.5?'#4ade80':(hf>0.28?'#f59e0b':'#ff3b47');
+    if(hf>0){const hg=x.createLinearGradient(bx,0,bx+bw,0);hg.addColorStop(0,shade(hc,-0.15));hg.addColorStop(1,hc);
+      x.fillStyle=hg;x.beginPath();x.roundRect(bx,hy,Math.max(bw*hf,hh),hh,hh/2);x.fill();}
+    x.strokeStyle='rgba(255,255,255,0.18)';x.lineWidth=1;x.beginPath();x.roundRect(bx+0.5,hy+0.5,bw-1,hh-1,hh/2);x.stroke();
+    x.textAlign='center';x.fillStyle='#fff';x.font='bold '+F(10)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.9)';x.shadowBlur=2;
+    x.fillText('❤ '+fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),pad+w/2,hy+hh/2);x.shadowBlur=0;
     x.restore();
     // комбо-индикатор (справа сверху) — растёт с серией, мигает на пике
     // индикатор СЕРИИ БЕЗ УРОНА (справа сверху): чем длиннее серия — тем ярче и крупнее,
