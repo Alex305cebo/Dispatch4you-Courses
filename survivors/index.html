@@ -4843,7 +4843,7 @@
     // хаб: на мобильных/узких экранах — компактнее (150×92 вместо 190×108),
     // шрифты 8.5–11px остаются читаемыми, сетка статов ужата по колонкам
     const mobile=W<640;
-    const pad=mobile?6:8,w=mobile?150:190,h=mobile?92:108;
+    const pad=mobile?6:8,w=mobile?150:190,h=mobile?106:124;
     const bx=pad+(mobile?6:8),bw=w-(mobile?12:16);
     x.save();
     x.globalAlpha=0.68;x.fillStyle='#0b0e17';
@@ -4856,8 +4856,9 @@
     x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=2;
     x.fillText(fmtNum(Math.max(0,player.hp))+' / '+fmtNum(player.maxHp),pad+w/2,pad+(mobile?11.5:15));
     x.shadowBlur=0;
-    // XP: синий бар
-    hudBar(bx,pad+(mobile?20:25),bw,mobile?6:7,killsThisLevel/Math.max(1,levelBudget(player.level)),'#4D96FF');
+    // ШКАЛА МОБОВ ЗА УРОВЕНЬ: заполнена в начале уровня, УБЫВАЕТ по мере убийства (0 = новый уровень)
+    const budg=Math.max(1,levelBudget(player.level)),remain=Math.max(0,budg-killsThisLevel);
+    hudBar(bx,pad+(mobile?20:25),bw,mobile?6:7,remain/budg,'#f59e0b');
     // Перегрузка: фиолетовый бар
     if(player.overdriveActive>0){
       hudBar(bx,pad+(mobile?29:35),bw,mobile?4:5,1,'#c084fc');
@@ -4866,25 +4867,22 @@
     }else{
       hudBar(bx,pad+(mobile?29:35),bw,mobile?4:5,(player.overdrive||0)/100,'#a855f7');
     }
-    // строка: уровень · жизни · время
+    // строка: уровень · время · Mk (жизни вынесены ВНИЗ панели)
     const y1=pad+(mobile?41:51);
     x.textAlign='left';x.textBaseline='middle';
     x.font='bold '+(mobile?12:14)+'px system-ui,sans-serif';
-    // раскладываем строку динамически, чтобы «Mk» не наезжал на жизни/время
     let cx=bx;
     x.fillStyle='#7dd3fc';const lvlTxt='Ур. '+player.level+(megaDone?'':'/50');
-    x.fillText(lvlTxt,cx,y1);cx+=x.measureText(lvlTxt).width+(mobile?7:9);
+    x.fillText(lvlTxt,cx,y1);cx+=x.measureText(lvlTxt).width+(mobile?9:12);
     x.font='bold '+(mobile?11:12)+'px system-ui,sans-serif';
-    x.fillStyle='#ff5d73';const hs='❤'.repeat(Math.max(0,lives));x.fillText(hs,cx,y1);cx+=x.measureText(hs).width+(mobile?7:9);
-    x.fillStyle='#8891a3';const tt=fmtTime(t);x.fillText(tt,cx,y1);cx+=x.measureText(tt).width+(mobile?8:11);
-    // ТИР КОРАБЛЯ (уровень персонажа/корабля наглядно): Mk I…VI
+    x.fillStyle='#8891a3';const tt=fmtTime(t);x.fillText(tt,cx,y1);cx+=x.measureText(tt).width+(mobile?9:12);
     const stT=shipTier();x.fillStyle=stT>=5?'#fde047':(stT>=3?'#7dd3fc':'#9fb4d6');
     x.fillText('Mk '+ROMAN[stT]+((player.ascTier||0)>0?' 🌟'+player.ascTier:''),cx,y1);
-    // строка: убийства + мобов на поле
+    // строка: убийства + мобов ОСТАЛОСЬ за уровень
     const y2=pad+(mobile?53:65);
     x.font=(mobile?10:11)+'px system-ui,sans-serif';
     x.fillStyle='#9aa4b5';x.fillText('☠ '+fmtNum(kills),bx,y2);
-    x.fillStyle='#fca5a5';x.fillText('👾 мобов: '+enemies.length,pad+(mobile?56:72),y2);
+    x.fillStyle='#fbbf24';x.fillText('👾 осталось: '+fmtNum(remain),pad+(mobile?56:72),y2);
     // боевые статы сеткой — ИКОНКИ (как на картах улучшений) + крупное число, без слов
     const col=[bx,pad+(mobile?54:70),pad+(mobile?102:130)];
     const gfs=(mobile?9:10);
@@ -4898,6 +4896,13 @@
       x.font=gfs+'px system-ui,sans-serif';x.fillStyle='#cbd5e1';x.textAlign='left';x.fillText(cells[i][0],cx,cy);
       x.fillStyle='#e8ebf2';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],cx+(mobile?17:19),cy);
     }
+    // ЖИЗНИ — отдельной строкой ВНИЗУ панели, крупно (❤ живые, 🤍 потерянные из 3)
+    const ly=pad+(mobile?94:112);
+    x.textAlign='left';x.textBaseline='middle';
+    x.font='bold '+(mobile?9.5:10.5)+'px system-ui,sans-serif';x.fillStyle='#8891a3';x.fillText('ЖИЗНИ',bx,ly);
+    x.font=(mobile?13:15)+'px system-ui,sans-serif';
+    let hs2='';for(let i=0;i<3;i++)hs2+=(i<lives?'❤':'🤍');
+    x.fillText(hs2,bx+(mobile?42:50),ly);
     x.restore();
     // комбо-индикатор (справа сверху) — растёт с серией, мигает на пике
     // индикатор СЕРИИ БЕЗ УРОНА (справа сверху): чем длиннее серия — тем ярче и крупнее,
