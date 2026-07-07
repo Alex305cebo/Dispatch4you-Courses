@@ -1555,7 +1555,7 @@
       ranged:!elite&&!!base.ranged,rangedCd:!elite&&base.ranged?rand(1,2):0};
     clampMobHp(en); // всегда в коридоре живучести относительно урона игрока
     if(act===2&&!elite){en.glow='#f43f5e';en.maxHp=en.hp=en.maxHp*1.12;} // АКТ 2: багровое свечение + чуть живучее
-    if(elite&&!en.superboss){ // обычные боссы получают щит и неуязвимость на трансформациях (как мини-Хронос)
+    if(elite&&!en.superboss&&!inVault){ // обычные боссы получают щит (но НЕ в лабиринте — там без щита, проще)
       en.shieldMax=en.shieldHp=Math.round(en.maxHp*0.28);en.shieldRe=14;en.shieldCd=0;en._shieldHitT=0;
       armMegaShield(en);
     }
@@ -3939,9 +3939,11 @@
         czAcc=0;
         const a2=rand(0,Math.PI*2),d2=rand(320,520);
         const zx=player.x+Math.cos(a2)*d2,zy=player.y+Math.sin(a2)*d2;
-        cursedZones.push({x:zx,y:zy,r:150,t:45,acc:0});
-        pickups.push({x:zx,y:zy,r:11,type:'chest',color:'#facc15',label:'★',life:45,cz:true});
-        announce={text:'☠ Проклятая зона: внутри опасно, но там сундук…',life:2.6,color:'#a855f7'};
+        // ЧЕЛЛЕНДЖ «УДЕРЖИ ЗОНУ»: стой внутри, шкала заполняется — вскроешь сундук. Внутри яд и стража.
+        cursedZones.push({x:zx,y:zy,r:150,t:60,acc:0,hold:0,holdNeed:7,done:false});
+        for(let i=0;i<8;i++){const m=spawnEnemy(false);const aa=rand(0,Math.PI*2),rr=rand(60,150);m.x=zx+Math.cos(aa)*rr;m.y=zy+Math.sin(aa)*rr;m.color='#a855f7';m.glow='#a855f7';}
+        announce={text:'☠ УДЕРЖИ ПРОКЛЯТУЮ ЗОНУ 7с — вскроешь сундук! (внутри яд и стража)',life:3.5,color:'#a855f7'};
+        camShake=Math.max(camShake,6);sfxSweep(160,700,0.5,'sawtooth',0.1,true);
       }
       // РАЗЛОМ (Breach): волна мобов + якорь; убьёшь якоря — награда
       riftAcc+=dt;
@@ -3958,13 +3960,25 @@
         announce={text:'🌀 РАЗЛОМ ОТКРЫЛСЯ! Убей якоря (фиолетовый) — получишь награду',life:3.5,color:'#c084fc'};
         camShake=Math.max(camShake,8);sfxSweep(160,800,0.5,'sawtooth',0.12,true);
       }
-      // тик проклятых зон: яд (мягкий, не убивает ниже 5% HP) — комбо не рвёт
+      // тик проклятых зон: держи зону (шкала) + мягкий яд; удержал — сундук
       for(let ci2=cursedZones.length-1;ci2>=0;ci2--){
         const cz=cursedZones[ci2];cz.t-=dt;cz.acc+=dt;
-        if(cz.acc>=1&&dist(player,cz)<cz.r){cz.acc=0;
+        const inside=dist(player,cz)<cz.r;
+        if(cz.acc>=1&&inside){cz.acc=0;
           if(player.hp>player.maxHp*0.05){player.hp-=player.maxHp*0.02;flashFx(0.08,'168,85,247');}
         }
-        if(cz.t<=0)cursedZones.splice(ci2,1);
+        if(!cz.done){
+          if(inside)cz.hold=Math.min(cz.holdNeed,cz.hold+dt);
+          else cz.hold=Math.max(0,cz.hold-dt*0.5); // ушёл — прогресс медленно тает
+          if(cz.hold>=cz.holdNeed){ // УДЕРЖАЛ — вскрываем сундук
+            cz.done=true;openChest();addUpPoints(1,'проклятая зона');
+            announce={text:'🏆 ЗОНА УДЕРЖАНА — СУНДУК ТВОЙ!',life:3,color:'#fde047'};
+            flashFx(0.5,'250,204,21');camShake=Math.max(camShake,10);sfxChime(660,6,0.09,0.13);
+            burst(cz.x,cz.y,'#facc15',24);rings.push({x:cz.x,y:cz.y,r:0,maxR:cz.r+40,life:0.8,color:'#facc15'});
+            cursedZones.splice(ci2,1);continue;
+          }
+        }
+        if(cz.t<=0){cursedZones.splice(ci2,1);announce={text:'☠ Проклятая зона рассеялась…',life:1.6,color:'#8891a3'};}
       }
       // тик разломов: время вышло — закрывается без награды
       for(let ri2=rifts.length-1;ri2>=0;ri2--){
@@ -5020,6 +5034,15 @@
       for(let i=0;i<5;i++){const aa=t*0.7+i*1.257;x.globalAlpha=(0.3+0.2*Math.sin(t*3+i))*fade;
         x.fillStyle='#c084fc';x.beginPath();x.arc(cz.x+Math.cos(aa)*cz.r*0.6,cz.y+Math.sin(aa)*cz.r*0.6,3,0,Math.PI*2);x.fill();}
       x.restore();x.globalAlpha=1;
+      // сундук в центре + кольцо прогресса удержания
+      const prog=Math.max(0,Math.min(1,(cz.hold||0)/(cz.holdNeed||7)));
+      x.save();x.translate(cz.x,cz.y);
+      x.strokeStyle='rgba(0,0,0,0.5)';x.lineWidth=6/zoom;x.beginPath();x.arc(0,0,34,0,Math.PI*2);x.stroke();
+      x.strokeStyle=prog>=1?'#fde047':'#facc15';x.lineWidth=6/zoom;x.beginPath();x.arc(0,0,34,-Math.PI/2,-Math.PI/2+Math.PI*2*prog);x.stroke();
+      x.font='22px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('🎁',0,-1);
+      x.fillStyle='#fde047';x.font='bold '+Math.round(11/zoom)+'px system-ui,sans-serif';
+      x.fillText('удержи '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с',0,46);
+      x.restore();
     });
     // разломы: фиолетовая «трещина» из дуг + искры
     rifts.forEach(rf=>{
