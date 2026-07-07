@@ -358,15 +358,23 @@
   // забега: глубина прокачки (уровень), объём (киллы), выносливость (время), скилл
   // (серия без урона), сложные цели (боссы/охотники), жадность (собранный опыт).
   const SCORE_W={level:1000,kills:6,time:3,combo:35,bosses:400,hunters:250,gems:2};
+  // Потолки на компоненты: старые забеги (комбо считалось почти как киллы и весило x35,
+  // плюс марафоны на 90+ минут) раздували счёт до десятков миллионов и ломали таблицу.
+  // Кап держит очки в вменяемом диапазоне и убирает двойной учёт комбо.
+  const SCORE_CAP={level:600,kills:250000,time:7200,combo:1000,bosses:400,hunters:400,gems:120000};
   function scoreFrom(o){
+    const c=k=>Math.min(o[k]||0,SCORE_CAP[k]);
     return Math.round(
-      (o.level||1)*SCORE_W.level + (o.kills||0)*SCORE_W.kills + (o.time||0)*SCORE_W.time +
-      (o.combo||0)*SCORE_W.combo + (o.bosses||0)*SCORE_W.bosses + (o.hunters||0)*SCORE_W.hunters +
-      (o.gems||0)*SCORE_W.gems);
+      Math.max(1,c('level'))*SCORE_W.level + c('kills')*SCORE_W.kills + c('time')*SCORE_W.time +
+      c('combo')*SCORE_W.combo + c('bosses')*SCORE_W.bosses + c('hunters')*SCORE_W.hunters +
+      c('gems')*SCORE_W.gems);
   }
   function currentRun(){return {level:player.level,kills,time:Math.round(t),combo:player.comboBest||0,bosses:bossKills,hunters:hunterKills,gems:gemsCollected};}
   async function submitScore(game,name,score,extra){try{const fields={game:fsVal(game),name:fsVal(name),score:fsVal(Math.max(0,Math.round(score)))};if(extra)for(const k in extra)fields[k]=fsVal(extra[k]);await fetch(FS_BASE+'/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fields})});}catch(e){console.error('leaderboard submit failed',e);}}
-  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;return{name:(f.name&&f.name.stringValue)||'?',score:num(f.score),level:num(f.level),kills:num(f.kills),time:num(f.time),combo:num(f.combo),bosses:num(f.bosses),hunters:num(f.hunters),gems:num(f.gems)};});list.sort((a,b)=>b.score-a.score||b.level-a.level||b.kills-a.kills);
+  async function fetchLeaderboard(game,limit){try{const body={structuredQuery:{from:[{collectionId:'leaderboard'}],where:{fieldFilter:{field:{fieldPath:'game'},op:'EQUAL',value:{stringValue:game}}},limit:200}};const res=await fetch(FS_BASE+':runQuery',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const rows=await res.json();const num=v=>Number((v&&(v.integerValue||v.doubleValue))||0);const list=rows.filter(r=>r.document).map(r=>{const f=r.document.fields;const o={name:(f.name&&f.name.stringValue)||'?',level:num(f.level),kills:num(f.kills),time:num(f.time),combo:num(f.combo),bosses:num(f.bosses),hunters:num(f.hunters),gems:num(f.gems)};
+      // пересчитываем счёт по КАПНУТОЙ формуле — старые раздутые записи (напр. 74M) становятся честными;
+      // если у записи нет компонентов (совсем старая схема) — берём сохранённый счёт
+      const rec=scoreFrom(o);o.score=(o.level||o.kills||o.time)?rec:num(f.score);return o;});list.sort((a,b)=>b.score-a.score||b.level-a.level||b.kills-a.kills);
     // ОДНА запись на игрока: у одного ника оставляем только лучший счёт — иначе один
     // забег, «Завершить»→«Продолжить» много раз, заливал всю таблицу дублями.
     const seen=new Set(),ded=[];
@@ -566,14 +574,33 @@
     musicNodes=null;
   }
   // iOS/Safari глушит AudioContext при сворачивании браузера («suspended»/«interrupted») —
-  // при возврате на вкладку/первом касании возобновляем контекст и музыку
+  // при возврате на вкладку/первом касании возобновляем контекст и музыку.
+  // Если resume() не поднимает контекст до 'running' (частый баг iOS после сворачивания) —
+  // ПЕРЕСОЗДАЁМ весь аудиограф заново, чтобы звук точно вернулся.
+  function rebuildAudio(){
+    try{if(actx)actx.close();}catch(e){}
+    actx=null;compressor=null;masterGain=null;musicNodes=null;
+    if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
+    ensureAudio(); // свежий контекст + музыка (если звук включён)
+  }
   function resumeAudioIfNeeded(){
-    if(!actx)return;
-    if(actx.state==='suspended'||actx.state==='interrupted'){
-      try{actx.resume().then(()=>{if(soundOn&&!musicNodes)startMusic();}).catch(()=>{});}catch(e){}
+    if(!actx){if(soundOn)ensureAudio();return;}
+    if(actx.state==='closed'){rebuildAudio();return;}
+    if(actx.state==='running'){
+      if(masterGain)masterGain.gain.value=soundOn?1:0;
+      if(soundOn&&musicNodes==='file'&&musicEl&&musicEl.paused){try{musicEl.play().catch(()=>{});}catch(e){}}
+      if(soundOn&&!musicNodes)startMusic();
+      return;
     }
-    if(soundOn&&musicNodes==='file'&&musicEl&&musicEl.paused){try{musicEl.play().catch(()=>{});}catch(e){}}
-    if(soundOn&&!musicNodes&&actx.state==='running')startMusic();
+    // suspended / interrupted — пробуем поднять, иначе пересоздаём
+    try{
+      actx.resume().then(()=>{
+        if(!actx||actx.state!=='running'){rebuildAudio();return;}
+        if(masterGain)masterGain.gain.value=soundOn?1:0;
+        if(soundOn&&musicNodes==='file'&&musicEl&&musicEl.paused){try{musicEl.play().catch(()=>{});}catch(e){}}
+        if(soundOn&&!musicNodes)startMusic();
+      }).catch(()=>rebuildAudio());
+    }catch(e){rebuildAudio();}
   }
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeAudioIfNeeded();});
   window.addEventListener('pageshow',resumeAudioIfNeeded);
@@ -3777,7 +3804,15 @@
       const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
       if(!vaultCleared&&left===0){
         vaultCleared=true;
-        announce={text:'🏆 ЛАБИРИНТ ЗАЧИЩЕН! Иди к выходу 🚪',life:3,color:'#4ade80'};addUpPoints(5,'лабиринт');
+        // ЛУТ У ТЕЛЕПОРТА: немного плюшек рядом с выходом (не толпа — 3 предмета + пара кристаллов)
+        if(vaultExit){
+          const ex=vaultExit.x,ey=vaultExit.y;
+          const drops=[['chest','#facc15','★'],['heal','#4ade80','+'],['magnet','#38bdf8','◎']];
+          drops.forEach((d,i)=>{const a=(i/drops.length)*Math.PI*2-Math.PI/2,pt={x:ex+Math.cos(a)*66,y:ey+Math.sin(a)*66,r:12,type:d[0],color:d[1],label:d[2]};if(typeof nearestWalkPoint==='function'){const w=nearestWalkPoint(pt.x,pt.y);if(w){pt.x=w.x;pt.y=w.y;}}pickups.push(pt);});
+          for(let i=0;i<5;i++){const a=Math.random()*Math.PI*2,g={x:ex+Math.cos(a)*rand(36,90),y:ey+Math.sin(a)*rand(36,90),r:6,val:Math.round((player.xpNeed||50)*0.14)};if(typeof nearestWalkPoint==='function'){const w=nearestWalkPoint(g.x,g.y);if(w){g.x=w.x;g.y=w.y;}}gems.push(g);}
+          burst(ex,ey,'#facc15',18);rings.push({x:ex,y:ey,r:0,maxR:vaultExit.r+70,life:0.9,color:'#4ade80'});
+        }
+        announce={text:'🏆 ЛАБИРИНТ ЗАЧИЩЕН! Забери награду у выхода 🚪',life:3,color:'#4ade80'};addUpPoints(5,'лабиринт');
         flashFx(0.5,'74,222,128');sfxChime(660,3,0.09,0.12);
       }
       if(vaultCleared&&vaultExit&&dist(player,vaultExit)<vaultExit.r+player.r){
@@ -4077,7 +4112,28 @@
             if(p.fireballEvo&&p.pierceLeft>0){p.hitSet.add(e);p.pierceLeft--;continue;}
             p.life=0;p.pierceLeft=-1;break;
           }
-          e.hp-=p.dmg;p.hitSet.add(e);p.pierceLeft--;sparkHit(p.x,p.y,p.color||'#4D96FF');
+          // ЩИТ БОССА: снаряд ОТСКАКИВАЕТ от щита (как от настоящего), но щит всё равно ломается
+          if(e.shieldHp>0&&e.shieldMax){
+            e.hp-=p.dmg; // урон уходит в щит через сеттер armMegaShield
+            p.hitSet.add(e);
+            const nx=p.x-e.x,ny=p.y-e.y,nl=Math.hypot(nx,ny)||1,ux=nx/nl,uy=ny/nl;
+            const dot=p.vx*ux+p.vy*uy;p.vx-=2*dot*ux;p.vy-=2*dot*uy; // отражение v'=v-2(v·n)n
+            const sr=e.r+(e.megaboss?46:16);p.x=e.x+ux*(sr+4);p.y=e.y+uy*(sr+4); // на поверхность щита
+            p.life=Math.min(p.life,0.4);p._deflected=true;p.color='#7dd3fc';
+            e._shieldHitT=Math.max(e._shieldHitT||0,0.16);
+            sparkHit(p.x,p.y,'#bae6fd');rings.push({x:p.x,y:p.y,r:0,maxR:e.megaboss?34:22,life:0.22,color:'#7dd3fc'});
+            camShake=Math.max(camShake,e.megaboss?3:1.8);
+            if(t-lastBeepAt>0.05){lastBeepAt=t;if(Math.random()<0.5)beep(760,0.03,'square',0.03);}
+            break; // снаряд обработан — отлетел
+          }
+          // РЕАЛЬНОЕ ПОПАДАНИЕ (щита нет): урон + сочная реакция босса (вспышка/отдача/искры)
+          e.hp-=p.dmg;p.hitSet.add(e);p.pierceLeft--;
+          if(e.elite){ // боссы/Хронос заметно вздрагивают от попаданий
+            e.hitFlash=Math.max(e.hitFlash||0,0.1);
+            const kb=e.megaboss?1.1:2.2,a=Math.atan2(e.y-p.y,e.x-p.x);e.x+=Math.cos(a)*kb;e.y+=Math.sin(a)*kb;
+            burst(p.x,p.y,'#fff',2);sparkHit(p.x,p.y,'#fde047');
+            camShake=Math.max(camShake,e.megaboss?1.6:1.2);
+          }else sparkHit(p.x,p.y,p.color||'#4D96FF');
           if(player.slowHitLevel)e.slowT=Math.max(e.slowT||0,0.3+0.3*player.slowHitLevel);
         }
       }
@@ -4160,6 +4216,8 @@
       x.strokeStyle='#fff';x.lineWidth=5;x.shadowColor='#fff';x.shadowBlur=22;
       x.beginPath();x.arc(0,0,150,0,Math.PI*2);x.stroke();x.shadowBlur=0;x.globalAlpha=1;
     }
+    // ВСПЫШКА ПОПАДАНИЯ: корпус коротко белеет при реальном уроне (по HP)
+    if(e.hitFlash>0){x.globalAlpha=Math.min(0.55,e.hitFlash*6);x.fillStyle='#fff';x.beginPath();x.arc(0,0,150,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     x.restore();
   }
   // ИСТИННАЯ ФОРМА Хроноса (Акт 2): другой корабль — хищный клинок с кристаллическим ядром,
@@ -4209,6 +4267,7 @@
       x.strokeStyle=c;x.lineWidth=6;x.shadowColor=c;x.shadowBlur=24;
       x.beginPath();x.arc(0,0,160,0,Math.PI*2);x.stroke();x.shadowBlur=0;x.globalAlpha=1;
     }
+    if(e.hitFlash>0){x.globalAlpha=Math.min(0.55,e.hitFlash*6);x.fillStyle='#fff';x.beginPath();x.arc(0,0,160,0,Math.PI*2);x.fill();x.globalAlpha=1;}
     x.restore();
   }
   function drawBoss(ex,ey,e){
@@ -4681,9 +4740,22 @@
           x.fillStyle='#2f8a45';x.beginPath();x.arc(tr.x-tr.r*0.32,tr.y-tr.r*0.32,tr.r*0.55,0,Math.PI*2);x.fill(); // блик
         }
       }else{
+        // СТЕНЫ ЛАБИРИНТА: каменно-техно панели с объёмом (свет сверху, тень снизу)
+        // и пульсирующим энергетическим швом — вместо плоских полос
         for(const w of vaultWalls){
-          x.fillStyle='#181030';x.fillRect(w.x,w.y,w.w,w.h);
-          x.strokeStyle='rgba(192,132,252,0.5)';x.lineWidth=2;x.strokeRect(w.x,w.y,w.w,w.h);
+          x.fillStyle='#130c26';x.fillRect(w.x,w.y,w.w,w.h); // тёмная база
+          x.fillStyle='#241a49';x.fillRect(w.x+2,w.y+2,w.w-4,Math.max(2,w.h*0.5-2)); // верхняя светлая грань (объём)
+          x.fillStyle='#0d0820';x.fillRect(w.x+2,w.y+w.h*0.5,w.w-4,w.h*0.5-2); // нижняя тень
+          const seam=0.35+0.25*Math.sin(t*2+(w.x+w.y)*0.008);
+          // энергошов: тёмный низ + яркое ядро (дешёвый «глоу» без shadowBlur)
+          if(w.w>=w.h){const my=w.y+w.h/2;
+            x.strokeStyle='rgba(24,52,110,0.7)';x.lineWidth=3.5;x.beginPath();x.moveTo(w.x+6,my);x.lineTo(w.x+w.w-6,my);x.stroke();
+            x.strokeStyle='rgba(120,210,255,'+seam+')';x.lineWidth=1.4;x.beginPath();x.moveTo(w.x+6,my);x.lineTo(w.x+w.w-6,my);x.stroke();
+          }else{const mx=w.x+w.w/2;
+            x.strokeStyle='rgba(24,52,110,0.7)';x.lineWidth=3.5;x.beginPath();x.moveTo(mx,w.y+6);x.lineTo(mx,w.y+w.h-6);x.stroke();
+            x.strokeStyle='rgba(120,210,255,'+seam+')';x.lineWidth=1.4;x.beginPath();x.moveTo(mx,w.y+6);x.lineTo(mx,w.y+w.h-6);x.stroke();
+          }
+          x.strokeStyle='rgba(139,92,246,0.55)';x.lineWidth=1;x.strokeRect(w.x+0.5,w.y+0.5,w.w-1,w.h-1); // фиолетовый контур
         }
       }
       if(vaultExit){
@@ -5646,7 +5718,7 @@
   // пауза
   let paused=false;
   const opause=document.getElementById('opause');
-  function pauseGame(){if(state!=='running'||paused)return;paused=true;saveRun();opause.classList.add('show');}
+  function pauseGame(){if(state!=='running'||paused)return;paused=true;endJoy();keys={};moveVec={x:0,y:0};saveRun();opause.classList.add('show');}
   function unpause(){if(!paused)return;paused=false;opause.classList.remove('show');last=performance.now();}
   function togglePause(){paused?unpause():pauseGame();}
   document.getElementById('btnPauseSide').addEventListener('click',pauseGame);
@@ -5654,8 +5726,8 @@
   document.addEventListener('keydown',e=>{if(e.code==='Escape'||e.code==='KeyP')togglePause();});
 
   function toCanvasXY(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*(cv.width/r.width),y:(e.clientY-r.top)*(cv.height/r.height)};}
-  cv.addEventListener('pointerdown',e=>{if(state!=='running')return;const p=toCanvasXY(e);joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
-  cv.addEventListener('pointermove',e=>{if(!joy.active)return;const p=toCanvasXY(e);let dx=p.x-joy.bx,dy=p.y-joy.by;const d=Math.hypot(dx,dy),max=42;if(d>max){dx=dx/d*max;dy=dy/d*max;}joy.dx=dx/max;joy.dy=dy/max;});
+  cv.addEventListener('pointerdown',e=>{if(state!=='running'||paused)return;const p=toCanvasXY(e);joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(!joy.active||paused)return;const p=toCanvasXY(e);let dx=p.x-joy.bx,dy=p.y-joy.by;const d=Math.hypot(dx,dy),max=42;if(d>max){dx=dx/d*max;dy=dy/d*max;}joy.dx=dx/max;joy.dy=dy/max;});
   function endJoy(){joy.active=false;joy.dx=0;joy.dy=0;}
   cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
 
