@@ -1095,6 +1095,7 @@
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
+  let finaleLB=0; // кинематографические чёрные полосы (леттербокс) во время финала Хроноса
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
   let act2Base=null; // БАЗА Акта 2: здание, что починило корабль — остаётся в мире как ориентир
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
@@ -1310,7 +1311,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1401,7 +1402,7 @@
       inArcade=true;arcade=s.arcade;arcadeStash=s.arcadeStash||null;
     }else{inArcade=false;arcade=null;arcadeStash=null;}
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
-    act=s.act||1;finale=null;act2Tower=null;
+    act=s.act||1;finale=null;finaleLB=0;act2Tower=null;
     mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;act2Base=s.act2Base||null;
     // подстраховка: сейв во время починки (ещё раненый, башни нет) — возвращаем башню рядом
     if(act===2&&player.wounded&&!player.ship2&&!act2Base){act2Tower={x:player.x+130,y:player.y-10,r:46,progress:0};}
@@ -3402,12 +3403,22 @@
   function finaleTick(real){
     if(!finale)return;
     const F=finale,b=F.boss;
-    F.t-=real;
+    // КИНЕМАТОГРАФИЯ: перед выстрелом Хроноса время как будто густеет — камера ЗАМЕДЛЯЕТСЯ и
+    // ОТДАЛЯЕТСЯ (кадр «выдоха»), наплывают чёрные полосы. На выстреле — резкий наезд и тряска.
+    const preFire=(F.phase==='win'||F.phase==='charge');
+    const eff=real*(preFire?0.5:1);        // визуал (дрейф босса, искры) течёт медленнее до выстрела
+    F.t-=preFire?real*0.82:real;            // сами фазы тоже «дышат» чуть медленнее
+    // леттербокс: наплывает в начале, уходит на телепорте
+    const lbT=F.phase==='teleport'?0:1;finaleLB+=(lbT-finaleLB)*Math.min(1,real*3);
+    // зум: плавно ОТДАЛЯЕМСЯ на win/charge, лёгкий наезд на fire, сильный наезд в портал
+    const zT=F.phase==='win'?baseZoom*0.9:F.phase==='charge'?baseZoom*0.7:F.phase==='fire'?baseZoom*0.85:Math.min(2.4,baseZoom*2.2);
+    zoom+=(zT-zoom)*Math.min(1,real*(F.phase==='teleport'?2.0:1.3));
     // step() во время катсцены НЕ идёт → гасим вспышки здесь, иначе они «залипают» и топят лазер в красном
     if(screenFlash>0)screenFlash=Math.max(0,screenFlash-real*1.6);
     if(fxFlash>0)fxFlash=Math.max(0,fxFlash-real*3.5);
-    camShake=Math.max(camShake,F.phase==='fire'?20:F.phase==='charge'?8:5);
-    if(b){b.x+=(player.x+240-b.x)*Math.min(1,real*1.3);b.y+=(player.y-70-b.y)*Math.min(1,real*1.3);} // Хронос выходит на позицию
+    // спокойствие перед бурей: почти без тряски на заряде → мощный удар на выстреле
+    camShake=Math.max(camShake,F.phase==='fire'?22:F.phase==='charge'?3:2);
+    if(b){b.x+=(player.x+240-b.x)*Math.min(1,eff*1.3);b.y+=(player.y-70-b.y)*Math.min(1,eff*1.3);} // Хронос плавно выходит на позицию
     if(F.phase==='win'){
       // Хронос содрогается — «почти конец», игрок выдыхает
       if(b&&Math.random()<0.6)burst(b.x+rand(-b.r,b.r),b.y+rand(-b.r,b.r),'#fff',2);
@@ -3433,11 +3444,10 @@
         announce={text:'🌀 ВЗРЫВ РАЗЛОМА ЗАТЯГИВАЕТ ТЕБЯ — переход в АКТ 2…',life:2.8,color:'#7dd3fc'};
         sfxSweep(1500,180,1.6,'sine',0.15,true);
       }
-    }else{ // teleport: корабль закручивается в портал, экран белеет
-      zoom+=(Math.min(2.4,baseZoom*2.2)-zoom)*Math.min(1,real*2.0);
+    }else{ // teleport: корабль закручивается в портал, экран белеет (зум наезжает — см. выше)
       player._spin=(player._spin||0)+real*16;
       if(Math.random()<0.6)particles.push({x:player.x+rand(-34,34),y:player.y+rand(-34,34),vx:rand(-2,2),vy:rand(-3,-0.5),life:0.7,color:'#7dd3fc',sz:3});
-      if(F.t<=0){finale=null;zoom=baseZoom*1.3;player._spin=0;enterAct2();}
+      if(F.t<=0){finale=null;finaleLB=0;zoom=baseZoom*1.3;player._spin=0;enterAct2();}
     }
   }
   function drawFinale(){
@@ -3482,6 +3492,13 @@
       x.restore();
     }
     x.restore();
+    // ЛЕТТЕРБОКС: кинематографические чёрные полосы сверху и снизу (в экранных координатах)
+    if(finaleLB>0.01){
+      x.save();x.setTransform(1,0,0,1,0,0);
+      const bh=Math.round(H*0.12*finaleLB);
+      x.fillStyle='#000';x.fillRect(0,0,W,bh);x.fillRect(0,H-bh,W,bh);
+      x.restore();
+    }
   }
   function enterAct2(){
     act=2;megaDone=true;megaFought=true;
@@ -3513,7 +3530,8 @@
     burst(player.x,player.y,a2?'#f43f5e':'#94a3b8',30);
     const ang=rand(0,Math.PI*2),rad=360; // на экране, а не за его краем
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
-      hp,maxHp:hp,speed:a2?62:55,dmg,r:a2?124:110,baseR:a2?124:110,baseSpeed:a2?62:55,shipA:0,invulnT:0,
+      hp,maxHp:hp,speed:a2?230:200,dmg,r:a2?124:110,baseR:a2?124:110,baseSpeed:a2?230:200,shipA:0,invulnT:0,
+      roamCd:0,roamX:undefined,roamY:undefined,blinkCd:rand(4,6),blinkWarn:0, // быстрое рысканье + телепорт-удар в упор
       guns:[{ox:120,oy:0},{ox:10,oy:-64},{ox:10,oy:64},{ox:-88,oy:-46},{ox:-88,oy:46}].map(g=>({ox:g.ox,oy:g.oy,cd:rand(0.6,2.2),burst:0,bt:0})),
       color:a2?'#be123c':'#94a3b8',glow:a2?'#f43f5e':'#94a3b8',skinShape:'super',skinName:a2?'ХРОНОС · ПРОБУЖДЁННЫЙ':'ХРОНОС · Форма Стали',
       xp:xpForPower(hp,dmg)*3,elite:true,megaboss:true,bossNumber:8,pauseSpawns:true,
@@ -3529,6 +3547,37 @@
     player.invuln=Math.max(player.invuln,1.2);
     sfxBoom(0.6,0.35,300,40,true);setTimeout(()=>beep(45,0.9,'sawtooth',0.25),250);
     return en;
+  }
+  // ДВИЖЕНИЕ ХРОНОСА: стремительно рыщет вокруг игрока и изредка ТЕЛЕПОРТИРУЕТСЯ вплотную
+  // для удара в упор (ударная волна с коротким телеграфом — уворот возможен, но страшно)
+  function megaMove(e,dt){
+    e.blinkCd-=dt;
+    if(e.blinkCd<=0&&e.blinkWarn<=0){
+      // исчезновение из текущей точки
+      burst(e.x,e.y,e.glow||'#f43f5e',28);rings.push({x:e.x,y:e.y,r:0,maxR:e.r+70,life:0.4,color:e.glow||'#f43f5e'});
+      // появление ВПЛОТНУЮ, сбоку от игрока
+      const a=rand(0,Math.PI*2),rr=e.r*0.85+player.r+34;
+      e.x=player.x+Math.cos(a)*rr;e.y=player.y+Math.sin(a)*rr;
+      e.shipA=Math.atan2(player.y-e.y,player.x-e.x);
+      burst(e.x,e.y,'#fff',26);rings.push({x:e.x,y:e.y,r:0,maxR:e.r+110,life:0.5,color:'#fff'});
+      // телеграф удара в упор: круг у Хроноса, детонирует через ~0.55с (успей убежать!)
+      telegraphs.push({x:e.x,y:e.y,r:e.r+90,t:0.55,max:0.55,dmg:Math.round(e.dmg*0.85),color:'#ff2d55'});
+      camShake=Math.max(camShake,12);screenFlash=Math.max(screenFlash,0.3);
+      announce={text:'⚡ ХРОНОС В УПОР — ОТБЕГИ!',life:1.3,color:'#ff2d55'};
+      sfxSweep(900,120,0.4,'sawtooth',0.14,true);beep(60,0.3,'sawtooth',0.16);
+      e.blinkWarn=0.55;e.blinkCd=rand(6,9); // замирает на удар, потом снова рыщет
+      return;
+    }
+    if(e.blinkWarn>0){e.blinkWarn-=dt;return;} // готовит удар — стоит на месте
+    // обычное быстрое перемещение: рыщет вокруг игрока, резко меняя точку
+    e.roamCd-=dt;
+    if(e.roamCd<=0||e.roamX===undefined){
+      const a=rand(0,Math.PI*2),rr=rand(260,440);
+      e.roamX=player.x+Math.cos(a)*rr;e.roamY=player.y+Math.sin(a)*rr;
+      e.roamCd=rand(0.8,1.7);
+    }
+    const mdx=e.roamX-e.x,mdy=e.roamY-e.y,md=Math.hypot(mdx,mdy)||1,stp=Math.min(md,e.speed*dt);
+    e.x+=mdx/md*stp;e.y+=mdy/md*stp;
   }
   function updateMegaBoss(e,dt){
     // ФИНАЛ АКТА 1: Хронос на <3% HP не умирает — стреляет супер-лазером и телепортирует тебя в Акт 2
@@ -3589,12 +3638,13 @@
       if(Math.random()<0.4)particles.push({x:e.x+rand(-e.r,e.r),y:e.y+rand(-e.r,e.r),vx:0,vy:-1.4,life:0.5,color:'#fff',sz:3});
       return; // во время трансформации не стреляет и не двигает пушками
     }
-    // корабль медленно доворачивается на игрока
+    // корабль доворачивается на игрока (быстрее — он теперь подвижный и агрессивный)
     {
       const ta=Math.atan2(player.y-e.y,player.x-e.x);
       let da=((ta-e.shipA)%(Math.PI*2)+Math.PI*3)%(Math.PI*2)-Math.PI;
-      e.shipA+=da*Math.min(1,dt*1.1);
+      e.shipA+=da*Math.min(1,dt*2.2);
     }
+    megaMove(e,dt); // стремительное рысканье + телепорт-удар в упор
     // ПУШКИ: каждая живёт своей жизнью — очередь из 3-6 выстрелов, потом своя перезарядка
     const cosA=Math.cos(e.shipA),sinA=Math.sin(e.shipA),scl=e.r/e.baseR;
     for(const g of e.guns){
