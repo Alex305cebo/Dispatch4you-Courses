@@ -148,6 +148,23 @@
     .side{max-height:20vh;}
     .hint{display:none;}
   }
+  /* ТЕЛЕФОН: нижнее меню прячется под гамбургер (☰) — тап ставит игру на паузу и открывает
+     попап со всем содержимым; сам хаб рисуется полосой внизу канваса (drawMobileBar) */
+  .m-only{display:none;}
+  #btnBurger{display:none;position:absolute;top:9px;left:9px;z-index:40;width:auto;padding:6px 12px;font-size:20px;line-height:1;
+    background:rgba(16,22,40,0.92);border:1px solid rgba(125,211,252,0.45);border-radius:10px;color:#cfe6ff;box-shadow:0 2px 10px rgba(0,0,0,0.45);}
+  #btnSideClose{border-color:#4ade80;color:#4ade80;font-weight:700;}
+  @media (max-width:819px){
+    #btnBurger{display:flex;align-items:center;justify-content:center;}
+    .m-only{display:block;}
+    .side{position:fixed;inset:0;z-index:70;background:rgba(6,9,16,0.97);display:none;grid-template-columns:1fr;
+      max-height:none;padding:16px 14px;overflow-y:auto;align-content:start;gap:10px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
+    .side.open{display:grid;}
+    .side .hint,.side .credit{display:block;}
+    #pendingBtns{bottom:72px;}
+    /* окна (лидерборд, история, мета…) открываются ПОВЕРХ попап-меню */
+    .overlay{z-index:80;}
+  }
 </style>
 </head>
 <body>
@@ -155,6 +172,7 @@
 <div class="wrap">
   <div class="arena">
     <canvas id="sboard" width="640" height="480"></canvas>
+    <button id="btnBurger" aria-label="Меню">☰</button>
     <div id="pendingBtns">
       <button id="btnPendingUp" class="pupBtn">⬆ Выбрать одно</button>
       <button id="btnPendingAll" class="pupBtn">✨ Выбрать всё</button>
@@ -265,6 +283,7 @@
     </div>
   </div>
   <div class="side">
+    <button id="btnSideClose" class="m-only box full" style="align-self:center;width:100%;padding:12px;font-size:16px;">▶ Продолжить игру</button>
     <div class="box full" style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
       <div style="font-size:12px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;">Игрок: <span id="splayername" style="color:var(--text);">—</span></div>
       <button id="btnRename" style="width:auto;padding:6px 9px;font-size:11px;flex:0 0 auto;">✎</button>
@@ -4839,11 +4858,83 @@
     x.strokeStyle='rgba(255,255,255,0.14)';x.lineWidth=1;
     x.beginPath();x.roundRect(bx+0.5,by+0.5,bw-1,bh-1,r);x.stroke();
   }
+  // ближайший босс: Хронос (акт 1 — ур.50, акт 2 — act2BossLvl) или мини-босс каждые 5 ур.
+  function nextBossInfo(){
+    if(act===2&&!mega2Done&&act2BossLvl>player.level)return['☠ Хронос '+(act2BossLvl-player.level)+' ур.','#ff6b7a'];
+    const nm=Math.ceil((player.level+1)/5)*5;
+    if(!megaDone&&nm>=50)return['☠ Хронос '+Math.max(0,50-player.level)+' ур.','#ff6b7a'];
+    return['⚔ Босс '+(nm-player.level)+' ур.','#fca5a5'];
+  }
+  const MOBILE_HUD_H=58;
+  // МОБИЛЬНЫЙ ХАБ: не угловая коробка, а ПОЛОСА во всю ширину экрана ВНИЗУ —
+  // ничего не накладывается на бой; по полю (и по самой полосе) можно водить пальцем,
+  // все кнопки-меню спрятаны под гамбургер (☰) сверху слева
+  function drawMobileBar(){
+    const P=10,BH=MOBILE_HUD_H,innerW=W-P*2,narrow=W<380;
+    const S=narrow?0.9:1,FS=s=>Math.round(s*S);
+    x.save();
+    x.translate(0,H-BH); // полоса прижата к низу экрана
+    // фон-полоса + верхняя светящаяся грань (отделяет от поля боя)
+    const bg=x.createLinearGradient(0,0,0,BH);
+    bg.addColorStop(0,'rgba(8,11,20,0.9)');bg.addColorStop(1,'rgba(16,22,40,0.96)');
+    x.fillStyle=bg;x.fillRect(0,0,W,BH);
+    x.strokeStyle='rgba(125,211,252,0.4)';x.lineWidth=1.5;x.beginPath();x.moveTo(0,0.5);x.lineTo(W,0.5);x.stroke();
+    x.textBaseline='middle';
+    // === РЯД 1: уровень + Mk (слева) · DPS + босс (справа) ===
+    const y1=FS(13);
+    x.textAlign='left';x.fillStyle='#7dd3fc';x.font='800 '+FS(17)+'px system-ui,sans-serif';
+    const lt='Ур. '+player.level;x.fillText(lt,P,y1);
+    let lx=P+x.measureText(lt).width+6;
+    const stT=shipTier(),mk='Mk '+ROMAN[stT]+((player.ascTier||0)>0?' ✦'+player.ascTier:'');
+    x.font='bold '+FS(10)+'px system-ui,sans-serif';const mw=x.measureText(mk).width+12;
+    const mkCol=stT>=5?'#fde047':(stT>=3?'#7dd3fc':'#93c5fd');
+    x.fillStyle='rgba(125,211,252,0.16)';x.beginPath();x.roundRect(lx,y1-FS(8),mw,FS(16),FS(8));x.fill();
+    x.fillStyle=mkCol;x.textAlign='center';x.fillText(mk,lx+mw/2,y1);
+    // справа: босс-отсчёт + DPS
+    const nb=nextBossInfo();
+    x.textAlign='right';x.font='bold '+FS(10.5)+'px system-ui,sans-serif';x.fillStyle=nb[1];x.fillText(nb[0],W-P,y1);
+    const bwid=x.measureText(nb[0]).width;
+    x.fillStyle='#7dd3fc';x.fillText('⚔ '+fmtNum(Math.round(estPlayerDps())),W-P-bwid-FS(12),y1);
+    // === РЯД 2: ХП-БАР во всю ширину, сердца-жизни внутри слева + число ===
+    const hh=FS(15),hy=FS(23);
+    const hf=Math.max(0,Math.min(1,player.hp/player.maxHp));
+    x.fillStyle='rgba(0,0,0,0.5)';x.beginPath();x.roundRect(P,hy,innerW,hh,hh/2);x.fill();
+    const hc=hf>0.5?'#22c55e':(hf>0.28?'#f59e0b':'#ef4444');
+    if(hf>0){const hg=x.createLinearGradient(P,0,P+innerW,0);hg.addColorStop(0,shade(hc,-0.15));hg.addColorStop(1,hc);
+      x.fillStyle=hg;x.beginPath();x.roundRect(P,hy,Math.max(innerW*hf,hh),hh,hh/2);x.fill();}
+    x.strokeStyle='rgba(255,255,255,0.2)';x.lineWidth=1;x.beginPath();x.roundRect(P+0.5,hy+0.5,innerW-1,hh-1,hh/2);x.stroke();
+    // 3 сердца ♥ красные с белой обводкой
+    x.textAlign='center';x.font='bold '+FS(13)+'px system-ui,sans-serif';x.lineWidth=FS(2.4);x.lineJoin='round';
+    let hxp=P+FS(11);for(let i=0;i<3;i++){x.strokeStyle='#fff';x.strokeText('♥',hxp,hy+hh/2);
+      x.fillStyle=i<lives?'#ff2d55':'rgba(255,255,255,0.22)';x.fillText('♥',hxp,hy+hh/2);hxp+=FS(15);}
+    x.fillStyle='#fff';x.font='bold '+FS(11)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
+    x.fillText(fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),(hxp+FS(4)+P+innerW)/2,hy+hh/2);x.shadowBlur=0;
+    // === РЯД 3: время · убийства · мобы (мини-бар) слева · баффы справа ===
+    const y3=hy+hh+FS(9);
+    x.textAlign='left';x.font='bold '+FS(10)+'px system-ui,sans-serif';x.fillStyle='#93a1b5';
+    let cx=P;x.fillText('⏱ '+fmtTime(t),cx,y3);cx+=x.measureText('⏱ '+fmtTime(t)).width+FS(12);
+    x.fillStyle='#93a1b5';x.fillText('☠ '+fmtNum(kills),cx,y3);cx+=x.measureText('☠ '+fmtNum(kills)).width+FS(12);
+    // мобы за уровень + мини-полоска убывающая
+    const budg=Math.max(1,levelBudget(player.level)),remain=Math.max(0,budg-killsThisLevel);
+    x.fillStyle='#fbbf24';x.fillText('👾 '+fmtNum(remain),cx,y3);cx+=x.measureText('👾 '+fmtNum(remain)).width+FS(6);
+    const mbw=FS(52);hudBar(cx,y3-FS(3),mbw,FS(5),remain/budg,'#f59e0b');cx+=mbw+FS(10);
+    // баффы справа: ⚡ускорение 🛡щит 🔥берсерк (пока действуют)
+    const buffs=[];
+    if(player.hasteActive>0)buffs.push(['⚡',Math.ceil(player.hasteActive),'#4ade80']);
+    if(player.shieldActive>0)buffs.push(['🛡',Math.ceil(player.shieldActive),'#38bdf8']);
+    if(player.berserkActive>0)buffs.push(['🔥',Math.ceil(player.berserkActive),'#fb923c']);
+    if(player.overdriveActive>0)buffs.push(['💥',Math.ceil(player.overdriveActive),'#c084fc']);
+    x.textAlign='right';let bxp=W-P;
+    for(const bf of buffs){x.fillStyle=bf[2];x.font='bold '+FS(9)+'px system-ui,sans-serif';x.fillText(bf[1]+'',bxp,y3);
+      bxp-=x.measureText(bf[1]+'').width+FS(2);x.font=FS(12)+'px system-ui,sans-serif';x.fillText(bf[0],bxp,y3);bxp-=FS(14);}
+    x.restore();
+  }
   function drawHudOverlay(){
-    // хаб: на мобильных/узких экранах — компактнее (150×92 вместо 190×108),
-    // шрифты 8.5–11px остаются читаемыми, сетка статов ужата по колонкам
+    // ПК — угловая коробка-хаб; МОБИЛЬНЫЙ — полоса во всю ширину сверху (drawMobileBar)
     const mobile=W<640;
-    const pad=8,w=mobile?172:210,h=mobile?128:140;
+    if(mobile){drawMobileBar();}
+    else{
+    const pad=8,w=210,h=140;
     const bx=pad+11,bw=w-22,rx=pad+w-11;
     const F=s=>Math.round(mobile?s*0.9:s);
     x.save();
@@ -4943,26 +5034,28 @@
     x.textAlign='center';x.fillStyle='#fff';x.font='bold '+F(10)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
     x.fillText(fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),hpNumX,hy+hh/2);x.shadowBlur=0;
     x.restore();
-    // комбо-индикатор (справа сверху) — растёт с серией, мигает на пике
-    // индикатор СЕРИИ БЕЗ УРОНА (справа сверху): чем длиннее серия — тем ярче и крупнее,
-    // с названием тира; «пуск» при новом тире, пульс на каждом убийстве
+    }
+    // индикатор СЕРИИ БЕЗ УРОНА: справа сверху (хаб теперь внизу, места вверху достаточно).
+    // Чем длиннее серия — тем ярче и крупнее.
     if(player.combo>=3){
+      const mobile=W<640;const cy0=8;
       x.save();
       const ti=comboTierInfo(player.combo);
       const tierCol=['#fb923c','#f87171','#facc15','#c084fc','#67e8f9'];
       const col=ti>=0?tierCol[ti]:'#e8ebf2';
       const punch=(player._comboPunch||0)+Math.max(0,(player.comboT||0)/1.2)*0.25;
+      const base=mobile?18:21;
       const scale=1+Math.min(0.7,ti*0.12+0.1)+punch*0.35;
       x.textAlign='right';x.textBaseline='top';
       x.shadowColor=col;x.shadowBlur=ti>=0?10+ti*3:5;
-      x.font='bold '+Math.round(21*scale)+'px system-ui,sans-serif';
+      x.font='bold '+Math.round(base*scale)+'px system-ui,sans-serif';
       x.fillStyle=col;
-      x.fillText('🔥 x'+fmtNum(player.combo),W-12,8);
+      x.fillText('🔥 x'+fmtNum(player.combo),W-12,cy0);
       // подпись: название тира или пояснение
       x.shadowBlur=0;x.textBaseline='top';
-      x.font='bold 10px system-ui,sans-serif';x.fillStyle=col;x.globalAlpha=0.9;
+      x.font='bold '+(mobile?9:10)+'px system-ui,sans-serif';x.fillStyle=col;x.globalAlpha=0.9;
       const label=ti>=0?COMBO_TIERS[ti].name+' · без урона':'серия без урона';
-      x.fillText(label,W-12,8+Math.round(21*scale)+2);
+      x.fillText(label,W-12,cy0+Math.round(base*scale)+2);
       x.restore();
     }
   }
@@ -6015,6 +6108,21 @@
   document.getElementById('btnPauseSide').addEventListener('click',pauseGame);
   document.getElementById('btnResumePause').addEventListener('click',unpause);
   document.addEventListener('keydown',e=>{if(e.code==='Escape'||e.code==='KeyP')togglePause();});
+  // МОБИЛЬНЫЙ ГАМБУРГЕР (☰): тап ставит игру на паузу и открывает попап-меню (бывшую нижнюю
+  // панель). Хаб при этом остаётся полосой внизу канваса, по полю можно водить пальцем.
+  const sideEl=document.querySelector('.side');
+  function openBurgerMenu(){
+    if(state==='running'&&!paused){paused=true;endJoy();keys={};moveVec={x:0,y:0};saveRun();}
+    sideEl.classList.add('open');
+  }
+  function closeBurgerMenu(){
+    sideEl.classList.remove('open');
+    if(paused&&!opause.classList.contains('show')){paused=false;last=performance.now();}
+  }
+  document.getElementById('btnBurger').addEventListener('click',openBurgerMenu);
+  document.getElementById('btnSideClose').addEventListener('click',closeBurgerMenu);
+  // выход из игры через попап — закрываем сам попап, чтобы экран конца был виден
+  document.getElementById('btnFinishSide').addEventListener('click',()=>sideEl.classList.remove('open'));
 
   function toCanvasXY(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*(cv.width/r.width),y:(e.clientY-r.top)*(cv.height/r.height)};}
   cv.addEventListener('pointerdown',e=>{if(state!=='running'||paused)return;const p=toCanvasXY(e);joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
