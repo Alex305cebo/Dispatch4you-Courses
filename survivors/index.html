@@ -4909,15 +4909,21 @@
       x.fillStyle=i<lives?'#ff2d55':'rgba(255,255,255,0.22)';x.fillText('♥',hxp,hy+hh/2);hxp+=FS(15);}
     x.fillStyle='#fff';x.font='bold '+FS(11)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
     x.fillText(fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),(hxp+FS(4)+P+innerW)/2,hy+hh/2);x.shadowBlur=0;
-    // === РЯД 3: время · убийства · мобы (мини-бар) слева · баффы справа ===
+    // === РЯД 3: время · убийства · мобов до уровня слева · баффы справа ===
     const y3=hy+hh+FS(9);
     x.textAlign='left';x.font='bold '+FS(10)+'px system-ui,sans-serif';x.fillStyle='#93a1b5';
     let cx=P;x.fillText('⏱ '+fmtTime(t),cx,y3);cx+=x.measureText('⏱ '+fmtTime(t)).width+FS(12);
     x.fillStyle='#93a1b5';x.fillText('☠ '+fmtNum(kills),cx,y3);cx+=x.measureText('☠ '+fmtNum(kills)).width+FS(12);
-    // мобы за уровень + мини-полоска убывающая
+    // сколько мобов осталось до следующего уровня (полоса опыта — отдельно, над хабом)
     const budg=Math.max(1,levelBudget(player.level)),remain=Math.max(0,budg-killsThisLevel);
-    x.fillStyle='#fbbf24';x.fillText('👾 '+fmtNum(remain),cx,y3);cx+=x.measureText('👾 '+fmtNum(remain)).width+FS(6);
-    const mbw=FS(52);hudBar(cx,y3-FS(3),mbw,FS(5),remain/budg,'#f59e0b');cx+=mbw+FS(10);
+    x.fillStyle='#fbbf24';x.fillText('👾 '+fmtNum(remain)+' до ур.',cx,y3);
+    // === ШКАЛА ОПЫТА: во всю ширину, ПРЯМО над хабом (заполняется по мере набора уровня) ===
+    const xpH=FS(6),xpY=-xpH; // над верхней гранью полосы
+    const xpFrac=Math.max(0,Math.min(1,killsThisLevel/budg));
+    x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(0,xpY,W,xpH);
+    if(xpFrac>0){const xg=x.createLinearGradient(0,0,W,0);xg.addColorStop(0,'#4D96FF');xg.addColorStop(1,'#B388FF');
+      x.fillStyle=xg;x.fillRect(0,xpY,W*xpFrac,xpH);}
+    x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(0,xpY,W,1); // тонкий блик сверху
     // баффы справа: ⚡ускорение 🛡щит 🔥берсерк (пока действуют)
     const buffs=[];
     if(player.hasteActive>0)buffs.push(['⚡',Math.ceil(player.hasteActive),'#4ade80']);
