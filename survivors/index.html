@@ -5433,16 +5433,32 @@
         x.globalAlpha=0.9;x.fillText('💀',e.x,e.y-e.r-9);x.restore();x.globalAlpha=1;
       }
       if(e.shieldHp>0&&e.shieldMax){
-        // пузырь щита: голубая сфера, ТРЕЩИНЫ проступают по мере урона, вспышка при попадании
+        // ЭНЕРГОЩИТ: центр ПРОЗРАЧНЫЙ (корабль хорошо виден), свечение только по краю —
+        // вращающиеся дуги «силового поля» + яркий обод. Трещины по мере урона, вспышка на попадании.
         const sr=e.r+(e.megaboss?46:16),frac=Math.max(0,e.shieldHp/e.shieldMax);
+        const hit=Math.max(0,Math.min(1,(e._shieldHitT||0)/0.16)); // 0..1, гаснет
+        const pulse=0.5+0.5*Math.sin(t*4);
         x.save();x.translate(e.x,e.y);
-        const hit=e._shieldHitT>0?0.45:0;
-        x.globalAlpha=0.18+0.10*Math.sin(t*4)+hit;
-        x.fillStyle='#7dd3fc';x.beginPath();x.arc(0,0,sr,0,Math.PI*2);x.fill();
-        x.globalAlpha=0.9;x.strokeStyle='#7dd3fc';x.lineWidth=2.5;x.shadowColor='#7dd3fc';x.shadowBlur=12;
+        // 1) кольцевой градиент — прозрачный в центре, лёгкое свечение только у обода
+        const g=x.createRadialGradient(0,0,sr*0.66,0,0,sr);
+        g.addColorStop(0,'rgba(125,211,252,0)');
+        g.addColorStop(0.82,'rgba(125,211,252,'+(0.04+0.03*pulse).toFixed(3)+')');
+        g.addColorStop(0.95,'rgba(125,211,252,'+(0.16+0.10*pulse+0.45*hit).toFixed(3)+')');
+        g.addColorStop(1,'rgba(214,245,255,'+(0.34+0.5*hit).toFixed(3)+')');
+        x.fillStyle=g;x.beginPath();x.arc(0,0,sr,0,Math.PI*2);x.fill();
+        // 2) яркий тонкий обод со свечением
+        x.strokeStyle='rgba(198,238,255,'+(0.7+0.3*hit)+')';x.lineWidth=hit>0?3.2:1.8;
+        x.shadowColor='#7dd3fc';x.shadowBlur=9+12*hit;
         x.beginPath();x.arc(0,0,sr,0,Math.PI*2);x.stroke();x.shadowBlur=0;
+        // 3) вращающиеся дуги-сегменты силового поля по ободу
+        const segs=e.megaboss?10:7,rot=t*0.7;
+        x.strokeStyle='rgba(224,242,254,'+(0.45+0.4*pulse)+')';x.lineWidth=2.4;x.lineCap='round';
+        for(let si=0;si<segs;si++){const a=rot+si/segs*Math.PI*2;
+          x.beginPath();x.arc(0,0,sr,a,a+0.32);x.stroke();}
+        x.lineCap='butt';
+        // 4) трещины по мере урона (проступают ближе к пробитию)
         const cracks=Math.floor((1-frac)*9);
-        x.strokeStyle='rgba(224,242,254,0.85)';x.lineWidth=1.5;
+        x.strokeStyle='rgba(224,242,254,0.8)';x.lineWidth=1.4;
         for(let ci=0;ci<cracks;ci++){
           const a0=ci*2.399+1.7;
           let cx2=Math.cos(a0)*sr,cy2=Math.sin(a0)*sr,a2=a0+Math.PI+0.5*Math.sin(ci*7);
