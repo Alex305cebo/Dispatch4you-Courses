@@ -4843,7 +4843,7 @@
     // хаб: на мобильных/узких экранах — компактнее (150×92 вместо 190×108),
     // шрифты 8.5–11px остаются читаемыми, сетка статов ужата по колонкам
     const mobile=W<640;
-    const pad=8,w=mobile?168:214,h=mobile?150:164;
+    const pad=8,w=mobile?172:210,h=mobile?128:140;
     const bx=pad+11,bw=w-22,rx=pad+w-11;
     const F=s=>Math.round(mobile?s*0.9:s);
     x.save();
@@ -4854,52 +4854,94 @@
     x.strokeStyle='rgba(125,211,252,0.22)';x.lineWidth=1.3;x.beginPath();x.roundRect(pad+0.6,pad+0.6,w-1.2,h-1.2,13);x.stroke();
     x.textBaseline='middle';
     // === ШАПКА: уровень (крупно) + бейдж Mk ===
-    const yA=pad+F(17);
-    x.textAlign='left';x.fillStyle='#7dd3fc';x.font='800 '+F(23)+'px system-ui,sans-serif';
+    const yA=pad+F(15);
+    x.textAlign='left';x.fillStyle='#7dd3fc';x.font='800 '+F(21)+'px system-ui,sans-serif';
     const lt='Ур. '+player.level;x.fillText(lt,bx,yA);
-    if(!megaDone){x.fillStyle='#5f7d9c';x.font='bold '+F(11)+'px system-ui,sans-serif';x.fillText('/50',bx+x.measureText(lt).width+4,yA+F(3));}
+    if(!megaDone){x.fillStyle='#5f7d9c';x.font='bold '+F(10)+'px system-ui,sans-serif';x.fillText('/50',bx+x.measureText(lt).width+4,yA+F(3));}
     const stT=shipTier(),mk='Mk '+ROMAN[stT]+((player.ascTier||0)>0?' ✦'+player.ascTier:'');
     x.font='bold '+F(11)+'px system-ui,sans-serif';const mw=x.measureText(mk).width+14;
     const mkCol=stT>=5?'#fde047':(stT>=3?'#7dd3fc':'#93c5fd');
     x.fillStyle='rgba(125,211,252,0.14)';x.beginPath();x.roundRect(rx-mw,yA-F(8.5),mw,F(17),8);x.fill();
     x.fillStyle=mkCol;x.textAlign='center';x.fillText(mk,rx-mw/2,yA);
     // === время + убийства ===
-    const yB=pad+F(37);
-    x.textAlign='left';x.fillStyle='#93a1b5';x.font='bold '+F(11)+'px system-ui,sans-serif';x.fillText('⏱ '+fmtTime(t),bx,yB);
+    const yB=pad+F(30);
+    x.textAlign='left';x.fillStyle='#93a1b5';x.font='bold '+F(10)+'px system-ui,sans-serif';x.fillText('⏱ '+fmtTime(t),bx,yB);
     x.textAlign='right';x.fillStyle='#93a1b5';x.fillText('☠ '+fmtNum(kills),rx,yB);
     // === шкала МОБОВ за уровень (убывает) ===
     const budg=Math.max(1,levelBudget(player.level)),remain=Math.max(0,budg-killsThisLevel);
-    const yC=pad+F(52);
-    x.textAlign='left';x.fillStyle='#fbbf24';x.font='bold '+F(9.5)+'px system-ui,sans-serif';x.fillText('👾 мобов до уровня: '+fmtNum(remain),bx,yC);
-    hudBar(bx,yC+F(7),bw,F(7),remain/budg,'#f59e0b');
+    const yC=pad+F(42);
+    x.textAlign='left';x.fillStyle='#fbbf24';x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText('👾 мобов: '+fmtNum(remain),bx,yC);
+    hudBar(bx,yC+F(5),bw,F(5),remain/budg,'#f59e0b');
+    // === DPS (урон/сек) + обратный отсчёт до босса ===
+    const yD=pad+F(57);
+    x.textAlign='left';x.fillStyle='#7dd3fc';x.font='bold '+F(9.5)+'px system-ui,sans-serif';x.fillText('⚔ DPS '+fmtNum(Math.round(estPlayerDps())),bx,yD);
+    // ближайший босс: Хронос (акт 1 — ур.50, акт 2 — act2BossLvl) или мини-босс каждые 5 ур.
+    let bossTxt,bossCol;
+    if(act===2&&!mega2Done&&act2BossLvl>player.level){bossTxt='☠ Хронос '+(act2BossLvl-player.level)+' ур.';bossCol='#ff6b7a';}
+    else if(!megaDone){const nm=Math.ceil((player.level+1)/5)*5;
+      if(nm>=50){bossTxt='☠ Хронос '+Math.max(0,50-player.level)+' ур.';bossCol='#ff6b7a';}
+      else{bossTxt='⚔ Босс '+(nm-player.level)+' ур.';bossCol='#fca5a5';}}
+    else{const nm=Math.ceil((player.level+1)/5)*5;bossTxt='⚔ Босс '+(nm-player.level)+' ур.';bossCol='#fca5a5';}
+    x.textAlign='right';x.fillStyle=bossCol;x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText(bossTxt,rx,yD);
     // === боевые статы иконками (2 ряда × 3) ===
-    const gfs=F(11),cols=[bx,bx+(mobile?54:70),bx+(mobile?108:138)];
+    const gfs=F(10.5),cols=[bx,bx+(mobile?56:70),bx+(mobile?112:140)];
     const cells=[['💪',fmtNum(player.dmg)],['⚡',(1000/player.fireRate).toFixed(1)],['👟',Math.round(player.speed)],
       ['💥',Math.round(player.critChance*100)+'%'],['🏹',player.pierce],['◎',Math.round(player.aoeMult*100)+'%']];
-    const sy=[pad+F(78),pad+F(94)];
+    const sy=[pad+F(70),pad+F(83)];
     for(let i=0;i<6;i++){const c=cols[i%3],cy=sy[i<3?0:1];
       x.textAlign='left';x.font=gfs+'px system-ui,sans-serif';x.fillStyle='#c3d0e0';x.fillText(cells[i][0],c,cy);
-      x.fillStyle='#eef3fa';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],c+F(18),cy);}
-    // === перегрузка: тонкий акцент (заряд или активна) ===
-    const yE=pad+F(108);
+      x.fillStyle='#eef3fa';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],c+F(17),cy);}
+    // === оружие/эволюции (слева) + активные баффы (справа) ===
+    const yW=pad+F(97);
+    // собранное оружие: эмодзи из name; сколько влезет, остальное «+N»
+    const owned=WEAPON_UNLOCKS.filter(w=>w.done).map(w=>w.name.split(' ')[0]);
+    const evoN=EVOLUTIONS.filter(ev=>player[ev.flag]).length;
+    // активные баффы считаем первыми — чтобы знать, сколько места занять справа
+    const buffs=[];
+    if(player.hasteActive>0)buffs.push(['⚡',Math.ceil(player.hasteActive),'#4ade80']);
+    if(player.shieldActive>0)buffs.push(['🛡',Math.ceil(player.shieldActive),'#38bdf8']);
+    if(player.berserkActive>0)buffs.push(['🔥',Math.ceil(player.berserkActive),'#fb923c']);
+    x.textBaseline='middle';x.textAlign='right';
+    let bxp=rx;
+    for(const bf of buffs){
+      x.fillStyle=bf[2];x.font='bold '+F(8.5)+'px system-ui,sans-serif';x.fillText(bf[1]+'',bxp,yW);bxp-=x.measureText(bf[1]+'').width+F(2);
+      x.font=F(11)+'px system-ui,sans-serif';x.fillText(bf[0],bxp,yW);bxp-=F(13);}
+    // оружие слева — до начала баффов
+    x.textAlign='left';
+    const rightEdge=buffs.length?bxp-F(4):rx;
+    const step=F(14);let ix=bx;
+    x.font=F(12)+'px system-ui,sans-serif';x.fillStyle='#eef3fa';
+    if(owned.length){for(const em of owned){if(ix+step>rightEdge-F(14)){break;}x.fillText(em,ix,yW);ix+=step;}
+      const shown=Math.floor((ix-bx)/step),extra=owned.length-shown;
+      if(extra>0){x.fillStyle='#8fa0b6';x.font='bold '+F(8.5)+'px system-ui,sans-serif';x.fillText('+'+extra,ix,yW);ix+=F(15);}
+    }else{x.fillStyle='#5c6a80';x.font='italic '+F(8.5)+'px system-ui,sans-serif';x.fillText('нет оружия',bx,yW);ix+=F(48);}
+    if(evoN>0){x.fillStyle='#fde047';x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText('⭐'+evoN,ix,yW);}
+    x.textBaseline='middle';
+    // === HP-БАР ВНИЗУ ХАБА: сердца-жизни ВНУТРИ бара + перегрузка тонкой полоской над ним ===
+    const yE=pad+F(107);
     if(player.overdriveActive>0){
-      x.fillStyle='rgba(0,0,0,0.35)';x.beginPath();x.roundRect(bx,yE,bw,F(5),F(2.5));x.fill();
-      x.fillStyle='#c084fc';x.beginPath();x.roundRect(bx,yE,bw,F(5),F(2.5));x.fill();
-      x.textAlign='center';x.fillStyle='#f3e8ff';x.font='bold '+F(7.5)+'px system-ui,sans-serif';x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w/2,yE+F(2.5));
-    }else{hudBar(bx,yE,bw,F(5),(player.overdrive||0)/100,'#a855f7');}
-    // === ЖИЗНИ ===
-    const yL=pad+F(122);
-    x.textAlign='left';x.fillStyle='#8891a3';x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText('ЖИЗНИ',bx,yL);
-    x.font=F(13)+'px system-ui,sans-serif';let hs2='';for(let i=0;i<3;i++)hs2+=(i<lives?'❤':'🤍');x.fillText(hs2,bx+F(42),yL);
-    // === HP-БАР ВНИЗУ ХАБА (толстый, с градиентом и числом) ===
-    const hf=Math.max(0,Math.min(1,player.hp/player.maxHp)),hh=F(15),hy=pad+h-hh-F(7);
-    x.fillStyle='rgba(0,0,0,0.45)';x.beginPath();x.roundRect(bx,hy,bw,hh,hh/2);x.fill();
-    const hc=hf>0.5?'#4ade80':(hf>0.28?'#f59e0b':'#ff3b47');
+      x.fillStyle='#c084fc';x.beginPath();x.roundRect(bx,yE,bw,F(4),F(2));x.fill();
+      x.textAlign='center';x.fillStyle='#f3e8ff';x.font='bold '+F(7)+'px system-ui,sans-serif';x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w/2,yE+F(2));
+    }else{hudBar(bx,yE,bw,F(4),(player.overdrive||0)/100,'#a855f7');}
+    const hf=Math.max(0,Math.min(1,player.hp/player.maxHp)),hh=F(17),hy=pad+h-hh-F(5);
+    x.fillStyle='rgba(0,0,0,0.5)';x.beginPath();x.roundRect(bx,hy,bw,hh,hh/2);x.fill();
+    const hc=hf>0.5?'#22c55e':(hf>0.28?'#f59e0b':'#ef4444');
     if(hf>0){const hg=x.createLinearGradient(bx,0,bx+bw,0);hg.addColorStop(0,shade(hc,-0.15));hg.addColorStop(1,hc);
       x.fillStyle=hg;x.beginPath();x.roundRect(bx,hy,Math.max(bw*hf,hh),hh,hh/2);x.fill();}
-    x.strokeStyle='rgba(255,255,255,0.18)';x.lineWidth=1;x.beginPath();x.roundRect(bx+0.5,hy+0.5,bw-1,hh-1,hh/2);x.stroke();
-    x.textAlign='center';x.fillStyle='#fff';x.font='bold '+F(10)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.9)';x.shadowBlur=2;
-    x.fillText('❤ '+fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),pad+w/2,hy+hh/2);x.shadowBlur=0;
+    x.strokeStyle='rgba(255,255,255,0.2)';x.lineWidth=1;x.beginPath();x.roundRect(bx+0.5,hy+0.5,bw-1,hh-1,hh/2);x.stroke();
+    // 3 жизни-сердца ВНУТРИ бара слева: ♥ красное с белой обводкой (не сливается с фоном)
+    x.textAlign='center';x.textBaseline='middle';x.font='bold '+F(13)+'px system-ui,sans-serif';
+    x.lineWidth=F(2.4);x.lineJoin='round';
+    let hxp=bx+F(11);
+    for(let i=0;i<3;i++){
+      x.strokeStyle='#fff';x.strokeText('♥',hxp,hy+hh/2);
+      x.fillStyle=i<lives?'#ff2d55':'rgba(255,255,255,0.22)';x.fillText('♥',hxp,hy+hh/2);
+      hxp+=F(15);
+    }
+    // число HP — по центру справа от сердец
+    const hpNumX=(bx+hxp+F(2)+bx+bw)/2;
+    x.textAlign='center';x.fillStyle='#fff';x.font='bold '+F(10)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
+    x.fillText(fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),hpNumX,hy+hh/2);x.shadowBlur=0;
     x.restore();
     // комбо-индикатор (справа сверху) — растёт с серией, мигает на пике
     // индикатор СЕРИИ БЕЗ УРОНА (справа сверху): чем длиннее серия — тем ярче и крупнее,
