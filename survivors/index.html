@@ -4885,19 +4885,18 @@
     x.font=(mobile?10:11)+'px system-ui,sans-serif';
     x.fillStyle='#9aa4b5';x.fillText('☠ '+fmtNum(kills),bx,y2);
     x.fillStyle='#fca5a5';x.fillText('👾 мобов: '+enemies.length,pad+(mobile?56:72),y2);
-    // боевые статы сеткой (крупные числа — компактно)
+    // боевые статы сеткой — ИКОНКИ (как на картах улучшений) + крупное число, без слов
     const col=[bx,pad+(mobile?54:70),pad+(mobile?102:130)];
-    const gfs=(mobile?8.5:9);
-    x.font=gfs+'px system-ui,sans-serif';
+    const gfs=(mobile?9:10);
+    x.font=gfs+'px system-ui,sans-serif';x.textBaseline='middle';
     const cells=[
-      ['Урон',fmtNum(player.dmg)],['Атк',(1000/player.fireRate).toFixed(1)],['Скор',Math.round(player.speed)],
-      ['Крит',Math.round(player.critChance*100)+'%'],['Проб',player.pierce],['Рад',Math.round(player.aoeMult*100)+'%']
+      ['💪',fmtNum(player.dmg)],['⚡',(1000/player.fireRate).toFixed(1)],['👟',Math.round(player.speed)],
+      ['💥',Math.round(player.critChance*100)+'%'],['🏹',player.pierce],['◎',Math.round(player.aoeMult*100)+'%']
     ];
     for(let i=0;i<6;i++){
-      const cx=col[i%3],cy=pad+(i<3?(mobile?66:80):(mobile?79:94));
-      x.fillStyle='#8891a3';x.fillText(cells[i][0],cx,cy);
-      x.fillStyle='#e8ebf2';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],cx+(mobile?24:27),cy);
-      x.font=gfs+'px system-ui,sans-serif';
+      const cx=col[i%3],cy=pad+(i<3?(mobile?67:81):(mobile?80:95));
+      x.font=gfs+'px system-ui,sans-serif';x.fillStyle='#cbd5e1';x.textAlign='left';x.fillText(cells[i][0],cx,cy);
+      x.fillStyle='#e8ebf2';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],cx+(mobile?17:19),cy);
     }
     x.restore();
     // комбо-индикатор (справа сверху) — растёт с серией, мигает на пике
