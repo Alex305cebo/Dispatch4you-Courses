@@ -1289,16 +1289,23 @@
   const SAVE_KEY='survivors-run';
   let saveAcc=0;
   function saveRun(){
-    if(inVault)return; // не сохраняем половинчатое состояние Хранилища
     if(!player||!(state==='running'||state==='shop'||state==='levelup'||state==='cooldown'||state==='weaponpopup'||state==='curse'))return;
     try{
-      localStorage.setItem(SAVE_KEY,JSON.stringify({
+      const data={
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
         safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,act2Base,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
-      }));
+      };
+      // СОСТОЯНИЕ ЛАБИРИНТА: сохраняем целиком, чтобы refresh/сворачивание не выкидывали из него
+      if(inVault){
+        data.inVault=true;data.vaultT=vaultT;data.vaultCleared=vaultCleared;data.vaultTheme=vaultTheme;data.vaultTotal=vaultTotal;
+        data.vaultWalls=vaultWalls;data.vaultExit=vaultExit;data.vaultWalk=vaultWalk;data.vaultSpawns=vaultSpawns;
+        data.vaultStash=vaultStash;data.forestTrees=forestTrees;
+        data.vaultGrid=vaultGrid?Array.from(vaultGrid):null;data.vgOx=vgOx;data.vgOy=vgOy;data.vgT=vgT;data.vgCols=vgCols;data.vgRows=vgRows;
+      }
+      localStorage.setItem(SAVE_KEY,JSON.stringify(data));
     }catch(e){}
   }
   function hasSave(){try{return !!localStorage.getItem(SAVE_KEY);}catch(e){return false;}}
@@ -1340,7 +1347,20 @@
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
-    forestDone=s.forestDone||false;forestPending=false;forestGate=false;vaultTheme='dungeon';forestTrees=[];
+    forestDone=s.forestDone||false;forestPending=false;forestGate=false;
+    // ВОССТАНОВЛЕНИЕ ЛАБИРИНТА: если сейв сделан внутри — возвращаемся прямо в него
+    if(s.inVault){
+      inVault=true;vaultT=s.vaultT||0;vaultCleared=!!s.vaultCleared;vaultTheme=s.vaultTheme||'dungeon';vaultTotal=s.vaultTotal||0;
+      vaultWalls=s.vaultWalls||[];vaultExit=s.vaultExit||null;vaultWalk=s.vaultWalk||[];vaultSpawns=s.vaultSpawns||[];
+      vaultStash=s.vaultStash||null;forestTrees=s.forestTrees||[];
+      if(s.vaultGrid){vaultGrid=Uint8Array.from(s.vaultGrid);vgOx=s.vgOx||0;vgOy=s.vgOy||0;vgT=s.vgT||64;vgCols=s.vgCols||0;vgRows=s.vgRows||0;}else vaultGrid=null;
+      if(vaultStash){ // чиним Set-ы у отложенного мира (JSON превратил их в {})
+        (vaultStash.projectiles||[]).forEach(pp=>{if(!(pp.hitSet instanceof Set))pp.hitSet=new Set();});
+        (vaultStash.boomers||[]).forEach(bo=>{if(!(bo.hitSet instanceof Set))bo.hitSet=new Set();});
+      }
+    }else{
+      inVault=false;vaultTheme='dungeon';forestTrees=[];vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultStash=null;vaultCleared=false;vaultT=0;
+    }
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
     act=s.act||1;finale=null;act2Tower=null;
     mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;act2Base=s.act2Base||null;
