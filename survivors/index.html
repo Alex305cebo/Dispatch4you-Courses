@@ -1282,10 +1282,11 @@
   // Кривая по точкам игрока: ур.1≈100, ур.30≈3000, ур.40≈4800, ур.50≈5500.
   function levelBudget(lvl){
     const L=Math.max(1,lvl);
-    if(L<=30)return Math.round(100+(L-1)*100);
-    if(L<=40)return Math.round(3000+(L-30)*180);
-    if(L<=50)return Math.round(4800+(L-40)*70);
-    return Math.round(5500+(L-50)*60); // после 50-го — плавно растёт
+    // вдвое меньше мобов на уровень — раньше было слишком много и слишком долго
+    if(L<=30)return Math.round((100+(L-1)*100)/2);
+    if(L<=40)return Math.round((3000+(L-30)*180)/2);
+    if(L<=50)return Math.round((4800+(L-40)*70)/2);
+    return Math.round((5500+(L-50)*60)/2); // после 50-го — плавно растёт
   }
   let killsThisLevel=0; // прогресс к следующему уровню = убитые мобы
 
@@ -4975,7 +4976,9 @@
     const hh=FS(15),hy=FS(23);
     const hf=Math.max(0,Math.min(1,player.hp/player.maxHp));
     x.fillStyle='rgba(0,0,0,0.5)';x.beginPath();x.roundRect(P,hy,innerW,hh,hh/2);x.fill();
-    const hc=hf>0.5?'#22c55e':(hf>0.28?'#f59e0b':'#ef4444');
+    // ПОЛНОЕ ХП — красное; жёлто-оранжевое — предупреждение; критическое — мигает
+    const critPulseM=0.5+0.5*Math.sin(t*9);
+    const hc=hf>0.5?'#ef4444':(hf>0.28?'#f97316':(critPulseM>0.5?'#ff1744':'#7f1d1d'));
     if(hf>0){const hg=x.createLinearGradient(P,0,P+innerW,0);hg.addColorStop(0,shade(hc,-0.15));hg.addColorStop(1,hc);
       x.fillStyle=hg;x.beginPath();x.roundRect(P,hy,Math.max(innerW*hf,hh),hh,hh/2);x.fill();}
     x.strokeStyle='rgba(255,255,255,0.2)';x.lineWidth=1;x.beginPath();x.roundRect(P+0.5,hy+0.5,innerW-1,hh-1,hh/2);x.stroke();
@@ -5017,7 +5020,7 @@
     const mobile=W<640;
     if(mobile){drawMobileBar();}
     else{
-    const pad=8,w=210,h=140;
+    const pad=8,w=210,h=155;
     const bx=pad+11,bw=w-22,rx=pad+w-11;
     const F=s=>Math.round(mobile?s*0.9:s);
     x.save();
@@ -5041,13 +5044,8 @@
     const yB=pad+F(30);
     x.textAlign='left';x.fillStyle='#93a1b5';x.font='bold '+F(10)+'px system-ui,sans-serif';x.fillText('⏱ '+fmtTime(t),bx,yB);
     x.textAlign='right';x.fillStyle='#93a1b5';x.fillText('☠ '+fmtNum(kills),rx,yB);
-    // === шкала МОБОВ за уровень (убывает) ===
-    const budg=Math.max(1,levelBudget(player.level)),remain=Math.max(0,budg-killsThisLevel);
-    const yC=pad+F(42);
-    x.textAlign='left';x.fillStyle='#fbbf24';x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText('👾 мобов: '+fmtNum(remain),bx,yC);
-    hudBar(bx,yC+F(5),bw,F(5),remain/budg,'#f59e0b');
     // === DPS (урон/сек) + обратный отсчёт до босса ===
-    const yD=pad+F(57);
+    const yD=pad+F(44);
     x.textAlign='left';x.fillStyle='#7dd3fc';x.font='bold '+F(9.5)+'px system-ui,sans-serif';x.fillText('⚔ DPS '+fmtNum(Math.round(estPlayerDps())),bx,yD);
     // ближайший босс: Хронос (акт 1 — ур.50, акт 2 — act2BossLvl) или мини-босс каждые 5 ур.
     let bossTxt,bossCol;
@@ -5061,12 +5059,12 @@
     const gfs=F(10.5),cols=[bx,bx+(mobile?56:70),bx+(mobile?112:140)];
     const cells=[['💪',fmtNum(player.dmg)],['⚡',(1000/player.fireRate).toFixed(1)],['👟',Math.round(player.speed)],
       ['💥',Math.round(player.critChance*100)+'%'],['🏹',player.pierce],['◎',Math.round(player.aoeMult*100)+'%']];
-    const sy=[pad+F(70),pad+F(83)];
+    const sy=[pad+F(58),pad+F(71)];
     for(let i=0;i<6;i++){const c=cols[i%3],cy=sy[i<3?0:1];
       x.textAlign='left';x.font=gfs+'px system-ui,sans-serif';x.fillStyle='#c3d0e0';x.fillText(cells[i][0],c,cy);
       x.fillStyle='#eef3fa';x.font='bold '+gfs+'px system-ui,sans-serif';x.fillText(cells[i][1],c+F(17),cy);}
     // === оружие/эволюции (слева) + активные баффы (справа) ===
-    const yW=pad+F(97);
+    const yW=pad+F(85);
     // собранное оружие: эмодзи из name; сколько влезет, остальное «+N»
     const owned=WEAPON_UNLOCKS.filter(w=>w.done).map(w=>w.name.split(' ')[0]);
     const evoN=EVOLUTIONS.filter(ev=>player[ev.flag]).length;
@@ -5092,15 +5090,17 @@
     }else{x.fillStyle='#5c6a80';x.font='italic '+F(8.5)+'px system-ui,sans-serif';x.fillText('нет оружия',bx,yW);ix+=F(48);}
     if(evoN>0){x.fillStyle='#fde047';x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText('⭐'+evoN,ix,yW);}
     x.textBaseline='middle';
-    // === HP-БАР ВНИЗУ ХАБА: сердца-жизни ВНУТРИ бара + перегрузка тонкой полоской над ним ===
-    const yE=pad+F(107);
+    // === ПЕРЕГРУЗКА (тонкая полоска) → ХП-БАР (сердца внутри) → ШКАЛА МОБОВ (под ХП) ===
+    const yE=pad+F(95);
     if(player.overdriveActive>0){
       x.fillStyle='#c084fc';x.beginPath();x.roundRect(bx,yE,bw,F(4),F(2));x.fill();
       x.textAlign='center';x.fillStyle='#f3e8ff';x.font='bold '+F(7)+'px system-ui,sans-serif';x.fillText('⚡ ПЕРЕГРУЗКА '+Math.ceil(player.overdriveActive)+'с',pad+w/2,yE+F(2));
     }else{hudBar(bx,yE,bw,F(4),(player.overdrive||0)/100,'#a855f7');}
-    const hf=Math.max(0,Math.min(1,player.hp/player.maxHp)),hh=F(17),hy=pad+h-hh-F(5);
+    const hf=Math.max(0,Math.min(1,player.hp/player.maxHp)),hh=F(17),hy=pad+F(103);
     x.fillStyle='rgba(0,0,0,0.5)';x.beginPath();x.roundRect(bx,hy,bw,hh,hh/2);x.fill();
-    const hc=hf>0.5?'#22c55e':(hf>0.28?'#f59e0b':'#ef4444');
+    // ПОЛНОЕ ХП — красное (по просьбе); жёлто-оранжевое — предупреждение; критическое — мигает
+    const critPulse=0.5+0.5*Math.sin(t*9);
+    const hc=hf>0.5?'#ef4444':(hf>0.28?'#f97316':(critPulse>0.5?'#ff1744':'#7f1d1d'));
     if(hf>0){const hg=x.createLinearGradient(bx,0,bx+bw,0);hg.addColorStop(0,shade(hc,-0.15));hg.addColorStop(1,hc);
       x.fillStyle=hg;x.beginPath();x.roundRect(bx,hy,Math.max(bw*hf,hh),hh,hh/2);x.fill();}
     x.strokeStyle='rgba(255,255,255,0.2)';x.lineWidth=1;x.beginPath();x.roundRect(bx+0.5,hy+0.5,bw-1,hh-1,hh/2);x.stroke();
@@ -5117,6 +5117,11 @@
     const hpNumX=(bx+hxp+F(2)+bx+bw)/2;
     x.textAlign='center';x.fillStyle='#fff';x.font='bold '+F(10)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
     x.fillText(fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),hpNumX,hy+hh/2);x.shadowBlur=0;
+    // === ШКАЛА МОБОВ ЗА УРОВЕНЬ — ПОД ХП-баром ===
+    const budg=Math.max(1,levelBudget(player.level)),remain=Math.max(0,budg-killsThisLevel);
+    const yC=hy+hh+F(12);
+    x.textAlign='left';x.fillStyle='#fbbf24';x.font='bold '+F(9)+'px system-ui,sans-serif';x.fillText('👾 мобов: '+fmtNum(remain),bx,yC);
+    hudBar(bx,yC+F(5),bw,F(5),remain/budg,'#f59e0b');
     x.restore();
     }
     // индикатор СЕРИИ БЕЗ УРОНА: справа сверху (хаб теперь внизу, места вверху достаточно).
