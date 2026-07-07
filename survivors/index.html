@@ -1071,6 +1071,7 @@
   // На 29 уровне — «прорыв к лесу»: фикс. волна мобов со счётчиком сверху; зачистил — в лес.
   let vaultTheme='dungeon',forestPending=false,forestGate=false,forestDone=false,forestGateTotal=0,forestTrees=[];
   const CAVE_LIGHT=340; // радиус света фонаря в лабиринте (мировые единицы): дальше — темнота
+  let inArcade=false,arcade=null,arcadeStash=null; // бонус-уровень SPACE INVADERS
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
@@ -1277,7 +1278,7 @@
     // (зум ×1.30 — близкий стартовый план нового забега)
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
-    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;
+    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
@@ -1306,6 +1307,8 @@
         data.vaultStash=vaultStash;data.forestTrees=forestTrees;
         data.vaultGrid=vaultGrid?Array.from(vaultGrid):null;data.vgOx=vgOx;data.vgOy=vgOy;data.vgT=vgT;data.vgCols=vgCols;data.vgRows=vgRows;
       }
+      // SPACE INVADERS: сохраняем целиком, чтобы refresh не выкидывал из бонус-уровня
+      if(inArcade&&arcade){data.inArcade=true;data.arcade=arcade;data.arcadeStash=arcadeStash;}
       localStorage.setItem(SAVE_KEY,JSON.stringify(data));
     }catch(e){}
   }
@@ -1362,6 +1365,10 @@
     }else{
       inVault=false;vaultTheme='dungeon';forestTrees=[];vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultStash=null;vaultCleared=false;vaultT=0;
     }
+    // ВОССТАНОВЛЕНИЕ SPACE INVADERS
+    if(s.inArcade&&s.arcade){
+      inArcade=true;arcade=s.arcade;arcadeStash=s.arcadeStash||null;
+    }else{inArcade=false;arcade=null;arcadeStash=null;}
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
     act=s.act||1;finale=null;act2Tower=null;
     mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;act2Base=s.act2Base||null;
@@ -1859,6 +1866,156 @@
   }
 
   function burst(px,py,color,n){if(particles.length>600)return;for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
+
+  // ============ БОНУС-УРОВЕНЬ: SPACE INVADERS 👾 ============
+  const INV_COLORS=['#4ade80','#38bdf8','#f0abfc']; // 3 типа пришельцев по рядам
+  function makeBunker(bx,by){const cells=[];for(let r=0;r<4;r++)for(let c=0;c<7;c++){if((r===3)&&(c===2||c===3||c===4))continue;cells.push({c,r,ok:true});}return{x:bx,y:by,cells,cw:9,ch:8};}
+  function enterArcade(){
+    arcadeStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
+    enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];
+    portal=null;mobSpawnPaused=true;
+    const cols=9,rows=5,gapX=Math.min(66,W*0.092),gapY=Math.min(46,H*0.066);
+    const startX=W/2-(cols-1)*gapX/2,startY=H*0.15,inv=[];
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)inv.push({col:c,row:r,alive:true,type:r===0?2:(r<3?1:0)});
+    const bunkers=[];for(let i=0;i<4;i++)bunkers.push(makeBunker(W*(0.17+0.222*i),H*0.7));
+    arcade={px:W/2,py:H*0.87,fire:0,bullets:[],ebullets:[],inv,cols,rows,ox:0,oy:0,dir:1,speed:28,
+      shotCd:rand(0.6,1.2),bunkers,ufo:null,ufoCd:rand(9,16),kills:0,total:cols*rows,over:0,result:null,at:0,
+      startX,startY,gapX,gapY,flash:0};
+    inArcade=true;state='running';
+    announce={text:'👾 SPACE INVADERS! Сбей всех, не дай им дойти до низа',life:3.5,color:'#4ade80'};
+    flashFx(0.4,'74,222,128');sfxSweep(200,820,0.45,'square',0.1,true);
+  }
+  function invPos(A,v){return{x:A.startX+v.col*A.gapX+A.ox,y:A.startY+v.row*A.gapY+A.oy};}
+  function exitArcade(result){
+    inArcade=false;
+    if(arcadeStash){enemies=arcadeStash.enemies||[];projectiles=arcadeStash.projectiles||[];enemyProjectiles=arcadeStash.enemyProjectiles||[];
+      pools=arcadeStash.pools||[];mines=arcadeStash.mines||[];meteors=arcadeStash.meteors||[];boomers=arcadeStash.boomers||[];turrets=arcadeStash.turrets||[];
+      player.x=arcadeStash.ox;player.y=arcadeStash.oy;mobSpawnPaused=arcadeStash.paused;}
+    (projectiles||[]).forEach(pp=>{if(!(pp.hitSet instanceof Set))pp.hitSet=new Set();});
+    arcadeStash=null;arcade=null;player.invuln=Math.max(player.invuln,2.5);
+    if(result==='win'){
+      addUpPoints(3,'SPACE INVADERS');
+      const dr=[['chest','#facc15','★'],['heal','#4ade80','+'],['magnet','#38bdf8','◎']];
+      dr.forEach((d,i)=>{const a=i/3*Math.PI*2-Math.PI/2;pickups.push({x:player.x+Math.cos(a)*62,y:player.y+Math.sin(a)*62,r:12,type:d[0],color:d[1],label:d[2]});});
+      for(let i=0;i<6;i++){const a=Math.random()*6.283;gems.push({x:player.x+Math.cos(a)*rand(40,90),y:player.y+Math.sin(a)*rand(40,90),r:6,val:Math.round((player.xpNeed||50)*0.16)});}
+      metaState.shards+=8;saveMeta();
+      announce={text:'🏆 ВТОРЖЕНИЕ ОТБИТО! Забери награду',life:4.5,color:'#fde047'};flashFx(0.6,'250,204,21');sfxChime(660,6,0.09,0.14);
+    }else{
+      if(lives>1)lives--; // мягкий проигрыш: −1 жизнь (но не убивает, если жизнь последняя)
+      announce={text:'👾 Пришельцы прорвались… −1 жизнь. Возвращаемся в бой!',life:4.5,color:'#ff2d55'};flashFx(0.5,'255,45,85');camShake=Math.max(camShake,12);
+    }
+    state='running';last=performance.now();
+  }
+  function arcadeStep(dt){
+    const A=arcade;if(!A){inArcade=false;return;}
+    t+=dt;A.at+=dt;if(A.flash>0)A.flash-=dt;
+    if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
+    if(A.over>0){A.over-=dt;if(A.over<=0){exitArcade(A.result);}return;}
+    // управление: только по горизонтали (джойстик / клавиши / геймпад)
+    let mvx=0;
+    if(joy&&joy.active&&Math.abs(joy.dx)>0.05)mvx=joy.dx;
+    if(keys){if(keys.left||keys.a)mvx=-1;if(keys.right||keys.d)mvx=1;}
+    if(typeof gp!=='undefined'&&gp.active&&Math.abs(gp.x)>0.15)mvx=gp.x;
+    A.px=Math.max(26,Math.min(W-26,A.px+mvx*400*dt));
+    // автоогонь вверх
+    A.fire-=dt;
+    if(A.fire<=0&&A.bullets.length<4){A.fire=Math.max(0.16,(player.fireRate||280)/1000*0.85);A.bullets.push({x:A.px,y:A.py-20});beep(900,0.025,'square',0.028);}
+    A.bullets.forEach(b=>b.y-=580*dt);
+    A.ebullets.forEach(b=>b.y+=Math.min(360,220+A.kills*3)*dt);
+    // марш строя
+    const alive=A.inv.filter(v=>v.alive);
+    A.speed=28+(A.kills/A.total)*110;
+    let minx=1e9,maxx=-1e9,maxy=-1e9;
+    for(const v of alive){const p2=invPos(A,v);if(p2.x<minx)minx=p2.x;if(p2.x>maxx)maxx=p2.x;if(p2.y>maxy)maxy=p2.y;}
+    A.ox+=A.dir*A.speed*dt;
+    if(A.dir>0&&maxx>W-24){A.dir=-1;A.oy+=A.gapY*0.5;}
+    else if(A.dir<0&&minx<24){A.dir=1;A.oy+=A.gapY*0.5;}
+    // огонь пришельцев
+    A.shotCd-=dt;
+    if(A.shotCd<=0&&alive.length){A.shotCd=Math.max(0.32,rand(0.7,1.5)-(A.kills/A.total)*0.5);
+      const s=alive[Math.floor(Math.random()*alive.length)],p2=invPos(A,s);A.ebullets.push({x:p2.x,y:p2.y+14});beep(180,0.05,'sawtooth',0.04);}
+    // НЛО
+    A.ufoCd-=dt;if(!A.ufo&&A.ufoCd<=0){A.ufoCd=rand(12,22);A.ufo={x:-40,y:H*0.085,dir:1};}
+    if(A.ufo){A.ufo.x+=A.ufo.dir*170*dt;if(A.ufo.x>W+40)A.ufo=null;}
+    // пули игрока → пришельцы / НЛО / бункеры
+    for(const b of A.bullets){
+      if(b.y<-8)continue;
+      for(const v of alive){if(!v.alive)continue;const p2=invPos(A,v);if(Math.abs(b.x-p2.x)<17&&Math.abs(b.y-p2.y)<13){v.alive=false;A.kills++;b.y=-99;A.flash=0.05;
+        for(let i=0;i<6;i++)particles.push({x:p2.x,y:p2.y,vx:rand(-2,2),vy:rand(-2,2),life:0.5,color:INV_COLORS[v.type],sz:2});sfxChime(520+v.type*120,2,0.05,0.06);break;}}
+      if(b.y<-8)continue;
+      if(A.ufo&&Math.abs(b.x-A.ufo.x)<26&&Math.abs(b.y-A.ufo.y)<12){b.y=-99;for(let i=0;i<10;i++)particles.push({x:A.ufo.x,y:A.ufo.y,vx:rand(-3,3),vy:rand(-3,3),life:0.7,color:'#fde047',sz:2.5});A.ufo=null;metaState.shards+=1;saveMeta();sfxChime(900,5,0.06,0.1);}
+      if(b.y<-8)continue;
+      arcadeBunkerHit(A,b,true);
+    }
+    // пули пришельцев → игрок / бункеры
+    for(const b of A.ebullets){
+      if(b.y>H+8)continue;
+      if(Math.abs(b.x-A.px)<18&&Math.abs(b.y-A.py)<16){b.y=H+99;A.flash=0.12;camShake=Math.max(camShake,6);
+        player.hp-=player.maxHp*0.07;flashFx(0.25,'255,45,85');beep(120,0.12,'sawtooth',0.06);
+        if(player.hp<=0){player.hp=Math.max(1,Math.round(player.maxHp*0.2));A.result='lose';A.over=0.9;}continue;}
+      arcadeBunkerHit(A,b,false);
+    }
+    A.bullets=A.bullets.filter(b=>b.y>-8&&b.y<H+8);
+    A.ebullets=A.ebullets.filter(b=>b.y<H+8&&b.y>-8);
+    particles=particles.filter(p=>p.life>0);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=dt/0.55;});
+    // победа / поражение
+    if(A.result){/* already ending */}
+    else if(alive.length===0){A.result='win';A.over=1.2;announce={text:'👾 ВСЕ СБИТЫ!',life:2,color:'#4ade80'};sfxChime(660,8,0.08,0.12);}
+    else if(maxy+A.gapY*0.5>=A.py-8){A.result='lose';A.over=1.0;announce={text:'👾 ОНИ ДОШЛИ ДО НИЗА!',life:2,color:'#ff2d55'};}
+  }
+  function arcadeBunkerHit(A,b,up){
+    for(const bk of A.bunkers){const gw=7*bk.cw,gh=4*bk.ch,left=bk.x-gw/2,top=bk.y-gh/2;
+      if(b.x<left-4||b.x>left+gw+4||b.y<top-4||b.y>top+gh+4)continue;
+      let best=null,bd=1e9;
+      for(const cell of bk.cells){if(!cell.ok)continue;const cx=left+cell.c*bk.cw+bk.cw/2,cy=top+cell.r*bk.ch+bk.ch/2;const dd=(b.x-cx)*(b.x-cx)+(b.y-cy)*(b.y-cy);if(dd<bd){bd=dd;best=cell;}}
+      if(best&&bd<220){const px2=b.x,py2=b.y;best.ok=false;b.y=up?-99:H+99;for(let i=0;i<3;i++)particles.push({x:px2,y:py2,vx:rand(-1.5,1.5),vy:rand(-1.5,1.5),life:0.4,color:'#94a3b8',sz:2});return;}
+    }
+  }
+  function drawInvader(px,py,type,ph){
+    const c=INV_COLORS[type],s=3.2,legs=Math.floor(ph*3)%2;
+    x.fillStyle=c;
+    // 3 простых «пиксельных» силуэта (краб/кальмар/осьминог), нижний ряд-«лапки» анимируется
+    const P=type===0?['01110','11111','10101','00100',legs?'01010':'10001']
+      :type===1?['00100','01110','11111','10101',legs?'01010':'00100']
+      :['01110','11011','11111','01110',legs?'10001':'01010'];
+    for(let r=0;r<P.length;r++)for(let cc=0;cc<5;cc++){if(P[r][cc]==='1')x.fillRect(px+(cc-2.5)*s,py+(r-2.5)*s,s-0.6,s-0.6);}
+  }
+  function arcadeDraw(){
+    const A=arcade;
+    x.setTransform(1,0,0,1,0,0);
+    x.fillStyle='#04060c';x.fillRect(0,0,W,H);
+    // звёзды
+    x.fillStyle='rgba(255,255,255,0.5)';for(let i=0;i<40;i++){const sx=(i*97.3)%W,sy=(i*57.7+((A?A.at:0)*12))%H;x.fillRect(sx,sy,1.4,1.4);}
+    if(A){
+      // пришельцы
+      for(const v of A.inv){if(!v.alive)continue;const p2=invPos(A,v);drawInvader(p2.x,p2.y,v.type,A.at+v.col*0.2);}
+      // НЛО
+      if(A.ufo){x.fillStyle='#fde047';x.shadowColor='#fde047';x.shadowBlur=8;x.beginPath();x.ellipse(A.ufo.x,A.ufo.y,16,6,0,0,Math.PI*2);x.fill();x.shadowBlur=0;x.fillStyle='#f59e0b';x.beginPath();x.ellipse(A.ufo.x,A.ufo.y-3,7,4,0,0,Math.PI*2);x.fill();}
+      // бункеры
+      x.fillStyle='#4ade80';for(const bk of A.bunkers){const gw=7*bk.cw,gh=4*bk.ch,left=bk.x-gw/2,top=bk.y-gh/2;for(const cell of bk.cells){if(cell.ok)x.fillRect(left+cell.c*bk.cw,top+cell.r*bk.ch,bk.cw-1,bk.ch-1);}}
+      // пули
+      x.fillStyle='#e8eefc';for(const b of A.bullets)x.fillRect(b.x-1.5,b.y-8,3,10);
+      x.fillStyle='#fb7185';for(const b of A.ebullets)x.fillRect(b.x-1.5,b.y-4,3,10);
+      // частицы
+      particles.forEach(p=>{x.globalAlpha=Math.max(0,p.life);x.fillStyle=p.color;x.fillRect(p.x-p.sz/2,p.y-p.sz/2,p.sz,p.sz);});x.globalAlpha=1;
+      // корабль игрока (пушка)
+      x.save();x.translate(A.px,A.py);x.fillStyle='#7dd3fc';x.shadowColor='#4D96FF';x.shadowBlur=10;
+      x.beginPath();x.moveTo(0,-16);x.lineTo(13,10);x.lineTo(4,10);x.lineTo(4,3);x.lineTo(-4,3);x.lineTo(-4,10);x.lineTo(-13,10);x.closePath();x.fill();x.shadowBlur=0;
+      x.fillStyle='#fde047';x.fillRect(-1.6,-16,3.2,6);x.restore();
+      if(A.flash>0){x.globalAlpha=A.flash*3;x.fillStyle='#fff';x.fillRect(0,0,W,H);x.globalAlpha=1;}
+      // скан-линии
+      x.globalAlpha=0.06;x.fillStyle='#000';for(let yy=0;yy<H;yy+=3)x.fillRect(0,yy,W,1);x.globalAlpha=1;
+      // HUD
+      x.fillStyle='#4ade80';x.font='bold 15px system-ui,sans-serif';x.textAlign='left';x.textBaseline='top';
+      x.fillText('👾 '+A.kills+' / '+A.total,14,12);
+      x.fillStyle='#ff5d73';x.textAlign='right';x.fillText('❤'.repeat(Math.max(0,lives)),W-14,12);
+    }
+    // баннер-анонс по центру сверху
+    if(announce){x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));x.fillStyle=announce.color||'#4ade80';
+      x.font='bold '+Math.min(20,Math.max(13,Math.round(W/44)))+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='top';
+      x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=6;x.fillText(String(announce.text),W/2,H*0.3);x.restore();}
+  }
+
   // осколки при смерти — разлетаются кусочками цвета врага + белые искры
   function deathShards(e){
     if(particles.length>600)return;
@@ -2844,7 +3001,7 @@
     if(state!=='running'||pendingLevelUps<UP_COST)return;
     let guard=0,applied=false;
     while(pendingLevelUps>=UP_COST&&guard++<300){const r=autoApplyOne();pendingLevelUps-=UP_COST;pushAutoToast(r.text,r.color);applied=true;}
-    chestPending=false;
+    chestPending=false;currentOffer=null;
     if(applied){sfxChime(523,4,0.08,0.1);flashFx(0.16,'74,222,128');}
     updatePendingBtn();
   });
@@ -2856,7 +3013,7 @@
   document.getElementById('btnAutoPick').addEventListener('click',()=>{
     let guard=0;
     while(pendingLevelUps>=UP_COST&&guard++<300){const r=autoApplyOne();pendingLevelUps-=UP_COST;pushAutoToast(r.text,r.color);}
-    chestPending=false;sfxChime(523,4,0.08,0.1);
+    chestPending=false;currentOffer=null;sfxChime(523,4,0.08,0.1);
     olevel.classList.remove('show');updatePendingBtn();startCooldown();
   });
 
@@ -2871,9 +3028,11 @@
   }
   const UP_COST=1; // каждый уровень/сундук = один выбор (без системы очков)
   let pendingIdleT=0; // сколько РЕАЛЬНЫХ секунд копятся невыбранные улучшения (кнопки «нетерпеливеют»)
+  let currentOffer=null; // зафиксированный набор из 3 карт — защита от бесконечного реролла
   // диспетчер режима «выбор» — карточный выбор (в режиме «авто» модалка не открывается)
   function renderShop(){ renderChoice(); }
   function buyPoint(){
+    currentOffer=null; // выбор сделан → следующий набор карт роллится заново
     pendingLevelUps=Math.max(0,pendingLevelUps-UP_COST);
     // после выбора сразу показываем СЛЕДУЮЩИЙ набор из 3, пока есть накопленные выборы
     // (в любом режиме); закрываем только когда всё выбрано или нажато «Готово»
@@ -2912,7 +3071,7 @@
   function maybeOpenChoice(){
     if(!isFinite(pendingLevelUps))pendingLevelUps=0; // страховка: NaN/undefined не должны открывать выбор
     updatePendingBtn(); // держим кнопки актуальными по мере накопления выборов
-    if(!(state==='running'&&!paused&&player&&!player.dying&&!inVault))return;
+    if(!(state==='running'&&!paused&&player&&!player.dying&&!inVault&&!inArcade))return;
     if(pendingLevelUps<UP_COST)return;
     if(optChoice){
       state='levelup';renderShop();olevel.classList.add('show');updatePendingBtn();
@@ -2973,7 +3132,10 @@
     levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Выбери одно улучшение из трёх';
     chestPending=false;
     cardsEl.innerHTML='';
-    const offer=rollChoice();
+    // АНТИ-РЕРОЛЛ: карты фиксируются и НЕ перекатываются при повторной отрисовке.
+    // Новый набор выпадает только когда выбор реально сделан (buyPoint очищает currentOffer).
+    if(!currentOffer)currentOffer=rollChoice();
+    const offer=currentOffer;
     if(offer.length===0){
       const el=document.createElement('div');el.className='card';el.style.borderColor='#4ade80';
       el.innerHTML='<b style="color:#4ade80;">💚 Лечение</b><span style="display:block;color:#4ade80;font-weight:600;margin-bottom:4px;">+25% HP</span><span>Всё прокачано — восстанови здоровье</span>';
@@ -3564,6 +3726,7 @@
   function gameOver(){endSession('death');}
 
   function step(dt){
+    if(inArcade){arcadeStep(dt);return;} // бонус-уровень SPACE INVADERS — своя логика
     t+=dt;
     capStats(); // софт-кап статов каждый кадр — числа всегда конечны и читаемы
     maybeAscend(); // все улучшения на максимуме → Восхождение
@@ -3877,14 +4040,16 @@
         portalAcc+=dt;
         if(portalAcc>=70){portalAcc=0;
           const a=rand(0,Math.PI*2),d0=rand(500,800);
-          portal={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:60,life:18};
-          announce={text:'🌀 Портал в ЛАБИРИНТ — успей войти!',life:3,color:'#c084fc'};
+          const arc=Math.random()<0.32; // иногда — редкий АРКАДНЫЙ портал (SPACE INVADERS)
+          portal={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:60,life:18,kind:arc?'arcade':'vault'};
+          announce=arc?{text:'👾 АРКАДНЫЙ ПОРТАЛ — успей войти в SPACE INVADERS!',life:3,color:'#4ade80'}
+                      :{text:'🌀 Портал в ЛАБИРИНТ — успей войти!',life:3,color:'#c084fc'};
           sfxSweep(300,1200,0.4,'sine',0.1,true);
         }
       }else if(portal){
         portal.life-=dt;
         if(portal.life<=0){portal=null;announce={text:'Портал закрылся',life:1.4,color:'#8891a3'};}
-        else if(dist(player,portal)<portal.r)enterVault();
+        else if(dist(player,portal)<portal.r){if(portal.kind==='arcade')enterArcade();else enterVault();}
       }
     }
 
@@ -4639,7 +4804,7 @@
     enemies.forEach(e=>{if(e.hunter)edgeArrow(e.x,e.y,e.r,'#facc15',1.6+0.3*Math.sin(t*6));});
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
-    if(portal)edgeArrow(portal.x,portal.y,portal.r,'#c084fc',1.7+0.3*Math.sin(t*6));
+    if(portal)edgeArrow(portal.x,portal.y,portal.r,portal.kind==='arcade'?'#4ade80':'#c084fc',1.7+0.3*Math.sin(t*6));
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
@@ -4740,6 +4905,7 @@
   }
 
   function draw(){
+    if(inArcade){arcadeDraw();return;} // бонус-уровень SPACE INVADERS — своя отрисовка
     let sx=0,sy=0;
     if(camShake>0.3){sx=Math.sin(t*47)*camShake*0.6;sy=Math.cos(t*41)*camShake*0.6;}
     x.clearRect(0,0,W,H);
@@ -4817,15 +4983,16 @@
     }
     // портал в Хранилище — вращающаяся фиолетовая воронка
     if(portal){
+      const arc=portal.kind==='arcade',pc=arc?'#4ade80':'#c084fc',pc2=arc?'#bbf7d0':'#e9d5ff';
       x.save();x.translate(portal.x,portal.y);
-      x.shadowColor='#c084fc';x.shadowBlur=24;
-      for(let ri=0;ri<3;ri++){x.globalAlpha=0.7-ri*0.2;x.strokeStyle='#c084fc';x.lineWidth=3/zoom;
+      x.shadowColor=pc;x.shadowBlur=24;
+      for(let ri=0;ri<3;ri++){x.globalAlpha=0.7-ri*0.2;x.strokeStyle=pc;x.lineWidth=3/zoom;
         x.beginPath();x.arc(0,0,portal.r-ri*10-Math.sin(t*3+ri)*4,0,Math.PI*2);x.stroke();}
       x.shadowBlur=0;x.globalAlpha=0.9;x.rotate(t*2);
-      for(let i=0;i<6;i++){const a=i*(Math.PI/3);x.strokeStyle='#e9d5ff';x.lineWidth=2/zoom;
+      for(let i=0;i<6;i++){const a=i*(Math.PI/3);x.strokeStyle=pc2;x.lineWidth=2/zoom;
         x.beginPath();x.moveTo(Math.cos(a)*portal.r*0.3,Math.sin(a)*portal.r*0.3);x.lineTo(Math.cos(a)*portal.r*0.85,Math.sin(a)*portal.r*0.85);x.stroke();}
       x.rotate(-t*2);x.globalAlpha=1;x.fillStyle='#fff';x.font='22px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-      x.fillText('🌀',0,-2);x.font='bold 11px system-ui,sans-serif';x.fillStyle='#e9d5ff';x.fillText(Math.ceil(portal.life)+'с',0,portal.r*0.55);
+      x.fillText(arc?'👾':'🌀',0,-2);x.font='bold 11px system-ui,sans-serif';x.fillStyle=pc2;x.fillText(Math.ceil(portal.life)+'с',0,portal.r*0.55);
       x.restore();
     }
     // лес в открытом мире: деревья (только видимые), зелёный подтон
