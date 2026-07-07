@@ -1082,6 +1082,7 @@
   let cursedZones=[]; // проклятые зоны: туман с ядом/замедлением и жирным сундуком в центре
   let rifts=[]; // разломы: волна мобов + якорь; убил якоря — награда
   let altarAcc=0,czAcc=0,riftAcc=0; // таймеры редких событий поля
+  let siege=null; // ВОЛНА-ОСАДА раз в 10 уровней: {t,total,acc,wave,lvl} — 30с накатывающихся волн
   let shrineAcc=0;
   let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
@@ -1305,7 +1306,7 @@
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     // (зум ×1.30 — близкий стартовый план нового забега)
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
@@ -1326,7 +1327,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,killsThisLevel,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,act2Base,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,act2Base,siege,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       };
       // СОСТОЯНИЕ ЛАБИРИНТА: сохраняем целиком, чтобы refresh/сворачивание не выкидывали из него
@@ -1376,7 +1377,7 @@
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;killsThisLevel=s.killsThisLevel||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
-    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
+    mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];siege=s.siege||null;chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
     pickupAcc=s.pickupAcc||0;pickupInterval=s.pickupInterval||14;points=s.points||0;shopBought=s.shopBought||{};
     safeZone=s.safeZone||null;safeZoneAcc=s.safeZoneAcc||0;pendingSpawns=s.pendingSpawns||[];pendingEvent=s.pendingEvent||null;
     eventDelay=s.eventDelay||0;freezeT=s.freezeT||0;waveAcc=s.waveAcc||0;
@@ -3013,19 +3014,37 @@
   }
 
   // scripted wave events — one every 10 levels, rotating by act
+  // ВОЛНА-ОСАДА (раз в 10 уровней): 30 секунд враги накатывают волнами со всех сторон —
+  // орда / сжимающееся кольцо / камикадзе чередуются. Выжил — сундук + полная перегрузка
   function fireEvent(lvl){
-    const kind=Math.floor(lvl/10)%3;
-    if(kind===0){
-      announce={text:'⚠ НАШЕСТВИЕ ОРДЫ! ⚠',life:2.5,color:'#f97316'};
-      for(let i=0;i<36;i++){const e=spawnEnemy(false);const a=rand(0,Math.PI*2);const rr=rand(450,650);e.x=player.x+Math.cos(a)*rr;e.y=player.y+Math.sin(a)*rr;}
-    }else if(kind===1){
-      announce={text:'⚠ СЖИМАЮЩЕЕСЯ КОЛЬЦО! ⚠',life:2.5,color:'#a855f7'};
-      for(let i=0;i<26;i++){const e=spawnEnemy(false);const a=i/26*Math.PI*2;e.x=player.x+Math.cos(a)*620;e.y=player.y+Math.sin(a)*620;}
-    }else{
-      announce={text:'⚠ ДОЖДЬ КАМИКАДЗЕ! ⚠',life:2.5,color:'#ef4444'};
-      for(let i=0;i<10;i++){const e=spawnEnemy(false);const a=rand(0,Math.PI*2);const rr=rand(400,600);e.x=player.x+Math.cos(a)*rr;e.y=player.y+Math.sin(a)*rr;e.beh='bomber';e.speed=Math.min(170,e.speed*1.3);}
+    siege={t:30,total:30,acc:2.4,wave:0,lvl};
+    announce={text:'🌊 ОСАДА УРОВНЯ '+lvl+'! Продержись 30 секунд!',life:3.2,color:'#f97316'};
+    sfxSweep(150,600,0.5,'sawtooth',0.12);camShake=Math.max(camShake,6);flashFx(0.4,'249,115,22');
+  }
+  function siegeTick(dt){
+    if(!siege)return;
+    if(inVault||inArcade)return; // в лабиринте/бонусе осада ждёт
+    if(enemies.some(e2=>e2.megaboss)){siege=null;return;} // босс важнее — осада отменяется без штрафа
+    siege.t-=dt;siege.acc+=dt;
+    if(siege.acc>=3&&enemies.length<200){
+      siege.acc=0;siege.wave++;
+      const kind=siege.wave%3,n=kind===2?7:11;
+      for(let i=0;i<n;i++){
+        const e=spawnEnemy(false);
+        const a=kind===1?i/n*Math.PI*2:rand(0,Math.PI*2);
+        const rr=kind===1?600:rand(430,640);
+        e.x=player.x+Math.cos(a)*rr;e.y=player.y+Math.sin(a)*rr;
+        if(kind===2){e.beh='bomber';e.speed=Math.min(170,e.speed*1.3);}
+      }
+      sfxSweep(200,500,0.25,'sawtooth',0.06);
     }
-    sfxSweep(150,600,0.5,'sawtooth',0.12);camShake=Math.max(camShake,6);
+    if(siege.t<=0){
+      siege=null;
+      pickups.push({x:player.x+rand(-40,40),y:player.y+rand(-40,40),r:12,type:'chest',color:'#facc15',label:'★'});
+      addOverdrive(100);
+      announce={text:'🏆 ОСАДА ОТБИТА! Сундук + перегрузка!',life:3,color:'#4ade80'};
+      flashFx(0.5,'74,222,128');sfxChime(660,6,0.09,0.14);camShake=Math.max(camShake,8);
+    }
   }
 
 
@@ -3951,6 +3970,7 @@
       eventDelay-=dt;
       if(eventDelay<=0){const lvl=pendingEvent;pendingEvent=null;fireEvent(lvl);}
     }
+    siegeTick(dt);
 
     // safe zone: a periodic sanctuary — enemies can't enter, and the shop only works inside.
     // ВАЖНО: тикаем существующую зону, только если она есть; спавним новую лишь вне лабиринта.
@@ -5823,6 +5843,18 @@
     // На узких экранах стек начинается НИЖЕ компактной панели статов (низ ~98px),
     // иначе центрированный текст наезжал бы на неё.
     let topY=W<640?108:34;
+    // ВОЛНА-ОСАДА: баннер с обратным отсчётом и убывающей полосой (30с → 0)
+    if(siege){
+      const prog=Math.max(0,siege.t/siege.total),urgent=siege.t<8;
+      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
+      x.font='bold 15px system-ui,sans-serif';x.fillStyle=urgent?'#ff6b6b':'#f97316';
+      x.fillText('🌊 ОСАДА! Продержись ещё '+Math.ceil(siege.t)+'с',W/2,topY);
+      const bw=Math.min(300,W*0.5),bx0=W/2-bw/2,by0=topY+20,bh=9;
+      x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bx0,by0,bw,bh);
+      x.fillStyle=urgent?'#ff6b6b':'#fb923c';x.fillRect(bx0,by0,bw*prog,bh);
+      x.strokeStyle='rgba(255,255,255,0.45)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
+      x.restore();topY+=36;
+    }
     // ЧЕЛЛЕНДЖ «УДЕРЖИ ПРОКЛЯТУЮ ЗОНУ» — понятный баннер с полосой и секундами (в бою в центре не видно)
     if(cursedZones.length){
       const cz=cursedZones[0],prog=Math.max(0,Math.min(1,(cz.hold||0)/(cz.holdNeed||7))),inside=dist(player,cz)<cz.r;
