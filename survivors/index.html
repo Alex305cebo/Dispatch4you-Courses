@@ -1258,6 +1258,16 @@
 
   // прокачка нарочно медленная: ×2 до 15 уровня, ×5 после — уровни идут заметно реже
   function xpNeedFor(lvl){const base=26*Math.pow(1.26,lvl-1);const mult=lvl>=15?5:2;return Math.round(base*mult);}
+  // УРОВЕНЬ = ЧИСЛО УБИТЫХ МОБОВ за уровень (примерно ~1 минута игры на уровень).
+  // Кривая по точкам игрока: ур.1≈100, ур.30≈3000, ур.40≈4800, ур.50≈5500.
+  function levelBudget(lvl){
+    const L=Math.max(1,lvl);
+    if(L<=30)return Math.round(100+(L-1)*100);
+    if(L<=40)return Math.round(3000+(L-30)*180);
+    if(L<=50)return Math.round(4800+(L-40)*70);
+    return Math.round(5500+(L-50)*60); // после 50-го — плавно растёт
+  }
+  let killsThisLevel=0; // прогресс к следующему уровню = убитые мобы
 
   function rollDmg(base){
     base*=player.lvlDmgScale||1;
@@ -1276,7 +1286,7 @@
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     // (зум ×1.30 — близкий стартовый план нового забега)
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
@@ -1295,7 +1305,7 @@
     try{
       const data={
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
-        t,spawnAcc,kills,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
+        t,spawnAcc,kills,killsThisLevel,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
         safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,act2Base,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
@@ -1344,7 +1354,7 @@
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];fxq=[];
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=Math.min(3,s.lives!=null?s.lives:3);zoom=baseZoom;enemyCountSmoothed=0;
-    bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;
+    bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;killsThisLevel=s.killsThisLevel||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
     mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
@@ -2309,6 +2319,8 @@
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
+    // ПРОГРЕСС УРОВНЯ: обычный моб = +1 к счётчику; набрал бюджет уровня → уровень (см. levelBudget)
+    if(!e.elite){killsThisLevel++;let g2=0;while(killsThisLevel>=levelBudget(player.level)&&g2++<50){killsThisLevel-=levelBudget(player.level);levelUpOnce();}}
     // боссы и супербоссы НЕ дают выбор улучшений — вместо этого роняют БОЛЬШОЙ кристалл
     // опыта. Сбалансировано долей текущего уровня: босс ~45% полосы, супербосс ~90%
     if(e.elite||e.superboss){
@@ -2893,15 +2905,9 @@
   }
 
   function grantXp(v){
-    const add=Math.round(v*(player.curseXpMul||1));
-    player.xp+=isFinite(add)?add:0;
-    let guard=0; // предохранитель от зависания на экстремальных числах
-    while(player.xp>=player.xpNeed&&isFinite(player.xpNeed)&&guard++<2000){
-      player.xp-=player.xpNeed;
-      levelUpOnce();
-      player.xpNeed=xpNeedFor(player.level);
-    }
-    // Вариант А: карточки НЕ открываются сами — копятся в мигающую кнопку «УЛУЧШЕНИЕ ×N»
+    // Уровень теперь качается от ЧИСЛА УБИТЫХ МОБОВ (killEnemy → killsThisLevel), а не от опыта.
+    // Кристаллы оставляем как эффект/сбор, но они больше не двигают уровень.
+    player.xp+=0;
   }
 
   function levelUpOnce(){
@@ -4851,7 +4857,7 @@
     x.fillText(fmtNum(Math.max(0,player.hp))+' / '+fmtNum(player.maxHp),pad+w/2,pad+(mobile?11.5:15));
     x.shadowBlur=0;
     // XP: синий бар
-    hudBar(bx,pad+(mobile?20:25),bw,mobile?6:7,player.xp/player.xpNeed,'#4D96FF');
+    hudBar(bx,pad+(mobile?20:25),bw,mobile?6:7,killsThisLevel/Math.max(1,levelBudget(player.level)),'#4D96FF');
     // Перегрузка: фиолетовый бар
     if(player.overdriveActive>0){
       hudBar(bx,pad+(mobile?29:35),bw,mobile?4:5,1,'#c084fc');
