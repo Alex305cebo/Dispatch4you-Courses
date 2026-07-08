@@ -4737,6 +4737,13 @@
         g.x+=Math.cos(a)*(280+gemMagnetR)*dt;g.y+=Math.sin(a)*(280+gemMagnetR)*dt;
       }
       if(dist(player,g)<player.r+g.r){grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));g.dead=true;gemsCollected++;if(challenge&&challenge.type==='gems')challenge.progress++;
+        // КРИСТАЛЛЫ СНОВА ОСМЫСЛЕННЫ: (А) небольшой доп-прогресс к уровню — эквивалент ~0.25 килла
+        killsThisLevel+=0.25;
+        let gg=0;while(killsThisLevel>=levelBudget(player.level)&&gg++<50){killsThisLevel-=levelBudget(player.level);levelUpOnce();}
+        // (Б) понемногу копят ✨ мета-валюту — раз в ~50 кристаллов выдаётся 1 осколок
+        player.gemShardAcc=(player.gemShardAcc||0)+0.02;
+        if(player.gemShardAcc>=1){player.gemShardAcc-=1;metaState.shards++;saveMeta();
+          if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-18,vy:-26,life:1,val:'+1 ✨',crit:false});}
         // искры-звёздочки при сборе кристалла
         if(particles.length<560)for(let i=0;i<3;i++){const a=rand(0,Math.PI*2);
           particles.push({x:g.x,y:g.y,vx:Math.cos(a)*1.5,vy:Math.sin(a)*1.5-1.8,life:0.5,color:'#93c5fd',sz:1.5+Math.random()*1.5});}}
@@ -6224,6 +6231,20 @@
     // иначе центрированный текст наезжал бы на неё.
     // хаб теперь внизу — верх свободен; на мобильном отступаем лишь под кнопку-гамбургер
     let topY=(W<640||H>W)?46:34;
+    // ШКАЛА УРОВНЯ: сколько мобов осталось убить до след. уровня — цифрами и полосой, всегда на виду
+    // (дополняет кольцо-прогресс в хабе, а не заменяет — так просил пользователь)
+    {
+      const budgT=Math.max(1,levelBudget(player.level)),remainT=Math.max(0,budgT-killsThisLevel);
+      const progT=Math.max(0,Math.min(1,killsThisLevel/budgT));
+      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
+      x.font='bold 13px system-ui,sans-serif';x.fillStyle='#7dd3fc';
+      x.fillText('👾 '+fmtNum(remainT)+' мобов до '+(player.level+1)+' уровня',W/2,topY);
+      const bwL=Math.min(260,W*0.44),bxL=W/2-bwL/2,byL=topY+17,bhL=6;
+      x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(bxL,byL,bwL,bhL);
+      x.fillStyle='#4D96FF';x.fillRect(bxL,byL,bwL*progT,bhL);
+      x.strokeStyle='rgba(255,255,255,0.35)';x.lineWidth=1;x.strokeRect(bxL+0.5,byL+0.5,bwL-1,bhL-1);
+      x.restore();topY+=28;
+    }
     // ВОЛНА-ОСАДА: баннер с обратным отсчётом и убывающей полосой (30с → 0)
     if(siege){
       const prog=Math.max(0,siege.t/siege.total),urgent=siege.t<8;
