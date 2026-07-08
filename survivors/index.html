@@ -1148,6 +1148,11 @@
   let bossLoot=[]; // СТАНДАРТНЫЙ выброс добычи с физикой: разлёт → отскок от препятствий → притяжение к кораблю.
   // Используется на каждой смерти босса (в т.ч. стражей лабиринта), а не только в конце портала-церемонии
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
+  // УРОВЕНЬ КОРАБЛЯ: сквозной счётчик за весь забег, растёт вместе с player.level, но —
+  // в отличие от него — НЕ сбрасывается при переходе в новый акт (player.level обнуляется
+  // до 1 в enterAct2 вместе со статами). Так хаб может показать и «уровень в акте» (текущий
+  // прогресс билда), и «уровень корабля» (сколько всего пройдено за весь забег)
+  let shipLevel=1;
   let finaleLB=0; // кинематографические чёрные полосы (леттербокс) во время финала Хроноса
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
   let act2Base=null; // БАЗА Акта 2: здание, что починило корабль — остаётся в мире как ориентир
@@ -1366,7 +1371,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1384,7 +1389,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,killsThisLevel,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,mega2Done,act2BossLvl,act2Base,siege,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,shipLevel,mega2Done,act2BossLvl,act2Base,siege,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       };
       // СОСТОЯНИЕ ЛАБИРИНТА: сохраняем целиком, чтобы refresh/сворачивание не выкидывали из него
@@ -1464,7 +1469,7 @@
       if(arcade.waveNum==null)arcade.waveNum=1;if(arcade.maxWaves==null)arcade.maxWaves=3;
     }else{inArcade=false;arcade=null;arcadeStash=null;}
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
-    act=s.act||1;finale=null;finaleLB=0;act2Tower=null;
+    act=s.act||1;shipLevel=s.shipLevel||(s.player&&s.player.level)||1;finale=null;finaleLB=0;act2Tower=null;
     mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;act2Base=s.act2Base||null;
     // подстраховка: сейв во время починки (ещё раненый, башни нет) — возвращаем башню рядом
     if(act===2&&player.wounded&&!player.ship2&&!act2Base){act2Tower={x:player.x+130,y:player.y-10,r:46,progress:0};}
@@ -3338,7 +3343,7 @@
   }
 
   function levelUpOnce(){
-    player.level++;
+    player.level++;shipLevel++;
     flashFx(0.7,'77,150,255'); // вспышка левелапа — голубая
     rings.push({x:player.x,y:player.y,r:0,maxR:160,life:0.6,color:'#4D96FF'});
     fxLevelUp(); // золотой радиальный всплеск
@@ -5647,7 +5652,7 @@
     // === РЯД 3: время · убийства · урон/сек слева · баффы справа ===
     const y3=hy+hh+FS(10);
     x.textAlign='left';x.font='600 '+FS(9.5)+'px system-ui,sans-serif';x.fillStyle=MUT;
-    let cx=P;const l3='⏱ '+fmtTime(t)+' · ☠ '+fmtNum(kills)+' · ';
+    let cx=P;const l3=(act>=2?'🚀 '+fmtNum(shipLevel)+' · ':'')+'⏱ '+fmtTime(t)+' · ☠ '+fmtNum(kills)+' · ';
     x.fillText(l3,cx,y3);cx+=x.measureText(l3).width;
     x.fillStyle='#7dd3fc';x.font='700 '+FS(9.5)+'px system-ui,sans-serif';
     const dpsS='⚔ '+fmtNum(Math.round(estPlayerDps()));x.fillText(dpsS,cx,y3);cx+=x.measureText(dpsS).width;
@@ -5701,7 +5706,10 @@
     x.fillStyle='#eaf6ff';x.font='800 '+(player.level>=100?11:14)+'px system-ui,sans-serif';x.textAlign='center';
     x.fillText(player.level,rcx,rcy+0.5);
     const x1=bx+44;
-    x.textAlign='left';x.fillStyle=MUT;x.font='600 8px system-ui,sans-serif';x.fillText('У Р О В Е Н Ь',x1,pad+13);
+    // с Акта 2 player.level обнуляется (см. enterAct2) — подписываем явно «уровень АКТА»,
+    // а сквозной «уровень корабля» (shipLevel, никогда не сбрасывается) — в строке справа
+    x.textAlign='left';x.fillStyle=MUT;x.font='600 8px system-ui,sans-serif';
+    x.fillText(act>=2?'У Р О В Е Н Ь   А К Т А':'У Р О В Е Н Ь',x1,pad+13);
     // чип Mk + «N до уровня»
     const stT=shipTier(),mk='Mk '+ROMAN[stT]+((player.ascTier||0)>0?' ✦'+player.ascTier:'');
     x.font='700 9px system-ui,sans-serif';const mw=x.measureText(mk).width+12;
@@ -5719,7 +5727,7 @@
     x.fillStyle='rgba(244,63,94,0.12)';x.beginPath();x.roundRect(rx-bpw,pad+7,bpw,15,7.5);x.fill();
     x.fillStyle=nb[1];x.textAlign='center';x.fillText(nb[0],rx-bpw/2,pad+14.5);
     x.textAlign='right';x.fillStyle=MUT;x.font='600 8px system-ui,sans-serif';
-    x.fillText('⏱ '+fmtTime(t)+' · ☠ '+fmtNum(kills),rx,pad+31.5);
+    x.fillText((act>=2?'🚀 '+fmtNum(shipLevel)+' · ':'')+'⏱ '+fmtTime(t)+' · ☠ '+fmtNum(kills),rx,pad+31.5);
     div(pad+44);
     // ── СЕКЦИЯ 2: ПРОЧНОСТЬ ──
     x.textAlign='left';x.fillStyle=MUT;x.font='600 8px system-ui,sans-serif';x.fillText('П Р О Ч Н О С Т Ь',bx,pad+55);
