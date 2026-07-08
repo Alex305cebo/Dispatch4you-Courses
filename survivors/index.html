@@ -138,6 +138,22 @@
   #pendingBtns.urge2 .pupBtn{font-size:16px;padding:11px 21px;box-shadow:0 0 22px rgba(250,204,21,0.9);}
   #pendingBtns.urge1{animation:pupurge 1.1s ease-in-out infinite;}
   #pendingBtns.urge2{animation:pupurge 0.7s ease-in-out infinite;}
+  /* хаб (ПК) теперь показывает только уровень+прочность — статы урона и иконки оружия/эволюций
+     переехали сюда, в попап по кнопке (готовим место под будущий гараж корабля за кристаллы) */
+  #btnShipStats{display:none;position:absolute;z-index:6;top:132px;left:14px;width:auto;padding:5px 11px;
+    font-size:11px;font-weight:700;background:rgba(17,24,42,0.72);border:1px solid rgba(125,211,252,0.32);
+    border-radius:8px;color:#cfe6ff;cursor:pointer;}
+  #btnShipStats:hover{background:rgba(17,24,42,0.9);border-color:#7dd3fc;}
+  #shipStatsPanel{display:none;position:absolute;z-index:6;top:168px;left:14px;width:248px;padding:11px 13px;
+    border-radius:12px;background:rgba(10,14,26,0.9);border:1px solid rgba(125,211,252,0.22);color:#f4f7fc;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+  #shipStatsPanel.open{display:block;}
+  .ssp-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px 4px;text-align:center;margin-bottom:9px;}
+  .ssp-tiles b{display:block;font-size:13px;font-weight:800;}
+  .ssp-tiles span{display:block;font-size:8px;color:#9aa8c2;letter-spacing:0.03em;margin-top:1px;}
+  .ssp-weapons{display:flex;flex-wrap:wrap;align-items:center;gap:5px;font-size:15px;
+    border-top:1px solid rgba(255,255,255,0.08);padding-top:9px;}
+  .ssp-empty{opacity:0.65;font-style:italic;font-size:10.5px;}
   @keyframes pupurge{0%,100%{filter:drop-shadow(0 0 4px rgba(250,204,21,0.5));transform:translateX(-50%) scale(1);}
     50%{filter:drop-shadow(0 0 16px rgba(250,204,21,1));transform:translateX(-50%) scale(1.07);}}
   @keyframes pupblink{0%,100%{opacity:1;transform:translateX(-50%) scale(1);}50%{opacity:0.82;transform:translateX(-50%) scale(0.985);}}
@@ -174,8 +190,13 @@
     <canvas id="sboard" width="640" height="480"></canvas>
     <button id="btnBurger" aria-label="Меню">☰</button>
     <div id="pendingBtns">
-      <button id="btnPendingUp" class="pupBtn">⬆ Выбрать одно</button>
-      <button id="btnPendingAll" class="pupBtn">✨ Выбрать всё</button>
+      <button id="btnPendingUp" class="pupBtn">⬆ Выбрать</button>
+      <button id="btnPendingAll" class="pupBtn">⚡ Авто</button>
+    </div>
+    <button id="btnShipStats">📊 Статы корабля</button>
+    <div id="shipStatsPanel">
+      <div class="ssp-tiles" id="sspTiles"></div>
+      <div class="ssp-weapons" id="sspWeapons"></div>
     </div>
     <div id="ostart" class="overlay show">
       <h2>Выжившие</h2>
@@ -346,6 +367,7 @@
     cv.width=W;cv.height=H;
     // тот же критерий, что и CSS-медиа-запрос сайдбара — оба решения теперь всегда совпадают
     uiMobile=window.matchMedia('(max-width:819px), (orientation: portrait)').matches;
+    syncShipStatsVisibility();
   }
   const isMobileDevice=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
   const baseZoom=isMobileDevice?0.62:1;
@@ -1105,6 +1127,8 @@
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let darkForest=null; // ТЁМНЫЙ ЛЕС (награда за удержание проклятой зоны): {total,killed,lit,litT,loot[]} — тьма+фонарь, свой счётчик мобов, свет+добыча в конце
+  let bossLoot=[]; // СТАНДАРТНЫЙ выброс добычи с физикой: разлёт → отскок от препятствий → притяжение к кораблю.
+  // Используется на каждой смерти босса (в т.ч. стражей лабиринта), а не только в конце портала-церемонии
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
   let finaleLB=0; // кинематографические чёрные полосы (леттербокс) во время финала Хроноса
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
@@ -1323,7 +1347,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;act=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1429,7 +1453,7 @@
     if(megaDone&&!megaFought){megaDone=false;pendingMegaBoss=true;
       setTimeout(()=>{announce={text:'⚡ ХРОНОС ЖАЖДЕТ НАСТОЯЩЕГО БОЯ — РЕВАНШ!',life:5,color:'#ff2d55'};},600);}
     enemies.forEach(en=>{if(en.megaboss){en._shArmed=false;armMegaShield(en);}});
-    worldTrees=[];forestField=false;darkForest=null; // лес не сериализуем — при загрузке чистим
+    worldTrees=[];forestField=false;darkForest=null;bossLoot=[]; // лес и добыча боссов не сериализуются — при загрузке чистим
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
     // JSON.stringify превращает Set в {} — после загрузки p.hitSet.has() падал бы
     // с TypeError и замораживал игру. Возрождаем настоящие Set-ы.
@@ -2652,6 +2676,16 @@
     {min:1000,name:'БОГ ВОЙНЫ',fx:'103,232,249'},
   ];
   function comboTierInfo(n){let ti=-1;for(let i=0;i<COMBO_TIERS.length;i++)if(n>=COMBO_TIERS[i].min)ti=i;return ti;}
+  // СТАНДАРТНЫЙ выброс добычи боссов: items — [{kind,color,label,relicId}], разлетаются с физикой
+  // из (x,y) и летят к кораблю (см. тик bossLoot в step()). Заменяет плоское pickups.push у боссов.
+  function ejectBossLoot(x,y,items){
+    for(const it of items){
+      const a=rand(0,Math.PI*2),sp=rand(200,380);
+      bossLoot.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:0,phase:'fly',
+        kind:it.kind,color:it.color||'#7dd3fc',label:it.label||'✦',relicId:it.relicId,r:9});
+    }
+    burst(x,y,'#fde047',14);rings.push({x,y,r:0,maxR:80,life:0.5,color:'#fde047'});
+  }
   function killEnemy(e){
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
@@ -2769,11 +2803,11 @@
     }
     if(e.pauseSpawns&&!e.megaboss){mobSpawnPaused=false;announce={text:'Босс уровня 8 повержен!',life:2.4,color:'#f97316'};}
     if(e.elite){
-      pickups.push({x:e.x+rand(-16,16),y:e.y+rand(-16,16),r:11,type:'chest',color:'#facc15',label:'★'});
+      // СТАНДАРТНЫЙ выброс: все награды босса разлетаются с физикой (не лежат плоско на месте
+      // смерти) — отскакивают от стен лабиринта/деревьев леса, если есть, и летят к кораблю
+      const drop=[{kind:'chest',color:'#facc15',label:'★'}];
       if(e.superboss){
-        PICKUP_TYPES.filter(pt=>pt.id!=='chest').forEach(pt=>{
-          pickups.push({x:e.x+rand(-20,20),y:e.y+rand(-20,20),r:11,type:pt.id,color:pt.color,label:pt.label});
-        });
+        PICKUP_TYPES.filter(pt=>pt.id!=='chest').forEach(pt=>drop.push({kind:pt.id,color:pt.color,label:pt.label}));
         announce={text:'СУПЕРБОСС ПОВЕРЖЕН!',life:3,color:'#ff2d55'};
         camShake=Math.max(camShake,14);screenFlash=Math.max(screenFlash,0.7);
         burst(e.x,e.y,'#ff2d55',40);
@@ -2781,15 +2815,16 @@
       }else{
         const others=PICKUP_TYPES.filter(pt=>pt.id!=='chest');
         const extra=others[Math.floor(Math.random()*others.length)];
-        pickups.push({x:e.x+rand(-16,16),y:e.y+rand(-16,16),r:11,type:extra.id,color:extra.color,label:extra.label});
+        drop.push({kind:extra.id,color:extra.color,label:extra.label});
       }
       if(player.level>=50){
         const pool=RELICS.filter(r=>!(player.relics&&player.relics[r.id]));
         if(pool.length&&Math.random()<(e.superboss?0.7:0.32)){
           const r=pool[Math.floor(Math.random()*pool.length)];
-          pickups.push({x:e.x+rand(-24,24),y:e.y+rand(-24,24),r:12,type:'relic',relicId:r.id,color:'#facc15',label:'◆'});
+          drop.push({kind:'relic',relicId:r.id,color:'#facc15',label:'◆'});
         }
       }
+      ejectBossLoot(e.x,e.y,drop);
     }
   }
 
@@ -3344,7 +3379,7 @@
     if(label&&player&&floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-24,vy:-30,life:1,val:'+'+n+'⬆ '+label,crit:true});
     updatePendingBtn();updateHubPoints();
   }
-  // режим «кнопки»: две пилюли сверху — «Выбрать одно» / «Выбрать всё»
+  // режим «кнопки»: две пилюли снизу — «Выбрать» (открыть карты) / «Авто» (применить все накопленные сразу)
   const pendingBtns=document.getElementById('pendingBtns');
   const btnPendingUp=document.getElementById('btnPendingUp'),btnPendingAll=document.getElementById('btnPendingAll');
   const btnDonePick=document.getElementById('btnDonePick'),btnAutoPick=document.getElementById('btnAutoPick');
@@ -3361,12 +3396,36 @@
     pendingBtns.classList.toggle('urge1',urge===1);
     pendingBtns.classList.toggle('urge2',urge===2);
     if(show){
-      btnPendingUp.textContent='⬆ Одно ('+pendingLevelUps+')';
-      btnPendingAll.textContent='✨ Всё ('+pendingLevelUps+')';
+      btnPendingUp.textContent='⬆ Выбрать ('+pendingLevelUps+')';
+      btnPendingAll.textContent='⚡ Авто ('+pendingLevelUps+')';
     }
   }
   const hubPointsEl=document.getElementById('hubPoints'),hubPointsBox=document.getElementById('hubPointsBox');
   function updateHubPoints(){ if(hubPointsBox)hubPointsBox.style.display='none'; }
+  // «📊 Статы корабля» — попап под хабом: урон/крит/пробой + иконки оружия (доступ по кнопке,
+  // не всегда на экране). На мобильном хаб — полоса внизу, там этой кнопки нет вовсе.
+  const btnShipStats=document.getElementById('btnShipStats'),shipStatsPanel=document.getElementById('shipStatsPanel');
+  const sspTiles=document.getElementById('sspTiles'),sspWeapons=document.getElementById('sspWeapons');
+  let shipStatsOpen=false;
+  btnShipStats.addEventListener('click',()=>{
+    shipStatsOpen=!shipStatsOpen;shipStatsPanel.classList.toggle('open',shipStatsOpen);
+    if(shipStatsOpen)updateShipStatsPanel();
+  });
+  function syncShipStatsVisibility(){
+    btnShipStats.style.display=uiMobile?'none':'block';
+    if(uiMobile&&shipStatsOpen){shipStatsOpen=false;shipStatsPanel.classList.remove('open');}
+  }
+  function updateShipStatsPanel(){
+    if(!shipStatsOpen||uiMobile||!player)return;
+    const tiles=[[fmtNum(Math.round(estPlayerDps())),'УРОН/СЕК'],[fmtNum(player.dmg),'УРОН'],[(1000/player.fireRate).toFixed(1)+'/с','ТЕМП'],
+      [Math.round(player.critChance*100)+'%','КРИТ'],[String(player.pierce),'ПРОБОЙ'],[Math.round(player.aoeMult*100)+'%','ОХВАТ']];
+    sspTiles.innerHTML=tiles.map(tl=>'<div><b>'+tl[0]+'</b><span>'+tl[1]+'</span></div>').join('');
+    const owned=WEAPON_UNLOCKS.filter(w=>w.done).map(w=>w.name.split(' ')[0]);
+    const evoN=EVOLUTIONS.filter(ev=>player[ev.flag]).length;
+    let html=owned.length?owned.join(' '):'<span class="ssp-empty">оружие не выбрано</span>';
+    if(evoN>0)html+=' <span style="color:#fde047;font-weight:700;font-size:11px;">⭐'+evoN+'</span>';
+    sspWeapons.innerHTML=html;
+  }
   // «Выбрать одно» — открыть выбор из 3 карт ровно на один раз
   btnPendingUp.addEventListener('click',()=>{
     if(state==='running'&&pendingLevelUps>=UP_COST){state='levelup';renderShop();olevel.classList.add('show');updatePendingBtn();}
@@ -4477,6 +4536,50 @@
         if(darkForest.litT>25||(darkForest.litT>14&&darkForest.loot.length===0)){darkForest=null;worldTrees=[];}
       }
     }
+    // СТАНДАРТНЫЙ ВЫБРОС ДОБЫЧИ БОССОВ: разлёт → отскок (от стен лабиринта/деревьев леса, если есть) → домой.
+    // Тот же приём, что и у церемонии портала/тёмного леса, но триггерится СРАЗУ на смерти любого босса.
+    if(bossLoot.length){
+      for(const L of bossLoot){
+        L.t+=dt;
+        if(L.phase==='fly'){
+          const nx=L.x+L.vx*dt,ny=L.y+L.vy*dt;
+          if(inVault){
+            if(pointInWalls(nx,L.y)){L.vx=-L.vx*0.65;sparkHit(L.x,L.y,L.color);}else L.x=nx;
+            if(pointInWalls(L.x,ny)){L.vy=-L.vy*0.65;sparkHit(L.x,L.y,L.color);}else L.y=ny;
+          }else if(darkForest||forestField){
+            L.x=nx;L.y=ny;
+            for(const tr of worldTrees){
+              const dx=L.x-tr.x,dy=L.y-tr.y,d=Math.hypot(dx,dy),minD=tr.r+L.r;
+              if(d<minD&&d>0.01){
+                const nx2=dx/d,ny2=dy/d;L.x=tr.x+nx2*minD;L.y=tr.y+ny2*minD;
+                const vn=L.vx*nx2+L.vy*ny2;L.vx=(L.vx-2*vn*nx2)*0.72;L.vy=(L.vy-2*vn*ny2)*0.72;
+                sparkHit(L.x,L.y,L.color);
+              }
+            }
+          }else{L.x=nx;L.y=ny;}
+          const fr=Math.pow(0.25,dt);L.vx*=fr;L.vy*=fr;
+          if(L.t>0.7)L.phase='home';
+        }else{
+          const a=Math.atan2(player.y-L.y,player.x-L.x);
+          const sp=Math.min(950,260+(L.t-0.7)*900);
+          L.x+=Math.cos(a)*sp*dt;L.y+=Math.sin(a)*sp*dt;
+        }
+        if(Math.random()<0.3&&particles.length<560)particles.push({x:L.x,y:L.y,vx:rand(-0.5,0.5),vy:rand(-0.5,0.5),life:0.35,color:L.color,sz:1.6});
+        if(dist(player,L)<player.r+12){
+          L._got=true;
+          if(L.kind==='gem'){gemsCollected++;killsThisLevel+=0.25;
+            let gg3=0;while(killsThisLevel>=levelBudget(player.level)&&gg3++<50){killsThisLevel-=levelBudget(player.level);levelUpOnce();}
+            sfxChime(700,2,0.04,0.06);}
+          else if(L.kind==='shard'){metaState.shards++;saveMeta();
+            if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-20,vy:-28,life:1,val:'+1 ✨',crit:true});
+            sfxChime(880,3,0.05,0.09);}
+          else if(L.kind==='relic')collectPickup({x:L.x,y:L.y,type:'relic',relicId:L.relicId,color:L.color});
+          else collectPickup({x:L.x,y:L.y,type:L.kind,color:L.color});
+          burst(L.x,L.y,L.color,8);
+        }
+      }
+      bossLoot=bossLoot.filter(L=>!L._got);
+    }
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
     if(inVault){
       vaultT+=dt; // просто счёт времени внутри (без лимита)
@@ -4817,15 +4920,46 @@
     const gemMagnetR=player.pickupRadius*2.2;
     const GEM_DESPAWN_R=1200,GEM_DESPAWN_T=6;
     const vacuum=player.magnetT>0; // режим-пылесос: тянет и новые кристаллы тоже
+    // КОЛЬЦО ЗАЩИТЫ: пока стоишь внутри safeZone, оно пульсирует и очень медленно тянет
+    // окрестные кристаллы к себе; у границы кольца кристалл «выстреливается» внутрь и
+    // рикошетит от стенки кольца, а затем летит к кораблю — как и было предложено
+    const szActive=!!(safeZone&&dist(player,safeZone)<safeZone.r);
+    if(safeZone)safeZone.pulseT=(safeZone.pulseT||0)+(szActive?dt:0);
+    const szPullR=safeZone?safeZone.r*2.6:0;
     for(const g of gems){
       const d=dist(player,g);
       g.age=(g.age||0)+dt;
-      if(!g.magnet&&!vacuum&&d>GEM_DESPAWN_R&&g.age>GEM_DESPAWN_T){g.dead=true;continue;} // далёкий и старый — убираем
-      if(g.magnet||vacuum){
+      if(!g.magnet&&!vacuum&&!g.szPhase&&d>GEM_DESPAWN_R&&g.age>GEM_DESPAWN_T){g.dead=true;continue;} // далёкий и старый — убираем
+      if(g.szPhase==='launch'){
+        g.szT+=dt;
+        const nx=g.x+g.szVx*dt,ny=g.y+g.szVy*dt,dc=dist({x:nx,y:ny},safeZone);
+        if(dc>safeZone.r-g.r){
+          const nX=(nx-safeZone.x)/Math.max(1,dc),nY=(ny-safeZone.y)/Math.max(1,dc);
+          const vn=g.szVx*nX+g.szVy*nY;g.szVx=(g.szVx-2*vn*nX)*0.8;g.szVy=(g.szVy-2*vn*nY)*0.8;
+          sparkHit(g.x,g.y,'#4ade80');
+        }else{g.x=nx;g.y=ny;}
+        const fr=Math.pow(0.5,dt);g.szVx*=fr;g.szVy*=fr;
+        if(g.szT>1.4)g.szPhase='home';
+      }else if(g.szPhase==='home'){
+        const a=Math.atan2(player.y-g.y,player.x-g.x);
+        const sp=Math.max(500,d*2.2);
+        g.x+=Math.cos(a)*sp*dt;g.y+=Math.sin(a)*sp*dt;
+      }else if(g.magnet||vacuum){
         // magnet pickup: every gem on the map races to the player
         const a=Math.atan2(player.y-g.y,player.x-g.x);
         const sp=Math.max(600,d*2.5);
         g.x+=Math.cos(a)*sp*dt;g.y+=Math.sin(a)*sp*dt;
+      }else if(szActive&&safeZone&&dist(g,safeZone)<szPullR){
+        const dz=dist(g,safeZone);
+        if(dz>=safeZone.r){
+          const a=Math.atan2(safeZone.y-g.y,safeZone.x-g.x);
+          g.x+=Math.cos(a)*46*dt;g.y+=Math.sin(a)*46*dt;
+        }
+        if(dist(g,safeZone)<safeZone.r+6){
+          const la=rand(0,Math.PI*2),lsp=rand(220,340);
+          g.szPhase='launch';g.szVx=Math.cos(la)*lsp;g.szVy=Math.sin(la)*lsp;g.szT=0;
+          sparkHit(g.x,g.y,'#4ade80');
+        }
       }else if(d<gemMagnetR){
         const a=Math.atan2(player.y-g.y,player.x-g.x);
         g.x+=Math.cos(a)*(280+gemMagnetR)*dt;g.y+=Math.sin(a)*(280+gemMagnetR)*dt;
@@ -5385,6 +5519,8 @@
       if(!darkForest.lit)enemies.forEach(e=>{if(e.darkForestMob)edgeArrow(e.x,e.y,e.r,'#4ade80',1.4+0.25*Math.sin(t*6));});
       else darkForest.loot.forEach(L=>edgeArrow(L.x,L.y,L.r,L.color,1.3));
     }
+    // добыча боссов, разлетевшаяся за край экрана
+    bossLoot.forEach(L=>edgeArrow(L.x,L.y,L.r,L.color,1.3));
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
@@ -5417,7 +5553,9 @@
   const MOBILE_HUD_H=62;
   // хаб-карточка (ПК): было 1.4 («слишком мелкий» → перебор → «слишком большой, мешает
   // видеть поле») — 1.15 умереннее + сам фон стал полупрозрачным (см. drawHudOverlay)
-  const HUB_SCALE=1.15,HUB_PAD=10,HUB_W=248,HUB_H=160;
+  // HUB_H укорочен: секции статов/оружия переехали в DOM-попап (#shipStatsPanel) — в самом
+  // хабе остались только уровень+прочность, которые нужно видеть каждую секунду боя
+  const HUB_SCALE=1.15,HUB_PAD=10,HUB_W=248,HUB_H=104;
   // МОБИЛЬНЫЙ ХАБ: не угловая коробка, а ПОЛОСА во всю ширину экрана ВНИЗУ —
   // ничего не накладывается на бой; по полю (и по самой полосе) можно водить пальцем,
   // все кнопки-меню спрятаны под гамбургер (☰) сверху слева
@@ -5501,10 +5639,11 @@
     const mobile=uiMobile;
     if(mobile){drawMobileBar();}
     else{
-    // ═══ КАРТОЧКА-ХАБ (ПК): 4 секции с разделителями ═══
+    // ═══ КАРТОЧКА-ХАБ (ПК): только то, что нужно смотреть КАЖДУЮ секунду боя ═══
     // 1) кольцо уровня (дуга = прогресс до след. уровня) + Mk + босс + время
     // 2) прочность: красный ХП-бар с жизнями внутри + стрип перегрузки
-    // 3) 6 плиток статов с русскими подписями  4) оружие + активные баффы
+    // Урон/крит/пробой и иконки оружия смотрят реже — переехали в попап «📊 Статы корабля»
+    // (кнопка под хабом, см. #btnShipStats) — так хаб короче и меньше закрывает поле боя
     const pad=HUB_PAD,w=HUB_W,h=HUB_H;
     const bx=pad+12,bw=w-24,rx=pad+w-12;
     const MUT='#aebbd4',VAL='#f4f7fc'; // светлее — на тёмной карточке прежние приглушённые тона не читались
@@ -5565,40 +5704,20 @@
       x.fillStyle=i<lives?'#ff2d55':'rgba(255,255,255,0.22)';x.fillText('♥',hxp,hy+hh/2);hxp+=13;}
     // стрип перегрузки (копится фиолетовым)
     hudBar(bx,hy+hh+4,bw,3.5,player.overdriveActive>0?1:(player.overdrive||0)/100,player.overdriveActive>0?'#c084fc':'#a855f7');
-    div(pad+88);
-    // ── СЕКЦИЯ 3: БОЕВЫЕ ПОКАЗАТЕЛИ (3×2 плитки с подписями) ──
-    const tiles=[[fmtNum(Math.round(estPlayerDps())),'УРОН/СЕК'],[fmtNum(player.dmg),'УРОН'],[(1000/player.fireRate).toFixed(1)+'/с','ТЕМП'],
-      [Math.round(player.critChance*100)+'%','КРИТ'],[String(player.pierce),'ПРОБОЙ'],[Math.round(player.aoeMult*100)+'%','ОХВАТ']];
-    for(let i=0;i<6;i++){
-      const cx2=bx+bw*((i%3)*2+1)/6,vy=pad+(i<3?98:118);
-      x.textAlign='center';x.fillStyle=VAL;x.font='800 11px system-ui,sans-serif';x.fillText(tiles[i][0],cx2,vy);
-      x.fillStyle='#9aa8c2';x.font='600 7px system-ui,sans-serif';x.fillText(tiles[i][1],cx2,vy+10);
-    }
-    x.strokeStyle='rgba(255,255,255,0.05)';x.lineWidth=1;x.beginPath();
-    x.moveTo(bx+bw/3,pad+93);x.lineTo(bx+bw/3,pad+131);x.moveTo(bx+2*bw/3,pad+93);x.lineTo(bx+2*bw/3,pad+131);x.stroke();
-    div(pad+136);
-    // ── СЕКЦИЯ 4: ОРУЖИЕ (слева) + АКТИВНЫЕ БАФФЫ (справа) ──
-    const yW=pad+149;
-    const owned=WEAPON_UNLOCKS.filter(w=>w.done).map(w=>w.name.split(' ')[0]);
-    const evoN=EVOLUTIONS.filter(ev=>player[ev.flag]).length;
+    // активные баффы — единственное, что осталось «на глазах», рядом со стрипом перегрузки
     const buffs=[];
     if(player.hasteActive>0)buffs.push(['⚡',Math.ceil(player.hasteActive),'#4ade80']);
     if(player.shieldActive>0)buffs.push(['🛡',Math.ceil(player.shieldActive),'#38bdf8']);
     if(player.berserkActive>0)buffs.push(['🔥',Math.ceil(player.berserkActive),'#fb923c']);
     if(player.magnetT>0)buffs.push(['◎',Math.ceil(player.magnetT),'#38bdf8']);
-    x.textAlign='right';let bxp=rx;
-    for(const bf of buffs){
-      x.fillStyle=bf[2];x.font='700 8.5px system-ui,sans-serif';x.fillText(bf[1]+'с',bxp,yW);bxp-=x.measureText(bf[1]+'с').width+2;
-      x.font='11px system-ui,sans-serif';x.fillText(bf[0],bxp,yW);bxp-=14;}
-    x.textAlign='left';
-    const rightEdge=buffs.length?bxp-4:rx,step=14;let ix=bx;
-    x.font='11px system-ui,sans-serif';x.fillStyle=VAL;
-    if(owned.length){for(const em of owned){if(ix+step>rightEdge-14)break;x.fillText(em,ix,yW);ix+=step;}
-      const extra=owned.length-Math.floor((ix-bx)/step);
-      if(extra>0){x.fillStyle='#8fa0b6';x.font='700 8.5px system-ui,sans-serif';x.fillText('+'+extra,ix,yW);ix+=15;}
-    }else{x.fillStyle='#8b98b3';x.font='italic 8.5px system-ui,sans-serif';x.fillText('оружие не выбрано',bx,yW);ix+=76;}
-    if(evoN>0){x.fillStyle='#fde047';x.font='700 9px system-ui,sans-serif';x.fillText('⭐'+evoN,ix,yW);}
+    if(buffs.length){
+      x.textAlign='right';let bxp=rx;const yB=hy+hh+13;
+      for(const bf of buffs){
+        x.fillStyle=bf[2];x.font='700 8px system-ui,sans-serif';x.fillText(bf[1]+'с',bxp,yB);bxp-=x.measureText(bf[1]+'с').width+2;
+        x.font='10px system-ui,sans-serif';x.fillText(bf[0],bxp,yB);bxp-=13;}
+    }
     x.restore();
+    if(shipStatsOpen)updateShipStatsPanel();
     }
     // индикатор СЕРИИ БЕЗ УРОНА: справа сверху (хаб — карточка слева, тут места достаточно).
     // Чем длиннее серия — тем ярче и крупнее.
@@ -5687,10 +5806,13 @@
     // safe zone (under everything)
     if(safeZone){
       const fade=Math.min(1,safeZone.life/2);
+      // пока корабль внутри — кольцо пульсирует (тянет кристаллы, см. тик gems в step())
+      const szOn=dist(player,safeZone)<safeZone.r;
+      const pulse=szOn?1+0.05*Math.sin((safeZone.pulseT||0)*5):1;
       x.save();x.globalAlpha=0.1*fade;
-      x.fillStyle='#4ade80';x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.fill();
-      x.globalAlpha=0.7*fade;x.strokeStyle='#4ade80';x.lineWidth=2.5/zoom;x.setLineDash([12,8]);
-      x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r,0,Math.PI*2);x.stroke();x.setLineDash([]);
+      x.fillStyle='#4ade80';x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r*pulse,0,Math.PI*2);x.fill();
+      x.globalAlpha=(szOn?0.9:0.7)*fade;x.strokeStyle='#4ade80';x.lineWidth=(szOn?3.2:2.5)/zoom;x.setLineDash([12,8]);
+      x.beginPath();x.arc(safeZone.x,safeZone.y,safeZone.r*pulse,0,Math.PI*2);x.stroke();x.setLineDash([]);
       // маркер отдыха + КРУПНЫЙ отсчёт по центру (масштаб не зависит от зума — всегда читается)
       x.globalAlpha=fade;x.translate(safeZone.x,safeZone.y);
       const szs=1/zoom; // компенсируем отдалённую камеру
@@ -5733,6 +5855,17 @@
     if(darkForest&&darkForest.lit&&darkForest.loot.length){
       x.textAlign='center';x.textBaseline='middle';
       for(const L of darkForest.loot){
+        x.save();x.translate(L.x,L.y);
+        x.fillStyle=L.color;x.shadowColor=L.color;x.shadowBlur=10;
+        x.beginPath();x.arc(0,0,L.r,0,Math.PI*2);x.fill();x.shadowBlur=0;
+        x.fillStyle='#0a0e18';x.font='bold 10px system-ui,sans-serif';x.fillText(L.label,0,0.5);
+        x.restore();
+      }
+    }
+    // ДОБЫЧА БОССОВ: тот же летящий/рикошетящий стиль, стандартный для любой смерти босса
+    if(bossLoot.length){
+      x.textAlign='center';x.textBaseline='middle';
+      for(const L of bossLoot){
         x.save();x.translate(L.x,L.y);
         x.fillStyle=L.color;x.shadowColor=L.color;x.shadowBlur=10;
         x.beginPath();x.arc(0,0,L.r,0,Math.PI*2);x.fill();x.shadowBlur=0;
@@ -6315,7 +6448,7 @@
       const mobileB=uiMobile;
       const left2=Math.max(0,darkForest.total-darkForest.killed);
       const progF=darkForest.total?darkForest.killed/darkForest.total:0;
-      // +58 на ПК — иначе баннер садится ровно на пилюли «Одно/Всё» (#pendingBtns, bottom:14px)
+      // +58 на ПК — иначе баннер садится ровно на пилюли «Выбрать/Авто» (#pendingBtns, bottom:14px)
       const byB=H-(mobileB?MOBILE_HUD_H+16:58);
       x.save();x.textAlign='center';x.textBaseline='bottom';x.shadowColor='#000';x.shadowBlur=4;
       x.font='bold 15px system-ui,sans-serif';x.fillStyle='#86e08a';
