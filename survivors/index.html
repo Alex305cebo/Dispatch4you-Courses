@@ -3343,15 +3343,15 @@
     rings.push({x:player.x,y:player.y,r:0,maxR:160,life:0.6,color:'#4D96FF'});
     fxLevelUp(); // золотой радиальный всплеск
     pendingLevelUps++;
-    if(player.level===40&&!megaDone)announce={text:'⚔ ВНИМАНИЕ: на 50 уровне ждёт МЕГА-БОСС ХРОНОС!',life:5,color:'#ff2d55'};
-    if(player.level===45&&!megaDone)announce={text:'☠ МЕГА-БОСС всё ближе — 5 уровней до встречи!',life:4,color:'#ff2d55'};
-    if(player.level===50&&!megaDone)pendingMegaBoss=true;
+    if(player.level===20&&!megaDone)announce={text:'⚔ ВНИМАНИЕ: на 30 уровне ждёт МЕГА-БОСС ХРОНОС!',life:5,color:'#ff2d55'};
+    if(player.level===25&&!megaDone)announce={text:'☠ МЕГА-БОСС всё ближе — 5 уровней до встречи!',life:4,color:'#ff2d55'};
+    if(player.level===30&&!megaDone)pendingMegaBoss=true;
     // БОСС АКТА 2: обновлённый Хронос появляется через несколько уровней после починки корабля
     if(act===2&&player.ship2&&!mega2Done&&act2BossLvl){
       if(player.level===act2BossLvl-3)announce={text:'☠ РАЗЛОМ ДРОЖИТ… ХРОНОС ПРОБУЖДАЕТСЯ — 3 уровня!',life:4,color:'#f43f5e'};
       if(player.level>=act2BossLvl&&!enemies.some(e=>e.megaboss)){mega2Pending=true;}
     }
-    if(player.level%5===0&&!(player.level===50&&!megaDone)){pendingLevelUps+=2;pendingBossLevel=player.level;
+    if(player.level%5===0&&!(player.level===30&&!megaDone)){pendingLevelUps+=2;pendingBossLevel=player.level;
       // рубеж сложности: враги делают шаг вверх — предупреждаем и даём передышку (+20% HP),
       // чтобы полоса оставалась играбельной
       announce={text:'⚠ РУБЕЖ '+player.level+' — враги стали сильнее!',life:3,color:'#f59e0b'};
@@ -3364,7 +3364,7 @@
     // достиг 29 — запускаем «прорыв к лесу» (один раз за забег): фикс. волна, потом ЛЕС на 30
     if(player.level===29&&!forestDone){forestPending=true;}
     if(player.level%10===0){pendingEvent=player.level;eventDelay=7;}
-    if(player.level>=50&&player.level%10===0){pendingCurse=player.level;}
+    if(player.level>=30&&player.level%10===0){pendingCurse=player.level;}
     if(player.level%10===1&&player.level>1){
       announce={text:'— АКТ '+(Math.floor(player.level/10)+1)+' —',life:2.5,color:'#e8ebf2'};
     }
@@ -3889,13 +3889,26 @@
   }
   function enterAct2(){
     act=2;megaDone=true;megaFought=true;
-    mega2Done=false;mega2Pending=false;act2BossLvl=player.level+8; // босс Акта 2 ждёт через 8 уровней
+    mega2Done=false;mega2Pending=false;
     enemies=[];enemyProjectiles=[];projectiles=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];
     mobSpawnPaused=false;
+    // СБРОС К АКТУ 2: свежий корабль с 1 уровня, статы/эволюции/реликвии с нуля — но
+    // СЛУЧАЙНАЯ ПОЛОВИНА оружия, собранного за Акт 1, остаётся (на базовом уровне,
+    // без апгрейдов — «оружие сброшено по уровню», как и просил игрок)
+    const ownedIds=WEAPON_UNLOCKS.filter(w=>w.done).map(w=>w.id);
+    const shuffled=ownedIds.slice().sort(()=>Math.random()-0.5);
+    const keepIds=shuffled.slice(0,Math.ceil(shuffled.length/2));
+    WEAPON_UNLOCKS.forEach(w=>w.done=false);
+    const px=player.x,py=player.y;
+    player=newPlayer();
+    player.x=px;player.y=py;
+    keepIds.forEach(id=>{const w=WEAPON_UNLOCKS.find(w2=>w2.id===id);if(w){w.done=true;w.apply(player);}});
+    killsThisLevel=0;pendingLevelUps=0;pendingBossLevel=null;
+    act2BossLvl=player.level+8; // босс Акта 2 ждёт через 8 уровней от нового старта
     player.wounded=true; // раненый: искры и дым, пока не починит башня
     player.invuln=Math.max(player.invuln,4);
     act2Tower={x:player.x+150,y:player.y-10,r:46,progress:0};act2Base=null;
-    announce={text:'— АКТ 2: РАЗЛОМ — долети до БАЗЫ, она починит корабль',life:6,color:'#ff2d55'};
+    announce={text:'— АКТ 2: РАЗЛОМ — корабль обнулён (осталась половина оружия). Долети до БАЗЫ',life:6,color:'#ff2d55'};
     flashFx(0.6,'244,63,94');screenFlash=0.5;
     state='running';last=performance.now();
   }
@@ -4700,24 +4713,10 @@
         rollVaultReward();exitVault();
       }
     }else{
-      // мини-челленджи: каждые ~75с короткое испытание с наградой
-      if(!challenge){
-        challengeAcc+=dt;
-        if(challengeAcc>=75&&player.level>=5){
-          challengeAcc=0;
-          const kinds=[
-            {type:'kills',goal:Math.max(25,Math.round(12+player.level*1.6)),time:25,label:'Убей'},
-            {type:'nohit',goal:0,time:18,label:'Не получай урона'},
-            {type:'gems',goal:15,time:22,label:'Собери кристаллы'},
-          ];
-          challenge=Object.assign({progress:0,failed:false},kinds[Math.floor(Math.random()*kinds.length)]);
-          const txt=challenge.type==='kills'?('⚔ ЧЕЛЛЕНДЖ: убей '+challenge.goal+' за '+challenge.time+'с!')
-            :challenge.type==='nohit'?('🛡 ЧЕЛЛЕНДЖ: не получай урона '+challenge.time+'с!')
-            :('💎 ЧЕЛЛЕНДЖ: собери '+challenge.goal+' кристаллов за '+challenge.time+'с!');
-          announce={text:txt,life:3,color:'#38bdf8'};
-          sfxChime(587,3,0.09,0.11);
-        }
-      }else{
+      // Мини-челленджи ОТКЛЮЧЕНЫ: их баннер спамил поверх круга проклятой зоны (та же
+      // ~75с частота, независимый таймер) — единственный «особый ивент» теперь зона.
+      // Резолюция ниже оставлена на случай уже активного challenge из старого сохранения.
+      if(challenge){
         challenge.time-=dt;
         const done=challenge.type==='nohit'?(!challenge.failed&&challenge.time<=0):(challenge.progress>=challenge.goal);
         if(done){
@@ -4733,17 +4732,11 @@
           challenge=null;
         }
       }
-      if(!portal&&player.level>=12){
-        portalAcc+=dt;
-        if(portalAcc>=70){portalAcc=0;
-          const a=rand(0,Math.PI*2),d0=rand(500,800);
-          const arc=Math.random()<0.32; // иногда — редкий АРКАДНЫЙ портал (SPACE INVADERS)
-          portal={x:player.x+Math.cos(a)*d0,y:player.y+Math.sin(a)*d0,r:60,life:18,kind:arc?'arcade':'vault'};
-          announce=arc?{text:'👾 АРКАДНЫЙ ПОРТАЛ — успей войти в SPACE INVADERS!',life:3,color:'#4ade80'}
-                      :{text:'🌀 Портал в ЛАБИРИНТ — успей войти!',life:3,color:'#c084fc'};
-          sfxSweep(300,1200,0.4,'sine',0.1,true);
-        }
-      }else if(portal){
+      // САМОСТОЯТЕЛЬНЫЙ портал в мире убран — бонус-уровни (лабиринт/инвейдеры/тёмный лес)
+      // раньше открывались ДВУМЯ независимыми путями одновременно (этот таймер + проклятая
+      // зона), из-за чего спамили друг на друга. Теперь единственный вход — круг проклятой
+      // зоны; тик оставлен только на случай, если portal ещё жив из старого сохранения
+      if(portal){
         portal.life-=dt;
         if(portal.life<=0){portal=null;announce={text:'Портал закрылся',life:1.4,color:'#8891a3'};}
         else if(dist(player,portal)<portal.r){if(portal.kind==='arcade')enterArcade();else enterVault();}
@@ -5599,11 +5592,11 @@
     if(f>0.004){x.strokeStyle=col;x.lineCap='round';
       x.beginPath();x.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+f*Math.PI*2);x.stroke();x.lineCap='butt';}
   }
-  // ближайший босс: Хронос (акт 1 — ур.50, акт 2 — act2BossLvl) или мини-босс каждые 5 ур.
+  // ближайший босс: Хронос (акт 1 — ур.30, акт 2 — act2BossLvl) или мини-босс каждые 5 ур.
   function nextBossInfo(){
     if(act===2&&!mega2Done&&act2BossLvl>player.level)return['☠ Хронос '+(act2BossLvl-player.level)+' ур.','#ff6b7a'];
     const nm=Math.ceil((player.level+1)/5)*5;
-    if(!megaDone&&nm>=50)return['☠ Хронос '+Math.max(0,50-player.level)+' ур.','#ff6b7a'];
+    if(!megaDone&&nm>=30)return['☠ Хронос '+Math.max(0,30-player.level)+' ур.','#ff6b7a'];
     return['⚔ Босс '+(nm-player.level)+' ур.','#fca5a5'];
   }
   const MOBILE_HUD_H=62;
