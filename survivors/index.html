@@ -3328,10 +3328,12 @@
     if(player.gemShardAcc>=1){player.gemShardAcc-=1;metaState.shards++;saveMeta();
       if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-18,vy:-26,life:1,val:'+1 ✨',crit:false});}
     // silent=true — тихое зачисление «сгоревшего»/срезанного лимитом кристалла: игрок его
-    // не видел рядом с кораблём, поэтому иконку к счётчику не пускаем (нечего анимировать)
-    if(!silent&&gemFlyIcons.length<60){
-      const sx=(g.x-player.x)*zoom+W/2,sy=(g.y-player.y)*zoom+H/2;
-      gemFlyIcons.push({x:sx,y:sy,t:0,dur:0.45+Math.random()*0.15});
+    // не видел рядом с кораблём, поэтому иконку к счётчику не пускаем (нечего анимировать).
+    // Кристалл уже долетел до корабля физикой — сюда, к счётчику, лишь маленький пиксель-блик
+    // спамится СЛУЧАЙНО НАД самой цифрой и тут же тихо в неё втягивается (не летит через весь
+    // экран от корабля — при частых сборах это было слишком навязчиво)
+    if(!silent&&gemFlyIcons.length<24){
+      gemFlyIcons.push({x:gemCounterPos.x+rand(-34,34),y:gemCounterPos.y-rand(16,42),t:0,dur:0.28+Math.random()*0.1});
     }
   }
 
@@ -6548,99 +6550,100 @@
     let topY=topMobile?46:34;
     const hubRightEdge=topMobile?0:(HUB_PAD+HUB_W)*HUB_SCALE+18;
     const topCX=topMobile?W/2:Math.min(W-190,Math.max(W/2,hubRightEdge+190));
-    // ШКАЛА УРОВНЯ: сколько мобов осталось убить до след. уровня — цифрами и полосой, всегда на виду
-    // (дополняет кольцо-прогресс в хабе, а не заменяет — так просил пользователь)
+    // СТРОКА СТАТУСА: шкала уровня + счётчик кристаллов ОДНОЙ компактной строкой (раньше были
+    // 2 отдельных блока друг под другом — генеральная уборка HUD, сверху не должно быть стены
+    // из текста). Прогресс-бар — под всей строкой целиком.
     {
       const budgT=Math.max(1,levelBudget(player.level)),remainT=Math.max(0,budgT-killsThisLevel);
       const progT=Math.max(0,Math.min(1,killsThisLevel/budgT));
-      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
-      x.font='bold 13px system-ui,sans-serif';x.fillStyle='#7dd3fc';
-      x.fillText('👾 '+fmtNum(remainT)+' мобов до '+(player.level+1)+' уровня',topCX,topY);
-      const bwL=Math.min(260,W*0.44),bxL=topCX-bwL/2,byL=topY+17,bhL=6;
-      x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(bxL,byL,bwL,bhL);
+      const mobLabel='👾 '+fmtNum(remainT)+' до '+(player.level+1)+' ур.';
+      const gemLabel='💎 '+fmtNum(gemsCollected);
+      const punchS=1+gemCounterPunch*0.22,rowH=19,gap=16;
+      x.save();x.textBaseline='middle';
+      x.font='bold 12px system-ui,sans-serif';const mobW=x.measureText(mobLabel).width;
+      x.font='bold '+Math.round(12*punchS)+'px system-ui,sans-serif';const gemW=x.measureText(gemLabel).width;
+      const gemPillW=gemW+14,totalW=mobW+gap+gemPillW,rowY=topY+rowH/2;
+      let cx=topCX-totalW/2;
+      x.textAlign='left';x.font='bold 12px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=3;
+      x.fillStyle='#7dd3fc';x.fillText(mobLabel,cx,rowY);
+      cx+=mobW+gap;
+      gemCounterPos.x=cx+gemPillW/2;gemCounterPos.y=rowY;
+      x.shadowBlur=0;
+      x.fillStyle='rgba(10,16,28,0.55)';x.beginPath();x.roundRect(cx,topY,gemPillW,rowH,rowH/2);x.fill();
+      x.strokeStyle='rgba(125,211,252,0.3)';x.lineWidth=1;x.beginPath();x.roundRect(cx+0.5,topY+0.5,gemPillW-1,rowH-1,rowH/2);x.stroke();
+      x.textAlign='center';x.font='bold '+Math.round(12*punchS)+'px system-ui,sans-serif';
+      x.shadowColor='#38bdf8';x.shadowBlur=gemCounterPunch>0?8:0;
+      x.fillStyle='#bfe6ff';x.fillText(gemLabel,cx+gemPillW/2,rowY);
+      x.shadowBlur=0;topY+=rowH+4;
+      const bwL=totalW,bxL=topCX-bwL/2,byL=topY,bhL=5;
+      x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(bxL,byL,bwL,bhL);
       x.fillStyle='#4D96FF';x.fillRect(bxL,byL,bwL*progT,bhL);
-      x.strokeStyle='rgba(255,255,255,0.35)';x.lineWidth=1;x.strokeRect(bxL+0.5,byL+0.5,bwL-1,bhL-1);
-      x.restore();topY+=28;
+      x.strokeStyle='rgba(255,255,255,0.3)';x.lineWidth=1;x.strokeRect(bxL+0.5,byL+0.5,bwL-1,bhL-1);
+      x.restore();topY+=bhL+8;
     }
-    // ПОСТОЯННЫЙ СЧЁТЧИК КРИСТАЛЛОВ: всегда на виду (вместо всплывающего попапа со звуком) —
-    // собранные кристаллы летят сюда маленькими иконками (см. ниже) и тихо считаются
-    {
-      const punchS=1+gemCounterPunch*0.22;
-      const label='💎 '+fmtNum(gemsCollected);
-      x.save();x.textAlign='center';x.textBaseline='middle';
-      x.font='bold '+Math.round(14*punchS)+'px system-ui,sans-serif';
-      const gcw=x.measureText(label).width+16,gch=22;
-      gemCounterPos.x=topCX;gemCounterPos.y=topY+gch/2;
-      x.fillStyle='rgba(10,16,28,0.55)';x.beginPath();x.roundRect(topCX-gcw/2,topY,gcw,gch,gch/2);x.fill();
-      x.strokeStyle='rgba(125,211,252,0.3)';x.lineWidth=1;x.beginPath();x.roundRect(topCX-gcw/2+0.5,topY+0.5,gcw-1,gch-1,gch/2);x.stroke();
-      x.shadowColor='#38bdf8';x.shadowBlur=gemCounterPunch>0?10:0;
-      x.fillStyle='#bfe6ff';x.fillText(label,topCX,topY+gch/2);
-      x.shadowBlur=0;x.restore();topY+=gch+8;
-    }
-    // ЛЕТЯЩИЕ ИКОНКИ КРИСТАЛЛОВ → к счётчику: дуга (квадратичный безье) с ускорением на
-    // подлёте («втягивание»), без коллизий — чисто декоративная, дешёвая по кадру анимация
+    // ИСКОРКИ НАД СЧЁТЧИКОМ: НЕ летят через весь экран от корабля (было навязчиво при частых
+    // сборах) — мелкие пиксели-кристаллики спамятся случайно прямо над цифрой и тут же коротко
+    // втягиваются в неё; чисто декоративно, без коллизий, дёшево по кадру даже пачкой
     if(gemFlyIcons.length){
       x.save();x.textAlign='center';x.textBaseline='middle';
       for(const fi of gemFlyIcons){
-        const t=Math.min(1,fi.t/fi.dur),et=t*t;
-        const cx2=(fi.x+gemCounterPos.x)/2,cy2=Math.min(fi.y,gemCounterPos.y)-70;
-        const u=1-et;
-        const px=u*u*fi.x+2*u*et*cx2+et*et*gemCounterPos.x;
-        const py=u*u*fi.y+2*u*et*cy2+et*et*gemCounterPos.y;
-        const sz=9*(1-et*0.7);
-        x.globalAlpha=t>0.75?(1-t)/0.25:1;
-        x.fillStyle='#7dd3fc';x.shadowColor='#38bdf8';x.shadowBlur=6;
-        x.beginPath();x.arc(px,py,sz,0,Math.PI*2);x.fill();
+        const t=Math.min(1,fi.t/fi.dur),et=t*t; // ease-in — набирает скорость к концу, «засасывает»
+        const px=fi.x+(gemCounterPos.x-fi.x)*et,py=fi.y+(gemCounterPos.y-fi.y)*et;
+        const sz=4*(1-et*0.5);
+        x.globalAlpha=t>0.7?(1-t)/0.3:1;
+        x.fillStyle='#7dd3fc';x.shadowColor='#38bdf8';x.shadowBlur=5;
+        x.fillRect(px-sz/2,py-sz/2,sz,sz); // пиксель-кристаллик — квадратик, не кружок
       }
       x.shadowBlur=0;x.restore();x.globalAlpha=1;
     }
     // ВОЛНА-ОСАДА: баннер с обратным отсчётом и убывающей полосой (30с → 0)
     if(siege){
       const prog=Math.max(0,siege.t/siege.total),urgent=siege.t<8;
-      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
-      x.font='bold 15px system-ui,sans-serif';x.fillStyle=urgent?'#ff6b6b':'#f97316';
-      x.fillText('🌊 ОСАДА! Продержись ещё '+Math.ceil(siege.t)+'с',topCX,topY);
-      const bw=Math.min(300,W*0.5),bx0=topCX-bw/2,by0=topY+20,bh=9;
+      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=3;
+      x.font='bold 13px system-ui,sans-serif';x.fillStyle=urgent?'#ff6b6b':'#f97316';
+      x.fillText('🌊 Осада: '+Math.ceil(siege.t)+'с',topCX,topY);
+      const bw=Math.min(220,W*0.4),bx0=topCX-bw/2,by0=topY+16,bh=6;
       x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bx0,by0,bw,bh);
       x.fillStyle=urgent?'#ff6b6b':'#fb923c';x.fillRect(bx0,by0,bw*prog,bh);
-      x.strokeStyle='rgba(255,255,255,0.45)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
-      x.restore();topY+=36;
+      x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
+      x.restore();topY+=27;
     }
-    // ЧЕЛЛЕНДЖ «УДЕРЖИ ПРОКЛЯТУЮ ЗОНУ» — понятный баннер с полосой и секундами (в бою в центре не видно)
+    // ЧЕЛЛЕНДЖ «УДЕРЖИ ПРОКЛЯТУЮ ЗОНУ» — компактный баннер (стрелка-указатель уже есть на
+    // экране, так что длинную подсказку «иди по стрелке» можно было сократить)
     if(cursedZones.length){
       const cz=cursedZones[0],prog=Math.max(0,Math.min(1,(cz.hold||0)/(cz.holdNeed||7))),inside=dist(player,cz)<cz.r;
-      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
-      x.font='bold 15px system-ui,sans-serif';x.fillStyle=prog>=1?'#4ade80':(inside?'#fde047':'#c084fc');
-      // не внутри — подсказываем идти по стрелке (иначе баннер висит без объяснений); также видно, сколько зоне осталось жить
-      x.fillText('🎁 УДЕРЖИ ЗОНУ ещё '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с'+(inside?'':' · ИДИ ПО СТРЕЛКЕ ➜ ('+Math.ceil(cz.t)+'с до исчезновения)'),topCX,topY);
-      const bw=Math.min(300,W*0.5),bx0=topCX-bw/2,by0=topY+20,bh=9;
+      x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=3;
+      x.font='bold 13px system-ui,sans-serif';x.fillStyle=prog>=1?'#4ade80':(inside?'#fde047':'#c084fc');
+      const label=inside?'🎁 Держи зону: '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с':'🎁 Найди зону ➜ '+Math.ceil(cz.t)+'с';
+      x.fillText(label,topCX,topY);
+      const bw=Math.min(220,W*0.4),bx0=topCX-bw/2,by0=topY+16,bh=6;
       x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bx0,by0,bw,bh);
       x.fillStyle=prog>=1?'#4ade80':'#facc15';x.fillRect(bx0,by0,bw*prog,bh);
-      x.strokeStyle='rgba(255,255,255,0.45)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
-      x.restore();topY+=36;
+      x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
+      x.restore();topY+=27;
     }
     if(inVault){
       const forest=vaultTheme==='forest';
       x.save();x.textAlign='center';x.textBaseline='top';
-      x.font='bold 15px system-ui,sans-serif';
+      x.font='bold 13px system-ui,sans-serif';
       const vBoss=enemies.filter(e2=>e2.vaultBoss).length;
-      x.fillStyle=vaultCleared?'#4ade80':(vaultOpening?'#fde047':(forest?'#4ade80':'#c084fc'));x.shadowColor='#000';x.shadowBlur=4;
-      const head=forest?'🌲 ЛЕС':'🏛 ЛАБИРИНТ';
-      const clr=forest?'🌲 ЛЕС ПРОЙДЕН — собери добычу и к выходу!':'🚪 ПОРТАЛ ОТКРЫТ — собери добычу и к выходу!';
-      x.fillText(vaultCleared?clr:(vaultOpening?'🌀 ПОРТАЛ ПРОБУЖДАЕТСЯ — добыча летит к тебе!':head+' · ЦЕЛЬ: боссы — осталось '+vBoss+' из '+vaultTotal),topCX,topY);
-      x.restore();topY+=24;
+      x.fillStyle=vaultCleared?'#4ade80':(vaultOpening?'#fde047':(forest?'#4ade80':'#c084fc'));x.shadowColor='#000';x.shadowBlur=3;
+      const head=forest?'🌲 Лес':'🏛 Лабиринт';
+      const clr=forest?'🌲 Лес пройден — собери добычу!':'🚪 Портал открыт — собери добычу!';
+      x.fillText(vaultCleared?clr:(vaultOpening?'🌀 Портал пробуждается…':head+' · боссы: '+vBoss+'/'+vaultTotal),topCX,topY);
+      x.restore();topY+=20;
     }else if(enemies.some(e2=>e2.megaboss)){
       const mb=enemies.find(e2=>e2.megaboss);
       x.save();x.textAlign='center';x.textBaseline='top';
-      x.font='bold 15px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
+      x.font='bold 14px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=3;
       x.fillStyle=mb.shieldHp>0?'#7dd3fc':'#ff2d55';
       const pct=Math.max(0,Math.round(mb.hp/mb.maxHp*100));
       // число стадий: истинная форма — 3, обычный бой — 4 (+ фаза «истинная форма» как отдельная веха)
       const nSt=mb.megaPhase==='true'?3:4,curSt=Math.max(1,Math.min(nSt,mb.megaStage||1));
       const phaseTag=mb.act2boss?(mb.megaPhase==='true'?' · ИСТИННАЯ ФОРМА':' · ФАЗА 1/2'):'';
-      x.fillText('☠ '+(mb.skinName||'ХРОНОС')+' · '+pct+'% · стадия '+curSt+'/'+nSt+(mb.shieldHp>0?' · 🛡':'')+phaseTag,topCX,topY);
+      x.fillText('☠ '+(mb.skinName||'ХРОНОС')+' · '+pct+'% · '+curSt+'/'+nSt+(mb.shieldHp>0?' · 🛡':'')+phaseTag,topCX,topY);
       // СЕГМЕНТИРОВАННАЯ ПОЛОСА HP: видно, сколько стадий и на какой сейчас босс
-      const bw=Math.min(360,W*0.6),bh=10,bx0=topCX-bw/2,by0=topY+20,seg=bw/nSt,gap=3;
+      const bw=Math.min(320,W*0.55),bh=9,bx0=topCX-bw/2,by0=topY+18,seg=bw/nSt,gap=3;
       const frac=Math.max(0,mb.hp/mb.maxHp),fillSeg=frac*nSt; // сколько сегментов «полны» снизу вверх
       for(let i=0;i<nSt;i++){
         const sx=bx0+i*seg,sw=seg-gap;
@@ -6650,14 +6653,14 @@
         x.strokeStyle='rgba(255,255,255,0.35)';x.lineWidth=1;x.strokeRect(sx+0.5,by0+0.5,sw-1,bh-1);
       }
       if(mb.shieldHp>0&&mb.shieldMax){x.fillStyle='#7dd3fc';x.fillRect(bx0,by0+bh+2,bw*Math.max(0,mb.shieldHp/mb.shieldMax),3);}
-      x.restore();topY+=40;
+      x.restore();topY+=36;
     }else if(forestGate){
       x.save();x.textAlign='center';x.textBaseline='top';
-      x.font='bold 15px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
+      x.font='bold 13px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=3;
       const gLeft=enemies.length+pendingSpawns.length;
       x.fillStyle='#4ade80';
-      x.fillText('🌲 ПРОРЫВ К ЛЕСУ · осталось мобов: '+gLeft+' из '+forestGateTotal,topCX,topY);
-      x.restore();topY+=24;
+      x.fillText('🌲 Прорыв к лесу · осталось: '+gLeft+'/'+forestGateTotal,topCX,topY);
+      x.restore();topY+=20;
     }else if(challenge){
       x.save();x.textAlign='center';x.textBaseline='top';
       x.font='bold 13px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
@@ -6670,17 +6673,19 @@
       const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));
       // компактный центрированный баннер: перенос по словам (до 2 строк), ширина ≤60% экрана
       // (на ПК уже, чем раньше — иначе широкий текст снова наезжает на хаб слева от topCX)
-      const maxW=topMobile?Math.min(W*0.6,560):Math.min(W*0.6,380);
-      const fs=Math.min(20,Math.max(13,Math.round(W/44)));
+      const maxW=topMobile?Math.min(W*0.55,420):Math.min(W*0.5,340);
+      // раньше доходило до 20px (при W~900) — на растянутых широких окнах это читалось как
+      // огромный кричащий баннер; теперь заметно скромнее, но всё ещё разборчиво
+      const fs=Math.min(15,Math.max(12,Math.round(W/60)));
       x.font='bold '+fs+'px system-ui,sans-serif';
       const words=String(announce.text).split(' ');const lines=[];let cur='';
       for(const w of words){const test=cur?cur+' '+w:w;if(x.measureText(test).width>maxW&&cur){lines.push(cur);cur=w;}else cur=test;}
       if(cur)lines.push(cur);
       const shown=lines.slice(0,2);
-      x.textAlign='center';x.textBaseline='top';x.fillStyle=ac;x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=6;
-      shown.forEach((ln,i)=>{x.shadowColor='rgba(0,0,0,0.7)';x.fillText(ln,topCX,topY+i*(fs+5));x.shadowColor=ac;x.shadowBlur=10;x.fillText(ln,topCX,topY+i*(fs+5));});
+      x.textAlign='center';x.textBaseline='top';x.fillStyle=ac;x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=5;
+      shown.forEach((ln,i)=>{x.shadowColor='rgba(0,0,0,0.7)';x.fillText(ln,topCX,topY+i*(fs+3));x.shadowColor=ac;x.shadowBlur=8;x.fillText(ln,topCX,topY+i*(fs+3));});
       x.restore();
-      topY+=shown.length*(fs+5)+8;
+      topY+=shown.length*(fs+3)+6;
     }
     if(autoToasts.length){
       // ПОЛОСА БАФФОВ (стиль WoW): компактные квадратные иконки.
