@@ -4489,21 +4489,8 @@
         announce={text:'☠ УДЕРЖИ ПРОКЛЯТУЮ ЗОНУ 7с — вскроешь сундук! (внутри яд и стража)',life:3.5,color:'#a855f7'};
         camShake=Math.max(camShake,6);sfxSweep(160,700,0.5,'sawtooth',0.1,true);
       }
-      // РАЗЛОМ (Breach): волна мобов + якорь; убьёшь якоря — награда
-      riftAcc+=dt;
-      if(riftAcc>=90&&player.level>=20&&rifts.length===0){
-        riftAcc=0;
-        const a2=rand(0,Math.PI*2),d2=rand(380,560);
-        const rx=player.x+Math.cos(a2)*d2,ry=player.y+Math.sin(a2)*d2;
-        const anchor=spawnEnemy(false);
-        anchor.x=rx;anchor.y=ry;anchor.champion=true;anchor.riftAnchor=true;
-        anchor.hp=anchor.maxHp=estPlayerDps()*3;anchor.r=Math.max(anchor.r,16);anchor.speed*=0.5;
-        anchor.color='#c084fc';anchor.glow='#c084fc';
-        for(let i=0;i<14;i++){const m=spawnEnemy(false);const aa=rand(0,Math.PI*2),rr=rand(40,170);m.x=rx+Math.cos(aa)*rr;m.y=ry+Math.sin(aa)*rr;}
-        rifts.push({x:rx,y:ry,r:130,t:30,anchor:anchor});
-        announce={text:'🌀 РАЗЛОМ ОТКРЫЛСЯ! Убей якоря (фиолетовый) — получишь награду',life:3.5,color:'#c084fc'};
-        camShake=Math.max(camShake,8);sfxSweep(160,800,0.5,'sawtooth',0.12,true);
-      }
+      // РАЗЛОМ (Breach) ОТКЛЮЧЁН: ещё один независимый таймер-спаммер поверх круга проклятой
+      // зоны (крутящаяся фиолетовая спираль с отсчётом) — единственный «особый ивент» теперь зона
       // тик проклятых зон: держи зону (шкала) + мягкий яд; удержал — сундук
       for(let ci2=cursedZones.length-1;ci2>=0;ci2--){
         const cz=cursedZones[ci2];cz.t-=dt;cz.acc+=dt;
