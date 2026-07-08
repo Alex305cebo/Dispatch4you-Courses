@@ -316,6 +316,13 @@
     return;
   }
   let W=640,H=480;
+  // мобильный HUD-режим канваса (угловая карточка ПК vs полоса-хаб внизу): раньше решался
+  // по форме самого канваса (W<640||H>W), но при фиксированном 250px-сайдбаре игровое поле
+  // на «средних» десктопных окнах (~850-1180px) становилось УЖЕ чем выше — и canvas-HUD
+  // ошибочно переключался в мобильный режим, хотя DOM-сайдбар (по CSS-медиа-запросу окна
+  // целиком) оставался десктопным — получалась гибридная поломанная вёрстка. Теперь оба
+  // решения читают ОДИН и тот же критерий — реальные размеры окна браузера.
+  let uiMobile=false;
   const cv=document.getElementById('sboard'),x=cv.getContext('2d');
   // ЗАЩИТА: отрицательный радиус arc/ellipse кидает исключение и убивает кадр
   // (видели «radius provided (-1.06) is negative» в бою). Клампим к 0 глобально —
@@ -337,6 +344,8 @@
     const scale=Math.min(1,900/rw,700/rh);
     W=Math.round(rw*scale);H=Math.round(rh*scale);
     cv.width=W;cv.height=H;
+    // тот же критерий, что и CSS-медиа-запрос сайдбара — оба решения теперь всегда совпадают
+    uiMobile=window.matchMedia('(max-width:819px), (orientation: portrait)').matches;
   }
   const isMobileDevice=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
   const baseZoom=isMobileDevice?0.62:1;
@@ -1095,6 +1104,7 @@
   let arcTouchX=null; // прямое слежение за пальцем в Invaders (не аналоговый джойстик — корабль ловит палец)
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
+  let darkForest=null; // ТЁМНЫЙ ЛЕС (награда за удержание проклятой зоны): {total,killed,lit,litT,loot[]} — тьма+фонарь, свой счётчик мобов, свет+добыча в конце
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
   let finaleLB=0; // кинематографические чёрные полосы (леттербокс) во время финала Хроноса
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
@@ -1313,7 +1323,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;act=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1419,7 +1429,7 @@
     if(megaDone&&!megaFought){megaDone=false;pendingMegaBoss=true;
       setTimeout(()=>{announce={text:'⚡ ХРОНОС ЖАЖДЕТ НАСТОЯЩЕГО БОЯ — РЕВАНШ!',life:5,color:'#ff2d55'};},600);}
     enemies.forEach(en=>{if(en.megaboss){en._shArmed=false;armMegaShield(en);}});
-    worldTrees=[];forestField=false; // лес не сериализуем — при загрузке чистим
+    worldTrees=[];forestField=false;darkForest=null; // лес не сериализуем — при загрузке чистим
     (s.weapons||[]).forEach((d,i)=>{if(WEAPON_UNLOCKS[i])WEAPON_UNLOCKS[i].done=d;});
     // JSON.stringify превращает Set в {} — после загрузки p.hitSet.has() падал бы
     // с TypeError и замораживал игру. Возрождаем настоящие Set-ы.
@@ -1812,6 +1822,27 @@
     announce={text:'🌲 ЛЕС ВЫРОС ВОКРУГ ТЕБЯ! Найди и убей Лесного Хозяина',life:4.5,color:'#4ade80'};
     flashFx(0.5,'74,222,128');camShake=Math.max(camShake,10);
     sfxSweep(150,650,0.6,'sine',0.12,true);
+  }
+  // ТЁМНЫЙ ЛЕС — награда за удержание проклятой зоны: деревья вокруг игрока, ТЬМА с фонарём-ореолом
+  // (как в лабиринте), свой счётчик мобов снизу экрана. Убил всех — лес освещается, из деревьев
+  // с физикой (разлёт + отскок от стволов + притяжение) высыпается добыча.
+  function startDarkForest(){
+    worldTrees=[];
+    const cx=player.x,cy=player.y;
+    for(let i=0;i<130;i++){
+      const a3=rand(0,Math.PI*2),d3=rand(140,720);
+      worldTrees.push({x:cx+Math.cos(a3)*d3,y:cy+Math.sin(a3)*d3,r:rand(16,30)});
+    }
+    mobSpawnPaused=true;pendingSpawns=[];
+    const need=Math.max(16,Math.round(12+player.level*0.55));
+    for(let i=0;i<need;i++){
+      const e=spawnEnemy(false);
+      const a=rand(0,Math.PI*2),r=rand(220,650);
+      e.x=cx+Math.cos(a)*r;e.y=cy+Math.sin(a)*r;e.darkForestMob=true;
+    }
+    darkForest={total:need,killed:0,lit:false,litT:0,loot:[]};
+    announce={text:'🌲 ТЁМНЫЙ ЛЕС! Убей '+need+' тварей во тьме — свет вернётся',life:4,color:'#86c48a'};
+    flashFx(0.45,'20,45,28');camShake=Math.max(camShake,8);sfxSweep(160,520,0.6,'sine',0.14,true);
   }
   // мягкая круговая коллизия с деревьями (для игрока и врагов), только пока лес активен
   function collideTrees(o){
@@ -4154,7 +4185,7 @@
     const czSlow=(cursedZones.some(z=>dist(player,z)<z.r)?0.78:1)*(player.altarSlowT>0?0.8:1); // зона/сделка замедляют
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*czSlow*dt;player.y+=my*player.speed*hasteMul*czSlow*dt;player.facing={x:mx,y:my};}
     if(inVault){collideCircleWalls(player);keepInWalk(player);}
-    if(forestField)collideTrees(player);
+    if(forestField||darkForest)collideTrees(player);
     if(player.invuln>0)player.invuln-=dt;
     if(player.wounded&&Math.random()<0.7)particles.push({x:player.x+rand(-10,10),y:player.y+rand(-6,10),vx:rand(-1.2,1.2),vy:rand(-2.2,-0.4),life:0.8,color:Math.random()<0.5?'#f97316':'#64748b',sz:2+Math.random()*3});
     if(act2Tower){ // башня Акта 2 чинит и трансформирует корабль
@@ -4367,12 +4398,16 @@
         if(!cz.done){
           if(inside)cz.hold=Math.min(cz.holdNeed,cz.hold+dt);
           else cz.hold=Math.max(0,cz.hold-dt*0.5); // ушёл — прогресс медленно тает
-          if(cz.hold>=cz.holdNeed){ // УДЕРЖАЛ — вскрываем сундук
-            cz.done=true;openChest();addUpPoints(1,'проклятая зона');
-            announce={text:'🏆 ЗОНА УДЕРЖАНА — СУНДУК ТВОЙ!',life:3,color:'#fde047'};
+          if(cz.hold>=cz.holdNeed){ // УДЕРЖАЛ — награда: один из 3 бонус-режимов (лабиринт / инвейдеры / тёмный лес)
+            cz.done=true;addUpPoints(1,'проклятая зона');
             flashFx(0.5,'250,204,21');camShake=Math.max(camShake,10);sfxChime(660,6,0.09,0.13);
             burst(cz.x,cz.y,'#facc15',24);rings.push({x:cz.x,y:cz.y,r:0,maxR:cz.r+40,life:0.8,color:'#facc15'});
-            cursedZones.splice(ci2,1);continue;
+            cursedZones.splice(ci2,1);
+            const roll=Math.random();
+            if(roll<0.34)enterVault();
+            else if(roll<0.67)enterArcade();
+            else startDarkForest();
+            continue;
           }
         }
         if(cz.t<=0){cursedZones.splice(ci2,1);announce={text:'☠ Проклятая зона рассеялась…',life:1.6,color:'#8891a3'};}
@@ -4381,6 +4416,65 @@
       for(let ri2=rifts.length-1;ri2>=0;ri2--){
         const rf=rifts[ri2];rf.t-=dt;
         if(rf.t<=0){rifts.splice(ri2,1);announce={text:'🌀 Разлом закрылся…',life:1.6,color:'#8891a3'};}
+      }
+    }
+    // ТЁМНЫЙ ЛЕС: считаем оставшихся мобов; всех убил — свет возвращается + добыча с физикой из деревьев
+    if(darkForest){
+      if(!darkForest.lit){
+        const left=enemies.filter(e2=>e2.darkForestMob).length;
+        darkForest.killed=darkForest.total-left;
+        if(left<=0){
+          darkForest.lit=true;darkForest.litT=0;mobSpawnPaused=false;
+          announce={text:'☀ ЛЕС ОСВЕЩЁН! Собирай добычу из деревьев',life:3.4,color:'#fde047'};
+          flashFx(0.55,'253,224,71');camShake=Math.max(camShake,8);sfxChime(660,6,0.09,0.13);
+          // часть деревьев «раскрывается» и выбрасывает приз с физикой
+          for(const tr of worldTrees){
+            if(Math.random()<0.24){
+              const r2=Math.random();
+              const kind=r2<0.42?'gem':r2<0.6?'shard':r2<0.75?'heal':r2<0.9?'magnet':'chest';
+              const m={gem:['✦','#7dd3fc'],shard:['✨','#fde047'],heal:['+','#fb7185'],magnet:['◎','#38bdf8'],chest:['★','#facc15']}[kind];
+              const a=rand(0,Math.PI*2),sp=rand(180,340);
+              darkForest.loot.push({x:tr.x,y:tr.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:0,phase:'fly',kind,color:m[1],label:m[0],r:9});
+              burst(tr.x,tr.y,m[1],8);
+            }
+          }
+        }
+      }else{
+        darkForest.litT+=dt;
+        // физика добычи: разлёт → рикошет от стволов деревьев → притяжение к кораблю
+        for(const L of darkForest.loot){
+          L.t+=dt;
+          if(L.phase==='fly'){
+            L.x+=L.vx*dt;L.y+=L.vy*dt;
+            for(const tr of worldTrees){
+              const dx=L.x-tr.x,dy=L.y-tr.y,d=Math.hypot(dx,dy),minD=tr.r+L.r;
+              if(d<minD&&d>0.01){
+                const nx=dx/d,ny=dy/d;L.x=tr.x+nx*minD;L.y=tr.y+ny*minD;
+                const vn=L.vx*nx+L.vy*ny;L.vx=(L.vx-2*vn*nx)*0.72;L.vy=(L.vy-2*vn*ny)*0.72;
+                sparkHit(L.x,L.y,L.color);
+              }
+            }
+            const fr=Math.pow(0.3,dt);L.vx*=fr;L.vy*=fr;
+            if(L.t>0.9)L.phase='home';
+          }else{
+            const a=Math.atan2(player.y-L.y,player.x-L.x);
+            const sp=Math.min(900,240+(L.t-0.9)*820);
+            L.x+=Math.cos(a)*sp*dt;L.y+=Math.sin(a)*sp*dt;
+          }
+          if(Math.random()<0.25&&particles.length<560)particles.push({x:L.x,y:L.y,vx:rand(-0.5,0.5),vy:rand(-0.5,0.5),life:0.35,color:L.color,sz:1.6});
+          if(dist(player,L)<player.r+12){
+            L._got=true;
+            if(L.kind==='gem'){gemsCollected++;killsThisLevel+=0.25;
+              let gg2=0;while(killsThisLevel>=levelBudget(player.level)&&gg2++<50){killsThisLevel-=levelBudget(player.level);levelUpOnce();}}
+            else if(L.kind==='shard'){metaState.shards++;saveMeta();
+              if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-18,vy:-26,life:1,val:'+1 ✨',crit:false});}
+            else collectPickup({x:L.x,y:L.y,type:L.kind,color:L.color});
+            burst(L.x,L.y,L.color,8);
+          }
+        }
+        darkForest.loot=darkForest.loot.filter(L=>!L._got);
+        // лес рассеивается, когда добыча собрана (или спустя время — не блокируем игрока навечно)
+        if(darkForest.litT>25||(darkForest.litT>14&&darkForest.loot.length===0)){darkForest=null;worldTrees=[];}
       }
     }
     // бонус-рейд «Хранилище»: портал появляется периодически с 12 уровня
@@ -4561,7 +4655,7 @@
         }
         moveEnemy(e,dt,d,spd);
         if(inVault){collideCircleWalls(e);keepInWalk(e,true);}
-        if(forestField)collideTrees(e);
+        if(forestField||darkForest)collideTrees(e);
       }
       if(d<player.r+e.r){
         if(player.thornsLevel)e.hp-=6*player.thornsLevel*player.dmgMult*dt;
@@ -5286,6 +5380,11 @@
     if(portal)edgeArrow(portal.x,portal.y,portal.r,portal.kind==='arcade'?'#4ade80':'#c084fc',1.7+0.3*Math.sin(t*6));
     // проклятая зона: стрелка, иначе в гуще боя её физически не найти (баннер «Удержи зону» без неё бесполезен)
     cursedZones.forEach(cz=>{if(!cz.done)edgeArrow(cz.x,cz.y,cz.r,'#a855f7',1.7+0.3*Math.sin(t*6));});
+    // тёмный лес: стрелки на тварей во тьме и на разлетевшуюся добычу после освещения
+    if(darkForest){
+      if(!darkForest.lit)enemies.forEach(e=>{if(e.darkForestMob)edgeArrow(e.x,e.y,e.r,'#4ade80',1.4+0.25*Math.sin(t*6));});
+      else darkForest.loot.forEach(L=>edgeArrow(L.x,L.y,L.r,L.color,1.3));
+    }
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
@@ -5316,6 +5415,9 @@
     return['⚔ Босс '+(nm-player.level)+' ур.','#fca5a5'];
   }
   const MOBILE_HUD_H=62;
+  // хаб-карточка (ПК): было 1.4 («слишком мелкий» → перебор → «слишком большой, мешает
+  // видеть поле») — 1.15 умереннее + сам фон стал полупрозрачным (см. drawHudOverlay)
+  const HUB_SCALE=1.15,HUB_PAD=10,HUB_W=248,HUB_H=160;
   // МОБИЛЬНЫЙ ХАБ: не угловая коробка, а ПОЛОСА во всю ширину экрана ВНИЗУ —
   // ничего не накладывается на бой; по полю (и по самой полосе) можно водить пальцем,
   // все кнопки-меню спрятаны под гамбургер (☰) сверху слева
@@ -5396,20 +5498,21 @@
   }
   function drawHudOverlay(){
     // ПК/ландшафт — угловая карточка-хаб; телефон И планшет вертикально — полоса внизу (drawMobileBar)
-    const mobile=W<640||H>W;
+    const mobile=uiMobile;
     if(mobile){drawMobileBar();}
     else{
     // ═══ КАРТОЧКА-ХАБ (ПК): 4 секции с разделителями ═══
     // 1) кольцо уровня (дуга = прогресс до след. уровня) + Mk + босс + время
     // 2) прочность: красный ХП-бар с жизнями внутри + стрип перегрузки
     // 3) 6 плиток статов с русскими подписями  4) оружие + активные баффы
-    const pad=10,w=248,h=160;
+    const pad=HUB_PAD,w=HUB_W,h=HUB_H;
     const bx=pad+12,bw=w-24,rx=pad+w-12;
     const MUT='#aebbd4',VAL='#f4f7fc'; // светлее — на тёмной карточке прежние приглушённые тона не читались
     x.save();
-    x.scale(1.4,1.4); // хаб крупнее целиком (жалоба: «слишком мелкий, ничего не разобрать»)
+    x.scale(HUB_SCALE,HUB_SCALE); // умеренно крупнее (не 1.4x — тот размер закрывал слишком много поля)
     const bg=x.createLinearGradient(pad,pad,pad,pad+h);
-    bg.addColorStop(0,'rgba(17,24,42,0.94)');bg.addColorStop(1,'rgba(7,10,18,0.95)');
+    // полупрозрачный: сквозь хаб видно бой позади него, текст/иконки остаются непрозрачными и читаемыми
+    bg.addColorStop(0,'rgba(17,24,42,0.62)');bg.addColorStop(1,'rgba(7,10,18,0.66)');
     x.fillStyle=bg;x.beginPath();x.roundRect(pad,pad,w,h,14);x.fill();
     x.strokeStyle='rgba(125,211,252,0.16)';x.lineWidth=1.2;x.beginPath();x.roundRect(pad+0.6,pad+0.6,w-1.2,h-1.2,14);x.stroke();
     x.strokeStyle='rgba(255,255,255,0.07)';x.lineWidth=1;x.beginPath();x.moveTo(pad+16,pad+1.5);x.lineTo(pad+w-16,pad+1.5);x.stroke();
@@ -5497,10 +5600,10 @@
     if(evoN>0){x.fillStyle='#fde047';x.font='700 9px system-ui,sans-serif';x.fillText('⭐'+evoN,ix,yW);}
     x.restore();
     }
-    // индикатор СЕРИИ БЕЗ УРОНА: справа сверху (хаб теперь внизу, места вверху достаточно).
+    // индикатор СЕРИИ БЕЗ УРОНА: справа сверху (хаб — карточка слева, тут места достаточно).
     // Чем длиннее серия — тем ярче и крупнее.
     if(player.combo>=3){
-      const mobile=W<640||H>W;const cy0=8;
+      const mobile=uiMobile;const cy0=8;
       x.save();
       const ti=comboTierInfo(player.combo);
       const tierCol=['#fb923c','#f87171','#facc15','#c084fc','#67e8f9'];
@@ -5625,6 +5728,17 @@
         x.fillStyle='#2f8a45';x.beginPath();x.arc(tr.x-tr.r*0.32,tr.y-tr.r*0.32,tr.r*0.55,0,Math.PI*2);x.fill();
       }
       x.restore();
+    }
+    // ТЁМНЫЙ ЛЕС: добыча, летящая/рикошетящая между стволами (светящиеся сферы с иконкой)
+    if(darkForest&&darkForest.lit&&darkForest.loot.length){
+      x.textAlign='center';x.textBaseline='middle';
+      for(const L of darkForest.loot){
+        x.save();x.translate(L.x,L.y);
+        x.fillStyle=L.color;x.shadowColor=L.color;x.shadowBlur=10;
+        x.beginPath();x.arc(0,0,L.r,0,Math.PI*2);x.fill();x.shadowBlur=0;
+        x.fillStyle='#0a0e18';x.font='bold 10px system-ui,sans-serif';x.fillText(L.label,0,0.5);
+        x.restore();
+      }
     }
     // проклятые зоны: тёмный туман с фиолетовым ободом
     cursedZones.forEach(cz=>{
@@ -6180,8 +6294,9 @@
       x.save();edgeArrow(B.x,B.y,B.r,'#4ade80',1.1);x.restore(); // ориентир, даже когда далеко
     }
     drawFinale();
-    // ПЕЩЕРА: в лабиринте вокруг корабля — круг света фонаря, дальше темно
-    if(inVault&&vaultTheme!=='forest'){
+    // ПЕЩЕРА/ТЁМНЫЙ ЛЕС: вокруг корабля — круг света фонаря, дальше темно (лабиринт — тёплый,
+    // тёмный лес — зеленоватый; свет леса гаснет мгновенно, как только всех убил)
+    if((inVault&&vaultTheme!=='forest')||(darkForest&&!darkForest.lit)){
       let csx=0,csy=0;if(camShake>0.3){csx=Math.sin(t*47)*camShake*0.6;csy=Math.cos(t*41)*camShake*0.6;}
       const cx=W/2+csx,cy=H/2+csy,flick=1+0.035*Math.sin(t*11)+0.02*Math.sin(t*23);
       const LR=Math.min(W,H)*0.30*flick; // радиус света фонаря в экранных px
@@ -6189,10 +6304,27 @@
       const dg=x.createRadialGradient(cx,cy,LR*0.62,cx,cy,LR*1.65);
       dg.addColorStop(0,'rgba(2,1,7,0)');dg.addColorStop(0.5,'rgba(2,1,7,0.62)');dg.addColorStop(1,'rgba(2,1,7,0.99)');
       x.fillStyle=dg;x.fillRect(0,0,W,H);
-      // тёплое свечение фонаря у корабля (поверх темноты — мягкий ореол)
+      // свечение фонаря у корабля (поверх темноты — мягкий ореол)
+      const glowCol=darkForest?'170,255,150':'255,188,110';
       const wg=x.createRadialGradient(cx,cy,0,cx,cy,LR*0.95);
-      wg.addColorStop(0,'rgba(255,216,150,0.18)');wg.addColorStop(0.5,'rgba(255,188,110,0.07)');wg.addColorStop(1,'rgba(255,188,110,0)');
+      wg.addColorStop(0,'rgba('+glowCol+',0.18)');wg.addColorStop(0.5,'rgba('+glowCol+',0.07)');wg.addColorStop(1,'rgba('+glowCol+',0)');
       x.fillStyle=wg;x.fillRect(0,0,W,H);
+    }
+    // ТЁМНЫЙ ЛЕС: свой счётчик мобов СНИЗУ экрана (по просьбе — отдельно от общей шкалы уровня сверху)
+    if(darkForest&&!darkForest.lit){
+      const mobileB=uiMobile;
+      const left2=Math.max(0,darkForest.total-darkForest.killed);
+      const progF=darkForest.total?darkForest.killed/darkForest.total:0;
+      // +58 на ПК — иначе баннер садится ровно на пилюли «Одно/Всё» (#pendingBtns, bottom:14px)
+      const byB=H-(mobileB?MOBILE_HUD_H+16:58);
+      x.save();x.textAlign='center';x.textBaseline='bottom';x.shadowColor='#000';x.shadowBlur=4;
+      x.font='bold 15px system-ui,sans-serif';x.fillStyle='#86e08a';
+      x.fillText('🌲 ТЁМНЫЙ ЛЕС: убей ещё '+left2+' из '+darkForest.total,W/2,byB);
+      const bwF=Math.min(300,W*0.5),bxF=W/2-bwF/2,byF=byB-22,bhF=9;
+      x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bxF,byF,bwF,bhF);
+      x.fillStyle='#4ade80';x.fillRect(bxF,byF,bwF*progF,bhF);
+      x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1;x.strokeRect(bxF+0.5,byF+0.5,bwF-1,bhF-1);
+      x.restore();
     }
     drawOffscreenIndicators();
     // movement indicator: a chevron orbiting the player instead of a joystick pad —
@@ -6229,8 +6361,12 @@
     // складывается вниз по курсору topY — элементы никогда не накладываются друг на друга.
     // На узких экранах стек начинается НИЖЕ компактной панели статов (низ ~98px),
     // иначе центрированный текст наезжал бы на неё.
-    // хаб теперь внизу — верх свободен; на мобильном отступаем лишь под кнопку-гамбургер
-    let topY=(W<640||H>W)?46:34;
+    // на мобильном хаб — полоса внизу, верх свободен, отступаем лишь под кнопку-гамбургер;
+    // на ПК хаб — карточка в левом верхнем углу — баннеры центрируем ПРАВЕЕ неё, а не по W/2
+    const topMobile=(uiMobile);
+    let topY=topMobile?46:34;
+    const hubRightEdge=topMobile?0:(HUB_PAD+HUB_W)*HUB_SCALE+18;
+    const topCX=topMobile?W/2:Math.min(W-190,Math.max(W/2,hubRightEdge+190));
     // ШКАЛА УРОВНЯ: сколько мобов осталось убить до след. уровня — цифрами и полосой, всегда на виду
     // (дополняет кольцо-прогресс в хабе, а не заменяет — так просил пользователь)
     {
@@ -6238,8 +6374,8 @@
       const progT=Math.max(0,Math.min(1,killsThisLevel/budgT));
       x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
       x.font='bold 13px system-ui,sans-serif';x.fillStyle='#7dd3fc';
-      x.fillText('👾 '+fmtNum(remainT)+' мобов до '+(player.level+1)+' уровня',W/2,topY);
-      const bwL=Math.min(260,W*0.44),bxL=W/2-bwL/2,byL=topY+17,bhL=6;
+      x.fillText('👾 '+fmtNum(remainT)+' мобов до '+(player.level+1)+' уровня',topCX,topY);
+      const bwL=Math.min(260,W*0.44),bxL=topCX-bwL/2,byL=topY+17,bhL=6;
       x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(bxL,byL,bwL,bhL);
       x.fillStyle='#4D96FF';x.fillRect(bxL,byL,bwL*progT,bhL);
       x.strokeStyle='rgba(255,255,255,0.35)';x.lineWidth=1;x.strokeRect(bxL+0.5,byL+0.5,bwL-1,bhL-1);
@@ -6250,8 +6386,8 @@
       const prog=Math.max(0,siege.t/siege.total),urgent=siege.t<8;
       x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
       x.font='bold 15px system-ui,sans-serif';x.fillStyle=urgent?'#ff6b6b':'#f97316';
-      x.fillText('🌊 ОСАДА! Продержись ещё '+Math.ceil(siege.t)+'с',W/2,topY);
-      const bw=Math.min(300,W*0.5),bx0=W/2-bw/2,by0=topY+20,bh=9;
+      x.fillText('🌊 ОСАДА! Продержись ещё '+Math.ceil(siege.t)+'с',topCX,topY);
+      const bw=Math.min(300,W*0.5),bx0=topCX-bw/2,by0=topY+20,bh=9;
       x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bx0,by0,bw,bh);
       x.fillStyle=urgent?'#ff6b6b':'#fb923c';x.fillRect(bx0,by0,bw*prog,bh);
       x.strokeStyle='rgba(255,255,255,0.45)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
@@ -6263,8 +6399,8 @@
       x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
       x.font='bold 15px system-ui,sans-serif';x.fillStyle=prog>=1?'#4ade80':(inside?'#fde047':'#c084fc');
       // не внутри — подсказываем идти по стрелке (иначе баннер висит без объяснений); также видно, сколько зоне осталось жить
-      x.fillText('🎁 УДЕРЖИ ЗОНУ ещё '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с'+(inside?'':' · ИДИ ПО СТРЕЛКЕ ➜ ('+Math.ceil(cz.t)+'с до исчезновения)'),W/2,topY);
-      const bw=Math.min(300,W*0.5),bx0=W/2-bw/2,by0=topY+20,bh=9;
+      x.fillText('🎁 УДЕРЖИ ЗОНУ ещё '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с'+(inside?'':' · ИДИ ПО СТРЕЛКЕ ➜ ('+Math.ceil(cz.t)+'с до исчезновения)'),topCX,topY);
+      const bw=Math.min(300,W*0.5),bx0=topCX-bw/2,by0=topY+20,bh=9;
       x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bx0,by0,bw,bh);
       x.fillStyle=prog>=1?'#4ade80':'#facc15';x.fillRect(bx0,by0,bw*prog,bh);
       x.strokeStyle='rgba(255,255,255,0.45)';x.lineWidth=1;x.strokeRect(bx0+0.5,by0+0.5,bw-1,bh-1);
@@ -6278,7 +6414,7 @@
       x.fillStyle=vaultCleared?'#4ade80':(vaultOpening?'#fde047':(forest?'#4ade80':'#c084fc'));x.shadowColor='#000';x.shadowBlur=4;
       const head=forest?'🌲 ЛЕС':'🏛 ЛАБИРИНТ';
       const clr=forest?'🌲 ЛЕС ПРОЙДЕН — собери добычу и к выходу!':'🚪 ПОРТАЛ ОТКРЫТ — собери добычу и к выходу!';
-      x.fillText(vaultCleared?clr:(vaultOpening?'🌀 ПОРТАЛ ПРОБУЖДАЕТСЯ — добыча летит к тебе!':head+' · ЦЕЛЬ: боссы — осталось '+vBoss+' из '+vaultTotal),W/2,topY);
+      x.fillText(vaultCleared?clr:(vaultOpening?'🌀 ПОРТАЛ ПРОБУЖДАЕТСЯ — добыча летит к тебе!':head+' · ЦЕЛЬ: боссы — осталось '+vBoss+' из '+vaultTotal),topCX,topY);
       x.restore();topY+=24;
     }else if(enemies.some(e2=>e2.megaboss)){
       const mb=enemies.find(e2=>e2.megaboss);
@@ -6289,9 +6425,9 @@
       // число стадий: истинная форма — 3, обычный бой — 4 (+ фаза «истинная форма» как отдельная веха)
       const nSt=mb.megaPhase==='true'?3:4,curSt=Math.max(1,Math.min(nSt,mb.megaStage||1));
       const phaseTag=mb.act2boss?(mb.megaPhase==='true'?' · ИСТИННАЯ ФОРМА':' · ФАЗА 1/2'):'';
-      x.fillText('☠ '+(mb.skinName||'ХРОНОС')+' · '+pct+'% · стадия '+curSt+'/'+nSt+(mb.shieldHp>0?' · 🛡':'')+phaseTag,W/2,topY);
+      x.fillText('☠ '+(mb.skinName||'ХРОНОС')+' · '+pct+'% · стадия '+curSt+'/'+nSt+(mb.shieldHp>0?' · 🛡':'')+phaseTag,topCX,topY);
       // СЕГМЕНТИРОВАННАЯ ПОЛОСА HP: видно, сколько стадий и на какой сейчас босс
-      const bw=Math.min(360,W*0.6),bh=10,bx0=W/2-bw/2,by0=topY+20,seg=bw/nSt,gap=3;
+      const bw=Math.min(360,W*0.6),bh=10,bx0=topCX-bw/2,by0=topY+20,seg=bw/nSt,gap=3;
       const frac=Math.max(0,mb.hp/mb.maxHp),fillSeg=frac*nSt; // сколько сегментов «полны» снизу вверх
       for(let i=0;i<nSt;i++){
         const sx=bx0+i*seg,sw=seg-gap;
@@ -6307,20 +6443,21 @@
       x.font='bold 15px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
       const gLeft=enemies.length+pendingSpawns.length;
       x.fillStyle='#4ade80';
-      x.fillText('🌲 ПРОРЫВ К ЛЕСУ · осталось мобов: '+gLeft+' из '+forestGateTotal,W/2,topY);
+      x.fillText('🌲 ПРОРЫВ К ЛЕСУ · осталось мобов: '+gLeft+' из '+forestGateTotal,topCX,topY);
       x.restore();topY+=24;
     }else if(challenge){
       x.save();x.textAlign='center';x.textBaseline='top';
       x.font='bold 13px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=4;
       x.fillStyle=challenge.time<6?'#fb923c':'#38bdf8';
       const prog=challenge.type==='nohit'?'':' ('+challenge.progress+'/'+challenge.goal+')';
-      x.fillText('🎯 '+challenge.label+prog+' · '+Math.max(0,Math.ceil(challenge.time))+'с',W/2,topY);
+      x.fillText('🎯 '+challenge.label+prog+' · '+Math.max(0,Math.ceil(challenge.time))+'с',topCX,topY);
       x.restore();topY+=22;
     }
     if(announce){
       const ac=announce.color||'#22d3ee';x.save();x.globalAlpha=Math.min(1,Math.max(0,announce.life));
       // компактный центрированный баннер: перенос по словам (до 2 строк), ширина ≤60% экрана
-      const maxW=Math.min(W*0.6,560);
+      // (на ПК уже, чем раньше — иначе широкий текст снова наезжает на хаб слева от topCX)
+      const maxW=topMobile?Math.min(W*0.6,560):Math.min(W*0.6,380);
       const fs=Math.min(20,Math.max(13,Math.round(W/44)));
       x.font='bold '+fs+'px system-ui,sans-serif';
       const words=String(announce.text).split(' ');const lines=[];let cur='';
@@ -6328,7 +6465,7 @@
       if(cur)lines.push(cur);
       const shown=lines.slice(0,2);
       x.textAlign='center';x.textBaseline='top';x.fillStyle=ac;x.shadowColor='rgba(0,0,0,0.6)';x.shadowBlur=6;
-      shown.forEach((ln,i)=>{x.shadowColor='rgba(0,0,0,0.7)';x.fillText(ln,W/2,topY+i*(fs+5));x.shadowColor=ac;x.shadowBlur=10;x.fillText(ln,W/2,topY+i*(fs+5));});
+      shown.forEach((ln,i)=>{x.shadowColor='rgba(0,0,0,0.7)';x.fillText(ln,topCX,topY+i*(fs+5));x.shadowColor=ac;x.shadowBlur=10;x.fillText(ln,topCX,topY+i*(fs+5));});
       x.restore();
       topY+=shown.length*(fs+5)+8;
     }
@@ -6337,9 +6474,9 @@
       // Десктоп — ряд по центру сверху (в общем стеке). Мобильные/узкие — СПРАВА от
       // панели статов (хаба), с переносом строк; центр поля не занимаем.
       const n=autoToasts.length;
-      const mobile=W<640||H>W;
+      const mobile=uiMobile;
       const s=mobile?26:34,gap=5;
-      const rowX0=mobile?60:W/2-(n*s+(n-1)*gap)/2; // 60 = правее кнопки-гамбургера; хаб теперь внизу
+      const rowX0=mobile?60:topCX-(n*s+(n-1)*gap)/2; // 60 = правее кнопки-гамбургера на телефоне
       let ix=rowX0,iy=mobile?10:topY,lastRowY=iy;
       const maxX=W-8;
       x.save();x.textAlign='center';x.textBaseline='middle';
@@ -6375,7 +6512,7 @@
         x.font='bold '+(mobile?10:11)+'px system-ui,sans-serif';x.textBaseline='top';
         x.fillStyle=newest.color;x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=3;
         if(mobile){x.textAlign='left';x.fillText(newest.label,rowX0,lastRowY+s+3);}
-        else{x.fillText(newest.label,W/2,topY+s+4);labelH=16;}
+        else{x.fillText(newest.label,topCX,topY+s+4);labelH=16;}
       }
       x.restore();
       if(!mobile)topY+=s+4+labelH; // на мобильных стек не двигаем — иконки живут рядом с хабом
