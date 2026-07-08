@@ -4931,6 +4931,10 @@
       g.age=(g.age||0)+dt;
       if(!g.magnet&&!vacuum&&!g.szPhase&&d>GEM_DESPAWN_R&&g.age>GEM_DESPAWN_T){g.dead=true;continue;} // далёкий и старый — убираем
       if(g.szPhase==='launch'){
+        // зона могла истечь (safeZone=null) пока кристалл ещё рикошетит внутри неё —
+        // тогда просто отпускаем его лететь к кораблю, без обращения к границе кольца
+        if(!safeZone){g.szPhase='home';}
+        else{
         g.szT+=dt;
         const nx=g.x+g.szVx*dt,ny=g.y+g.szVy*dt,dc=dist({x:nx,y:ny},safeZone);
         if(dc>safeZone.r-g.r){
@@ -4940,6 +4944,7 @@
         }else{g.x=nx;g.y=ny;}
         const fr=Math.pow(0.5,dt);g.szVx*=fr;g.szVy*=fr;
         if(g.szT>1.4)g.szPhase='home';
+        }
       }else if(g.szPhase==='home'){
         const a=Math.atan2(player.y-g.y,player.x-g.x);
         const sp=Math.max(500,d*2.2);
