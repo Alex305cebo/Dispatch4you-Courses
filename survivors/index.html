@@ -4317,7 +4317,10 @@
     const lp=Math.max(0,Math.min(1,((player.level||1)-1)/2)); // 0 на 1-м, 1 уже к 3-му уровню
     const levelZoom=baseZoom*(1.30-0.56*lp);                  // СТАРТ заметно ближе (×1.30) → далеко (×0.74) к 3 ур.
     const crowd=Math.min(0.10,Math.max(0,enemyCountSmoothed-25)/500); // толпа отдаляет ещё, но не более чем на 0.10
-    const targetZoom=Math.max(baseZoom*0.62,levelZoom-crowd*baseZoom); // ограничение: дальше ×0.62 не отдаляем
+    // В ЛАБИРИНТЕ камера отдаляется заметно сильнее — узкие коридоры и толпа стражей у стен
+    // плохо просматривались; здесь запас обзора важнее, чем в открытом поле
+    const vaultZoomMul=inVault?0.82:1;
+    const targetZoom=Math.max(baseZoom*(inVault?0.5:0.62),(levelZoom-crowd*baseZoom)*vaultZoomMul);
     const zoomDelta=(targetZoom-zoom)*Math.min(1,dt*0.3);
     const zoomMaxStep=0.15*dt;
     zoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
@@ -6561,11 +6564,16 @@
       const progT=Math.max(0,Math.min(1,killsThisLevel/budgT));
       const mobLabel='👾 '+fmtNum(remainT)+' до '+(player.level+1)+' ур.';
       const gemLabel='💎 '+fmtNum(gemsCollected);
-      const punchS=1+gemCounterPunch*0.22,rowH=19,gap=16;
+      // ЦЕЛЬ ЛАБИРИНТА/ЛЕСА — раньше отдельным полноразмерным баннером ниже, теперь третьей
+      // «фишкой» в этой же строке: одним событием (осада/зона) меньше в стопке одновременно
+      const vaultChip=(inVault&&!vaultCleared&&!vaultOpening)?'🏛 '+enemies.filter(e2=>e2.vaultBoss).length+'/'+vaultTotal:null;
+      const punchS=1+gemCounterPunch*0.22,rowH=19,gap=14;
       x.save();x.textBaseline='middle';
       x.font='bold 12px system-ui,sans-serif';const mobW=x.measureText(mobLabel).width;
       x.font='bold '+Math.round(12*punchS)+'px system-ui,sans-serif';const gemW=x.measureText(gemLabel).width;
-      const gemPillW=gemW+14,totalW=mobW+gap+gemPillW,rowY=topY+rowH/2;
+      const gemPillW=gemW+14;
+      const vaultW=vaultChip?x.measureText(vaultChip).width:0;
+      const totalW=mobW+gap+gemPillW+(vaultChip?gap+vaultW:0),rowY=topY+rowH/2;
       let cx=topCX-totalW/2;
       x.textAlign='left';x.font='bold 12px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=3;
       x.fillStyle='#7dd3fc';x.fillText(mobLabel,cx,rowY);
@@ -6577,7 +6585,12 @@
       x.textAlign='center';x.font='bold '+Math.round(12*punchS)+'px system-ui,sans-serif';
       x.shadowColor='#38bdf8';x.shadowBlur=gemCounterPunch>0?8:0;
       x.fillStyle='#bfe6ff';x.fillText(gemLabel,cx+gemPillW/2,rowY);
-      x.shadowBlur=0;topY+=rowH+4;
+      x.shadowBlur=0;cx+=gemPillW;
+      if(vaultChip){
+        cx+=gap;x.textAlign='left';x.font='bold 12px system-ui,sans-serif';x.shadowColor='#000';x.shadowBlur=3;
+        x.fillStyle='#c084fc';x.fillText(vaultChip,cx,rowY);x.shadowBlur=0;
+      }
+      topY+=rowH+4;
       const bwL=totalW,bxL=topCX-bwL/2,byL=topY,bhL=5;
       x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(bxL,byL,bwL,bhL);
       x.fillStyle='#4D96FF';x.fillRect(bxL,byL,bwL*progT,bhL);
@@ -6626,15 +6639,9 @@
       x.restore();topY+=27;
     }
     if(inVault){
-      const forest=vaultTheme==='forest';
-      x.save();x.textAlign='center';x.textBaseline='top';
-      x.font='bold 13px system-ui,sans-serif';
-      const vBoss=enemies.filter(e2=>e2.vaultBoss).length;
-      x.fillStyle=vaultCleared?'#4ade80':(vaultOpening?'#fde047':(forest?'#4ade80':'#c084fc'));x.shadowColor='#000';x.shadowBlur=3;
-      const head=forest?'🌲 Лес':'🏛 Лабиринт';
-      const clr=forest?'🌲 Лес пройден — собери добычу!':'🚪 Портал открыт — собери добычу!';
-      x.fillText(vaultCleared?clr:(vaultOpening?'🌀 Портал пробуждается…':head+' · боссы: '+vBoss+'/'+vaultTotal),topCX,topY);
-      x.restore();topY+=20;
+      // цель «боссы: X/Y» теперь чипом в строке статуса выше (см. vaultChip) — одним
+      // баннером в стопке меньше. Переходы (портал пробудился/открыт) уже кричат через
+      // announce в момент события, а «ВЫХОД/УБЕЙ ВСЕХ» подписан прямо у портала в мире
     }else if(enemies.some(e2=>e2.megaboss)){
       const mb=enemies.find(e2=>e2.megaboss);
       x.save();x.textAlign='center';x.textBaseline='top';
