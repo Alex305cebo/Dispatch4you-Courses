@@ -4835,7 +4835,10 @@
             if(e._shieldBroke){e._shieldBroke=false;burst(e.x,e.y,'#7dd3fc',16);}
             if(e._shieldHitT>0)e._shieldHitT-=dt;
             e.shootCd-=dt;
-            if(e.shootCd<=0){bossShoot(e);e.shootCd=Math.max(0.9,2.6-e.bossNumber*0.15);}
+            // дистанция атаки ограничена — раньше босс бил снарядами от себя на любое
+            // расстояние (даже через полкарты лабиринта); теперь ждёт, пока игрок подойдёт
+            // достаточно близко, и лишь тогда открывает огонь
+            if(e.shootCd<=0&&d<420){bossShoot(e);e.shootCd=Math.max(0.9,2.6-e.bossNumber*0.15);}
           }
         }
         if(e._atk&&e._atk.type==='spiral'){ // спираль: два рукава, угол крутится
