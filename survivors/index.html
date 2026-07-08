@@ -1404,6 +1404,10 @@
     // ВОССТАНОВЛЕНИЕ SPACE INVADERS
     if(s.inArcade&&s.arcade){
       inArcade=true;arcade=s.arcade;arcadeStash=s.arcadeStash||null;
+      // страховка: Set (hitSet у пронзающих пуль) и ссылки-цели (у самонаводящихся) не переживают JSON — чиним
+      if(arcade.bullets)arcade.bullets.forEach(b=>{if(b.pierce&&!(b.hitSet instanceof Set))b.hitSet=new Set();if(b.homing)b.target=null;});
+      if(arcade.mode==null)arcade.mode='normal';if(arcade.modeT==null)arcade.modeT=0;
+      if(arcade.waveNum==null)arcade.waveNum=1;if(arcade.maxWaves==null)arcade.maxWaves=3;
     }else{inArcade=false;arcade=null;arcadeStash=null;}
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
     act=s.act||1;finale=null;finaleLB=0;act2Tower=null;
@@ -1925,35 +1929,78 @@
   function burst(px,py,color,n){if(particles.length>600)return;for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
 
   // ============ БОНУС-УРОВЕНЬ: SPACE INVADERS 👾 ============
-  const INV_COLORS=['#4ade80','#38bdf8','#f0abfc']; // 3 типа пришельцев по рядам
-  // падающая добыча в Space Invaders: кристалл/осколок/усилители — ловим кораблём
-  const ARC_DROPS={gem:['✦','#7dd3fc'],shard:['✨','#fde047'],rapid:['⚡','#4ade80'],spread:['⋔','#f0abfc'],shield:['🛡','#38bdf8'],heal:['+','#fb7185']};
+  // 6 типов пришельцев: 0 рядовой, 1 синий, 2 стрелок (верх), 3 ТАНК (2 хита),
+  // 4 ПИКИРОВЩИК (ныряет на игрока), 5 КЛОН (периодически размножается рядом с анимацией)
+  const INV_COLORS=['#4ade80','#38bdf8','#f0abfc','#fb923c','#ef4444','#facc15'];
+  // падающая добыча: кристалл/осколок + 4 РАЗНЫХ РЕЖИМА ОРУЖИЯ, меняющих стрельбу корабля
+  const ARC_DROPS={gem:['✦','#7dd3fc'],shard:['✨','#fde047'],rapid:['⚡','#4ade80'],spread:['⋔','#f0abfc'],
+    laser:['🔫','#fb923c'],homing:['🎯','#a78bfa'],shield:['🛡','#38bdf8'],heal:['+','#fb7185']};
+  const ARC_MODE_COL={rapid:'#4ade80',spread:'#f0abfc',laser:'#fb923c',homing:'#a78bfa'};
   function arcadeDrop(A,x0,y0,forceKind){
     let kind=forceKind;
     if(!kind){const r=Math.random();
-      kind=r<0.46?'gem':r<0.68?'shard':r<0.8?'rapid':r<0.9?'spread':r<0.97?'shield':'heal';}
+      kind=r<0.40?'gem':r<0.58?'shard':r<0.70?'rapid':r<0.80?'spread':r<0.88?'laser':r<0.94?'homing':r<0.98?'shield':'heal';}
     const m=ARC_DROPS[kind];
     // ФИЗИКА: приз ВЫЛЕТАЕТ из моба (вверх и в сторону), потом падает с гравитацией и крутится
     A.drops.push({x:x0,y:y0,vx:rand(-160,160),vy:rand(-230,-90),kind,label:m[0],color:m[1],spin:rand(0,6.283),vr:rand(-8,8),bounces:0});
   }
-  function makeBunker(bx,by){const cells=[];for(let r=0;r<4;r++)for(let c=0;c<7;c++){if((r===3)&&(c===2||c===3||c===4))continue;cells.push({c,r,ok:true});}return{x:bx,y:by,cells,cw:9,ch:8};}
+  // ПРОЦЕДУРНЫЕ БУНКЕРЫ: 6 разных силуэтов — '2' бронированная ячейка (2 хита),
+  // 'D' КОНУСОВИДНЫЙ ШИП: не разрушается, а ОТРАЖАЕТ пули игрока по физике рикошета
+  const BUNKER_SHAPES=[
+    ['1111111','1111111','1111111','1100011'], // классическая арка
+    ['0111110','1111111','1111111','1111111'], // купол-блок
+    ['1000001','1100011','1111111','1111111'], // воронка
+    ['0010100','0111110','1111111','0111110'], // ромб
+    ['1111111','1102011','1102011','1111111'], // бронированное ядро
+    ['1111111','0111110','0011100','000D000'], // КОНУС: сужается к острому шипу-рикошету внизу
+  ];
+  const BUNKER_COLORS=['#4ade80','#38bdf8','#f59e0b','#e879f9','#f87171','#22d3ee'];
+  function makeBunker(bx,by,shapeIdx){
+    const si=shapeIdx%BUNKER_SHAPES.length,pat=BUNKER_SHAPES[si],cells=[];
+    for(let r=0;r<4;r++)for(let c=0;c<7;c++){const ch=pat[r][c];if(ch==='0')continue;
+      cells.push({c,r,ok:true,hp:ch==='2'?2:1,deflect:ch==='D'});}
+    return{x:bx,y:by,cells,cw:9,ch:8,color:BUNKER_COLORS[si]};
+  }
+  // сборка ВОЛНЫ: больше рядов/колонок и злее состав с каждой волной; бункеры каждый раз новые
+  function arcadeInvType(wn,r,rows){
+    const roll=Math.random();
+    if(r===0)return(wn>=2&&roll<0.22)?3:2; // верх: стрелки, с 2 волны — иногда танк
+    if(r<rows-2&&wn>=2){
+      if(roll<0.12)return 4; // пикировщик
+      if(roll<0.22)return 5; // клон — периодически размножается
+    }
+    if(r<rows-2)return 1;
+    return 0;
+  }
+  function arcadeBuildWave(A,wn){
+    const cols=Math.min(11,7+wn),rows=Math.min(6,4+wn);
+    const gapX=Math.min(60,W*0.086),gapY=Math.min(42,H*0.06);
+    const startX=W/2-(cols-1)*gapX/2,startY=H*0.13,inv=[];
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+      const type=arcadeInvType(wn,r,rows);
+      inv.push({col:c,row:r,alive:true,type,hp:type===3?2:1,diving:false,dvx:0,dvy:0,diveT:0,diveDir:1,
+        cloneOx:0,cloneOy:0,cloneCd:type===5?rand(4,7):0,spawnT:0});
+    }
+    const bnCount=Math.min(5,2+wn),bunkers=[];
+    for(let i=0;i<bnCount;i++)bunkers.push(makeBunker(W*((i+0.5)/bnCount),H*0.72,Math.floor(Math.random()*BUNKER_SHAPES.length)));
+    Object.assign(A,{inv,cols,rows,gapX,gapY,startX,startY,ox:0,oy:0,dir:1,speed:26+wn*7,
+      kills:0,total:inv.length,bunkers,bullets:[],ebullets:[],shotCd:rand(0.5,1)});
+  }
   function enterArcade(){
     arcadeStash={enemies,projectiles,enemyProjectiles,pools,mines,meteors,boomers,turrets,ox:player.x,oy:player.y,paused:mobSpawnPaused};
     enemies=[];projectiles=[];enemyProjectiles=[];pools=[];mines=[];meteors=[];boomers=[];turrets=[];
     portal=null;mobSpawnPaused=true;
-    const cols=9,rows=5,gapX=Math.min(66,W*0.092),gapY=Math.min(46,H*0.066);
-    const startX=W/2-(cols-1)*gapX/2,startY=H*0.15,inv=[];
-    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)inv.push({col:c,row:r,alive:true,type:r===0?2:(r<3?1:0)});
-    const bunkers=[];for(let i=0;i<4;i++)bunkers.push(makeBunker(W*(0.17+0.222*i),H*0.7));
-    arcade={px:W/2,py:H*0.87,fire:0,bullets:[],ebullets:[],inv,cols,rows,ox:0,oy:0,dir:1,speed:28,
-      shotCd:rand(0.6,1.2),bunkers,ufo:null,ufoCd:rand(7,13),kills:0,total:cols*rows,over:0,result:null,at:0,
-      startX,startY,gapX,gapY,flash:0,
-      drops:[],rapidT:0,spreadT:0,shield:0,score:0,gemsGot:0,combo:0,comboT:0,pops:[]}; // добыча + усилители
+    arcade={px:W/2,py:H*0.87,fire:0,waveNum:1,maxWaves:3,ufo:null,ufoCd:rand(7,13),over:0,result:null,at:0,flash:0,
+      drops:[],mode:'normal',modeT:0,shield:0,score:0,gemsGot:0,combo:0,comboT:0,pops:[]};
+    arcadeBuildWave(arcade,1);
     inArcade=true;state='running';arcTouchX=null;joy.active=false;
-    announce={text:'👾 SPACE INVADERS! Сбей всех, не дай им дойти до низа',life:3.5,color:'#4ade80'};
+    announce={text:'👾 SPACE INVADERS! Волна 1/3 — сбей всех, не дай им дойти до низа',life:3.5,color:'#4ade80'};
     flashFx(0.4,'74,222,128');sfxSweep(200,820,0.45,'square',0.1,true);
   }
-  function invPos(A,v){return{x:A.startX+v.col*A.gapX+A.ox,y:A.startY+v.row*A.gapY+A.oy};}
+  function invPos(A,v){
+    const bx=A.startX+v.col*A.gapX+A.ox+(v.cloneOx||0),by=A.startY+v.row*A.gapY+A.oy+(v.cloneOy||0);
+    return v.diving?{x:bx+(v.dvx||0),y:by+(v.dvy||0)}:{x:bx,y:by};
+  }
   function exitArcade(result){
     inArcade=false;arcTouchX=null;joy.active=false;
     const caughtGems=arcade?(arcade.gemsGot||0):0; // пойманные кристаллы переносим в основной бой
@@ -1993,18 +2040,64 @@
       A.px+=mvx*440*dt;
     }
     A.px=Math.max(26,Math.min(W-26,A.px));
-    // усилители-таймеры
-    if(A.rapidT>0)A.rapidT-=dt;if(A.spreadT>0)A.spreadT-=dt;
+    if(A.modeT>0){A.modeT-=dt;if(A.modeT<=0)A.mode='normal';}
     if(A.comboT>0){A.comboT-=dt;if(A.comboT<=0)A.combo=0;}
-    // автоогонь вверх (усилители: ⚡ скорострельность, ⋔ тройной выстрел)
+    const alive=A.inv.filter(v=>v.alive); // считаем один раз в начале — нужен и самонаводящимся пулям, и пикировщикам
+    for(const v of alive){if(v.spawnT>0)v.spawnT=Math.max(0,v.spawnT-dt);} // анимация появления клона гаснет
+    // === СТРЕЛЬБА: 4 РАЗНЫХ РЕЖИМА ОРУЖИЯ (переключаются подобранными плюшками) ===
     A.fire-=dt;
-    const maxB=A.rapidT>0?8:4,cd=A.rapidT>0?0.085:Math.max(0.16,(player.fireRate||280)/1000*0.85);
-    if(A.fire<=0&&A.bullets.length<maxB){A.fire=cd;
-      if(A.spreadT>0){A.bullets.push({x:A.px,y:A.py-20,vx:-110});A.bullets.push({x:A.px,y:A.py-20,vx:0});A.bullets.push({x:A.px,y:A.py-20,vx:110});}
+    const FIRE_CFG={normal:{cd:Math.max(0.16,(player.fireRate||280)/1000*0.85),maxB:4},
+      rapid:{cd:0.085,maxB:8},spread:{cd:0.17,maxB:6},laser:{cd:0.055,maxB:10},homing:{cd:0.24,maxB:5}};
+    const fc=FIRE_CFG[A.mode]||FIRE_CFG.normal;
+    if(A.fire<=0&&A.bullets.length<fc.maxB){A.fire=fc.cd;
+      if(A.mode==='spread'){A.bullets.push({x:A.px,y:A.py-20,vx:-115});A.bullets.push({x:A.px,y:A.py-20,vx:0});A.bullets.push({x:A.px,y:A.py-20,vx:115});}
+      else if(A.mode==='laser')A.bullets.push({x:A.px,y:A.py-20,vx:0,pierce:true,hitSet:new Set(),spd:760});
+      else if(A.mode==='homing')A.bullets.push({x:A.px,y:A.py-20,vx:0,homing:true,target:null});
       else A.bullets.push({x:A.px,y:A.py-20,vx:0});
-      beep(A.rapidT>0?1150:900,0.025,'square',0.028);}
-    A.bullets.forEach(b=>{b.y-=620*dt;b.x+=(b.vx||0)*dt;});
-    A.ebullets.forEach(b=>b.y+=Math.min(360,220+A.kills*3)*dt);
+      beep(A.mode==='laser'?1300:A.mode==='rapid'?1150:900,0.025,'square',0.028);}
+    // самонаводящиеся пули доворачивают к ближайшему живому пришельцу
+    for(const b of A.bullets){
+      if(!b.homing)continue;
+      if(!b.target||!b.target.alive){let best=null,bd=1e9;
+        for(const v of alive){if(!v.alive)continue;const p2=invPos(A,v);if(p2.y>=b.y)continue;const dd=(p2.x-b.x)*(p2.x-b.x)+(p2.y-b.y)*(p2.y-b.y);if(dd<bd){bd=dd;best=v;}}
+        b.target=best;}
+      if(b.target&&b.target.alive){const p2=invPos(A,b.target);const desVx=Math.max(-260,Math.min(260,(p2.x-b.x)*3));
+        b.vx=(b.vx||0)+(desVx-(b.vx||0))*Math.min(1,dt*7);}
+    }
+    A.bullets.forEach(b=>{b.y-=(b.spd||620)*dt;b.x+=(b.vx||0)*dt;});
+    A.ebullets.forEach(b=>{b.y+=Math.min(360,220+A.kills*3)*dt;b.x+=(b.vx||0)*dt;});
+    // === ПИКИРОВЩИКИ (тип 4): иногда отрываются от строя и с криком ныряют на игрока, стреляя ===
+    const maxDivers=1+Math.min(2,(A.waveNum||1)-1);
+    const diversNow=alive.filter(v=>v.type===4&&v.diving).length;
+    for(const v of alive){
+      if(v.type!==4)continue;
+      if(!v.diving){
+        if(diversNow<maxDivers&&Math.random()<0.06*dt){v.diving=true;v.diveT=0;v.diveDir=Math.random()<0.5?-1:1;sfxChime(260,2,0.04,0.05);}
+        continue;
+      }
+      v.diveT+=dt;
+      v.dvy=Math.min(300,v.diveT*230);
+      v.dvx=Math.sin(v.diveT*3.2)*60+v.diveDir*v.diveT*40;
+      const baseY=A.startY+v.row*A.gapY+A.oy;
+      if(Math.random()<0.9*dt){const p2=invPos(A,v);A.ebullets.push({x:p2.x,y:p2.y+10,vx:(A.px-p2.x)*0.35});}
+      if(v.diveT>1.7||baseY+v.dvy>A.py-60){v.diving=false;v.dvx=0;v.dvy=0;v.diveT=0;}
+    }
+    // === КЛОНЫ (тип 5): периодически размножаются рядом со вспышкой-анимацией появления ===
+    if(A.inv.length<A.cols*A.rows*1.5){ // потолок, чтобы волна не разрослась до бесконечности
+      for(const v of alive){
+        if(v.type!==5)continue;
+        v.cloneCd=(v.cloneCd==null?rand(4,7):v.cloneCd)-dt;
+        if(v.cloneCd<=0){
+          v.cloneCd=rand(6,10);
+          const off=[[15,-9],[-15,-9],[15,9],[-15,9]][Math.floor(Math.random()*4)];
+          const clone={col:v.col,row:v.row,alive:true,type:5,hp:1,diving:false,dvx:0,dvy:0,diveT:0,diveDir:1,
+            cloneOx:(v.cloneOx||0)+off[0],cloneOy:(v.cloneOy||0)+off[1],cloneCd:rand(6,10),spawnT:0.35};
+          A.inv.push(clone);A.total++;
+          const p2=invPos(A,v);burst(p2.x+off[0],p2.y+off[1],'#facc15',10);
+          sfxChime(700,3,0.05,0.08);
+        }
+      }
+    }
     // ПАДАЮЩАЯ ДОБЫЧА С ФИЗИКОЙ: гравитация, отскок от стен/пола/бункеров, вращение; ловим внизу
     const G=560;
     for(const d of A.drops){
@@ -2028,8 +2121,7 @@
       if(Math.abs(d.x-A.px)<26&&Math.abs(d.y-A.py)<22){d._got=true;
         if(d.kind==='gem'){A.gemsGot++;A.score+=5;}
         else if(d.kind==='shard'){metaState.shards++;saveMeta();A.score+=12;}
-        else if(d.kind==='rapid'){A.rapidT=Math.max(A.rapidT,6.5);}
-        else if(d.kind==='spread'){A.spreadT=Math.max(A.spreadT,6.5);}
+        else if(d.kind==='rapid'||d.kind==='spread'||d.kind==='laser'||d.kind==='homing'){A.mode=d.kind;A.modeT=7;}
         else if(d.kind==='shield'){A.shield=1;}
         else if(d.kind==='heal'){player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.12);}
         A.pops.push({x:d.x,y:d.y,label:d.label,color:d.color,life:0.8});
@@ -2039,15 +2131,17 @@
     // убираем пойманные и «уставшие» (много отскоков и почти замерли внизу)
     A.drops=A.drops.filter(d=>!d._got&&!(d.bounces>=4&&Math.abs(d.vy)<40&&d.y>H-40)&&d.y<H+40);
     if(A.pops){for(const pp of A.pops)pp.life-=dt;A.pops=A.pops.filter(pp=>pp.life>0);}
-    // марш строя
-    const alive=A.inv.filter(v=>v.alive);
-    A.speed=28+(A.kills/A.total)*110;
+    // марш строя: пикировщики в полёте не толкают границы и не считаются «дошедшими до низа»
+    const formationAlive=alive.filter(v=>!v.diving);
+    A.speed=(26+(A.waveNum||1)*7)+(A.kills/A.total)*100;
     let minx=1e9,maxx=-1e9,maxy=-1e9;
-    for(const v of alive){const p2=invPos(A,v);if(p2.x<minx)minx=p2.x;if(p2.x>maxx)maxx=p2.x;if(p2.y>maxy)maxy=p2.y;}
-    A.ox+=A.dir*A.speed*dt;
-    if(A.dir>0&&maxx>W-24){A.dir=-1;A.oy+=A.gapY*0.5;}
-    else if(A.dir<0&&minx<24){A.dir=1;A.oy+=A.gapY*0.5;}
-    // огонь пришельцев
+    for(const v of formationAlive){const p2=invPos(A,v);if(p2.x<minx)minx=p2.x;if(p2.x>maxx)maxx=p2.x;if(p2.y>maxy)maxy=p2.y;}
+    if(formationAlive.length){
+      A.ox+=A.dir*A.speed*dt;
+      if(A.dir>0&&maxx>W-24){A.dir=-1;A.oy+=A.gapY*0.5;}
+      else if(A.dir<0&&minx<24){A.dir=1;A.oy+=A.gapY*0.5;}
+    }
+    // огонь пришельцев (обычный точечный — вдобавок к прицельным выстрелам пикировщиков выше)
     A.shotCd-=dt;
     if(A.shotCd<=0&&alive.length){A.shotCd=Math.max(0.32,rand(0.7,1.5)-(A.kills/A.total)*0.5);
       const s=alive[Math.floor(Math.random()*alive.length)],p2=invPos(A,s);A.ebullets.push({x:p2.x,y:p2.y+14});beep(180,0.05,'sawtooth',0.04);}
@@ -2057,18 +2151,31 @@
     // пули игрока → пришельцы / НЛО / бункеры
     for(const b of A.bullets){
       if(b.y<-8)continue;
-      for(const v of alive){if(!v.alive)continue;const p2=invPos(A,v);if(Math.abs(b.x-p2.x)<17&&Math.abs(b.y-p2.y)<13){v.alive=false;A.kills++;b.y=-99;A.flash=0.05;
-        A.combo++;A.comboT=2.2;A.score+=10+Math.min(20,A.combo);
-        for(let i=0;i<6;i++)particles.push({x:p2.x,y:p2.y,vx:rand(-2,2),vy:rand(-2,2),life:0.5,color:INV_COLORS[v.type],sz:2});sfxChime(520+v.type*120,2,0.05,0.06);
-        // ДРОП: верхние ряды (тип 2/1) роняют чаще; серия повышает шанс
-        const chance=(v.type===2?0.34:v.type===1?0.24:0.16)+Math.min(0.15,A.combo*0.01);
-        if(Math.random()<chance)arcadeDrop(A,p2.x,p2.y);
-        break;}}
+      for(const v of alive){
+        if(!v.alive)continue;
+        if(b.pierce&&b.hitSet&&b.hitSet.has(v))continue;
+        const p2=invPos(A,v);
+        if(Math.abs(b.x-p2.x)<17&&Math.abs(b.y-p2.y)<13){
+          if(b.pierce)b.hitSet.add(v);else b.y=-99;
+          v.hp=(v.hp||1)-1;A.flash=0.05;sparkHit(p2.x,p2.y,INV_COLORS[v.type]);
+          if(v.hp<=0){
+            v.alive=false;A.kills++;A.combo++;A.comboT=2.2;
+            const bonus=v.type===3?18:v.type===4?15:v.type===5?20:10;A.score+=bonus+Math.min(20,A.combo);
+            for(let i=0;i<6;i++)particles.push({x:p2.x,y:p2.y,vx:rand(-2,2),vy:rand(-2,2),life:0.5,color:INV_COLORS[v.type],sz:2});
+            sfxChime(520+v.type*70,2,0.05,0.06);
+            // ДРОП: танк/стрелок/пикировщик/клон роняют чаще; серия повышает шанс
+            const chance=(v.type===3?0.42:v.type===2?0.34:v.type===5?0.32:v.type===4?0.3:v.type===1?0.22:0.14)+Math.min(0.15,A.combo*0.01);
+            if(Math.random()<chance)arcadeDrop(A,p2.x,p2.y);
+          }else beep(300,0.03,'square',0.02); // ранен (танк), но жив
+          if(!b.pierce)break;
+        }
+      }
       if(b.y<-8)continue;
       if(A.ufo&&Math.abs(b.x-A.ufo.x)<26&&Math.abs(b.y-A.ufo.y)<12){b.y=-99;
         // ЗОЛОТАЯ ТАРЕЛКА: дождь наград — гарантированный усилитель + осколки + кристаллы
         for(let i=0;i<16;i++)particles.push({x:A.ufo.x,y:A.ufo.y,vx:rand(-4,4),vy:rand(-4,4),life:0.8,color:i%2?'#fde047':'#fff',sz:3});
-        arcadeDrop(A,A.ufo.x-24,A.ufo.y,'rapid');arcadeDrop(A,A.ufo.x+24,A.ufo.y,'spread');
+        arcadeDrop(A,A.ufo.x-30,A.ufo.y,'rapid');arcadeDrop(A,A.ufo.x+30,A.ufo.y,'spread');
+        arcadeDrop(A,A.ufo.x-10,A.ufo.y,'laser');arcadeDrop(A,A.ufo.x+10,A.ufo.y,'homing');
         arcadeDrop(A,A.ufo.x,A.ufo.y,'shard');arcadeDrop(A,A.ufo.x-40,A.ufo.y,'gem');arcadeDrop(A,A.ufo.x+40,A.ufo.y,'gem');
         A.ufo=null;metaState.shards+=3;saveMeta();A.score+=100;A.flash=0.12;camShake=Math.max(camShake,7);
         announce={text:'💰 ЗОЛОТАЯ ТАРЕЛКА СБИТА! Лови награды!',life:2.2,color:'#fde047'};
@@ -2089,27 +2196,53 @@
     A.bullets=A.bullets.filter(b=>b.y>-8&&b.y<H+8);
     A.ebullets=A.ebullets.filter(b=>b.y<H+8&&b.y>-8);
     particles=particles.filter(p=>p.life>0);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life-=dt/0.55;});
-    // победа / поражение
+    // победа волны / всей игры / поражение
     if(A.result){/* already ending */}
-    else if(alive.length===0){A.result='win';A.over=1.2;announce={text:'👾 ВСЕ СБИТЫ!',life:2,color:'#4ade80'};sfxChime(660,8,0.08,0.12);}
-    else if(maxy+A.gapY*0.5>=A.py-8){A.result='lose';A.over=1.0;announce={text:'👾 ОНИ ДОШЛИ ДО НИЗА!',life:2,color:'#ff2d55'};}
+    else if(alive.length===0){
+      if((A.waveNum||1)<(A.maxWaves||3)){
+        A.waveNum=(A.waveNum||1)+1;arcadeBuildWave(A,A.waveNum);
+        announce={text:'👾 ВОЛНА '+A.waveNum+'/'+A.maxWaves+'!',life:2.4,color:'#4ade80'};
+        flashFx(0.3,'74,222,128');sfxSweep(300,700,0.4,'square',0.1);
+      }else{
+        A.result='win';A.over=1.2;announce={text:'👾 ВСЕ ВОЛНЫ ОТБИТЫ!',life:2,color:'#4ade80'};sfxChime(660,8,0.08,0.12);
+      }
+    }
+    else if(formationAlive.length&&maxy+A.gapY*0.5>=A.py-8){A.result='lose';A.over=1.0;announce={text:'👾 ОНИ ДОШЛИ ДО НИЗА!',life:2,color:'#ff2d55'};}
   }
   function arcadeBunkerHit(A,b,up){
     for(const bk of A.bunkers){const gw=7*bk.cw,gh=4*bk.ch,left=bk.x-gw/2,top=bk.y-gh/2;
       if(b.x<left-4||b.x>left+gw+4||b.y<top-4||b.y>top+gh+4)continue;
-      let best=null,bd=1e9;
-      for(const cell of bk.cells){if(!cell.ok)continue;const cx=left+cell.c*bk.cw+bk.cw/2,cy=top+cell.r*bk.ch+bk.ch/2;const dd=(b.x-cx)*(b.x-cx)+(b.y-cy)*(b.y-cy);if(dd<bd){bd=dd;best=cell;}}
-      if(best&&bd<220){const px2=b.x,py2=b.y;best.ok=false;b.y=up?-99:H+99;for(let i=0;i<3;i++)particles.push({x:px2,y:py2,vx:rand(-1.5,1.5),vy:rand(-1.5,1.5),life:0.4,color:'#94a3b8',sz:2});return;}
+      let best=null,bd=1e9,bestCx=0,bestCy=0;
+      for(const cell of bk.cells){if(!cell.ok)continue;const cx=left+cell.c*bk.cw+bk.cw/2,cy=top+cell.r*bk.ch+bk.ch/2;const dd=(b.x-cx)*(b.x-cx)+(b.y-cy)*(b.y-cy);if(dd<bd){bd=dd;best=cell;bestCx=cx;bestCy=cy;}}
+      if(best&&bd<220){
+        // КОНУСОВИДНЫЙ ШИП: только пули ИГРОКА (летят вверх) рикошетят по физике — не гасятся, а отражаются в сторону
+        if(best.deflect&&up){
+          const side=b.x<bestCx?-1:1;b.vx=(b.vx||0)+side*(240+Math.random()*90);
+          b.y-=6;sparkHit(b.x,b.y,'#e0f2fe');beep(560,0.03,'triangle',0.03);return;
+        }
+        const px2=b.x,py2=b.y;best.hp=(best.hp||1)-1;if(best.hp<=0)best.ok=false;
+        b.y=up?-99:H+99;for(let i=0;i<3;i++)particles.push({x:px2,y:py2,vx:rand(-1.5,1.5),vy:rand(-1.5,1.5),life:0.4,color:bk.color||'#94a3b8',sz:2});return;
+      }
     }
   }
-  function drawInvader(px,py,type,ph){
-    const c=INV_COLORS[type],s=3.2,legs=Math.floor(ph*3)%2;
+  function drawInvader(px,py,v,ph){
+    const type=v.type,c=INV_COLORS[type],s=type===3?3.7:3.2,legs=Math.floor(ph*3)%2;
+    x.save();
+    if(v.diving){x.translate(px,py);x.rotate(Math.atan2(v.dvx||0,240)*0.5);x.translate(-px,-py);}
+    if(v.spawnT>0){const sc=Math.max(0.05,1-(v.spawnT/0.35));x.translate(px,py);x.scale(sc,sc);x.translate(-px,-py);x.globalAlpha=sc;} // анимация появления клона
     x.fillStyle=c;
-    // 3 простых «пиксельных» силуэта (краб/кальмар/осьминог), нижний ряд-«лапки» анимируется
+    // 6 простых «пиксельных» силуэтов: краб/кальмар/осьминог/танк/пикировщик/клон (два сросшихся тельца);
+    // нижний ряд-«лапки» анимируется
     const P=type===0?['01110','11111','10101','00100',legs?'01010':'10001']
       :type===1?['00100','01110','11111','10101',legs?'01010':'00100']
-      :['01110','11011','11111','01110',legs?'10001':'01010'];
+      :type===2?['01110','11011','11111','01110',legs?'10001':'01010']
+      :type===3?['11111','11111','10101','11111',legs?'01010':'10001']
+      :type===4?['00100','01110','11111','00100',legs?'01010':'00100']
+      :['01010','11111','11111','01010',legs?'10101':'01010'];
     for(let r=0;r<P.length;r++)for(let cc=0;cc<5;cc++){if(P[r][cc]==='1')x.fillRect(px+(cc-2.5)*s,py+(r-2.5)*s,s-0.6,s-0.6);}
+    if(type===3&&v.hp>1){x.strokeStyle='rgba(255,255,255,0.6)';x.lineWidth=1.4;x.strokeRect(px-2.5*s-1,py-2.5*s-1,5*s+2,5*s+2);} // броня цела
+    if(v.diving){x.globalAlpha=0.5;x.fillStyle='#ef4444';x.shadowColor='#ef4444';x.shadowBlur=8;x.beginPath();x.arc(px,py-9,2.6,0,Math.PI*2);x.fill();x.globalAlpha=1;}
+    x.restore();
   }
   function arcadeDraw(){
     const A=arcade;
@@ -2119,13 +2252,27 @@
     x.fillStyle='rgba(255,255,255,0.5)';for(let i=0;i<40;i++){const sx=(i*97.3)%W,sy=(i*57.7+((A?A.at:0)*12))%H;x.fillRect(sx,sy,1.4,1.4);}
     if(A){
       // пришельцы
-      for(const v of A.inv){if(!v.alive)continue;const p2=invPos(A,v);drawInvader(p2.x,p2.y,v.type,A.at+v.col*0.2);}
+      for(const v of A.inv){if(!v.alive)continue;const p2=invPos(A,v);drawInvader(p2.x,p2.y,v,A.at+v.col*0.2);}
       // НЛО
       if(A.ufo){x.fillStyle='#fde047';x.shadowColor='#fde047';x.shadowBlur=8;x.beginPath();x.ellipse(A.ufo.x,A.ufo.y,16,6,0,0,Math.PI*2);x.fill();x.shadowBlur=0;x.fillStyle='#f59e0b';x.beginPath();x.ellipse(A.ufo.x,A.ufo.y-3,7,4,0,0,Math.PI*2);x.fill();}
-      // бункеры
-      x.fillStyle='#4ade80';for(const bk of A.bunkers){const gw=7*bk.cw,gh=4*bk.ch,left=bk.x-gw/2,top=bk.y-gh/2;for(const cell of bk.cells){if(cell.ok)x.fillRect(left+cell.c*bk.cw,top+cell.r*bk.ch,bk.cw-1,bk.ch-1);}}
-      // пули
-      x.fillStyle='#e8eefc';for(const b of A.bullets)x.fillRect(b.x-1.5,b.y-8,3,10);
+      // бункеры: разноцветные силуэты, бронированные ячейки — с белой окантовкой пока целы;
+      // КОНУСОВИДНЫЙ ШИП — ледяной треугольник-рикошет (не разрушается)
+      for(const bk of A.bunkers){const gw=7*bk.cw,gh=4*bk.ch,left=bk.x-gw/2,top=bk.y-gh/2;
+        for(const cell of bk.cells){if(!cell.ok)continue;const cx=left+cell.c*bk.cw,cy=top+cell.r*bk.ch;
+          if(cell.deflect){
+            x.fillStyle='#e0f2fe';x.shadowColor='#7dd3fc';x.shadowBlur=7;
+            x.beginPath();x.moveTo(cx+bk.cw/2,cy-3);x.lineTo(cx+bk.cw-0.5,cy+bk.ch-0.5);x.lineTo(cx+0.5,cy+bk.ch-0.5);x.closePath();x.fill();x.shadowBlur=0;
+          }else{
+            x.fillStyle=bk.color||'#4ade80';x.fillRect(cx,cy,bk.cw-1,bk.ch-1);
+            if(cell.hp>1){x.strokeStyle='rgba(255,255,255,0.55)';x.lineWidth=1;x.strokeRect(cx+0.5,cy+0.5,bk.cw-2,bk.ch-2);}
+          }
+        }}
+      // пули: лазер — длинный тонкий пронзающий луч, самонаводящиеся — фиолетовые с искрой, остальные — обычные
+      for(const b of A.bullets){
+        if(b.pierce){x.fillStyle='#fb923c';x.shadowColor='#fb923c';x.shadowBlur=6;x.fillRect(b.x-1,b.y-16,2,20);x.shadowBlur=0;}
+        else if(b.homing){x.fillStyle='#a78bfa';x.shadowColor='#a78bfa';x.shadowBlur=5;x.fillRect(b.x-1.5,b.y-8,3,10);x.shadowBlur=0;}
+        else{x.fillStyle='#e8eefc';x.fillRect(b.x-1.5,b.y-8,3,10);}
+      }
       x.fillStyle='#fb7185';for(const b of A.ebullets)x.fillRect(b.x-1.5,b.y-4,3,10);
       // ПАДАЮЩАЯ ДОБЫЧА: вращающаяся капсула с иконкой + свечение (крутится по физике)
       x.textAlign='center';x.textBaseline='middle';
@@ -2141,25 +2288,30 @@
       if(A.pops)for(const pp of A.pops){x.globalAlpha=Math.max(0,pp.life);x.fillStyle=pp.color;x.font='bold 16px system-ui,sans-serif';x.textAlign='center';x.fillText(pp.label,pp.x,pp.y-(0.8-pp.life)*24);x.globalAlpha=1;}
       // частицы
       particles.forEach(p=>{x.globalAlpha=Math.max(0,p.life);x.fillStyle=p.color;x.fillRect(p.x-p.sz/2,p.y-p.sz/2,p.sz,p.sz);});x.globalAlpha=1;
-      // корабль игрока (пушка)
+      // корабль игрока: цвет и силуэт меняются с текущим режимом оружия (плюшкой)
       x.save();x.translate(A.px,A.py);
       if(A.shield>0){x.strokeStyle='#38bdf8';x.lineWidth=2;x.globalAlpha=0.6+0.3*Math.sin(A.at*8);x.shadowColor='#38bdf8';x.shadowBlur=10;x.beginPath();x.arc(0,-2,22,0,Math.PI*2);x.stroke();x.shadowBlur=0;x.globalAlpha=1;}
-      x.fillStyle=A.rapidT>0?'#4ade80':'#7dd3fc';x.shadowColor=A.rapidT>0?'#4ade80':'#4D96FF';x.shadowBlur=10;
+      const shipCol=ARC_MODE_COL[A.mode]||'#7dd3fc';
+      x.fillStyle=shipCol;x.shadowColor=shipCol;x.shadowBlur=10;
       x.beginPath();x.moveTo(0,-16);x.lineTo(13,10);x.lineTo(4,10);x.lineTo(4,3);x.lineTo(-4,3);x.lineTo(-4,10);x.lineTo(-13,10);x.closePath();x.fill();x.shadowBlur=0;
       x.fillStyle='#fde047';x.fillRect(-1.6,-16,3.2,6);
-      if(A.spreadT>0){x.fillStyle='#f0abfc';x.fillRect(-9,-14,2.4,5);x.fillRect(6.6,-14,2.4,5);} // боковые стволы
+      if(A.mode==='spread'){x.fillStyle='#f0abfc';x.fillRect(-9,-14,2.4,5);x.fillRect(6.6,-14,2.4,5);} // боковые стволы
+      else if(A.mode==='laser'){x.strokeStyle='#fb923c';x.lineWidth=1.5;x.globalAlpha=0.7+0.3*Math.sin(A.at*14);x.shadowColor='#fb923c';x.shadowBlur=8;x.beginPath();x.moveTo(0,-16);x.lineTo(0,-30);x.stroke();x.shadowBlur=0;x.globalAlpha=1;} // тонкий пронзающий ствол
+      else if(A.mode==='homing'){x.fillStyle='#a78bfa';x.globalAlpha=0.7+0.3*Math.sin(A.at*6);x.shadowColor='#a78bfa';x.shadowBlur=8;x.beginPath();x.arc(0,-12,2.6,0,Math.PI*2);x.fill();x.shadowBlur=0;x.globalAlpha=1;} // «наводящий глаз»
       x.restore();
       if(A.flash>0){x.globalAlpha=A.flash*3;x.fillStyle='#fff';x.fillRect(0,0,W,H);x.globalAlpha=1;}
       // скан-линии
       x.globalAlpha=0.06;x.fillStyle='#000';for(let yy=0;yy<H;yy+=3)x.fillRect(0,yy,W,1);x.globalAlpha=1;
-      // HUD: счёт + прогресс + жизни, ряд активных усилителей, комбо
+      // HUD: счёт + волна + жизни, текущее оружие, комбо
       x.fillStyle='#4ade80';x.font='bold 15px system-ui,sans-serif';x.textAlign='left';x.textBaseline='top';
-      x.fillText('👾 '+A.kills+' / '+A.total,14,12);
+      x.fillText('👾 '+A.kills+'/'+A.total+' · Волна '+(A.waveNum||1)+'/'+(A.maxWaves||3),14,12);
       x.fillStyle='#fde047';x.fillText('★ '+A.score,14,32);
       x.fillStyle='#ff5d73';x.textAlign='right';x.fillText('❤'.repeat(Math.max(0,lives)),W-14,12);
-      // активные усилители (иконка + остаток секунд)
+      // текущее оружие + щит (иконка + остаток секунд)
       let hx=W-14;x.textAlign='right';
-      const pu=[];if(A.rapidT>0)pu.push(['⚡',Math.ceil(A.rapidT),'#4ade80']);if(A.spreadT>0)pu.push(['⋔',Math.ceil(A.spreadT),'#f0abfc']);if(A.shield>0)pu.push(['🛡','','#38bdf8']);
+      const pu=[];
+      if(A.mode!=='normal'&&A.modeT>0){const mm=ARC_DROPS[A.mode];if(mm)pu.push([mm[0],Math.ceil(A.modeT),ARC_MODE_COL[A.mode]]);}
+      if(A.shield>0)pu.push(['🛡','','#38bdf8']);
       for(const q of pu){x.fillStyle=q[2];x.font='bold 13px system-ui,sans-serif';const s=q[0]+(q[1]!==''?' '+q[1]+'с':'');x.fillText(s,hx,34);hx-=x.measureText(s).width+14;}
       // комбо при серии
       if(A.combo>=3){x.textAlign='center';x.fillStyle='#fde047';x.font='bold '+(15+Math.min(12,A.combo))+'px system-ui,sans-serif';x.globalAlpha=Math.min(1,A.comboT);x.fillText('🔥 x'+A.combo,W/2,44);x.globalAlpha=1;}
@@ -5125,6 +5277,8 @@
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,portal.kind==='arcade'?'#4ade80':'#c084fc',1.7+0.3*Math.sin(t*6));
+    // проклятая зона: стрелка, иначе в гуще боя её физически не найти (баннер «Удержи зону» без неё бесполезен)
+    cursedZones.forEach(cz=>{if(!cz.done)edgeArrow(cz.x,cz.y,cz.r,'#a855f7',1.7+0.3*Math.sin(t*6));});
   }
 
   // critical stats drawn on the canvas itself — always visible, no matter how
@@ -6086,7 +6240,8 @@
       const cz=cursedZones[0],prog=Math.max(0,Math.min(1,(cz.hold||0)/(cz.holdNeed||7))),inside=dist(player,cz)<cz.r;
       x.save();x.textAlign='center';x.textBaseline='top';x.shadowColor='#000';x.shadowBlur=4;
       x.font='bold 15px system-ui,sans-serif';x.fillStyle=prog>=1?'#4ade80':(inside?'#fde047':'#c084fc');
-      x.fillText('🎁 УДЕРЖИ ЗОНУ ещё '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с'+(inside?'':' · ВСТАНЬ ВНУТРЬ!'),W/2,topY);
+      // не внутри — подсказываем идти по стрелке (иначе баннер висит без объяснений); также видно, сколько зоне осталось жить
+      x.fillText('🎁 УДЕРЖИ ЗОНУ ещё '+Math.ceil((cz.holdNeed||7)-(cz.hold||0))+'с'+(inside?'':' · ИДИ ПО СТРЕЛКЕ ➜ ('+Math.ceil(cz.t)+'с до исчезновения)'),W/2,topY);
       const bw=Math.min(300,W*0.5),bx0=W/2-bw/2,by0=topY+20,bh=9;
       x.shadowBlur=0;x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(bx0,by0,bw,bh);
       x.fillStyle=prog>=1?'#4ade80':'#facc15';x.fillRect(bx0,by0,bw*prog,bh);
