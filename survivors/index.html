@@ -1092,6 +1092,7 @@
   let vaultTheme='dungeon',forestPending=false,forestGate=false,forestDone=false,forestGateTotal=0,forestTrees=[];
   const CAVE_LIGHT=340; // радиус света фонаря в лабиринте (мировые единицы): дальше — темнота
   let inArcade=false,arcade=null,arcadeStash=null; // бонус-уровень SPACE INVADERS
+  let arcTouchX=null; // прямое слежение за пальцем в Invaders (не аналоговый джойстик — корабль ловит палец)
   let pendingMegaBoss=false,megaDone=false,megaFought=false;
   let worldTrees=[],forestField=false; // ЛЕС В ОТКРЫТОМ МИРЕ: деревья-препятствия прямо на карте // МЕГА-БОСС 50 ур.; megaFought — бой реально состоялся (не «за кадром»)
   let act=1,finale=null,act2Tower=null; // АКТ 2: финал-катсцена Хроноса, башня-починка, новый корабль
@@ -1948,13 +1949,13 @@
       shotCd:rand(0.6,1.2),bunkers,ufo:null,ufoCd:rand(7,13),kills:0,total:cols*rows,over:0,result:null,at:0,
       startX,startY,gapX,gapY,flash:0,
       drops:[],rapidT:0,spreadT:0,shield:0,score:0,gemsGot:0,combo:0,comboT:0,pops:[]}; // добыча + усилители
-    inArcade=true;state='running';
+    inArcade=true;state='running';arcTouchX=null;joy.active=false;
     announce={text:'👾 SPACE INVADERS! Сбей всех, не дай им дойти до низа',life:3.5,color:'#4ade80'};
     flashFx(0.4,'74,222,128');sfxSweep(200,820,0.45,'square',0.1,true);
   }
   function invPos(A,v){return{x:A.startX+v.col*A.gapX+A.ox,y:A.startY+v.row*A.gapY+A.oy};}
   function exitArcade(result){
-    inArcade=false;
+    inArcade=false;arcTouchX=null;joy.active=false;
     const caughtGems=arcade?(arcade.gemsGot||0):0; // пойманные кристаллы переносим в основной бой
     if(arcadeStash){enemies=arcadeStash.enemies||[];projectiles=arcadeStash.projectiles||[];enemyProjectiles=arcadeStash.enemyProjectiles||[];
       pools=arcadeStash.pools||[];mines=arcadeStash.mines||[];meteors=arcadeStash.meteors||[];boomers=arcadeStash.boomers||[];turrets=arcadeStash.turrets||[];
@@ -1981,12 +1982,17 @@
     t+=dt;A.at+=dt;if(A.flash>0)A.flash-=dt;
     if(announce){announce.life-=dt;if(announce.life<=0)announce=null;}
     if(A.over>0){A.over-=dt;if(A.over<=0){exitArcade(A.result);}return;}
-    // управление: только по горизонтали (джойстик / клавиши / геймпад)
-    let mvx=0;
-    if(joy&&joy.active&&Math.abs(joy.dx)>0.05)mvx=joy.dx;
-    if(keys){if(keys.left||keys.a)mvx=-1;if(keys.right||keys.d)mvx=1;}
-    if(typeof gp!=='undefined'&&gp.active&&Math.abs(gp.x)>0.15)mvx=gp.x;
-    A.px=Math.max(26,Math.min(W-26,A.px+mvx*400*dt));
+    // управление: ТАЧ — корабль напрямую ловит палец (не аналоговый джойстик — тот
+    // слишком неточен для узкого шутера); клавиши/геймпад — как раньше, по скорости
+    if(arcTouchX!=null){
+      A.px+=(arcTouchX-A.px)*Math.min(1,dt*24); // быстрый, но плавный «магнит» к пальцу
+    }else{
+      let mvx=0;
+      if(keys){if(keys.left||keys.a)mvx=-1;if(keys.right||keys.d)mvx=1;}
+      if(typeof gp!=='undefined'&&gp.active&&Math.abs(gp.x)>0.15)mvx=gp.x;
+      A.px+=mvx*440*dt;
+    }
+    A.px=Math.max(26,Math.min(W-26,A.px));
     // усилители-таймеры
     if(A.rapidT>0)A.rapidT-=dt;if(A.spreadT>0)A.spreadT-=dt;
     if(A.comboT>0){A.comboT-=dt;if(A.comboT<=0)A.combo=0;}
@@ -6477,9 +6483,13 @@
   document.getElementById('btnFinishSide').addEventListener('click',()=>sideEl.classList.remove('open'));
 
   function toCanvasXY(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*(cv.width/r.width),y:(e.clientY-r.top)*(cv.height/r.height)};}
-  cv.addEventListener('pointerdown',e=>{if(state!=='running'||paused)return;const p=toCanvasXY(e);joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
-  cv.addEventListener('pointermove',e=>{if(!joy.active||paused)return;const p=toCanvasXY(e);let dx=p.x-joy.bx,dy=p.y-joy.by;const d=Math.hypot(dx,dy),max=42;if(d>max){dx=dx/d*max;dy=dy/d*max;}joy.dx=dx/max;joy.dy=dy/max;});
-  function endJoy(){joy.active=false;joy.dx=0;joy.dy=0;}
+  cv.addEventListener('pointerdown',e=>{if(state!=='running'||paused)return;const p=toCanvasXY(e);
+    if(inArcade){arcTouchX=p.x;cv.setPointerCapture(e.pointerId);return;}
+    joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
+  cv.addEventListener('pointermove',e=>{if(paused)return;const p=toCanvasXY(e);
+    if(inArcade){if(arcTouchX!=null)arcTouchX=p.x;return;}
+    if(!joy.active)return;let dx=p.x-joy.bx,dy=p.y-joy.by;const d=Math.hypot(dx,dy),max=42;if(d>max){dx=dx/d*max;dy=dy/d*max;}joy.dx=dx/max;joy.dy=dy/max;});
+  function endJoy(){joy.active=false;joy.dx=0;joy.dy=0;arcTouchX=null;}
   cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
 
   window.addEventListener('resize',()=>{resizeCanvas();draw();});
