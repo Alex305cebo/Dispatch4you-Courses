@@ -41,7 +41,7 @@
   button:hover{background:#242c3a;}
   .hint{grid-column:1/-1;font-size:11px;color:var(--muted);line-height:1.4;margin:0;text-align:center;}
   .credit{grid-column:1/-1;font-size:10px;color:var(--muted);opacity:0.7;text-align:center;margin:2px 0 0;}
-  @media (min-width:820px) and (min-height:480px){
+  @media (min-width:820px) and (min-height:480px) and (orientation: landscape){
     .wrap{grid-template-columns:1fr 250px;grid-template-rows:1fr;}
     .side{grid-template-columns:1fr;max-height:none;}
     .box{padding:10px 12px;}
@@ -143,7 +143,7 @@
   @keyframes pupblink{0%,100%{opacity:1;transform:translateX(-50%) scale(1);}50%{opacity:0.82;transform:translateX(-50%) scale(0.985);}}
   /* only the narrow single-column (phone) layout hides sidebar stats and leans on the
      on-canvas HUD; tablets wide enough for the side-by-side layout keep the full sidebar */
-  @media (hover:none) and (pointer:coarse) and (max-width:819px){
+  @media (hover:none) and (pointer:coarse) and (max-width:819px), (hover:none) and (pointer:coarse) and (orientation: portrait){
     .side .m-hide{display:none;}
     .side{max-height:20vh;}
     .hint{display:none;}
@@ -154,14 +154,14 @@
   #btnBurger{display:none;position:absolute;top:9px;left:9px;z-index:40;width:auto;padding:6px 12px;font-size:20px;line-height:1;
     background:rgba(16,22,40,0.92);border:1px solid rgba(125,211,252,0.45);border-radius:10px;color:#cfe6ff;box-shadow:0 2px 10px rgba(0,0,0,0.45);}
   #btnSideClose{border-color:#4ade80;color:#4ade80;font-weight:700;}
-  @media (max-width:819px){
+  @media (max-width:819px), (orientation: portrait){
     #btnBurger{display:flex;align-items:center;justify-content:center;}
     .m-only{display:block;}
     .side{position:fixed;inset:0;z-index:70;background:rgba(6,9,16,0.97);display:none;grid-template-columns:1fr;
       max-height:none;padding:16px 14px;overflow-y:auto;align-content:start;gap:10px;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);}
     .side.open{display:grid;}
     .side .hint,.side .credit{display:block;}
-    #pendingBtns{bottom:72px;}
+    #pendingBtns{bottom:84px;}
     /* окна (лидерборд, история, мета…) открываются ПОВЕРХ попап-меню */
     .overlay{z-index:80;}
   }
@@ -5172,8 +5172,8 @@
     x.restore();
   }
   function drawHudOverlay(){
-    // ПК — угловая коробка-хаб; МОБИЛЬНЫЙ — полоса во всю ширину сверху (drawMobileBar)
-    const mobile=W<640;
+    // ПК/ландшафт — угловая карточка-хаб; телефон И планшет вертикально — полоса внизу (drawMobileBar)
+    const mobile=W<640||H>W;
     if(mobile){drawMobileBar();}
     else{
     // ═══ КАРТОЧКА-ХАБ (ПК): 4 секции с разделителями ═══
@@ -5276,7 +5276,7 @@
     // индикатор СЕРИИ БЕЗ УРОНА: справа сверху (хаб теперь внизу, места вверху достаточно).
     // Чем длиннее серия — тем ярче и крупнее.
     if(player.combo>=3){
-      const mobile=W<640;const cy0=8;
+      const mobile=W<640||H>W;const cy0=8;
       x.save();
       const ti=comboTierInfo(player.combo);
       const tierCol=['#fb923c','#f87171','#facc15','#c084fc','#67e8f9'];
@@ -5996,7 +5996,8 @@
     // складывается вниз по курсору topY — элементы никогда не накладываются друг на друга.
     // На узких экранах стек начинается НИЖЕ компактной панели статов (низ ~98px),
     // иначе центрированный текст наезжал бы на неё.
-    let topY=W<640?108:34;
+    // хаб теперь внизу — верх свободен; на мобильном отступаем лишь под кнопку-гамбургер
+    let topY=(W<640||H>W)?46:34;
     // ВОЛНА-ОСАДА: баннер с обратным отсчётом и убывающей полосой (30с → 0)
     if(siege){
       const prog=Math.max(0,siege.t/siege.total),urgent=siege.t<8;
@@ -6088,9 +6089,9 @@
       // Десктоп — ряд по центру сверху (в общем стеке). Мобильные/узкие — СПРАВА от
       // панели статов (хаба), с переносом строк; центр поля не занимаем.
       const n=autoToasts.length;
-      const mobile=W<640;
+      const mobile=W<640||H>W;
       const s=mobile?26:34,gap=5;
-      const rowX0=mobile?164:W/2-(n*s+(n-1)*gap)/2; // 164 = правый край компактного хаба (6+150) + 8
+      const rowX0=mobile?60:W/2-(n*s+(n-1)*gap)/2; // 60 = правее кнопки-гамбургера; хаб теперь внизу
       let ix=rowX0,iy=mobile?10:topY,lastRowY=iy;
       const maxX=W-8;
       x.save();x.textAlign='center';x.textBaseline='middle';
