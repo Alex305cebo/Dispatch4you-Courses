@@ -140,13 +140,18 @@
   #pendingBtns.urge2{animation:pupurge 0.7s ease-in-out infinite;}
   /* хаб (ПК) теперь показывает только уровень+прочность — статы урона и иконки оружия/эволюций
      переехали сюда, в попап по кнопке (готовим место под будущий гараж корабля за кристаллы) */
+  /* top/left — в «канвас-единицах» (как хаб рисуется на канвасе); JS выставляет
+     transform:scale(domScale) в resizeCanvas() — тот же коэффициент, на который сам канвас
+     растянут CSS-ом (width/height:100%) относительно своего внутреннего разрешения.
+     Без этого на широких десктопных окнах (где канвас даунскейлится и растягивается) кнопка
+     оставалась «мелкой» в фикс-пикселях и наезжала на увеличенный хаб */
   #btnShipStats{display:none;position:absolute;z-index:6;top:132px;left:14px;width:auto;padding:5px 11px;
     font-size:11px;font-weight:700;background:rgba(17,24,42,0.72);border:1px solid rgba(125,211,252,0.32);
-    border-radius:8px;color:#cfe6ff;cursor:pointer;}
+    border-radius:8px;color:#cfe6ff;cursor:pointer;transform-origin:top left;}
   #btnShipStats:hover{background:rgba(17,24,42,0.9);border-color:#7dd3fc;}
   #shipStatsPanel{display:none;position:absolute;z-index:6;top:168px;left:14px;width:248px;padding:11px 13px;
     border-radius:12px;background:rgba(10,14,26,0.9);border:1px solid rgba(125,211,252,0.22);color:#f4f7fc;
-    box-shadow:0 8px 24px rgba(0,0,0,0.4);}
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);transform-origin:top left;}
   #shipStatsPanel.open{display:block;}
   .ssp-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:7px 4px;text-align:center;margin-bottom:9px;}
   .ssp-tiles b{display:block;font-size:13px;font-weight:800;}
@@ -367,6 +372,12 @@
     cv.width=W;cv.height=H;
     // тот же критерий, что и CSS-медиа-запрос сайдбара — оба решения теперь всегда совпадают
     uiMobile=window.matchMedia('(max-width:819px), (orientation: portrait)').matches;
+    // канвас растянут CSS-ом (width/height:100%) с внутреннего W до rw — тот же коэффициент
+    // прикладываем к DOM-кнопке/попапу статов, иначе на широких окнах (где W даунскейлится)
+    // их фикс-пиксельные top/left отстают от реально увеличенного хаба и наезжают на него
+    const domScale=rw/Math.max(1,W);
+    btnShipStats.style.transform='scale('+domScale+')';
+    shipStatsPanel.style.transform='scale('+domScale+')';
     syncShipStatsVisibility();
   }
   const isMobileDevice=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
@@ -1107,11 +1118,13 @@
   ];
 
   let player,enemies,projectiles,enemyProjectiles,particles,rings,pickups,bolts,mines,gems,boomers,pools,meteors,turrets,freezeT,safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,floaters=[];
-  // КРУПНАЯ АНИМАЦИЯ ЗАЧИСЛЕНИЯ КРИСТАЛЛОВ: собранные кристаллы копятся в gemCreditAcc короткое
-  // окно (чтобы очередь/пачка сборов не мигала числами по одному), затем разом всплывает
-  // большая цифра над кораблём. НИ ОДИН кристалл не пропадает бесследно — даже те, что
-  // деспавнятся вдали или срезаются лимитом GEM_CAP, всё равно зачисляются через creditGem()
-  let gemCreditAcc=0,gemCreditFlushT=0,gemCreditShowVal=0,gemCreditShowT=0;
+  // СЧЁТЧИК КРИСТАЛЛОВ: постоянная сумма сверху экрана (gemsCollected), а не всплывающий
+  // попап с назойливым звуком на каждую пачку. При сборе рядом с кораблём к счётчику
+  // «улетает» маленькая иконка по дуге (лёгкая анимация без реальных коллизий/физики —
+  // дёшево по кадру) и тихо гаснет у цели. НИ ОДИН кристалл не пропадает бесследно — даже
+  // те, что деспавнятся вдали или срезаются лимитом GEM_CAP, всё равно зачисляются в сумму
+  // через creditGem(), просто без иконки-полёта (незачем анимировать то, что игрок не видел)
+  let gemFlyIcons=[],gemCounterPos={x:0,y:0},gemCounterPunch=0;
   let autoToasts=[]; // мелкие плашки сверху в авто-режиме улучшений («✓ применено …»)
   let telegraphs=[]; // PoE-стиль: красные круги-предупреждения ударов боссов по земле
   let fireZones=[]; // «пол-арены горит»: половина поля от точки босса
@@ -1348,7 +1361,7 @@
 
   function reset(){
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
-    gemCreditAcc=0;gemCreditFlushT=0;gemCreditShowVal=0;gemCreditShowT=0;
+    gemFlyIcons=[];gemCounterPunch=0;
     // (зум ×1.30 — близкий стартовый план нового забега)
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
@@ -1418,7 +1431,7 @@
     enemies=s.enemies||[];gems=s.gems||[];pickups=s.pickups||[];mines=s.mines||[];pools=s.pools||[];
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];fxq=[];
-    gemCreditAcc=0;gemCreditFlushT=0;gemCreditShowVal=0;gemCreditShowT=0;
+    gemFlyIcons=[];gemCounterPunch=0;
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=Math.min(3,s.lives!=null?s.lives:3);zoom=baseZoom;enemyCountSmoothed=0;
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;killsThisLevel=s.killsThisLevel||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
@@ -3305,7 +3318,7 @@
   // ЗАЧИСЛЕНИЕ КРИСТАЛЛА: единая точка для любого способа получить кристалл — из-под корабля,
   // из кольца безопасности, или «сгоревший» вдали/срезанный лимитом. Раньше вдалеке и лимитом
   // кристаллы просто удалялись без награды — теперь ни один не пропадает бесследно.
-  function creditGem(g){
+  function creditGem(g,silent){
     grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));
     gemsCollected++;
     if(challenge&&challenge.type==='gems')challenge.progress++;
@@ -3314,9 +3327,12 @@
     player.gemShardAcc=(player.gemShardAcc||0)+0.02;
     if(player.gemShardAcc>=1){player.gemShardAcc-=1;metaState.shards++;saveMeta();
       if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-18,vy:-26,life:1,val:'+1 ✨',crit:false});}
-    // копим в пачку для крупной анимации — окно продлевается каждым новым кристаллом,
-    // так что серия сборов (например, из кольца безопасности) всплывает ОДНОЙ большой цифрой
-    gemCreditAcc++;gemCreditFlushT=0.4;
+    // silent=true — тихое зачисление «сгоревшего»/срезанного лимитом кристалла: игрок его
+    // не видел рядом с кораблём, поэтому иконку к счётчику не пускаем (нечего анимировать)
+    if(!silent&&gemFlyIcons.length<60){
+      const sx=(g.x-player.x)*zoom+W/2,sy=(g.y-player.y)*zoom+H/2;
+      gemFlyIcons.push({x:sx,y:sy,t:0,dur:0.45+Math.random()*0.15});
+    }
   }
 
   function levelUpOnce(){
@@ -4952,7 +4968,7 @@
     for(const g of gems){
       const d=dist(player,g);
       g.age=(g.age||0)+dt;
-      if(!g.magnet&&!vacuum&&!g.szPhase&&d>GEM_DESPAWN_R&&g.age>GEM_DESPAWN_T){creditGem(g);g.dead=true;continue;} // далёкий и старый — не пропадает, а тихо зачисляется
+      if(!g.magnet&&!vacuum&&!g.szPhase&&d>GEM_DESPAWN_R&&g.age>GEM_DESPAWN_T){creditGem(g,true);g.dead=true;continue;} // далёкий и старый — не пропадает, а тихо зачисляется
       if(g.szPhase==='launch'){
         // зона могла истечь (safeZone=null) пока кристалл ещё рикошетит внутри неё —
         // тогда просто отпускаем его лететь к кораблю, без обращения к границе кольца
@@ -5003,18 +5019,18 @@
     const GEM_CAP=320;
     if(gems.length>GEM_CAP){
       gems.sort((a,b)=>((a.x-player.x)**2+(a.y-player.y)**2)-((b.x-player.x)**2+(b.y-player.y)**2));
-      for(let i=GEM_CAP;i<gems.length;i++)creditGem(gems[i]);
+      for(let i=GEM_CAP;i<gems.length;i++)creditGem(gems[i],true);
       gems.length=GEM_CAP;
     }
-    // окно пачки истекло — показываем крупную цифру зачисленных кристаллов разом
-    if(gemCreditAcc>0){
-      gemCreditFlushT-=dt;
-      if(gemCreditFlushT<=0){
-        gemCreditShowVal=gemCreditAcc;gemCreditShowT=1.3;gemCreditAcc=0;
-        sfxChime(760,4,0.07,0.1);
+    // иконки-кристаллы, летящие к постоянному счётчику сверху экрана (лёгкая анимация без
+    // столкновений/физики — просто дуга по времени, дёшево по кадру даже пачкой)
+    if(gemFlyIcons.length){
+      for(let i=gemFlyIcons.length-1;i>=0;i--){
+        const fi=gemFlyIcons[i];fi.t+=dt;
+        if(fi.t>=fi.dur){gemFlyIcons.splice(i,1);gemCounterPunch=1;}
       }
     }
-    if(gemCreditShowT>0)gemCreditShowT-=dt;
+    if(gemCounterPunch>0)gemCounterPunch=Math.max(0,gemCounterPunch-dt*4);
 
     // projectiles
     for(const p of projectiles){
@@ -6304,19 +6320,6 @@
       });
       x.shadowBlur=0;x.globalAlpha=1;
     }
-    // КРУПНАЯ ЦИФРА ЗАЧИСЛЕННЫХ КРИСТАЛЛОВ: над кораблём, «панч»-масштаб на появление,
-    // размер компенсирует зум камеры (1/zoom) — читается крупно при любом отдалении
-    if(gemCreditShowT>0){
-      const age=1.3-gemCreditShowT,popIn=Math.min(1,age/0.18);
-      const scaleZ=1/zoom,scale=(0.55+0.45*popIn)*scaleZ;
-      x.save();x.globalAlpha=Math.min(1,gemCreditShowT/0.45);
-      x.translate(player.x,player.y-player.r-46*scaleZ);
-      x.textAlign='center';x.textBaseline='middle';
-      x.font='800 '+Math.round(30*scale)+'px system-ui,sans-serif';
-      x.fillStyle='#7dd3fc';x.shadowColor='#38bdf8';x.shadowBlur=16;
-      x.fillText('💎 +'+fmtNum(gemCreditShowVal),0,0);
-      x.shadowBlur=0;x.restore();
-    }
     // aura
     if(player.auraLevel){x.strokeStyle='rgba(77,150,255,0.25)';x.lineWidth=2/zoom;x.beginPath();x.arc(player.x,player.y,player.auraRadius*softAoe(player.aoeMult),0,Math.PI*2);x.stroke();}
     // blades
@@ -6558,6 +6561,38 @@
       x.fillStyle='#4D96FF';x.fillRect(bxL,byL,bwL*progT,bhL);
       x.strokeStyle='rgba(255,255,255,0.35)';x.lineWidth=1;x.strokeRect(bxL+0.5,byL+0.5,bwL-1,bhL-1);
       x.restore();topY+=28;
+    }
+    // ПОСТОЯННЫЙ СЧЁТЧИК КРИСТАЛЛОВ: всегда на виду (вместо всплывающего попапа со звуком) —
+    // собранные кристаллы летят сюда маленькими иконками (см. ниже) и тихо считаются
+    {
+      const punchS=1+gemCounterPunch*0.22;
+      const label='💎 '+fmtNum(gemsCollected);
+      x.save();x.textAlign='center';x.textBaseline='middle';
+      x.font='bold '+Math.round(14*punchS)+'px system-ui,sans-serif';
+      const gcw=x.measureText(label).width+16,gch=22;
+      gemCounterPos.x=topCX;gemCounterPos.y=topY+gch/2;
+      x.fillStyle='rgba(10,16,28,0.55)';x.beginPath();x.roundRect(topCX-gcw/2,topY,gcw,gch,gch/2);x.fill();
+      x.strokeStyle='rgba(125,211,252,0.3)';x.lineWidth=1;x.beginPath();x.roundRect(topCX-gcw/2+0.5,topY+0.5,gcw-1,gch-1,gch/2);x.stroke();
+      x.shadowColor='#38bdf8';x.shadowBlur=gemCounterPunch>0?10:0;
+      x.fillStyle='#bfe6ff';x.fillText(label,topCX,topY+gch/2);
+      x.shadowBlur=0;x.restore();topY+=gch+8;
+    }
+    // ЛЕТЯЩИЕ ИКОНКИ КРИСТАЛЛОВ → к счётчику: дуга (квадратичный безье) с ускорением на
+    // подлёте («втягивание»), без коллизий — чисто декоративная, дешёвая по кадру анимация
+    if(gemFlyIcons.length){
+      x.save();x.textAlign='center';x.textBaseline='middle';
+      for(const fi of gemFlyIcons){
+        const t=Math.min(1,fi.t/fi.dur),et=t*t;
+        const cx2=(fi.x+gemCounterPos.x)/2,cy2=Math.min(fi.y,gemCounterPos.y)-70;
+        const u=1-et;
+        const px=u*u*fi.x+2*u*et*cx2+et*et*gemCounterPos.x;
+        const py=u*u*fi.y+2*u*et*cy2+et*et*gemCounterPos.y;
+        const sz=9*(1-et*0.7);
+        x.globalAlpha=t>0.75?(1-t)/0.25:1;
+        x.fillStyle='#7dd3fc';x.shadowColor='#38bdf8';x.shadowBlur=6;
+        x.beginPath();x.arc(px,py,sz,0,Math.PI*2);x.fill();
+      }
+      x.shadowBlur=0;x.restore();x.globalAlpha=1;
     }
     // ВОЛНА-ОСАДА: баннер с обратным отсчётом и убывающей полосой (30с → 0)
     if(siege){
