@@ -1099,6 +1099,7 @@
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
   let act2Base=null; // БАЗА Акта 2: здание, что починило корабль — остаётся в мире как ориентир
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
+  let vaultLoot=[],vaultOpening=false,vaultOpenT=0; // ЦЕРЕМОНИЯ ПОРТАЛА: выброс добычи с физикой после смерти всех боссов
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
@@ -1310,7 +1311,7 @@
     // (зум ×1.30 — близкий стартовый план нового забега)
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
-    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
+    portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;act=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
@@ -1336,6 +1337,7 @@
       if(inVault){
         data.inVault=true;data.vaultT=vaultT;data.vaultCleared=vaultCleared;data.vaultTheme=vaultTheme;data.vaultTotal=vaultTotal;
         data.vaultWalls=vaultWalls;data.vaultExit=vaultExit;data.vaultWalk=vaultWalk;data.vaultSpawns=vaultSpawns;
+        data.vaultLoot=vaultLoot;data.vaultOpening=vaultOpening;data.vaultOpenT=vaultOpenT;
         data.vaultStash=vaultStash;data.forestTrees=forestTrees;
         data.vaultGrid=vaultGrid?Array.from(vaultGrid):null;data.vgOx=vgOx;data.vgOy=vgOy;data.vgT=vgT;data.vgCols=vgCols;data.vgRows=vgRows;
       }
@@ -1388,6 +1390,7 @@
     if(s.inVault){
       inVault=true;vaultT=s.vaultT||0;vaultCleared=!!s.vaultCleared;vaultTheme=s.vaultTheme||'dungeon';vaultTotal=s.vaultTotal||0;
       vaultWalls=s.vaultWalls||[];vaultExit=s.vaultExit||null;vaultWalk=s.vaultWalk||[];vaultSpawns=s.vaultSpawns||[];
+      vaultLoot=s.vaultLoot||[];vaultOpening=!!s.vaultOpening;vaultOpenT=s.vaultOpenT||0;
       vaultStash=s.vaultStash||null;forestTrees=s.forestTrees||[];
       if(s.vaultGrid){vaultGrid=Uint8Array.from(s.vaultGrid);vgOx=s.vgOx||0;vgOy=s.vgOy||0;vgT=s.vgT||64;vgCols=s.vgCols||0;vgRows=s.vgRows||0;}else vaultGrid=null;
       if(vaultStash){ // чиним Set-ы у отложенного мира (JSON превратил их в {})
@@ -1395,7 +1398,7 @@
         (vaultStash.boomers||[]).forEach(bo=>{if(!(bo.hitSet instanceof Set))bo.hitSet=new Set();});
       }
     }else{
-      inVault=false;vaultTheme='dungeon';forestTrees=[];vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultStash=null;vaultCleared=false;vaultT=0;
+      inVault=false;vaultTheme='dungeon';forestTrees=[];vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultStash=null;vaultCleared=false;vaultT=0;vaultLoot=[];vaultOpening=false;vaultOpenT=0;
     }
     // ВОССТАНОВЛЕНИЕ SPACE INVADERS
     if(s.inArcade&&s.arcade){
@@ -1516,7 +1519,9 @@
   // работают ВНУТРИ коридора, но не могут его пробить.
   function clampMobHp(en){
     const dps=estPlayerDps();
-    const lim=en.megaboss?[40,90]:en.superboss?[10,26]:en.elite?[6,16]:en.hunter?[3,7]:en.champion?[1.6,4.5]:[0.6,2.4];
+    // враги «полегчали» ~на четверть: бои короче, игра не затягивается (коридор всё так же
+    // привязан к живому DPS игрока — баланс держится на любом уровне прокачки)
+    const lim=en.megaboss?[30,70]:en.superboss?[8,20]:en.elite?[4.5,12]:en.hunter?[2.5,5.5]:en.champion?[1.3,3.5]:[0.5,1.9];
     const was=Math.max(1,en.maxHp);
     en.maxHp=Math.max(dps*lim[0],Math.min(isFinite(en.maxHp)?en.maxHp:dps*lim[1],dps*lim[1]));
     en.hp=en.hp/was*en.maxHp;
@@ -1738,7 +1743,7 @@
     // мобы НЕ спавнятся все сразу у входа — копим ТОЧКИ спавна, они материализуются
     // по мере продвижения (см. step). Сложность нарастает с ГЛУБИНОЙ комнаты.
     const dps=estPlayerDps();
-    const bossCap=Math.max(400,dps*9);
+    const bossCap=Math.max(350,dps*7); // стражи полегче — лабиринт проходится бодрее
     const depthN=centers.length-1; // индекс последней комнаты
     vaultSpawns=[];
     // КОРИДОРЫ: плотнее мобами, чем глубже коридор
@@ -1760,7 +1765,7 @@
         const b=spawnEnemy(true,3+Math.floor(depth*5));
         b.hp=b.maxHp=Math.min(b.maxHp*(0.4+depth*0.5),bossCap);b.r=Math.min(b.r,46);
         b.x=c.x+(guards>1?(gI?90:-90):0);b.y=c.y;b.pauseSpawns=false;
-        b.modSummon=0;b.msT=0;b.skinName='Страж лабиринта';b.sleep=true;
+        b.modSummon=0;b.msT=0;b.skinName='Страж лабиринта';b.sleep=true;b.vaultBoss=true;
         b.dmg*=1+depth*0.4;
       }
       const swarm=3+Math.round(depth*3);
@@ -1770,16 +1775,17 @@
     // Выход открывается только после полной зачистки (значит — после победы над ним).
     {
       const g=spawnEnemy(true,6);
-      g.hp=g.maxHp=Math.min(g.maxHp*1.6,bossCap*1.8);g.r=Math.min(g.r+8,54);
+      g.hp=g.maxHp=Math.min(g.maxHp*1.6,bossCap*1.5);g.r=Math.min(g.r+8,54);
       g.x=last.x;g.y=last.y;g.pauseSpawns=false;g.superboss=true;g.skinShape='super';
-      g.color=forest?'#16a34a':'#ff2d55';g.glow=forest?'#22c55e':'#ff2d55';g.modSummon=0;g.msT=0;g.sleep=true;
+      g.color=forest?'#16a34a':'#ff2d55';g.glow=forest?'#22c55e':'#ff2d55';g.modSummon=0;g.msT=0;g.sleep=true;g.vaultBoss=true;
       g.skinName=forest?'Лесной Хозяин':'Хранитель Лабиринта';g.dmg*=1.5;
       for(let k2=0;k2<4;k2++)vaultSpawns.push({x:last.x+rand(-170,170),y:last.y+rand(-170,170)});
     }
-    vaultTotal=enemies.length+vaultSpawns.length;
+    // ЦЕЛЬ ЛАБИРИНТА: убить всех БОССОВ (стражи + Хранитель), обычных мобов чистить не обязательно
+    vaultTotal=enemies.filter(e2=>e2.vaultBoss).length;
     announce=forest
-      ?{text:'🌲 ЛЕС ('+centers.length+' полян)! Пробейся по улочкам к Лесному Хозяину — уничтожь всех ('+vaultTotal+')',life:4,color:'#4ade80'}
-      :{text:'🏛 ЛАБИРИНТ ('+centers.length+' залов)! Пробейся к Хранителю — уничтожь всех ('+vaultTotal+')',life:4,color:'#c084fc'};
+      ?{text:'🌲 ЛЕС ('+centers.length+' полян)! ЦЕЛЬ: убей всех БОССОВ ('+vaultTotal+') — путь к Лесному Хозяину',life:4.5,color:'#4ade80'}
+      :{text:'🏛 ЛАБИРИНТ ('+centers.length+' залов)! ЦЕЛЬ: убей всех БОССОВ ('+vaultTotal+') — путь к Хранителю',life:4.5,color:'#c084fc'};
     camShake=Math.max(camShake,10);screenFlash=Math.max(screenFlash,forest?0.4:0.4);
     sfxSweep(200,900,0.5,'sawtooth',0.12,true);
   }
@@ -1892,7 +1898,7 @@
     pools=vaultStash.pools;mines=vaultStash.mines;meteors=vaultStash.meteors;boomers=vaultStash.boomers;turrets=vaultStash.turrets;
     player.x=vaultStash.ox;player.y=vaultStash.oy;mobSpawnPaused=vaultStash.paused;player.invuln=Math.max(player.invuln,1.5);
     inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;telegraphs=[];fireZones=[];
-    vaultTheme='dungeon';forestTrees=[];forestGate=false;
+    vaultTheme='dungeon';forestTrees=[];forestGate=false;vaultLoot=[];vaultOpening=false;vaultOpenT=0;
   }
   function rollVaultReward(){
     // СУПЕР-ПРИЗ за победу над Хранителем — гарантированно ценный и частично УНИКАЛЬНЫЙ
@@ -3614,7 +3620,7 @@
   function spawnMegaBoss(){
     const dps=estPlayerDps();
     const a2=act===2; // Акт 2: обновлённый Хронос — крепче, злее, и с истинной формой в конце
-    const hp=a2?Math.max(16000,dps*95):Math.max(9000,dps*60); // ОЧЕНЬ много жизней: щит/лечение/неуязвимости
+    const hp=a2?Math.max(13000,dps*75):Math.max(7500,dps*48); // много жизней, но бой короче (баланс к DPS игрока)
     const dmg=(a2?tierAvgDmg(50)*22:tierAvgDmg(50)*16);
     // АРЕНА: Хронос «поглощает» обычных мобов — поле очищается, бой не пропустить
     enemies=enemies.filter(e2=>e2.elite);
@@ -3629,7 +3635,7 @@
       xp:xpForPower(hp,dmg)*3,elite:true,megaboss:true,bossNumber:8,pauseSpawns:true,
       shieldMax:Math.max(1200,dps*(a2?12:8)),shieldHp:Math.max(1200,dps*(a2?12:8)),shieldRe:a2?15:18,shieldCd:0,_shieldHitT:0,
       megaStage:1,megaShootCd:1.2,flyerCd:6,healCd:11,shootCd:1e9,summonCd:1e9,
-      act2boss:a2,megaPhase:a2?'ship':null,maxHpTrue:a2?Math.max(12000,dps*70):0}; // истинная форма: второй бар HP
+      act2boss:a2,megaPhase:a2?'ship':null,maxHpTrue:a2?Math.max(9500,dps*55):0}; // истинная форма: второй бар HP
     armMegaShield(en);
     enemies.push(en);
     mobSpawnPaused=true; // арена: обычный спавн стоит, пока Хронос жив
@@ -3921,7 +3927,7 @@
 
   function endSession(reason){
     const died=reason!=='finish';
-    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultT=0;vaultTheme='dungeon';forestTrees=[];}
+    if(inVault){inVault=false;vaultStash=null;vaultWalls=[];vaultExit=null;vaultWalk=[];vaultSpawns=[];vaultGrid=null;vaultT=0;vaultTheme='dungeon';forestTrees=[];vaultLoot=[];vaultOpening=false;vaultOpenT=0;}
     forestGate=false;
     // смерть (кончились все жизни) — путь назад закрыт, только новая игра.
     // ручное «Завершить» (жизни ещё есть) — снимок сохраняется, «Продолжить» его загрузит
@@ -4232,19 +4238,64 @@
         }
       }
       if(vaultSpawns.some(s2=>s2.done))vaultSpawns=vaultSpawns.filter(s2=>!s2.done);
-      const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
-      if(!vaultCleared&&left===0){
-        vaultCleared=true;
-        // ЛУТ У ТЕЛЕПОРТА: немного плюшек рядом с выходом (не толпа — 3 предмета + пара кристаллов)
-        if(vaultExit){
-          const ex=vaultExit.x,ey=vaultExit.y;
-          const drops=[['chest','#facc15','★'],['heal','#4ade80','+'],['magnet','#38bdf8','◎']];
-          drops.forEach((d,i)=>{const a=(i/drops.length)*Math.PI*2-Math.PI/2,pt={x:ex+Math.cos(a)*66,y:ey+Math.sin(a)*66,r:12,type:d[0],color:d[1],label:d[2]};if(typeof nearestWalkPoint==='function'){const w=nearestWalkPoint(pt.x,pt.y);if(w){pt.x=w.x;pt.y=w.y;}}pickups.push(pt);});
-          for(let i=0;i<5;i++){const a=Math.random()*Math.PI*2,g={x:ex+Math.cos(a)*rand(36,90),y:ey+Math.sin(a)*rand(36,90),r:6,val:Math.round((player.xpNeed||50)*0.14)};if(typeof nearestWalkPoint==='function'){const w=nearestWalkPoint(g.x,g.y);if(w){g.x=w.x;g.y=w.y;}}gems.push(g);}
-          burst(ex,ey,'#facc15',18);rings.push({x:ex,y:ey,r:0,maxR:vaultExit.r+70,life:0.9,color:'#4ade80'});
+      // ЦЕЛЬ: убить всех БОССОВ. Пал последний — портал «пробуждается» и тремя выбросами
+      // выкидывает добычу с физикой; она отскакивает от стен и сама летит к кораблю.
+      const bossesLeft=enemies.filter(e2=>e2.vaultBoss).length;
+      if(!vaultCleared&&!vaultOpening&&bossesLeft===0){
+        vaultOpening=true;vaultOpenT=0;vaultLoot=[];
+        announce={text:'💥 ВСЕ БОССЫ ПАЛИ! Портал пробуждается…',life:2.4,color:'#fde047'};
+        camShake=Math.max(camShake,10);flashFx(0.4,'250,204,21');sfxSweep(200,900,0.7,'sine',0.12,true);
+      }
+      if(vaultOpening&&vaultExit){
+        const prevT=vaultOpenT;vaultOpenT+=dt;
+        for(const bt of[0.3,0.8,1.3]){
+          if(prevT<bt&&vaultOpenT>=bt){
+            const batch=bt===0.3?[['chest','#facc15','★'],['heal','#4ade80','+']]
+              :bt===0.8?[['magnet','#38bdf8','◎'],['shard','#fde047','✨']]
+              :[['gem'],['gem'],['gem'],['gem'],['gem'],['shard','#fde047','✨']];
+            for(const d of batch){
+              const a=rand(0,Math.PI*2),sp=rand(240,430);
+              vaultLoot.push({x:vaultExit.x,y:vaultExit.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+                t:0,phase:'fly',kind:d[0],color:d[1]||'#7dd3fc',label:d[2]||'✦',r:9});
+            }
+            burst(vaultExit.x,vaultExit.y,'#fde047',16);rings.push({x:vaultExit.x,y:vaultExit.y,r:0,maxR:110,life:0.5,color:'#fde047'});
+            camShake=Math.max(camShake,6);sfxChime(500+bt*260,3,0.06,0.1);
+          }
         }
-        announce={text:'🏆 ЛАБИРИНТ ЗАЧИЩЕН! Забери награду у выхода 🚪',life:3,color:'#4ade80'};addUpPoints(5,'лабиринт');
-        flashFx(0.5,'74,222,128');sfxChime(660,3,0.09,0.12);
+        if(vaultOpenT>=1.8){
+          vaultOpening=false;vaultCleared=true;
+          announce={text:'🚪 ПОРТАЛ ОТКРЫТ! Собери добычу и выходи',life:3,color:'#4ade80'};
+          addUpPoints(5,'лабиринт');flashFx(0.5,'74,222,128');sfxChime(660,5,0.09,0.12);
+          rings.push({x:vaultExit.x,y:vaultExit.y,r:0,maxR:vaultExit.r+90,life:0.9,color:'#4ade80'});
+        }
+      }
+      // ДОБЫЧА ПОРТАЛА: фаза «разлёт» (отскакивает от стен, тормозит) → фаза «домой» (притягивается к кораблю)
+      if(vaultLoot.length){
+        for(const L of vaultLoot){
+          L.t+=dt;
+          if(L.phase==='fly'){
+            const nx=L.x+L.vx*dt,ny=L.y+L.vy*dt;
+            if(pointInWalls(nx,L.y)){L.vx=-L.vx*0.65;sparkHit(L.x,L.y,L.color);}else L.x=nx;
+            if(pointInWalls(L.x,ny)){L.vy=-L.vy*0.65;sparkHit(L.x,L.y,L.color);}else L.y=ny;
+            const fr=Math.pow(0.22,dt);L.vx*=fr;L.vy*=fr;
+            if(L.t>0.85)L.phase='home';
+          }else{
+            const a=Math.atan2(player.y-L.y,player.x-L.x);
+            const sp=Math.min(950,260+(L.t-0.85)*900);
+            L.x+=Math.cos(a)*sp*dt;L.y+=Math.sin(a)*sp*dt;
+          }
+          if(Math.random()<0.3&&particles.length<560)particles.push({x:L.x,y:L.y,vx:rand(-0.5,0.5),vy:rand(-0.5,0.5),life:0.35,color:L.color,sz:1.6});
+          if(dist(player,L)<player.r+12){
+            L._got=true;
+            if(L.kind==='gem'){gemsCollected++;sfxChime(700,2,0.04,0.06);}
+            else if(L.kind==='shard'){metaState.shards++;saveMeta();
+              if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-20,vy:-28,life:1,val:'+1 ✨',crit:true});
+              sfxChime(880,3,0.05,0.09);}
+            else collectPickup({x:L.x,y:L.y,type:L.kind,color:L.color});
+            burst(L.x,L.y,L.color,8);
+          }
+        }
+        vaultLoot=vaultLoot.filter(L=>!L._got);
       }
       if(vaultCleared&&vaultExit&&dist(player,vaultExit)<vaultExit.r+player.r){
         rollVaultReward();exitVault();
@@ -4499,6 +4550,12 @@
       if(pk.life==null)pk.life=26; // страховка для старых сохранений
       pk.life-=dt;
       if(pk.life<=0){pk.dead=true;spawnPickup();continue;}
+      // ЛАБИРИНТ: плюшка, застрявшая В СТЕНЕ, притягивается к игроку, когда он подходит близко
+      if(inVault&&pointInWalls(pk.x,pk.y)){
+        const d2=dist(player,pk);
+        if(d2<190){const a=Math.atan2(player.y-pk.y,player.x-pk.x);
+          pk.x+=Math.cos(a)*360*dt;pk.y+=Math.sin(a)*360*dt;}
+      }
       if(dist(player,pk)<player.r+pk.r+player.pickupRadius*0.4){collectPickup(pk);pk.dead=true;}
     }
     pickups=pickups.filter(p=>!p.dead);
@@ -5049,9 +5106,8 @@
       // В лабиринте — минимум стрелок, чтобы не захламлять края экрана:
       // всегда только на финального Хранителя, а на остальных врагов — лишь когда
       // осталось мало (искать последних). Плюс стрелка на открытый выход.
-      const left=enemies.length+pendingSpawns.length+vaultSpawns.length;
-      enemies.forEach(e=>{if(e.superboss)edgeArrow(e.x,e.y,e.r,'#ff2d55',1.7+0.25*Math.sin(t*6));});
-      if(left<=8)enemies.forEach(e=>{if(!e.superboss)edgeArrow(e.x,e.y,e.r,e.elite?'#f87171':'#fca5a5',e.elite?1.3:1);});
+      // цель — боссы: стрелки всегда указывают на всех живых боссов лабиринта
+      enemies.forEach(e=>{if(e.vaultBoss)edgeArrow(e.x,e.y,e.r,e.superboss?'#ff2d55':'#f87171',(e.superboss?1.7:1.35)+0.25*Math.sin(t*6));});
       if(vaultCleared&&vaultExit)edgeArrow(vaultExit.x,vaultExit.y,vaultExit.r,'#4ade80',1.9+0.3*Math.sin(t*7));
       return;
     }
@@ -5550,6 +5606,15 @@
     x.globalAlpha=1;
     // pickups
     pickups.forEach(pk=>{drawPickup(pk.x,pk.y,pk);});
+    // ДОБЫЧА ПОРТАЛА (лабиринт): светящиеся сферы, летящие с физикой к кораблю
+    if(inVault&&vaultLoot.length)for(const L of vaultLoot){
+      x.save();x.translate(L.x,L.y);
+      x.fillStyle=L.color;x.shadowColor=L.color;x.shadowBlur=10;
+      x.beginPath();x.arc(0,0,L.kind==='gem'?6:9,0,Math.PI*2);x.fill();x.shadowBlur=0;
+      x.fillStyle='rgba(255,255,255,0.4)';x.beginPath();x.arc(-2,-2,L.kind==='gem'?2:2.8,0,Math.PI*2);x.fill();
+      if(L.kind!=='gem'){x.fillStyle='#0a0e18';x.font='bold 10px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(L.label,0,0.5);}
+      x.restore();
+    }
     // gems
     gems.forEach(g=>{
       x.save();x.translate(g.x,g.y);
@@ -6026,11 +6091,11 @@
       const forest=vaultTheme==='forest';
       x.save();x.textAlign='center';x.textBaseline='top';
       x.font='bold 15px system-ui,sans-serif';
-      const vLeft=enemies.length+pendingSpawns.length+vaultSpawns.length;
-      x.fillStyle=vaultCleared?'#4ade80':(forest?'#4ade80':'#c084fc');x.shadowColor='#000';x.shadowBlur=4;
+      const vBoss=enemies.filter(e2=>e2.vaultBoss).length;
+      x.fillStyle=vaultCleared?'#4ade80':(vaultOpening?'#fde047':(forest?'#4ade80':'#c084fc'));x.shadowColor='#000';x.shadowBlur=4;
       const head=forest?'🌲 ЛЕС':'🏛 ЛАБИРИНТ';
-      const clr=forest?'🌲 ЛЕС ПРОЙДЕН — иди к выходу!':'🚪 ВЫХОД ОТКРЫТ — иди к двери!';
-      x.fillText(vaultCleared?clr:head+' · осталось мобов: '+vLeft+(vLeft<=vaultTotal?' из '+vaultTotal:''),W/2,topY);
+      const clr=forest?'🌲 ЛЕС ПРОЙДЕН — собери добычу и к выходу!':'🚪 ПОРТАЛ ОТКРЫТ — собери добычу и к выходу!';
+      x.fillText(vaultCleared?clr:(vaultOpening?'🌀 ПОРТАЛ ПРОБУЖДАЕТСЯ — добыча летит к тебе!':head+' · ЦЕЛЬ: боссы — осталось '+vBoss+' из '+vaultTotal),W/2,topY);
       x.restore();topY+=24;
     }else if(enemies.some(e2=>e2.megaboss)){
       const mb=enemies.find(e2=>e2.megaboss);
