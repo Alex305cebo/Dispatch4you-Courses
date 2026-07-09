@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#070b14">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="/site-protection.en.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 6: Load Boards | Dispatcher Course</title>
+  <link rel="canonical" href="https://dispatch4you.com/en/pages/loadboards.html">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/shared-nav.css?v=8.2">
+    <link rel="stylesheet" href="/shared-styles.css?v=2.0">
+    <link rel="stylesheet" href="/lesson-audio.css?v=25">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; width: 100%; max-width: 100vw; scroll-behavior: smooth; }
+
+        :root {
+            --primary: #06b6d4;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary:#e2e8f0;
+            --text-muted:#94a3b8;
+            --border: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker); color: var(--text-primary);
+            line-height: 1.6; overflow-x: hidden; width: 100%; max-width: 100vw; margin: 0; padding: 0;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.15), transparent 50%),
+                        radial-gradient(circle at 85% 75%, rgba(249,115,22,.1), transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(14,165,233,.08), transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 40px; }
+
+        /* HERO */
+        .page-header { padding: 130px 0 70px; text-align: center; }
+        .page-badge {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(6,182,212,.15), rgba(14,165,233,.15));
+            border: 1px solid rgba(6,182,212,.3); border-radius: 24px;
+            font-size: 13px; font-weight: 700; color: var(--primary);
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .page-title {
+            font-size: clamp(40px,5vw,64px); font-weight: 900;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 40%, #f97316 80%, #fb923c 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 24px; line-height: 1.1;
+        }
+        .page-subtitle { font-size: 20px; color:#e2e8f0; max-width: 800px; margin: 0 auto; line-height: 1.7; }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat-number {
+            font-size: 36px; font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-stat-label { font-size: 13px; color:#cbd5e1; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 4px; }
+
+        /* SECTIONS */
+        .section { padding: 8px 0; }
+        .section-title {
+            font-size: clamp(28px,3vw,38px); font-weight: 900; margin-bottom: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #f97316 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .section-desc { font-size: 17px; color:#e2e8f0; line-height: 1.8; max-width: 900px; margin-bottom: 40px; }
+        .section-text { font-size: 16px; color:#e2e8f0; line-height: 1.85; margin-bottom: 20px; max-width: 950px; }
+        .section-text strong { color: var(--text-primary); }
+
+        /* GLASS CARD */
+        .glass-card {
+            background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+            border-radius: 20px; padding: 32px; backdrop-filter: blur(10px); transition: all .35s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(6,182,212,.3); background: rgba(6,182,212,.05);
+            transform: translateY(-4px); box-shadow: 0 12px 40px rgba(6,182,212,.1);
+        }
+
+        /* ===== NAVIGATION ===== */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:rgba(255,255,255,0.03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:rgba(255,255,255,0.05);transform:translateY(-2px)}.navigation-toggle.active{background:rgba(255,255,255,0.05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:#06b6d4;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#06b6d4;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid rgba(6,182,212,0.2)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:#e2e8f0;text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid rgba(255,255,255,0.08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:#67e8f9;border-color:rgba(6,182,212,0.3);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:#06b6d4}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:#67e8f9;border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:#06b6d4}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:#06b6d4;transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+
+        /* PLATFORM TABS */
+        .platform-tabs { display: flex; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+        .platform-tab {
+            padding: 12px 24px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
+            border-radius: 14px; color:#e2e8f0; font-size: 15px; font-weight: 600;
+            cursor: pointer; transition: all .3s; font-family: inherit; display: flex; align-items: center; gap: 8px;
+            white-space: nowrap;
+        }
+        .platform-tab:hover { background: rgba(6,182,212,.1); border-color: rgba(6,182,212,.3); }
+        .platform-tab.active { background: linear-gradient(135deg, rgba(6,182,212,.2), rgba(14,165,233,.2)); border-color: rgba(6,182,212,.5); color: var(--primary); }
+        .platform-content { display: none; animation: fadeIn .4s ease; }
+        .platform-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .platform-content h3 { font-size: 24px; font-weight: 800; color: var(--text-primary); margin-bottom: 12px; }
+        .platform-content .plat-price { font-size: 18px; font-weight: 700; color: var(--accent); margin-bottom: 16px; }
+        .platform-content p { font-size: 15px; color:#e2e8f0; line-height: 1.8; margin-bottom: 14px; }
+        .platform-content ul { list-style: none; margin: 16px 0; }
+        @media(max-width:768px) {
+            .platform-tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 8px; scrollbar-width: none; }
+            .platform-tabs::-webkit-scrollbar { display: none; }
+            .platform-tab { padding: 10px 14px; font-size: 13px; flex-shrink: 0; }
+        }
+        .platform-content li { padding: 8px 0; color:#e2e8f0; font-size: 14px; display: flex; align-items: flex-start; gap: 10px; }
+        .platform-content li::before { content: '▸'; color: var(--primary); font-weight: 700; flex-shrink: 0; }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .pros, .cons { padding: 20px; border-radius: 14px; }
+        .pros { background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.15); }
+        .cons { background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.15); }
+        .pros h4 { color: var(--success); font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+        .cons h4 { color: var(--danger); font-size: 14px; font-weight: 700; margin-bottom: 10px; }
+        .pros li::before { content: '✓'; color: var(--success); }
+        .cons li::before { content: '✗'; color: var(--danger); }
+
+        /* POST ANATOMY */
+        .post-visual { background: rgba(255,255,255,.04); border: 1px solid rgba(6,182,212,.2); border-radius: 20px; padding: 32px; position: relative; }
+        .post-row { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.05); flex-wrap: wrap; }
+        .post-row:last-child { border-bottom: none; }
+        .post-field-label { min-width: 140px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); flex-shrink: 0; }
+        .post-field-value { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .post-field-hint { font-size: 13px; color: #e2e8f0; margin-left: auto; max-width: 350px; text-align: right; }
+
+        /* GUIDE STEPS */
+        .guide-steps { display: flex; flex-direction: column; gap: 16px; }
+        .guide-step { cursor: pointer; }
+        .guide-step-header { display: flex; align-items: center; gap: 14px; padding: 18px 0; }
+        .step-num { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0; }
+        .step-title { font-size: 17px; font-weight: 700; color: var(--text-primary); flex: 1; }
+        .step-arrow { font-size: 12px; color:#cbd5e1; transition: transform .3s; }
+        .guide-step.open .step-arrow { transform: rotate(180deg); }
+        .step-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .guide-step.open .step-body { max-height: 600px; }
+        .step-body p { padding: 0 0 16px 54px; font-size: 15px; color:#e2e8f0; line-height: 1.8; }
+
+        /* SIMULATOR */
+        .sim-scenario { margin-bottom: 24px; padding: 24px; background: rgba(249,115,22,.06); border: 1px solid rgba(249,115,22,.15); border-radius: 16px; }
+        .sim-scenario h4 { font-size: 16px; font-weight: 700; color: var(--accent); margin-bottom: 8px; }
+        .sim-scenario p { font-size: 14px; color:#e2e8f0; line-height: 1.7; }
+        .sim-loads { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; margin-bottom: 20px; }
+        .sim-load { padding: 20px; background: rgba(255,255,255,.03); border: 2px solid rgba(255,255,255,.08); border-radius: 16px; cursor: pointer; transition: all .3s; }
+        .sim-load:hover { border-color: rgba(6,182,212,.4); background: rgba(6,182,212,.05); }
+        .sim-load.selected { border-color: rgba(6,182,212,.6); background: rgba(6,182,212,.08); }
+        .sim-load.best { border-color: rgba(16,185,129,.6); background: rgba(16,185,129,.08); }
+        .sim-load.bad { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.05); opacity: .7; }
+        .sim-load h5 { font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+        .sim-load .sim-detail { font-size: 13px; color:#e2e8f0; margin-bottom: 4px; display: flex; justify-content: space-between; }
+        .sim-load .sim-detail span:last-child { font-weight: 600; color: var(--text-primary); }
+        .sim-feedback { padding: 20px; border-radius: 14px; font-size: 14px; line-height: 1.8; display: none; margin-top: 16px; }
+        .sim-feedback.visible { display: block; animation: fadeIn .4s ease; }
+        .sim-feedback.correct { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .sim-feedback.wrong { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .sim-btn { padding: 12px 28px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .3s; font-family: inherit; }
+        .sim-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(6,182,212,.3); }
+        .sim-btn:disabled { opacity: .5; cursor: default; transform: none; box-shadow: none; }
+        .sim-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .sim-counter { font-size: 14px; color:#cbd5e1; font-weight: 600; }
+
+        /* RED FLAGS */
+        .flags-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 20px; }
+        .flag-card { border-left: 4px solid var(--danger); }
+        .flag-card h3 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .flag-card p { font-size: 14px; color:#e2e8f0; line-height: 1.8; }
+
+        /* CHECKLIST */
+        .checklist { list-style: none; }
+        .checklist-item { padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,.05); cursor: pointer; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-header { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 600; color: var(--text-primary); transition: color .2s; }
+        .checklist-header:hover { color: var(--primary); }
+        .checklist-icon { font-size: 20px; flex-shrink: 0; }
+        .checklist-arrow { margin-left: auto; font-size: 12px; color:#cbd5e1; transition: transform .3s; }
+        .checklist-item.open .checklist-arrow { transform: rotate(180deg); }
+        .checklist-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .checklist-item.open .checklist-body { max-height: 400px; }
+        .checklist-body p { padding: 12px 0 4px 32px; font-size: 14px; color:#e2e8f0; line-height: 1.8; }
+
+        /* QUIZ */
+        .quiz-card { background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(249,115,22,.05)); border: 1px solid rgba(6,182,212,.2); border-radius: 24px; padding: 40px; }
+        .quiz-question { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; line-height: 1.5; }
+        .quiz-options { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+        .quiz-option { padding: 16px 20px; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; color:#e2e8f0; font-size: 15px; font-weight: 500; cursor: pointer; transition: all .3s; font-family: inherit; text-align: left; }
+        .quiz-option:hover { background: rgba(6,182,212,.1); border-color: rgba(6,182,212,.3); color: var(--text-primary); }
+        .quiz-option.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .quiz-option.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: var(--danger); }
+        .quiz-option:disabled { cursor: default; }
+        .quiz-feedback { padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.7; display: none; }
+        .quiz-feedback.visible { display: block; animation: fadeIn .3s ease; }
+        .quiz-feedback.success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .quiz-feedback.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .quiz-counter { font-size: 14px; color:#cbd5e1; font-weight: 600; }
+        .quiz-next-btn { padding: 10px 24px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .3s; font-family: inherit; display: none; }
+        .quiz-next-btn.visible { display: inline-block; }
+        .quiz-score { text-align: center; padding: 32px; display: none; }
+        .quiz-score.visible { display: block; animation: fadeIn .4s ease; }
+        .quiz-score .score-number { font-size: 64px; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .quiz-score p { font-size: 18px; color:#e2e8f0; margin-top: 8px; }
+        .quiz-restart-btn { margin-top: 20px; padding: 12px 28px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .3s; font-family: inherit; }
+
+        /* RPM CALC */
+        .rpm-calc { display: grid; grid-template-columns: 1fr 1fr auto; gap: 16px; align-items: end; }
+        .rpm-field label { display: block; font-size: 13px; font-weight: 700; color:#cbd5e1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .rpm-field input { width: 100%; padding: 14px 16px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: var(--text-primary); font-size: 15px; font-family: inherit; }
+        .rpm-field input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(6,182,212,.15); }
+        .rpm-result { margin-top: 24px; padding: 24px; background: rgba(6,182,212,.08); border: 1px solid rgba(6,182,212,.15); border-radius: 16px; display: none; }
+        .rpm-result.visible { display: block; animation: fadeIn .4s ease; }
+        .rpm-result .rpm-value { font-size: 36px; font-weight: 900; color: var(--primary); }
+        .rpm-result .rpm-verdict { font-size: 15px; color:#e2e8f0; margin-top: 8px; line-height: 1.7; }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .sim-loads { grid-template-columns: 1fr; }
+            .pros-cons { grid-template-columns: 1fr; }
+            .rpm-calc { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .page-header { padding: 100px 0 50px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-number { font-size: 28px; }
+            .flags-grid { grid-template-columns: 1fr; }
+            .quiz-options { grid-template-columns: 1fr; }
+            .platform-tabs { gap: 6px; }
+            .platform-tab { padding: 10px 16px; font-size: 13px; }
+            .footer-content { grid-template-columns: repeat(2,1fr); gap: 32px; }
+            .post-field-hint { margin-left: 0; text-align: left; max-width: 100%; margin-top: 4px; }
+            .post-row { flex-direction: column; gap: 4px; }
+        }
+        @media (max-width: 480px) {
+            .container { padding: 0 16px; }
+            .hero-stats { flex-direction: column; gap: 16px; }
+            .footer-content { grid-template-columns: 1fr; gap: 24px; }
+        }
+        @media (max-width: 360px) {
+            .container { padding: 0 12px; }
+            .glass-card { padding: 20px; }
+            .quiz-card { padding: 24px; }
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-darker); }
+        ::-webkit-scrollbar-thumb { background: rgba(6,182,212,.3); border-radius: 4px; }
+
+        /* ===== SCROLL TO TOP BUTTON ===== */
+        .scroll-to-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(6,182,212,0.3);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);opacity:0;visibility:hidden;z-index:999}.scroll-to-top.visible{opacity:1;visibility:visible}.scroll-to-top.inactive{opacity:0.2}.scroll-to-top:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(6,182,212,0.4)}.scroll-to-top svg{color:#fff}@media(max-width:768px){.scroll-to-top{width:48px;height:48px;bottom:24px;right:24px}}
+
+.complete-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:1100px;margin:40px auto 24px;padding:20px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;font-family:inherit}
+.complete-module-btn:hover{background:linear-gradient(135deg,#059669,#047857);transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,.3)}
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:0 auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;text-decoration:none;color:#ffffff;transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:#ffffff}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+    </style>
+    <script type="module" src="/firebase-auth-init.en.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="/role-guard.en.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=11.0"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">🔍 Module 6 of 15</div>
+            <h1 class="page-title">Load Boards</h1>
+            <p class="page-subtitle">
+                The Load Board is a dispatcher's number-one tool. It's an online freight marketplace where
+                hundreds of thousands of postings from brokers and shippers appear every day. Being able to quickly find
+                profitable loads, analyze rates, and avoid scammers is the skill that separates a professional from a beginner.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat"><span class="hero-stat-number">500K+</span><span class="hero-stat-label">Loads per day</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">6</span><span class="hero-stat-label">Platforms</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">$30-150</span><span class="hero-stat-label">$/mo subscription</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">15 min</span><span class="hero-stat-label">To find a load</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- НАВИГАЦИЯ -->
+    <section class="section" style="padding-top: 0; padding-bottom: 30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Course Navigation</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ SECTIONS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/intro.html">📋 Introduction</a>
+                                    <a href="/en/pages/glossary.html">📖 Glossary</a>
+                                    <a href="/en/pages/role.html">👤 Role</a>
+                                    <a href="/en/pages/equipment.html">🚛 Equipment</a>
+                                    <a href="/en/pages/routes.html">🗺 Routes</a>
+                                    <a href="/en/pages/loadboards.html" class="active">📡 Load Boards</a>
+                                    <a href="/en/pages/negotiation.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/brokers.html">💼 Brokers</a>
+                                    <a href="/en/pages/docs.html">📄 Documents</a>
+                                    <a href="/en/pages/regulations.html">⚖️ Regulations</a>
+                                    <a href="/en/pages/technology.html">🖥 TMS</a>
+                                    <a href="/en/pages/communication.html">📞 Communication</a>
+                                    <a href="/en/pages/problems.html">⚠️ Problems</a>
+                                    <a href="/en/pages/finances.html">💰 Finances</a>
+                                    <a href="/en/pages/career.html">📈 Career</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ MODULES<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/doc-module-1-complete.html">🏭 Industry</a>
+                                    <a href="/en/pages/doc-module-2-complete.html">📖 Terms</a>
+                                    <a href="/en/pages/doc-module-3-complete.html">👤 Dispatcher</a>
+                                    <a href="/en/pages/doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="/en/pages/doc-module-5-complete.html">🗺 Routes</a>
+                                    <a href="/en/pages/doc-module-6-complete.html">🚛 Equipment</a>
+                                    <a href="/en/pages/doc-module-7-complete.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/doc-module-8-complete.html">💼 Brokers</a>
+                                    <a href="/en/pages/doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="/en/pages/doc-module-10-complete.html">📦 Freight</a>
+                                    <a href="/en/pages/doc-module-11-complete.html">⚠️ Problems</a>
+                                    <a href="/en/pages/doc-module-12-complete.html">📈 Career</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ TOOLS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/simulator.html">🎮 Simulator</a>
+                                    <a href="/en/pages/testing.html">📝 Tests</a>
+                                    <a href="/en/pages/cases.html">🗂 Cases</a>
+                                    <!-- Load Finder скрыт -->
+                                    <a href="/en/pages/dispatcher-cards.html">🃏 Cards</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ЧТО ТАКОЕ LOAD BOARD -->
+    <section class="section" data-audio-id="loadboards-audio-1">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="loadboards-audio-1">
+                <h2 class="section-title">🔍 What a Load Board is and how it works</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'loadboards-audio-1')" aria-label="Play audio"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                A Load Board (freight marketplace) is an online platform that connects those who need to move freight
+                with those who have a truck. Think of a stock exchange, but instead of shares, freight is traded here.
+                Every second, new postings appear, and the dispatcher's job is to find the best ones for their drivers.
+            </p>
+            <p class="section-text">
+                <strong>How the ecosystem is structured:</strong> A shipper (the freight owner) — for example, a Coca-Cola plant — wants
+                to deliver 40,000 lbs of beverages from Atlanta to Miami. They reach out to a broker (an intermediary). The broker posts
+                this load on a Load Board, listing the lane, equipment type, weight, dates, and rate. The dispatcher sees
+                this posting, evaluates how profitable it is, calls the broker, negotiates a better price, and books the load
+                for their driver. After delivery, the broker pays the carrier.
+            </p>
+            <p class="section-text">
+                <strong>Why the Load Board is the main tool:</strong> Without a Load Board, a dispatcher has to hunt for freight
+                by hand — calling dozens of brokers, checking email, waiting for offers. With a Load Board, you see
+                500,000+ loads in real time and can filter by lane, equipment type, rate, and
+                dozens of other parameters. It's like Google for freight — you can't work without it.
+            </p>
+            <p class="section-text">
+                <strong>Who posts the freight:</strong> Mostly brokers (80-85% of all postings). The remaining 15-20% come from
+                direct shippers and 3PL companies (third-party logistics). Loads from direct shippers are usually better:
+                higher rates, more reliable payment, fewer problems. But they're harder to find — they often work under contracts
+                and don't post freight on open marketplaces.
+            </p>
+            <p class="section-text">
+                <strong>Types of freight on the marketplace:</strong> Spot market (one-off loads) is what you see on the Load Board.
+                Spot market rates change daily depending on supply and demand. Unlike contract freight
+                (long-term contracts with a fixed rate), the spot market is more volatile but lets you earn
+                more during peak seasons. Roughly 20-25% of all freight in the US moves through the spot market.
+            </p>
+            <p class="section-text">
+                <strong>The life cycle of a load on the marketplace:</strong> The broker posts it → the load appears on the Load Board →
+                dispatchers see it and start calling → the broker picks the best carrier → sends a Rate Confirmation →
+                the driver picks up the load → delivers it → sends the POD (Proof of Delivery) → the broker pays.
+                The full cycle from posting to payment takes 15-45 days (depending on the broker's payment terms).
+            </p>
+        </div>
+    </section>
+
+    <!-- СРАВНЕНИЕ ПЛАТФОРМ -->
+    <section class="section" data-audio-id="loadboards-audio-2">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="loadboards-audio-2">
+                <h2 class="section-title">📱 Load Board platforms: a detailed comparison</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'loadboards-audio-2')" aria-label="Play audio"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-desc">
+                There are 6 major platforms for finding freight on the market. Each has its own strengths,
+                pricing, and target audience. Most professional dispatchers use 2-3 platforms
+                at once for maximum coverage. Switch between the tabs to study each platform in detail.
+            </p>
+
+            <div class="glass-card" style="padding: 40px;">
+                <div class="platform-tabs">
+                    <button class="platform-tab active" onclick="switchPlatform('dat')">📊 DAT</button>
+                    <button class="platform-tab" onclick="switchPlatform('truckstop')">🚛 Truckstop</button>
+                    <button class="platform-tab" onclick="switchPlatform('loadboard123')">💰 123Loadboard</button>
+                    <button class="platform-tab" onclick="switchPlatform('convoy')">⚡ Convoy</button>
+                    <button class="platform-tab" onclick="switchPlatform('uber')">🚗 Uber Freight</button>
+                    <button class="platform-tab" onclick="switchPlatform('direct')">📋 Direct Freight</button>
+                </div>
+
+                <div class="platform-content active" id="plat-dat">
+                    <h3>📊 DAT Load Board</h3>
+                    <div class="plat-price">From $45/mo (DAT One) to $150/mo (DAT Power)</div>
+                    <p>
+                        DAT is the undisputed market leader in Load Boards since 1978. It has the largest freight database in North America:
+                        more than 500 million loads a year go through the platform. If you're serious about working as a dispatcher,
+                        DAT is a must. 90% of professional dispatchers use DAT as their primary tool.
+                    </p>
+                    <p>
+                        <strong>DAT RateView</strong> is a unique tool that competitors don't match at this quality.
+                        It shows the average rate on any lane over the last 15 days, based on real transactions.
+                        This is your main leverage in negotiations with a broker: "The average rate on this lane is $2.45/mi per DAT data" —
+                        and the broker knows you're not bluffing.
+                    </p>
+                    <p>
+                        <strong>Pricing plans:</strong> DAT One ($45/mo) — basic load searching and truck posting.
+                        DAT Power ($150/mo) — full access to RateView, lane analytics, broker scores, hot market maps.
+                        For a beginner dispatcher, DAT One is enough. Once you have 3+ drivers, move up to Power.
+                    </p>
+                    <div class="pros-cons">
+                        <div class="pros">
+                            <h4>✅ Pros</h4>
+                            <ul>
+                                <li>Largest freight database in the US</li>
+                                <li>RateView — the best rate-analysis tool</li>
+                                <li>Broker scores and credit ratings</li>
+                                <li>Mobile app with push notifications</li>
+                                <li>Integration with TMS systems</li>
+                                <li>Hot market maps — demand visualization</li>
+                            </ul>
+                        </div>
+                        <div class="cons">
+                            <h4>❌ Cons</h4>
+                            <ul>
+                                <li>The most expensive subscription on the market</li>
+                                <li>The interface can be complex for beginners</li>
+                                <li>DAT Power costs $150/mo — expensive at the start</li>
+                                <li>Lots of competition — every dispatcher is here</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="platform-content" id="plat-truckstop">
+                    <h3>🚛 Truckstop.com</h3>
+                    <div class="plat-price">From $39/mo to $149/mo</div>
+                    <p>
+                        Truckstop.com is the second-largest platform, founded in 1995. It has historically been strong in the segment of
+                        owner-operators and small companies. In 2021, Truckstop merged with Internet Truckstop,
+                        which significantly expanded its freight database. Today it's a serious competitor to DAT with some unique features.
+                    </p>
+                    <p>
+                        <strong>Key advantage:</strong> Truckstop Rate Analysis — an analog of DAT RateView, but with a different
+                        calculation methodology. Many dispatchers compare DAT and Truckstop data for a more accurate picture.
+                        Truckstop also offers Book It Now — instant load booking without calling the broker.
+                    </p>
+                    <p>
+                        <strong>Who it's for:</strong> An excellent choice as a second platform alongside DAT.
+                        Some brokers post freight only on Truckstop, so you can find things here
+                        that aren't on DAT. It's also good for beginners — the interface is simpler than DAT's.
+                    </p>
+                    <div class="pros-cons">
+                        <div class="pros"><h4>✅ Pros</h4><ul>
+                            <li>Book It Now — instant booking</li>
+                            <li>Good rate analytics</li>
+                            <li>Simpler interface than DAT</li>
+                            <li>Integration with factoring companies</li>
+                        </ul></div>
+                        <div class="cons"><h4>❌ Cons</h4><ul>
+                            <li>Fewer loads than DAT</li>
+                            <li>Broker scores are less detailed</li>
+                            <li>The mobile app is weaker than DAT's</li>
+                        </ul></div>
+                    </div>
+                </div>
+
+                <div class="platform-content" id="plat-loadboard123">
+                    <h3>💰 123Loadboard</h3>
+                    <div class="plat-price">From $29/mo to $79/mo</div>
+                    <p>
+                        123Loadboard is a budget alternative for beginner dispatchers and owner-operators.
+                        The platform aggregates freight from several sources, including DAT and Truckstop,
+                        which gives access to a broad database for less money. It's not a replacement for DAT, but a great start.
+                    </p>
+                    <p>
+                        <strong>Unique feature:</strong> Broker credit checks are included in the subscription.
+                        On DAT you have to pay separately for this. For a beginner who doesn't yet know which brokers to trust,
+                        this is a critically important feature. There's also a mileage calculator and a fuel cost estimator.
+                    </p>
+                    <p>
+                        <strong>Strategy:</strong> Start with 123Loadboard ($29/mo), master the basics of finding freight,
+                        and learn to read postings and analyze rates. In 1-2 months, once you realize you need more,
+                        move up to DAT. Many dispatchers keep 123Loadboard as a backup even after moving to DAT.
+                    </p>
+                    <div class="pros-cons">
+                        <div class="pros"><h4>✅ Pros</h4><ul>
+                            <li>The lowest price on the market</li>
+                            <li>Broker credit checks included</li>
+                            <li>Aggregates freight from several sources</li>
+                            <li>Simple interface for beginners</li>
+                        </ul></div>
+                        <div class="cons"><h4>❌ Cons</h4><ul>
+                            <li>Rate analytics are weaker than DAT/Truckstop</li>
+                            <li>Some loads appear with a delay</li>
+                            <li>Fewer search filters</li>
+                        </ul></div>
+                    </div>
+                </div>
+
+                <div class="platform-content" id="plat-convoy">
+                    <h3>⚡ Convoy (Shut Down)</h3>
+                    <div class="plat-price" style="color:var(--danger);">The platform ceased operations in December 2023</div>
+                    <p>
+                        <strong>Background:</strong> Convoy was a next-generation digital brokerage platform founded in 2015 in Seattle.
+                        Unlike traditional Load Boards, Convoy acted as the broker itself: algorithms automatically
+                        matched loads to carriers based on their location, preferences, and history.
+                        It was the "Uber for freight" — minimal calls, maximum automation.
+                    </p>
+                    <p>
+                        <strong>What happened:</strong> In December 2023, Convoy announced it was shutting down operations after 8 years.
+                        Despite raising more than $1 billion in investment and a valuation of $3.8 billion, the company couldn't
+                        reach profitability amid falling freight rates in 2023.
+                        It became one of the largest bankruptcies in the logistics tech sector.
+                    </p>
+                    <p>
+                        <strong>The lesson for the industry:</strong> Convoy's closure showed that even with cutting-edge technology and huge investment,
+                        it's hard to compete with traditional brokers in a thin-margin industry.
+                        Digital platforms (Uber Freight, Amazon Relay) keep operating, but Convoy remains a reminder
+                        of the volatility of the trucking market.
+                    </p>
+                    <div style="padding:20px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:14px;margin-top:16px;">
+                        <p style="font-size:14px;color:var(--danger);font-weight:600;margin:0 0 8px 0;">⚠️ Convoy alternatives:</p>
+                        <ul style="margin:0;padding-left:20px;">
+                            <li style="font-size:13px;color:#e2e8f0;margin-bottom:4px;">Uber Freight — a similar model, still operating</li>
+                            <li style="font-size:13px;color:#e2e8f0;margin-bottom:4px;">Amazon Relay — for carriers working with Amazon</li>
+                            <li style="font-size:13px;color:#e2e8f0;margin-bottom:4px;">DAT One + Truckstop — traditional Load Boards remain reliable</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="platform-content" id="plat-uber">
+                    <h3>🚗 Uber Freight</h3>
+                    <div class="plat-price">Free for carriers</div>
+                    <p>
+                        Uber Freight is a division of Uber, launched in 2017. It works on the same model as Convoy:
+                        a digital broker with automatic load matching and fixed rates.
+                        Thanks to the Uber brand and huge investment, the platform quickly built up a base of shippers.
+                    </p>
+                    <p>
+                        <strong>Uber Freight's advantage:</strong> A huge base of shippers, including large corporations
+                        (Fortune 500). Loads from such companies are usually more reliable and more stable. Uber Freight also offers
+                        Instant Pay — same-day payment for a small fee (1-2%).
+                    </p>
+                    <p>
+                        <strong>For the dispatcher:</strong> Like Convoy, Uber Freight is an additional source of freight,
+                        not a replacement for DAT. Use it when you need to quickly find a load without negotiating,
+                        or when a driver is in a deadhead zone and needs any load to get out.
+                    </p>
+                    <div class="pros-cons">
+                        <div class="pros"><h4>✅ Pros</h4><ul>
+                            <li>Free, large shippers</li>
+                            <li>Instant Pay — same-day payment</li>
+                            <li>Convenient mobile app</li>
+                        </ul></div>
+                        <div class="cons"><h4>❌ Cons</h4><ul>
+                            <li>Fixed rates, no negotiation</li>
+                            <li>Fee for Instant Pay</li>
+                            <li>Limited analytics</li>
+                        </ul></div>
+                    </div>
+                </div>
+
+                <div class="platform-content" id="plat-direct">
+                    <h3>📋 Direct Freight</h3>
+                    <div class="plat-price">From $35/mo</div>
+                    <p>
+                        Direct Freight is a simple, reliable platform that has been running since 2003.
+                        It doesn't try to be "everything to everyone" — it focuses on basic load searching with minimal complexity.
+                        It's popular among small companies and owner-operators who don't need advanced analytics.
+                    </p>
+                    <p>
+                        <strong>Who it's for:</strong> If you run 1-2 drivers and need a simple tool
+                        without extra features, Direct Freight is a fit. It's also good as a third platform alongside
+                        DAT and Truckstop for maximum freight coverage.
+                    </p>
+                    <div class="pros-cons">
+                        <div class="pros"><h4>✅ Pros</h4><ul>
+                            <li>Simple interface</li>
+                            <li>Affordable price</li>
+                            <li>Stable operation</li>
+                        </ul></div>
+                        <div class="cons"><h4>❌ Cons</h4><ul>
+                            <li>Minimal analytics</li>
+                            <li>Fewer loads than the leaders</li>
+                            <li>No mobile app</li>
+                        </ul></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- АНАТОМИЯ ПОСТА + КАК ИСКАТЬ ГРУЗЫ -->
+    <section class="section" data-audio-id="loadboards-audio-3">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="loadboards-audio-3">
+                <h2 class="section-title">📋 Anatomy of a posting + 🎯 How to find loads</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'loadboards-audio-3')" aria-label="Play audio"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                Every posting on a Load Board contains a set of key fields that a dispatcher must be able to read
+                and analyze in seconds. An experienced dispatcher scans 50-100 postings in 15 minutes and instantly
+                determines which loads are worth attention and which aren't. Below is a breakdown of each field, explaining
+                what to look for.
+            </p>
+            <p class="section-text">
+                <strong>An important thing to understand:</strong> The information in a posting is only the beginning. Actual conditions may differ.
+                The rate may be negotiable, dates may shift, weight may be approximate.
+                Always confirm the details when you call the broker. But the posting gives you enough information for an initial assessment.
+            </p>
+
+            <div class="post-visual">
+                <div class="post-row">
+                    <span class="post-field-label">Origin</span>
+                    <span class="post-field-value">Chicago, IL 60601</span>
+                    <span class="post-field-hint">Pickup city and ZIP code. Check the deadhead from the driver's current position.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Destination</span>
+                    <span class="post-field-value">Atlanta, GA 30301</span>
+                    <span class="post-field-hint">Delivery city. Assess the availability of backhaul loads out of this region.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Miles</span>
+                    <span class="post-field-value">716 mi</span>
+                    <span class="post-field-hint">Route distance. Use it to calculate RPM (Rate Per Mile).</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Rate</span>
+                    <span class="post-field-value">$1,860 (all-in)</span>
+                    <span class="post-field-hint">Total rate. $1,860 ÷ 716 mi = $2.60/mi RPM. A good number for this lane.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Equipment</span>
+                    <span class="post-field-value">Dry Van 53'</span>
+                    <span class="post-field-hint">Equipment type. Make sure your driver has the right trailer.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Weight</span>
+                    <span class="post-field-value">38,000 lbs</span>
+                    <span class="post-field-hint">Cargo weight. Max ~45,000 lbs for a standard truck (80K gross - 35K tare).</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Pickup</span>
+                    <span class="post-field-value">03/27 08:00 - 14:00 CT</span>
+                    <span class="post-field-hint">Pickup date and window. CT = Central Time. Check the driver's HOS.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Delivery</span>
+                    <span class="post-field-value">03/28 06:00 - 12:00 ET</span>
+                    <span class="post-field-hint">Delivery date and window. ET = Eastern Time. Difference from CT: +1 hour.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Broker</span>
+                    <span class="post-field-value">XPO Logistics — MC# 123456</span>
+                    <span class="post-field-hint">Verify the MC# through FMCSA. XPO is a large, reliable broker.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">D2P (Days to Pay)</span>
+                    <span class="post-field-value">30 days / Quick Pay 2%</span>
+                    <span class="post-field-hint">Payment term. 30 days is standard. Quick Pay is faster, but with a fee.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Age</span>
+                    <span class="post-field-value">23 min</span>
+                    <span class="post-field-hint">Time since posting. A fresh posting is good. 2+ hours — there may be problems.</span>
+                </div>
+                <div class="post-row">
+                    <span class="post-field-label">Full/Partial</span>
+                    <span class="post-field-value">Full Truckload (FTL)</span>
+                    <span class="post-field-hint">FTL = the whole trailer. LTL = part of a trailer (usually less profitable).</span>
+                </div>
+            </div>
+
+            <h3 style="font-size:20px;font-weight:700;color:var(--primary);margin:40px 0 16px 0;">🎯 How to find loads: a step-by-step guide</h3>
+
+            <p class="section-text">
+                Finding freight isn't just opening a Load Board and clicking the first posting you see.
+                It's a systematic process that an experienced dispatcher runs every morning in 15-30 minutes.
+                The right search strategy saves hours of time and increases a driver's income by 20-30%.
+            </p>
+
+            <div class="glass-card" style="margin-top:20px;">
+                <div style="display:grid;gap:16px;">
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 1: Determine the driver's current position</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">City, state, ZIP code — this is your starting point for the search.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 2: Set the search radius</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Start with 50 miles. If there are few loads, expand to 100-150 miles. Remember: every deadhead mile is a hit to profit.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 3: Choose the equipment type</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Dry Van, Reefer, Flatbed — select only the type your driver actually has.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 4: Specify the desired direction</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">If the driver wants to head home, set the destination to the region or state you need.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 5: Weight and length filters</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">A standard Dry Van 53' — max 45,000 lbs. A Reefer is usually lighter because of the weight of the refrigeration unit.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 6: Pickup dates</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">If the driver is free today, look for loads for today or tomorrow. Plan ahead!</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 7: Sort the results</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Sort by RPM from highest to lowest. This puts the most profitable loads first.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 8: Analyze the top 10 results</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Don't grab the first load you see. Compare the top 5-10 options by RPM, deadhead, backhaul, and broker reliability.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 9: Vet the broker</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Open the broker's profile, check the rating, reviews, payment history, and MC#. If the broker is new or the rating is low, be careful.</p>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.08);border-left:4px solid var(--primary);padding:16px;border-radius:8px;">
+                        <p style="font-size:14px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">Step 10: Move fast</p>
+                        <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Load Boards run in real time. Good loads disappear in minutes. If a load fits, call immediately!</p>
+                    </div>
+                </div>
+
+                <div style="background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));border:2px solid rgba(6,182,212,0.3);border-radius:12px;padding:16px;margin-top:20px;">
+                    <p style="font-size:13px;font-weight:700;color:var(--primary);margin:0 0 8px 0;">💡 Pro Tips</p>
+                    <ul style="font-size:12px;color:#e2e8f0;margin:0;padding-left:20px;line-height:1.8;">
+                        <li>Save search templates for your busiest lanes — it saves time</li>
+                        <li>Use alerts — the platform will notify you when a matching load appears</li>
+                        <li>Study patterns — track which lanes give the best rates on which days</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- АНАЛИЗ СТАВОК + RED FLAGS -->
+    <section class="section" data-audio-id="loadboards-audio-4">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="loadboards-audio-4">
+                <h2 class="section-title">📊 Rate analysis + ⚠️ Red Flags</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'loadboards-audio-4')" aria-label="Play audio"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                Understanding rates is what turns a dispatcher from "someone who looks for loads" into
+                "a professional who maximizes income." Spot market rates change every day,
+                sometimes every hour. They depend on dozens of factors: season, weather, day of the week,
+                direction, equipment type, urgency, and the supply-demand balance in the region.
+            </p>
+            <p class="section-text">
+                <strong>RPM (Rate Per Mile)</strong> is the dispatcher's key metric. It's the amount a driver
+                earns for each mile traveled. The national average RPM for Dry Van: $2.00-$2.50.
+                For Reefer: $2.30-$3.00. For Flatbed: $2.50-$3.50. But these numbers vary widely
+                by region and season. An RPM below $1.80 for Dry Van is usually unprofitable (it doesn't cover the driver's costs).
+            </p>
+            <p class="section-text">
+                <strong>DAT RateView</strong> is the gold standard for rate analysis. It shows the average,
+                high, and low rate on any lane over the last 15 days based on real transactions.
+                Example: Chicago → Atlanta, Dry Van — average $2.45/mi, high $2.85/mi, low $2.10/mi.
+                If a broker offers $2.20/mi, you know you can negotiate up to $2.45+.
+            </p>
+            <p class="section-text">
+                <strong>Factors that affect rates:</strong> Monday and Tuesday usually have the highest rates
+                (shippers send out freight for the week). Friday — rates drop (few people want to drive over the weekend).
+                The start of the month — more freight (new orders). The end of the month — less.
+                January is the cheapest month. October-November is the most expensive.
+            </p>
+
+            <div class="glass-card" style="padding: 32px;">
+                <h3 style="font-size: 20px; font-weight: 800; color: var(--text-primary); margin-bottom: 20px;">🧮 RPM Calculator</h3>
+                <p style="font-size: 14px; color:#e2e8f0; margin-bottom: 24px; line-height: 1.7;">
+                    Enter the rate for the load and the total distance (including deadhead to pickup) to calculate the real RPM
+                    and get a profitability assessment.
+                </p>
+                <div class="rpm-calc">
+                    <div class="rpm-field">
+                        <label>Rate ($)</label>
+                        <input type="number" id="rpmRate" placeholder="2000">
+                    </div>
+                    <div class="rpm-field">
+                        <label>Total miles</label>
+                        <input type="number" id="rpmMiles" placeholder="800">
+                    </div>
+                    <button class="sim-btn" onclick="calcRpm()">Calculate</button>
+                </div>
+                <div class="rpm-result" id="rpmResult">
+                    <div class="rpm-value" id="rpmValue"></div>
+                    <div class="rpm-verdict" id="rpmVerdict"></div>
+                </div>
+            </div>
+
+            <h3 style="font-size:20px;font-weight:700;color:#ef4444;margin:40px 0 16px 0;">⚠️ Red Flags — signs of problem loads</h3>
+
+            <p class="section-text">
+                Load boards are an open market, and like any market, there are scammers here.
+                Double brokering, fake loads, ghost brokers — these are all real threats that can cost
+                you thousands of dollars. Knowing the red flags is your defense.
+            </p>
+
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:20px;">
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #1: Rate too high</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">If the rate is 30-40% above market, ask yourself why. The freight may be hazardous or urgent, or the broker may be unreliable.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #2: Unknown broker</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">No rating, no reviews, MC# won't verify. Require payment up front or walk away.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #3: Too many stops</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">If the Rate Con lists 3-5 stops, it eats up all the time and profit. Each stop = 1-2 hours of lost time.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #4: Unrealistic delivery windows</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Pickup in California this evening, delivery in New York the morning after tomorrow? 3,000 miles in 36 hours is physically impossible.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #5: Load sitting a long time</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">If the posting was published 2-4 hours ago and is still available, other dispatchers have already passed on it. Find out why.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #6: Broker won't answer questions</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">You call and ask questions about the load, the rate, the details — and the broker dodges them. That's a bad sign.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #7: Demand for immediate commitment</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">The broker pressures you: "Decide right now or the load goes to someone else." That's manipulation.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #8: Terms change after booking</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">You booked the load, then the broker calls: "Sorry, the rate changed" or "Another stop was added." That's unprofessional.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #9: No Rate Con</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">The broker says "I'll send it later" or "I'll email it," but never does. No Rate Con, no deal.</p>
+                </div>
+                <div style="background:rgba(239,68,68,0.08);border-left:4px solid #ef4444;padding:16px;border-radius:8px;">
+                    <p style="font-size:14px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">🚩 Red Flag #10: Bad reviews</p>
+                    <p style="font-size:13px;color:#e2e8f0;margin:0;line-height:1.6;">Check reviews from other carriers. If everyone complains about payment delays or hidden deductions, avoid this broker.</p>
+                </div>
+            </div>
+
+            <div style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(220,38,38,0.1));border:2px solid rgba(239,68,68,0.3);border-radius:12px;padding:16px;margin-top:20px;">
+                <p style="font-size:13px;font-weight:700;color:#ef4444;margin:0 0 8px 0;">💡 The main rule</p>
+                <p style="font-size:12px;color:#e2e8f0;margin:0;line-height:1.8;">Trust your gut. If something feels suspicious, it probably is. Better to pass on one load than to lose money and time on a problem one.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- СИМУЛЯТОР -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎮 Simulator: pick the best load</h2>
+            <p class="section-text">
+                Theory is good, but real learning happens through practice. In this simulator, you'll have to
+                pick the best load for your driver out of several options. Weigh RPM, deadhead,
+                broker rating, D2P, and backhaul availability. After you choose, the system will explain why one load is better than the others.
+            </p>
+            <p class="section-text">
+                <strong>Context:</strong> Your driver on a Dry Van 53' is in the city shown.
+                They have full HOS (11 hours driving). Your job is to pick the most profitable and safest load.
+            </p>
+
+            <div class="glass-card" id="simCard">
+                <div id="simBody">
+                    <div class="sim-scenario" id="simScenario"></div>
+                    <div class="sim-loads" id="simLoads"></div>
+                    <div class="sim-feedback" id="simFeedback"></div>
+                    <div class="sim-nav">
+                        <span class="sim-counter" id="simCounter"></span>
+                        <button class="sim-btn" id="simNext" onclick="nextSim()" style="display:none;">Next →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="simScore">
+                    <div class="score-number" id="simScoreNum"></div>
+                    <p id="simScoreText"></p>
+                    <button class="quiz-restart-btn" onclick="restartSim()">Restart</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRO TIPS -->
+    <section class="section" data-audio-id="loadboards-audio-5">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="loadboards-audio-5">
+                <h2 class="section-title">💡 Pro Tips from experienced dispatchers</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'loadboards-audio-5')" aria-label="Play audio"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                These tips were gathered from dispatchers with 5-10+ years of experience. Each one is a lesson
+                someone learned from their own mistakes (and lost money).
+                Click each item to see a detailed explanation.
+            </p>
+
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">⏰</span>The best time to search is 7:00-9:00 AM ET<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Most shippers and brokers start their day at 8:00 AM Eastern Time.
+                        Loads posted the evening before and early in the morning are the freshest and most profitable.
+                        By 10:00 AM the best loads are already taken. If you work from another time zone,
+                        adjust to ET. A dispatcher in California should start at 4:00 AM PT to compete.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">📱</span>Use at least 2 platforms at once<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>DAT + Truckstop is the standard combination. Some brokers post freight
+                        on only one platform. Using two, you see 30-40% more loads.
+                        It's also useful to have Convoy or Uber Freight as a backup for quick booking in deadhead zones.
+                        The cost of two subscriptions ($85-100/mo) pays for itself with a single extra load.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🔔</span>Set up alerts on profitable lanes<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>On DAT and Truckstop you can set up push notifications:
+                        "Notify me when a Dry Van load appears from Chicago to Atlanta with RPM $2.40+."
+                        Set up 5-10 alerts for your drivers' most common lanes.
+                        When a matching load appears, you find out first and call before the competition.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">📊</span>Keep a rate table by lane<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Create a Google Sheet with columns: lane, average RPM, best RPM,
+                        worst RPM, seasonal notes. Update it weekly. Within a month you'll have your own database
+                        that lets you evaluate any load instantly. "This lane is usually $2.40, and they're offering me $2.80 —
+                        great deal" or "$2.10 — below average, I'll negotiate."</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🤝</span>Build relationships with 10-15 reliable brokers<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>The Load Board is the spot market, but the best loads often never hit the marketplace.
+                        Brokers first offer freight to their "preferred carriers" — carriers they've already worked with.
+                        If you deliver loads on time and without issues, the broker will start calling you directly with their best offers.
+                        This is called "relationship freight" and it's the most profitable segment.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🚫</span>Never take a load from a broker with D2P 45+ days<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Days to Pay (D2P) is a critically important number. 30 days is standard.
+                        15-21 days is good. 45+ days is dangerous. If a broker pays in 45-60 days, it can signal
+                        financial trouble. You'll deliver the load, and 2 months later find out the broker went bankrupt.
+                        Use factoring (selling the invoice for a 2-3% fee) to get your money fast.</p></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- КВИЗ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎯 Quiz: test your Load Boards knowledge</h2>
+            <p class="section-desc">8 questions — check how well you've absorbed this module's material.</p>
+            <div class="quiz-card" id="quizCard">
+                <div id="quizBody">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                    <div class="quiz-nav">
+                        <span class="quiz-counter" id="quizCounter"></span>
+                        <button class="quiz-next-btn" id="quizNext" onclick="nextQ()">Next →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="quizScore">
+                    <div class="score-number" id="scoreNum"></div>
+                    <p id="scoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartQuiz()">Restart</button>
+                </div>
+            </div>
+        </div>
+        <button class="complete-module-btn" onclick="completeModule(6)"><span>✓</span><span>Complete the module and move to the next one</span></button>
+        <div class="module-navigation">
+            <a href="/en/pages/routes.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Previous module</span><span class="title">🗺️ Routes</span></div></a>
+            <a href="/en/pages/negotiation.html" class="module-nav-btn next"><div class="text"><span class="label">Next module</span><span class="title">💰 Negotiation</span></div><span class="icon">→</span></a>
+        </div>
+    </section>
+
+    <script>
+        // NAVIGATION
+        (function() {
+            const toggle = document.getElementById('navigationToggle');
+            const content = document.getElementById('navigationContent');
+
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                content.classList.toggle('active');
+            });
+
+            // Аккордеон для секций только на мобильных
+            function initMobileAccordion() {
+                if (window.innerWidth <= 640) {
+                    const navSections = document.querySelectorAll('.nav-section');
+
+                    // Показываем стрелки
+                    document.querySelectorAll('.section-arrow').forEach(arrow => {
+                        arrow.style.display = 'inline-block';
+                    });
+
+                    // Закрываем секции 2 и 3 (Модули и Инструменты)
+                    navSections.forEach(function(section, index) {
+                        if (index > 0) {
+                            section.classList.add('collapsed');
+                        }
+
+                        const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                            header.addEventListener('click', function() {
+                                section.classList.toggle('collapsed');
+                            });
+                            header.dataset.listenerAdded = 'true';
+                        }
+                    });
+                } else {
+                    // Скрываем стрелки на десктопе
+                    document.querySelectorAll('.section-arrow').forEach(arrow => {
+                        arrow.style.display = 'none';
+                    });
+                }
+            }
+
+            initMobileAccordion();
+            window.addEventListener('resize', initMobileAccordion);
+        })();
+
+        // PLATFORM TABS
+        function switchPlatform(id) {
+            document.querySelectorAll('.platform-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.platform-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('plat-' + id).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // GUIDE STEPS
+        function toggleStep(el) { el.classList.toggle('open'); }
+        function toggleChecklist(el) { el.classList.toggle('open'); }
+
+        // RPM CALC
+        function calcRpm() {
+            const rate = parseFloat(document.getElementById('rpmRate').value);
+            const miles = parseFloat(document.getElementById('rpmMiles').value);
+            if (!rate || !miles || miles <= 0) { alert('Enter the rate and miles'); return; }
+            const rpm = rate / miles;
+            document.getElementById('rpmValue').textContent = '$' + rpm.toFixed(2) + '/mi';
+            let verdict = '';
+            if (rpm >= 3.0) verdict = '🟢 Excellent RPM! This is well above average. Take this load if the broker is reliable. Double-check that the rate isn\'t too high (a possible red flag).';
+            else if (rpm >= 2.5) verdict = '🟢 Good RPM. Above the market average. Worth taking, especially if there\'s a backhaul out of the delivery point.';
+            else if (rpm >= 2.0) verdict = '🟡 Average RPM. Acceptable for most lanes. Try to negotiate $0.10-0.20 more. Account for tolls and fuel.';
+            else if (rpm >= 1.8) verdict = '🟠 Below average. Take it only if there are no better options or you need to get out of a deadhead zone. Negotiate for sure.';
+            else verdict = '🔴 Low RPM. It probably won\'t cover the driver\'s costs. Pass and look for a better option, unless this is a short deadhead repositioning.';
+            document.getElementById('rpmVerdict').textContent = verdict;
+            document.getElementById('rpmResult').classList.add('visible');
+        }
+
+        // SIMULATOR
+        const simData = [
+            {
+                scenario: 'Your driver is in Dallas, TX. Dry Van 53\'. Full HOS. Needs a load heading east.',
+                loads: [
+                    { id: 'a', route: 'Dallas → Atlanta', miles: 781, rate: 1875, deadhead: 0, broker: 'CH Robinson (A+)', d2p: 21, backhaul: 'Excellent — Atlanta hub' },
+                    { id: 'b', route: 'Dallas → Memphis', miles: 452, rate: 1200, deadhead: 0, broker: 'TQL (A)', d2p: 30, backhaul: 'Good — FedEx hub' },
+                    { id: 'c', route: 'Fort Worth → Jacksonville', miles: 1050, rate: 3150, deadhead: 35, broker: 'Unknown LLC (N/A)', d2p: 45, backhaul: 'Fair' },
+                    { id: 'd', route: 'Dallas → Houston', miles: 239, rate: 620, deadhead: 0, broker: 'Echo (A)', d2p: 25, backhaul: 'Excellent — Port of Houston' }
+                ],
+                best: 'a',
+                explanation: 'Load A is the best choice. RPM $2.40/mi, reliable broker CH Robinson (the largest in the US), fast payment in 21 days, and Atlanta is one of the best hubs for backhaul. Load C pays more ($3.00/mi), but the broker is unknown with D2P 45 days — high risk of non-payment. Load B isn\'t bad ($2.65/mi), but it\'s short. Load D is too short ($2.59/mi over 239 miles — little total revenue).'
+            },
+            {
+                scenario: 'Your driver is in Los Angeles, CA. Dry Van 53\'. Full HOS. Needs to get out of CA.',
+                loads: [
+                    { id: 'a', route: 'LA → Phoenix', miles: 370, rate: 555, deadhead: 0, broker: 'Coyote (A)', d2p: 30, backhaul: 'Poor — deadhead zone' },
+                    { id: 'b', route: 'LA → Dallas', miles: 1435, rate: 3730, deadhead: 0, broker: 'XPO (A+)', d2p: 21, backhaul: 'Excellent — Dallas hub' },
+                    { id: 'c', route: 'LA → Salt Lake City', miles: 688, rate: 1650, deadhead: 15, broker: 'Landstar (A)', d2p: 25, backhaul: 'Fair' },
+                    { id: 'd', route: 'LA → Chicago', miles: 2015, rate: 5640, deadhead: 0, broker: 'Fast Freight Inc (C)', d2p: 60, backhaul: 'Excellent — Chicago hub' }
+                ],
+                best: 'b',
+                explanation: 'Load B is the best choice. RPM $2.60/mi, XPO is a top broker, D2P 21 days, and Dallas is an excellent hub for the next load. Outbound from CA is always higher than inbound — use that. Load D pays $2.80/mi, but the broker has a C rating and D2P 60 days — too risky. Load A leads into a deadhead zone (Phoenix). Load C is average ($2.35/mi).'
+            },
+            {
+                scenario: 'Your driver is in Chicago, IL. Reefer 53\'. April — the start of produce season. Full HOS.',
+                loads: [
+                    { id: 'a', route: 'Chicago → Miami', miles: 1381, rate: 3450, deadhead: 0, broker: 'Total Quality (A)', d2p: 30, backhaul: 'Excellent — FL produce season!' },
+                    { id: 'b', route: 'Chicago → Nashville', miles: 473, rate: 1180, deadhead: 0, broker: 'Arrive (B+)', d2p: 35, backhaul: 'Good' },
+                    { id: 'c', route: 'Chicago → Columbus', miles: 350, rate: 980, deadhead: 0, broker: 'Echo (A)', d2p: 25, backhaul: 'Good — Amazon hub' },
+                    { id: 'd', route: 'Chicago → Atlanta', miles: 716, rate: 2005, deadhead: 0, broker: 'Schneider (A+)', d2p: 15, backhaul: 'Excellent' }
+                ],
+                best: 'a',
+                explanation: 'Load A is strategically the best. RPM $2.50/mi — good for a reefer. But the key point: April = Florida produce season! Reefer loads out of Miami (fruit, vegetables) pay $3.00-3.50/mi on the way back. You earn both on the way there and on the return load. This is the classic "ride the produce season" strategy. Load D is also good ($2.80/mi, Schneider — top), but it doesn\'t give access to produce freight.'
+            }
+        ];
+
+        let simIdx = 0, simScore = 0, simAnswered = false;
+
+        function renderSim() {
+            const s = simData[simIdx];
+            document.getElementById('simScenario').innerHTML = '<h4>Scenario ' + (simIdx+1) + ' of ' + simData.length + '</h4><p>' + s.scenario + '</p>';
+            document.getElementById('simCounter').textContent = (simIdx+1) + ' / ' + simData.length;
+            document.getElementById('simFeedback').className = 'sim-feedback';
+            document.getElementById('simNext').style.display = 'none';
+            simAnswered = false;
+            const loadsEl = document.getElementById('simLoads');
+            loadsEl.innerHTML = '';
+            s.loads.forEach(l => {
+                const rpm = (l.rate / (l.miles + l.deadhead)).toFixed(2);
+                const div = document.createElement('div');
+                div.className = 'sim-load';
+                div.onclick = () => answerSim(l.id);
+                div.innerHTML = '<h5>' + l.route + '</h5>' +
+                    '<div class="sim-detail"><span>Distance</span><span>' + l.miles + ' mi' + (l.deadhead ? ' (+' + l.deadhead + ' DH)' : '') + '</span></div>' +
+                    '<div class="sim-detail"><span>Rate</span><span>$' + l.rate.toLocaleString() + '</span></div>' +
+                    '<div class="sim-detail"><span>RPM</span><span>$' + rpm + '/mi</span></div>' +
+                    '<div class="sim-detail"><span>Broker</span><span>' + l.broker + '</span></div>' +
+                    '<div class="sim-detail"><span>D2P</span><span>' + l.d2p + ' days</span></div>' +
+                    '<div class="sim-detail"><span>Backhaul</span><span>' + l.backhaul + '</span></div>';
+                div.dataset.id = l.id;
+                loadsEl.appendChild(div);
+            });
+        }
+
+        function answerSim(id) {
+            if (simAnswered) return;
+            simAnswered = true;
+            const s = simData[simIdx];
+            document.querySelectorAll('.sim-load').forEach(el => {
+                el.style.pointerEvents = 'none';
+                if (el.dataset.id === s.best) el.classList.add('best');
+                else if (el.dataset.id === id) el.classList.add('bad');
+            });
+            const fb = document.getElementById('simFeedback');
+            if (id === s.best) {
+                simScore++;
+                fb.className = 'sim-feedback visible correct';
+                fb.textContent = '✅ Correct! ' + s.explanation;
+            } else {
+                fb.className = 'sim-feedback visible wrong';
+                fb.textContent = '❌ Not the best choice. ' + s.explanation;
+            }
+            if (simIdx < simData.length - 1) document.getElementById('simNext').style.display = '';
+            else setTimeout(showSimScore, 1500);
+        }
+
+        function nextSim() { simIdx++; renderSim(); }
+        function showSimScore() {
+            document.getElementById('simBody').style.display = 'none';
+            document.getElementById('simScore').classList.add('visible');
+            document.getElementById('simScoreNum').textContent = simScore + '/' + simData.length;
+            const p = Math.round(simScore/simData.length*100);
+            document.getElementById('simScoreText').textContent = p === 100 ? 'Perfect! You analyze loads brilliantly.' : p >= 66 ? 'Good result! Keep practicing.' : 'Re-read the section and try again.';
+        }
+        function restartSim() { simIdx=0; simScore=0; document.getElementById('simBody').style.display=''; document.getElementById('simScore').classList.remove('visible'); renderSim(); }
+        document.addEventListener('DOMContentLoaded', renderSim);
+
+        // QUIZ
+        const quizData = [
+            { q: 'Which platform is the largest Load Board in the US?', options: ['Truckstop', 'DAT', 'Convoy', '123Loadboard'], correct: 1, explanation: 'DAT has been the market leader since 1978. More than 500 million loads a year go through the platform. 90% of professional dispatchers use DAT.' },
+            { q: 'What does RPM mean in the context of freight?', options: ['Revolutions Per Minute', 'Rate Per Mile', 'Revenue Per Month', 'Route Planning Method'], correct: 1, explanation: 'RPM = Rate Per Mile — the dispatcher\'s key metric. It\'s calculated as total rate ÷ total miles (including deadhead).' },
+            { q: 'What is the "Age" of a posting on a Load Board?', options: ['The broker\'s age', 'Time since it was posted', 'The delivery deadline', 'The age of the freight'], correct: 1, explanation: 'Age is the time since the posting went up. Fresh postings (0-30 min) are the best pick. Postings older than 2 hours are often already booked or problematic.' },
+            { q: 'What is Double Brokering?', options: ['Working with two Load Boards', 'Passing a load from one broker to another', 'Double-checking a broker', 'Booking two loads'], correct: 1, explanation: 'Double brokering is when broker A hands a load to broker B instead of a carrier. It\'s prohibited and dangerous: if broker A doesn\'t pay B, you don\'t get paid.' },
+            { q: 'Which D2P (Days to Pay) is considered dangerous?', options: ['15 days', '21 days', '30 days', '45+ days'], correct: 3, explanation: 'D2P of 45+ days is a red flag. It can mean the broker has financial trouble. The standard is 30 days. 15-21 days is good.' },
+            { q: 'What is DAT RateView?', options: ['A list of brokers', 'A tool for analyzing average rates by lane', 'A fuel calculator', 'A GPS tracker'], correct: 1, explanation: 'DAT RateView shows the average, high, and low rate on any lane over the last 15 days based on real transactions. Your main leverage in negotiations.' },
+            { q: 'What time is best for finding loads?', options: ['12:00-14:00 ET', '7:00-9:00 AM ET', '16:00-18:00 ET', 'Time doesn\'t matter'], correct: 1, explanation: '7:00-9:00 AM Eastern Time is the peak of freight postings. By 10:00 AM the best loads are already taken. Start early!' },
+            { q: 'What RPM is considered the minimum acceptable for Dry Van?', options: ['$1.20/mi', '$1.50/mi', '$1.80/mi', '$2.50/mi'], correct: 2, explanation: 'An RPM below $1.80/mi for Dry Van usually doesn\'t cover the driver\'s costs (fuel, insurance, wear). $2.00+ is the target.' }
+        ];
+
+        let qIdx = 0, qScore = 0, qAnswered = false;
+        function renderQ() {
+            const q = quizData[qIdx];
+            document.getElementById('quizQuestion').textContent = q.q;
+            document.getElementById('quizCounter').textContent = (qIdx+1) + ' / ' + quizData.length;
+            document.getElementById('quizFeedback').className = 'quiz-feedback';
+            document.getElementById('quizNext').classList.remove('visible');
+            qAnswered = false;
+            const el = document.getElementById('quizOptions');
+            el.innerHTML = '';
+            q.options.forEach((o, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option'; btn.textContent = o;
+                btn.onclick = () => answerQ(i); el.appendChild(btn);
+            });
+        }
+        function answerQ(i) {
+            if (qAnswered) return; qAnswered = true;
+            const q = quizData[qIdx];
+            document.querySelectorAll('.quiz-option').forEach((b, j) => { b.disabled = true; if (j === q.correct) b.classList.add('correct'); if (j === i && i !== q.correct) b.classList.add('wrong'); });
+            const fb = document.getElementById('quizFeedback');
+            if (i === q.correct) { qScore++; fb.className = 'quiz-feedback visible success'; fb.textContent = '✅ Correct! ' + q.explanation; }
+            else { fb.className = 'quiz-feedback visible error'; fb.textContent = '❌ Incorrect. ' + q.explanation; }
+            if (qIdx < quizData.length - 1) document.getElementById('quizNext').classList.add('visible');
+            else setTimeout(showQScore, 1500);
+        }
+        function nextQ() { qIdx++; renderQ(); }
+        function showQScore() {
+            const popup = document.createElement('div');
+            popup.id = 'quizResultPopup';
+            popup.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(10,14,26,0.98),rgba(7,11,20,0.98));border:2px solid rgba(6,182,212,0.3);border-radius:24px;padding:48px 40px;max-width:500px;width:90%;z-index:10000;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(6,182,212,0.1) inset;animation:popupFadeIn 0.4s ease`;
+            const p = Math.round(qScore/quizData.length*100);
+            const msg = p === 100 ? 'Perfect! You\'re ready to work with Load Boards.' : p >= 75 ? 'Great result! A little more practice.' : p >= 50 ? 'Not bad, but worth reviewing the material.' : 'We recommend re-reading the module and trying again.';
+            const scoreColor = p === 100 ? '#10b981' : p >= 75 ? '#f59e0b' : '#ef4444';
+            popup.innerHTML = `<div style="text-align:center;"><div style="font-size:72px;font-weight:900;background:linear-gradient(135deg,${scoreColor},#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">${qScore}/${quizData.length}</div><div style="font-size:20px;font-weight:600;color:#e2e8f0;margin-bottom:32px;">${msg}</div><button onclick="closeQuizPopup();restartQuiz()" style="padding:14px 32px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;">Restart</button></div>`;
+            const overlay = document.createElement('div');
+            overlay.id = 'quizResultOverlay';
+            overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;animation:overlayFadeIn 0.3s ease`;
+            overlay.onclick = closeQuizPopup;
+            if (!document.getElementById('quizPopupStyles')) {
+                const style = document.createElement('style');
+                style.id = 'quizPopupStyles';
+                style.textContent = `@keyframes popupFadeIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}@keyframes popupFadeOut{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,-55%)}}`;
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+        }
+        function closeQuizPopup() {
+            const popup = document.getElementById('quizResultPopup');
+            const overlay = document.getElementById('quizResultOverlay');
+            if (popup) {
+                popup.style.animation = 'popupFadeOut 0.3s ease';
+                setTimeout(() => {
+                    popup.remove();
+                    if (overlay) overlay.remove();
+                }, 300);
+            }
+        }
+        function restartQuiz() { qIdx=0; qScore=0; renderQ(); }
+        document.addEventListener('DOMContentLoaded', renderQ);
+    </script>
+    <script>
+function completeModule(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');p['module'+n]=true;localStorage.setItem('courseProgress',JSON.stringify(p));const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Module complete!</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default';const next=document.querySelector('.module-nav-btn.next');if(next)setTimeout(()=>next.click(),1500)}
+document.addEventListener('DOMContentLoaded',function(){const n=document.querySelector('.complete-module-btn')?.onclick?.toString().match(/completeModule\((\d+)\)/);if(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');if(p['module'+n[1]]){const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Module complete</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default'}}});
+    </script>
+
+    <!-- Audio Elements -->
+    <audio id="loadboards-audio-1" src="/audio/loadboards-audio-1.mp3" preload="metadata" data-duration="185"></audio>
+    <audio id="loadboards-audio-2" src="/audio/loadboards-audio-2.mp3" preload="metadata" data-duration="265"></audio>
+    <audio id="loadboards-audio-3" src="/audio/loadboards-audio-3.mp3" preload="metadata" data-duration="246"></audio>
+    <audio id="loadboards-audio-4" src="/audio/loadboards-audio-4.mp3" preload="metadata" data-duration="228"></audio>
+    <audio id="loadboards-audio-5" src="/audio/loadboards-audio-5.mp3" preload="metadata" data-duration="214"></audio>
+    <script src="/lesson-audio.en.js?v=25"></script>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Back to top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <script>
+        // Кнопка возврата наверх
+        (function() {
+            const scrollBtn = document.getElementById('scrollToTop');
+            let inactivityTimer;
+
+            // Показываем кнопку при скролле вниз
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) {
+                    scrollBtn.classList.add('visible');
+                    resetInactivityTimer();
+                } else {
+                    scrollBtn.classList.remove('visible');
+                    scrollBtn.classList.remove('inactive');
+                }
+            });
+
+            // Сброс таймера при движении мыши или скролле
+            function resetInactivityTimer() {
+                scrollBtn.classList.remove('inactive');
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(function() {
+                    scrollBtn.classList.add('inactive');
+                }, 2000);
+            }
+
+            // Отслеживаем активность
+            window.addEventListener('mousemove', resetInactivityTimer);
+            window.addEventListener('scroll', resetInactivityTimer);
+            window.addEventListener('touchstart', resetInactivityTimer);
+
+            // Скролл наверх при клике
+            scrollBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+        })();
+    </script>
+
+<script type="module">
+// XP за посещение страницы (один раз)
+(function() {
+  const PAGE_KEY = 'xp_page_pages_loadboards_html';
+  if (localStorage.getItem(PAGE_KEY)) return;
+  import('/xp-system.js').then(m => {
+    m.awardXP('LOADBOARD_USED').then(r => {
+      if (r) localStorage.setItem(PAGE_KEY, '1');
+    });
+  }).catch(() => {});
+})();
+</script>
+
+<!-- Enhanced Quiz System -->
+<link rel="stylesheet" href="/enhanced-quiz-system.css">
+<script src="/enhanced-quiz-system.en.js"></script>
+</body>
+</html>

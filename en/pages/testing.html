@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#070b14">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<!-- Favicon -->
+
+
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Testing | Dispatcher Course</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/shared-styles.css">
+    <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
+    <link rel="stylesheet" href="/dark-theme.css">
+    <script src="/dark-mode.js"></script>
+    <script src="/pages/auth-check.en.js"></script>
+    <link rel="stylesheet" href="/shared-nav.css?v=8.2">
+    <style>
+        :root {
+            --bg: #070b14;
+            --text: #f0f4ff;
+            --text-2:#e2e8f0;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+            --primary-rgb: 139, 92, 246;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.15), transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.15), transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.1), transparent 50%);
+            animation: none;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        body::after {
+            display: none !important; /* grid removed */
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(139, 92, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+
+
+        25% {
+            transform: translate(5%, 5%) scale(1.05);
+        }
+
+        50% {
+            transform: translate(-5%, 5%) scale(1.1);
+        }
+
+        75% {
+            transform: translate(5%, -5%) scale(1.05);
+        }
+        }
+
+        .wrap {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Page header */
+        .page-header {
+            padding: 20px 0 16px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .page-header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-badge {
+            display: inline-block;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-header h1 {
+            font-size: clamp(24px, 4vw, 32px);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            margin-bottom: 6px;
+        }
+
+        .page-header h1 span {
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sub {
+            font-size: 14px;
+            color: var(--text-2);
+            line-height: 1.5;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-weight: 600;
+            font-size: 16px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(139, 92, 246, 0.3);
+            transform: translateX(-3px);
+        }
+
+        .main {
+            max-width: 1200px;
+            margin: 0 auto 40px;
+            padding: 0 24px;
+            padding-top: 24px;
+            margin-top: 80px !important;
+        }
+
+        .main.has-nav {
+            padding-top: 24px;
+        }
+
+        .card {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .title {
+            font-size: clamp(28px, 4vw, 36px);
+            font-weight: 900;
+            margin-bottom: 10px;
+            text-align: center;
+            line-height: 1.2;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .text {
+            font-size: 14px;
+            color: var(--text-2);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .cat {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: inset 0 2px 0 rgba(251, 191, 36, 0.5);
+        }
+
+        .cat:hover {
+            transform: translateY(-8px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(251, 191, 36, 0.4);
+            box-shadow:
+                inset 0 2px 0 rgba(251, 191, 36, 0.7),
+                0 12px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .cat-icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+
+        .cat-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        .cat-desc {
+            font-size: 14px;
+            color: var(--text-2);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .cat-info {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-2);
+        }
+
+        .quiz {
+            display: none;
+        }
+
+        .quiz.active {
+            display: block;
+        }
+
+        .progress {
+            background: rgba(255, 255, 255, 0.05);
+            height: 10px;
+            border-radius: 5px;
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+            height: 100%;
+            transition: width 0.4s ease;
+        }
+
+        .question {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 24px;
+        }
+
+        .q-num {
+            display: inline-block;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .q-text {
+            font-size: clamp(18px, 3vw, 20px);
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .answers {
+            display: grid;
+            gap: 12px;
+        }
+
+        .answer {
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid var(--border);
+            padding: 16px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .answer:hover {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .answer.selected {
+            border-color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.15);
+            font-weight: 600;
+        }
+
+        .answer.correct {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.15);
+            font-weight: 600;
+        }
+
+        .answer.incorrect {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+            font-weight: 600;
+            opacity: 0.6;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .results {
+            text-align: center;
+        }
+
+        .score {
+            font-size: clamp(60px, 10vw, 80px);
+            font-weight: 900;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .message {
+            font-size: clamp(20px, 4vw, 26px);
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 24px;
+            line-height: 1.3;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 32px 0;
+        }
+
+        .stat {
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .stat-value {
+            font-size: clamp(32px, 6vw, 40px);
+            font-weight: 900;
+            color: #8b5cf6;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-2);
+            margin-top: 8px;
+            font-weight: 600;
+        }
+
+        #scrollToTop {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8b5cf6, #3b82f6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        #scrollToTop:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+
+            .wrap,
+            .main {
+                padding: 0 20px;
+            }
+
+            .page-header {
+                padding: 24px 0 20px;
+            }
+
+            .page-header-top {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .back-btn {
+                align-self: flex-start;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .categories {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .cat {
+                padding: 20px;
+            }
+
+            .question {
+                padding: 18px;
+            }
+
+            .q-text {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                hyphens: auto;
+            }
+
+            .answer {
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                padding: 14px 16px;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            #scrollToTop {
+                width: 45px;
+                height: 45px;
+                bottom: 20px;
+                right: 20px;
+                font-size: 18px;
+            }
+        }
+
+        @media (max-width: 480px) {
+
+            .wrap,
+            .main {
+                padding: 0 16px;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            .cat {
+                padding: 16px;
+            }
+
+            .cat-icon {
+                font-size: 40px;
+            }
+
+            .cat-title {
+                font-size: 18px;
+            }
+
+            .cat-desc {
+                font-size: 13px;
+                word-wrap: break-word;
+            }
+
+            .question {
+                padding: 16px;
+            }
+
+            .q-text {
+                font-size: 16px;
+            }
+
+            .answer {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            padding: 80px 0 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 80px;
+        }
+
+        .footer .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 40px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 60px;
+            margin-bottom: 48px;
+        }
+
+        @media (max-width: 968px) {
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 568px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .footer .container {
+                padding: 0 20px;
+            }
+        }
+
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #ffffff;
+        }
+
+        .footer-section p {
+            color: #ffffff;
+            font-size: 14px;
+            line-height: 1.7;
+        }
+
+        .footer-section a {
+            display: block;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #6366f1;
+            transform: translateX(4px);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 32px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        /* Section Navigation */
+        .section-nav {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            background: var(--card);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-nav-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-2);
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .section-nav-btn:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.3);
+            color: var(--text);
+            transform: translateY(-2px);
+        }
+
+        .section-nav-btn.active {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+            border-color: #8b5cf6;
+            color: var(--text);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+        }
+
+        .nav-text {
+            font-size: 15px;
+        }
+
+        /* Section Content */
+        .section-content {
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* When nav is visible, add margin to card inside section */
+        .main.has-nav .section-content.active .card {
+            margin-top: 0;
+        }
+
+        .main:not(.has-nav) .section-content .card {
+            margin-top: 0;
+        }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile responsive for section nav */
+        @media (max-width: 768px) {
+            .section-nav {
+                gap: 8px;
+                padding: 8px;
+            }
+
+            .section-nav-btn {
+                flex-direction: column;
+                padding: 12px 8px;
+                gap: 4px;
+            }
+
+            .nav-icon {
+                font-size: 24px;
+            }
+
+            .nav-text {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .section-nav-btn {
+                padding: 10px 6px;
+            }
+
+            .nav-text {
+                font-size: 10px;
+            }
+        }
+    </style>
+
+    <script>!function () { var t = localStorage.getItem('dispatcher-theme') || 'dark'; 'dark' === t && document.documentElement.setAttribute('data-theme', 'dark') }();</script>
+
+
+    <link rel="stylesheet" href="/dark-theme.css">
+    <script src="/dark-mode.js"></script>
+    <script type="module" src="/firebase-auth-init.en.js?v=4.0"></script>
+</head>
+
+<body>
+    <!-- Role Guard -->
+    <script src="/role-guard.en.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=11.0"></script>
+
+    <div class="bg-grid"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="wrap">
+    </div>
+
+    <main class="main" style="margin-top: 80px;">
+        <!-- Navigation between sections -->
+        <div class="section-nav" style="display:none;">
+            <button class="section-nav-btn" onclick="showSection('quiz')" data-section="quiz">
+                <span class="nav-icon">✍️</span>
+                <span class="nav-text">Take the test</span>
+            </button>
+            <button class="section-nav-btn" onclick="showSection('results')" data-section="results">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Results</span>
+            </button>
+        </div>
+
+        <!-- SECTION 1: Test selection and stats -->
+        <div class="section-content active" id="welcome">
+            <div class="card">
+                <h1 class="title">Knowledge Testing</h1>
+                <p class="text">Test your knowledge of dispatcher work</p>
+
+                <!-- Overall stats -->
+                <div id="overallStats"
+                    style="display:none;background:rgba(102,126,234,.08);border:1px solid rgba(102,126,234,.2);border-radius:16px;padding:16px;margin-bottom:20px">
+                    <div style="font-size:16px;font-weight:800;color:#a5b4fc;margin-bottom:12px;text-align:center">📊
+                        Overall
+                        statistics</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+                        <div
+                            style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:10px;border-radius:10px;text-align:center">
+                            <div style="font-size:20px;font-weight:900;color:#667eea" id="statsTotal">0</div>
+                            <div style="font-size:11px;color:var(--text-2);margin-top:2px;font-weight:600">Answered
+                            </div>
+                        </div>
+                        <div
+                            style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:10px;border-radius:10px;text-align:center">
+                            <div style="font-size:20px;font-weight:900;color:#10b981" id="statsCorrect">0</div>
+                            <div style="font-size:11px;color:var(--text-2);margin-top:2px;font-weight:600">✅ Correct
+                            </div>
+                        </div>
+                        <div
+                            style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:10px;border-radius:10px;text-align:center">
+                            <div style="font-size:20px;font-weight:900;color:#ef4444" id="statsIncorrect">0</div>
+                            <div style="font-size:11px;color:var(--text-2);margin-top:2px;font-weight:600">❌
+                                Incorrect
+                            </div>
+                        </div>
+                        <div
+                            style="background:rgba(255,255,255,.02);border:1px solid var(--border);padding:10px;border-radius:10px;text-align:center">
+                            <div style="font-size:20px;font-weight:900;color:#a78bfa" id="statsPercent">0%</div>
+                            <div style="font-size:11px;color:var(--text-2);margin-top:2px;font-weight:600">Success
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="resetTest()"
+                        style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;margin-top:10px;width:100%;padding:10px;font-size:13px">🔄
+                        Reset all tests</button>
+                </div>
+
+                <div class="categories">
+                    <div class="cat" onclick="start('term')">
+                        <div class="cat-icon">📚</div>
+                        <div class="cat-title">Terminology</div>
+                        <div class="cat-desc">Professional terms and rules</div>
+                        <div class="cat-info"><span>40 minutes</span><span>50 questions</span></div>
+                    </div>
+                    <div class="cat" onclick="start('sit')">
+                        <div class="cat-icon">🎯</div>
+                        <div class="cat-title">Situational Scenarios</div>
+                        <div class="cat-desc">Real-world problems from the job</div>
+                        <div class="cat-info"><span>50 minutes</span><span>50 questions</span></div>
+                    </div>
+                    <div class="cat" onclick="start('final')">
+                        <div class="cat-icon">🏆</div>
+                        <div class="cat-title">Final Exam</div>
+                        <div class="cat-desc">Comprehensive knowledge check</div>
+                        <div class="cat-info"><span>90 minutes</span><span>100 questions</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: Taking the test -->
+        <div class="section-content" id="quiz">
+            <div class="card">
+                <div class="progress">
+                    <div class="progress-bar" id="bar"></div>
+                </div>
+                <div id="qContainer"></div>
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="prev()">◀ Back</button>
+                    <button class="btn btn-secondary" onclick="backToMenu()"
+                        style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;font-weight:700">🏠 Choose
+                        a test</button>
+                    <button class="btn btn-primary" onclick="showRes()"
+                        style="background:linear-gradient(135deg,#f59e0b,#d97706);font-weight:700">📊
+                        Results</button>
+                    <button class="btn btn-primary" onclick="next()" id="nextBtn">Next ▶</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 3: Results -->
+        <div class="section-content" id="results">
+            <div class="card">
+                <div class="results">
+                    <div style="font-size:100px" id="icon">🎉</div>
+                    <div class="score" id="scoreText">0%</div>
+                    <div class="message" id="msg"></div>
+                    <div
+                        style="background:rgba(102,126,234,.08);border:1px solid rgba(102,126,234,.2);border-radius:20px;padding:30px;margin:30px 0">
+                        <div style="font-size:24px;font-weight:800;color:#a5b4fc;margin-bottom:20px;text-align:center">
+                            📊
+                            Final test results</div>
+                        <div class="stats">
+                            <div class="stat"
+                                style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3)">
+                                <div class="stat-value" style="color:#10b981" id="cor">0</div>
+                                <div class="stat-label" style="color:#6ee7b7">✅ Correct answers</div>
+                            </div>
+                            <div class="stat"
+                                style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3)">
+                                <div class="stat-value" style="color:#ef4444" id="inc">0</div>
+                                <div class="stat-label" style="color:#fca5a5">❌ Incorrect answers</div>
+                            </div>
+                            <div class="stat"
+                                style="background:rgba(102,126,234,.08);border:1px solid rgba(102,126,234,.3)">
+                                <div class="stat-value" style="color:#667eea" id="tot">0</div>
+                                <div class="stat-label" style="color:#a5b4fc">📝 Questions answered</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+                        <button class="btn btn-primary" onclick="continueTest()" id="continueBtn"
+                            style="display:none">Continue test</button>
+                        <button class="btn btn-secondary" onclick="resetCurrentTest()"
+                            style="background:linear-gradient(135deg,#f59e0b,#d97706);color:white">🔄 Restart this test
+                            </button>
+                        <button class="btn btn-secondary" onclick="back()">Back to test selection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <button id="scrollToTop">↑</button>
+
+    <script>
+        const data = {
+            term: [
+                { q: "What does BOL mean?", a: ["Bill of Lading - shipping document with cargo details", "Book of Loads - a company's freight ledger", "Broker Operation License - a broker's operating license", "Business License - a company's business license"], c: 0 },
+                { q: "What is Deadhead?", a: ["An empty run with no load to the next pickup", "The final delivery point of a route", "A special trailer type for heavy freight", "A penalty for a shipping violation"], c: 0 },
+                { q: "What does Rate Confirmation mean?", a: ["A written confirmation of the rate and terms of a haul", "A driver's monthly performance rating", "A government-set fuel tariff", "A schedule of truck movements along routes"], c: 0 },
+                { q: "What is FMCSA?", a: ["Federal Motor Carrier Safety Administration - the federal safety agency", "Freight Management Control System Application - a cargo management system", "Fast Moving Cargo Service Association - an expedited freight association", "Federal Maintenance and Compliance Standards Act - a maintenance law"], c: 0 },
+                { q: "What does HOS mean?", a: ["Hours of Service - rules governing driver working hours", "Highway Operation Standards - standards for operating on highways", "Heavy Object Shipping - transporting heavy objects", "Hazmat Operation Safety - safety when hauling hazardous freight"], c: 0 },
+                { q: "What is POD?", a: ["Proof of Delivery - a document confirming a load was delivered", "Point of Departure - the load's origin point", "Package on Demand - on-demand parcel delivery", "Port of Destination - the destination port for ocean freight"], c: 0 },
+                { q: "What does Detention mean?", a: ["A truck held at loading/unloading beyond the free time, paid to the carrier", "The arrest of a driver by law enforcement", "A mandatory stop at a weigh station", "A truck breakdown requiring a tow"], c: 0 },
+                { q: "What is a Dry Van?", a: ["An enclosed trailer with no temperature control for general freight", "A refrigerated unit with cooling for perishables", "An open deck for construction materials", "A tanker for hauling liquids"], c: 0 },
+                { q: "What is the maximum driving time under HOS rules?", a: ["11 hours of driving after 10 consecutive hours off duty", "14 hours including all breaks and stops", "8 hours for inexperienced new drivers", "16 hours when using team driving"], c: 0 },
+                { q: "Minimum break after 11 hours of driving?", a: ["10 consecutive hours off duty before the next shift", "8 hours off duty, splittable", "12 hours including time for meals and hygiene", "6 hours for experienced drivers with a clean record"], c: 0 },
+                { q: "What is a Reefer?", a: ["A refrigerated trailer with temperature control for perishable freight", "A standard enclosed van for dry goods", "An open deck for oversized freight", "A tanker for chemical liquids"], c: 0 },
+                { q: "What does Layover mean?", a: ["A paid stop for the driver between hauls at the broker's request", "A special type of freight requiring special handling", "Extra insurance for high-value freight", "A bonus for early delivery"], c: 0 },
+                { q: "What is an MC Number?", a: ["Motor Carrier Number - a unique carrier ID issued by FMCSA", "Maintenance Check Number - a truck's inspection number", "Maximum Capacity Number - the maximum payload", "Mileage Counter Number - an odometer number for reporting"], c: 0 },
+                { q: "What does GVWR mean?", a: ["Gross Vehicle Weight Rating - the maximum allowed weight of the truck with its load", "General Vehicle Work Rules - general operating rules", "Government Weight Restrictions - state weight limits", "Guaranteed Vehicle Warranty Rights - truck warranty rights"], c: 0 },
+                { q: "What is a Flatbed?", a: ["An open deck with no walls for oversized and construction freight", "An enclosed van with side loading", "A refrigerated unit for frozen goods", "A tanker for petroleum products"], c: 0 },
+                { q: "What does Lumper mean?", a: ["A hired worker who loads/unloads at a warehouse for a separate fee", "A special type of freight requiring certification", "An insurance agent working with trucking companies", "An inspector checking freight quality"], c: 0 },
+                { q: "What is an ELD?", a: ["Electronic Logging Device - an electronic device that records a driver's hours", "Emergency Load Delivery - urgent load delivery", "Extra Large Dimensions - oversized freight", "Engine Load Detector - an engine load sensor"], c: 0 },
+                { q: "Maximum weight for a standard truck on federal highways?", a: ["80,000 pounds including the truck, trailer, and load", "100,000 pounds with a special permit", "60,000 pounds for trucks without extra axles", "120,000 pounds when using double trailers"], c: 0 },
+                { q: "What does Hazmat mean?", a: ["Hazardous Materials - dangerous materials requiring a special endorsement", "Heavy Materials - loads over 50,000 pounds", "Handling Materials - materials requiring manual handling", "Harbor Materials - freight destined for ports"], c: 0 },
+                { q: "What is Factoring?", a: ["Selling unpaid invoices to a factoring company to get paid quickly", "Calculating haul cost accounting for all factors", "Insuring cargo against damage and loss", "Checking documents before starting a haul"], c: 0 },
+                { q: "What is a DOT Number?", a: ["Department of Transportation Number - a company's DOT registration number", "Date of Transport - the date transport begins", "Delivery on Time - a guarantee of on-time delivery", "Driver Operation Test - a test for a driver's license"], c: 0 },
+                { q: "What does IFTA mean?", a: ["International Fuel Tax Agreement - a fuel tax agreement among states", "Interstate Freight Transport Act - an interstate hauling law", "Immediate Fuel Tax Approval - instant tax break approval", "International Fleet Tracking Association - a fleet tracking association"], c: 0 },
+                { q: "What is Bobtail?", a: ["A truck with no trailer driving to a pickup or home", "A short haul under 100 miles", "A small truck rated up to 10,000 pounds", "A special insurance type for new drivers"], c: 0 },
+                { q: "What does Backhaul mean?", a: ["A return load on the way home to avoid an empty run", "The rear gate of a truck for loading equipment", "Returning freight to the shipper after the consignee refuses it", "Canceling a haul for technical reasons"], c: 0 },
+                { q: "What is Drop and Hook?", a: ["Drop a loaded trailer and pick up another one already ready", "Drop off freight without the consignee's signature", "Hook up an extra trailer for more freight", "Unhook a trailer for repair at a shop"], c: 0 },
+                { q: "What does Live Load mean?", a: ["Loading with the driver waiting on site (usually 2 hours free)", "Hauling live animals requiring special conditions", "Urgent delivery within 24 hours", "Hazardous freight requiring constant monitoring"], c: 0 },
+                { q: "What is an Overweight Permit?", a: ["A special permit to haul a load exceeding the standard weight", "A fine for overweight issued at a weigh station", "Extra insurance for heavy freight", "A driver's license to operate heavy trucks"], c: 0 },
+                { q: "What does Tanker Endorsement mean?", a: ["An additional CDL endorsement to haul liquids in tankers", "A special tanker type for chemicals", "Tanker insurance against leaks and accidents", "A permit to haul fuel across state lines"], c: 0 },
+                { q: "What is Intermodal?", a: ["Moving containers by different modes of transport (truck, rail, ship)", "International cross-border freight", "A modern truck model with new technology", "A special freight type for military use"], c: 0 },
+                { q: "What does LTL mean?", a: ["Less Than Truckload - a partial truckload with several loads", "Long Term Load - a long-term hauling contract", "Limited Transport License - a limited hauling license", "Large Truck Load - a full load of a large truck"], c: 0 },
+                { q: "What is a Tarp?", a: ["A tarpaulin to cover and protect freight on an open deck", "A special trailer type for bulk freight", "Extra insurance against freight damage", "A document confirming freight quality"], c: 0 },
+                { q: "What does a TWIC Card mean?", a: ["Transportation Worker Identification Credential - an ID for working in ports", "Truck Weight Inspection Card - a weigh-station clearance card", "Two-Way Interactive Communication - a two-way comm system", "Trailer Wheel Inspection Certificate - a wheel inspection certificate"], c: 0 },
+                { q: "What is a Chassis?", a: ["A special wheeled frame for hauling ocean containers", "The truck cab where the driver sits", "A freight type requiring special securement", "A trailer for hauling cars"], c: 0 },
+                { q: "What does Drayage mean?", a: ["Short-distance moves of containers from the port to a warehouse", "A long interstate haul", "A special insurance type for ocean freight", "The process of loading containers onto a ship"], c: 0 },
+                { q: "What is a Pallet Jack?", a: ["A manual hydraulic cart for moving pallets in a warehouse", "A special trailer type for palletized freight", "A driver specializing in palletized freight", "An electronic tool for counting pallets"], c: 0 },
+                { q: "What does Tare Weight mean?", a: ["The weight of the empty truck and trailer without a load", "The total weight of the truck with load and fuel", "The weight of the freight only, without packaging", "The maximum allowed weight for a given route"], c: 0 },
+                { q: "What is a Kingpin?", a: ["The metal pin connecting the truck to the trailer (fifth wheel)", "The company's lead driver with the most experience", "A special high-value freight type", "A DOT inspector checking trucks on the road"], c: 0 },
+                { q: "What does Blind Shipment mean?", a: ["A shipment where the shipper's or consignee's info is hidden", "An urgent nighttime delivery", "Freight without any accompanying documents", "Hauling with the truck's windows covered"], c: 0 },
+                { q: "What is a Freight Broker Bond?", a: ["A required $75,000 broker surety bond to protect carriers", "A one-year agreement between a broker and a driver", "A broker's license to handle international freight", "Credit a broker extends to carriers"], c: 0 },
+                { q: "What does Accessorial Charges mean?", a: ["Extra fees for services (detention, lumper, tarp, etc.)", "The base rate for the haul", "Mandatory cargo insurance against damage", "Taxes on transportation services"], c: 0 },
+                { q: "What is a Cross Dock?", a: ["Transferring goods from one truck to another with no warehouse storage", "A special trailer type with side loading", "A loading dock at a warehouse", "A document for customs clearance"], c: 0 },
+                { q: "What does Fuel Surcharge mean?", a: ["An extra markup on the rate to offset fuel cost", "A penalty for excess fuel use", "A state-set fuel tax", "A driver bonus for saving fuel"], c: 0 },
+                { q: "What is Cargo Insurance?", a: ["Insurance on the load against damage, loss, or theft during transport", "Insurance on the truck against breakdowns and accidents", "The driver's health insurance", "Liability insurance covering third parties"], c: 0 },
+                { q: "What does Shipper mean?", a: ["The shipper - the company or person sending the freight", "The truck driver hauling the freight", "The broker arranging the haul", "The consignee receiving the freight at the destination"], c: 0 },
+                { q: "What is a Consignee?", a: ["The consignee - the company or person receiving the freight at the destination", "The shipper starting the haul", "The broker coordinating delivery", "The driver delivering the freight"], c: 0 },
+                { q: "What does Carrier Packet mean?", a: ["A packet of documents for the carrier (Rate Confirmation, BOL, instructions)", "Packaging of freight for safe transport", "A trailer loaded with small parcels", "A carrier's operating license"], c: 0 },
+                { q: "What is a W-9 Form?", a: ["A tax form with company info for the IRS (Tax ID)", "A form describing freight and its specs", "A hazmat hauling permit", "An insurance policy for the truck"], c: 0 },
+                { q: "What does COI mean?", a: ["Certificate of Insurance - a certificate confirming coverage", "Cost of Insurance - the annual insurance cost", "Carrier Operation Information - info about carrier operations", "Cargo Order Identification - a load order ID"], c: 0 },
+                { q: "What is Quick Pay?", a: ["Accelerated invoice payment (1-2 days) with a 2-5% fee", "Standard payment within 30 days", "A 50% prepayment before the haul starts", "A bonus for early delivery"], c: 0 }
+            ], sit: [
+                { q: "The truck broke down 200 miles from pickup, which is in 4 hours. What do you do?", a: ["Contact the broker immediately, explain the situation, and offer an alternative solution", "Wait for the repair to finish and hope you make it on time", "Cancel the load without explanation and look for another", "Find another load without notifying the broker of the problem"], c: 0 },
+                { q: "A load is $1,200 over 600 miles. Fuel is $450, the driver gets $400. Take it?", a: ["Yes, net profit is $350 (29% margin) - that's acceptable", "No, too little profit for that distance", "Negotiate a rate of at least $1,500 or decline", "Only take it if there's a guaranteed backhaul"], c: 0 },
+                { q: "The driver was held 6 hours at the pickup. What do you do?", a: ["Request detention pay (usually after 2 hours of free wait time)", "Do nothing, it's a normal part of the job", "Cancel the load immediately and leave", "File a complaint with FMCSA against the shipper"], c: 0 },
+                { q: "The driver refuses to install Macropoint for tracking. How do you handle it?", a: ["Explain it's a broker requirement, show how to install it, and help set it up", "Fire the driver for not complying", "Ignore the requirement and don't set up tracking", "Find a load from a broker that doesn't require tracking"], c: 0 },
+                { q: "The broker hasn't responded for 3 days after delivery. What do you do?", a: ["Send the POD by email and fax, and contact the factoring company to collect", "Keep waiting another week for a response", "Sue the broker immediately", "Forget about this load and move on"], c: 0 },
+                { q: "The driver went 2 hours over HOS to make the delivery. Your actions?", a: ["Stop the driver immediately, ensure a 10-hour break, and notify the broker of the delay", "Let them finish the haul so you don't lose the money", "Fire the driver for breaking the rules", "Change the ELD logs to hide the violation"], c: 0 },
+                { q: "It's a Hazmat load, but the driver has no endorsement. What do you do?", a: ["Decline it and find a driver with a Hazmat endorsement", "Take the load", "Hide the information", "Ask them to get the endorsement in a day"], c: 0 },
+                { q: "Rate is $2.50/mile over 800 miles, with 200 miles of deadhead. Take it?", a: ["Do the math: $2,000 over 1,000 miles = $2/mile", "Yes, the rate is good", "No, too much deadhead", "Demand pay for the deadhead"], c: 0 },
+                { q: "A driver asks for a $500 advance. How do you handle it?", a: ["Assess reliability; if they're new - decline", "Give it right away", "Decline", "Give $1,000"], c: 0 },
+                { q: "Pickup is in 30 minutes, the driver is 3 hours away. What do you do?", a: ["Tell the broker the real ETA", "Agree and hope for the best", "Decline", "Lie"], c: 0 },
+                { q: "The Rate Confirmation is $200 less than promised. Your actions?", a: ["Contact the broker, don't start the haul", "Start the haul", "Cancel the load", "Just accept it"], c: 0 },
+                { q: "Overweight at the weigh station. What do you do?", a: ["Contact the broker, demand the load be repacked", "Pay the fine", "Abandon the load", "Avoid the weigh stations"], c: 0 },
+                { q: "The truck broke down, repair takes 2 days. The load is urgent. Your actions?", a: ["Offer to transload onto another truck", "Wait for the repair", "Cancel the load", "Say nothing"], c: 0 },
+                { q: "The driver demands a 20% raise mid-haul. How do you handle it?", a: ["Decline and remind them of the contract terms", "Agree", "Fire them", "Threaten to call the police"], c: 0 },
+                { q: "The broker asks you to start without a Rate Confirmation. Your decision?", a: ["Decline without written confirmation", "Start on trust", "Demand prepayment", "Agree"], c: 0 },
+                { q: "The driver was 4 hours late. The broker canceled the load. What do you do?", a: ["Take responsibility, apologize, and find a new load", "Blame the broker", "Demand compensation", "Ignore it"], c: 0 },
+                { q: "A load is 1,500 miles for $3,000. Driver gets $1,200, fuel is $600. Take it?", a: ["Yes, profit is $1,200, a 40% margin", "No", "Negotiate for $3,500", "Give the driver $1,000"], c: 0 },
+                { q: "The driver has been out of contact for 12 hours. Your actions?", a: ["Try to reach them by every means and notify the broker", "Wait a full day", "Assume the load is lost", "Hire a detective"], c: 0 },
+                { q: "The broker requires Trucker Tools, the driver refuses. Your decision?", a: ["Explain that it's a broker requirement", "Decline the load", "Ignore it", "Find another driver"], c: 0 },
+                { q: "Rate is $1.80/mile over 1,200 miles, a backhaul. Take it?", a: ["Yes, a backhaul beats deadhead", "No, low rate", "Demand $2.50", "Look for something better"], c: 0 },
+                { q: "A load is $2,800 over 1,000 miles. The driver wants 45%. How much do you give?", a: ["$1,260 (45% of $2,800)", "$1,000", "$1,500", "$2,000"], c: 0 },
+                { q: "The driver is in California, the load is in Texas in 8 hours. Distance is 1,500 miles. Will they make it?", a: ["No, you need at least 24 hours", "Yes, they'll make it", "Depends on traffic", "They'd have to fly"], c: 0 },
+                { q: "The broker offers $1.50/mile. The average rate is $2.00. What do you do?", a: ["Decline or negotiate a better rate", "Take it right away", "Demand $3.00", "Agree"], c: 0 },
+                { q: "The driver runs out of HOS hours in 3 hours, delivery is 5 hours away. Your actions?", a: ["Stop the driver for a 10-hour break and notify the broker of the delay", "Continue the haul", "Change the logs", "Drive faster"], c: 0 },
+                { q: "You received the load, but the BOL doesn't match the freight. What do you do?", a: ["Don't take the load; contact the broker to fix the paperwork", "Take the load", "Fix the BOL yourself", "Ignore it"], c: 0 },
+                { q: "The driver asks for cash payment right after delivery. How do you handle it?", a: ["Explain the payment process through factoring (usually 1-2 days)", "Give them cash", "Refuse outright", "Give partial cash"], c: 0 },
+                { q: "The broker offers 3 loads in a row on the same lane. Take them?", a: ["Yes, it's a good deal - less deadhead, steady work", "No, too many", "Take only one", "Demand more money"], c: 0 },
+                { q: "The driver reports the load was stolen. First steps?", a: ["Call the police, notify the broker and insurer, document everything", "Search for the load yourself", "Blame the driver", "Say nothing"], c: 0 },
+                { q: "Rate is $3.00/mile over 500 miles, but it's a Hazmat load. Take it?", a: ["Only if the driver has a Hazmat endorsement and experience", "Yes, the rate is good", "No, it's dangerous", "Hide that it's Hazmat"], c: 0 },
+                { q: "The driver wants 2 weeks of vacation. How do you organize it?", a: ["Plan ahead, find a replacement, or temporarily work with other drivers", "Refuse", "Fire them", "Grant the vacation with no planning"], c: 0 },
+                { q: "The broker offers a load with TONU (Truck Ordered Not Used). What is it?", a: ["A load canceled after confirmation - you can claim compensation", "A bonus", "A fine", "A new type of load"], c: 0 },
+                { q: "The driver reports freight damage during loading. Your actions?", a: ["Document the damage, take photos, note it on the BOL, notify the broker", "Continue the haul", "Decline the load", "Say nothing"], c: 0 },
+                { q: "Rate is $2.20/mile over 800 miles, but a tarp is needed. Take it?", a: ["Yes, if you have a tarp and experience; factor in tarping time", "No", "Demand $3.00", "Take it without a tarp"], c: 0 },
+                { q: "The broker asks you to use their factoring. Your decision?", a: ["Compare the terms with your own factoring and pick the better one", "Agree right away", "Refuse", "Demand prepayment"], c: 0 },
+                { q: "The driver sped and got a $500 ticket. Who pays?", a: ["Usually the driver, if it's their fault", "The company", "The broker", "The insurer"], c: 0 },
+                { q: "A load is 2,000 miles for $4,500. Two drivers (team). Fuel is $800. Take it?", a: ["Yes, profit is $3,700, split between the drivers", "No", "Demand $6,000", "Run it with one driver"], c: 0 },
+                { q: "The broker requires $1M cargo insurance, you have $100K. What do you do?", a: ["Get additional coverage or decline the load", "Lie about the coverage", "Take the load", "Demand the broker provide the insurance"], c: 0 },
+                { q: "The driver is in New York, the load is in Miami (1,300 miles) in 20 hours. Will they make it?", a: ["Yes; at an average 55 mph you need ~24 hours, but it's possible", "No", "Easily", "They'd have to fly"], c: 0 },
+                { q: "You got the Rate Confirmation but no Carrier Packet. Start the haul?", a: ["Request the Carrier Packet, but you can start with the Rate Confirmation", "Decline", "Start with no documents", "Demand prepayment"], c: 0 },
+                { q: "The driver complains the truck is in poor condition. Your actions?", a: ["Check it immediately, send it for repair - safety comes first", "Ignore it", "Force them to keep working", "Fire them"], c: 0 },
+                { q: "The broker offers a load with Live Load and Live Unload. What to consider?", a: ["The driver will wait for loading/unloading - factor in time and possible detention", "Decline", "Demand more money", "Nothing special"], c: 0 },
+                { q: "Rate is $1.60/mile over 1,500 miles, but it's a backhaul home. Take it?", a: ["Yes, a backhaul always beats deadhead, even at a low rate", "No", "Demand $2.50", "Look for something better"], c: 0 },
+                { q: "The driver asks to buy new tires for $2,000. Your decision?", a: ["Check the tire condition; if needed - buy them, safety matters", "Refuse", "Give $500", "Make them buy their own"], c: 0 },
+                { q: "The broker hasn't paid 45 days after delivery. What do you do?", a: ["Contact factoring, file an FMCSA complaint, consider legal action", "Wait", "Forget it", "Make threats"], c: 0 },
+                { q: "It's a Drop and Hook, but the trailer isn't ready. Your actions?", a: ["Notify the broker, request detention if you wait more than 2 hours", "Leave", "Wait silently", "Take another trailer"], c: 0 },
+                { q: "The driver wants to take the load to their home (500 miles out of the way). Allow it?", a: ["No, that's misuse - only if it's a backhaul", "Yes", "Allow it for a fee", "Fire them"], c: 0 },
+                { q: "Rate is $5.00/mile over 200 miles, but the load is in a dangerous area. Take it?", a: ["Assess the risk, check reviews of the location, decide with the driver", "Yes, great rate", "No, it's dangerous", "Demand $10"], c: 0 },
+                { q: "The broker offers a 6-month contract with fixed rates. Your decision?", a: ["Evaluate the rates, work stability, and contract terms", "Agree right away", "Decline", "Demand more"], c: 0 },
+                { q: "The driver reports a DOT inspection. What do you do?", a: ["Make sure all documents are in order and support the driver", "Panic", "Nothing", "Blame the driver"], c: 0 },
+                { q: "It's a Reefer load, temp should be -10°F but it shows 0°F. Your actions?", a: ["Don't take the load, notify the broker, check the reefer unit", "Take the load", "Change the temp en route", "Say nothing"], c: 0 }
+            ]
+        };
+        data.final = [...data.term, ...data.sit];
+        let quiz = [], cur = 0, ans = [], locked = false;
+        function shuffle(arr) {
+            const a = [...arr];
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            // Update nav buttons
+            document.querySelectorAll('.section-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.section === sectionId) {
+                    btn.classList.add('active');
+                }
+            });
+            // Show/hide section nav based on section
+            const sectionNav = document.querySelector('.section-nav');
+            const mainEl = document.querySelector('.main');
+            if (sectionId === 'welcome') {
+                sectionNav.style.display = 'none';
+                mainEl.classList.remove('has-nav');
+            } else {
+                sectionNav.style.display = 'flex';
+                mainEl.classList.add('has-nav');
+            }
+        }
+
+        function start(t) {
+            quiz = shuffle(data[t]).map(q => {
+                const answers = q.a.map((a, i) => ({ text: a, isCorrect: i === q.c }));
+                const shuffled = shuffle(answers);
+                return { q: q.q, a: shuffled.map(a => a.text), c: shuffled.findIndex(a => a.isCorrect) };
+            });
+            cur = 0; ans = Array(quiz.length).fill(null); locked = false;
+            _answerStreak = 0; _answerStartTime = Date.now();
+            localStorage.setItem('currentTestType', t);
+            localStorage.setItem('test_' + t + '_quiz', JSON.stringify(quiz));
+            localStorage.setItem('test_' + t + '_answers', JSON.stringify(ans));
+            localStorage.setItem('test_' + t + '_current', '0');
+            showSection('quiz');
+            show();
+        }
+        function show() {
+            const q = quiz[cur];
+            locked = false;
+            document.getElementById('bar').style.width = ((cur + 1) / quiz.length * 100) + '%';
+            let answersHTML = '';
+            q.a.forEach((a, i) => {
+                let cls = 'answer';
+                if (ans[cur] !== null) {
+                    if (i === q.c) cls += ' correct';
+                    else cls += ' incorrect';
+                }
+                answersHTML += `<div class="${cls}" onclick="sel(${i})">${String.fromCharCode(65 + i)}. ${a}</div>`;
+            });
+            document.getElementById('qContainer').innerHTML = `
+<div class="question">
+<span class="q-num">Question ${cur + 1} of ${quiz.length}</span>
+<div class="q-text">${q.q}</div>
+<div class="answers">${answersHTML}</div>
+</div>`;
+            document.getElementById('nextBtn').textContent = cur === quiz.length - 1 ? 'Finish' : 'Next';
+        }
+        // XP & achievement tracking
+        let _answerStreak = 0;
+        let _answerStartTime = Date.now();
+
+        function _showXPToast(delta) {
+            const isPos = delta > 0;
+            const el = document.createElement('div');
+            el.style.cssText = 'position:fixed;right:24px;bottom:24px;z-index:99999;'
+                + 'background:linear-gradient(135deg,' + (isPos ? '#052e16,#0f172a' : '#450a0a,#0f172a') + ');'
+                + 'border:1px solid ' + (isPos ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.6)') + ';'
+                + 'border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;'
+                + 'min-width:140px;box-shadow:0 4px 20px rgba(0,0,0,0.5);'
+                + 'animation:xpToastIn 0.3s ease forwards;';
+            el.innerHTML = '<div style="font-size:20px">' + (isPos ? '⚡' : '💔') + '</div>'
+                + '<div style="color:' + (isPos ? '#4ade80' : '#f87171') + ';font-weight:800;font-size:15px">'
+                + (isPos ? '+' : '') + delta + ' XP</div>';
+            if (!document.getElementById('xpToastStyle')) {
+                const s = document.createElement('style');
+                s.id = 'xpToastStyle';
+                s.textContent = '@keyframes xpToastIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}'
+                    + '@keyframes xpToastOut{to{transform:translateX(120%);opacity:0}}';
+                document.head.appendChild(s);
+            }
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.animation = 'xpToastOut 0.3s ease forwards'; setTimeout(() => el.remove(), 300); }, 1500);
+        }
+
+        function _showTestAchieve(icon, title, desc, color) {
+            const el = document.createElement('div');
+            el.style.cssText = `position:fixed;right:24px;bottom:24px;z-index:9999;
+                background:linear-gradient(135deg,#1e1b4b,#0f172a);
+                border:1px solid ${color};border-radius:16px;padding:14px 18px;
+                display:flex;align-items:center;gap:12px;min-width:260px;
+                box-shadow:0 8px 32px rgba(0,0,0,0.5);
+                animation:testAchIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;`;
+            el.innerHTML = `<div style="font-size:36px;line-height:1">${icon}</div>
+                <div>
+                  <div style="color:#fbbf24;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px">🏅 Achievement!</div>
+                  <div style="color:#ffffff;font-weight:700;font-size:14px">${title}</div>
+                  <div style="color:#e2e8f0;font-size:12px">${desc}</div>
+                </div>`;
+            if (!document.getElementById('testAchStyle')) {
+                const s = document.createElement('style');
+                s.id = 'testAchStyle';
+                s.textContent = `@keyframes testAchIn{0%{transform:scale(0.5) translateX(120%);opacity:0}60%{transform:scale(1.05) translateX(0);opacity:1}100%{transform:scale(1) translateX(0);opacity:1}}
+                @keyframes testAchOut{to{transform:translateX(120%);opacity:0}}`;
+                document.head.appendChild(s);
+            }
+            document.body.appendChild(el);
+            setTimeout(() => { el.style.animation = 'testAchOut 0.4s ease forwards'; setTimeout(() => el.remove(), 400); }, 4000);
+        }
+
+        function sel(i) {
+            if (locked || ans[cur] !== null) return;
+            locked = true;
+            ans[cur] = i;
+            const testType = localStorage.getItem('currentTestType');
+            localStorage.setItem('test_' + testType + '_answers', JSON.stringify(ans));
+            const q = quiz[cur];
+            const isCorrect = i === q.c;
+            const elapsed = (Date.now() - _answerStartTime) / 1000;
+
+            // XP per answer
+            if (isCorrect) {
+                _answerStreak++;
+                _showXPToast(2);
+                import('/xp-system.js').then(m => m.awardXPDelta(2, 'Correct answer'));
+                if (_answerStreak === 5)  _showTestAchieve('🔥', 'Streak x5!', '5 correct in a row', 'rgba(251,146,60,0.6)');
+                if (_answerStreak === 10) _showTestAchieve('⚡', 'Streak x10!', '10 correct in a row', 'rgba(251,191,36,0.6)');
+                if (_answerStreak === 20) { _showTestAchieve('💥', 'Streak x20!', 'Incredible!', 'rgba(139,92,246,0.6)'); import('/xp-system.js').then(m => m.awardXPDelta(10, 'Streak x20 bonus')); }
+            } else {
+                _answerStreak = 0;
+                _showXPToast(-1);
+                import('/xp-system.js').then(m => m.awardXPDelta(-1, 'Incorrect answer'));
+            }
+            _answerStartTime = Date.now();
+
+            let answersHTML = '';
+            q.a.forEach((a, idx) => {
+                let cls = 'answer';
+                if (idx === q.c) cls += ' correct';
+                else cls += ' incorrect';
+                answersHTML += `<div class="${cls}">${String.fromCharCode(65 + idx)}. ${a}</div>`;
+            });
+            document.getElementById('qContainer').innerHTML = `
+<div class="question">
+<span class="q-num">Question ${cur + 1} of ${quiz.length}</span>
+<div class="q-text">${q.q}</div>
+<div class="answers">${answersHTML}</div>
+</div>`;
+            setTimeout(() => {
+                locked = false;
+                if (cur < quiz.length - 1) { cur++; localStorage.setItem('test_' + testType + '_current', cur); show(); }
+                else { showRes(); }
+            }, 2000);
+        }
+        function next() {
+            const testType = localStorage.getItem('currentTestType');
+            if (cur < quiz.length - 1) { cur++; localStorage.setItem('test_' + testType + '_current', cur); show(); } else { showRes(); }
+        }
+        function prev() {
+            const testType = localStorage.getItem('currentTestType');
+            if (cur > 0) { cur--; localStorage.setItem('test_' + testType + '_current', cur); show(); }
+        }
+        function showRes() {
+            let cor = 0, answered = 0;
+            quiz.forEach((q, i) => {
+                if (ans[i] !== null) {
+                    answered++;
+                    if (ans[i] === q.c) cor++;
+                }
+            });
+            const total = quiz.length;
+            const unanswered = total - answered;
+            const incorrect = answered - cor;
+            const pct = answered > 0 ? Math.round(cor / answered * 100) : 0;
+            showSection('results');
+            document.getElementById('scoreText').textContent = pct + '%';
+
+            // XP for the test + achievements on results
+            if (answered > 0) {
+                import('/xp-system.js').then(m => {
+                    m.awardXP('TEST_PASSED', { score: pct, correct: cor, total: answered });
+                    if (pct === 100) {
+                        m.awardXP('QUIZ_PERFECT');
+                        setTimeout(() => _showTestAchieve('💯', 'Perfect score!', '100% correct answers', 'rgba(16,185,129,0.6)'), 800);
+                    } else if (pct >= 90) {
+                        setTimeout(() => _showTestAchieve('🏆', 'Great result!', '90%+ correct answers', 'rgba(251,191,36,0.6)'), 800);
+                    }
+                });
+                const testsKey = 'testing_completed_count';
+                const done = (parseInt(localStorage.getItem(testsKey) || '0')) + 1;
+                localStorage.setItem(testsKey, done);
+                if (done === 1) setTimeout(() => _showTestAchieve('📚', 'First test!', 'You completed your first test', 'rgba(99,102,241,0.6)'), 1600);
+                if (done === 5) { setTimeout(() => _showTestAchieve('📚', 'Dedicated student', '5 tests completed', 'rgba(99,102,241,0.6)'), 1600); import('/xp-system.js').then(m => m.awardXP('QUIZ_ROUND_DONE')); }
+                if (done === 10) { setTimeout(() => _showTestAchieve('🧠', 'Expert!', '10 tests completed', 'rgba(139,92,246,0.6)'), 1600); import('/xp-system.js').then(m => m.awardXP('MODULE_MARATHON')); }
+            }
+            document.getElementById('cor').textContent = cor;
+            document.getElementById('inc').textContent = incorrect;
+            document.getElementById('tot').textContent = answered + ' of ' + total;
+            let icon = '🎉', msg = '';
+            if (unanswered > 0) {
+                icon = '⚠️';
+                msg = `You answered ${answered} of ${total} questions. ${unanswered} questions remaining.`;
+            } else if (pct >= 90) { icon = '🏆'; msg = 'Excellent! Outstanding knowledge!'; }
+            else if (pct >= 80) { icon = '🎉'; msg = 'Great! You passed the test!'; }
+            else if (pct >= 70) { icon = '👍'; msg = 'Good! There\'s room to improve.'; }
+            else if (pct >= 50) { icon = '📚'; msg = 'Satisfactory. Review the material.'; }
+            else { icon = '💪'; msg = 'You need more practice!'; }
+            document.getElementById('icon').textContent = icon;
+            document.getElementById('msg').textContent = msg;
+            if (unanswered > 0) {
+                document.getElementById('continueBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('continueBtn').style.display = 'none';
+            }
+        }
+        function back() {
+            showSection('welcome');
+        }
+        function backToMenu() {
+            showSection('welcome');
+        }
+        function continueTest() {
+            showSection('quiz');
+            show();
+        }
+        function resetTest() {
+            if (confirm('Are you sure you want to start a new test? All progress will be deleted.')) {
+                localStorage.removeItem('testType');
+                localStorage.removeItem('testQuiz');
+                localStorage.removeItem('testAnswers');
+                localStorage.removeItem('testCurrent');
+                location.reload();
+            }
+        }
+        function resetTest() {
+            if (confirm('Are you sure you want to delete ALL tests? All progress will be deleted.')) {
+                localStorage.removeItem('currentTestType');
+                ['term', 'sit', 'final'].forEach(t => {
+                    localStorage.removeItem('test_' + t + '_quiz');
+                    localStorage.removeItem('test_' + t + '_answers');
+                    localStorage.removeItem('test_' + t + '_current');
+                });
+                location.reload();
+            }
+        }
+        function resetCurrentTest() {
+            const testType = localStorage.getItem('currentTestType');
+            if (testType && confirm('Are you sure you want to restart this test?')) {
+                localStorage.removeItem('test_' + testType + '_quiz');
+                localStorage.removeItem('test_' + testType + '_answers');
+                localStorage.removeItem('test_' + testType + '_current');
+                location.reload();
+            }
+        }
+        function resumeSavedTest(testType) {
+            const savedQuiz = localStorage.getItem('test_' + testType + '_quiz');
+            const savedAnswers = localStorage.getItem('test_' + testType + '_answers');
+            const savedCurrent = localStorage.getItem('test_' + testType + '_current');
+            if (savedQuiz && savedAnswers && savedCurrent) {
+                quiz = JSON.parse(savedQuiz);
+                ans = JSON.parse(savedAnswers);
+                cur = parseInt(savedCurrent);
+                locked = false;
+                localStorage.setItem('currentTestType', testType);
+                showSection('quiz');
+                show();
+            }
+        }
+        window.onload = function () {
+            const testNames = { term: '📚 Terminology', sit: '🎯 Situational Scenarios', final: '🏆 Final Exam' };
+            let hasTests = false;
+            let totalAnswered = 0, totalQuestions = 0, totalCorrect = 0;
+            ['term', 'sit', 'final'].forEach(t => {
+                const savedQuiz = localStorage.getItem('test_' + t + '_quiz');
+                const savedAnswers = localStorage.getItem('test_' + t + '_answers');
+                if (savedQuiz && savedAnswers) {
+                    hasTests = true;
+                    const quiz = JSON.parse(savedQuiz);
+                    const ans = JSON.parse(savedAnswers);
+                    const answered = ans.filter(a => a !== null).length;
+                    const correct = ans.filter((a, i) => a !== null && a === quiz[i].c).length;
+                    totalAnswered += answered;
+                    totalQuestions += quiz.length;
+                    totalCorrect += correct;
+                }
+            });
+            if (hasTests) {
+                document.getElementById('statsTotal').textContent = totalAnswered + ' of ' + totalQuestions;
+                document.getElementById('statsCorrect').textContent = totalCorrect;
+                document.getElementById('statsIncorrect').textContent = (totalAnswered - totalCorrect);
+                const pct = totalAnswered > 0 ? Math.round(totalCorrect / totalAnswered * 100) : 0;
+                document.getElementById('statsPercent').textContent = pct + '%';
+                document.getElementById('overallStats').style.display = 'block';
+            }
+            ['term', 'sit', 'final'].forEach(t => {
+                const savedQuiz = localStorage.getItem('test_' + t + '_quiz');
+                const savedAnswers = localStorage.getItem('test_' + t + '_answers');
+                if (savedQuiz && savedAnswers) {
+                    const quiz = JSON.parse(savedQuiz);
+                    const ans = JSON.parse(savedAnswers);
+                    const answered = ans.filter(a => a !== null).length;
+                    const correct = ans.filter((a, i) => a !== null && a === quiz[i].c).length;
+                    const pct = answered > 0 ? Math.round(correct / answered * 100) : 0;
+                    const badge = document.createElement('div');
+                    badge.style.cssText = 'position:absolute;top:10px;right:10px;background:linear-gradient(135deg,#10b981,#059669);color:white;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(16,185,129,0.4)';
+                    badge.textContent = `${answered}/${quiz.length} (${pct}%)`;
+                    const catDiv = document.querySelectorAll('.cat')[t === 'term' ? 0 : t === 'sit' ? 1 : 2];
+                    if (catDiv) {
+                        catDiv.style.position = 'relative';
+                        catDiv.appendChild(badge);
+                        const resumeBtn = document.createElement('button');
+                        resumeBtn.style.cssText = 'margin-top:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);color:white;padding:10px 20px;border:none;border-radius:8px;font-weight:700;cursor:pointer;width:100%';
+                        resumeBtn.textContent = 'Continue test';
+                        resumeBtn.onclick = function (e) { e.stopPropagation(); resumeSavedTest(t); };
+                        catDiv.appendChild(resumeBtn);
+                    }
+                }
+            });
+        };
+
+        // Scroll to top button
+        const stt = document.getElementById('scrollToTop');
+        if (stt) {
+            window.addEventListener('scroll', () => {
+                stt.style.display = window.pageYOffset > 320 ? 'flex' : 'none';
+            });
+            stt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        }
+    </script>
+    <script src="/theme-switcher.js"></script>
+
+    <!-- Mobile menu script -->
+    <script>
+        // Mobile menu functionality
+        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+
+        if (mobileMenuToggle && mobileMenu && mobileMenuOverlay) {
+            mobileMenuToggle.addEventListener('click', () => {
+                mobileMenu.classList.toggle('active');
+                mobileMenuOverlay.classList.toggle('active');
+                document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
+            });
+
+            mobileMenuOverlay.addEventListener('click', () => {
+                mobileMenu.classList.remove('active');
+                mobileMenuOverlay.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+    </script>
+
+</body>
+
+</html>

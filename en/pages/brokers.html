@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en" style="background:#070b14">
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="/site-protection.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module 8: Working with Brokers | Dispatcher Courses</title>
+    <link rel="canonical" href="https://dispatch4you.com/en/pages/brokers.html">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-nav.css?v=8.2">
+    <link rel="stylesheet" href="/shared-styles.css?v=2.0">
+    <link rel="stylesheet" href="/lesson-audio.css?v=25">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{overflow-x:hidden;width:100%;max-width:100vw;scroll-behavior:smooth}
+        :root{--primary:#06b6d4;--secondary:#0ea5e9;--accent:#f97316;--success:#10b981;--warning:#f59e0b;--danger:#ef4444;--bg-dark:#0a0e1a;--bg-darker:#070b14;--text-primary:#ffffff;--text-secondary:#e2e8f0;--text-muted:#94a3b8}
+        body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg-darker);color:var(--text-primary);line-height:1.6;overflow-x:hidden;width:100%;max-width:100vw;margin:0;padding:0}
+        body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at 15% 25%,rgba(6,182,212,.15),transparent 50%),radial-gradient(circle at 85% 75%,rgba(249,115,22,.1),transparent 50%),radial-gradient(circle at 50% 50%,rgba(14,165,233,.08),transparent 70%);z-index:-1;pointer-events:none}
+        .container{max-width:1100px;margin:0 auto;padding:40px 40px}
+        .page-header{padding:130px 0 70px;text-align:center}
+        .page-badge{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(14,165,233,.15));border:1px solid rgba(6,182,212,.3);border-radius:24px;font-size:13px;font-weight:700;color:var(--primary);margin-bottom:20px;text-transform:uppercase;letter-spacing:1.5px}
+        .page-title{font-size:clamp(40px,5vw,64px);font-weight:900;background:linear-gradient(135deg,#06b6d4 0%,#0ea5e9 40%,#f97316 80%,#fb923c 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:24px;line-height:1.1}
+        .page-subtitle{font-size:20px;color:#e2e8f0;max-width:800px;margin:0 auto;line-height:1.7}
+        .hero-stats{display:flex;justify-content:center;gap:48px;margin-top:48px;flex-wrap:wrap}
+        .hero-stat{text-align:center}
+        .hero-stat-number{font-size:36px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .hero-stat-label{font-size:13px;color:#cbd5e1;text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-top:4px}
+        .section{padding:8px 0}
+        .section-title{font-size:clamp(28px,3vw,38px);font-weight:900;margin-bottom:16px;background:linear-gradient(135deg,#06b6d4 0%,#0ea5e9 50%,#f97316 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .section-desc{font-size:17px;color:#e2e8f0;line-height:1.8;max-width:900px;margin-bottom:40px}
+        .section-text{font-size:16px;color:#e2e8f0;line-height:1.85;margin-bottom:20px;max-width:950px}
+        .section-text strong{color:var(--text-primary)}
+        .glass-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:32px;backdrop-filter:blur(10px);transition:all .35s ease}
+        .glass-card:hover{border-color:rgba(6,182,212,.3);background:rgba(6,182,212,.05);transform:translateY(-4px);box-shadow:0 12px 40px rgba(6,182,212,.1)}
+
+        /* NAV */
+        .course-nav-block{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);margin-bottom:20px}
+        .course-nav-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:rgba(255,255,255,.03);border:none;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+        .course-nav-toggle::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(6,182,212,.1),rgba(14,165,233,.05));opacity:0;transition:opacity .3s}
+        .course-nav-toggle:hover::before,.course-nav-toggle.active::before{opacity:1}
+        .course-nav-toggle .cnt-icon{font-size:28px;z-index:1;position:relative}
+        .course-nav-toggle .cnt-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;z-index:1;position:relative}
+        .course-nav-toggle .cnt-arrow{font-size:18px;color:#06b6d4;transition:transform .3s;z-index:1;position:relative}
+        .course-nav-toggle.active .cnt-arrow{transform:rotate(180deg)}
+        .course-nav-content{max-height:0;overflow:hidden;transition:max-height .5s cubic-bezier(.4,0,.2,1)}
+        .course-nav-content.active{max-height:2000px}
+        .course-nav-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;padding:40px 32px;background:rgba(255,255,255,.02)}
+        .cnav-section{display:flex;flex-direction:column;gap:8px}
+        .cnav-header{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#06b6d4;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid rgba(6,182,212,.2)}
+        .cnav-items{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+        .cnav-items a{padding:6px 14px;color:#e2e8f0;text-decoration:none;font-size:13px;font-weight:500;border-radius:10px;transition:all .2s;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);position:relative;overflow:hidden}
+        .cnav-items a::before{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);transform:scaleY(0);transition:transform .3s}
+        .cnav-items a:hover{background:rgba(6,182,212,.08);color:#06b6d4;border-color:rgba(6,182,212,.2);transform:translateX(4px)}
+        .cnav-items a:hover::before{transform:scaleY(1)}
+        .cnav-items a.active{background:rgba(6,182,212,.12);color:#06b6d4;border-color:rgba(6,182,212,.3);font-weight:600}
+        .cnav-items a.active::before{transform:scaleY(1)}
+        /* TABS */
+        .type-tabs{display:flex;gap:8px;margin-bottom:32px;flex-wrap:wrap}
+        .type-tab{padding:12px 24px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#e2e8f0;font-size:15px;font-weight:600;cursor:pointer;transition:all .3s;font-family:inherit}
+        .type-tab:hover{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3)}
+        .type-tab.active{background:linear-gradient(135deg,rgba(6,182,212,.2),rgba(14,165,233,.2));border-color:rgba(6,182,212,.5);color:var(--primary)}
+        .type-content{display:none;animation:fadeIn .4s ease}
+        .type-content.active{display:block}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .type-content h3{font-size:22px;font-weight:800;color:var(--text-primary);margin-bottom:12px}
+        .type-content p{font-size:15px;color:#e2e8f0;line-height:1.8;margin-bottom:14px}
+        /* TOP BROKERS */
+        .brokers-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+        .broker-card{display:flex;gap:16px;align-items:flex-start}
+        .broker-rank{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#fff;flex-shrink:0}
+        .broker-info h3{font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:4px}
+        .broker-info .broker-meta{font-size:13px;color:var(--primary);font-weight:600;margin-bottom:8px}
+        .broker-info p{font-size:14px;color:#e2e8f0;line-height:1.7}
+        .broker-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+        .broker-tag{padding:3px 8px;background:rgba(6,182,212,.1);border:1px solid rgba(6,182,212,.2);border-radius:6px;font-size:11px;font-weight:600;color:var(--primary)}
+        /* STEPS */
+        .steps-list{display:flex;flex-direction:column;gap:16px}
+        .step-item{cursor:pointer}
+        .step-header{display:flex;align-items:center;gap:14px;padding:18px 0}
+        .step-num{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0}
+        .step-title{font-size:17px;font-weight:700;color:var(--text-primary);flex:1}
+        .step-arrow{font-size:12px;color:#cbd5e1;transition:transform .3s}
+        .step-item.open .step-arrow{transform:rotate(180deg)}
+        .step-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+        .step-item.open .step-body{max-height:600px}
+        .step-body p{padding:0 0 16px 54px;font-size:15px;color:#e2e8f0;line-height:1.8}
+        /* SCAM CARDS */
+        .scam-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+        .scam-card{border-left:4px solid var(--danger)}
+        .scam-card h3{font-size:17px;font-weight:700;color:var(--text-primary);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+        .scam-card p{font-size:14px;color:#e2e8f0;line-height:1.8}
+        .scam-card .scam-signs{margin-top:12px;padding:10px 14px;background:rgba(249,115,22,.06);border:1px solid rgba(249,115,22,.12);border-radius:10px;font-size:13px;color:var(--accent);line-height:1.7}
+        /* DETECTOR */
+        .detector-scenario{padding:24px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;margin-bottom:16px}
+        .detector-scenario h4{font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:12px}
+        .detector-field{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:14px}
+        .detector-field:last-child{border-bottom:none}
+        .detector-field span:first-child{color:#cbd5e1;font-weight:600}
+        .detector-field span:last-child{color:var(--text-primary)}
+        .detector-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0}
+        .detector-opt{padding:14px;text-align:center;background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;transition:all .3s;font-family:inherit;font-size:14px;font-weight:600;color:#e2e8f0}
+        .detector-opt:hover{border-color:rgba(6,182,212,.4);color:var(--text-primary)}
+        .detector-opt.safe{border-color:rgba(16,185,129,.5);background:rgba(16,185,129,.08);color:var(--success)}
+        .detector-opt.risky{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08);color:var(--warning)}
+        .detector-opt.scam{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08);color:var(--danger)}
+        .detector-opt:disabled{cursor:default}
+        .detector-fb{padding:16px 20px;border-radius:12px;font-size:14px;line-height:1.8;display:none;margin-top:12px}
+        .detector-fb.visible{display:block;animation:fadeIn .3s ease}
+        .detector-fb.correct{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--success)}
+        .detector-fb.wrong{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);color:var(--danger)}
+        .det-nav{display:flex;justify-content:space-between;align-items:center;margin-top:16px}
+        .det-counter{font-size:14px;color:#cbd5e1;font-weight:600}
+        .det-btn{padding:10px 24px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:none}
+        .det-btn.visible{display:inline-block}
+        /* CALC */
+        .calc-row{display:grid;grid-template-columns:1fr 1fr auto;gap:16px;align-items:end}
+        .calc-field label{display:block;font-size:13px;font-weight:700;color:#cbd5e1;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+        .calc-field input,.calc-field select{width:100%;padding:14px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;color:var(--text-primary);font-size:15px;font-family:inherit}
+        .calc-field input:focus,.calc-field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(6,182,212,.15)}
+        .calc-field select option{background:#1a1f2e;color:var(--text-primary)}
+        .calc-result{margin-top:24px;display:none;animation:fadeIn .4s ease}
+        .calc-result.visible{display:block}
+        .calc-result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+        .calc-result-item{text-align:center;padding:20px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.15);border-radius:14px}
+        .calc-result-item .crv{font-size:28px;font-weight:900;color:var(--primary)}
+        .calc-result-item .crl{font-size:11px;color:#cbd5e1;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+        .calc-btn{padding:14px 28px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+        /* CHECKLIST */
+        .checklist{list-style:none}
+        .checklist-item{padding:16px 0;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+        .checklist-item:last-child{border-bottom:none}
+        .checklist-header{display:flex;align-items:center;gap:12px;font-size:16px;font-weight:600;color:var(--text-primary)}
+        .checklist-header:hover{color:var(--primary)}
+        .checklist-icon{font-size:20px;flex-shrink:0}
+        .checklist-arrow{margin-left:auto;font-size:12px;color:#cbd5e1;transition:transform .3s}
+        .checklist-item.open .checklist-arrow{transform:rotate(180deg)}
+        .checklist-body{max-height:0;overflow:hidden;transition:max-height .4s ease}
+        .checklist-item.open .checklist-body{max-height:500px}
+        .checklist-body p{padding:12px 0 4px 32px;font-size:14px;color:#e2e8f0;line-height:1.8}
+        /* QUIZ */
+        .quiz-card{background:linear-gradient(135deg,rgba(6,182,212,.08),rgba(249,115,22,.05));border:1px solid rgba(6,182,212,.2);border-radius:24px;padding:40px}
+        .quiz-question{font-size:20px;font-weight:700;color:var(--text-primary);margin-bottom:24px;line-height:1.5}
+        .quiz-options{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+        .quiz-option{padding:16px 20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:14px;color:#e2e8f0;font-size:15px;font-weight:500;cursor:pointer;transition:all .3s;font-family:inherit;text-align:left}
+        .quiz-option:hover{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);color:var(--text-primary)}
+        .quiz-option.correct{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.4);color:var(--success)}
+        .quiz-option.wrong{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:var(--danger)}
+        .quiz-option:disabled{cursor:default}
+        .quiz-feedback{padding:16px 20px;border-radius:12px;font-size:14px;line-height:1.7;display:none}
+        .quiz-feedback.visible{display:block;animation:fadeIn .3s ease}
+        .quiz-feedback.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--success)}
+        .quiz-feedback.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--danger)}
+        .quiz-nav{display:flex;justify-content:space-between;align-items:center;margin-top:20px}
+        .quiz-counter{font-size:14px;color:#cbd5e1;font-weight:600}
+        .quiz-next-btn{padding:10px 24px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:none}
+        .quiz-next-btn.visible{display:inline-block}
+        .quiz-score{text-align:center;padding:32px;display:none}
+        .quiz-score.visible{display:block;animation:fadeIn .4s ease}
+        .quiz-score .score-number{font-size:64px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+        .quiz-restart-btn{margin-top:20px;padding:12px 28px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;color:var(--text-primary);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+        /* RESPONSIVE */
+        @media(max-width:1024px){.course-nav-grid{grid-template-columns:repeat(2,1fr)}.brokers-grid,.scam-grid{grid-template-columns:1fr}.calc-row{grid-template-columns:1fr}.calc-result-grid{grid-template-columns:1fr 1fr 1fr}.detector-options{grid-template-columns:1fr}}
+        @media(max-width:768px){.container{padding:0 20px}.page-header{padding:100px 0 50px}.hero-stats{gap:24px}.hero-stat-number{font-size:28px}.course-nav-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.course-nav-toggle{padding:18px 20px}.course-nav-toggle .cnt-title{font-size:16px}.quiz-options{grid-template-columns:1fr}.type-tabs{gap:6px}.type-tab{padding:10px 16px;font-size:13px}}
+        @media(max-width:480px){.container{padding:0 16px}.hero-stats{flex-direction:column;gap:16px}.calc-result-grid{grid-template-columns:1fr}}
+        @media(max-width:360px){.glass-card{padding:20px}.quiz-card{padding:24px}}
+        ::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:var(--bg-darker)}::-webkit-scrollbar-thumb{background:rgba(6,182,212,.3);border-radius:4px}
+.complete-module-btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:1100px;margin:40px auto 24px;padding:20px 32px;background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:700;cursor:pointer;transition:all .3s;position:relative;overflow:hidden;font-family:inherit}
+.complete-module-btn:hover{background:linear-gradient(135deg,#059669,#047857);transform:translateY(-2px);box-shadow:0 8px 25px rgba(16,185,129,.3)}
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:0 auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;text-decoration:none;color:#ffffff;transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:#ffffff}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+
+        /* Сектор 00: Навигация */
+        .sector-navigation {
+            margin-bottom: 30px;
+        }
+
+        .navigation-block {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .navigation-toggle {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 24px 32px;
+            background: rgba(255, 255, 255, 0.03);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .navigation-toggle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(14, 165, 233, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .navigation-toggle:hover::before {
+            opacity: 1;
+        }
+
+        .navigation-toggle:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .navigation-toggle.active {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .navigation-toggle.active::before {
+            opacity: 1;
+        }
+
+        .nav-icon {
+            font-size: 28px;
+            position: relative;
+            z-index: 1;
+            filter: drop-shadow(0 2px 4px rgba(6, 182, 212, 0.3));
+        }
+
+        .nav-title {
+            flex: 1;
+            text-align: left;
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #06b6d4, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.5px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-arrow {
+            font-size: 18px;
+            color: #06b6d4;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .navigation-toggle.active .nav-arrow {
+            transform: rotate(180deg);
+        }
+
+        .navigation-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .navigation-content.active {
+            max-height: 2000px;
+        }
+
+        .navigation-grid {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr;
+            gap: 32px;
+            padding: 32px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .nav-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #06b6d4;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .section-arrow {
+            display: none;
+        }
+
+        .section-items {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: repeat(8, auto);
+            grid-auto-flow: column;
+            gap: 8px;
+            counter-reset: nav-counter;
+        }
+
+        .nav-section:last-child .section-items {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .section-items a {
+            padding: 10px 12px;
+            color:#e2e8f0;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(14, 165, 233, 0.03));
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            position: relative;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            min-height: 44px;
+        }
+
+        .section-items a::before {
+            counter-increment: nav-counter;
+            content: counter(nav-counter);
+            font-size: 8px;
+            font-weight: 600;
+            color: rgba(6, 182, 212, 0.5);
+            min-width: 10px;
+            text-align: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            margin-left: -4px;
+        }
+
+        .section-items a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, #06b6d4, #0ea5e9);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .section-items a:hover {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(14, 165, 233, 0.1));
+            color: #67e8f9;
+            border-color: rgba(6, 182, 212, 0.3);
+            transform: translateX(3px);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+
+        .section-items a:hover::before {
+            color: #06b6d4;
+        }
+
+        .section-items a:hover::after {
+            opacity: 1;
+        }
+
+        .section-items a.active {
+            background: linear-gradient(135deg, rgba(6,182,212,0.2), rgba(99,102,241,0.15));
+            color: #67e8f9;
+            border-color: rgba(6, 182, 212, 0.5);
+            font-weight: 600;
+            box-shadow: 0 0 0 1px rgba(6,182,212,0.2) inset, 0 4px 16px rgba(6, 182, 212, 0.25);
+        }
+
+        .section-items a.active::before {
+            color: #06b6d4;
+        }
+
+        .section-items a.active::after {
+            opacity: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .navigation-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .navigation-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                padding: 24px 20px;
+            }
+
+            .section-items {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .section-items a {
+                padding: 8px 8px;
+                font-size: 11px;
+                white-space: nowrap;
+                min-height: 40px;
+                line-height: 1.2;
+                gap: 6px;
+            }
+
+            .navigation-toggle {
+                padding: 18px 20px;
+            }
+
+            .nav-title {
+                font-size: 16px;
+            }
+
+            /* Аккордеон только на мобильных */
+            .section-header {
+                cursor: pointer;
+                user-select: none;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .section-header .section-arrow {
+                display: inline-block;
+                font-size: 12px;
+                color: #06b6d4;
+                transition: transform 0.3s ease;
+                margin-left: 8px;
+            }
+
+            .nav-section.collapsed .section-arrow {
+                transform: rotate(-90deg);
+            }
+
+            .nav-section.collapsed .section-items {
+                display: none;
+            }
+        }
+
+        /* Принудительный чёрный цвет текста в документах */
+        #carrier-interactive p, #carrier-interactive strong, #carrier-interactive td, #carrier-interactive th { color: #000 !important; }
+        .rc-field:hover { box-shadow: 0 2px 8px rgba(6,182,212,0.15) !important; border-color: #06b6d4 !important; }
+    </style>
+    <script type="module" src="/firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="/role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=11.0"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">🤝 Module 8 of 15</div>
+            <h1 class="page-title">Working with Brokers</h1>
+            <p class="page-subtitle">
+                Brokers are your main business partners and, at the same time, your biggest source of risk.
+                80% of loads on the spot market go through brokers. Your factoring company is the first and
+                most important tool for verifying a broker's reliability. The ability to spot scammers
+                and build long-term relationships will protect your business and increase your income.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat"><span class="hero-stat-number">$21B+</span><span class="hero-stat-label">Broker Market</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">$100M+</span><span class="hero-stat-label">Fraud Losses/Year</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">17,000+</span><span class="hero-stat-label">Licensed Brokers</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">$75K</span><span class="hero-stat-label">Mandatory Bond</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- UPDATED: 2026-03-31 - NEW NAVIGATION SECTOR 00 -->
+    <!-- NAV -->
+    <section class="section" style="padding-top:0;padding-bottom:30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation fade-in-up">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Course Navigation</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ SECTIONS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/intro.html">📋 Introduction</a>
+                                    <a href="/en/pages/glossary.html">📖 Glossary</a>
+                                    <a href="/en/pages/role.html">👤 Role</a>
+                                    <a href="/en/pages/equipment.html">🚛 Equipment</a>
+                                    <a href="/en/pages/routes.html">🗺 Routes</a>
+                                    <a href="/en/pages/loadboards.html">📡 Load Boards</a>
+                                    <a href="/en/pages/negotiation.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/brokers.html" class="active">💼 Brokers</a>
+                                    <a href="/en/pages/docs.html">📄 Documents</a>
+                                    <a href="/en/pages/regulations.html">⚖️ Regulations</a>
+                                    <a href="/en/pages/technology.html">🖥 TMS</a>
+                                    <a href="/en/pages/communication.html">📞 Communication</a>
+                                    <a href="/en/pages/problems.html">⚠️ Problems</a>
+                                    <a href="/en/pages/finances.html">💰 Finances</a>
+                                    <a href="/en/pages/career.html">📈 Career</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ MODULES<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/doc-module-1-complete.html">🏭 Industry</a>
+                                    <a href="/en/pages/doc-module-2-complete.html">📖 Terms</a>
+                                    <a href="/en/pages/doc-module-3-complete.html">👤 Dispatcher</a>
+                                    <a href="/en/pages/doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="/en/pages/doc-module-5-complete.html">🗺 Routes</a>
+                                    <a href="/en/pages/doc-module-6-complete.html">🚛 Equipment</a>
+                                    <a href="/en/pages/doc-module-7-complete.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/doc-module-8-complete.html">💼 Brokers</a>
+                                    <a href="/en/pages/doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="/en/pages/doc-module-10-complete.html">📦 Freight</a>
+                                    <a href="/en/pages/doc-module-11-complete.html">⚠️ Problems</a>
+                                    <a href="/en/pages/doc-module-12-complete.html">📈 Career</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ TOOLS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/simulator.html">🎮 Simulator</a>
+                                    <a href="/en/pages/testing.html">📝 Tests</a>
+                                    <a href="/en/pages/cases.html">🗂 Cases</a>
+                                    <!-- Load Finder hidden -->
+                                    <a href="/en/pages/dispatcher-cards.html">🃏 Cards</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- КТО ТАКИЕ БРОКЕРЫ -->
+    <section class="section" data-audio-id="brokers-audio-1">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="brokers-audio-1">
+                <h2 class="section-title">🤝 Who Are Freight Brokers</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'brokers-audio-1')" aria-label="Play/Pause"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                A freight broker is a licensed intermediary between the shipper and the carrier.
+                A broker does not own trucks and does not haul freight themselves. Their job is to find a load from a shipper, find a suitable
+                carrier, and arrange delivery. For this, they earn a margin — the difference between what the shipper pays
+                and what the carrier receives. Typical margin: 12-25% of the load's value.
+            </p>
+            <p class="section-text">
+                <strong>Legal requirements:</strong> Every broker must have an FMCSA license (an MC number or USDOT number
+                with broker designation), a surety bond of $75,000 (a financial guarantee for carriers), and a process agent in every state
+                (BOC-3 form). Without these documents, brokering is illegal. Cost of getting licensed: ~$300 (FMCSA fee)
+                + $1,000-5,000/year (bond premium). The bond is not insurance for you: if a broker goes bankrupt and owes 20 carriers
+                $10,000 each, the $75,000 bond is split among everyone — you'll get 30-40 cents on the dollar.
+            </p>
+            <p class="section-text">
+                <strong>Difference between broker, 3PL, and freight forwarder:</strong> A broker is an intermediary in the US domestic market,
+                working with FTL/LTL loads. A 3PL (Third-Party Logistics) provider offers a broader service: warehousing,
+                supply chain management, distribution + brokerage services. A freight forwarder specializes in international shipping
+                (ocean, air freight). For a dispatcher, the main contact is brokers, although 3PL companies also post loads.
+            </p>
+            <p class="section-text">
+                <strong>Market scale:</strong> The freight brokerage market in the US is valued at $21+ billion (2026) and growing
+                7% per year. More than 17,000 licensed brokers operate in the country. But the top 50 companies control 80% of the volume.
+                The remaining 16,950+ are small and mid-size brokers, among whom you'll find both excellent partners and scammers.
+            </p>
+
+            <!-- ТИПЫ БРОКЕРОВ -->
+            <div class="glass-card" style="padding:40px;margin-top:32px;">
+                <h3 style="font-size:22px;font-weight:800;color:var(--text-primary);margin-bottom:24px;">📊 Types of Brokers</h3>
+                <div class="type-tabs">
+                    <button class="type-tab active" onclick="switchType('large')">🏢 Large</button>
+                    <button class="type-tab" onclick="switchType('mid')">🏬 Mid-size</button>
+                    <button class="type-tab" onclick="switchType('small')">🏠 Small</button>
+                    <button class="type-tab" onclick="switchType('digital')">⚡ Digital</button>
+                    <button class="type-tab" onclick="switchType('niche')">🎯 Niche</button>
+                </div>
+
+                <div class="type-content active" id="type-large">
+                    <h3>🏢 Large Brokers</h3>
+                    <p><strong>Examples:</strong> C.H. Robinson, TQL, XPO/RXO, Coyote (UPS), Echo Global, J.B. Hunt</p>
+                    <p>Companies with $1B+ annual revenue. They have thousands of employees, offices across the country, and their own TMS systems.
+                    They work with the biggest shippers (Walmart, Amazon, Coca-Cola). For a carrier, this means: a steady flow of loads,
+                    guaranteed payment, professional service. But there are downsides too: rates are often below market (large brokers
+                    push prices down through volume), bureaucracy, impersonal communication (you're one of thousands of carriers).</p>
+                    <p><strong>D2P:</strong> 15-30 days. <strong>Credit rating:</strong> A-A+. <strong>Recommendation:</strong>
+                    A great choice for stable income. Start with these — minimal risk of non-payment.</p>
+                </div>
+                <div class="type-content" id="type-mid">
+                    <h3>🏬 Mid-Size Brokers</h3>
+                    <p><strong>Examples:</strong> Arrive Logistics, GlobalTranz, Nolan Transportation, Redwood Logistics</p>
+                    <p>Companies with $100M-$1B revenue. Often specialize in certain regions or freight types.
+                    For a carrier, this is the sweet spot: rates are usually higher than large brokers (less price pressure),
+                    a more personal approach (they know you by name), yet still financially stable enough.
+                    Many mid-size brokers actively build relationship freight — if you're reliable, they'll call you
+                    first with the best loads.</p>
+                    <p><strong>D2P:</strong> 21-35 days. <strong>Credit rating:</strong> A-B+. <strong>Recommendation:</strong>
+                    The best rate-to-reliability ratio. Build relationships with 5-10 mid-size brokers.</p>
+                </div>
+                <div class="type-content" id="type-small">
+                    <h3>🏠 Small Brokers</h3>
+                    <p><strong>Profile:</strong> 1-20 employees, revenue up to $50M, often work from home</p>
+                    <p>The most numerous category — thousands of companies. Among them are excellent specialists with deep knowledge
+                    of their lanes and shippers. Rates can be the highest (a small broker is more flexible on pricing).
+                    But the risk is also the highest: weak cash flow, possible payment delays, some close without warning.
+                    Most cases of fraud and double brokering happen among small brokers.</p>
+                    <p><strong>D2P:</strong> 30-60 days. <strong>Credit rating:</strong> B-D. <strong>Recommendation:</strong>
+                    Work with them only after thorough verification. Use factoring to protect your cash flow.</p>
+                </div>
+                <div class="type-content" id="type-digital">
+                    <h3>⚡ Digital Brokers</h3>
+                    <p><strong>Examples:</strong> Convoy, Uber Freight, Loadsmart, Transfix</p>
+                    <p>Tech companies that automate the brokering process. Instead of calls and negotiations —
+                    algorithms match loads, rates are fixed, and booking is one click. Payment is fast (1-7 days).
+                    For a carrier: minimal paperwork, fast booking, guaranteed payment. Downsides: you can't negotiate
+                    (the rate is fixed and often below spot market), limited load selection, impersonal service.</p>
+                    <p><strong>D2P:</strong> 1-7 days. <strong>Credit rating:</strong> A. <strong>Recommendation:</strong>
+                    Use as an additional source of loads, especially in deadhead zones. Not as your primary source.</p>
+                </div>
+                <div class="type-content" id="type-niche">
+                    <h3>🎯 Niche/Specialty Brokers</h3>
+                    <p><strong>Examples:</strong> Allen Lund (produce), Landstar (owner-operators), Mode Transportation (LTL)</p>
+                    <p>They specialize in specific freight types (produce, hazmat, oversized), regions, or market segments.
+                    Their deep knowledge of their niche allows them to offer better rates and terms to specialized carriers.
+                    If your driver runs reefer — find 2-3 produce brokers. Flatbed — look for construction/industrial brokers.
+                    Niche brokers often pay 15-25% more than general brokers, because their shippers are willing to pay a premium
+                    for specialized service.</p>
+                    <p><strong>D2P:</strong> 21-30 days. <strong>Credit rating:</strong> A-B. <strong>Recommendation:</strong>
+                    Be sure to find niche brokers for your type of equipment.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ТОП-10 БРОКЕРОВ -->
+    <section class="section" data-audio-id="brokers-audio-2">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="brokers-audio-2">
+                <h2 class="section-title">🏆 Top 10 US Brokers</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'brokers-audio-2')" aria-label="Play/Pause"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                These companies control the bulk of the market. Working with them means minimal risk of non-payment and a steady
+                flow of loads. Knowing the top brokers helps you quickly assess posts on the Load Board: if you see C.H. Robinson or TQL —
+                you can call without a lengthy check. If you see an unfamiliar name — check thoroughly.
+            </p>
+            <div class="brokers-grid">
+                <div class="glass-card broker-card"><div class="broker-rank">1</div><div class="broker-info"><h3>C.H. Robinson</h3><div class="broker-meta">MC# 128735 · D2P: 21 days · Credit: A+</div><p>The largest broker in the world. $24B+ annual revenue. 105,000+ shippers, 73,000+ carriers. In business since 1905. Navisphere TMS — proprietary platform. Reliable payment, huge selection of loads, but rates are often below market.</p><div class="broker-tags"><span class="broker-tag">Dry Van</span><span class="broker-tag">Reefer</span><span class="broker-tag">LTL</span><span class="broker-tag">Intermodal</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">2</div><div class="broker-info"><h3>TQL (Total Quality Logistics)</h3><div class="broker-meta">MC# 295957 · D2P: 30 days · Credit: A+</div><p>The second largest. $8B+ revenue. Founded in 1997 in Cincinnati. Aggressive growth, many young agents. Rates are competitive, but D2P of 30 days is standard. In March 2025, scammers used the TQL name for 19,000 fake loads — always verify the MC#.</p><div class="broker-tags"><span class="broker-tag">FTL</span><span class="broker-tag">Flatbed</span><span class="broker-tag">Expedited</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">3</div><div class="broker-info"><h3>XPO / RXO</h3><div class="broker-meta">MC# 192590 · D2P: 25 days · Credit: A+</div><p>XPO spun off its brokerage division into RXO in 2022. $4B+ revenue. Strong technology platform, good rates on long lanes. Works with Fortune 500 shippers. Quick Pay available for 1-2%.</p><div class="broker-tags"><span class="broker-tag">Technology</span><span class="broker-tag">Last Mile</span><span class="broker-tag">Managed</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">4</div><div class="broker-info"><h3>Coyote Logistics (UPS)</h3><div class="broker-meta">MC# 568329 · D2P: 21 days · Credit: A+</div><p>Acquired by UPS in 2015 for $1.8B. $3B+ revenue. Fast payment (21-day standard), access to UPS loads. Good rates, professional agents. One of the best options for new dispatchers — reliable and stable.</p><div class="broker-tags"><span class="broker-tag">Dry Van</span><span class="broker-tag">Reefer</span><span class="broker-tag">Quick Pay</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">5</div><div class="broker-info"><h3>Echo Global Logistics</h3><div class="broker-meta">MC# 477905 · D2P: 30 days · Credit: A</div><p>$2.5B+ revenue. Founded in 2005 in Chicago. Strong analytics platform, EchoShip. Good for LTL and multimodal loads. Average rates, but reliable payment and professional service.</p><div class="broker-tags"><span class="broker-tag">LTL</span><span class="broker-tag">Multimodal</span><span class="broker-tag">Managed</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">6</div><div class="broker-info"><h3>Landstar System</h3><div class="broker-meta">MC# 134803 · D2P: 25 days · Credit: A+</div><p>A unique model: a network of 10,000+ independent agents. $6B+ revenue. Each agent is a separate business under the Landstar umbrella. Rates are often above average because agents compete for carriers. A great choice for owner-operators.</p><div class="broker-tags"><span class="broker-tag">Owner-Ops</span><span class="broker-tag">Flatbed</span><span class="broker-tag">Specialized</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">7</div><div class="broker-info"><h3>Schneider</h3><div class="broker-meta">MC# 133655 · D2P: 15 days · Credit: A+</div><p>One of the oldest (since 1935). Both a carrier and a broker. $5B+ revenue. D2P of 15 days — one of the best in the industry. FreightPower platform for booking. A highly reliable partner.</p><div class="broker-tags"><span class="broker-tag">Fast Pay</span><span class="broker-tag">Intermodal</span><span class="broker-tag">Dedicated</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">8</div><div class="broker-info"><h3>J.B. Hunt</h3><div class="broker-meta">MC# 138727 · D2P: 21 days · Credit: A+</div><p>$12B+ revenue (including its own fleet). J.B. Hunt 360 — one of the best digital booking platforms. Intermodal leader. For brokered loads — reliable payment, good rates on long lanes.</p><div class="broker-tags"><span class="broker-tag">Intermodal</span><span class="broker-tag">360 Platform</span><span class="broker-tag">Dedicated</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">9</div><div class="broker-info"><h3>GlobalTranz</h3><div class="broker-meta">MC# 489014 · D2P: 30 days · Credit: A</div><p>$2B+ revenue. Founded in 2003 in Phoenix. Strong technology platform, good for LTL. Operates through a network of agents. Competitive rates, especially on Southwest lanes.</p><div class="broker-tags"><span class="broker-tag">LTL</span><span class="broker-tag">Technology</span><span class="broker-tag">Southwest</span></div></div></div>
+
+                <div class="glass-card broker-card"><div class="broker-rank">10</div><div class="broker-info"><h3>Arrive Logistics</h3><div class="broker-meta">MC# 809794 · D2P: 25 days · Credit: A</div><p>A young company (2014), but fast-growing. $2B+ revenue. Based in Austin, TX. Known for good carrier relationships and competitive rates. Quick Pay for 1%. A great choice for the mid-size segment.</p><div class="broker-tags"><span class="broker-tag">Quick Pay 1%</span><span class="broker-tag">Carrier-friendly</span><span class="broker-tag">Growth</span></div></div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ПРОВЕРКА БРОКЕРА -->
+    <section class="section" data-audio-id="brokers-audio-3">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="brokers-audio-3">
+                <h2 class="section-title">🔍 How to Verify a Broker: A Step-by-Step Guide</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'brokers-audio-3')" aria-label="Play/Pause"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                Verifying a broker takes 5-10 minutes. Those minutes can save you from losing $2,000-5,000 on a single load.
+                The industry loses $100+ million a year to fraud. But the fastest and most reliable way to check —
+                is <strong>your factoring company's website</strong>. If you work with factoring — start there.
+            </p>
+            <p class="section-text">
+                <strong>Important 2025 change:</strong> FMCSA is transitioning to a unified USDOT number system. MC numbers are gradually
+                being replaced by USDOT numbers with broker designation. Both numbers are valid for now, but MC# will eventually go away.
+                Check both numbers at safer.fmcsa.dot.gov.
+            </p>
+
+            <!-- АУДИО 3.1 -->
+            <div class="section-audio-wrap" data-audio-id="brokers-audio-31" style="margin-bottom:24px;">
+                <h3 style="font-size:20px;font-weight:700;color:var(--text-primary);margin:0;flex:1;">🎧 Steps 0-8: A Full Breakdown of Broker Verification</h3>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this,'brokers-audio-31')" aria-label="Play audio"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-counter">Track 4 of 6</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+
+            <div class="glass-card">
+                <div class="steps-list">
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num" style="background:linear-gradient(135deg,#f97316,#fb923c);">⭐</span><span class="step-title">Step 0 (THE KEY STEP): Check the broker on your factoring company's website</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>
+                        If you work with a factoring company (OTR Solutions, RTS Financial, Apex Capital, Thunder Funding, etc.) —
+                        each of them has a <strong>free broker check tool</strong> right on their website.
+                        This is the fastest and most practical method: enter the broker's MC# and within 30 seconds you'll see their credit rating,
+                        payment history, D2P, and a recommendation — work with them or not.
+                        <br><br>
+                        <strong>Why this is the key step:</strong> Factoring companies work with thousands of brokers every day
+                        and have an up-to-date database on each one. They know who pays on time, who delays,
+                        and who doesn't pay at all. This information is updated in real time — far more current
+                        than data from DAT or Carrier411.
+                        <br><br>
+                        <strong>How it works:</strong> Go to your factoring company's website → find the "Broker Check,"
+                        "Credit Check," or "Verify Broker" section → enter the MC# → get an instant result.
+                        Most factoring companies also show whether they'll approve this invoice for purchase.
+                        If factoring refuses to buy this broker's invoice — that's a first-level red flag.
+                        <br><br>
+                        <strong>Examples:</strong> OTR Solutions — broker check at otrsolutions.com.
+                        RTS Financial — credit check at rtsinc.com. Apex Capital — broker verification at apexcapitalcorp.com.
+                        Thunder Funding — broker check at thunderfunding.com. All free for clients.
+                        </p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">1</span><span class="step-title">Check the MC# on FMCSA SAFER</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>Go to safer.fmcsa.dot.gov → Company Snapshot → enter the MC# or USDOT#. What to check:
+                        Status should be "ACTIVE" (not "INACTIVE" or "NOT AUTHORIZED"). Entity Type — "BROKER."
+                        If the status is not Active — do NOT work with this broker. Also check the license issue date:
+                        if the company has existed for less than 6 months — elevated risk.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">2</span><span class="step-title">Check the Surety Bond</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>On the same FMCSA page, check the "Insurance/Bond" section. There should be an active BMC-84
+                        (surety bond) or BMC-85 (trust fund) for $75,000. If the bond is missing or expired —
+                        the broker is operating illegally. Remember: a $75,000 bond is not a guarantee of full payment.
+                        If the broker owes 20 carriers, the bond is split among everyone.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">3</span><span class="step-title">Check the Credit Score on DAT/Carrier411</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>DAT Broker Score (included in DAT Power) shows a rating from A+ to F based on payment history.
+                        Carrier411.com — an independent platform with carrier reviews and credit reports ($).
+                        Highway — a free alternative with basic information. Minimum acceptable rating: B.
+                        Below B — work only with factoring or Quick Pay.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">4</span><span class="step-title">Check Days to Pay (D2P)</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>D2P — the average number of days from delivery to payment. Standard: 30 days.
+                        Good: 15-21 days. Acceptable: 30-35 days. Dangerous: 45+ days.
+                        A D2P of 45+ can mean financial trouble. Check D2P on DAT, Carrier411, or ask
+                        the broker directly. If a broker can't tell you their D2P — that's a red flag.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">5</span><span class="step-title">Check the Contact Information</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>The phone number in the Load Board post should match the phone number on FMCSA. If it doesn't match —
+                        call the number from FMCSA and confirm. The email should be corporate (@companyname.com),
+                        not a free provider (Gmail, Yahoo, Outlook). Check the address on Google Maps — is it a real office
+                        or a residential home? Scammers often use virtual addresses.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">6</span><span class="step-title">Check Other Carriers' Reviews</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>Carrier411, Highway, Google Reviews, Facebook groups (Trucking Dispatcher Community,
+                        Owner Operator Land). Look for patterns: a single complaint might be a misunderstanding.
+                        5+ complaints about non-payment — a serious red flag. Also ask in professional chats:
+                        "Has anyone worked with [broker name]? How was the experience?"</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">7</span><span class="step-title">Match the MC# in the Post and the Rate Confirmation</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>Critically important for protection against double brokering: the MC# in the Load Board post MUST match
+                        the MC# on the Rate Confirmation. If it doesn't match — that's double brokering. Also check:
+                        company name, address, phone — everything should match. Any discrepancy = decline the load.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num">8</span><span class="step-title">Check the Company's Age</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>The MC# issue date on FMCSA shows how long the company has been operating. Less than 6 months —
+                        elevated risk (new companies close more often or turn out to be scammers). 1-3 years — moderate risk.
+                        3+ years — usually reliable. Exception: large companies that got a new MC# after a reorganization.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- МОШЕННИЧЕСТВО -->
+    <section class="section" data-audio-id="brokers-audio-4">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="brokers-audio-4">
+                <h2 class="section-title">🚨 Freight Fraud: A Complete Guide</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'brokers-audio-4')" aria-label="Play/Pause"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                Freight fraud is one of the most serious problems in the industry. According to CargoNet, 2024 was a record year
+                for cargo theft in the US and Canada. The Transportation Intermediaries Association (TIA) reports
+                that 86% of brokers have encountered fraud attempts. Industry losses — $100+ million a year.
+                By some estimates, 1 in 8 freight transactions is affected by fraud in some form.
+            </p>
+            <p class="section-text">
+                <strong>The best defense is a factoring company.</strong> If you work with factoring and check
+                every broker through their broker check before booking — you filter out 90% of scammers automatically.
+                Factoring companies won't approve invoices from suspicious brokers, and this is your first filter.
+                Non-recourse factoring provides additional protection: even if the broker doesn't pay — factoring absorbs the risk.
+            </p>
+            <p class="section-text">
+                <strong>Why fraud is on the rise:</strong> The low barrier to entry in the brokerage business ($300 for a license),
+                digitization (it's easy to create a fake Load Board profile), weak FMCSA oversight (17,000+ brokers,
+                few inspectors), and financial pressure on small brokers during periods of low rates.
+                When the market drops — fraud rises, because desperate brokers turn to illegal schemes.
+            </p>
+
+            <div class="scam-grid">
+                <div class="glass-card scam-card">
+                    <h3>🔄 Double Brokering</h3>
+                    <p>The most common type of fraud. Broker A gets a load from a shipper, but instead of giving it to a carrier,
+                    passes it to Broker B (which is prohibited under the shipper contract). Broker B passes it to you.
+                    Chain: Shipper → Broker A → Broker B → You. Problem: if Broker A pays B, and B disappears —
+                    you won't get paid. Or Broker A finds out about the double brokering and refuses to pay B.</p>
+                    <div class="scam-signs"><strong>Signs:</strong> The MC# in the post doesn't match the MC# on the rate con.
+                    The rate con comes from a different company than the one that posted the load. The broker asks you not to call the shipper directly.
+                    The rate is significantly above market (Broker B inflates it to attract a carrier).</div>
+                </div>
+
+                <div class="glass-card scam-card">
+                    <h3>👻 Identity Theft / Broker Impersonation</h3>
+                    <p>Scammers steal a real company's MC# and operate under its name. They create fake Load Board profiles
+                    using a legitimate broker's data. The carrier thinks they're working with a well-known company,
+                    but they're actually dealing with a scammer. Real case: in March 2025, scammers posted 19,000+ fake loads
+                    on DAT under the TQL name. Thousands of carriers were affected.</p>
+                    <div class="scam-signs"><strong>Signs:</strong> The phone/email don't match the FMCSA data.
+                    Email from a free domain (Gmail) instead of a corporate one (@tql.com). Call the FMCSA phone number,
+                    not the one in the post — and ask whether they posted this load.</div>
+                </div>
+
+                <div class="glass-card scam-card">
+                    <h3>📧 Fake Loads / Phishing</h3>
+                    <p>Scammers post fake loads with attractive rates. The goal is to collect your data:
+                    your carrier packet (MC#, insurance, W-9, banking info). With this data, they can: steal your identity,
+                    create a fake profile under your name, redirect your payments to their account.
+                    Some ask for a "deposit" or "insurance fee" before loading — this is 100% a scam.</p>
+                    <div class="scam-signs"><strong>Signs:</strong> The rate is too good for the lane. They ask for a carrier packet
+                    before discussing load details. They demand a prepayment/deposit. Email from a free domain.
+                    No phone contact — only email.</div>
+                </div>
+
+                <div class="glass-card scam-card">
+                    <h3>💳 Payment Diversion</h3>
+                    <p>A scammer intercepts the communication between you and the broker and changes the banking information.
+                    You send an invoice — the broker pays, but the money goes to the scammer's account. Or a scammer calls
+                    the broker pretending to be you and asks to change the payment details. You find out only when the money doesn't arrive.</p>
+                    <div class="scam-signs"><strong>Signs:</strong> The broker says "we already paid" — but you haven't received anything.
+                    Someone asks to change banking info by email (not by phone). Protection: always confirm changes to
+                    payment details by phone. Use factoring — the factoring company controls the payments.</div>
+                </div>
+
+                <div class="glass-card scam-card">
+                    <h3>🚛 Cargo Theft</h3>
+                    <p>Scammers create a fake carrier company, receive a load from a broker, and disappear with the cargo.
+                    CargoNet recorded a record number of thefts in 2024. Average loss: $100,000-500,000 per incident.
+                    This is more of a problem for brokers and shippers, but a dispatcher can also be affected: if your MC#
+                    is stolen and used for a theft — you could come under investigation.</p>
+                    <div class="scam-signs"><strong>Protection:</strong> Protect your data. Don't send your carrier packet
+                    to unverified brokers. Use two-factor authentication on Load Board accounts.
+                    Monitor your MC# on FMCSA — if you see unfamiliar activity, report it immediately.</div>
+                </div>
+
+                <div class="glass-card scam-card">
+                    <h3>💸 Advance Fee Scam</h3>
+                    <p>"Pay a $500 deposit and we'll give you exclusive access to premium loads."
+                    "$200 insurance fee before loading — standard procedure." "$1,000 membership fee for access
+                    to our shipper database." All of this is fraud. A legitimate broker NEVER asks a carrier
+                    for money. Money flows from shipper → broker → carrier. Never the other way around.</p>
+                    <div class="scam-signs"><strong>Rule:</strong> If someone asks you to PAY before you
+                    EARN — it's a scam. No exceptions. The only legitimate expenses: a Load Board subscription
+                    ($30-150/mo) and factoring (1-5% of the invoice).</div>
+                </div>
+            </div>
+
+            <!-- ЧТО ДЕЛАТЬ ЕСЛИ ПОПАЛИСЬ -->
+            <div class="glass-card" style="margin-top:32px;padding:40px;border-left:4px solid var(--danger);">
+                <h3 style="font-size:22px;font-weight:800;color:var(--danger);margin-bottom:16px;">🆘 What to Do if You Fall Victim to Fraud</h3>
+                <p class="section-text" style="margin-bottom:16px;">Act fast — every day of delay reduces your chances of getting your money back.</p>
+                <div class="steps-list">
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num" style="background:linear-gradient(135deg,#f97316,#fb923c);">⭐</span><span class="step-title">Step 0 (FIRST): Contact your factoring company</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>If you work with factoring (RTS Pro, OTR Solutions, Apex Capital, Thunder Funding) —
+                        call them FIRST. The factoring company has a legal department and experience dealing with scammers.
+                        They can: block payment, file a claim on your behalf, contact the broker directly.
+                        With non-recourse factoring — you're fully protected: factoring absorbs the loss, and you've already received your money.
+                        RTS Pro and OTR Solutions have dedicated fraud departments that handle exactly these cases.
+                        This is the fastest and most effective path — factoring companies deal with these problems every day.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num" style="background:linear-gradient(135deg,var(--danger),#dc2626);">1</span><span class="step-title">File a Complaint with FMCSA</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>Go to nccdb.fmcsa.dot.gov (National Consumer Complaint Database) or call
+                        1-888-DOT-SAFT (1-888-368-7238). Include the broker's MC#, load details, and the loss amount. FMCSA can
+                        suspend the broker's license and start an investigation. The more complaints — the faster the response.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num" style="background:linear-gradient(135deg,var(--danger),#dc2626);">2</span><span class="step-title">File a Claim on the Surety Bond</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>Find the broker's surety company on FMCSA (Insurance/Bond section). Contact them
+                        and file a claim. You'll need: rate confirmation, BOL, POD, invoice, proof of delivery.
+                        The $75,000 bond is split among all claimants — file as early as possible.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num" style="background:linear-gradient(135deg,var(--danger),#dc2626);">3</span><span class="step-title">Report on Carrier411 and in Communities</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>Leave a review on Carrier411, Highway, Google. Post in Facebook groups
+                        (Trucking Dispatcher Community, Owner Operator Land). Warn other carriers —
+                        it might save someone from the same loss. Include the MC#, company name, and fraud details.</p></div>
+                    </div>
+                    <div class="step-item" onclick="toggleStep(this)">
+                        <div class="step-header"><span class="step-num" style="background:linear-gradient(135deg,var(--danger),#dc2626);">4</span><span class="step-title">Contact the Police and an Attorney</span><span class="step-arrow">▼</span></div>
+                        <div class="step-body"><p>For large amounts ($5,000+), file a police report and contact a
+                        transportation attorney. Some attorneys work on a contingency basis (taking a % of the recovered amount).
+                        Also consider small claims court for amounts up to $10,000 — you can do it without a lawyer.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ФАКТОРИНГ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">💰 Factoring: Not Just Money, But Protection</h2>
+            <p class="section-text">
+                Factoring (freight factoring) is the sale of your unpaid invoices to a factoring company
+                for immediate payment. But factoring isn't just about fast cash.
+                <strong>The factoring company is your main tool for verifying brokers.</strong>
+                Every factoring company has a database of thousands of brokers with up-to-date data
+                on credit rating, payment history, and D2P. This is the freshest and most accurate information on the market —
+                because factoring companies work with these brokers every day.
+            </p>
+            <p class="section-text">
+                <strong>Factoring's dual function:</strong> 1) You get 80-95% of the amount within 24-48 hours instead of waiting 30-45 days.
+                2) You get access to a free broker check tool on the factoring company's website.
+                Before every load, you enter the broker's MC# → see their rating, D2P, history → make a decision.
+                If factoring refuses to buy this broker's invoice — don't take the load. Period.
+            </p>
+            <p class="section-text">
+                <strong>How it works step by step:</strong> You deliver the load → send the POD and invoice to the factoring company →
+                within 24-48 hours you receive 80-95% of the amount in your account → the factoring company collects the full amount
+                from the broker in 30-45 days → pays you the remainder minus their fee (1-5%).
+            </p>
+            <p class="section-text">
+                <strong>Two types of factoring:</strong> Recourse factoring (cheaper, 1-3%) — if the broker doesn't pay,
+                you're obligated to return the advance to the factoring company. Non-recourse factoring (more expensive, 3-5%) —
+                the factoring company takes on the risk of non-payment. For beginners, non-recourse is recommended —
+                more expensive, but safer. With non-recourse, you're protected even if the broker goes bankrupt.
+            </p>
+            <p class="section-text">
+                <strong>Top factoring companies with broker check:</strong> OTR Solutions (otrsolutions.com) —
+                one of the best broker check tools, free for clients. RTS Financial (rtsinc.com) —
+                fast checks + Quick Pay. Apex Capital (apexcapitalcorp.com) — the largest factoring company
+                in trucking, an extensive broker database. Thunder Funding (thunderfunding.com) — great for beginners,
+                low fees. All provide free broker verification for their clients.
+            </p>
+
+            <div class="glass-card" style="padding:32px;margin-top:24px;">
+                <h3 style="font-size:20px;font-weight:800;color:var(--text-primary);margin-bottom:20px;">🧮 Factoring Calculator</h3>
+                <p style="font-size:14px;color:#e2e8f0;margin-bottom:24px;">Enter the invoice amount and factoring fee to see how much you'll receive.</p>
+                <div class="calc-row">
+                    <div class="calc-field"><label>Invoice Amount ($)</label><input type="number" id="facInvoice" placeholder="2500"></div>
+                    <div class="calc-field">
+                        <label>Fee (%)</label>
+                        <select id="facRate"><option value="1.5">1.5% (Recourse, best)</option><option value="2.5" selected>2.5% (Recourse, average)</option><option value="3.5">3.5% (Non-recourse)</option><option value="5">5% (Non-recourse, high)</option></select>
+                    </div>
+                    <button class="calc-btn" onclick="calcFactoring()">Calculate</button>
+                </div>
+                <div class="calc-result" id="facResult">
+                    <div class="calc-result-grid">
+                        <div class="calc-result-item"><span class="crv" id="facGet"></span><span class="crl">You Get Immediately (90%)</span></div>
+                        <div class="calc-result-item"><span class="crv" id="facFee"></span><span class="crl">Factoring Fee</span></div>
+                        <div class="calc-result-item"><span class="crv" id="facTotal"></span><span class="crl">Total You Receive</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CARRIER PACKET -->
+    <section class="section" data-audio-id="brokers-audio-5">
+        <div class="container">
+            <div class="section-audio-wrap" data-audio-id="brokers-audio-5">
+                <h2 class="section-title">📋 Carrier Packet: Setting Up With a Broker</h2>
+                <div class="la-container">
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <div class="la-wave"></div>
+                    <button class="la-btn" onclick="laToggle(this, 'brokers-audio-5')" aria-label="Play/Pause"><span class="la-play">▶</span><span class="la-pause">⏸</span></button>
+                    <div class="la-time">0:00 / 0:00</div>
+                    <div class="la-mobile-fill"></div>
+                </div>
+            </div>
+            <p class="section-text">
+                A Carrier Packet is a set of documents you send to a broker when you first start working together.
+                Without a carrier packet, the broker can't add you to their system and can't send you loads.
+                Prepare your packet in advance — when a broker asks for it, you'll send it in 2 minutes instead of 2 hours.
+                Speed of setup = speed of getting your first load.
+            </p>
+            <p class="section-text">
+                <strong>What's included in a Carrier Packet:</strong>
+            </p>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">📄</span>W-9 Form (Tax ID)<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>An IRS tax form with your EIN (Employer Identification Number) or SSN.
+                        The broker uses it for IRS reporting. Download the form at irs.gov, fill it out, and save it as a PDF.
+                        Only send it to verified brokers — the W-9 contains sensitive information.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🛡️</span>Certificate of Insurance (COI)<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Proof of your insurance: auto liability ($1M minimum), cargo insurance ($100K minimum),
+                        general liability. Request a COI from your insurance company — they issue it for free.
+                        Some brokers require being listed as "additional insured" or "certificate holder" —
+                        this is standard practice, just ask your insurer to add it.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">📜</span>MC Authority / USDOT Copy<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>A copy of your operating authority from FMCSA. Download it from safer.fmcsa.dot.gov →
+                        Company Snapshot → Print. Shows that you're a legitimate carrier with an active license.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">📝</span>Broker-Carrier Agreement<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>The contract between you and the broker. Read it CAREFULLY before signing.
+                        Pay attention to: payment terms (D2P), detention policy, TONU policy, liability limits,
+                        exclusive use clause (some brokers prohibit working with competitors — avoid those).
+                        If something's unclear — ask, or have an attorney review it.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🚛</span>Equipment List<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>A list of your equipment: truck type, year, VIN, trailer type, dimensions.
+                        The broker uses this to match you with suitable loads. Update it when things change.</p></div>
+                    </li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)">
+                        <div class="checklist-header"><span class="checklist-icon">🏦</span>Banking Information / Factoring NOA<span class="checklist-arrow">▼</span></div>
+                        <div class="checklist-body"><p>Payment details: bank name, routing number, account number.
+                        If you use factoring — send the NOA (Notice of Assignment) from your factoring company.
+                        The NOA tells the broker: "Pay our factoring company, not us directly."
+                        IMPORTANT: only send banking info to verified brokers.</p></div>
+                    </li>
+                </ul>
+            </div>
+            <!-- ИНТЕРАКТИВНЫЙ CARRIER PACKET -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px;">
+                <div>
+                    <h4 style="font-size:16px;font-weight:700;color:var(--text-primary);margin:0 0 10px 0;">📋 What to Check Before Sending</h4>
+                    <div class="rc-field" data-section="W-9 Form" data-tooltip="A tax form with your EIN.<br><br>A broker can't pay you without a W-9. Update it when your address or company name changes." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ W-9 Form</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Is it the current version with the correct EIN and address?</p>
+                    </div>
+                    <div class="rc-field" data-section="Certificate of Insurance (COI)" data-tooltip="Certificate of insurance.<br><br>Auto Liability $1M+ and Cargo $100K+ — minimum. The broker should be listed as Additional Insured." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Certificate of Insurance</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Auto $1M+, Cargo $100K+. Not expired?</p>
+                    </div>
+                    <div class="rc-field" data-section="MC Authority" data-tooltip="A copy of MC Authority from FMCSA.<br><br>Status should be ACTIVE. Verify at: safer.fmcsa.dot.gov → Company Snapshot." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ MC Authority</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Status ACTIVE on FMCSA? Not suspended?</p>
+                    </div>
+                    <div class="rc-field" data-section="Broker-Carrier Agreement" data-tooltip="The contract with the broker — read EVERY clause.<br><br>Especially: payment terms, detention policy, TONU, liability limits, exclusive use clause." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ Broker-Carrier Agreement</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Read every clause! Especially liability and payment.</p>
+                    </div>
+                    <div class="rc-field" data-section="NOA / Banking Info" data-tooltip="Payment details.<br><br>If you have factoring — attach the NOA. The broker will pay your factoring company. No factoring — they pay you directly." style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:8px 10px;margin-bottom:6px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                        <p style="font-size:12px;font-weight:600;color:#06b6d4;margin:0 0 2px 0;">✓ NOA / Banking Info</p>
+                        <p style="font-size:11px;color:#e2e8f0;margin:0;line-height:1.4;">Factoring = NOA. No factoring = bank details.</p>
+                    </div>
+                    <div style="background:linear-gradient(135deg,rgba(239,68,68,0.1),rgba(249,115,22,0.08));border:2px solid rgba(239,68,68,0.3);border-radius:8px;padding:8px 10px;margin-top:6px;">
+                        <p style="font-size:11px;font-weight:600;color:#f87171;margin:0 0 2px 0;">⚠️ Caution!</p>
+                        <p style="font-size:10px;color:#e2e8f0;margin:0;line-height:1.4;">Only send it to verified brokers. Scammers collect packets to steal data.</p>
+                    </div>
+                </div>
+                <div>
+                    <div style="background:rgba(255,255,255,0.05);border:2px solid rgba(6,182,212,0.2);border-radius:10px;overflow:hidden;">
+                        <div style="padding:16px;background:#fff;font-family:Arial,Helvetica,sans-serif;color:#000;">
+                            <p style="font-size:16px;font-weight:900;color:#000;margin:0 0 2px 0;border-bottom:2px solid #000;padding-bottom:8px;">CARRIER PACKET</p>
+                            <p style="font-size:9px;color:#666;margin:0 0 12px 0;">New Carrier Setup — TQL Freight Solutions</p>
+                            <div class="rc-field" data-section="Carrier Info" data-tooltip="Basic carrier information.<br><br>Name, address, MC#, DOT# must match FMCSA. Any discrepancy = registration declined." style="border:1px solid #000;padding:10px;margin-bottom:8px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <span style="position:absolute;top:6px;right:6px;font-size:10px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                <p style="font-size:9px;font-weight:700;color:#000;text-transform:uppercase;margin:0 0 4px 0;border-bottom:1px solid #ccc;padding-bottom:2px;">CARRIER INFORMATION</p>
+                                <p style="font-size:11px;font-weight:700;color:#000;margin:0;">Your Trucking Company LLC</p>
+                                <p style="font-size:10px;color:#333;margin:1px 0 0 0;">MC# 1234567 | DOT# 7654321 | EIN: 12-3456789</p>
+                            </div>
+                            <div class="rc-field" data-section="Insurance (COI)" data-tooltip="Certificate of insurance.<br><br>Auto Liability $1M+ and Cargo $100K+. The broker should be Additional Insured." style="border:1px solid #000;padding:10px;margin-bottom:8px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <span style="position:absolute;top:6px;right:6px;font-size:10px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                <p style="font-size:9px;font-weight:700;color:#000;text-transform:uppercase;margin:0 0 4px 0;border-bottom:1px solid #ccc;padding-bottom:2px;">CERTIFICATE OF INSURANCE</p>
+                                <table style="width:100%;font-size:10px;color:#000;">
+                                    <tr><td><strong style="color:#000;">Auto Liability:</strong></td><td>$1,000,000 ✓</td></tr>
+                                    <tr><td><strong style="color:#000;">Cargo:</strong></td><td>$100,000 ✓</td></tr>
+                                    <tr><td><strong style="color:#000;">Expires:</strong></td><td>12/31/2026</td></tr>
+                                </table>
+                            </div>
+                            <div class="rc-field" data-section="W-9 & Payment" data-tooltip="Tax form and payment details.<br><br>The W-9 is needed for the 1099 at year-end. If you have factoring — attach the NOA instead of bank details." style="border:1px solid #000;padding:10px;cursor:pointer;transition:all 0.2s ease;position:relative;">
+                                <span style="position:absolute;top:6px;right:6px;font-size:10px;color:#06b6d4;opacity:0.6;">ⓘ</span>
+                                <p style="font-size:9px;font-weight:700;color:#000;text-transform:uppercase;margin:0 0 4px 0;border-bottom:1px solid #ccc;padding-bottom:2px;">W-9 & PAYMENT INFO</p>
+                                <p style="font-size:10px;color:#000;margin:0;"><strong style="color:#000;">EIN:</strong> 12-3456789</p>
+                                <p style="font-size:10px;color:#f59e0b;margin:3px 0 0 0;font-weight:700;">⚠ NOA attached — pay to factoring company</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🤝 Building Relationships: From Spot to Relationship Freight</h2>
+            <p class="section-text">
+                The spot market (loads from the Load Board) is the starting point. But the real money is in relationship freight.
+                That's when a broker calls you directly with loads that never even hit the board.
+                Relationship freight pays 10-15% more than spot, because the broker values reliability
+                and is willing to pay a premium for guaranteed service.
+            </p>
+            <p class="section-text">
+                <strong>The first step — verify through factoring:</strong> Before building a relationship with a broker,
+                make sure they're reliable. Check them on your factoring company's website — it only takes 30 seconds.
+                There's no point investing time in a relationship with a broker who delays payment or has a poor
+                credit rating. Your factoring company has already done this work for you — use their data.
+            </p>
+            <p class="section-text">
+                <strong>How to become a "preferred carrier":</strong> Deliver on time — every time. Report problems
+                early (delays, breakdowns) — not at the last minute. Answer calls and messages quickly.
+                Be professional in your communication. Don't cancel loads after booking (this kills trust instantly).
+                After 5-10 successful deliveries, the broker will start offering you loads first.
+            </p>
+            <p class="section-text">
+                <strong>The "10-15 brokers" strategy:</strong> Your goal is to build relationships with 10-15 reliable brokers
+                who regularly give you loads. This creates a stable income stream without daily searching on the board.
+                Formula: 5 large brokers (stability) + 5 mid-size brokers (best rates) + 3-5 niche brokers (specialized loads).
+                Once you have 15 brokers who know you by name — you're no longer dependent on the spot market.
+                <strong>Important:</strong> all 10-15 brokers should be approved by your factoring company —
+                that's your quality filter.
+            </p>
+            <p class="section-text">
+                <strong>What to do after every delivery:</strong> Send the POD quickly (the same day).
+                Write a short message: "Load delivered on time, no issues. POD attached. Looking forward to the next one."
+                This takes 30 seconds, but creates the impression of a professional. Within a month, the broker will be calling you first.
+            </p>
+        </div>
+    </section>
+
+    <!-- ДЕТЕКТОР МОШЕННИЧЕСТВА -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🔎 Detector: Evaluate the Broker</h2>
+            <p class="section-text">
+                Below are profiles of 4 brokers with real data. Decide: ✅ reliable, ⚠️ risky, or 🚫 scammer.
+                After you choose — an explanation of which signs to watch for.
+            </p>
+            <div class="glass-card" id="detCard">
+                <div id="detBody">
+                    <div class="detector-scenario" id="detScenario"></div>
+                    <div class="detector-options" id="detOpts"></div>
+                    <div class="detector-fb" id="detFb"></div>
+                    <div class="det-nav">
+                        <span class="det-counter" id="detCounter"></span>
+                        <button class="det-btn" id="detNext" onclick="nextDet()">Next →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="detScore">
+                    <div class="score-number" id="detScoreNum"></div>
+                    <p id="detScoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartDet()">Retake</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- КВИЗ -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">🎯 Quiz: Test Your Broker Knowledge</h2>
+            <p class="section-desc">10 questions on the module material — from broker verification to fraud protection.</p>
+            <div class="quiz-card" id="quizCard">
+                <div id="quizBody">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                    <div class="quiz-nav">
+                        <span class="quiz-counter" id="quizCounter"></span>
+                        <button class="quiz-next-btn" id="quizNext" onclick="nextQ()">Next →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="quizScore">
+                    <div class="score-number" id="scoreNum"></div>
+                    <p id="scoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartQuiz()">Retake</button>
+                </div>
+            </div>
+        </div>
+        <button class="complete-module-btn" onclick="completeModule(8)"><span>✓</span><span>Complete module and continue to the next</span></button>
+        <div class="module-navigation">
+            <a href="/en/pages/negotiation.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Previous module</span><span class="title">💰 Negotiation</span></div></a>
+            <a href="/en/pages/docs.html" class="module-nav-btn next"><div class="text"><span class="label">Next module</span><span class="title">📄 Documents</span></div><span class="icon">→</span></a>
+        </div>
+    </section>
+
+    <script>
+        // NAV
+        const navToggle = document.getElementById('navigationToggle');
+        const navContent = document.getElementById('navigationContent');
+
+        if (navToggle && navContent) {
+            navToggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                navContent.classList.toggle('active');
+            });
+        }
+
+        // Аккордеон для секций только на мобильных
+        function initMobileAccordion() {
+            if (window.innerWidth <= 640) {
+                const navSections = document.querySelectorAll('.nav-section');
+
+                // Показываем стрелки
+                document.querySelectorAll('.section-arrow').forEach(arrow => {
+                    arrow.style.display = 'inline-block';
+                });
+
+                // Закрываем секции 2 и 3 (Модули и Инструменты)
+                navSections.forEach(function(section, index) {
+                    if (index > 0) {
+                        section.classList.add('collapsed');
+                    }
+
+                    const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                        header.addEventListener('click', function() {
+                            section.classList.toggle('collapsed');
+                        });
+                            header.dataset.listenerAdded = 'true';
+                    }
+                });
+            } else {
+                // Скрываем стрелки на десктопе
+                document.querySelectorAll('.section-arrow').forEach(arrow => {
+                    arrow.style.display = 'none';
+                });
+            }
+        }
+
+        initMobileAccordion();
+        window.addEventListener('resize', initMobileAccordion);
+
+        function switchType(id){document.querySelectorAll('.type-content').forEach(c=>c.classList.remove('active'));document.querySelectorAll('.type-tab').forEach(t=>t.classList.remove('active'));document.getElementById('type-'+id).classList.add('active');event.currentTarget.classList.add('active');}
+        function toggleStep(el){el.classList.toggle('open');}
+        function toggleChecklist(el){el.classList.toggle('open');}
+
+        // FACTORING CALC
+        function calcFactoring(){
+            const inv=parseFloat(document.getElementById('facInvoice').value);
+            const rate=parseFloat(document.getElementById('facRate').value);
+            if(!inv||inv<=0){alert('Enter the invoice amount');return;}
+            const advance=Math.round(inv*0.9);const fee=Math.round(inv*rate/100);const total=inv-fee;
+            document.getElementById('facGet').textContent='$'+advance.toLocaleString();
+            document.getElementById('facFee').textContent='-$'+fee.toLocaleString();
+            document.getElementById('facTotal').textContent='$'+total.toLocaleString();
+            document.getElementById('facResult').classList.add('visible');
+        }
+
+        // DETECTOR
+        const detData=[
+            {
+                name:'Swift Logistics LLC',
+                fields:[['MC#','MC-987654'],['FMCSA Status','ACTIVE'],['Age','8 years'],['Bond','$75,000 — Active'],['D2P','25 days'],['Credit Score','A (DAT)'],['Email','dispatch@swiftlogistics.com'],['Phone','Matches FMCSA'],['Reviews','47 reviews, 4.2/5']],
+                answer:'safe',
+                explanation:'✅ Reliable broker. All signs are positive: Active status, 8 years in business, good credit score (A), D2P of 25 days, corporate email, phone matches FMCSA, lots of positive reviews.'
+            },
+            {
+                name:'FastFreight Solutions',
+                fields:[['MC#','MC-1234567'],['FMCSA Status','ACTIVE'],['Age','4 months'],['Bond','$75,000 — Active'],['D2P','45 days'],['Credit Score','N/A (new company)'],['Email','fastfreight2025@gmail.com'],['Phone','Does NOT match FMCSA'],['Reviews','0 reviews']],
+                answer:'scam',
+                explanation:'🚫 High probability of fraud. Red flags: the company has existed for 4 months, D2P of 45 days, no credit score, Gmail email (not corporate), phone does NOT match FMCSA (possible identity theft), zero reviews. Do not work with this broker.'
+            },
+            {
+                name:'Midwest Transport Brokers',
+                fields:[['MC#','MC-456789'],['FMCSA Status','ACTIVE'],['Age','3 years'],['Bond','$75,000 — Active'],['D2P','35 days'],['Credit Score','B (DAT)'],['Email','loads@midwesttb.com'],['Phone','Matches FMCSA'],['Reviews','12 reviews, 3.5/5 (2 complaints about late payment)']],
+                answer:'risky',
+                explanation:'⚠️ Risky, but you can work with them cautiously. The company is legitimate (3 years, Active, bonded), but D2P of 35 days is above average, credit is B (not the best), and there are complaints about late payment. Recommendation: work through factoring or with Quick Pay.'
+            },
+            {
+                name:'National Freight Corp',
+                fields:[['MC#','MC-111222'],['FMCSA Status','INACTIVE'],['Age','License revoked'],['Bond','EXPIRED'],['D2P','N/A'],['Credit Score','F (DAT)'],['Email','nationalfreight@yahoo.com'],['Phone','Not answering'],['Reviews','8 reviews — all negative, complaints about non-payment']],
+                answer:'scam',
+                explanation:'🚫 Scammer or bankrupt. INACTIVE status = no right to operate. Bond expired = no financial guarantee. Credit F = worst rating. Yahoo email. Phone doesn\\'t answer. All reviews are negative. Absolutely do not work with them.'
+            }
+        ];
+        let dIdx=0,dScore=0,dAnswered=false;
+        function renderDet(){
+            const d=detData[dIdx];
+            let html='<h4>Broker '+(dIdx+1)+' of '+detData.length+': '+d.name+'</h4>';
+            d.fields.forEach(f=>{html+='<div class="detector-field"><span>'+f[0]+'</span><span>'+f[1]+'</span></div>';});
+            document.getElementById('detScenario').innerHTML=html;
+            document.getElementById('detCounter').textContent=(dIdx+1)+' / '+detData.length;
+            document.getElementById('detFb').className='detector-fb';
+            document.getElementById('detNext').classList.remove('visible');
+            dAnswered=false;
+            const el=document.getElementById('detOpts');
+            el.innerHTML='';
+            ['safe','risky','scam'].forEach(r=>{
+                const btn=document.createElement('button');
+                btn.className='detector-opt';
+                btn.textContent=r==='safe'?'✅ Reliable':r==='risky'?'⚠️ Risky':'🚫 Scammer';
+                btn.onclick=()=>answerDet(r);btn.dataset.r=r;el.appendChild(btn);
+            });
+        }
+        function answerDet(r){
+            if(dAnswered)return;dAnswered=true;
+            const d=detData[dIdx];
+            document.querySelectorAll('.detector-opt').forEach(b=>{b.disabled=true;b.classList.add(b.dataset.r);});
+            const fb=document.getElementById('detFb');
+            if(r===d.answer){dScore++;fb.className='detector-fb visible correct';fb.textContent='Correct! '+d.explanation;}
+            else{fb.className='detector-fb visible wrong';fb.textContent='Incorrect. '+d.explanation;}
+            if(dIdx<detData.length-1)document.getElementById('detNext').classList.add('visible');
+            else setTimeout(showDetScore,1500);
+        }
+        function nextDet(){dIdx++;renderDet();}
+        function showDetScore(){
+            const popup=document.createElement('div');
+            popup.id='detResultPopup';
+            popup.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(10,14,26,0.98),rgba(7,11,20,0.98));border:2px solid rgba(6,182,212,0.3);border-radius:24px;padding:48px 40px;max-width:500px;width:90%;z-index:10000;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(6,182,212,0.1) inset;animation:popupFadeIn 0.4s ease`;
+            const p=Math.round(dScore/detData.length*100);
+            const resultText=dScore===detData.length?'Perfect! You\\'re great at spotting scammers.':dScore>=3?'Good result!':'Re-read the broker verification section.';
+            const scoreColor=p===100?'#10b981':p>=75?'#f59e0b':'#ef4444';
+            popup.innerHTML=`<div style="text-align:center;"><div style="font-size:72px;font-weight:900;background:linear-gradient(135deg,${scoreColor},#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">${dScore}/${detData.length}</div><div style="font-size:20px;font-weight:600;color:#e2e8f0;margin-bottom:32px;">${resultText}</div><button onclick="closeDetPopup();restartDet()" style="padding:14px 32px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;">Retake</button></div>`;
+            const overlay=document.createElement('div');
+            overlay.id='detResultOverlay';
+            overlay.style.cssText=`position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;animation:overlayFadeIn 0.3s ease`;
+            overlay.onclick=closeDetPopup;
+            if(!document.getElementById('detPopupStyles')){
+                const style=document.createElement('style');
+                style.id='detPopupStyles';
+                style.textContent=`@keyframes popupFadeIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}@keyframes popupFadeOut{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,-55%)}}`;
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+        }
+        function closeDetPopup(){
+            const popup=document.getElementById('detResultPopup');
+            const overlay=document.getElementById('detResultOverlay');
+            if(popup){
+                popup.style.animation='popupFadeOut 0.3s ease';
+                setTimeout(()=>{
+                    popup.remove();
+                    if(overlay)overlay.remove();
+                },300);
+            }
+        }
+        function restartDet(){dIdx=0;dScore=0;renderDet();}
+        document.addEventListener('DOMContentLoaded',renderDet);
+
+        // QUIZ
+        const quizData=[
+            {q:'What is the minimum surety bond a freight broker must have?',options:['$10,000','$25,000','$75,000','$150,000'],correct:2,explanation:'FMCSA requires a $75,000 surety bond (BMC-84) or trust fund (BMC-85). This is a financial guarantee for carriers, but if the broker goes bankrupt, the $75K is split among everyone affected.'},
+            {q:'What is double brokering?',options:['Working with two Load Boards','The illegal transfer of a load from one broker to another','Double-checking a broker','Booking two loads at once'],correct:1,explanation:'Double brokering is when Broker A passes a load to Broker B without the shipper\\'s knowledge. This violates the contract and creates a non-payment risk for the carrier.'},
+            {q:'What D2P (Days to Pay) is considered dangerous?',options:['15 days','21 days','30 days','45+ days'],correct:3,explanation:'A D2P of 45+ days is a red flag. It can indicate the broker\\'s financial troubles. The standard is 30 days. The best brokers pay in 15-21 days.'},
+            {q:'Which is the largest freight broker in the world?',options:['TQL','Coyote','C.H. Robinson','XPO'],correct:2,explanation:'C.H. Robinson is the largest broker with $24B+ in revenue, operating since 1905. 105,000+ shippers, 73,000+ carriers.'},
+            {q:'What should you check FIRST when verifying a broker?',options:['Google reviews','MC# on FMCSA SAFER','The company website','LinkedIn profile'],correct:1,explanation:'FMCSA SAFER (safer.fmcsa.dot.gov) is the first step. You check: Active status, bond, entity type (BROKER). Without Active status — you can\\'t work with them.'},
+            {q:'How much does the industry lose to fraud each year?',options:['$1 million','$10 million','$100+ million','$1 billion'],correct:2,explanation:'By some estimates, the industry loses $100+ million a year to freight fraud. 86% of brokers have encountered fraud attempts.'},
+            {q:'What is factoring in trucking?',options:['Cargo insurance','Selling invoices for fast payment','Truck leasing','A fuel loan'],correct:1,explanation:'Factoring is selling unpaid invoices to a factoring company for 80-95% of the amount within 24-48 hours. The fee is 1-5%.'},
+            {q:'Which broker email is a red flag?',options:['dispatch@chrobinson.com','loads@tql.com','fastfreight2025@gmail.com','booking@coyote.com'],correct:2,explanation:'A Gmail/Yahoo/Outlook email is a red flag. Legitimate brokers use corporate domains (@companyname.com). A free email = a small or fake broker.'},
+            {q:'What\\'s included in a Carrier Packet?',options:['Just a W-9','A W-9 and insurance','W-9, COI, MC authority, agreement, equipment list, banking info','Just MC authority'],correct:2,explanation:'A complete Carrier Packet: W-9, Certificate of Insurance (COI), MC authority copy, broker-carrier agreement, equipment list, banking information.'},
+            {q:'What is relationship freight?',options:['Loads from relatives','Loads from brokers you\\'ve built a relationship with','Loads between sister cities','International loads'],correct:1,explanation:'Relationship freight is loads from brokers who know and trust you. It pays 10-15% more than the spot market. Goal: 10-15 reliable brokers = stable income.'}
+        ];
+        let qIdx=0,qScore=0,qAnswered=false;
+        function renderQ(){const q=quizData[qIdx];document.getElementById('quizQuestion').textContent=q.q;document.getElementById('quizCounter').textContent=(qIdx+1)+' / '+quizData.length;document.getElementById('quizFeedback').className='quiz-feedback';document.getElementById('quizNext').classList.remove('visible');qAnswered=false;const el=document.getElementById('quizOptions');el.innerHTML='';q.options.forEach((o,i)=>{const btn=document.createElement('button');btn.className='quiz-option';btn.textContent=o;btn.onclick=()=>answerQ(i);el.appendChild(btn);})}
+        function answerQ(i){if(qAnswered)return;qAnswered=true;const q=quizData[qIdx];document.querySelectorAll('.quiz-option').forEach((b,j)=>{b.disabled=true;if(j===q.correct)b.classList.add('correct');if(j===i&&i!==q.correct)b.classList.add('wrong');});const fb=document.getElementById('quizFeedback');if(i===q.correct){qScore++;fb.className='quiz-feedback visible success';fb.textContent='✅ Correct! '+q.explanation;}else{fb.className='quiz-feedback visible error';fb.textContent='❌ Incorrect. '+q.explanation;}if(qIdx<quizData.length-1)document.getElementById('quizNext').classList.add('visible');else setTimeout(showQScore,1500);}
+        function nextQ(){qIdx++;renderQ();}
+                function showQScore(){const popup=document.createElement('div');popup.id='quizResultPopup';popup.style.cssText=`position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(10,14,26,0.98),rgba(7,11,20,0.98));border:2px solid rgba(6,182,212,0.3);border-radius:24px;padding:48px 40px;max-width:500px;width:90%;z-index:10000;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(6,182,212,0.1) inset;animation:popupFadeIn 0.4s ease`;const p=Math.round(qScore/quizData.length*100);const resultText=p===100?'Perfect!':p>=75?'Great result!':p>=50?'Not bad, review the material.':'Re-read the module.';popup.innerHTML=`<div style="text-align:center;"><div style="font-size:72px;font-weight:900;background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">${qScore}/${quizData.length}</div><div style="font-size:20px;font-weight:600;color:#e2e8f0;margin-bottom:32px;">${resultText}</div><button onclick="closeQuizPopup();restartQuiz()" style="padding:14px 32px;background:rgba(6,182,212,0.15);border:1px solid rgba(6,182,212,0.3);border-radius:12px;color:#06b6d4;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.2s;">Retake</button></div>`;const overlay=document.createElement('div');overlay.id='quizResultOverlay';overlay.style.cssText=`position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;animation:overlayFadeIn 0.3s ease`;overlay.onclick=closeQuizPopup;if(!document.getElementById('quizPopupStyles')){const style=document.createElement('style');style.id='quizPopupStyles';style.textContent=`@keyframes popupFadeIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}@keyframes popupFadeOut{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,-55%)}}`;document.head.appendChild(style)}document.body.appendChild(overlay);document.body.appendChild(popup);setTimeout(closeQuizPopup,8000)}
+        function closeQuizPopup(){const popup=document.getElementById('quizResultPopup');const overlay=document.getElementById('quizResultOverlay');if(popup){popup.style.animation='popupFadeOut 0.3s ease';setTimeout(()=>{popup.remove();if(overlay)overlay.remove()},300)}}
+        function restartQuiz(){qIdx=0;qScore=0;renderQ();}
+        document.addEventListener('DOMContentLoaded',renderQ);
+    </script>
+    <script>
+function completeModule(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');p['module'+n]=true;localStorage.setItem('courseProgress',JSON.stringify(p));const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Module completed!</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default';const next=document.querySelector('.module-nav-btn.next');if(next)setTimeout(()=>next.click(),1500)}
+document.addEventListener('DOMContentLoaded',function(){const n=document.querySelector('.complete-module-btn')?.onclick?.toString().match(/completeModule\(\d+\)/);if(n){const p=JSON.parse(localStorage.getItem('courseProgress')||'{}');if(p['module'+n[1]]){const btn=document.querySelector('.complete-module-btn');btn.innerHTML='<span>✓</span><span>Module completed</span>';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';btn.style.cursor='default'}}});
+    </script>
+    <script type="module">
+// XP за посещение страницы (один раз)
+(function() {
+  const PAGE_KEY = 'xp_page_pages_brokers_html';
+  if (localStorage.getItem(PAGE_KEY)) return;
+  import('/xp-system.js').then(m => {
+    m.awardXP('BROKER_STUDIED').then(r => {
+      if (r) localStorage.setItem(PAGE_KEY, '1');
+    });
+  }).catch(() => {});
+})();
+</script>
+<link rel="stylesheet" href="/course-navigation.css">
+<script src="/course-navigation.js"></script>
+<link rel="stylesheet" href="/scroll-to-top.css">
+<script src="/scroll-to-top.js"></script>
+
+<!-- Tooltip для интерактивных полей -->
+<div id="rc-tooltip" style="display:none;position:fixed;background:rgba(15,23,42,0.98);border:2px solid rgba(6,182,212,0.4);border-radius:12px;padding:12px 16px;max-width:320px;font-size:12px;color:#e2e8f0;line-height:1.6;z-index:10000;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,0.4);backdrop-filter:blur(8px);"></div>
+<script>
+(function(){
+    const tooltip = document.getElementById('rc-tooltip');
+    let activeField = null;
+    function isMobile(){ return window.innerWidth <= 768; }
+    function positionNearMouse(e){ tooltip.style.left=(e.clientX+15)+'px'; tooltip.style.top=(e.clientY+15)+'px'; }
+    function positionCenter(){ tooltip.style.left='50%'; tooltip.style.top='50%'; tooltip.style.transform='translate(-50%,-50%)'; tooltip.style.pointerEvents='auto'; }
+    function closeTip(field){ tooltip.style.display='none'; tooltip.style.pointerEvents='none'; if(field){ const defaultBg=field.closest('#rate-con-interactive,#bol-interactive,#pod-interactive,#invoice-interactive,#carrier-interactive,#extra-interactive')?'#fff':'rgba(255,255,255,0.04)'; field.style.background=defaultBg; } activeField=null; }
+    function initFields(){
+        document.querySelectorAll('.rc-field').forEach(field=>{
+            const text=field.dataset.tooltip; if(!text) return;
+            const defaultBg=field.closest('#rate-con-interactive,#bol-interactive,#pod-interactive,#invoice-interactive,#carrier-interactive,#extra-interactive')?'#fff':'rgba(255,255,255,0.04)';
+            const hoverBg=field.closest('#rate-con-interactive,#bol-interactive,#pod-interactive,#invoice-interactive,#carrier-interactive,#extra-interactive')?'#f0f9ff':'rgba(6,182,212,0.08)';
+            field.addEventListener('mouseenter', function(e){
+                if(isMobile()) return;
+                tooltip.innerHTML=text; tooltip.style.display='block'; tooltip.style.transform='none';
+                positionNearMouse(e); this.style.background=hoverBg;
+            });
+            field.addEventListener('mousemove', function(e){ if(!isMobile()&&tooltip.style.display==='block') positionNearMouse(e); });
+            field.addEventListener('mouseleave', function(){ if(!isMobile()){ tooltip.style.display='none'; this.style.background=defaultBg; } });
+            field.addEventListener('click', function(e){
+                e.stopPropagation();
+                if(activeField===this){ closeTip(this); return; }
+                if(activeField) closeTip(activeField);
+                tooltip.innerHTML=text; tooltip.style.display='block';
+                if(isMobile()){ positionCenter(); } else { positionNearMouse(e); }
+                this.style.background=hoverBg; activeField=this;
+            });
+        });
+    }
+    document.addEventListener('click', function(e){ if(isMobile()&&!e.target.closest('#rc-tooltip')){ closeTip(activeField); } else if(!isMobile()&&!e.target.closest('.rc-field')&&!e.target.closest('#rc-tooltip')){ closeTip(activeField); } });
+    if(tooltip) tooltip.addEventListener('click', function(){ if(isMobile()) closeTip(activeField); });
+    window.addEventListener('scroll', function(){ if(isMobile()) closeTip(activeField); }, {passive:true});
+    document.addEventListener('touchstart', function(e){ if(isMobile()&&!e.target.closest('.rc-field')&&!e.target.closest('#rc-tooltip')) closeTip(activeField); }, {passive:true});
+    document.addEventListener('DOMContentLoaded', initFields);
+    initFields();
+})();
+</script>
+
+<!-- AUDIO ELEMENTS -->
+<audio id="brokers-audio-1" src="/audio/brokers-audio-1.mp3" data-duration="343" preload="metadata"></audio>
+<audio id="brokers-audio-2" src="/audio/brokers-audio-2.mp3" data-duration="294" preload="metadata"></audio>
+<audio id="brokers-audio-3" src="/audio/brokers-audio-3.mp3" data-duration="285" preload="metadata"></audio>
+<audio id="brokers-audio-31" src="/audio/brokers-audio-31.mp3" data-duration="300" preload="metadata"></audio>
+<audio id="brokers-audio-4" src="/audio/brokers-audio-4.mp3" data-duration="309" preload="metadata"></audio>
+<audio id="brokers-audio-5" src="/audio/brokers-audio-5.mp3" data-duration="312" preload="metadata"></audio>
+<script src="/lesson-audio.js?v=25"></script>
+
+
+<!-- Enhanced Quiz System -->
+<link rel="stylesheet" href="/enhanced-quiz-system.css">
+<script src="/enhanced-quiz-system.js"></script>
+</body>
+</html>
