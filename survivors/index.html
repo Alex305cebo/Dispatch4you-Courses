@@ -1157,6 +1157,13 @@
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
   let act2Base=null; // БАЗА Акта 2: здание, что починило корабль — остаётся в мире как ориентир
   let act2TeleFx=null; // ТЕЛЕПОРТ-ИНТРО: голубое кольцо в точке приземления — пульсирует, потом мигает и гаснет
+  // БАЗА АКТА 2: квадратный форт со стенами и одними воротами (юг). Пока sealed — ворота
+  // наглухо запечатаны (враги и их снаряды не проходят вообще), после починки корабля
+  // открываются насовсем — и база остаётся укреплённым ориентиром до конца акта, а не
+  // исчезает, как временная зона. towers — 4 угловые площадки под будущие оборонительные
+  // вышки (само строительство — отдельная фича, пока просто заготовки). ruins — разрушенные
+  // здания внутри как декор+препятствия.
+  let act2BaseWalls=null;
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let vaultLoot=[],vaultOpening=false,vaultOpenT=0; // ЦЕРЕМОНИЯ ПОРТАЛА: выброс добычи с физикой после смерти всех боссов
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
@@ -1372,7 +1379,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;act2BaseWalls=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1390,7 +1397,7 @@
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
         t,spawnAcc,kills,killsThisLevel,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
-        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,shipLevel,mega2Done,act2BossLvl,act2Base,siege,
+        safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,shipLevel,mega2Done,act2BossLvl,act2Base,act2BaseWalls,siege,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
       };
       // СОСТОЯНИЕ ЛАБИРИНТА: сохраняем целиком, чтобы refresh/сворачивание не выкидывали из него
@@ -1472,6 +1479,7 @@
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
     act=s.act||1;shipLevel=s.shipLevel||(s.player&&s.player.level)||1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;
     mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;act2Base=s.act2Base||null;
+    act2BaseWalls=s.act2BaseWalls||null; // квадратная база — постоянный ориентир, переживает перезагрузку
     // подстраховка: сейв во время починки (ещё раненый, башни нет) — возвращаем башню рядом
     if(act===2&&player.wounded&&!player.ship2&&!act2Base){act2Tower={x:player.x+130,y:player.y-10,r:46,progress:0};}
     // РЕВАНШ: в старых версиях Хронос мог погибнуть «за кадром» в толпе — бой не состоялся.
@@ -1903,6 +1911,16 @@
       if(d2<rr*rr&&d2>0.0001){const d=Math.sqrt(d2),push=(rr-d)/d;o.x+=dx*push;o.y+=dy*push;}
     }
   }
+  // разрушенные здания внутри базы Акта 2 — те же круглые препятствия, что и деревья
+  function collideRuins(o){
+    const B=act2BaseWalls;if(!B)return;
+    for(const ru of B.ruins){
+      const dx=o.x-ru.x;if(dx>90||dx<-90)continue;
+      const dy=o.y-ru.y;if(dy>90||dy<-90)continue;
+      const rr=ru.r*0.85+(o.r||10)*0.7,d2=dx*dx+dy*dy;
+      if(d2<rr*rr&&d2>0.0001){const d=Math.sqrt(d2),push=(rr-d)/d;o.x+=dx*push;o.y+=dy*push;}
+    }
+  }
   // «Прорыв к лесу» на 29 уровне: фиксированная волна мобов, обычный спавн выключен,
   // сверху — счётчик оставшихся. Зачистил всех → вход в ЛЕС (enterVault('forest')).
   function startForestGate(){
@@ -1936,6 +1954,46 @@
         o.x+=dx*push;o.y+=dy*push;
       }
     }
+  }
+  // КВАДРАТНАЯ БАЗА АКТА 2: пересчитать прямоугольники стен под текущее состояние ворот.
+  // Периметр из 5 постоянных сегментов (север/запад/восток/юг-лево/юг-право) + 6-й
+  // временный сегмент-заглушка ровно в проёме ворот, пока sealed — снимается при открытии
+  function rebuildBaseWallRects(){
+    const B=act2BaseWalls;if(!B)return;
+    const R=B.R,t=B.t,g=B.gateHalf,cx=B.cx,cy=B.cy;
+    B.rects=[
+      {x:cx-R-t,y:cy-R-t,w:2*R+2*t,h:t}, // север
+      {x:cx-R-t,y:cy-R-t,w:t,h:2*R+2*t}, // запад
+      {x:cx+R,y:cy-R-t,w:t,h:2*R+2*t}, // восток
+      {x:cx-R-t,y:cy+R,w:R+t-g,h:t}, // юг-лево (от западной стены до края ворот)
+      {x:cx+g,y:cy+R,w:R+t-g,h:t}, // юг-право (от края ворот до восточной стены)
+    ];
+    if(B.sealed)B.rects.push({x:cx-g,y:cy+R,w:2*g,h:t}); // ворота запечатаны — доп. сегмент в проёме
+  }
+  // столкновения со стенами базы Акта 2 — тот же алгоритм, что и у лабиринта, но на своём массиве
+  function collideBaseWalls(o){
+    const B=act2BaseWalls;if(!B||!B.rects)return;
+    for(const w of B.rects){
+      const cx=Math.max(w.x,Math.min(o.x,w.x+w.w)),cy=Math.max(w.y,Math.min(o.y,w.y+w.h));
+      const dx=o.x-cx,dy=o.y-cy,d2=dx*dx+dy*dy;
+      if(d2<o.r*o.r){
+        if(d2<0.0001){
+          const pl=o.x-w.x,pr=w.x+w.w-o.x,pt=o.y-w.y,pb2=w.y+w.h-o.y;
+          const m=Math.min(pl,pr,pt,pb2);
+          if(m===pl)o.x=w.x-o.r;else if(m===pr)o.x=w.x+w.w+o.r;
+          else if(m===pt)o.y=w.y-o.r;else o.y=w.y+w.h+o.r;
+          continue;
+        }
+        const d=Math.sqrt(d2),push=(o.r-d)/d;
+        o.x+=dx*push;o.y+=dy*push;
+      }
+    }
+  }
+  // точка внутри стены базы (для отсечения снарядов врагов у запечатанных ворот)
+  function pointInBaseWalls(px,py){
+    const B=act2BaseWalls;if(!B||!B.rects)return false;
+    for(const w of B.rects){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}
+    return false;
   }
   // проходимая зона лабиринта (комнаты+коридоры) — страховка от «выпал за стены»
   let vaultWalk=[];
@@ -3917,19 +3975,29 @@
     // «прибывает» в новое место. Голубое кольцо телепорта мигает и гаснет через ~6с (см. draw)
     player.x=0;player.y=0;
     act2TeleFx={x:0,y:0,t:0};
-    act2Tower={x:130,y:-10,r:46,progress:0};act2Base=null; // здание-лекарь стоит в стороне от точки приземления
-    // БЕЗОПАСНАЯ ЗОНА БАЗЫ: пока чинишься — мобы внутрь не проходят (снимается сразу же,
-    // как только починка завершится — см. тик act2Tower). Переиспользуем существующий safeZone
-    safeZone={x:0,y:0,r:260,life:99999,perm:true};safeZoneAcc=0;
-    // ОРДА ЗА ПЕРИМЕТРОМ: сразу видно, что снаружи опасно и многолюдно — но враги слабые
-    // (масштабируются от player.level=1, как в самом начале Акта 1)
+    act2Tower={x:130,y:70,r:46,progress:0};act2Base=null; // здание-лекарь стоит в стороне от точки приземления
+    // КВАДРАТНАЯ БАЗА: форт «на два экрана» (R=480 → сторона 960) с воротами на юге.
+    // Пока ворота запечатаны — враги и их снаряды не проходят вообще (не просто оттесняются,
+    // как раньше circular safeZone, а физически упираются в стену). Открываются насовсем
+    // после починки — база остаётся постоянным ориентиром до конца акта, не исчезает.
+    const R=480,t=24,gateHalf=70;
+    act2BaseWalls={cx:0,cy:0,R,t,gateHalf,sealed:true,
+      // 4 угловые площадки под будущие оборонительные вышки (само строительство — отдельно)
+      towers:[{x:-(R-70),y:-(R-70)},{x:R-70,y:-(R-70)},{x:-(R-70),y:R-70},{x:R-70,y:R-70}],
+      // разрушенные здания внутри — декор+препятствия, подальше от ворот/башни-лекаря/точки приземления
+      ruins:[{x:-260,y:-180,r:38,rot:0.3},{x:-300,y:120,r:44,rot:-0.2},{x:220,y:-260,r:36,rot:0.6},
+        {x:300,y:200,r:40,rot:-0.5},{x:-120,y:280,r:34,rot:0.15},{x:60,y:-320,r:38,rot:-0.35}]};
+    rebuildBaseWallRects();
+    // ОРДА ЗА ВОРОТАМИ: сразу видно, что снаружи опасно и многолюдно — но враги слабые
+    // (масштабируются от player.level=1, как в самом начале Акта 1). Спавним ПРЯМОУГОЛЬНОЙ
+    // полосой строго южнее стены (не полярной дугой — на квадратной базе дуга с малым
+    // радиусом-офсетом может по x «съесть» весь радиус и оказаться y<R, т.е. внутри стены)
     mobSpawnPaused=true;pendingSpawns=[];
     for(let i=0;i<50;i++){
       const e=spawnEnemy(false);
-      const a=rand(0,Math.PI*2),r=rand(300,520);
-      e.x=Math.cos(a)*r;e.y=Math.sin(a)*r;
+      e.x=rand(-R+40,R-40);e.y=R+t+rand(30,320); // южнее южной стены (cy=0), во всю ширину базы
     }
-    announce={text:'— АКТ 2: РАЗЛОМ — корабль обнулён (осталась половина оружия). Почини корабль на базе, прежде чем выходить наружу!',life:6,color:'#ff2d55'};
+    announce={text:'— АКТ 2: РАЗЛОМ — корабль обнулён (осталась половина оружия). Почини корабль на базе, прежде чем открывать ворота!',life:6,color:'#ff2d55'};
     flashFx(0.6,'244,63,94');screenFlash=0.5;
     state='running';last=performance.now();
   }
@@ -4319,6 +4387,7 @@
     const czSlow=(cursedZones.some(z=>dist(player,z)<z.r)?0.78:1)*(player.altarSlowT>0?0.8:1); // зона/сделка замедляют
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*czSlow*dt;player.y+=my*player.speed*hasteMul*czSlow*dt;player.facing={x:mx,y:my};}
     if(inVault){collideCircleWalls(player);keepInWalk(player);}
+    if(act2BaseWalls){collideBaseWalls(player);collideRuins(player);}
     if(forestField||darkForest)collideTrees(player);
     if(player.invuln>0)player.invuln-=dt;
     if(player.wounded&&Math.random()<0.7)particles.push({x:player.x+rand(-10,10),y:player.y+rand(-6,10),vx:rand(-1.2,1.2),vy:rand(-2.2,-0.4),life:0.8,color:Math.random()<0.5?'#f97316':'#64748b',sz:2+Math.random()*3});
@@ -4330,11 +4399,11 @@
         if(act2Tower.progress>=1){
           player.ship2=true;player.wounded=false;player.hp=player.maxHp;
           act2Base={x:act2Tower.x,y:act2Tower.y,r:act2Tower.r};act2Tower=null; // база остаётся в мире
-          // ЧИНИТЬСЯ ЗАКОНЧИЛ — безопасная зона снимается, орда снаружи наконец может дойти,
-          // обычный спавн возобновляется
-          if(safeZone&&safeZone.perm){safeZone=null;}
+          // ПОЧИНИЛСЯ — ворота открываются НАСОВСЕМ (сама база и стены остаются постоянным
+          // укреплённым ориентиром), орда снаружи наконец может прорваться, спавн возобновляется
+          if(act2BaseWalls&&act2BaseWalls.sealed){act2BaseWalls.sealed=false;rebuildBaseWallRects();}
           mobSpawnPaused=false;
-          announce={text:'⚡ КОРАБЛЬ ВОССТАНОВЛЕН — ДВА КРЫЛОВЫХ ОРУДИЯ! Зона отключена — держись!',life:5,color:'#7dd3fc'};
+          announce={text:'⚡ КОРАБЛЬ ВОССТАНОВЛЕН — ДВА КРЫЛОВЫХ ОРУДИЯ! Ворота открыты — держись!',life:5,color:'#7dd3fc'};
           flashFx(0.7,'125,211,252');camShake=Math.max(camShake,16);
           for(let i=0;i<40;i++)particles.push({x:player.x,y:player.y,vx:rand(-5,5),vy:rand(-5,5),life:1,color:'#7dd3fc',sz:3});
         }
@@ -4808,6 +4877,7 @@
         }
         moveEnemy(e,dt,d,spd);
         if(inVault){collideCircleWalls(e);keepInWalk(e,true);}
+        if(act2BaseWalls){collideBaseWalls(e);collideRuins(e);}
         if(forestField||darkForest)collideTrees(e);
       }
       if(d<player.r+e.r){
@@ -4924,12 +4994,13 @@
       enemies=elites.concat(enemies.filter(e=>!e.elite&&!e.goblin).slice(0,240-elites.length));
     }
     // self-heal: never let a leaked pause flag starve the field of enemies
-    if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns)&&!inVault&&!forestGate&&!(safeZone&&safeZone.perm))mobSpawnPaused=false;
+    if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns)&&!inVault&&!forestGate&&!(safeZone&&safeZone.perm)&&!(act2BaseWalls&&act2BaseWalls.sealed))mobSpawnPaused=false;
 
     // enemy projectiles (fizzle at the safe-zone border — it's actually safe inside)
     for(const ep of enemyProjectiles){
       ep.x+=ep.vx*dt;ep.y+=ep.vy*dt;ep.life-=dt;
       if(inVault&&pointInWalls(ep.x,ep.y)){ep.dead=true;continue;}
+      if(act2BaseWalls&&pointInBaseWalls(ep.x,ep.y)){ep.dead=true;sparkHit(ep.x,ep.y,'#94a3b8');continue;}
       if(safeZone&&dist(safeZone,ep)<safeZone.r){ep.dead=true;burst(ep.x,ep.y,'#4ade80',3);continue;}
       if(dist(player,ep)<player.r+ep.r){hurtPlayer(ep.dmg,ep.x,ep.y,ep.boss?14:0,ep.boss);ep.dead=true;burst(ep.x,ep.y,'#a855f7',5);}
     }
@@ -6477,8 +6548,58 @@
       x.beginPath();x.arc(0,-R*1.5,R*0.2*pu,0,Math.PI*2);x.fill();x.shadowBlur=0;
       x.restore();
     }
+    // РАЗРУШЕННОЕ ЗДАНИЕ внутри базы Акта 2 — декор+препятствие (см. collideRuins)
+    function drawRuin(ru){
+      x.save();x.translate(ru.x,ru.y);x.rotate(ru.rot);
+      x.fillStyle='#1e2532';
+      x.beginPath();x.moveTo(-ru.r*0.8,ru.r*0.6);x.lineTo(-ru.r*0.5,-ru.r*0.9);x.lineTo(ru.r*0.3,-ru.r*1.1);x.lineTo(ru.r*0.8,ru.r*0.5);x.closePath();x.fill();
+      x.strokeStyle='#3f4a5c';x.lineWidth=2;x.stroke();
+      x.fillStyle='#0a0e17'; // выбитые окна
+      x.fillRect(-ru.r*0.3,-ru.r*0.5,ru.r*0.22,ru.r*0.3);
+      x.fillRect(ru.r*0.05,-ru.r*0.75,ru.r*0.2,ru.r*0.28);
+      x.strokeStyle='#0a0e17';x.lineWidth=1.5; // трещина-скол
+      x.beginPath();x.moveTo(-ru.r*0.1,-ru.r*0.9);x.lineTo(ru.r*0.05,-ru.r*0.3);x.lineTo(-ru.r*0.05,ru.r*0.2);x.stroke();
+      x.restore();
+      if(Math.random()<0.02&&particles.length<560)particles.push({x:ru.x+rand(-10,10),y:ru.y-ru.r*0.8,vx:rand(-0.3,0.3),vy:-0.6,life:1.2,color:'#475569',sz:2.5});
+    }
     // камера уже снята → возвращаем мировую трансформацию для станции (edgeArrow ниже — экранный)
     const camWorld=()=>{let ssx=0,ssy=0;if(camShake>0.3){ssx=Math.sin(t*47)*camShake*0.6;ssy=Math.cos(t*41)*camShake*0.6;}x.translate(W/2+ssx,H/2+ssy);x.scale(zoom,zoom);x.translate(-player.x,-player.y);};
+    // КВАДРАТНАЯ БАЗА АКТА 2: пол, стены, ворота (запечатаны/открыты), угловые площадки
+    // под вышки, разрушенные здания внутри — постоянный ориентир до конца акта
+    if(act2BaseWalls){
+      const B=act2BaseWalls;
+      x.save();camWorld();
+      x.fillStyle='rgba(30,41,59,0.4)';x.fillRect(B.cx-B.R,B.cy-B.R,B.R*2,B.R*2);
+      x.strokeStyle='rgba(125,211,252,0.12)';x.lineWidth=1/zoom;x.strokeRect(B.cx-B.R,B.cy-B.R,B.R*2,B.R*2);
+      B.rects.forEach((w,i)=>{
+        const gateSeal=i===5; // 6-й сегмент — временная заглушка ворот (только пока sealed)
+        x.fillStyle=gateSeal?'rgba(239,68,68,0.55)':'#334155';
+        x.fillRect(w.x,w.y,w.w,w.h);
+        x.strokeStyle=gateSeal?'#ff6b6b':'#64748b';x.lineWidth=1.5/zoom;
+        x.strokeRect(w.x,w.y,w.w,w.h);
+      });
+      // столбы ворот — всегда видны, отмечают проём в южной стене
+      const gx1=B.cx-B.gateHalf,gx2=B.cx+B.gateHalf,gy=B.cy+B.R;
+      x.fillStyle='#0f172a';x.fillRect(gx1-8,gy-6,16,B.t+12);x.fillRect(gx2-8,gy-6,16,B.t+12);
+      x.fillStyle=B.sealed?'#ff6b6b':'#4ade80';x.shadowColor=x.fillStyle;x.shadowBlur=10;
+      x.beginPath();x.arc(gx1,gy+B.t/2,5,0,Math.PI*2);x.fill();
+      x.beginPath();x.arc(gx2,gy+B.t/2,5,0,Math.PI*2);x.fill();x.shadowBlur=0;
+      x.fillStyle=B.sealed?'#ff6b6b':'#4ade80';x.font='bold '+Math.round(13/zoom)+'px system-ui,sans-serif';
+      x.textAlign='center';x.textBaseline='top';
+      x.fillText(B.sealed?'🔒 ВОРОТА ЗАПЕЧАТАНЫ':'🔓 ВОРОТА ОТКРЫТЫ',B.cx,gy+B.t+8);
+      // угловые площадки под будущие оборонительные вышки (строительство — отдельная фича)
+      B.towers.forEach(tw=>{
+        x.save();x.translate(tw.x,tw.y);
+        x.fillStyle='rgba(125,211,252,0.08)';x.beginPath();x.arc(0,0,34,0,Math.PI*2);x.fill();
+        x.strokeStyle='rgba(125,211,252,0.35)';x.lineWidth=2/zoom;x.setLineDash([6,5]);
+        x.beginPath();x.arc(0,0,34,0,Math.PI*2);x.stroke();x.setLineDash([]);
+        x.fillStyle='#7dd3fc';x.globalAlpha=0.7;x.font=Math.round(16/zoom)+'px system-ui,sans-serif';
+        x.textAlign='center';x.textBaseline='middle';x.fillText('🏗',0,0);x.globalAlpha=1;
+        x.restore();
+      });
+      B.ruins.forEach(ru=>drawRuin(ru));
+      x.restore();
+    }
     if(act2Tower){
       const T2=act2Tower;
       x.save();camWorld();
