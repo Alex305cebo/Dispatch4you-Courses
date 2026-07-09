@@ -205,10 +205,13 @@
       <div class="menu-col">
         <button class="ostart primary" id="btnResume" style="display:none;">▶ Продолжить</button>
         <button class="ostart primary" id="btnStart">🎮 Начать заново</button>
+        <button class="ostart" id="btnDiffOpen" style="color:#fb923c;">🎚 Сложность: <span id="diffName">Нормальный</span></button>
         <button class="ostart" id="btnCharOpen" style="color:#7dd3fc;">🦸 Персонаж: <span id="charName">Универсал</span></button>
         <button class="ostart" id="btnMetaOpen" style="color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
         <button class="ostart" id="btnAchiOpen" style="color:#fde047;">🏅 Достижения</button>
         <button class="ostart choiceBtn" id="btnChoiceStart" style="color:#93c5fd;">🎯 Улучшения: выбор</button>
+        <button class="ostart" id="btnLbFromStart">🏆 Таблица лидеров</button>
+        <button class="ostart" id="btnHistoryFromStart">📜 Мои сессии</button>
         <button class="ostart sndBtn" id="btnSoundStart" style="align-self:center;width:auto;padding:10px 20px;">🔊 Звук</button>
       </div>
       <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
@@ -265,6 +268,12 @@
       <p>Уклон применяется поверх старта, выбор оружия остаётся.</p>
       <div class="cards" id="charList"></div>
       <button class="ostart" id="btnCharClose">Закрыть</button>
+    </div>
+    <div id="odiff" class="overlay" style="overflow-y:auto;">
+      <h2>🎚 Сложность</h2>
+      <p>Меняет силу и частоту врагов. Можно менять между забегами в любой момент.</p>
+      <div class="cards" id="diffList"></div>
+      <button class="ostart" id="btnDiffClose">Закрыть</button>
     </div>
     <div id="oweapon" class="overlay">
       <h2 id="weaponTitle">Новое оружие!</h2>
@@ -1428,6 +1437,22 @@
   const imgCache={};
   function getImg(src){let im=imgCache[src];if(!im){im=new Image();im.src=src;imgCache[src]=im;}return im;}
   function imgReady(im){return im&&im.complete&&im.naturalWidth>0;}
+  // СЛОЖНОСТЬ: 5 уровней. 'hard' — прежний баланс игры БЕЗ ИЗМЕНЕНИЙ (для тех, кто уже
+  // привык); остальные — явно легче, по умолчанию для всех новых игроков стоит 'normal'
+  // (заметно спокойнее старого баланса, который многим казался слишком тяжёлым).
+  // hp/dmg — множители силы врагов, spd — скорость, spawn — множитель интервала спавна
+  // (>1 = реже спавнятся). hp применяется к коридору clampMobHp (см. ниже), не к сырым
+  // цифрам — враги в игре ВСЕГДА нормализуются относительно живого DPS игрока, так что
+  // менять нужно сам коридор, а не значение до него.
+  const DIFF_PRESETS=[
+    {id:'novice',icon:'🌱',name:'Новичок',desc:'Вдвое слабее и реже — спокойное знакомство с игрой.',hp:0.42,dmg:0.42,spd:0.85,spawn:1.35},
+    {id:'easy',icon:'🙂',name:'Лёгкий',desc:'Заметно спокойнее стандарта — расслабленный забег.',hp:0.6,dmg:0.6,spd:0.92,spawn:1.2},
+    {id:'normal',icon:'⚖️',name:'Нормальный',desc:'Комфортный баланс: держит в тонусе, но не душит.',hp:0.8,dmg:0.8,spd:0.97,spawn:1.08},
+    {id:'hard',icon:'🔥',name:'Сложный',desc:'Прежний баланс игры без изменений — плотные волны, злые боссы.',hp:1,dmg:1,spd:1,spawn:1},
+    {id:'nightmare',icon:'💀',name:'Кошмар',desc:'Ещё жёстче стандарта — для тех, кому было мало.',hp:1.25,dmg:1.3,spd:1.05,spawn:0.9},
+  ];
+  let selectedDiff=localStorage.getItem('survivors-diff')||'normal';
+  function curDiff(){return DIFF_PRESETS.find(dd=>dd.id===selectedDiff)||DIFF_PRESETS[2];}
   const CHARACTERS=[
     {id:'balanced',icon:'🎯',name:'Универсал',desc:'Сбалансированный старт, без уклона.',apply:p=>{}},
     {id:'warrior',icon:'⚔️',name:'Воин',desc:'+30% макс. HP, +10% урона, -5% скорости.',apply:p=>{p.maxHp=Math.round(p.maxHp*1.3);p.hp=p.maxHp;p.dmgMult*=1.1;p.speed=Math.round(p.speed*0.95);}},
@@ -1754,11 +1779,13 @@
   }
 
   function difficulty(){
+    const D=curDiff();
     return {
-      interval:Math.max(220,1000-t*6),
+      interval:Math.max(220,1000-t*6)*D.spawn,
       count:1+Math.floor(t/28),
-      hpMul:Math.min(12,1+t/30),
-      spdMul:Math.min(2.2,1+t/150),
+      hpMul:Math.min(12,1+t/30), // сам множитель сложности на HP — в clampMobHp (коридор)
+      spdMul:Math.min(2.2,1+t/150)*D.spd,
+      dmgMul:D.dmg,
     };
   }
 
@@ -1836,8 +1863,12 @@
   function clampMobHp(en){
     const dps=estPlayerDps();
     // враги «полегчали» ~на четверть: бои короче, игра не затягивается (коридор всё так же
-    // привязан к живому DPS игрока — баланс держится на любом уровне прокачки)
-    const lim=en.megaboss?[30,70]:en.superboss?[8,20]:en.elite?[4.5,12]:en.hunter?[2.5,5.5]:en.champion?[1.3,3.5]:[0.5,1.9];
+    // привязан к живому DPS игрока — баланс держится на любом уровне прокачки).
+    // Множитель СЛОЖНОСТИ — на сам коридор, а не на сырой HP: любое значение до клампа
+    // всё равно нормализуется в эти границы, так что менять нужно именно их
+    const Dh=curDiff().hp;
+    const lim0=en.megaboss?[30,70]:en.superboss?[8,20]:en.elite?[4.5,12]:en.hunter?[2.5,5.5]:en.champion?[1.3,3.5]:[0.5,1.9];
+    const lim=[lim0[0]*Dh,lim0[1]*Dh];
     const was=Math.max(1,en.maxHp);
     en.maxHp=Math.max(dps*lim[0],Math.min(isFinite(en.maxHp)?en.maxHp:dps*lim[1],dps*lim[1]));
     en.hp=en.hp/was*en.maxHp;
@@ -1895,7 +1926,7 @@
     // sqrt смягчает, чтобы апгрейды всё же ощущались; к боссам не применяем (у них свои множители)
     const powCouple=elite?1:Math.sqrt(player.dmgMult||1);
     const finalHp=(elite?tierAvgHp(player.level)*(16+Math.min(8,bn)*2)*d.hpMul:base.hp*d.hpMul)*hpMulL*(champion?5:1)*earlyGameHpEase(player.level)*wb*postMul*powCouple;
-    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg*postMul*(act===2?1.45:1);
+    const finalDmg=(elite?tierAvgDmg(player.level)*6*dmgMulL:base.dmg*dmgMulL)*(champion?1.5:1)*wb*ceDmg*postMul*(act===2?1.45:1)*d.dmgMul;
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       // ponytail: regular mobs capped below base player speed (180) — a mob you can never
       // outrun glues to you permanently, which is what made fast spawns miserable
@@ -4044,7 +4075,7 @@
     const superNumber=(atLevel-1)/25;
     const d=difficulty();
     const hp=tierAvgHp(atLevel)*(40+superNumber*8)*d.hpMul;
-    const dmg=tierAvgDmg(atLevel)*14*(1+Math.floor(atLevel/4)*0.08);
+    const dmg=tierAvgDmg(atLevel)*14*(1+Math.floor(atLevel/4)*0.08)*d.dmgMul;
     const ang=rand(0,Math.PI*2),rad=offscreenRad(40);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       hp,maxHp:hp,speed:55*d.spdMul*0.65,dmg,r:40+Math.min(8,superNumber)*6,
@@ -4268,9 +4299,10 @@
   }
   function spawnMegaBoss(){
     const dps=estPlayerDps();
+    const Dm=curDiff(); // Хронос не проходит через clampMobHp — множитель сложности тут напрямую
     const a2=act===2; // Акт 2: обновлённый Хронос — крепче, злее, и с истинной формой в конце
-    const hp=a2?Math.max(13000,dps*75):Math.max(7500,dps*48); // много жизней, но бой короче (баланс к DPS игрока)
-    const dmg=(a2?tierAvgDmg(50)*22:tierAvgDmg(50)*16);
+    const hp=(a2?Math.max(13000,dps*75):Math.max(7500,dps*48))*Dm.hp; // много жизней, но бой короче (баланс к DPS игрока)
+    const dmg=(a2?tierAvgDmg(50)*22:tierAvgDmg(50)*16)*Dm.dmg;
     // АРЕНА: Хронос «поглощает» обычных мобов — поле очищается, бой не пропустить
     enemies=enemies.filter(e2=>e2.elite);
     enemyProjectiles=[];
@@ -4282,7 +4314,7 @@
       guns:[{ox:120,oy:0},{ox:10,oy:-64},{ox:10,oy:64},{ox:-88,oy:-46},{ox:-88,oy:46}].map(g=>({ox:g.ox,oy:g.oy,cd:rand(0.6,2.2),burst:0,bt:0})),
       color:a2?'#be123c':'#94a3b8',glow:a2?'#f43f5e':'#94a3b8',skinShape:'super',skinName:a2?'ХРОНОС · ПРОБУЖДЁННЫЙ':'ХРОНОС · Форма Стали',
       xp:xpForPower(hp,dmg)*3,elite:true,megaboss:true,bossNumber:8,pauseSpawns:true,
-      shieldMax:Math.max(1200,dps*(a2?12:8)),shieldHp:Math.max(1200,dps*(a2?12:8)),shieldRe:a2?15:18,shieldCd:0,_shieldHitT:0,
+      shieldMax:Math.max(1200,dps*(a2?12:8))*Dm.hp,shieldHp:Math.max(1200,dps*(a2?12:8))*Dm.hp,shieldRe:a2?15:18,shieldCd:0,_shieldHitT:0,
       megaStage:1,megaShootCd:1.2,flyerCd:6,healCd:11,shootCd:1e9,summonCd:1e9,
       act2boss:a2,megaPhase:a2?'ship':null,maxHpTrue:a2?Math.max(9500,dps*55):0}; // истинная форма: второй бар HP
     armMegaShield(en);
@@ -4429,7 +4461,7 @@
   function spawnLevel8Boss(){
     const d=difficulty();
     const hp=tierAvgHp(8)*30*d.hpMul;
-    const dmg=tierAvgDmg(8)*10*(1+Math.floor(8/4)*0.08);
+    const dmg=tierAvgDmg(8)*10*(1+Math.floor(8/4)*0.08)*d.dmgMul;
     const ang=rand(0,Math.PI*2),rad=offscreenRad(40);
     const en={x:player.x+Math.cos(ang)*rad,y:player.y+Math.sin(ang)*rad,
       hp,maxHp:hp,speed:50*d.spdMul*0.7,dmg,r:34,
@@ -7416,6 +7448,26 @@
   document.getElementById('btnCharOpen').addEventListener('click',()=>{renderChars();ostart.classList.remove('show');ochar.classList.add('show');});
   document.getElementById('btnCharClose').addEventListener('click',()=>{ochar.classList.remove('show');ostart.classList.add('show');});
   syncCharName();
+  // выбор сложности — тот же паттерн карточек, что и персонаж; действует со следующего спавна
+  // (д.dmgMul/spd/spawn читаются каждый кадр из curDiff(), а HP — через коридор clampMobHp)
+  const odiff=document.getElementById('odiff');
+  function syncDiffName(){document.getElementById('diffName').textContent=curDiff().name;}
+  function renderDiffs(){
+    document.getElementById('diffList').innerHTML=DIFF_PRESETS.map(dd=>
+      '<div class="card diffCard" data-id="'+dd.id+'" style="width:150px;cursor:pointer;text-align:center;'+(dd.id===selectedDiff?'border-color:#fb923c;box-shadow:0 0 12px rgba(251,146,60,0.4);':'')+'">'
+      +'<div style="width:72px;height:72px;border-radius:50%;border:2px solid #fb923c;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:42px;line-height:1;background:#0c0f18;">'+dd.icon+'</div>'
+      +'<b style="color:#fb923c;">'+dd.name+'</b><span>'+dd.desc+'</span></div>').join('');
+    document.querySelectorAll('.diffCard').forEach(el=>el.addEventListener('click',()=>{
+      selectedDiff=el.getAttribute('data-id');localStorage.setItem('survivors-diff',selectedDiff);
+      syncDiffName();renderDiffs();beep(660,0.08,'sine',0.1);
+    }));
+  }
+  document.getElementById('btnDiffOpen').addEventListener('click',()=>{renderDiffs();ostart.classList.remove('show');odiff.classList.add('show');});
+  document.getElementById('btnDiffClose').addEventListener('click',()=>{odiff.classList.remove('show');ostart.classList.add('show');});
+  syncDiffName();
+  // лидерборд/история сессий — раньше доступны только из паузы/итогов забега, теперь и со старта
+  document.getElementById('btnLbFromStart').addEventListener('click',showLeaderboard);
+  document.getElementById('btnHistoryFromStart').addEventListener('click',showHistory);
   // persist on tab hide / refresh / close so nothing is lost
   window.addEventListener('pagehide',saveRun);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)saveRun();});
