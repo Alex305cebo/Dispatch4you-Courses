@@ -589,7 +589,7 @@
       +'<span class="rsc">'+fmtNum(Number(r.score)||0)+'</span></div>';
   }
   async function showLeaderboard(){
-    if(state==='running'){lbResumeRunning=true;state='leaderboard';}
+    if(state==='running'){lbResumeRunning=true;state='leaderboard';updatePendingBtn();}
     lbHiddenOverlays=Array.from(document.querySelectorAll('.overlay.show')).filter(o=>o!==olb);
     lbHiddenOverlays.forEach(o=>o.classList.remove('show'));
     olb.classList.add('show');
@@ -3688,17 +3688,36 @@
         for(let i=0;i<n;i++){const a=off+i/n*Math.PI*2;
           projectiles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,r:5,life:1.15,pierceLeft:1,hitSet:new Set(),dmg,color:'#f0abfc'});}
         sfxSweep(650,880,0.05,'sine',0.03);}}
-    // drones — orbiting companions that snipe the nearest enemy
-    if(p.droneLevel){p.droneAcc+=dt*as;
+    // drones — companions that wander chaotically near the ship (not a boring fixed
+    // orbit — random jitter kept on a leash around the player) and snipe the nearest enemy
+    if(p.droneLevel){
       const dEvo=p.droneEvo;
+      const dn=1+Math.floor((p.droneLevel-1)/2)+(dEvo?2:0);
+      if(!p.drones||p.drones.length!==dn){
+        p.drones=[];
+        for(let i=0;i<dn;i++){const a0=rand(0,Math.PI*2),r0=rand(35,55);
+          p.drones.push({x:p.x+Math.cos(a0)*r0,y:p.y+Math.sin(a0)*r0,vx:0,vy:0,ang:a0});}
+      }
+      const MINR=32,MAXR=75,MAXSP=120;
+      for(const d of p.drones){
+        d.vx+=rand(-1,1)*260*dt;d.vy+=rand(-1,1)*260*dt;
+        const ddx=d.x-p.x,ddy=d.y-p.y,dd=Math.hypot(ddx,ddy)||1;
+        if(dd>MAXR){const pull=(dd-MAXR)*6;d.vx-=ddx/dd*pull*dt;d.vy-=ddy/dd*pull*dt;}
+        else if(dd<MINR){const push=(MINR-dd)*6;d.vx+=ddx/dd*push*dt;d.vy+=ddy/dd*push*dt;}
+        d.vx*=0.9;d.vy*=0.9;
+        const sp=Math.hypot(d.vx,d.vy);
+        if(sp>MAXSP){d.vx=d.vx/sp*MAXSP;d.vy=d.vy/sp*MAXSP;}
+        d.x+=d.vx*dt;d.y+=d.vy*dt;
+        if(sp>4)d.ang=Math.atan2(d.vy,d.vx);
+      }
+      p.droneAcc+=dt*as;
       if(p.droneAcc>=wgap((1.4-p.droneLevel*0.1)*(dEvo?0.5:1))){p.droneAcc=0;
-        const n=1+Math.floor((p.droneLevel-1)/2)+(dEvo?2:0);
-        for(let i=0;i<n;i++){
-          const a=t*1.6+i*(Math.PI*2/n),dx0=p.x+Math.cos(a)*46,dy0=p.y+Math.sin(a)*46;
+        for(const d of p.drones){
           const e=nearestEnemy(420);
-          if(e){const aa=Math.atan2(e.y-dy0,e.x-dx0),sp=500*p.projSpeedMult;
-            projectiles.push({x:dx0,y:dy0,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:3.5,life:1,pierceLeft:dEvo?1:0,hitSet:new Set(),
-              dmg:rollDmg((10+6*p.droneLevel)*(dEvo?1.5:1)*p.dmgMult),color:'#4ade80'});}}}}
+          if(e){const aa=Math.atan2(e.y-d.y,e.x-d.x),sp=500*p.projSpeedMult;
+            projectiles.push({x:d.x,y:d.y,vx:Math.cos(aa)*sp,vy:Math.sin(aa)*sp,r:3.5,life:1,pierceLeft:dEvo?1:0,hitSet:new Set(),
+              dmg:rollDmg((10+6*p.droneLevel)*(dEvo?1.5:1)*p.dmgMult),color:'#4ade80'});}}}
+    }
     // acid pools — lingering damage zones dropped at the player's feet
     if(p.acidLevel){p.acidAcc+=dt*as;
       if(p.acidAcc>=wgap(4.5-p.acidLevel*0.35)){p.acidAcc=0;
@@ -6819,13 +6838,11 @@
       x.save();x.translate(b.x,b.y);x.rotate(t*14);x.fillStyle='#fde047';x.shadowColor='#fde047';x.shadowBlur=8;
       x.fillRect(-b.r,-3,b.r*2,6);x.fillRect(-3,-b.r,6,b.r*2);x.restore();
     });
-    // drones
-    if(player.droneLevel){
-      const dn=1+Math.floor((player.droneLevel-1)/2)+(player.droneEvo?2:0);
+    // drones — draw at their actual wandering position (see updateArsenal), not a fixed orbit
+    if(player.droneLevel&&player.drones){
       x.fillStyle='#4ade80';x.shadowColor='#4ade80';x.shadowBlur=8;
-      for(let i=0;i<dn;i++){
-        const a=t*1.6+i*(Math.PI*2/dn),dx0=player.x+Math.cos(a)*46,dy0=player.y+Math.sin(a)*46;
-        x.save();x.translate(dx0,dy0);x.rotate(a);
+      for(const d of player.drones){
+        x.save();x.translate(d.x,d.y);x.rotate(d.ang||0);
         x.beginPath();x.moveTo(7,0);x.lineTo(-5,-5);x.lineTo(-5,5);x.closePath();x.fill();x.restore();
       }
       x.shadowBlur=0;
@@ -7760,7 +7777,7 @@
   // пауза
   let paused=false;
   const opause=document.getElementById('opause');
-  function pauseGame(){if(state!=='running'||paused)return;paused=true;endJoy();keys={};moveVec={x:0,y:0};saveRun();opause.classList.add('show');}
+  function pauseGame(){if(state!=='running'||paused)return;paused=true;endJoy();keys={};moveVec={x:0,y:0};saveRun();opause.classList.add('show');updatePendingBtn();}
   function unpause(){if(!paused)return;paused=false;opause.classList.remove('show');last=performance.now();}
   function togglePause(){paused?unpause():pauseGame();}
   document.getElementById('btnPauseSide').addEventListener('click',pauseGame);
@@ -7770,7 +7787,7 @@
   // панель). Хаб при этом остаётся полосой внизу канваса, по полю можно водить пальцем.
   const sideEl=document.querySelector('.side');
   function openBurgerMenu(){
-    if(state==='running'&&!paused){paused=true;endJoy();keys={};moveVec={x:0,y:0};saveRun();}
+    if(state==='running'&&!paused){paused=true;endJoy();keys={};moveVec={x:0,y:0};saveRun();updatePendingBtn();}
     sideEl.classList.add('open');
   }
   function closeBurgerMenu(){
