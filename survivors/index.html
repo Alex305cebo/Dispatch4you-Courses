@@ -205,14 +205,12 @@
       <div class="menu-col">
         <button class="ostart primary" id="btnResume" style="display:none;">▶ Продолжить</button>
         <button class="ostart primary" id="btnStart">🎮 Начать заново</button>
-        <button class="ostart" id="btnDiffOpen" style="color:#fb923c;">🎚 Сложность: <span id="diffName">Нормальный</span></button>
-        <button class="ostart" id="btnCharOpen" style="color:#7dd3fc;">🦸 Персонаж: <span id="charName">Универсал</span></button>
         <button class="ostart" id="btnMetaOpen" style="color:#e9d5ff;">✨ Мета-прогрессия (<span id="metaShardsStart">0</span>)</button>
         <button class="ostart" id="btnAchiOpen" style="color:#fde047;">🏅 Достижения</button>
         <button class="ostart choiceBtn" id="btnChoiceStart" style="color:#93c5fd;">🎯 Улучшения: выбор</button>
         <button class="ostart" id="btnLbFromStart">🏆 Таблица лидеров</button>
         <button class="ostart" id="btnHistoryFromStart">📜 Мои сессии</button>
-        <button class="ostart sndBtn" id="btnSoundStart" style="align-self:center;width:auto;padding:10px 20px;">🔊 Звук</button>
+        <button class="ostart" id="btnSettingsOpen" style="color:#94a3b8;">⚙ Настройки</button>
       </div>
       <div id="inappHint" style="display:none;flex-direction:column;gap:8px;align-items:center;margin-top:4px;padding:10px 14px;border:1px solid #f59e0b;border-radius:10px;background:rgba(245,158,11,0.08);max-width:320px;">
         <p style="color:#fbbf24;font-size:12px;margin:0;">⚠ Ты во встроенном браузере чата — страница может скроллиться и мешать управлению.</p>
@@ -274,6 +272,16 @@
       <p>Меняет силу и частоту врагов. Можно менять между забегами в любой момент.</p>
       <div class="cards" id="diffList"></div>
       <button class="ostart" id="btnDiffClose">Закрыть</button>
+    </div>
+    <div id="osettings" class="overlay">
+      <h2>⚙ Настройки</h2>
+      <div class="menu-col">
+        <button class="ostart sndBtn" id="btnSoundSettings" style="align-self:center;width:auto;padding:10px 20px;">🔊 Звук</button>
+        <button class="ostart" id="btnDiffOpen" style="color:#fb923c;">🎚 Сложность: <span id="diffName">Нормальный</span></button>
+        <button class="ostart" id="btnCharOpen" style="color:#7dd3fc;">🦸 Персонаж: <span id="charName">Универсал</span></button>
+        <button class="ostart" id="btnPerfToggle" style="color:#a3e635;">🐢 Слабое устройство: <span id="perfState">Выкл</span></button>
+      </div>
+      <button class="ostart" id="btnSettingsClose" style="margin-top:6px;">Закрыть</button>
     </div>
     <div id="oweapon" class="overlay">
       <h2 id="weaponTitle">Новое оружие!</h2>
@@ -355,6 +363,16 @@
   // решения читают ОДИН и тот же критерий — реальные размеры окна браузера.
   let uiMobile=false;
   const cv=document.getElementById('sboard'),x=cv.getContext('2d');
+  // РЕЖИМ СЛАБОЙ ПРОИЗВОДИТЕЛЬНОСТИ: вместо правки ~150 мест по всему файлу, где
+  // выставляется x.shadowBlur (свечения/glow — самое дорогое в canvas-рендере на слабых
+  // телефонах), перехватываем это свойство на самом контексте: чтение/запись проксируются
+  // в реальный canvas API, но запись всегда форсится в 0, пока включён perfMode
+  let perfMode=localStorage.getItem('survivors-perf')==='1';
+  const _shadowBlurDesc=Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype,'shadowBlur');
+  Object.defineProperty(x,'shadowBlur',{
+    get(){return _shadowBlurDesc.get.call(x);},
+    set(v){_shadowBlurDesc.set.call(x,perfMode?0:v);},
+  });
   // ЗАЩИТА: отрицательный радиус arc/ellipse кидает исключение и убивает кадр
   // (видели «radius provided (-1.06) is negative» в бою). Клампим к 0 глобально —
   // дуга нулевого радиуса просто не рисуется, игра не замечает.
@@ -1419,6 +1437,7 @@
   let vaultLoot=[],vaultOpening=false,vaultOpenT=0; // ЦЕРЕМОНИЯ ПОРТАЛА: выброс добычи с физикой после смерти всех боссов
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
+  function effEnemyCap(){return perfMode?Math.round(ENEMY_CAP*0.55):ENEMY_CAP;} // слабый телефон — меньше мобов сразу
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
   let deathCine=0; // кинематографичная слоу-мо смерть: >0 = идёт, по завершении gameOver()
   function doHitStop(d){hitStop=Math.max(hitStop,d);}
@@ -2339,7 +2358,7 @@
     sfxChime(660,6,0.09,0.15);
   }
 
-  function burst(px,py,color,n){if(particles.length>600)return;for(let i=0;i<n;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
+  function burst(px,py,color,n){if(particles.length>(perfMode?260:600))return;const nn=perfMode?Math.ceil(n*0.4):n;for(let i=0;i<nn;i++)particles.push({x:px,y:py,vx:rand(-3,3),vy:rand(-3,3),life:1,color,sz:2+Math.random()*3});}
 
   // ============ БОНУС-УРОВЕНЬ: SPACE INVADERS 👾 ============
   // 6 типов пришельцев: 0 рядовой, 1 синий, 2 стрелок (верх), 3 ТАНК (2 хита),
@@ -4742,7 +4761,7 @@
       // такие утечки не переживал: квота тратилась, килы не добирались — софтлок уровня
       let aliveNormal=0;for(const e2 of enemies){if(!e2.elite&&!e2.goblin&&!e2.hunter)aliveNormal++;}
       const levelQuota=levelBudget(player.level);
-      if(killsThisLevel+aliveNormal<levelQuota&&enemies.length<ENEMY_CAP+(player.curseCapBonus||0)){
+      if(killsThisLevel+aliveNormal<levelQuota&&enemies.length<effEnemyCap()+(player.curseCapBonus||0)){
         spawnAcc+=dt*1000;
         if(spawnAcc>d.interval){spawnAcc=0;
           const n=Math.min(d.count,Math.ceil(levelQuota-killsThisLevel-aliveNormal));
@@ -4752,7 +4771,7 @@
         spawnAcc=Math.min(spawnAcc,d.interval); // не копим спавн-долг, пока переполнено
         // буст «волна усиления» — ТОЛЬКО когда толпа упёрлась в потолок (раньше срабатывал
         // и на исчерпанной квоте уровня — кричал «толпа стала опаснее» над пустым полем)
-        if(enemies.length>=ENEMY_CAP+(player.curseCapBonus||0)){
+        if(enemies.length>=effEnemyCap()+(player.curseCapBonus||0)){
         waveAcc+=dt*1000;
         if(waveAcc>=WAVE_INTERVAL){waveAcc=0;triggerWaveBuff();}
         }
@@ -7445,8 +7464,14 @@
       syncCharName();renderChars();beep(660,0.08,'sine',0.1);
     }));
   }
-  document.getElementById('btnCharOpen').addEventListener('click',()=>{renderChars();ostart.classList.remove('show');ochar.classList.add('show');});
-  document.getElementById('btnCharClose').addEventListener('click',()=>{ochar.classList.remove('show');ostart.classList.add('show');});
+  // Персонаж/Сложность/Звук теперь живут в подменю «⚙ Настройки» (стартовое меню
+  // разрослось до 10 кнопок — свернули три второстепенных в один раздел). Открываются
+  // ПОВЕРХ настроек (не старта) и по закрытию возвращают на них же, а не на самый старт
+  const osettings=document.getElementById('osettings');
+  document.getElementById('btnSettingsOpen').addEventListener('click',()=>{ostart.classList.remove('show');osettings.classList.add('show');});
+  document.getElementById('btnSettingsClose').addEventListener('click',()=>{osettings.classList.remove('show');ostart.classList.add('show');});
+  document.getElementById('btnCharOpen').addEventListener('click',()=>{renderChars();osettings.classList.remove('show');ochar.classList.add('show');});
+  document.getElementById('btnCharClose').addEventListener('click',()=>{ochar.classList.remove('show');osettings.classList.add('show');});
   syncCharName();
   // выбор сложности — тот же паттерн карточек, что и персонаж; действует со следующего спавна
   // (д.dmgMul/spd/spawn читаются каждый кадр из curDiff(), а HP — через коридор clampMobHp)
@@ -7462,8 +7487,8 @@
       syncDiffName();renderDiffs();beep(660,0.08,'sine',0.1);
     }));
   }
-  document.getElementById('btnDiffOpen').addEventListener('click',()=>{renderDiffs();ostart.classList.remove('show');odiff.classList.add('show');});
-  document.getElementById('btnDiffClose').addEventListener('click',()=>{odiff.classList.remove('show');ostart.classList.add('show');});
+  document.getElementById('btnDiffOpen').addEventListener('click',()=>{renderDiffs();osettings.classList.remove('show');odiff.classList.add('show');});
+  document.getElementById('btnDiffClose').addEventListener('click',()=>{odiff.classList.remove('show');osettings.classList.add('show');});
   syncDiffName();
   // лидерборд/история сессий — раньше доступны только из паузы/итогов забега, теперь и со старта
   document.getElementById('btnLbFromStart').addEventListener('click',showLeaderboard);
@@ -7509,7 +7534,17 @@
   }
   document.addEventListener('keydown',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=true;e.preventDefault();}});
   document.addEventListener('keyup',e=>{const k=KEYMAP[e.code]||KEYMAP[e.key];if(k){keys[k]=false;e.preventDefault();}});
-  document.getElementById('btnSoundStart').addEventListener('click',toggleSound);
+  document.getElementById('btnSoundSettings').addEventListener('click',toggleSound);
+  // «слабое устройство»: выключает glow (см. shadowBlur-прокси у объявления x), урезает
+  // частицы взрывов (burst()) и потолок одновременных врагов (effEnemyCap()) — работает
+  // сразу, без перезапуска забега
+  const perfStateEl=document.getElementById('perfState');
+  function syncPerfState(){perfStateEl.textContent=perfMode?'Вкл':'Выкл';}
+  document.getElementById('btnPerfToggle').addEventListener('click',()=>{
+    perfMode=!perfMode;localStorage.setItem('survivors-perf',perfMode?'1':'0');
+    syncPerfState();beep(perfMode?440:660,0.08,'sine',0.08);
+  });
+  syncPerfState();
   document.getElementById('btnSoundSide').addEventListener('click',toggleSound);
   document.getElementById('btnSoundPause').addEventListener('click',toggleSound);
   document.addEventListener('keydown',e=>{if(e.code==='KeyM')toggleSound();});
