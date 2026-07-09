@@ -1156,6 +1156,7 @@
   let finaleLB=0; // кинематографические чёрные полосы (леттербокс) во время финала Хроноса
   let mega2Pending=false,mega2Done=false,act2BossLvl=0; // БОСС АКТА 2: обновлённый Хронос с истинной формой (3 доп. стадии)
   let act2Base=null; // БАЗА Акта 2: здание, что починило корабль — остаётся в мире как ориентир
+  let act2TeleFx=null; // ТЕЛЕПОРТ-ИНТРО: голубое кольцо в точке приземления — пульсирует, потом мигает и гаснет
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let vaultLoot=[],vaultOpening=false,vaultOpenT=0; // ЦЕРЕМОНИЯ ПОРТАЛА: выброс добычи с физикой после смерти всех боссов
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
@@ -1371,7 +1372,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -1469,7 +1470,7 @@
       if(arcade.waveNum==null)arcade.waveNum=1;if(arcade.maxWaves==null)arcade.maxWaves=3;
     }else{inArcade=false;arcade=null;arcadeStash=null;}
     pendingMegaBoss=s.pendingMegaBoss||false;megaDone=s.megaDone||false;megaFought=s.megaFought||false;
-    act=s.act||1;shipLevel=s.shipLevel||(s.player&&s.player.level)||1;finale=null;finaleLB=0;act2Tower=null;
+    act=s.act||1;shipLevel=s.shipLevel||(s.player&&s.player.level)||1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;
     mega2Done=s.mega2Done||false;act2BossLvl=s.act2BossLvl||0;mega2Pending=false;act2Base=s.act2Base||null;
     // подстраховка: сейв во время починки (ещё раненый, башни нет) — возвращаем башню рядом
     if(act===2&&player.wounded&&!player.ship2&&!act2Base){act2Tower={x:player.x+130,y:player.y-10,r:46,progress:0};}
@@ -3912,8 +3913,23 @@
     act2BossLvl=player.level+8; // босс Акта 2 ждёт через 8 уровней от нового старта
     player.wounded=true; // раненый: искры и дым, пока не починит башня
     player.invuln=Math.max(player.invuln,4);
-    act2Tower={x:player.x+150,y:player.y-10,r:46,progress:0};act2Base=null;
-    announce={text:'— АКТ 2: РАЗЛОМ — корабль обнулён (осталась половина оружия). Долети до БАЗЫ',life:6,color:'#ff2d55'};
+    // ТЕЛЕПОРТ НА БАЗУ: фиксированная точка (не старые координаты) — корабль реально
+    // «прибывает» в новое место. Голубое кольцо телепорта мигает и гаснет через ~6с (см. draw)
+    player.x=0;player.y=0;
+    act2TeleFx={x:0,y:0,t:0};
+    act2Tower={x:130,y:-10,r:46,progress:0};act2Base=null; // здание-лекарь стоит в стороне от точки приземления
+    // БЕЗОПАСНАЯ ЗОНА БАЗЫ: пока чинишься — мобы внутрь не проходят (снимается сразу же,
+    // как только починка завершится — см. тик act2Tower). Переиспользуем существующий safeZone
+    safeZone={x:0,y:0,r:260,life:99999,perm:true};safeZoneAcc=0;
+    // ОРДА ЗА ПЕРИМЕТРОМ: сразу видно, что снаружи опасно и многолюдно — но враги слабые
+    // (масштабируются от player.level=1, как в самом начале Акта 1)
+    mobSpawnPaused=true;pendingSpawns=[];
+    for(let i=0;i<50;i++){
+      const e=spawnEnemy(false);
+      const a=rand(0,Math.PI*2),r=rand(300,520);
+      e.x=Math.cos(a)*r;e.y=Math.sin(a)*r;
+    }
+    announce={text:'— АКТ 2: РАЗЛОМ — корабль обнулён (осталась половина оружия). Почини корабль на базе, прежде чем выходить наружу!',life:6,color:'#ff2d55'};
     flashFx(0.6,'244,63,94');screenFlash=0.5;
     state='running';last=performance.now();
   }
@@ -4306,6 +4322,7 @@
     if(forestField||darkForest)collideTrees(player);
     if(player.invuln>0)player.invuln-=dt;
     if(player.wounded&&Math.random()<0.7)particles.push({x:player.x+rand(-10,10),y:player.y+rand(-6,10),vx:rand(-1.2,1.2),vy:rand(-2.2,-0.4),life:0.8,color:Math.random()<0.5?'#f97316':'#64748b',sz:2+Math.random()*3});
+    if(act2TeleFx){act2TeleFx.t+=dt;if(act2TeleFx.t>6.2)act2TeleFx=null;} // телепорт мигает и гаснет к ~6с
     if(act2Tower){ // башня Акта 2 чинит и трансформирует корабль
       if(dist(player,act2Tower)<act2Tower.r+player.r+34){
         act2Tower.progress=Math.min(1,act2Tower.progress+dt/2.6);
@@ -4313,7 +4330,11 @@
         if(act2Tower.progress>=1){
           player.ship2=true;player.wounded=false;player.hp=player.maxHp;
           act2Base={x:act2Tower.x,y:act2Tower.y,r:act2Tower.r};act2Tower=null; // база остаётся в мире
-          announce={text:'⚡ КОРАБЛЬ ВОССТАНОВЛЕН — ДВА КРЫЛОВЫХ ОРУДИЯ!',life:5,color:'#7dd3fc'};
+          // ЧИНИТЬСЯ ЗАКОНЧИЛ — безопасная зона снимается, орда снаружи наконец может дойти,
+          // обычный спавн возобновляется
+          if(safeZone&&safeZone.perm){safeZone=null;}
+          mobSpawnPaused=false;
+          announce={text:'⚡ КОРАБЛЬ ВОССТАНОВЛЕН — ДВА КРЫЛОВЫХ ОРУДИЯ! Зона отключена — держись!',life:5,color:'#7dd3fc'};
           flashFx(0.7,'125,211,252');camShake=Math.max(camShake,16);
           for(let i=0;i<40;i++)particles.push({x:player.x,y:player.y,vx:rand(-5,5),vy:rand(-5,5),life:1,color:'#7dd3fc',sz:3});
         }
@@ -4903,7 +4924,7 @@
       enemies=elites.concat(enemies.filter(e=>!e.elite&&!e.goblin).slice(0,240-elites.length));
     }
     // self-heal: never let a leaked pause flag starve the field of enemies
-    if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns)&&!inVault&&!forestGate)mobSpawnPaused=false;
+    if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns)&&!inVault&&!forestGate&&!(safeZone&&safeZone.perm))mobSpawnPaused=false;
 
     // enemy projectiles (fizzle at the safe-zone border — it's actually safe inside)
     for(const ep of enemyProjectiles){
@@ -5861,10 +5882,18 @@
       x.globalAlpha=fade;x.translate(safeZone.x,safeZone.y);
       const szs=1/zoom; // компенсируем отдалённую камеру
       x.fillStyle='#fff';x.font=Math.round(26*szs)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
-      x.fillText('🛡',0,-20*szs);
-      x.font='bold '+Math.round(30*szs)+'px system-ui,sans-serif';x.fillStyle='#bbf7d0';
-      x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=6;
-      x.fillText(Math.ceil(safeZone.life)+'с',0,14*szs);
+      x.fillText(safeZone.perm?'🔧':'🛡',0,-20*szs);
+      // безопасная зона базы (perm) держится, пока не починишься — секунд не считаем,
+      // обычные же временные зоны показывают крупный отсчёт
+      if(safeZone.perm){
+        x.font='bold '+Math.round(15*szs)+'px system-ui,sans-serif';x.fillStyle='#bbf7d0';
+        x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=6;
+        x.fillText('БАЗА БЕЗОПАСНА',0,14*szs);
+      }else{
+        x.font='bold '+Math.round(30*szs)+'px system-ui,sans-serif';x.fillStyle='#bbf7d0';
+        x.shadowColor='rgba(0,0,0,0.8)';x.shadowBlur=6;
+        x.fillText(Math.ceil(safeZone.life)+'с',0,14*szs);
+      }
       x.shadowBlur=0;
       x.restore();
     }
@@ -6469,6 +6498,20 @@
       x.fillStyle='#4ade80';x.globalAlpha=0.9;x.font='bold '+Math.round(12/zoom)+'px system-ui,sans-serif';x.textAlign='center';x.textBaseline='middle';
       x.fillText('🛰 БАЗА',0,B.r+30);x.globalAlpha=1;x.restore();x.restore();
       x.save();edgeArrow(B.x,B.y,B.r,'#4ade80',1.1);x.restore(); // ориентир, даже когда далеко
+    }
+    // ТЕЛЕПОРТ-ИНТРО: голубое кольцо в точке высадки — первые ~4с ровно пульсирует,
+    // потом ~2с мигает и гаснет совсем (декоративно, на геймплей не влияет)
+    if(act2TeleFx){
+      const tt=act2TeleFx.t;
+      let a1;
+      if(tt<4)a1=0.45+0.25*Math.sin(t*4);
+      else{const fadeT=Math.min(1,(tt-4)/2.2);a1=(Math.sin(tt*16)>0?0.55:0.08)*(1-fadeT);}
+      x.save();camWorld();x.translate(act2TeleFx.x,act2TeleFx.y);
+      x.globalAlpha=Math.max(0,a1);
+      x.fillStyle='rgba(56,189,248,0.18)';x.beginPath();x.arc(0,0,54,0,Math.PI*2);x.fill();
+      x.strokeStyle='#38bdf8';x.lineWidth=4/zoom;x.setLineDash([10,6]);
+      x.beginPath();x.arc(0,0,54,0,Math.PI*2);x.stroke();x.setLineDash([]);
+      x.globalAlpha=1;x.restore();
     }
     drawFinale();
     // ПЕЩЕРА/ТЁМНЫЙ ЛЕС: вокруг корабля — круг света фонаря, дальше темно (лабиринт — тёплый,
