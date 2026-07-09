@@ -633,7 +633,9 @@
   // false = «авто» (улучшения применяются сами, сверху всплывают плашки о применённом).
   // по умолчанию — режим «кнопки» (две кнопки внизу, выбор карточек не открывается сам);
   // в меню/паузе можно переключить на «авто-выбор»
-  let optChoice=(localStorage.getItem('survivors-choice')||'0')==='1';
+  // авто-открытие карточек выбора при каждом уровне — теперь дефолт (было '0'/кнопки).
+  // Кто явно переключал сам — localStorage уже хранит их выбор и переживает эту смену.
+  let optChoice=(localStorage.getItem('survivors-choice')||'1')==='1';
   function applyChoiceOpt(){
     localStorage.setItem('survivors-choice',optChoice?'1':'0');
     document.querySelectorAll('.choiceBtn').forEach(b=>b.textContent=optChoice?'🎯 Улучшения: авто-выбор':'🔘 Улучшения: кнопки');
@@ -1542,6 +1544,7 @@
   let vaultLoot=[],vaultOpening=false,vaultOpenT=0; // ЦЕРЕМОНИЯ ПОРТАЛА: выброс добычи с физикой после смерти всех боссов
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
   const ENEMY_CAP=360,WAVE_INTERVAL=6000; // потолок живых врагов: дальше не растим толпу, а усиливаем её волнами
+  const MAX_LIVES=5; // старт всё ещё с 3 (♥♥♥), но теперь жизни реально НАКАПЛИВАЮТСЯ выше — вплоть до 5
   function effEnemyCap(){return perfMode?Math.round(ENEMY_CAP*0.55):ENEMY_CAP;} // слабый телефон — меньше мобов сразу
   let hitStop=0,fxFlash=0,fxFlashColor='255,255,255',critFlashCd=0; // juice: слоу-мо и цветные вспышки
   let deathCine=0; // кинематографичная слоу-мо смерть: >0 = идёт, по завершении gameOver()
@@ -1850,7 +1853,7 @@
     meteors=s.meteors||[];turrets=s.turrets||[];projectiles=s.projectiles||[];enemyProjectiles=s.enemyProjectiles||[];
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];fxq=[];
     gemFlyIcons=[];gemCounterPunch=0;
-    t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=Math.min(3,s.lives!=null?s.lives:3);zoom=baseZoom;enemyCountSmoothed=0;
+    t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=Math.min(MAX_LIVES,s.lives!=null?s.lives:3);zoom=baseZoom;enemyCountSmoothed=0;
     bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;killsThisLevel=s.killsThisLevel||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
@@ -2468,7 +2471,7 @@
     // 3) УНИКАЛЬНАЯ «Печать Лабиринта» — только отсюда, складывается за каждое прохождение
     player.vaultSeals=(player.vaultSeals||0)+1;
     player.dmgMult*=1.25;player.atkSpeedMult*=1.15;player.pierce+=1;player.maxHp+=40;player.hp=player.maxHp;
-    if(lives<3)lives++; // максимум 3 жизни: приз может восстановить потерянную, но не сверх 3
+    if(lives<MAX_LIVES)lives++; // приз может восстановить потерянную жизнь, вплоть до MAX_LIVES
     parts.push('🏛 Печать Лабиринта ×'+player.vaultSeals+' (+25% урон, +15% темп, +1 пробитие, +40 HP, восстановление жизни до 3)');
     metaState.shards+=12;saveMeta();
     announce={text:'🏆 СУПЕР-ПРИЗ ХРАНИТЕЛЯ: '+parts.join(' · '),life:5,color:'#fde047'};
@@ -3855,7 +3858,11 @@
     if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
     // достиг 29 — запускаем «прорыв к лесу» (один раз за забег): фикс. волна, потом ЛЕС на 30
     if(player.level===29&&!forestDone){forestPending=true;}
-    if(player.level%10===0){pendingEvent=player.level;eventDelay=7;}
+    if(player.level%10===0){pendingEvent=player.level;eventDelay=7;
+      // жизни теперь реально НАКАПЛИВАЮТСЯ по ходу забега, не только от редкого приза
+      // лабиринта — раз в 10 уровней, вплоть до MAX_LIVES
+      if(lives<MAX_LIVES){lives++;announce={text:'❤ +1 ЖИЗНЬ! Резервов: '+lives+'/'+MAX_LIVES,life:2.6,color:'#ff2d55'};flashFx(0.4,'255,45,85');sfxChime(660,4,0.09,0.12);}
+    }
     if(player.level>=30&&player.level%10===0){pendingCurse=player.level;}
     if(player.level%10===1&&player.level>1){
       announce={text:'— АКТ '+(Math.floor(player.level/10)+1)+' —',life:2.5,color:'#e8ebf2'};
@@ -6211,9 +6218,9 @@
     if(hf>0){const hg=x.createLinearGradient(P,0,P+innerW,0);hg.addColorStop(0,shade(hc,-0.15));hg.addColorStop(1,hc);
       x.fillStyle=hg;x.beginPath();x.roundRect(P,hy,Math.max(innerW*hf,hh),hh,hh/2);x.fill();}
     x.strokeStyle='rgba(255,255,255,0.2)';x.lineWidth=1;x.beginPath();x.roundRect(P+0.5,hy+0.5,innerW-1,hh-1,hh/2);x.stroke();
-    // 3 сердца ♥ красные с белой обводкой
+    // сердца ♥ красные с белой обводкой — слотов теперь MAX_LIVES (жизни накапливаются выше 3)
     x.textAlign='center';x.font='bold '+FS(13)+'px system-ui,sans-serif';x.lineWidth=FS(2.4);x.lineJoin='round';
-    let hxp=P+FS(11);for(let i=0;i<3;i++){x.strokeStyle='#fff';x.strokeText('♥',hxp,hy+hh/2);
+    let hxp=P+FS(11);for(let i=0;i<MAX_LIVES;i++){x.strokeStyle='#fff';x.strokeText('♥',hxp,hy+hh/2);
       x.fillStyle=i<lives?'#ff2d55':'rgba(255,255,255,0.22)';x.fillText('♥',hxp,hy+hh/2);hxp+=FS(15);}
     x.fillStyle='#fff';x.font='bold '+FS(11)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
     x.fillText(fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),(hxp+FS(4)+P+innerW)/2,hy+hh/2);x.shadowBlur=0;
@@ -6327,9 +6334,9 @@
     if(hf>0){const hg=x.createLinearGradient(bx0,0,bx0+bw0,0);hg.addColorStop(0,shade(hc,-0.18));hg.addColorStop(1,hc);
       x.fillStyle=hg;x.beginPath();x.roundRect(bx0,hy,Math.max(bw0*hf,hh),hh,hh/2);x.fill();}
     x.strokeStyle='rgba(255,255,255,0.18)';x.lineWidth=1;x.beginPath();x.roundRect(bx0+0.5,hy+0.5,bw0-1,hh-1,hh/2);x.stroke();
-    // жизни-сердца внутри бара слева
+    // жизни-сердца внутри бара слева (слотов теперь MAX_LIVES)
     x.textAlign='center';x.font='bold 10px system-ui,sans-serif';x.lineWidth=2;x.lineJoin='round';
-    let hxp=bx0+9;for(let i=0;i<3;i++){x.strokeStyle='#fff';x.strokeText('♥',hxp,hy+hh/2);
+    let hxp=bx0+9;for(let i=0;i<MAX_LIVES;i++){x.strokeStyle='#fff';x.strokeText('♥',hxp,hy+hh/2);
       x.fillStyle=i<lives?'#ff2d55':'rgba(255,255,255,0.22)';x.fillText('♥',hxp,hy+hh/2);hxp+=11;}
     // цифры ХП по центру бара
     x.fillStyle='#fff';x.font='bold 9.5px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
