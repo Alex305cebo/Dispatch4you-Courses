@@ -1375,7 +1375,7 @@
   let altarAcc=0,czAcc=0,riftAcc=0; // таймеры редких событий поля
   let siege=null; // ВОЛНА-ОСАДА раз в 10 уровней: {t,total,acc,wave,lvl} — 30с накатывающихся волн
   let shrineAcc=0;
-  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected,mobsSpawnedThisLevel;
+  let t,spawnAcc,camShake,kills,lives,zoom,enemyCountSmoothed,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,pendingLevel8Boss,mobSpawnPaused,screenFlash,announce,chestPending,pickupAcc,pickupInterval,state,stateBeforeShop,points,shopBought,raf,last,keys,moveVec,joy,waveAcc,pendingCurse,lastCheckpointT,lastCheckpointKills,lastCheckpointLevel,bossKills,hunterKills,gemsCollected;
   let portal=null,portalAcc=0,inVault=false,vaultT=0,vaultStash=null,vaultCleared=false; // бонус-рейд «Лабиринт»
   let vaultWalls=[],vaultExit=null; // стены и выход лабиринта
   // «ЛЕС» — особый уровень после 30-го: reskin лабиринта (деревья + улочки).
@@ -1619,7 +1619,7 @@
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     gemFlyIcons=[];gemCounterPunch=0;
     // (зум ×1.30 — близкий стартовый план нового забега)
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;mobsSpawnedThisLevel=0;lastRushAnnounced=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lastRushAnnounced=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;act2BaseWalls=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
@@ -1638,7 +1638,7 @@
     try{
       const data={
         player,enemies,gems,pickups,mines,pools,meteors,turrets,projectiles,enemyProjectiles,boomers,
-        t,spawnAcc,kills,killsThisLevel,mobsSpawnedThisLevel,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
+        t,spawnAcc,kills,killsThisLevel,lives,bossKills,hunterKills,gemsCollected,lastLevelUpAt,pendingLevelUps,pendingBossLevel,pendingSuperWarning,pendingSuperboss,
         pendingLevel8Boss,pendingCurse,mobSpawnPaused,chestPending,pickupAcc,pickupInterval,points,shopBought,
         safeZone,safeZoneAcc,pendingSpawns,pendingEvent,eventDelay,freezeT,sessionTag,waveAcc,forestDone,pendingMegaBoss,megaDone,megaFought,act,shipLevel,mega2Done,act2BossLvl,act2Base,act2BaseWalls,siege,
         weapons:WEAPON_UNLOCKS.map(w=>!!w.done)
@@ -1689,7 +1689,7 @@
     boomers=s.boomers||[];particles=[];rings=[];bolts=[];floaters=[];fxq=[];
     gemFlyIcons=[];gemCounterPunch=0;
     t=s.t||0;spawnAcc=s.spawnAcc||0;camShake=0;kills=s.kills||0;lives=Math.min(3,s.lives!=null?s.lives:3);zoom=baseZoom;enemyCountSmoothed=0;
-    bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;killsThisLevel=s.killsThisLevel||0;mobsSpawnedThisLevel=s.mobsSpawnedThisLevel||0;
+    bossKills=s.bossKills||0;hunterKills=s.hunterKills||0;gemsCollected=s.gemsCollected||0;killsThisLevel=s.killsThisLevel||0;
     lastLevelUpAt=s.lastLevelUpAt||t;pendingLevelUps=s.pendingLevelUps||0;pendingBossLevel=s.pendingBossLevel||null;
     pendingSuperWarning=s.pendingSuperWarning||null;pendingSuperboss=s.pendingSuperboss||null;pendingLevel8Boss=s.pendingLevel8Boss||false;pendingCurse=s.pendingCurse||null;
     mobSpawnPaused=s.mobSpawnPaused||false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];siege=s.siege||null;chestPending=s.chestPending||false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;
@@ -3648,7 +3648,6 @@
 
   function levelUpOnce(){
     player.level++;shipLevel++;
-    mobsSpawnedThisLevel=0; // новый уровень — новая волна мобов (см. лимит в спавн-цикле step())
     const announceBefore=announce; // если ни одна из веток ниже не выставит свой баннер — покажем номер уровня
     flashFx(0.7,'77,150,255'); // вспышка левелапа — голубая
     rings.push({x:player.x,y:player.y,r:0,maxR:160,life:0.6,color:'#4D96FF'});
@@ -4226,7 +4225,7 @@
     player=newPlayer();
     player.x=px;player.y=py;
     keepIds.forEach(id=>{const w=WEAPON_UNLOCKS.find(w2=>w2.id===id);if(w){w.done=true;w.apply(player);}});
-    killsThisLevel=0;mobsSpawnedThisLevel=0;lastRushAnnounced=0;pendingLevelUps=0;pendingBossLevel=null;
+    killsThisLevel=0;lastRushAnnounced=0;pendingLevelUps=0;pendingBossLevel=null;
     act2BossLvl=player.level+8; // босс Акта 2 ждёт через 8 уровней от нового старта
     player.wounded=true; // раненый: искры и дым, пока не починит башня
     player.invuln=Math.max(player.invuln,4);
@@ -4703,20 +4702,28 @@
       if(player.level>=40&&Math.random()<0.05*dt&&enemies.filter(e=>e.hunter).length<2)spawnHunter();
       // жадный гоблин: с 5 уровня, редко (~раз в 2.5-3 мин), один за раз
       if(player.level>=5&&Math.random()<0.0065*dt&&!enemies.some(e=>e.goblin))spawnGoblin();
-      // волна уровня: ровно levelBudget(level) мобов на уровень — этого же числа килов
-      // требует levelUpOnce(), так что волна физически заканчивается к концу уровня, а
-      // не сыплется бесконечно; на новом уровне mobsSpawnedThisLevel обнуляется
+      // ВОЛНА УРОВНЯ (самовосстанавливающаяся): спавним, пока «убито за уровень + живые
+      // обычные» меньше бюджета уровня. Килы перекладывают мобов из «живых» в «убитых» —
+      // сумма не растёт, к концу уровня поле пустеет само. А если мобы УТЕКЛИ без зачёта
+      // (обрезка толпы >240, поглощение ареной Хроноса, побег гоблина) — сумма проседает,
+      // и спавнер сам доспавнивает недостающих. Жёсткий счётчик «заспавнено за уровень»
+      // такие утечки не переживал: квота тратилась, килы не добирались — софтлок уровня
+      let aliveNormal=0;for(const e2 of enemies){if(!e2.elite&&!e2.goblin&&!e2.hunter)aliveNormal++;}
       const levelQuota=levelBudget(player.level);
-      if(mobsSpawnedThisLevel<levelQuota&&enemies.length<ENEMY_CAP+(player.curseCapBonus||0)){
+      if(killsThisLevel+aliveNormal<levelQuota&&enemies.length<ENEMY_CAP+(player.curseCapBonus||0)){
         spawnAcc+=dt*1000;
         if(spawnAcc>d.interval){spawnAcc=0;
-          const n=Math.min(d.count,levelQuota-mobsSpawnedThisLevel);
-          for(let i=0;i<n;i++){spawnEnemy(false);mobsSpawnedThisLevel++;}
+          const n=Math.min(d.count,Math.ceil(levelQuota-killsThisLevel-aliveNormal));
+          for(let i=0;i<n;i++)spawnEnemy(false);
         }
       }else{
         spawnAcc=Math.min(spawnAcc,d.interval); // не копим спавн-долг, пока переполнено
+        // буст «волна усиления» — ТОЛЬКО когда толпа упёрлась в потолок (раньше срабатывал
+        // и на исчерпанной квоте уровня — кричал «толпа стала опаснее» над пустым полем)
+        if(enemies.length>=ENEMY_CAP+(player.curseCapBonus||0)){
         waveAcc+=dt*1000;
         if(waveAcc>=WAVE_INTERVAL){waveAcc=0;triggerWaveBuff();}
+        }
       }
     }
 
@@ -5111,11 +5118,13 @@
     // scale danger with size, but not let an unbounded mob count one-shot the player
     const CONTACT_CAP=12;
     const frozen=freezeT>0;
-    // ПОСЛЕДНИЕ МОБЫ УРОВНЯ: квота уровня выспавнена и обычных мобов осталось ≤10 —
-    // хвост уровня не должен превращаться в прятки по краям карты. Включаем «стягивание»:
-    // отставшие бросают свои манеры движения и бегут прямо к кораблю, издалека — быстрее
-    const lastRush=(!inVault&&!mobSpawnPaused&&mobsSpawnedThisLevel>=levelBudget(player.level))
-      &&(()=>{let n=0;for(const e2 of enemies){if(!e2.elite&&!e2.goblin&&!e2.hunter&&++n>10)return false;}return n>0;})();
+    // ПОСЛЕДНИЕ МОБЫ УРОВНЯ: до конца уровня осталось ≤10 килов, и живых обычных ровно
+    // столько же — хвост уровня не должен превращаться в прятки по краям карты. Включаем
+    // «стягивание»: отставшие бросают свои манеры движения и бегут прямо к кораблю
+    const lastRush=(!inVault&&!mobSpawnPaused)&&(()=>{
+      let n=0;for(const e2 of enemies){if(!e2.elite&&!e2.goblin&&!e2.hunter&&++n>10)return false;}
+      return n>0&&killsThisLevel+n>=levelBudget(player.level);
+    })();
     if(lastRush&&lastRushAnnounced!==player.level){
       lastRushAnnounced=player.level;
       announce={text:'👾 Последние мобы уровня бегут к тебе!',life:2.2,color:'#7dd3fc'};
