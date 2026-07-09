@@ -2413,6 +2413,37 @@
     for(const w of B.rects){if(px>=w.x&&px<=w.x+w.w&&py>=w.y&&py<=w.y+w.h)return true;}
     return false;
   }
+  // точка внутри ВНУТРЕННЕЙ площади базы (а не в самой стене) — используется угловыми
+  // вышками, чтобы отличать мобов, просочившихся внутрь через открытые ворота, от толпы снаружи
+  function pointInsideBase(px,py){
+    const B=act2BaseWalls;if(!B)return false;
+    return Math.abs(px-B.cx)<B.R&&Math.abs(py-B.cy)<B.R;
+  }
+  // УГЛОВЫЕ ВЫШКИ БАЗЫ АКТА 2: 4 постоянные автоматические турели на угловых площадках.
+  // Всегда в строю (даже пока ворота запечатаны — прореживают орду снаружи через дальность),
+  // но приоритет цели — мобы, УЖЕ просочившиеся внутрь периметра, а не толпа снаружи.
+  function updateBaseTurrets(dt){
+    const B=act2BaseWalls;if(!B)return;
+    const TR=700,COOL=0.5,tdmg=Math.max(15,estPlayerDps()*0.12);
+    for(const tw of B.towers){
+      tw.fireAcc=(tw.fireAcc||0)+dt;
+      if(tw.muzzle>0)tw.muzzle-=dt;
+      let best=null,bestScore=-1;
+      for(const e of enemies){
+        const d=dist(tw,e);if(d>TR)continue;
+        const score=(pointInsideBase(e.x,e.y)?1:0)*1e6-d;
+        if(score>bestScore){bestScore=score;best=e;}
+      }
+      if(!best)continue;
+      tw.aim=Math.atan2(best.y-tw.y,best.x-tw.x);
+      if(tw.fireAcc>=COOL){
+        tw.fireAcc=0;tw.muzzle=0.12;
+        projectiles.push({x:tw.x,y:tw.y,vx:Math.cos(tw.aim)*520,vy:Math.sin(tw.aim)*520,r:4.5,life:1.2,pierceLeft:0,hitSet:new Set(),dmg:tdmg,color:'#7dd3fc'});
+        if(particles.length<600)for(let i=0;i<4;i++)particles.push({x:tw.x+Math.cos(tw.aim)*20,y:tw.y+Math.sin(tw.aim)*20,
+          vx:Math.cos(tw.aim)*2+rand(-1,1),vy:Math.sin(tw.aim)*2+rand(-1,1),life:0.25,color:'#7dd3fc',sz:2});
+      }
+    }
+  }
   // проходимая зона лабиринта (комнаты+коридоры) — страховка от «выпал за стены»
   let vaultWalk=[];
   // сетка проходимости для O(1) проверок (заполняется в genDungeon)
@@ -4905,7 +4936,7 @@
     const czSlow=(cursedZones.some(z=>dist(player,z)<z.r)?0.78:1)*(player.altarSlowT>0?0.8:1); // зона/сделка замедляют
     if(len>0){mx/=Math.max(len,1);my/=Math.max(len,1);player.x+=mx*player.speed*hasteMul*czSlow*dt;player.y+=my*player.speed*hasteMul*czSlow*dt;player.facing={x:mx,y:my};}
     if(inVault){collideCircleWalls(player);keepInWalk(player);}
-    if(act2BaseWalls){collideBaseWalls(player);collideRuins(player);}
+    if(act2BaseWalls){collideBaseWalls(player);collideRuins(player);updateBaseTurrets(dt);}
     if(forestField||darkForest)collideTrees(player);
     if(player.invuln>0)player.invuln-=dt;
     if(player.wounded&&Math.random()<0.7)particles.push({x:player.x+rand(-10,10),y:player.y+rand(-6,10),vx:rand(-1.2,1.2),vy:rand(-2.2,-0.4),life:0.8,color:Math.random()<0.5?'#f97316':'#64748b',sz:2+Math.random()*3});
@@ -7176,14 +7207,19 @@
       x.fillStyle=B.sealed?'#ff6b6b':'#4ade80';x.font='bold '+Math.round(13/zoom)+'px system-ui,sans-serif';
       x.textAlign='center';x.textBaseline='top';
       x.fillText(B.sealed?'🔒 ВОРОТА ЗАПЕЧАТАНЫ':'🔓 ВОРОТА ОТКРЫТЫ',B.cx,gy+B.t+8);
-      // угловые площадки под будущие оборонительные вышки (строительство — отдельная фича)
+      // угловые оборонительные вышки — активные автотурели (см. updateBaseTurrets):
+      // ствол разворачивается на текущую цель, вспышка дула при выстреле
       B.towers.forEach(tw=>{
         x.save();x.translate(tw.x,tw.y);
-        x.fillStyle='rgba(125,211,252,0.08)';x.beginPath();x.arc(0,0,34,0,Math.PI*2);x.fill();
-        x.strokeStyle='rgba(125,211,252,0.35)';x.lineWidth=2/zoom;x.setLineDash([6,5]);
-        x.beginPath();x.arc(0,0,34,0,Math.PI*2);x.stroke();x.setLineDash([]);
-        x.fillStyle='#7dd3fc';x.globalAlpha=0.7;x.font=Math.round(16/zoom)+'px system-ui,sans-serif';
-        x.textAlign='center';x.textBaseline='middle';x.fillText('🏗',0,0);x.globalAlpha=1;
+        x.fillStyle='rgba(125,211,252,0.14)';x.beginPath();x.arc(0,0,30,0,Math.PI*2);x.fill();
+        x.strokeStyle='rgba(125,211,252,0.55)';x.lineWidth=2/zoom;
+        x.beginPath();x.arc(0,0,30,0,Math.PI*2);x.stroke();
+        x.rotate(tw.aim||0);
+        x.fillStyle='#7dd3fc';x.shadowColor='#7dd3fc';x.shadowBlur=tw.muzzle>0?16:6;
+        x.fillRect(-6,-5,20,10);
+        x.beginPath();x.arc(0,0,9,0,Math.PI*2);x.fill();
+        if(tw.muzzle>0){x.fillStyle='#e0f2fe';x.beginPath();x.arc(16,0,4,0,Math.PI*2);x.fill();}
+        x.shadowBlur=0;
         x.restore();
       });
       B.ruins.forEach(ru=>drawRuin(ru));
