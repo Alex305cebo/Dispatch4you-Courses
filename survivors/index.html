@@ -57,33 +57,54 @@
     .card{width:120px !important;padding:10px !important;}
     .overlay p{font-size:12px;max-width:280px;}
   }
-  /* лидерборд: большая золотая кнопка + топ-3 в панели, пьедестал в попапе */
+  /* лидерборд: большая золотая кнопка + топ-3 в панели, пьедестал+список в попапе.
+     Общий язык: круглый аватар-инициал (детерминированный цвет по имени), медаль/ранг,
+     счёт в цветной пилюле — то же визуальное словарь во всех трёх местах (сайдбар/
+     пьедестал/список), чтобы таблица не выглядела тремя разными наборами вёрстки. */
   .lb-btn{width:100%;padding:11px 4px;font-size:12px;font-weight:800;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-sizing:border-box;color:#1a1305;
     background:linear-gradient(135deg,#fde047,#f59e0b);border:1px solid #fbbf24;border-radius:10px;cursor:pointer;
     box-shadow:0 0 16px rgba(250,204,21,0.3);text-shadow:0 1px 0 rgba(255,255,255,0.25);}
   .lb-btn:hover{background:linear-gradient(135deg,#fef08a,#fbbf24);}
-  .lb-top3{margin-top:8px;display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);}
-  .lb-top3 .row{display:flex;justify-content:space-between;gap:6px;align-items:baseline;}
-  .lb-top3 .row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-  .lb-top3 .row .sc{color:var(--text);font-weight:700;white-space:nowrap;}
-  .lb-podium{display:flex;align-items:flex-end;gap:10px;justify-content:center;width:100%;max-width:400px;margin-top:2px;}
-  .lb-podium .p{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px 10px;position:relative;
-    background:linear-gradient(180deg,rgba(255,255,255,0.07),rgba(255,255,255,0.015));
-    border-radius:10px 10px 0 0;background:var(--panel2);border:1px solid var(--border);border-bottom:none;min-width:0;}
-  .lb-podium .p.first{transform:translateY(-10px);padding-top:20px;}
-  .lb-podium .crown{position:absolute;top:-15px;font-size:22px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));}
-  .lb-podium .medal{font-size:27px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5));}
-  .lb-podium .nm{font-size:12px;color:var(--text);font-weight:700;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .lb-podium .sc{font-size:16px;font-weight:900;letter-spacing:0.3px;}
-  .lb-podium .ex{font-size:10px;color:var(--muted);text-align:center;line-height:1.35;}
-  /* строки 4-10 */
-  .lb-row{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:10px;margin-bottom:4px;background:rgba(255,255,255,0.025);}
-  .lb-row .rk{width:24px;height:24px;flex:0 0 24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:12px;background:rgba(255,255,255,0.06);color:var(--muted);}
-  .lb-row .rnm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:600;font-size:13px;}
-  .lb-row .rsc{white-space:nowrap;color:#7dd3fc;font-weight:800;font-size:13px;}
-  .lb-row .rex{white-space:nowrap;font-size:10px;color:var(--muted);}
-  .lb-row.mine{background:rgba(77,150,255,0.14);outline:1px solid rgba(77,150,255,0.5);}
+  .lb-avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;flex:none;
+    background:radial-gradient(circle at 32% 28%,rgba(255,255,255,0.35),rgba(255,255,255,0.03) 65%);
+    border:1.5px solid currentColor;color:var(--av,#7dd3fc);box-shadow:0 0 10px rgba(0,0,0,0.35) inset;}
+  /* --- мини-топ3 в сайдбаре (виден постоянно во время игры) --- */
+  .lb-top3{margin-top:9px;display:flex;flex-direction:column;gap:5px;}
+  .lb-top3 .row{display:flex;align-items:center;gap:7px;padding:5px 7px 5px 5px;border-radius:9px;background:rgba(255,255,255,0.035);border:1px solid transparent;}
+  .lb-top3 .row.r0{background:linear-gradient(90deg,rgba(250,204,21,0.14),rgba(250,204,21,0.02));border-color:rgba(250,204,21,0.25);}
+  .lb-top3 .row .lb-avatar{width:22px;height:22px;font-size:10px;}
+  .lb-top3 .row .medal{font-size:13px;flex:none;line-height:1;}
+  .lb-top3 .row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;color:var(--text);font-weight:700;font-size:11.5px;}
+  .lb-top3 .row .sc{color:#7dd3fc;font-weight:800;white-space:nowrap;font-size:11px;}
+  .lb-top3 .lb-empty{color:var(--muted);font-size:11px;text-align:center;padding:4px 0;}
+  /* --- пьедестал: топ-3, ступени разной высоты, золото по центру и приподнято --- */
+  .lb-podium{display:flex;align-items:flex-end;gap:10px;justify-content:center;width:100%;max-width:440px;margin-top:4px;}
+  .lb-podium .p{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 8px 14px;position:relative;min-width:0;overflow:hidden;
+    border-radius:16px 16px 7px 7px;border:1px solid var(--border);
+    background:linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.015) 55%,rgba(0,0,0,0.12));}
+  .lb-podium .p.first{padding-top:26px;padding-bottom:18px;z-index:1;}
+  .lb-podium .rankbg{position:absolute;bottom:-8px;right:-2px;font-size:56px;font-weight:900;line-height:1;opacity:0.07;pointer-events:none;}
+  .lb-podium .lb-avatar{width:44px;height:44px;font-size:18px;}
+  .lb-podium .p.first .lb-avatar{width:56px;height:56px;font-size:23px;}
+  .lb-podium .crown{position:absolute;top:-16px;font-size:23px;filter:drop-shadow(0 2px 5px rgba(0,0,0,0.6));animation:lbCrown 2.6s ease-in-out infinite;}
+  @keyframes lbCrown{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-3px) rotate(4deg);}}
+  .lb-podium .medal{font-size:15px;line-height:1;filter:drop-shadow(0 2px 3px rgba(0,0,0,0.5));}
+  .lb-podium .nm{font-size:12.5px;color:var(--text);font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lb-podium .sc{font-size:18px;font-weight:900;letter-spacing:0.3px;text-shadow:0 0 14px currentColor;}
+  .lb-podium .ex{font-size:10px;color:var(--muted);text-align:center;line-height:1.4;}
+  /* --- список: ранги 4+, зебра-полосы, аватар, счёт в пилюле --- */
+  .lb-list-wrap{width:100%;max-width:440px;margin-top:12px;}
+  .lb-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:12px;margin-bottom:6px;border:1px solid transparent;
+    background:linear-gradient(90deg,rgba(255,255,255,0.045),rgba(255,255,255,0.012));}
+  .lb-row:nth-child(even){background:linear-gradient(90deg,rgba(255,255,255,0.022),rgba(255,255,255,0.005));}
+  .lb-row .rk{width:22px;flex:0 0 22px;text-align:center;font-weight:800;font-size:11.5px;color:var(--muted);}
+  .lb-row .lb-avatar{width:30px;height:30px;font-size:13px;}
+  .lb-row .rnm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);font-weight:700;font-size:13.5px;}
+  .lb-row .rex{white-space:nowrap;font-size:10.5px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;}
+  .lb-row .rsc{white-space:nowrap;font-weight:900;font-size:13.5px;color:#7dd3fc;padding:4px 10px;border-radius:8px;background:rgba(125,211,252,0.1);}
+  .lb-row.mine{background:linear-gradient(90deg,rgba(77,150,255,0.22),rgba(77,150,255,0.05));border-color:rgba(77,150,255,0.45);box-shadow:0 0 14px rgba(77,150,255,0.14);}
+  .lb-row.mine .rsc{background:rgba(77,150,255,0.28);color:#bcd7ff;}
+  .lb-empty-state{color:var(--muted);font-size:13px;text-align:center;padding:20px 10px;}
   #olb{overflow-y:auto;}
   .overlay{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at center,rgba(12,16,28,0.86),rgba(5,6,10,0.94));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);border-radius:12px;text-align:center;padding:20px;}
   .overlay.show{display:flex;}
@@ -318,11 +339,13 @@
         <button class="ostart" id="btnMetaFromOver" style="color:#e9d5ff;">✨ Мета-прогрессия</button>
       </div>
     </div>
-    <div id="olb" class="overlay">
+    <div id="olb" class="overlay" style="overflow-y:auto;">
       <h2>🏆 Таблица лидеров</h2>
-      <p style="color:var(--muted);font-size:11px;margin:-6px 0 12px;max-width:400px;text-align:center;">Очки = уровень + убийства + время + серия без урона + боссы + опыт</p>
+      <p style="color:var(--muted);font-size:11px;margin:-6px 0 4px;max-width:400px;text-align:center;">Очки = уровень + убийства + время + серия без урона + боссы + опыт, взвешено по сложности</p>
       <div id="lbPodium" class="lb-podium"></div>
-      <div id="lbList" style="font-size:13px;color:var(--muted);max-height:260px;overflow:auto;width:100%;max-width:400px;margin-top:10px;">Загрузка…</div>
+      <div id="lbList" class="lb-list-wrap">
+        <div class="lb-empty-state">Загрузка…</div>
+      </div>
       <button class="ostart" id="btnLbClose">Закрыть</button>
     </div>
     <div id="ohistory" class="overlay">
@@ -517,20 +540,36 @@
     return base.startsWith('ilya')||base.startsWith('alexxx')||base.startsWith('алекс');
   }
   function creatorBadge(name){return isCreatorName(name)?' <span style="color:#fde047;font-weight:700;" title="создатель">★</span>':'';}
+  // АВАТАР: детерминированный цвет+буква по имени — единый визуальный язык для
+  // сайдбара/пьедестала/списка, без реальных картинок (никакой сети, никаких загрузок)
+  const AVATAR_COLORS=['#7dd3fc','#c084fc','#4ade80','#fb923c','#f472b6','#fbbf24','#60a5fa','#34d399'];
+  function avatarColor(name){let h=0;for(let i=0;i<(name||'').length;i++)h=(h*31+name.charCodeAt(i))>>>0;return AVATAR_COLORS[h%AVATAR_COLORS.length];}
+  function avatarLetter(name){const c=(name||'?').trim().replace(/^[^A-Za-zА-Яа-я0-9]+/,'')[0]||'?';return c.toUpperCase();}
+  function lbAvatar(name,size){const col=avatarColor(name);return '<span class="lb-avatar" style="width:'+size+'px;height:'+size+'px;font-size:'+Math.round(size*0.44)+'px;--av:'+col+';">'+avatarLetter(name)+'</span>';}
   // always-visible top-3 under the sidebar button — everyone sees the current leaders
   async function refreshTop3(){
     const rows=await fetchLeaderboard(LB_GAME,3);
     lbTop3El.innerHTML=rows.length?rows.map((r,i)=>
-      '<div class="row"><span class="nm">'+MEDALS[i]+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+'</span><span class="sc">'+fmtNum(Number(r.score)||0)+'</span></div>'
-    ).join(''):'<div>Пока пусто — стань первым!</div>';
+      '<div class="row r'+i+'">'+lbAvatar(r.name,22)
+      +'<span class="medal">'+MEDALS[i]+'</span>'
+      +'<span class="nm">'+diffIcon(r.diff)+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+'</span>'
+      +'<span class="sc">'+fmtNum(Number(r.score)||0)+'</span></div>'
+    ).join(''):'<div class="lb-empty">Пока пусто — стань первым!</div>';
   }
   refreshTop3();setInterval(refreshTop3,60000);
+  // пьедестал: ступени РАЗНОЙ высоты (1-е место заметно выше), большая полупрозрачная
+  // цифра ранга фоном, аватар-круг цвета медали, крупный счёт со свечением
   function podiumCell(r,i){
     const col=['#facc15','#cbd5e1','#e08a3c'][i];
     const first=i===0;
-    if(!r)return '<div class="p'+(first?' first':'')+'" style="opacity:0.3;"><span class="medal">'+MEDALS[i]+'</span><span class="nm">—</span></div>';
-    return '<div class="p'+(first?' first':'')+'" style="border-color:'+col+';box-shadow:0 0 '+(first?22:12)+'px '+hexA(col,first?0.35:0.18)+';">'
+    const heights=[188,152,134];
+    const style='min-height:'+heights[i]+'px;border-color:'+col+';box-shadow:0 0 '+(first?24:12)+'px '+hexA(col,first?0.32:0.16)+';';
+    if(!r)return '<div class="p'+(first?' first':'')+'" style="'+style+'opacity:0.35;">'
+      +'<span class="rankbg">'+(i+1)+'</span><span class="medal" style="font-size:22px;">'+MEDALS[i]+'</span><span class="nm">—</span></div>';
+    return '<div class="p'+(first?' first':'')+'" style="'+style+'">'
       +(first?'<span class="crown">👑</span>':'')
+      +'<span class="rankbg" style="color:'+col+';">'+(i+1)+'</span>'
+      +lbAvatar(r.name,first?56:44)
       +'<span class="medal">'+MEDALS[i]+'</span>'
       +'<span class="nm">'+diffIcon(r.diff)+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+'</span>'
       +'<span class="sc" style="color:'+col+';">'+fmtNum(Number(r.score)||0)+'</span>'
@@ -541,8 +580,11 @@
     const mine=isMyRecord(r.name);
     return '<div class="lb-row'+(mine?' mine':'')+'">'
       +'<span class="rk">'+(i+1)+'</span>'
-      +'<span class="rnm">'+diffIcon(r.diff)+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')
-        +'<br><span class="rex">ур.'+(r.level||1)+' · ⚔'+fmtNum(r.kills||0)+(r.time?' · ⏱'+fmtTime(r.time):'')+(r.bosses?' · 👑'+r.bosses:'')+'</span></span>'
+      +lbAvatar(r.name,30)
+      +'<span style="flex:1;min-width:0;display:flex;flex-direction:column;">'
+        +'<span class="rnm">'+diffIcon(r.diff)+' '+escapeHtml(r.name)+' '+milestoneBadge(r.level)+creatorBadge(r.name)+(mine?' <span style="color:#4D96FF;font-size:10px;">← ты</span>':'')+'</span>'
+        +'<span class="rex">ур.'+(r.level||1)+' · ⚔'+fmtNum(r.kills||0)+(r.time?' · ⏱'+fmtTime(r.time):'')+(r.bosses?' · 👑'+r.bosses:'')+'</span>'
+      +'</span>'
       +'<span class="rsc">'+fmtNum(Number(r.score)||0)+'</span></div>';
   }
   async function showLeaderboard(){
@@ -550,11 +592,11 @@
     lbHiddenOverlays=Array.from(document.querySelectorAll('.overlay.show')).filter(o=>o!==olb);
     lbHiddenOverlays.forEach(o=>o.classList.remove('show'));
     olb.classList.add('show');
-    lbPodiumEl.innerHTML='';lbListEl.textContent='Загрузка…';
+    lbPodiumEl.innerHTML='';lbListEl.innerHTML='<div class="lb-empty-state">Загрузка…</div>';
     const rows=await fetchLeaderboard(LB_GAME,10);
-    if(!rows.length){lbListEl.textContent='Пока никто не играл — стань первым!';return;}
+    if(!rows.length){lbListEl.innerHTML='<div class="lb-empty-state">🏆 Пока никто не играл — стань первым!</div>';return;}
     lbPodiumEl.innerHTML=podiumCell(rows[1],1)+podiumCell(rows[0],0)+podiumCell(rows[2],2);
-    lbListEl.innerHTML=rows.length>3?rows.slice(3).map((r,i)=>lbRow(r,i+3)).join(''):'<div style="text-align:center;padding:6px 0;">Займи место в десятке!</div>';
+    lbListEl.innerHTML=rows.length>3?rows.slice(3).map((r,i)=>lbRow(r,i+3)).join(''):'<div class="lb-empty-state">Займи место в десятке!</div>';
   }
   document.getElementById('btnLbSide').addEventListener('click',showLeaderboard);
   document.getElementById('btnLbFromOver').addEventListener('click',showLeaderboard);
