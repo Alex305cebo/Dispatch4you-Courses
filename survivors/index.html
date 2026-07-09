@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,minimum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Выжившие</title>
 <style>
   :root{--bg1:#0b0e17;--bg2:#05060a;--panel:#121724;--panel2:#1a2130;--border:#293042;--text:#e8ebf2;--muted:#8891a3;--danger:#ef4444;--xp:#4D96FF;--hp:#ef4444;}
@@ -382,6 +382,21 @@
     location.replace('https://alex305cebo.github.io/Dispatch4you-Courses/survivors/index.html');
     return;
   }
+  // ПЛАНШЕТЫ: случайный пинч/двойной-тап во время игры зумит страницу — контент
+  // «съезжает» и появляется скролл, которого в фулскрин-игре быть не должно (viewport-мета
+  // одного user-scalable=no мало, iOS игнорит его для жеста двойного тапа отдельно)
+  document.addEventListener('gesturestart',e=>e.preventDefault());
+  document.addEventListener('gesturechange',e=>e.preventDefault());
+  let _lastTouchEnd=0,_lastTouchX=0,_lastTouchY=0;
+  document.addEventListener('touchend',e=>{
+    const now=Date.now();
+    const t=e.changedTouches&&e.changedTouches[0];
+    const tx=t?t.clientX:0,ty=t?t.clientY:0;
+    // двойной тап-зум срабатывает у iOS только на ОДНОМ и том же месте — проверяем и
+    // время, и расстояние, иначе два быстрых тапа по РАЗНЫМ кнопкам друг друга «съедят»
+    if(now-_lastTouchEnd<=350&&Math.hypot(tx-_lastTouchX,ty-_lastTouchY)<30)e.preventDefault();
+    _lastTouchEnd=now;_lastTouchX=tx;_lastTouchY=ty;
+  },{passive:false});
   let W=640,H=480;
   // мобильный HUD-режим канваса (угловая карточка ПК vs полоса-хаб внизу): раньше решался
   // по форме самого канваса (W<640||H>W), но при фиксированном 250px-сайдбаре игровое поле
