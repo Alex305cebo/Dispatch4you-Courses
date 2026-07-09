@@ -1666,7 +1666,7 @@
   }
 
   function makeBasePlayer(){
-    return {x:0,y:0,r:14,hp:125,maxHp:125,speed:180,dmg:18,fireRate:550,fireAcc:0,
+    return {x:0,y:0,r:14,hp:112,maxHp:112,speed:180,dmg:18,fireRate:550,fireAcc:0,
       projSpeed:420,projCount:1,pierce:0,pickupRadius:40,regen:0,
       dmgMult:1,atkSpeedMult:1,projSpeedMult:1,critChance:0,critMult:2,aoeMult:1,lifesteal:0,
       auraLevel:0,auraDmg:0,auraRadius:0,auraAcc:0,
@@ -5408,7 +5408,10 @@
     // scale danger with size, but not let an unbounded mob count shred the player before
     // they can react and disengage. Scaled by difficulty (было фиксированно 12 на всех
     // сложностях — «Нормальный» толпа душила игрока так же жёстко, как «Сложный»).
-    const CONTACT_CAP=Math.max(5,Math.round(10*curDiff().dmg));
+    // ponytail: первая попытка (×10) перегнула в другую сторону — толпа вообще перестала
+    // быть опасной даже на «Нормальном» (почти нельзя умереть, стоя внутри толпы). ×13
+    // возвращает реальный риск, разница между сложностями остаётся.
+    const CONTACT_CAP=Math.max(6,Math.round(13*curDiff().dmg));
     const frozen=freezeT>0;
     // ПОСЛЕДНИЕ МОБЫ УРОВНЯ: до конца уровня осталось ≤10 килов, и живых обычных ровно
     // столько же — хвост уровня не должен превращаться в прятки по краям карты. Включаем
