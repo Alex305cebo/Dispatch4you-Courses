@@ -52,11 +52,11 @@ jobs:
             game:
               - 'adventure/**'
             academy:
-              - 'dispatch-academy-app/src/**'
-              - 'dispatch-academy-app/public/**'
-              - 'dispatch-academy-app/index.html'
-              - 'dispatch-academy-app/vite.config.ts'
-              - 'dispatch-academy-app/package.json'
+              - 'games/dispatch-academy-app/src/**'
+              - 'games/dispatch-academy-app/public/**'
+              - 'games/dispatch-academy-app/index.html'
+              - 'games/dispatch-academy-app/vite.config.ts'
+              - 'games/dispatch-academy-app/package.json'
             maptrainer:
               - 'map-trainer/src/**'
               - 'map-trainer/public/**'
@@ -91,6 +91,7 @@ jobs:
             rsync -avzrc --delete \
               --exclude='.git' --exclude='.github' --exclude='.kiro' \
               --exclude='adventure' --exclude='game' --exclude='games' --exclude='map-trainer/' \
+              --exclude='dispatch-academy-app' --exclude='game2' \
               --exclude='node_modules' --exclude='*.md' --exclude='*.backup' \
               --exclude='*.bak' --exclude='*.old' --exclude='*.albers-backup' \
               --exclude='*.fixed-projection' --exclude='*.v2-debug' \
@@ -325,11 +326,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
-        working-directory: dispatch-academy-app
+        working-directory: games/dispatch-academy-app
 
       - name: Build
         run: npx vite build
-        working-directory: dispatch-academy-app
+        working-directory: games/dispatch-academy-app
         env:
           NODE_ENV: production
 
@@ -346,7 +347,7 @@ jobs:
             echo "Deploy attempt $i..."
             rsync -avzrc --delete \
               -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
-              dispatch-academy-app/dist/ \
+              games/dispatch-academy-app/dist/ \
               ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/dispatch-academy-app/ \
               && echo "✅ Deploy successful" && exit 0
             echo "⚠️ Attempt $i failed, waiting 20s..."

@@ -28,8 +28,8 @@
 ## Deploy
 - Branch `main` → GitHub Actions → Hostinger (auto)
 - Dev branch: `claude/session-context-qcmlai`
-- Build: `cd dispatch-academy-app && npm run build`
-- Test: `cd dispatch-academy-app && npm test`
+- Build: `cd games/dispatch-academy-app && npm run build`
+- Test: `cd games/dispatch-academy-app && npm test`
 
 ## Rules
 - NEVER run dev server, browser, or screenshots without explicit user request
