@@ -610,6 +610,256 @@
       mNextArp=(mNextArp||now)+1.7+Math.random()*1.4;
     }
   }
+
+  // === ДОП. МУЗЫКАЛЬНЫЕ ТРЕКИ (напряжение/бой, босс, энергичный) — переключаются по
+  // ситуации в игре (см. desiredMood/updateMusicMood ниже), одна и та же generative-музыка
+  // больше не звучит одинаково весь забег. mHit — как sfxBoom, но принимает свой t0
+  // (sfxBoom всегда бьёт "сейчас" и не годится для точного ритма, плюс не спамит общий
+  // FX_GAP-троттлинг игровых звуков, чтобы бой не съедал музыкальные удары).
+  function mHit(t0,dur,gain,cut1,cut2){
+    if(!actx)return;
+    const n=Math.floor(actx.sampleRate*dur);
+    const buf=actx.createBuffer(1,n,actx.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*(1-i/n);
+    const src=actx.createBufferSource();src.buffer=buf;
+    const f=actx.createBiquadFilter();f.type='lowpass';
+    f.frequency.setValueAtTime(cut1||900,t0);f.frequency.exponentialRampToValueAtTime(cut2||90,t0+dur);
+    const g=actx.createGain();
+    g.gain.setValueAtTime(gain||0.25,t0);g.gain.exponentialRampToValueAtTime(0.001,t0+dur);
+    src.connect(f);f.connect(g);g.connect(compressor);
+    src.start(t0);src.stop(t0+dur+0.05);
+  }
+
+  // TENSE / COMBAT — тёмный driving dungeon-synth, ре минор натуральный.
+  // Темп ~120 BPM: смена аккорда каждые 3с, бас-пульс восьмыми (0.25с), лид-арпеджио каждые 0.18-0.4с.
+  // Более давящий и плотный, чем calm-трек, но без резкого диссонанса (это зона boss-темы).
+  function tenseSynth(freq,t0,dur,gain,attack){
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type='sawtooth';o.frequency.value=freq;
+    const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1200;
+    o.connect(lp);lp.connect(g);g.connect(compressor);
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(gain,t0+(attack||0.15));
+    g.gain.setValueAtTime(gain,t0+dur*0.55);
+    g.gain.linearRampToValueAtTime(0.0005,t0+dur);
+    o.start(t0);o.stop(t0+dur+0.05);
+  }
+  function tenseBass(freq,t0,dur,gain){
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type='square';o.frequency.value=freq;
+    const lp=actx.createBiquadFilter();lp.type='lowpass';
+    lp.frequency.setValueAtTime(700,t0);lp.frequency.exponentialRampToValueAtTime(120,t0+dur);
+    o.connect(lp);lp.connect(g);g.connect(compressor);
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(gain,t0+0.015);
+    g.gain.exponentialRampToValueAtTime(0.0008,t0+dur);
+    o.start(t0);o.stop(t0+dur+0.03);
+  }
+  // прогрессия i - VII - VI - v (Dm - C - Bb - Am) — классический "давящий" нисходящий ход
+  const TENSE_CHORDS=[
+    [73.42,110.00,146.83,174.61],  // Dm  (D2 A2 D3 F3)
+    [65.41,98.00,130.81,164.81],   // C   (C2 G2 C3 E3)
+    [58.27,87.31,116.54,146.83],   // Bb  (Bb1 F2 Bb2 D3)
+    [110.00,130.81,164.81,220.00], // Am  (A2 C3 E3 A3)
+  ];
+  const TENSE_ARP=[293.66,329.63,349.23,392.00,440.00,466.16,523.25]; // ре натуральный минор
+  let tChordIdx=0,tNextChord=0,tNextBeat=0,tNextArp=0,tBeatCount=0;
+  let tCurrentRoot=TENSE_CHORDS[0][0];
+  function resetTense(){tNextChord=0;tNextBeat=0;tNextArp=0;tBeatCount=0;}
+  function tenseTick(){
+    if(!actx)return;
+    const now=actx.currentTime;
+    // смена аккорда — гармонический пульс ~3с (перекрытие 0.4с для мягкого кроссфейда)
+    if(now>=tNextChord-0.05){
+      const ch=TENSE_CHORDS[tChordIdx%TENSE_CHORDS.length];tChordIdx++;
+      const t0=Math.max(now,tNextChord||now);
+      tCurrentRoot=ch[0];
+      ch.forEach((f,i)=>tenseSynth(f,t0,3.4,0.014+(i===0?0.01:0),0.15));
+      tNextChord=(tNextChord||now)+3.0;
+    }
+    // пульсирующий бас/перкуссия на восьмых (0.25с ~ 120 BPM), удар на четверть + лёгкий хай-хэт на "и"
+    if(now>=tNextBeat-0.03){
+      const t0=Math.max(now,tNextBeat||now);
+      const downbeat=(tBeatCount%2===0);
+      if(downbeat){
+        mHit(t0,0.22,0.032,650,55);
+        tenseBass(tCurrentRoot,t0,0.28,0.03);
+      }else{
+        mHit(t0,0.08,0.015,3200,1400);
+        tenseBass(tCurrentRoot*1.5,t0,0.16,0.016);
+      }
+      tBeatCount++;
+      tNextBeat=(tNextBeat||now)+0.25;
+    }
+    // давящее лид-арпеджио — чаще и короче, чем в calm-треке
+    if(now>=tNextArp-0.05){
+      if(Math.random()<0.82){
+        const f=TENSE_ARP[Math.floor(Math.random()*TENSE_ARP.length)]*(Math.random()<0.2?0.5:1);
+        const o=actx.createOscillator(),g=actx.createGain();
+        o.type='triangle';o.frequency.value=f;
+        const hp=actx.createBiquadFilter();hp.type='highpass';hp.frequency.value=180;
+        o.connect(hp);hp.connect(g);g.connect(compressor);
+        const t0=Math.max(now,tNextArp||now);
+        g.gain.setValueAtTime(0,t0);
+        g.gain.linearRampToValueAtTime(0.026,t0+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0006,t0+0.5);
+        o.start(t0);o.stop(t0+0.55);
+      }
+      tNextArp=(tNextArp||now)+0.18+Math.random()*0.22;
+    }
+  }
+
+  // «Босс / опасность» — тёмный индастриал-дрон: суб-бас почти не движется (смена корня раз в 6-10с),
+  // поверх — редкие громкие зловещие удары на неровном пульсе (2-4с, иногда двойной «лаб-дап» как сердцебиение).
+  // Диссонансы (малая секунда, тритон) между соседними корнями и в самих ударах держат постоянное напряжение.
+  let bNextDrone=0,bNextStab=0;
+  // Соседние значения специально подобраны так, чтобы смена корня звучала диссонантно
+  // (малая секунда / тритон друг к другу), а не как обычная тоника-доминанта.
+  const BOSS_ROOTS=[41.20,43.65,58.27,40.00,46.25,61.74]; // около E1,F1,A#1,E1,F#1,B1 — суб-бас
+  function bossDrone(freq,t0,dur,gain,attack){
+    const o1=actx.createOscillator(),o2=actx.createOscillator();
+    const lp=actx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=200;
+    const g=actx.createGain();
+    o1.type='sine';o1.frequency.value=freq;
+    o2.type='triangle';o2.frequency.value=freq*1.012; // лёгкая расстройка — медленные биения, тревога
+    o1.connect(lp);o2.connect(lp);lp.connect(g);g.connect(compressor);
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(gain,t0+(attack||3));
+    g.gain.setValueAtTime(gain,t0+dur*0.55);
+    g.gain.linearRampToValueAtTime(0.0005,t0+dur);
+    o1.start(t0);o2.start(t0);
+    o1.stop(t0+dur+0.1);o2.stop(t0+dur+0.1);
+  }
+  function bossStab(t0,important){
+    const dur=0.9+Math.random()*0.5;
+    const peak=important?0.10:0.07;
+    mHit(t0,dur,peak,700,60);
+    // металлический диссонирующий "звон" поверх удара — тритон или малая секунда
+    const base=BOSS_ROOTS[Math.floor(Math.random()*BOSS_ROOTS.length)]*4; // на две октавы выше корня
+    const iv=Math.random()<0.5?1.4142:1.0595; // тритон / малая секунда как отношение частот
+    [base,base*iv].forEach((freq,i)=>{
+      const o=actx.createOscillator(),og=actx.createGain();
+      o.type=i===0?'square':'sawtooth';o.frequency.value=freq;
+      const bp=actx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=freq*1.5;bp.Q.value=4;
+      o.connect(bp);bp.connect(og);og.connect(compressor);
+      const gp=(important?0.05:0.035)*(i===0?1:0.7);
+      og.gain.setValueAtTime(0,t0);
+      og.gain.linearRampToValueAtTime(gp,t0+0.02);
+      og.gain.exponentialRampToValueAtTime(0.0008,t0+dur*0.8);
+      o.start(t0);o.stop(t0+dur+0.1);
+    });
+  }
+  function bossTick(){
+    if(!actx)return;
+    const now=actx.currentTime;
+    if(now>=bNextDrone-0.05){
+      const freq=BOSS_ROOTS[Math.floor(Math.random()*BOSS_ROOTS.length)];
+      const interval=6+Math.random()*4; // смена корня раз в 6-10с
+      bossDrone(freq,Math.max(now,bNextDrone),interval+2.5,0.03,3);
+      bNextDrone=(bNextDrone||now)+interval;
+    }
+    if(now>=bNextStab-0.05){
+      const t0=Math.max(now,bNextStab);
+      const important=Math.random()<0.3;
+      bossStab(t0,important);
+      // иногда двойной удар — "лаб-дап", как сердцебиение перед чем-то страшным
+      if(Math.random()<0.25)bossStab(t0+0.18+Math.random()*0.08,false);
+      bNextStab=(bNextStab||now)+2+Math.random()*2; // неровный пульс, 2-4с
+    }
+  }
+  function resetBoss(){bNextDrone=0;bNextStab=0;}
+
+  // "Энергичный / боевой" трек — ~148 BPM, ретро-синтвейв/чиптюн (для Акта 2 и т.п.).
+  // Яркая мажорная гармония (D миксолидийский, I-bVII-IV-V), пульсирующий бас на каждую долю,
+  // быстрый 16-нотный арпеджио сверху + kick/hat — бодрый контраст "спокойному" треку.
+  function eSynth(freq,t0,dur,gain,wave){
+    if(!actx)return;
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=wave||'square';
+    o.frequency.setValueAtTime(freq,t0);
+    const lp=actx.createBiquadFilter();lp.type='lowpass';
+    lp.frequency.value=(wave==='sine'?6000:2600);
+    o.connect(lp);lp.connect(g);g.connect(compressor);
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(gain,t0+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0008,t0+dur);
+    o.start(t0);o.stop(t0+dur+0.03);
+  }
+  // Прогрессия I-bVII-IV-V в D mixolydian: яркая, "гимновая" синтвейв-каденция.
+  const E_BASS_ROOTS=[73.42,65.41,98.00,110.00];   // D2, C2, G2, A2
+  const E_ARP_SETS=[
+    [293.66,369.99,440.00,587.33],   // D4 F#4 A4 D5  (D major)
+    [261.63,329.63,392.00,523.25],   // C4 E4 G4 C5   (C major)
+    [392.00,493.88,587.33,783.99],   // G4 B4 D5 G5   (G major)
+    [440.00,554.37,659.25,880.00],   // A4 C#5 E5 A5  (A major)
+  ];
+  const E_BEAT=60/148;          // ≈0.405s — пульс баса на каждую долю
+  const E_16TH=E_BEAT/4;        // ≈0.101s — частый арпеджио
+  const E_CHORD_DUR=E_BEAT*4;   // смена аккорда раз в такт (4 доли)
+  let eNextBeat=0,eNextArp=0,eNextHat=0,eNextChord=0;
+  let eChordIdx=0,eArpStep=0;
+  function resetEnergetic(){eNextBeat=0;eNextArp=0;eNextHat=0;eNextChord=0;eChordIdx=0;eArpStep=0;}
+  function energeticTick(){
+    if(!actx)return;
+    const now=actx.currentTime;
+    if(now>=eNextChord-0.05){
+      eChordIdx=(eChordIdx+1)%E_ARP_SETS.length;
+      eNextChord=(eNextChord||now)+E_CHORD_DUR;
+    }
+    if(now>=eNextBeat-0.05){
+      const t0=Math.max(now,eNextBeat);
+      const root=E_BASS_ROOTS[eChordIdx];
+      eSynth(root,t0,0.18,0.028,'square');   // тональный пульс баса
+      mHit(t0,0.14,0.05,1100,55);            // ударный "кик"-транзиент
+      eNextBeat=(eNextBeat||now)+E_BEAT;
+    }
+    if(now>=eNextHat-0.05){
+      const t0=Math.max(now,eNextHat);
+      mHit(t0,0.045,0.015,9000,5200);        // короткий "хай-хэт" всплеск
+      eNextHat=(eNextHat||now)+E_BEAT;
+    }
+    if(now>=eNextArp-0.05){
+      const t0=Math.max(now,eNextArp);
+      const set=E_ARP_SETS[eChordIdx];
+      let f=set[eArpStep%set.length];
+      if(Math.random()<0.15)f*=2; // редкий скачок на октаву вверх
+      eSynth(f,t0,0.09,0.02,eArpStep%2===0?'square':'sine');
+      eArpStep++;
+      eNextArp=(eNextArp||now)+E_16TH;
+    }
+  }
+
+  // ДИСПЕТЧЕР НАСТРОЕНИЯ: выбирает трек по ситуации в игре. Переключение на "босс" —
+  // мгновенное (важно сразу почувствовать угрозу), остальные смены — с задержкой ~2.5с,
+  // чтобы музыка не дёргалась туда-сюда на границе порога (колебания числа врагов и т.п.)
+  let musicMood='calm',moodPendingT=0;
+  function desiredMood(){
+    if(enemies&&enemies.some(e=>e.megaboss))return 'boss';
+    if(siege||(enemies&&enemies.length>150))return 'tense';
+    if(act===2)return 'energetic';
+    return 'calm';
+  }
+  function updateMusicMood(dt){
+    if(!actx||musicNodes!=='gen')return; // трек-файл или звук выключен — режим не переключаем
+    const want=desiredMood();
+    if(want===musicMood){moodPendingT=0;return;}
+    moodPendingT+=dt;
+    if(moodPendingT>=(want==='boss'?0:2.5)){
+      musicMood=want;moodPendingT=0;
+      if(want==='calm'){mChordIdx=0;mNextChord=0;mNextArp=0;}
+      else if(want==='tense')resetTense();
+      else if(want==='boss')resetBoss();
+      else if(want==='energetic')resetEnergetic();
+    }
+  }
+  function musicTick(){
+    if(musicMood==='tense')tenseTick();
+    else if(musicMood==='boss')bossTick();
+    else if(musicMood==='energetic')energeticTick();
+    else calmTick();
+  }
+
   function startMusic(){
     if(!actx||musicNodes)return;
     // сперва пробуем файл-трек (если пользователь положил его в assets/music/calm.mp3)
@@ -625,9 +875,9 @@
       musicNodes='file';musicEl.currentTime=0;musicEl.play().catch(()=>{});
       return;
     }
-    musicNodes='gen';mChordIdx=0;mNextChord=0;mNextArp=0;
-    musicTimer=setInterval(calmTick,120);
-    calmTick();
+    musicNodes='gen';mChordIdx=0;mNextChord=0;mNextArp=0;musicMood='calm';moodPendingT=0;
+    musicTimer=setInterval(musicTick,120);
+    musicTick();
   }
   function stopMusic(){
     if(musicTimer){clearInterval(musicTimer);musicTimer=null;}
@@ -4368,6 +4618,7 @@
   function step(dt){
     if(inArcade){arcadeStep(dt);return;} // бонус-уровень SPACE INVADERS — своя логика
     t+=dt;
+    updateMusicMood(dt); // трек музыки по ситуации: спокойный/напряжённый/боссовый/энергичный
     capStats(); // софт-кап статов каждый кадр — числа всегда конечны и читаемы
     maybeAscend(); // все улучшения на максимуме → Восхождение
     // Вариант А: боссы-рубежи выходят СРАЗУ с надписью на поле — без экрана отсчёта
