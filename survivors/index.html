@@ -2431,30 +2431,86 @@
     const B=act2BaseWalls;if(!B)return false;
     return Math.abs(px-B.cx)<B.R&&Math.abs(py-B.cy)<B.R;
   }
-  // УГЛОВЫЕ ВЫШКИ БАЗЫ АКТА 2: 4 постоянные автоматические турели на угловых площадках.
-  // Всегда в строю (даже пока ворота запечатаны — прореживают орду снаружи через дальность),
-  // но приоритет цели — мобы, УЖЕ просочившиеся внутрь периметра, а не толпа снаружи.
+  // ═══ ЭКОНОМИКА КРИСТАЛЛОВ АКТА 2: подлетел к турели/зданию с кристаллами → апгрейд копится ═══
+  const TUR_MAX=8, UP_TIME=2.0;
+  function turCost(lv){return 120+lv*150;} // стоимость апгрейда турели ур.lv→lv+1
+  function bldRepairCost(b){return Math.round(b.maxHp*0.25);} // полный ремонт здания
+  function bldUpCost(b){return 260+(b.lv||0)*220;} // апгрейд бонуса здания
+  // общий «поток кристаллов» из корабля в конструкцию во время апгрейда
+  function crystalStream(sx,sy,tx,ty,col){
+    if(particles.length>560)return;
+    const a=Math.atan2(ty-sy,tx-sx);
+    particles.push({x:sx+rand(-8,8),y:sy+rand(-8,8),vx:Math.cos(a)*3.2,vy:Math.sin(a)*3.2,life:0.4,color:col||'#7dd3fc',sz:2.4});
+  }
+  // ТУРЕЛИ БАЗЫ: автоцель (приоритет — прорвавшимся внутрь) + прокачка за кристаллы (ур.1-8,
+  // на 8 — лазер по нескольким). Огонь, урон, стволы, дальность растут с уровнем.
   function updateBaseTurrets(dt){
     const B=act2BaseWalls;if(!B)return;
-    const TR=700,COOL=0.5,tdmg=Math.max(15,estPlayerDps()*0.12);
     for(const tw of B.towers){
+      if(tw.lv==null)tw.lv=1;if(tw.paid==null)tw.paid=0;
+      const lv=tw.lv;
+      const TR=560+lv*40; // дальность растёт с уровнем
       tw.fireAcc=(tw.fireAcc||0)+dt;
       if(tw.muzzle>0)tw.muzzle-=dt;
-      let best=null,bestScore=-1;
-      for(const e of enemies){
-        const d=dist(tw,e);if(d>TR)continue;
-        const score=(pointInsideBase(e.x,e.y)?1:0)*1e6-d;
-        if(score>bestScore){bestScore=score;best=e;}
+      if(tw.upFx>0)tw.upFx-=dt;
+      // === ПРОКАЧКА за кристаллы: игрок рядом + есть кристаллы + не макс ===
+      tw.near=false;
+      if(act2Def&&act2Def.active&&lv<TUR_MAX&&dist(player,tw)<70&&gemsCollected>0){
+        tw.near=true;
+        const cost=turCost(lv),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        gemsCollected-=pay;tw.paid+=pay;
+        crystalStream(player.x,player.y,tw.x,tw.y,'#7dd3fc');
+        if(tw.paid>=cost){tw.lv++;tw.paid=0;tw.upFx=0.9;
+          burst(tw.x,tw.y,'#7dd3fc',22);camShake=Math.max(camShake,5);sfxChime(660,5,0.08,0.12);
+          announce={text:'⬆ Турель улучшена — ур.'+tw.lv+(tw.lv>=TUR_MAX?' (ЛАЗЕР!)':''),life:2.2,color:'#7dd3fc'};}
       }
+      // === АВТООГОНЬ ===
+      let best=null,bestScore=-1;
+      for(const e of enemies){const d=dist(tw,e);if(d>TR)continue;
+        const score=(pointInsideBase(e.x,e.y)?1:0)*1e6-d;if(score>bestScore){bestScore=score;best=e;}}
       if(!best)continue;
       tw.aim=Math.atan2(best.y-tw.y,best.x-tw.x);
-      if(tw.fireAcc>=COOL){
+      // 🔧 Мастерская усиливает урон турелей, ⚙ Арсенал — скорострельность (разрушены → штраф)
+      const cool=Math.max(0.12,(0.5-lv*0.045)/(0.9+0.1*act2BuildingBonus('armory'))),
+        tdmg=Math.max(15,estPlayerDps()*(0.09+lv*0.02))*(0.85+0.15*act2BuildingBonus('workshop'));
+      if(tw.fireAcc>=cool){
         tw.fireAcc=0;tw.muzzle=0.12;
-        projectiles.push({x:tw.x,y:tw.y,vx:Math.cos(tw.aim)*520,vy:Math.sin(tw.aim)*520,r:4.5,life:1.2,pierceLeft:0,hitSet:new Set(),dmg:tdmg,color:'#7dd3fc'});
+        if(lv>=TUR_MAX){ // ЛАЗЕР: быстрый пробивающий луч-снаряд, косит несколько
+          projectiles.push({x:tw.x,y:tw.y,vx:Math.cos(tw.aim)*820,vy:Math.sin(tw.aim)*820,r:5,life:1.1,pierceLeft:6,hitSet:new Set(),dmg:tdmg*1.3,color:'#f43f5e'});
+        }else{
+          const shots=lv>=5?3:lv>=3?2:1,spread=0.13;
+          for(let s=0;s<shots;s++){const a=tw.aim+(s-(shots-1)/2)*spread;
+            projectiles.push({x:tw.x,y:tw.y,vx:Math.cos(a)*560,vy:Math.sin(a)*560,r:4.5,life:1.2,pierceLeft:lv>=6?1:0,hitSet:new Set(),dmg:tdmg,color:'#7dd3fc'});}
+        }
         if(particles.length<600)for(let i=0;i<4;i++)particles.push({x:tw.x+Math.cos(tw.aim)*20,y:tw.y+Math.sin(tw.aim)*20,
-          vx:Math.cos(tw.aim)*2+rand(-1,1),vy:Math.sin(tw.aim)*2+rand(-1,1),life:0.25,color:'#7dd3fc',sz:2});
+          vx:Math.cos(tw.aim)*2+rand(-1,1),vy:Math.sin(tw.aim)*2+rand(-1,1),life:0.25,color:lv>=TUR_MAX?'#f43f5e':'#7dd3fc',sz:2});
       }
     }
+    // === ЗДАНИЯ: ремонт/апгрейд за кристаллы ===
+    if(act2Def&&act2Def.active&&B.buildings)for(const b of B.buildings){
+      b.near=false;
+      if(dist(player,b)>b.r+70||gemsCollected<=0)continue;
+      if(!b.alive){ // ремонт разрушенного
+        b.near='repair';const cost=bldRepairCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        gemsCollected-=pay;b.paid=(b.paid||0)+pay;crystalStream(player.x,player.y,b.x,b.y,'#4ade80');
+        if(b.paid>=cost){b.alive=true;b.hp=b.maxHp;b.paid=0;burst(b.x,b.y,'#4ade80',24);camShake=Math.max(camShake,5);sfxChime(523,5,0.08,0.12);announce={text:'🔧 Здание восстановлено!',life:2.2,color:'#4ade80'};}
+      }else if(b.hp<b.maxHp*0.999){ // подлатать целое, но повреждённое
+        b.near='fix';const pay=Math.min(gemsCollected,b.maxHp*0.4*dt/UP_TIME);
+        gemsCollected-=pay;b.hp=Math.min(b.maxHp,b.hp+pay*2.2);crystalStream(player.x,player.y,b.x,b.y,'#4ade80');
+      }else if((b.lv||0)<5){ // апгрейд бонуса
+        b.near='up';const cost=bldUpCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        gemsCollected-=pay;b.paid=(b.paid||0)+pay;crystalStream(player.x,player.y,b.x,b.y,'#fde047');
+        if(b.paid>=cost){b.lv=(b.lv||0)+1;b.paid=0;b.maxHp=Math.round(b.maxHp*1.2);b.hp=b.maxHp;b.upFx=0.9;
+          burst(b.x,b.y,'#fde047',22);camShake=Math.max(camShake,5);sfxChime(784,5,0.08,0.12);announce={text:'⬆ '+({shield:'Генератор щита',armory:'Арсенал',workshop:'Мастерская',medbay:'Медблок',main:'Главное здание'}[b.kind]||'Здание')+' — ур.'+b.lv,life:2.2,color:'#fde047'};}
+      }
+      if(b.upFx>0)b.upFx-=dt;
+    }
+  }
+  // суммарные пассивные бонусы целых зданий (по уровням) — читаются обороной/турелями/лечением
+  function act2BuildingBonus(kind){
+    const B=act2BaseWalls;if(!B||!B.buildings)return 0;
+    const b=B.buildings.find(bb=>bb.kind===kind&&bb.alive);
+    return b?1+(b.lv||0):0; // 0 если разрушено, иначе 1 + уровень апгрейда
   }
   // ═══════════ ОБОРОНА БАЗЫ АКТА 2 ═══════════
   const ACT2_MAXWAVES=30;
@@ -2569,13 +2625,15 @@
     if(D.phase==='won'||D.phase==='lost')return;
     D.phaseT-=dt;
     const inBase=pointInsideBase(player.x,player.y);
-    // кольцо лечения главного здания работает всегда (в любой фазе)
+    // кольцо лечения главного здания работает всегда; ✚ Медблок усиливает лечение
     const mb=B.buildings.find(b=>b.main&&b.alive);
-    if(mb&&dist(player,mb)<mb.r+90)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.16*dt);
+    const healMul=0.8+0.2*act2BuildingBonus('medbay');
+    if(mb&&dist(player,mb)<mb.r+90)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.16*healMul*dt);
     if(D.phase==='break'){
       D.shield.up=true;
       if(inBase)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.18*dt);
-      for(const ga of B.gates){ga.wave=false;ga.hp=Math.min(ga.maxHp,ga.hp+ga.maxHp*0.3*dt);}
+      const gateRegen=0.3*(0.8+0.2*act2BuildingBonus('shield')); // 🛡 Генератор щита ускоряет починку ворот
+      for(const ga of B.gates){ga.wave=false;ga.hp=Math.min(ga.maxHp,ga.hp+ga.maxHp*gateRegen*dt);}
       if(D.phaseT<=0)act2StartWave();
     }else if(D.phase==='wave'){
       D.shield.up=false;
@@ -4712,7 +4770,10 @@
     // КВАДРАТНАЯ БАЗА-ФОРТ: 4 ворот (С/В/Ю/З), купол-щит, разрушаемые здания внутри.
     const R=480,t=26,gateHalf=76;
     act2BaseWalls={cx:0,cy:0,R,t,gateHalf,sealed:false,towers:[
-      {x:-(R-64),y:-(R-64)},{x:R-64,y:-(R-64)},{x:-(R-64),y:R-64},{x:R-64,y:R-64}]};
+      // 4 угловые + 3 у центра — все прокачиваются за кристаллы (ур.1-8, лазер на 8)
+      {x:-(R-64),y:-(R-64),lv:1,paid:0},{x:R-64,y:-(R-64),lv:1,paid:0},
+      {x:-(R-64),y:R-64,lv:1,paid:0},{x:R-64,y:R-64,lv:1,paid:0},
+      {x:0,y:-138,lv:1,paid:0},{x:120,y:70,lv:1,paid:0},{x:-120,y:70,lv:1,paid:0}]};
     act2BaseWalls.gates=['N','E','S','W'].map(s=>makeAct2Gate(s,act2BaseWalls));
     // ЗДАНИЯ: главное в центре (кольцо лечения, поражение при сносе) + 4 боковых по секторам
     act2BaseWalls.buildings=[
@@ -5161,7 +5222,10 @@
     // В ЛАБИРИНТЕ камера отдаляется заметно сильнее — узкие коридоры и толпа стражей у стен
     // плохо просматривались; здесь запас обзора важнее, чем в открытом поле
     const vaultZoomMul=inVault?0.82:1;
-    const targetZoom=Math.max(baseZoom*(inVault?0.5:0.62),(levelZoom-crowd*baseZoom)*vaultZoomMul);
+    // ОБОРОНА БАЗЫ: форт огромный (960px) — держим камеру заметно дальше, чтобы видеть все
+    // 4 ворот и откуда лезут мобы; после интро отъезжаем ещё сильнее
+    let targetZoom=Math.max(baseZoom*(inVault?0.5:0.62),(levelZoom-crowd*baseZoom)*vaultZoomMul);
+    if(act2Def&&act2Def.active)targetZoom=baseZoom*(act2Def.phase==='intro'?0.62:0.5);
     const zoomDelta=(targetZoom-zoom)*Math.min(1,dt*0.3);
     const zoomMaxStep=0.15*dt;
     zoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
@@ -7372,29 +7436,77 @@
     // ЗДАНИЕ БАЗЫ АКТА 2 (разные силуэты по типу, трещины/дым по мере урона, обломки если снесено)
     function drawAct2Building(b){
       const r=b.r,hpf=Math.max(0,b.hp/b.maxHp),BC={shield:'#38bdf8',armory:'#fb923c',workshop:'#a78bfa',medbay:'#4ade80',main:'#7dd3fc'}[b.kind]||'#94a3b8';
+      const ic={shield:'🛡',armory:'⚙',workshop:'🔧',medbay:'✚',main:'🏛'}[b.kind]||'▪';
       x.save();x.translate(b.x,b.y);
-      if(!b.alive){ // обломки
+      if(!b.alive){ // обломки + подсказка «почини за кристаллы»
         x.fillStyle='#1e2532';x.beginPath();x.moveTo(-r*0.8,r*0.6);x.lineTo(-r*0.4,-r*0.5);x.lineTo(r*0.4,-r*0.7);x.lineTo(r*0.8,r*0.5);x.closePath();x.fill();
         x.strokeStyle='#3f4a5c';x.lineWidth=2/zoom;x.stroke();
-        x.fillStyle='#f97316';x.globalAlpha=0.85;x.font='bold '+Math.round(15/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText('🛠',0,-r-14);x.globalAlpha=1;
+        if(Math.random()<0.04&&particles.length<560)particles.push({x:b.x+rand(-r,r),y:b.y,vx:rand(-0.3,0.3),vy:-0.7,life:1.2,color:'#64748b',sz:2.5});
+        if(b.near==='repair'){const cost=bldRepairCost(b),f=Math.min(1,(b.paid||0)/cost);
+          x.strokeStyle='#0b0e17';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,r+16,0,Math.PI*2);x.stroke();
+          x.strokeStyle='#4ade80';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,r+16,-Math.PI/2,-Math.PI/2+f*Math.PI*2);x.stroke();}
+        x.fillStyle='#4ade80';x.globalAlpha=0.9;x.font='bold '+Math.round(13/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='middle';
+        x.fillText('🔧 Ремонт: '+bldRepairCost(b)+'💎',0,-r-20);x.globalAlpha=1;
         x.restore();return;
       }
-      // кольцо лечения у главного здания
-      if(b.main){const pr=0.5+0.5*Math.sin(t*2.5);x.strokeStyle='rgba(74,222,128,'+(0.3+0.2*pr)+')';x.lineWidth=3/zoom;x.setLineDash([9,7]);x.beginPath();x.arc(0,0,r+90,0,Math.PI*2);x.stroke();x.setLineDash([]);}
-      // корпус
-      x.fillStyle=b.hitT>0?'#fff':'#26303f';x.strokeStyle=BC;x.lineWidth=2.5/zoom;
+      // кольцо лечения главного здания (пульс + искры)
+      if(b.main){const pr=0.5+0.5*Math.sin(t*2.5);x.strokeStyle='rgba(74,222,128,'+(0.3+0.2*pr)+')';x.lineWidth=3/zoom;x.setLineDash([9,7]);x.beginPath();x.arc(0,0,r+90,0,Math.PI*2);x.stroke();x.setLineDash([]);
+        if(Math.random()<0.15&&particles.length<560){const aa=rand(0,Math.PI*2);particles.push({x:b.x+Math.cos(aa)*(r+90),y:b.y+Math.sin(aa)*(r+90),vx:0,vy:-0.5,life:0.7,color:'#4ade80',sz:2});}}
+      // вспышка апгрейда
+      if(b.upFx>0){x.strokeStyle='rgba(253,224,71,'+b.upFx+')';x.lineWidth=4/zoom;x.beginPath();x.arc(0,0,r+(1-b.upFx)*50,0,Math.PI*2);x.stroke();}
       const s=b.main?r:r*0.92;
-      x.beginPath();x.rect(-s,-s,s*2,s*2);x.fill();x.stroke();
+      // свечение по уровню
+      x.shadowColor=BC;x.shadowBlur=b.hitT>0?0:(6+(b.lv||0)*3);
+      x.fillStyle=b.hitT>0?'#fff':'#26303f';x.strokeStyle=BC;x.lineWidth=2.5/zoom;
+      x.beginPath();x.rect(-s,-s,s*2,s*2);x.fill();x.stroke();x.shadowBlur=0;
       // иконка типа
-      x.fillStyle=BC;x.shadowColor=BC;x.shadowBlur=b.hitT>0?0:8;
-      x.font='bold '+Math.round((b.main?30:22)/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='middle';
-      x.fillText({shield:'🛡',armory:'⚙',workshop:'🔧',medbay:'✚',main:'🏛'}[b.kind]||'▪',0,0);x.shadowBlur=0;
+      x.fillStyle=BC;x.font='bold '+Math.round((b.main?30:22)/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(ic,0,0);
+      // пипсы уровня апгрейда
+      if(b.lv>0){for(let i=0;i<b.lv;i++){x.fillStyle='#fde047';x.beginPath();x.arc(-s+8+i*11,s-7,3,0,Math.PI*2);x.fill();}}
       // HP-полоска
       const bw=s*2,by=-s-12/zoom;
       x.fillStyle='rgba(0,0,0,0.55)';x.fillRect(-bw/2,by,bw,5/zoom);
       x.fillStyle=hpf>0.5?'#4ade80':hpf>0.25?'#fbbf24':'#ff6b6b';x.fillRect(-bw/2,by,bw*hpf,5/zoom);
+      // прогресс апгрейда + подсказка стоимости, когда игрок рядом
+      if(b.near==='up'){const cost=bldUpCost(b),f=Math.min(1,(b.paid||0)/cost);
+        x.strokeStyle='#0b0e17';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,s+16,0,Math.PI*2);x.stroke();
+        x.strokeStyle='#fde047';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,s+16,-Math.PI/2,-Math.PI/2+f*Math.PI*2);x.stroke();
+        x.fillStyle='#fde047';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.fillText('⬆ '+cost+'💎',0,-s-24);}
+      else if(b.near==='fix'){x.fillStyle='#4ade80';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.fillText('🔧 чиню…',0,-s-24);}
       // дым при уроне
       if(hpf<0.6&&Math.random()<0.08&&particles.length<560)particles.push({x:b.x+rand(-r,r),y:b.y-r*0.6,vx:rand(-0.3,0.3),vy:-0.8,life:1.3,color:'#64748b',sz:2.5});
+      x.restore();
+    }
+    // ТУРЕЛЬ БАЗЫ: платформа-восьмиугольник, вращающаяся башня со стволами по уровню,
+    // свечение/цвет растут с уровнем, на 8 — лазерный излучатель; кольцо-прогресс апгрейда
+    function drawAct2Turret(tw){
+      const lv=tw.lv||1,laser=lv>=TUR_MAX;
+      const col=laser?'#f43f5e':(lv>=5?'#fde047':(lv>=3?'#7dd3fc':'#93c5fd'));
+      x.save();x.translate(tw.x,tw.y);
+      // вспышка апгрейда
+      if(tw.upFx>0){x.strokeStyle='rgba(125,211,252,'+tw.upFx+')';x.lineWidth=4/zoom;x.beginPath();x.arc(0,0,28+(1-tw.upFx)*44,0,Math.PI*2);x.stroke();}
+      // платформа
+      x.fillStyle='rgba(15,23,42,0.9)';x.strokeStyle=col;x.lineWidth=2.5/zoom;
+      x.beginPath();for(let i=0;i<8;i++){const a=i/8*Math.PI*2+Math.PI/8,rr=26;const px=Math.cos(a)*rr,py=Math.sin(a)*rr;i?x.lineTo(px,py):x.moveTo(px,py);}x.closePath();x.fill();x.stroke();
+      // вращающаяся башня
+      x.save();x.rotate(tw.aim||0);
+      x.fillStyle=col;x.shadowColor=col;x.shadowBlur=tw.muzzle>0?18:(6+lv);
+      const barrels=laser?1:(lv>=5?3:lv>=3?2:1);
+      if(laser){x.fillRect(-7,-6,26,12);x.fillStyle='#fecaca';x.fillRect(16,-2,10,4);
+        if(tw.muzzle>0){x.strokeStyle='rgba(244,63,94,0.6)';x.lineWidth=8/zoom;x.beginPath();x.moveTo(20,0);x.lineTo(160,0);x.stroke();}}
+      else{for(let i=0;i<barrels;i++){const off=(i-(barrels-1)/2)*6;x.fillRect(-6,off-2.2,22,4.4);}}
+      x.beginPath();x.arc(0,0,9,0,Math.PI*2);x.fill();
+      if(tw.muzzle>0){x.fillStyle='#e0f2fe';x.beginPath();x.arc(18,0,4,0,Math.PI*2);x.fill();}
+      x.shadowBlur=0;x.restore();
+      // «ур.N» под турелью
+      x.fillStyle=col;x.font='bold '+Math.round(11/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='middle';
+      x.fillText(laser?'ЛАЗЕР':('ур.'+lv),0,34);
+      // кольцо-прогресс + стоимость апгрейда, когда игрок рядом
+      if(tw.near&&lv<TUR_MAX){const cost=turCost(lv),f=Math.min(1,(tw.paid||0)/cost);
+        x.strokeStyle='#0b0e17';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,30,0,Math.PI*2);x.stroke();
+        x.strokeStyle='#fde047';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,30,-Math.PI/2,-Math.PI/2+f*Math.PI*2);x.stroke();
+        x.fillStyle='#fde047';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.fillText('⬆ '+cost+'💎',0,-38);}
       x.restore();
     }
     // КВАДРАТНАЯ БАЗА-ФОРТ АКТА 2: пол, стены, 4 ворот, купол-щит, здания, турели
@@ -7402,6 +7514,11 @@
       const B=act2BaseWalls,D=act2Def;
       x.save();camWorld();
       x.fillStyle='rgba(30,41,59,0.42)';x.fillRect(B.cx-B.R,B.cy-B.R,B.R*2,B.R*2);
+      // анимированная сетка-пол базы (лёгкий «энергополе» эффект)
+      x.strokeStyle='rgba(125,211,252,0.06)';x.lineWidth=1/zoom;
+      const gstep=80,gph=(t*14)%gstep;
+      for(let gx=B.cx-B.R;gx<=B.cx+B.R;gx+=gstep){x.beginPath();x.moveTo(gx,B.cy-B.R);x.lineTo(gx,B.cy+B.R);x.stroke();}
+      for(let gy=B.cy-B.R+gph;gy<=B.cy+B.R;gy+=gstep){x.beginPath();x.moveTo(B.cx-B.R,gy);x.lineTo(B.cx+B.R,gy);x.stroke();}
       // стены (сегменты + створки закрытых ворот)
       B.rects.forEach(w=>{x.fillStyle='#334155';x.fillRect(w.x,w.y,w.w,w.h);x.strokeStyle='#64748b';x.lineWidth=1.5/zoom;x.strokeRect(w.x,w.y,w.w,w.h);});
       // ВОРОТА: столбы + маячок состояния + HP + отсчёт открытия
@@ -7418,19 +7535,9 @@
         if(breaking){const bw=B.gateHalf*1.7,byy=ga.cy-18;x.fillStyle='rgba(0,0,0,0.5)';x.fillRect(ga.cx-bw/2,byy,bw,5);x.fillStyle=ga.hp<ga.maxHp*0.35?'#ff6b6b':'#fbbf24';x.fillRect(ga.cx-bw/2,byy,bw*Math.max(0,ga.hp/ga.maxHp),5);}
         if(ga.approachT>0&&!open){x.fillStyle='#fde047';x.font='bold '+Math.round(14/zoom)+'px system-ui';x.fillText('🔓 '+Math.max(0,Math.ceil(3-ga.approachT))+'с',ga.cx-ga.nx*46,ga.cy-ga.ny*46);}
       }
-      // здания
+      // здания и турели
       if(B.buildings)for(const b of B.buildings)drawAct2Building(b);
-      // угловые турели
-      B.towers.forEach(tw=>{
-        x.save();x.translate(tw.x,tw.y);
-        x.fillStyle='rgba(125,211,252,0.14)';x.beginPath();x.arc(0,0,30,0,Math.PI*2);x.fill();
-        x.strokeStyle='rgba(125,211,252,0.55)';x.lineWidth=2/zoom;x.beginPath();x.arc(0,0,30,0,Math.PI*2);x.stroke();
-        x.rotate(tw.aim||0);
-        x.fillStyle='#7dd3fc';x.shadowColor='#7dd3fc';x.shadowBlur=tw.muzzle>0?16:6;
-        x.fillRect(-6,-5,20,10);x.beginPath();x.arc(0,0,9,0,Math.PI*2);x.fill();
-        if(tw.muzzle>0){x.fillStyle='#e0f2fe';x.beginPath();x.arc(16,0,4,0,Math.PI*2);x.fill();}
-        x.shadowBlur=0;x.restore();
-      });
+      B.towers.forEach(drawAct2Turret);
       // КУПОЛ-ЩИТ (поднят в перерыв — держит периметр и лечит)
       if(D&&D.shield&&D.shield.up){
         const pulse=0.5+0.5*Math.sin(t*3),o=B.R+B.t+6;
