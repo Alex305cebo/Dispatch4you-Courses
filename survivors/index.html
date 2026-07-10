@@ -2598,13 +2598,13 @@
   function act2StartWave(){
     const D=act2Def,B=act2BaseWalls;if(!D||!B)return;
     D.phase='wave';
-    const nOpen=Math.min(4,1+Math.floor((D.wave-1)/9)); // 1 ворота, к поздним волнам — до 3-4
+    const nOpen=Math.min(4,1+Math.floor((D.wave-1)/4)); // раньше открывается больше ворот: 1→2(в5)→3(в9)→4(в13)
     const sides=['N','E','S','W'].slice().sort(()=>Math.random()-0.5).slice(0,nOpen);
     D.breakSides=sides;
     for(const ga of B.gates){if(sides.indexOf(ga.side)>=0){ga.wave=true;ga.flick=1.1;}}
     rebuildBaseWallRects();
-    D.toSpawn=Math.round(26+D.wave*6);D.spawnAcc=0.2;D.shield.up=false;D.waveClean=true; // заметно больше мобов
-    D.siegeLeft=D.wave>=3?Math.floor(D.wave/3)+1:0; // сколько таранов выпустить за волну
+    D.toSpawn=Math.round(45+D.wave*11);D.spawnAcc=0.15;D.shield.up=false;D.waveClean=true; // МНОГО мобов
+    D.siegeLeft=D.wave>=2?Math.floor(D.wave/2)+1:0; // тараны — почти каждую волну, чаще
     announce={text:'⚔ ВОЛНА '+D.wave+'/'+D.maxWaves+'! Купол пробит: '+sides.join(' · ')+' — держи ворота!',life:4,color:'#ff2d55'};
     flashFx(0.5,'255,45,85');camShake=Math.max(camShake,10);sfxBoom(0.5,0.3,700,60,true);
   }
@@ -2616,6 +2616,9 @@
     if(side==='N'||side==='S'){e.x=B.cx+rand(-spread,spread);e.y=ga.cy+ga.ny*rand(90,380);}
     else{e.y=B.cy+rand(-spread,spread);e.x=ga.cx+ga.nx*rand(90,380);}
     e.defense=true;e.beh=null;
+    // мобы КРЕПЧЕ и злее с каждой волной (не зависит от уровня игрока)
+    const wv=(act2Def&&act2Def.wave)||1,wf=1+(wv-1)*0.11;
+    e.hp=e.maxHp=e.maxHp*wf;e.dmg*=1+(wv-1)*0.06;e.speed*=1+Math.min(0.5,(wv-1)*0.02);
     if(kind==='siege'){ // ТАРАН-ОСАДНИК: толстый, медленный, прёт на главное здание, игнорит турели-приоритет
       e.siege=true;e.hp=e.maxHp=e.maxHp*6;e.r=Math.max(e.r*1.8,26);e.speed=Math.max(38,e.speed*0.45);
       e.dmg*=1.4;e.color='#b91c1c';e.glow='#ef4444';e.skinShape='shield';
@@ -2634,13 +2637,14 @@
   }
   function act2SpawnBatch(){
     const D=act2Def,B=act2BaseWalls;if(!D||!B||!D.breakSides.length)return;
+    if(enemies.length>=effEnemyCap())return; // держим одновременное число мобов под потолком (перф), бюджет ждёт
     const rndSide=()=>D.breakSides[Math.floor(Math.random()*D.breakSides.length)];
-    // таран (пока есть в запасе волны)
-    if(D.siegeLeft>0&&Math.random()<0.6){D.siegeLeft--;act2SpawnOne(rndSide(),'siege');D.toSpawn=Math.max(0,D.toSpawn-1);}
+    // тараны — чаще
+    if(D.siegeLeft>0&&Math.random()<0.7){D.siegeLeft--;act2SpawnOne(rndSide(),'siege');D.toSpawn=Math.max(0,D.toSpawn-1);}
     // ЛЕТУНЫ через стену — часто и по нескольку (со 2-й волны): толпа лезет и по воздуху
-    if(D.wave>=2&&Math.random()<0.5){const fn=1+Math.floor(Math.random()*2);for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
+    if(D.wave>=2&&Math.random()<0.6){const fn=1+Math.floor(Math.random()*3);for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
     // основная волна — крупные пачки
-    const n=Math.min(D.toSpawn,4+Math.floor(Math.random()*4)+Math.floor(D.wave/6));
+    const n=Math.min(D.toSpawn,6+Math.floor(Math.random()*5)+Math.floor(D.wave/4));
     for(let i=0;i<n;i++){act2SpawnOne(rndSide(),'normal');D.toSpawn--;if(D.toSpawn<=0)break;}
   }
   function act2Win(){
@@ -2674,7 +2678,7 @@
         if(Math.random()<0.5)particles.push({x:mb.x+rand(-16,16),y:mb.y-36,vx:0,vy:-1.6,life:0.6,color:'#7dd3fc',sz:2.5});
         if(D.powerT>=2.4){
           player.ship2=true;player.wounded=false;player.hp=player.maxHp;
-          D.phase='break';D.phaseT=10;D.shield.up=true;D.shield.hp=D.shield.maxHp;
+          D.phase='break';D.phaseT=9;D.shield.up=true;D.shield.hp=D.shield.maxHp;
           announce={text:'🛡 БАЗА ЗАПУЩЕНА! Купол держит периметр. Волна 1 через 10с — готовь оборону!',life:5,color:'#7dd3fc'};
           flashFx(0.6,'125,211,252');camShake=Math.max(camShake,12);sfxChime(523,5,0.09,0.13);
         }
@@ -2701,7 +2705,7 @@
       if(D.phaseT<=0)act2StartWave();
     }else if(D.phase==='wave'){
       D.shield.up=false;
-      if(D.toSpawn>0){D.spawnAcc-=dt;if(D.spawnAcc<=0){act2SpawnBatch();D.spawnAcc=rand(0.35,0.8);}}
+      if(D.toSpawn>0){D.spawnAcc-=dt;if(D.spawnAcc<=0){act2SpawnBatch();D.spawnAcc=rand(0.2,0.5);}}
       if(D.toSpawn<=0&&!enemies.some(e=>e.defense)){
         const cleared=D.wave;
         // БОНУС ЗА ЧИСТУЮ ВОЛНУ: ни одно здание не задето
@@ -2711,7 +2715,7 @@
         D.wave++;
         if(D.wave>D.maxWaves){act2Win();return;}
         for(const ga of B.gates)ga.wave=false;
-        D.phase='break';D.phaseT=D.wave%5===1?12:8;
+        D.phase='break';D.phaseT=D.wave%5===1?9:6;
         if(!D.waveClean)announce={text:'✅ Волна '+cleared+' отбита! Волна '+D.wave+' через '+Math.ceil(D.phaseT)+'с — чини и улучшай.',life:4,color:'#4ade80'};
         sfxChime(660,5,0.08,0.12);
       }
