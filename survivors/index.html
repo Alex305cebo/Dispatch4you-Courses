@@ -2583,9 +2583,12 @@
         const outX=og.cx+og.nx*(B.t+30),outY=og.cy+og.ny*(B.t+30);
         const past=(e.x-outX)*og.nx+(e.y-outY)*og.ny; // >0 если снаружи дальше створа
         if(past>0){wx=outX;wy=outY;}else{wx=og.cx-og.nx*34;wy=og.cy-og.ny*34;}
-        // анти-софтлок: моб слишком долго снаружи (застрял об стену) — телепорт к своему проёму
-        e._defT=(e._defT||0)+dt;
-        if(e._defT>9){e._defT=0;e.x=outX;e.y=outY;burst(e.x,e.y,e.color||'#f43f5e',4);}
+        // анти-софтлок: считаем «застрявшим» только если НЕ приближается к воротам (иначе дальний
+        // спавн, идущий долго, ошибочно телепортировался бы); реально застрял 6с — прыжок к проёму
+        const gd=Math.hypot(og.cx-e.x,og.cy-e.y);
+        if(e._lastGD!=null&&gd<e._lastGD-2)e._defT=0;else e._defT=(e._defT||0)+dt;
+        e._lastGD=gd;
+        if(e._defT>6){e._defT=0;e.x=outX;e.y=outY;burst(e.x,e.y,e.color||'#f43f5e',4);}
       }else if(ng){
         wx=ng.cx+ng.nx*(e.r+4);wy=ng.cy+ng.ny*(e.r+4);
         if(Math.hypot(ng.cx-e.x,ng.cy-e.y)<B.gateHalf+e.r+16)chipGate=ng;
@@ -2607,7 +2610,7 @@
     D.breakSides=sides;
     for(const ga of B.gates){if(sides.indexOf(ga.side)>=0){ga.wave=true;ga.flick=1.1;}}
     rebuildBaseWallRects();
-    D.toSpawn=Math.round(45+D.wave*11);D.spawnAcc=0.15;D.shield.up=false;D.waveClean=true; // МНОГО мобов
+    D.toSpawn=Math.round(70+D.wave*16);D.spawnAcc=0.12;D.shield.up=false;D.waveClean=true; // ОЧЕНЬ много мобов
     D.siegeLeft=D.wave>=2?Math.floor(D.wave/2)+1:0; // тараны — почти каждую волну, чаще
     announce={text:'⚔ ВОЛНА '+D.wave+'/'+D.maxWaves+'! Купол пробит: '+sides.join(' · ')+' — держи ворота!',life:4,color:'#ff2d55'};
     flashFx(0.5,'255,45,85');camShake=Math.max(camShake,10);sfxBoom(0.5,0.3,700,60,true);
@@ -2616,9 +2619,9 @@
   function act2SpawnOne(side,kind){
     const B=act2BaseWalls,ga=B.gates.find(g=>g.side===side);if(!ga)return;
     const e=spawnEnemy(false);
-    const spread=B.R*0.85;
-    if(side==='N'||side==='S'){e.x=B.cx+rand(-spread,spread);e.y=ga.cy+ga.ny*rand(90,380);}
-    else{e.y=B.cy+rand(-spread,spread);e.x=ga.cx+ga.nx*rand(90,380);}
+    const spread=B.R*1.15; // шире вдоль стороны
+    if(side==='N'||side==='S'){e.x=B.cx+rand(-spread,spread);e.y=ga.cy+ga.ny*rand(260,900);} // намного дальше от базы
+    else{e.y=B.cy+rand(-spread,spread);e.x=ga.cx+ga.nx*rand(260,900);}
     e.defense=true;e.beh=null;
     // мобы КРЕПЧЕ и злее с каждой волной (не зависит от уровня игрока)
     const wv=(act2Def&&act2Def.wave)||1,wf=1+(wv-1)*0.11;
@@ -2635,8 +2638,8 @@
       e.speed=Math.max(75,e.speed*(fv===0?1.2:fv===2?0.8:1));e.dmg*=fv===2?1.4:1;
       e.color=fv===2?'#7c3aed':'#a78bfa';e.glow='#c4b5fd';e.skinShape=fv===2?'fang':'triangle';
       e._wing=rand(0,6.28);
-      e.x=B.cx+ga.nx*(B.R+120)+(side==='N'||side==='S'?rand(-spread,spread):0);
-      e.y=B.cy+ga.ny*(B.R+120)+(side==='E'||side==='W'?rand(-spread,spread):0);
+      e.x=B.cx+ga.nx*(B.R+rand(220,560))+(side==='N'||side==='S'?rand(-spread,spread):0);
+      e.y=B.cy+ga.ny*(B.R+rand(220,560))+(side==='E'||side==='W'?rand(-spread,spread):0);
     }
   }
   function act2SpawnBatch(){
@@ -2648,7 +2651,7 @@
     // ЛЕТУНЫ через стену — часто и по нескольку (со 2-й волны): толпа лезет и по воздуху
     if(D.wave>=2&&Math.random()<0.6){const fn=1+Math.floor(Math.random()*3);for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
     // основная волна — крупные пачки
-    const n=Math.min(D.toSpawn,6+Math.floor(Math.random()*5)+Math.floor(D.wave/4));
+    const n=Math.min(D.toSpawn,9+Math.floor(Math.random()*6)+Math.floor(D.wave/3));
     for(let i=0;i<n;i++){act2SpawnOne(rndSide(),'normal');D.toSpawn--;if(D.toSpawn<=0)break;}
   }
   function act2Win(){
@@ -7782,16 +7785,19 @@
       if(D.phase==='wave'){
         for(const ga of (B2.gates||[]))if(ga.open){x.save();edgeArrow(ga.cx,ga.cy,10,'#ff6b6b',1.3);x.restore();}
       }
-      // ПОКУПКА: кристаллы летят от счётчика 💎 (экран) в улучшаемую конструкцию (мир→экран)
+      // ПОКУПКА: голубые кристаллы летят от счётчика 💎 в улучшаемую конструкцию (старт чуть НИЖЕ
+      // пилюли, чтобы не перекрывать саму цифру суммы; ближние к счётчику точки не рисуем)
       if(act2Spend.length){
-        const src=(gemCounterPos&&gemCounterPos.x)?gemCounterPos:{x:W/2,y:24};
-        x.save();x.textAlign='center';x.textBaseline='middle';
+        const gc=(gemCounterPos&&gemCounterPos.x)?gemCounterPos:{x:W/2,y:24};
+        const src={x:gc.x,y:gc.y+16};
+        x.save();
         for(const sp of act2Spend){
-          const f=Math.min(1,sp.t/sp.dur),ef=f*f*(3-2*f);
+          const f=Math.min(1,sp.t/sp.dur);if(f<0.12)continue; // не рисуем, пока частица ещё на счётчике
+          const ef=f*f*(3-2*f);
           const ex=(sp.wx-player.x)*zoom+W/2,ey=(sp.wy-player.y)*zoom+H/2;
           const px=src.x+(ex-src.x)*ef,py=src.y+(ey-src.y)*ef;
-          x.globalAlpha=1-f*0.25;x.fillStyle=sp.col;x.shadowColor=sp.col;x.shadowBlur=8;
-          x.beginPath();x.arc(px,py,3.4,0,Math.PI*2);x.fill();
+          x.globalAlpha=Math.min(1,(f-0.12)*4)*(1-f*0.2);x.fillStyle='#7dd3fc';x.shadowColor='#38bdf8';x.shadowBlur=5;
+          x.beginPath();x.arc(px,py,2.7,0,Math.PI*2);x.fill();
         }
         x.shadowBlur=0;x.globalAlpha=1;x.restore();
       }
