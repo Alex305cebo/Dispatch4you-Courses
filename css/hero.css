@@ -214,6 +214,136 @@ h1 {
   font-weight: 600;
 }
 
+/* ========================================
+   ФОНОВЫЙ СЛОЙ С ВИДЕО
+   Слой живёт в <main>, а не в герое: он тянется под героем и следующей
+   секцией. При скролле уезжает медленнее контента (js/hero-parallax.js).
+
+   mix-blend-mode:screen — вся соль. У ролика чёрные поля, а в этом режиме
+   чёрный не даёт вклада вовсе, то есть становится прозрачным. Поэтому не
+   нужны ни маски, ни подгонка фона под цвет кадра: на странице остаётся
+   только светящаяся сцена.
+   ======================================== */
+main { position: relative; }
+
+.hero-bg-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* Пиксели, а не vh: на телефоне при скролле прячется и возвращается
+     адресная строка, vh пересчитывается — и слой прыгает. */
+  height: 1500px;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hero-bg-video {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 100%;
+  max-width: 1700px;
+  /* svh привязан к «маленькому» вьюпорту и не меняется при появлении
+     адресной строки. Для старых браузеров ниже есть запасной vh. */
+  height: 100vh;
+  height: 100svh;
+  max-height: 900px;
+  object-fit: cover;
+  mix-blend-mode: screen;
+  opacity: 0.42;
+  will-change: transform;
+  /* left:50% + перенос на половину ширины: центрируем без margin,
+     чтобы параллакс мог свободно писать в translate3d по Y */
+  transform: translate3d(-50%, 0, 0);
+
+  /* Низ кадра гасим МАСКОЙ, а не заливкой поверх.
+     Фон страницы — фиксированный анимированный градиент (body::before),
+     и любой сплошной прямоугольник поверх него перекрывает свечение,
+     обрываясь заметной полосой на границе слоя. Маска же ничего не рисует:
+     видео просто уходит в прозрачность, фон остаётся нетронутым. */
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0%, #000 52%, rgba(0, 0, 0, 0.45) 76%, transparent 96%);
+  mask-image: linear-gradient(to bottom,
+    #000 0%, #000 52%, rgba(0, 0, 0, 0.45) 76%, transparent 96%);
+}
+
+/* контент поверх слоя */
+section.hero { position: relative; z-index: 1; min-height: min(84vh, 740px); }
+.why-section { position: relative; z-index: 1; }
+
+/* Затемнение под текстом: сцена яркая, без него заголовок не читается.
+   Гасим к центру, к краям отпускаем — кадр остаётся виден. */
+section.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 62% 66% at 50% 46%,
+    rgba(5, 8, 16, 0.88), rgba(5, 8, 16, 0.6) 52%, rgba(5, 8, 16, 0) 82%);
+}
+section.hero > .container { position: relative; z-index: 1; }
+
+/* ── Телефон ────────────────────────────────────────────────────────
+   Параллакс здесь даёт CSS scroll-driven animation (ниже), а не JS: она
+   идёт на композиторном потоке, том же, что и прокрутка, поэтому не
+   отстаёт. Для этого пришлось убрать mix-blend-mode — он вынуждает
+   пересчитывать смешение каждый кадр и выкидывает анимацию с композитора.
+   Вместо него интеграцию даёт радиальная маска: она статична относительно
+   кадра, кэшируется в слой и анимации не мешает. Сцена читается как
+   светящийся остров — так же, как делал бы screen.
+   ────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Слой в пикселях: vh здесь дёргается вместе с адресной строкой. */
+  .hero-bg-stage { height: 1800px; }
+
+  .hero-bg-video {
+    top: 32px;
+    width: 140%;
+    max-width: none;
+    height: auto;
+    max-height: none;
+    aspect-ratio: 16 / 9;   /* cover на вертикальном экране раздувает сцену вдвое */
+    object-fit: contain;
+    mix-blend-mode: normal; /* блокирует композиторную анимацию — снимаем */
+    opacity: 0.62;
+    /* радиальная маска гасит все края кадра в прозрачность */
+    -webkit-mask-image: radial-gradient(ellipse 72% 60% at 50% 42%,
+      #000 28%, rgba(0, 0, 0, 0.55) 60%, transparent 82%);
+    mask-image: radial-gradient(ellipse 72% 60% at 50% 42%,
+      #000 28%, rgba(0, 0, 0, 0.55) 60%, transparent 82%);
+  }
+  section.hero::before {
+    background: radial-gradient(ellipse 108% 62% at 50% 40%,
+      rgba(5, 8, 16, 0.55), rgba(5, 8, 16, 0.38) 58%, rgba(5, 8, 16, 0) 92%);
+  }
+  section.hero { min-height: auto; }
+}
+
+/* Компоситорный параллакс: кадр уезжает вверх медленнее страницы.
+   translateY растёт со скроллом и частично гасит естественный подъём —
+   net = scroll − translateY. При TO/RANGE = 0.65 остаётся ~0.35 скорости,
+   то есть видео живёт примерно до прокрутки 1120px (герой + заход в блок ниже). */
+@keyframes hero-bg-parallax {
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(-50%, 780px, 0); }
+}
+@supports (animation-timeline: scroll()) {
+  @media (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+    .hero-bg-video {
+      animation: hero-bg-parallax linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 1200px;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg-video { transform: translate3d(-50%, 0, 0) !important; }
+}
+
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .hero {
