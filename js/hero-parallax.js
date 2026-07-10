@@ -1,11 +1,10 @@
 /**
- * hero-parallax.js — фоновое видео уезжает медленнее контента.
+ * hero-parallax.js — ФОЛБЭК-параллакс для десктопа без scroll-timeline.
  *
- * ТОЛЬКО ДЕСКТОП (>768px). На телефоне параллакса нет намеренно: прокрутка там
- * идёт в отдельном (композиторном) потоке, а JS — в основном, поэтому любой
- * сдвиг через скрипт отстаёт на кадр и «догоняет» после отпускания пальца.
- * На мобильном видео — обычный элемент в потоке: скроллится вместе со
- * страницей, мгновенно и без рывков, потому что это и есть нативная прокрутка.
+ * Основной механизм — CSS scroll-driven animation (см. hero.css): она идёт на
+ * композиторном потоке и не лагает. Этот скрипт нужен ТОЛЬКО там, где её нет
+ * (Safari desktop) И это не телефон: на мобильном Safari JS-параллакс отставал
+ * бы на тач-скролле, поэтому там оставляем обычную прокрутку со страницей.
  */
 (function () {
   'use strict';
@@ -16,14 +15,16 @@
 
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
   var narrow = window.matchMedia('(max-width: 768px)');
+  // scroll-driven animation поддержана — CSS всё делает сам, JS не нужен
+  var cssHandles = window.CSS && CSS.supports && CSS.supports('animation-timeline: scroll()');
 
   var SPEED = 0.38;   // 0 = стоит, 1 = едет с текстом
-  var SMOOTH = 0.22;  // плавность подхода к цели (десктоп)
+  var SMOOTH = 0.22;  // плавность подхода к цели
   var EPS = 0.05;
 
   var current = 0, target = 0, running = false, idle = 0;
 
-  function disabled() { return calm.matches || narrow.matches; }
+  function disabled() { return calm.matches || narrow.matches || cssHandles; }
 
   // Снять инлайн-transform, чтобы им управлял CSS (на мобильном — scroll-driven
   // анимация, в reduced-motion — базовое правило). Инлайн перебил бы их.
