@@ -134,7 +134,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-], { basename: '/dispatch-academy-app' });
+], { basename: '/games/dispatch-academy-app' });
 
 function App() {
   return (

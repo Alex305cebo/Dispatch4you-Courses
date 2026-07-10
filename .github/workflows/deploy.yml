@@ -307,7 +307,7 @@ jobs:
           fi
           echo "✅ states-10m.json OK (HTTP $STATUS)"
 
-  # ─── 4. Dispatch Academy (React/Vite) → /dispatch-academy-app/ ────
+  # ─── 4. Dispatch Academy (React/Vite) → /games/dispatch-academy-app/ ────
   deploy-academy:
     name: Build & deploy Dispatch Academy
     runs-on: ubuntu-latest
@@ -341,14 +341,14 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Deploy to /dispatch-academy-app/ (with retry)
+      - name: Deploy to /games/dispatch-academy-app/ (with retry)
         run: |
           for i in 1 2 3; do
             echo "Deploy attempt $i..."
             rsync -avzrc --delete \
               -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=60 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
               games/dispatch-academy-app/dist/ \
-              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/dispatch-academy-app/ \
+              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/games/dispatch-academy-app/ \
               && echo "✅ Deploy successful" && exit 0
             echo "⚠️ Attempt $i failed, waiting 20s..."
             sleep 20

@@ -18,7 +18,7 @@ export default function AchievementModal() {
   useEffect(() => {
     if (!visible || !soundEnabled) return;
     try {
-      const audio = new Audio('/dispatch-academy-app/sounds/success.mp3');
+      const audio = new Audio('/games/dispatch-academy-app/sounds/success.mp3');
       audio.volume = 0.5;
       audio.play().catch(() => {});
     } catch {

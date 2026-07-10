@@ -35,7 +35,7 @@ export default function LevelUpModal() {
   useEffect(() => {
     if (!showLevelUpModal || !soundEnabled) return;
     try {
-      const audio = new Audio('/dispatch-academy-app/sounds/success.mp3');
+      const audio = new Audio('/games/dispatch-academy-app/sounds/success.mp3');
       audio.volume = 0.6;
       audio.play().catch(() => {
         /* autoplay may be blocked — ignore */

@@ -267,7 +267,7 @@ export default function TaskRenderer({ task, onComplete, onSkip, isRetry }: Task
       // Play success sound if correct and sound is enabled
       if (correct && soundEnabled) {
         try {
-          const audio = new Audio('/dispatch-academy-app/sounds/success.mp3');
+          const audio = new Audio('/games/dispatch-academy-app/sounds/success.mp3');
           audio.volume = 0.5;
           audio.play().catch(() => {
             // Silently fail if audio can't play (autoplay policy, missing file)

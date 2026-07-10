@@ -11,7 +11,7 @@
 
 const VERSION = 'v1';
 const CACHE = `dispatch-academy-${VERSION}`;
-const BASE = '/dispatch-academy-app/';
+const BASE = '/games/dispatch-academy-app/';
 const APP_SHELL = `${BASE}index.html`;
 
 self.addEventListener('install', (event) => {

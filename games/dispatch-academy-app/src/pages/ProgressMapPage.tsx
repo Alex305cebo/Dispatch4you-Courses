@@ -19,7 +19,7 @@ import type { TaskResult } from '../types/progress';
 const MAPS = [
   {
     id: 1,
-    image: '/dispatch-academy-app/maps/week-1.webp',
+    image: '/games/dispatch-academy-app/maps/week-1.webp',
     title: 'Основы тракинга',
     levels: [
       { id: 1, x: 50.1, y: 86.8 },
@@ -51,7 +51,7 @@ const MAPS = [
   },
   {
     id: 2,
-    image: '/dispatch-academy-app/maps/week-2.webp',
+    image: '/games/dispatch-academy-app/maps/week-2.webp',
     title: 'Профессиональный диспетчинг',
     levels: [
       { id: 12, x: 50.2, y: 85.4 },
@@ -85,7 +85,7 @@ const MAPS = [
   },
   {
     id: 3,
-    image: '/dispatch-academy-app/maps/dream.webp',
+    image: '/games/dispatch-academy-app/maps/dream.webp',
     title: '💤 Сон диспетчера',
     levels: [
       { id: 101, x: 49.7, y: 90.9 },
@@ -251,8 +251,8 @@ export default function ProgressMapPage() {
 
   // Random avatar video for map 1 — chosen once per popup open
   const MAP1_VIDEOS = [
-    '/dispatch-academy-app/videos/student-avatar.mp4',
-    '/dispatch-academy-app/videos/student-avatar-3.mp4',
+    '/games/dispatch-academy-app/videos/student-avatar.mp4',
+    '/games/dispatch-academy-app/videos/student-avatar-3.mp4',
   ];
   const [randomVideoSrc, setRandomVideoSrc] = useState(MAP1_VIDEOS[0]);
 
@@ -810,7 +810,7 @@ export default function ProgressMapPage() {
                   <div className="w-28 h-28 lg:w-40 lg:h-40 rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-lg shadow-cyan-500/10">
                     <video
                       className="w-full h-full object-cover"
-                      src={currentMapIndex === 0 ? randomVideoSrc : '/dispatch-academy-app/videos/student-avatar-2.mp4'}
+                      src={currentMapIndex === 0 ? randomVideoSrc : '/games/dispatch-academy-app/videos/student-avatar-2.mp4'}
                       autoPlay
                       loop
                       muted

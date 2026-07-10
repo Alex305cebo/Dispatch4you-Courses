@@ -29,7 +29,7 @@ export function showLocalNotification(title: string, body: string): void {
   try {
     new Notification(title, {
       body,
-      icon: '/dispatch-academy-app/icon.svg',
+      icon: '/games/dispatch-academy-app/icon.svg',
     });
   } catch {
     /* construction can throw in some embedded contexts — ignore */
