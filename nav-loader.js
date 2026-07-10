@@ -182,7 +182,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=11.2';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=11.3';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
@@ -536,9 +536,32 @@
                 '@media(min-width:1024px){.desk-lang{display:inline-flex}}' +
                 /* topbar-lang: постоянно видимый переключатель рядом с бургером —
                    виден на ЛЮБОЙ ширине <1024px, не только когда открыто мобильное меню */
-                '.topbar-lang{display:none;flex-shrink:0;background:rgba(255,255,255,.05);border-radius:10px;padding:2px;margin-right:2px}' +
-                '@media(max-width:1023px){.topbar-lang{display:inline-flex}}' +
-                '.topbar-lang .d4y-lang{font-size:11px;padding:5px 6px}';
+                '.topbar-lang{display:none;flex-shrink:0;background:rgba(255,255,255,.05);border-radius:10px;padding:2px}' +
+                '.topbar-lang .d4y-lang{font-size:11px;padding:5px 6px}' +
+                /* Правая группа (XP-бейдж + переключатель + бургер) прижата вправо:
+                   свободное место забирает логотип, поэтому auto-отступы у бургера
+                   и бейджа снимаем — иначе оно делится между ними и переключатель
+                   уезжает к логотипу. */
+                '@media(max-width:1023px){' +
+                '.topbar-lang{display:inline-flex}' +
+                '.nav-content>.logo{margin-right:auto}' +
+                '.nav-content>.burger{margin-left:0}' +
+                '.nav-content>.mob-xp-wrap{margin-left:0}' +
+                '}' +
+                /* Узкие экраны: у залогиненного в шапке ещё и XP-бейдж, и вчетвером
+                   (логотип + бейдж + переключатель + бургер) они не влезают.
+                   До 400px поджимаем отступы, число XP оставляем. */
+                '@media(max-width:400px){' +
+                '.logo-text{font-size:15px}' +
+                '.mob-xp-wrap .mob-xp-badge{padding:6px 8px}' +
+                '.topbar-lang .d4y-lang{font-size:10px;padding:5px 5px}' +
+                '}' +
+                /* Ниже 360px даже так не хватает — сворачиваем бейдж до аватара
+                   (число XP остаётся в мобильном меню и на дашборде). */
+                '@media(max-width:360px){' +
+                '.mob-xp-wrap .mob-xp-val{display:none}' +
+                '.mob-xp-wrap .mob-xp-badge{gap:0}' +
+                '}';
             (document.head || document.documentElement).appendChild(st);
         }
         var desk = document.getElementById('nav-actions-desktop');
