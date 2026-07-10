@@ -182,7 +182,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=11.1';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=11.2';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
@@ -200,6 +200,7 @@
 <a href="{{BASE}}pages/users-stats.html" class="nav-stats-icon" id="nav-stats-icon" style="display:none" title="Статистика пользователей"><i class="fa fa-chart-bar"></i></a>
 <div class="nav-actions" id="nav-actions-desktop"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
 <div class="mob-xp-wrap" id="mob-xp-wrap" style="display:none"><a href="{{BASE}}dashboard.html" class="mob-xp-badge" id="mob-xp-badge"><span class="mob-xp-avatar" id="mob-xp-avatar">👤</span><span class="mob-xp-val" id="mob-xp-val">⚡ 0 XP</span></a></div>
+<div id="topbar-lang-anchor"></div>
 <button class="burger" id="burgerBtn"><span></span><span></span><span></span></button>
 </div></div></nav>
 <div class="mob-overlay" id="mobOverlay"></div>
@@ -533,13 +534,17 @@
                 '.d4y-lang-sep{color:#475569;font-size:11px}' +
                 '.desk-lang{display:none;margin-right:4px}' +
                 '@media(min-width:1024px){.desk-lang{display:inline-flex}}' +
-                '.mob-lang{display:inline-flex;margin:2px 0 14px}';
+                /* topbar-lang: постоянно видимый переключатель рядом с бургером —
+                   виден на ЛЮБОЙ ширине <1024px, не только когда открыто мобильное меню */
+                '.topbar-lang{display:none;flex-shrink:0;background:rgba(255,255,255,.05);border-radius:10px;padding:2px;margin-right:2px}' +
+                '@media(max-width:1023px){.topbar-lang{display:inline-flex}}' +
+                '.topbar-lang .d4y-lang{font-size:11px;padding:5px 6px}';
             (document.head || document.documentElement).appendChild(st);
         }
         var desk = document.getElementById('nav-actions-desktop');
         if (desk && !document.querySelector('.desk-lang')) desk.insertAdjacentHTML('beforebegin', langSwitchHTML('desk-lang'));
-        var mobBody = document.querySelector('#mobMenu .mob-body');
-        if (mobBody && !document.querySelector('.mob-lang')) mobBody.insertAdjacentHTML('afterbegin', langSwitchHTML('mob-lang'));
+        var topbar = document.getElementById('topbar-lang-anchor');
+        if (topbar && !document.querySelector('.topbar-lang')) topbar.insertAdjacentHTML('beforeend', langSwitchHTML('topbar-lang'));
     }
 
     // ── SEO: hreflang alternates for this page ────────────────────
