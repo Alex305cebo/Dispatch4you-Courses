@@ -1550,6 +1550,8 @@
   // ОБОРОНА БАЗЫ (Акт 2): волновой режим — держим 30 волн, мобы прорываются через ворота
   // и грызут здания; купол-щит в перерыв держит периметр и лечит, на волне ломается гранью.
   let act2Def=null;
+  let act2Zaps=[]; // молнии турелей-лазеров: цепь между мобами (полилинии с затуханием)
+  let act2Spend=[]; // «покупка»: кристаллы летят от счётчика 💎 сверху в улучшаемую конструкцию
   let vaultSpawns=[]; // отложенные точки спавна — мобы материализуются по мере продвижения
   let vaultLoot=[],vaultOpening=false,vaultOpenT=0; // ЦЕРЕМОНИЯ ПОРТАЛА: выброс добычи с физикой после смерти всех боссов
   let challenge=null,challengeAcc=0; // мини-челленджи по ходу забега
@@ -1793,7 +1795,7 @@
     t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lastRushAnnounced=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
-    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;act2BaseWalls=null;act2Def=null;mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
+    vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;act2BaseWalls=null;act2Def=null;act2Zaps=[];act2Spend=[];mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
     points=0;shopBought={};
     pickupAcc=0;pickupInterval=rand(10,16);shrineAcc=0;
     WEAPON_UNLOCKS.forEach(w=>w.done=false);
@@ -2443,16 +2445,16 @@
   function turCost(lv){return 120+lv*150;} // стоимость апгрейда турели ур.lv→lv+1
   function bldRepairCost(b){return Math.round(b.maxHp*0.25);} // полный ремонт здания
   function bldUpCost(b){return 260+(b.lv||0)*220;} // апгрейд бонуса здания
-  // общий «поток кристаллов» из корабля в конструкцию во время апгрейда
+  // «поток кристаллов»: летят ОТ счётчика 💎 сверху экрана В улучшаемую конструкцию (tx,ty — мир)
   function crystalStream(sx,sy,tx,ty,col){
-    if(particles.length>560)return;
-    const a=Math.atan2(ty-sy,tx-sx);
-    particles.push({x:sx+rand(-8,8),y:sy+rand(-8,8),vx:Math.cos(a)*3.2,vy:Math.sin(a)*3.2,life:0.4,color:col||'#7dd3fc',sz:2.4});
+    if(Math.random()>0.4||act2Spend.length>60)return; // троттлинг потока
+    act2Spend.push({wx:tx,wy:ty,col:col||'#7dd3fc',t:0,dur:0.5});
   }
   // ТУРЕЛИ БАЗЫ: автоцель (приоритет — прорвавшимся внутрь) + прокачка за кристаллы (ур.1-8,
   // на 8 — лазер по нескольким). Огонь, урон, стволы, дальность растут с уровнем.
   function updateBaseTurrets(dt){
     const B=act2BaseWalls;if(!B)return;
+    if(act2Zaps.length){for(const z of act2Zaps)z.life-=dt;act2Zaps=act2Zaps.filter(z=>z.life>0);}
     for(const tw of B.towers){
       if(tw.lv==null)tw.lv=1;if(tw.paid==null)tw.paid=0;
       const lv=tw.lv;
@@ -2482,8 +2484,15 @@
         tdmg=Math.max(15,estPlayerDps()*(0.09+lv*0.02))*(0.85+0.15*act2BuildingBonus('workshop'));
       if(tw.fireAcc>=cool){
         tw.fireAcc=0;tw.muzzle=0.12;
-        if(lv>=TUR_MAX){ // ЛАЗЕР: быстрый пробивающий луч-снаряд, косит несколько
-          projectiles.push({x:tw.x,y:tw.y,vx:Math.cos(tw.aim)*820,vy:Math.sin(tw.aim)*820,r:5,life:1.1,pierceLeft:6,hitSet:new Set(),dmg:tdmg*1.3,color:'#f43f5e'});
+        if(lv>=TUR_MAX){ // МОЛНИЯ: цепь-разряд, перескакивает между ближними мобами
+          const pts=[{x:tw.x,y:tw.y}];const hit=new Set([best]);let cur=best;
+          best.hp-=tdmg*1.4;best.hitFlash=Math.max(best.hitFlash||0,0.1);pts.push({x:cur.x,y:cur.y});
+          for(let j=0;j<4;j++){ // до 4 перескоков
+            let nx=null,nd=170*170;
+            for(const e2 of enemies){if(hit.has(e2))continue;const dd=(e2.x-cur.x)**2+(e2.y-cur.y)**2;if(dd<nd){nd=dd;nx=e2;}}
+            if(!nx)break;hit.add(nx);nx.hp-=tdmg*1.0;nx.hitFlash=Math.max(nx.hitFlash||0,0.1);pts.push({x:nx.x,y:nx.y});cur=nx;
+          }
+          act2Zaps.push({pts,life:0.16,maxLife:0.16});
         }else{
           const shots=lv>=5?3:lv>=3?2:1,spread=0.13;
           for(let s=0;s<shots;s++){const a=tw.aim+(s-(shots-1)/2)*spread;
@@ -2594,8 +2603,8 @@
     D.breakSides=sides;
     for(const ga of B.gates){if(sides.indexOf(ga.side)>=0){ga.wave=true;ga.flick=1.1;}}
     rebuildBaseWallRects();
-    D.toSpawn=Math.round(14+D.wave*3.2);D.spawnAcc=0.25;D.shield.up=false;D.waveClean=true;
-    D.siegeLeft=D.wave>=3?Math.floor(D.wave/4)+1:0; // сколько таранов выпустить за волну
+    D.toSpawn=Math.round(26+D.wave*6);D.spawnAcc=0.2;D.shield.up=false;D.waveClean=true; // заметно больше мобов
+    D.siegeLeft=D.wave>=3?Math.floor(D.wave/3)+1:0; // сколько таранов выпустить за волну
     announce={text:'⚔ ВОЛНА '+D.wave+'/'+D.maxWaves+'! Купол пробит: '+sides.join(' · ')+' — держи ворота!',life:4,color:'#ff2d55'};
     flashFx(0.5,'255,45,85');camShake=Math.max(camShake,10);sfxBoom(0.5,0.3,700,60,true);
   }
@@ -2611,10 +2620,14 @@
       e.siege=true;e.hp=e.maxHp=e.maxHp*6;e.r=Math.max(e.r*1.8,26);e.speed=Math.max(38,e.speed*0.45);
       e.dmg*=1.4;e.color='#b91c1c';e.glow='#ef4444';e.skinShape='shield';
       announce={text:'🐗 ТАРАН-ОСАДНИК рвётся к главному зданию — перехвати!',life:3,color:'#ef4444'};beep(90,0.3,'sawtooth',0.14);
-    }else if(kind==='flyer'){ // ЛЕТУН: перелетает стену, летит прямо к зданию
-      e.flyer=true;e.hp=e.maxHp=e.maxHp*0.7;e.r=Math.max(e.r*0.9,9);e.speed=Math.max(70,e.speed*0.9);
-      e.color='#a78bfa';e.glow='#c4b5fd';e.skinShape='triangle';
-      // залетает из-за стены — стартуем чуть дальше снаружи
+    }else if(kind==='flyer'){ // ЛЕТУН: перелетает стену/ворота, летит прямо к зданию — разные виды
+      e.flyer=true;
+      const fv=Math.floor(Math.random()*3); // 0 рой-мелочь, 1 обычный, 2 крупный «шершень»
+      const fmul=fv===0?0.5:fv===2?1.4:0.8;
+      e.hp=e.maxHp=e.maxHp*fmul;e.r=Math.max((fv===0?7:fv===2?14:10),e.r*(fv===2?1.1:0.9));
+      e.speed=Math.max(75,e.speed*(fv===0?1.2:fv===2?0.8:1));e.dmg*=fv===2?1.4:1;
+      e.color=fv===2?'#7c3aed':'#a78bfa';e.glow='#c4b5fd';e.skinShape=fv===2?'fang':'triangle';
+      e._wing=rand(0,6.28);
       e.x=B.cx+ga.nx*(B.R+120)+(side==='N'||side==='S'?rand(-spread,spread):0);
       e.y=B.cy+ga.ny*(B.R+120)+(side==='E'||side==='W'?rand(-spread,spread):0);
     }
@@ -2622,11 +2635,12 @@
   function act2SpawnBatch(){
     const D=act2Def,B=act2BaseWalls;if(!D||!B||!D.breakSides.length)return;
     const rndSide=()=>D.breakSides[Math.floor(Math.random()*D.breakSides.length)];
-    // изредка — таран (пока есть в запасе волны)
-    if(D.siegeLeft>0&&Math.random()<0.5){D.siegeLeft--;act2SpawnOne(rndSide(),'siege');D.toSpawn=Math.max(0,D.toSpawn-1);}
-    // изредка с 5-й волны — летун через стену
-    if(D.wave>=5&&Math.random()<0.22){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}
-    const n=Math.min(D.toSpawn,2+Math.floor(Math.random()*3));
+    // таран (пока есть в запасе волны)
+    if(D.siegeLeft>0&&Math.random()<0.6){D.siegeLeft--;act2SpawnOne(rndSide(),'siege');D.toSpawn=Math.max(0,D.toSpawn-1);}
+    // ЛЕТУНЫ через стену — часто и по нескольку (со 2-й волны): толпа лезет и по воздуху
+    if(D.wave>=2&&Math.random()<0.5){const fn=1+Math.floor(Math.random()*2);for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
+    // основная волна — крупные пачки
+    const n=Math.min(D.toSpawn,4+Math.floor(Math.random()*4)+Math.floor(D.wave/6));
     for(let i=0;i<n;i++){act2SpawnOne(rndSide(),'normal');D.toSpawn--;if(D.toSpawn<=0)break;}
   }
   function act2Win(){
@@ -2677,6 +2691,8 @@
     // МАЯК-ПРИМАНКА: таймеры активности и перезарядки
     if(D.lure&&D.lure.t>0){D.lure.t-=dt;if(Math.random()<0.4)particles.push({x:D.lure.x+rand(-14,14),y:D.lure.y+rand(-14,14),vx:0,vy:-1,life:0.6,color:'#fb7185',sz:2.5});}
     if(D.lureCd>0)D.lureCd-=dt;
+    // поток «покупки» — кристаллы летят от счётчика к конструкции
+    if(act2Spend.length){for(const sp of act2Spend)sp.t+=dt;act2Spend=act2Spend.filter(sp=>sp.t<sp.dur);}
     if(D.phase==='break'){
       D.shield.up=true;
       if(inBase)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.18*dt);
@@ -2685,7 +2701,7 @@
       if(D.phaseT<=0)act2StartWave();
     }else if(D.phase==='wave'){
       D.shield.up=false;
-      if(D.toSpawn>0){D.spawnAcc-=dt;if(D.spawnAcc<=0){act2SpawnBatch();D.spawnAcc=rand(0.5,1.1);}}
+      if(D.toSpawn>0){D.spawnAcc-=dt;if(D.spawnAcc<=0){act2SpawnBatch();D.spawnAcc=rand(0.35,0.8);}}
       if(D.toSpawn<=0&&!enemies.some(e=>e.defense)){
         const cleared=D.wave;
         // БОНУС ЗА ЧИСТУЮ ВОЛНУ: ни одно здание не задето
@@ -7535,6 +7551,10 @@
         x.strokeStyle='#fde047';x.lineWidth=5/zoom;x.beginPath();x.arc(0,0,s+16,-Math.PI/2,-Math.PI/2+f*Math.PI*2);x.stroke();
         x.fillStyle='#fde047';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.fillText('⬆ '+cost+'💎',0,-s-24);}
       else if(b.near==='fix'){x.fillStyle='#4ade80';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.fillText('🔧 чиню…',0,-s-24);}
+      // ПОДПИСЬ здания: название + уровень (понятно, что делает и насколько прокачано)
+      const NM={shield:'Генератор щита',armory:'Арсенал',workshop:'Мастерская',medbay:'Медблок',main:'Главное здание'}[b.kind]||'Здание';
+      x.fillStyle=BC;x.font='bold '+Math.round(11.5/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='top';
+      x.fillText(NM+(b.lv?(' · ур.'+b.lv):''),0,s+7);
       // дым при уроне
       if(hpf<0.6&&Math.random()<0.08&&particles.length<560)particles.push({x:b.x+rand(-r,r),y:b.y-r*0.6,vx:rand(-0.3,0.3),vy:-0.8,life:1.3,color:'#64748b',sz:2.5});
       x.restore();
@@ -7554,8 +7574,11 @@
       x.save();x.rotate(tw.aim||0);
       x.fillStyle=col;x.shadowColor=col;x.shadowBlur=tw.muzzle>0?18:(6+lv);
       const barrels=laser?1:(lv>=5?3:lv>=3?2:1);
-      if(laser){x.fillRect(-7,-6,26,12);x.fillStyle='#fecaca';x.fillRect(16,-2,10,4);
-        if(tw.muzzle>0){x.strokeStyle='rgba(244,63,94,0.6)';x.lineWidth=8/zoom;x.beginPath();x.moveTo(20,0);x.lineTo(160,0);x.stroke();}}
+      if(laser){ // короткое дуло + шар-излучатель молний (сам разряд рисуется отдельно)
+        x.fillRect(-7,-5,13,10);
+        x.fillStyle='#fecaca';x.beginPath();x.arc(9,0,tw.muzzle>0?5:4,0,Math.PI*2);x.fill();
+        if(tw.muzzle>0){x.fillStyle='#fff';x.beginPath();x.arc(9,0,2.5,0,Math.PI*2);x.fill();}
+      }
       else{for(let i=0;i<barrels;i++){const off=(i-(barrels-1)/2)*6;x.fillRect(-6,off-2.2,22,4.4);}}
       x.beginPath();x.arc(0,0,9,0,Math.PI*2);x.fill();
       if(tw.muzzle>0){x.fillStyle='#e0f2fe';x.beginPath();x.arc(18,0,4,0,Math.PI*2);x.fill();}
@@ -7608,6 +7631,18 @@
         x.beginPath();x.arc(0,-34,6,0,Math.PI*2);x.fill();x.shadowBlur=0;
         x.fillStyle='#fecdd3';x.font='bold '+Math.round(11/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='middle';x.fillText('📡 '+Math.ceil(L.t)+'с',0,18);
         x.restore();}
+      // МОЛНИИ турелей-лазеров: ломаные разряды между мобами
+      if(act2Zaps.length)for(const z of act2Zaps){
+        const a=Math.max(0,z.life/z.maxLife);
+        for(let pass=0;pass<2;pass++){
+          x.strokeStyle=pass?'rgba(255,255,255,'+a+')':'rgba(244,63,94,'+a+')';x.lineWidth=(pass?2:5)/zoom;
+          x.shadowColor='#f43f5e';x.shadowBlur=pass?0:12;x.beginPath();
+          for(let i=0;i<z.pts.length;i++){const p=z.pts[i];
+            const jx=i?rand(-6,6):0,jy=i?rand(-6,6):0;
+            i?x.lineTo(p.x+jx,p.y+jy):x.moveTo(p.x,p.y);}
+          x.stroke();x.shadowBlur=0;
+        }
+      }
       // КУПОЛ-ЩИТ (поднят в перерыв — держит периметр и лечит)
       if(D&&D.shield&&D.shield.up){
         const pulse=0.5+0.5*Math.sin(t*3),o=B.R+B.t+6;
@@ -7735,6 +7770,19 @@
       // ИНДИКАТОРЫ ПРОРЫВА: стрелки к открытым воротам + к главному зданию, если под ударом
       if(D.phase==='wave'){
         for(const ga of (B2.gates||[]))if(ga.open){x.save();edgeArrow(ga.cx,ga.cy,10,'#ff6b6b',1.3);x.restore();}
+      }
+      // ПОКУПКА: кристаллы летят от счётчика 💎 (экран) в улучшаемую конструкцию (мир→экран)
+      if(act2Spend.length){
+        const src=(gemCounterPos&&gemCounterPos.x)?gemCounterPos:{x:W/2,y:24};
+        x.save();x.textAlign='center';x.textBaseline='middle';
+        for(const sp of act2Spend){
+          const f=Math.min(1,sp.t/sp.dur),ef=f*f*(3-2*f);
+          const ex=(sp.wx-player.x)*zoom+W/2,ey=(sp.wy-player.y)*zoom+H/2;
+          const px=src.x+(ex-src.x)*ef,py=src.y+(ey-src.y)*ef;
+          x.globalAlpha=1-f*0.25;x.fillStyle=sp.col;x.shadowColor=sp.col;x.shadowBlur=8;
+          x.beginPath();x.arc(px,py,3.4,0,Math.PI*2);x.fill();
+        }
+        x.shadowBlur=0;x.globalAlpha=1;x.restore();
       }
     }
     updateLureBtn();
