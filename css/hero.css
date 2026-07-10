@@ -251,16 +251,17 @@ main { position: relative; }
   height: auto;
   aspect-ratio: 16 / 9;   /* показываем весь кадр, не обрезаем */
   object-fit: contain;
-  opacity: 0.62;
+  opacity: 0.55;
   will-change: transform;
   /* left:50% + сдвиг на половину ширины центрирует без margin, а X-часть
      translate остаётся в каждом кейфрейме параллакса */
   transform: translate3d(-50%, 0, 0);
-  /* радиальная маска гасит все края кадра в прозрачность */
-  -webkit-mask-image: radial-gradient(ellipse 74% 66% at 50% 46%,
-    #000 30%, rgba(0, 0, 0, 0.55) 62%, transparent 84%);
-  mask-image: radial-gradient(ellipse 74% 66% at 50% 46%,
-    #000 30%, rgba(0, 0, 0, 0.55) 62%, transparent 84%);
+  /* Десктоп: mix-blend-mode:screen делает чёрный фон кадра ПОЛНОСТЬЮ
+     прозрачным (не затемняет страницу, а исчезает), поэтому нет тёмного
+     прямоугольника и вертикальных краёв. На десктопе даже с blend scroll-
+     driven анимация плавная — тач-скролла тут нет. На телефоне ниже blend
+     снят и заменён маской (там blend вернул бы лаг). */
+  mix-blend-mode: screen;
 }
 
 /* контент поверх слоя */
@@ -287,6 +288,8 @@ section.hero > .container { position: relative; z-index: 1; }
     width: 140%;
     max-width: none;
     opacity: 0.62;
+    /* на телефоне blend снимаем (вернул бы лаг) и гасим края маской */
+    mix-blend-mode: normal;
     -webkit-mask-image: radial-gradient(ellipse 72% 60% at 50% 42%,
       #000 28%, rgba(0, 0, 0, 0.55) 60%, transparent 82%);
     mask-image: radial-gradient(ellipse 72% 60% at 50% 42%,
