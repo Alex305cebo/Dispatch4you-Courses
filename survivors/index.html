@@ -675,25 +675,39 @@
     [98.00,146.83,196.00,220.00],
   ];
   const CALM_ARP=[220.00,246.94,261.63,329.63,392.00,440.00]; // ля-минор пентатоника
-  let mChordIdx=0,mNextChord=0,mNextArp=0;
+  let mChordIdx=0,mNextChord=0,mNextArp=0,mNextBass=null;
+  // ЕДИНАЯ МУЗЫКА: всегда спокойный ambient-движок, а «бой» — та же мелодия, в которую ПЛАВНО
+  // перетекает интенсивность (musicIntensity 0..1): подключается мягкий бас-пульс и арпеджио
+  // становится чаще/ярче. Никаких резких смен трека — одна мелодия перетекает в другую.
   function calmTick(){
     if(!actx||!musicNodes)return;
     const now=actx.currentTime;
+    const I=Math.max(0,Math.min(1,musicIntensity));
     if(now>=mNextChord-0.05){
       const ch=CALM_CHORDS[mChordIdx%CALM_CHORDS.length];mChordIdx++;
-      ch.forEach((f,i)=>mSynth(f,Math.max(now,mNextChord),9,0.016+(i===0?0.008:0),1.6));
+      ch.forEach((f,i)=>mSynth(f,Math.max(now,mNextChord),9,0.016+(i===0?0.008:0)+I*0.006,1.6-I*0.5));
       mNextChord=(mNextChord||now)+8; // аккорды перекрываются на 1с — мягкий кроссфейд
     }
+    // мягкий бас-пульс — появляется/тает по интенсивности (перетекание в «боевую» версию)
+    if(I>0.05){
+      if(mNextBass==null)mNextBass=now;
+      if(now>=mNextBass-0.03){
+        const root=CALM_CHORDS[mChordIdx%CALM_CHORDS.length][0];
+        mSynth(root/2,Math.max(now,mNextBass),0.44,0.022*I,0.02);
+        if(I>0.45)mHit(Math.max(now,mNextBass),0.05,0.028*I,1500,400); // очень тихий тик на долю
+        mNextBass=(mNextBass||now)+0.5; // ~120 BPM
+      }
+    }else mNextBass=null;
     if(now>=mNextArp-0.05){
-      if(Math.random()<0.75){
+      if(Math.random()<0.6+I*0.35){
         const f=CALM_ARP[Math.floor(Math.random()*CALM_ARP.length)]*(Math.random()<0.3?2:1);
         const o=actx.createOscillator(),g=actx.createGain();
         o.type='sine';o.frequency.value=f;o.connect(g);g.connect(compressor);
         const t0=Math.max(now,mNextArp);
-        g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(0.02,t0+0.25);g.gain.exponentialRampToValueAtTime(0.0006,t0+2.6);
+        g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(0.02+I*0.01,t0+0.25);g.gain.exponentialRampToValueAtTime(0.0006,t0+2.6);
         o.start(t0);o.stop(t0+2.7);
       }
-      mNextArp=(mNextArp||now)+1.7+Math.random()*1.4;
+      mNextArp=(mNextArp||now)+(1.7-I*1.0)+Math.random()*(1.4-I*0.7); // в бою — чаще
     }
   }
 
@@ -919,32 +933,24 @@
   // ДИСПЕТЧЕР НАСТРОЕНИЯ: выбирает трек по ситуации в игре. Переключение на "босс" —
   // мгновенное (важно сразу почувствовать угрозу), остальные смены — с задержкой ~2.5с,
   // чтобы музыка не дёргалась туда-сюда на границе порога (колебания числа врагов и т.п.)
-  let musicMood='calm',moodPendingT=0;
-  function desiredMood(){
-    if(enemies&&enemies.some(e=>e.megaboss))return 'boss';
-    if(siege||(enemies&&enemies.length>150))return 'tense';
-    if(act===2)return 'energetic';
-    return 'calm';
+  let musicMood='calm',moodPendingT=0,musicIntensity=0;
+  // целевая «боевая» интенсивность 0..1 по ситуации — музыка ПЛАВНО перетекает к ней
+  function desiredIntensity(){
+    if(enemies&&enemies.some(e=>e.megaboss))return 1;
+    if(act2Def&&act2Def.active&&act2Def.phase==='wave')return 0.9;
+    if(siege||(enemies&&enemies.length>120))return 0.8;
+    if(enemies&&enemies.length>45)return 0.45;
+    if(act===2)return 0.3;
+    return 0;
   }
   function updateMusicMood(dt){
-    if(!actx||musicNodes!=='gen')return; // трек-файл или звук выключен — режим не переключаем
-    const want=desiredMood();
-    if(want===musicMood){moodPendingT=0;return;}
-    moodPendingT+=dt;
-    if(moodPendingT>=(want==='boss'?0:2.5)){
-      musicMood=want;moodPendingT=0;
-      if(want==='calm'){mChordIdx=0;mNextChord=0;mNextArp=0;}
-      else if(want==='tense')resetTense();
-      else if(want==='boss')resetBoss();
-      else if(want==='energetic')resetEnergetic();
-    }
+    if(!actx||musicNodes!=='gen')return; // трек-файл или звук выключен — не трогаем
+    const tgt=desiredIntensity();
+    // вверх (бой начался) быстрее, вниз (остываем) медленнее — мягкое перетекание
+    const rate=tgt>musicIntensity?0.55:0.22;
+    musicIntensity+=(tgt-musicIntensity)*Math.min(1,dt*rate);
   }
-  function musicTick(){
-    if(musicMood==='tense')tenseTick();
-    else if(musicMood==='boss')bossTick();
-    else if(musicMood==='energetic')energeticTick();
-    else calmTick();
-  }
+  function musicTick(){ calmTick(); } // всегда единый движок; интенсивность делает его «боевым»
 
   function startMusic(){
     if(!actx||musicNodes)return;
