@@ -453,6 +453,10 @@
   }
   const isMobileDevice=!!(window.matchMedia&&window.matchMedia('(pointer:coarse)').matches);
   const baseZoom=isMobileDevice?0.62:1;
+  // РУЧНОЙ ЗУМ: игрок крутит колесом (ПК) / щипком (тач). userZoom — множитель поверх
+  // авто-кадрирования, ограничен, чтобы нельзя было улететь слишком далеко/близко.
+  let userZoom=1,_autoZoom=0;
+  function clampUserZoom(){userZoom=Math.max(0.6,Math.min(1.9,userZoom));}
   const ostart=document.getElementById('ostart'),olevel=document.getElementById('olevel'),oover=document.getElementById('oover');
   const cardsEl=document.getElementById('cards'),overStats=document.getElementById('overStats');
   const overTitle=document.getElementById('overTitle'),overSession=document.getElementById('overSession');
@@ -1792,7 +1796,7 @@
     player=newPlayer();enemies=[];projectiles=[];enemyProjectiles=[];particles=[];floaters=[];rings=[];pickups=[];bolts=[];mines=[];gems=[];boomers=[];pools=[];meteors=[];turrets=[];fxq=[];freezeT=0;safeZone=null;safeZoneAcc=25;pendingSpawns=[];pendingEvent=null;eventDelay=0;
     gemFlyIcons=[];gemCounterPunch=0;
     // (зум ×1.30 — близкий стартовый план нового забега)
-    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lastRushAnnounced=0;lives=3;zoom=baseZoom*1.30;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
+    t=0;spawnAcc=0;waveAcc=0;camShake=0;kills=0;killsThisLevel=0;lastRushAnnounced=0;lives=3;zoom=baseZoom*1.30;_autoZoom=0;enemyCountSmoothed=0;lastLevelUpAt=0;pendingLevelUps=0;pendingBossLevel=null;pendingSuperWarning=null;pendingSuperboss=null;pendingLevel8Boss=false;pendingCurse=null;mobSpawnPaused=false;screenFlash=0;announce=null;autoToasts=[];telegraphs=[];fireZones=[];cursedZones=[];rifts=[];altarAcc=0;czAcc=0;riftAcc=0;siege=null;chestPending=false;hitStop=0;fxFlash=0;critFlashCd=0;deathCine=0;bossKills=0;hunterKills=0;gemsCollected=0;
     lastCheckpointT=0;lastCheckpointKills=0;lastCheckpointLevel=1;
     portal=null;portalAcc=0;inVault=false;vaultT=0;vaultStash=null;vaultCleared=false;vaultWalls=[];vaultExit=null;vaultSpawns=[];vaultWalk=[];vaultGrid=null;vaultLoot=[];vaultOpening=false;vaultOpenT=0;challenge=null;challengeAcc=0;inArcade=false;arcade=null;arcadeStash=null;
     vaultTheme='dungeon';forestPending=false;forestGate=false;forestDone=false;forestGateTotal=0;forestTrees=[];pendingMegaBoss=false;megaDone=false;megaFought=false;worldTrees=[];forestField=false;darkForest=null;bossLoot=[];act=1;shipLevel=1;finale=null;finaleLB=0;act2Tower=null;act2TeleFx=null;act2BaseWalls=null;act2Def=null;act2Zaps=[];act2Spend=[];mega2Pending=false;mega2Done=false;act2BossLvl=0;act2Base=null;
@@ -5307,9 +5311,12 @@
     // 4 ворот и откуда лезут мобы; после интро отъезжаем ещё сильнее
     let targetZoom=Math.max(baseZoom*(inVault?0.5:0.62),(levelZoom-crowd*baseZoom)*vaultZoomMul);
     if(act2Def&&act2Def.active)targetZoom=baseZoom*(act2Def.phase==='intro'?0.55:0.42);
-    const zoomDelta=(targetZoom-zoom)*Math.min(1,dt*0.3);
+    // _autoZoom — сглаженное авто-кадрирование; поверх него множится ручной userZoom (колесо/щипок)
+    if(!_autoZoom)_autoZoom=zoom||targetZoom||baseZoom;
+    const zoomDelta=(targetZoom-_autoZoom)*Math.min(1,dt*0.3);
     const zoomMaxStep=0.15*dt;
-    zoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
+    _autoZoom+=Math.max(-zoomMaxStep,Math.min(zoomMaxStep,zoomDelta));
+    zoom=Math.max(0.26,Math.min(2.3,_autoZoom*userZoom)); // финальный зум с ручным множителем и жёстким клампом
 
     // spawn (paused during a dedicated arena-boss fight like the level-8 encounter)
     // в лабиринте обычный спавн ВЫКЛЮЧЕН — иначе offscreenRad() сыпал мобов за стенами
@@ -8305,14 +8312,29 @@
   document.getElementById('btnFinishSide').addEventListener('click',()=>sideEl.classList.remove('open'));
 
   function toCanvasXY(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)*(cv.width/r.width),y:(e.clientY-r.top)*(cv.height/r.height)};}
-  cv.addEventListener('pointerdown',e=>{if(state!=='running'||paused)return;const p=toCanvasXY(e);
+  cv.addEventListener('pointerdown',e=>{if(state!=='running'||paused||pinching)return;const p=toCanvasXY(e);
     if(inArcade){arcTouchX=p.x;cv.setPointerCapture(e.pointerId);return;}
     joy.active=true;joy.bx=p.x;joy.by=p.y;joy.dx=0;joy.dy=0;cv.setPointerCapture(e.pointerId);});
-  cv.addEventListener('pointermove',e=>{if(paused)return;const p=toCanvasXY(e);
+  cv.addEventListener('pointermove',e=>{if(paused||pinching)return;const p=toCanvasXY(e);
     if(inArcade){if(arcTouchX!=null)arcTouchX=p.x;return;}
     if(!joy.active)return;let dx=p.x-joy.bx,dy=p.y-joy.by;const d=Math.hypot(dx,dy),max=42;if(d>max){dx=dx/d*max;dy=dy/d*max;}joy.dx=dx/max;joy.dy=dy/max;});
   function endJoy(){joy.active=false;joy.dx=0;joy.dy=0;arcTouchX=null;}
   cv.addEventListener('pointerup',endJoy);cv.addEventListener('pointercancel',endJoy);
+
+  // ── РУЧНОЙ ЗУМ: колесо мыши (ПК) + щипок двумя пальцами (тач) ──
+  cv.addEventListener('wheel',e=>{
+    userZoom*=e.deltaY<0?1.1:1/1.1;clampUserZoom();e.preventDefault();
+  },{passive:false});
+  let pinchDist=0,pinching=false;
+  const twoTouchDist=e=>{const a=e.touches[0],b=e.touches[1];return Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);};
+  cv.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){pinching=true;endJoy();pinchDist=twoTouchDist(e);e.preventDefault();}
+  },{passive:false});
+  cv.addEventListener('touchmove',e=>{
+    if(pinching&&e.touches.length===2){const d=twoTouchDist(e);if(pinchDist>0){userZoom*=d/pinchDist;clampUserZoom();}pinchDist=d;e.preventDefault();}
+  },{passive:false});
+  cv.addEventListener('touchend',e=>{if(e.touches.length<2)pinching=false;});
+  cv.addEventListener('touchcancel',()=>{pinching=false;});
 
   window.addEventListener('resize',()=>{resizeCanvas();draw();});
   window.addEventListener('orientationchange',()=>{resizeCanvas();draw();});
