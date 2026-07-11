@@ -68,3 +68,92 @@
   window.addEventListener('orientationchange', wake);
   wake();
 })();
+
+/**
+ * Hero-видео: скролл управляет промоткой, а в простое видео само медленно доигрывает.
+ *
+ * ВО ВРЕМЯ СКРОЛЛА — скраб: currentTime плавно ведём за скроллом (вниз вперёд,
+ * вверх назад). sens = длительность / RANGE, поэтому RANGE больше → скраб медленнее.
+ * Позиция накапливается относительно (по dy), а не привязана к абсолютному scrollY —
+ * иначе авто-дрейф сбрасывался бы к положению страницы.
+ *
+ * В ПРОСТОЕ — через IDLE_DELAY после последнего скролла видео начинает МЕДЛЕННО
+ * играть само (video.play() + низкий playbackRate). Это плавно и дёшево (обычный
+ * декод + loop), в отличие от посекундного seek. Новый скролл прерывает
+ * проигрывание и продолжает скраб с текущего кадра — без прыжка.
+ *
+ * НА СТАРТЕ кадр замер (не играет), пока не было первого скролла.
+ * Живёт отдельно от параллакса: работает и на телефоне.
+ */
+(function () {
+  'use strict';
+
+  var video = document.querySelector('.hero-bg-video');
+  if (!video) return;
+
+  video.removeAttribute('autoplay');
+  video.pause();
+
+  var RANGE = 3600;       // px скролла на всё видео (больше = медленнее скраб)
+  var EASE = 0.12;        // плавность подхода кадра к цели при скрабе
+  var IDLE_DELAY = 700;   // мс тишины после скролла до старта медленного проигрывания
+  var SLOW_RATE = 0.25;   // скорость авто-проигрывания в простое (доля обычной)
+
+  var dur = 0, sens = 0;
+  var target = 0, current = 0, raf = 0;
+  var lastY = 0, idleTimer = 0, playing = false;
+
+  function ready() {
+    var d = video.duration;
+    if (isFinite(d) && d > 0) { dur = d; sens = d / RANGE; return true; }
+    return false;
+  }
+
+  // Скраб: плавно ведём currentTime к target через seek (видео на паузе).
+  function scrubFrame() {
+    raf = 0;
+    var diff = target - current;
+    if (Math.abs(diff) < 0.01) { current = target; }
+    else { current += diff * EASE; raf = requestAnimationFrame(scrubFrame); }
+    try { video.currentTime = current; } catch (e) {}
+  }
+
+  // Простой: видео само медленно играет вперёд (эффективно, зациклено loop-атрибутом).
+  function startIdlePlay() {
+    if (!ready()) return;
+    playing = true;
+    video.playbackRate = SLOW_RATE;
+    var p = video.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
+  function onScroll() {
+    if (!ready()) return;
+    if (playing) {                       // прерываем авто-проигрывание, назад в скраб
+      video.pause();
+      playing = false;
+      current = target = video.currentTime;
+    }
+    var y = window.scrollY || window.pageYOffset || 0;
+    var dy = y - lastY;
+    lastY = y;
+    target += dy * sens;                 // относительно, не сбрасываем к абсолюту
+    if (target < 0) target = 0;
+    if (target > dur) target = dur;
+    if (!raf) raf = requestAnimationFrame(scrubFrame);
+    clearTimeout(idleTimer);             // задержка перед медленным проигрыванием
+    idleTimer = setTimeout(startIdlePlay, IDLE_DELAY);
+  }
+
+  function start() {
+    if (!ready()) return;
+    lastY = window.scrollY || window.pageYOffset || 0;
+    current = target = Math.min(dur, Math.max(0, lastY * sens));
+    try { video.currentTime = current; } catch (e) {}
+    // idle-play НЕ запускаем на старте — только после первого скролла (onScroll).
+  }
+
+  video.addEventListener('loadedmetadata', start);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  if (video.readyState >= 1) start();
+})();
