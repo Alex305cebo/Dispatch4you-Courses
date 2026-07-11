@@ -242,8 +242,12 @@ main { position: relative; }
   width: 100%;
   height: 100vh;
   height: 100svh;
-  object-fit: contain;     /* «отдалить»: виден весь кадр, а не обрезанный по краям */
+  object-fit: cover;       /* заполняет слой без letterbox */
   opacity: 0.3;            /* базовая = OP_TOP; дальше яркость «колоколом» пишет JS */
+  /* Радиальная маска гасит ВСЕ края в прозрачность → видео растворяется в фон,
+     без жёсткого прямоугольника (реальный фон страницы просвечивает). */
+  -webkit-mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 46%, rgba(0,0,0,0.4) 72%, transparent 95%);
+  mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 46%, rgba(0,0,0,0.4) 72%, transparent 95%);
   will-change: transform, opacity;   /* параллакс-сдвиг и затухание пишет JS */
 }
 
@@ -281,10 +285,8 @@ section.hero > .container { position: relative; z-index: 1; }
    Скраб на мобильном не используем: тач-скролл + перемотка видео ненадёжны
    и тяжелы. Видео просто играет по кругу как полноэкранный фон (JS включает
    loop+play), читаемость держит та же вуаль. */
-@media (max-width: 768px) {
-  /* contain (без обрезки) + шире вьюпорта → сцена крупнее обычного contain,
-     но не так «наезжает», как cover. left центрирует 135%-ширину. */
-  .hero-bg-video { opacity: 0.45; top: 10px; object-fit: contain; width: 135%; left: -17.5%; }
+@media (max-width: 600px) {
+  .hero-bg-video { opacity: 0.45; top: 0; }   /* cover+маска из базы; на телефоне играет по кругу */
   .hero-bg-scrim { opacity: 0.22; }
   section.hero::before {
     background: radial-gradient(ellipse 108% 62% at 50% 40%,

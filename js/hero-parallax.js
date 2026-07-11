@@ -20,7 +20,7 @@
   if (!video) return;
 
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
-  var narrow = window.matchMedia('(max-width: 768px)');
+  var narrow = window.matchMedia('(max-width: 600px)');   // <600 = телефон (играет), выше — скраб
 
   var RANGE   = narrow.matches ? 1700 : 1600;   // затухание к концу 2-й секции (моб ~1593px)
   var SPEED   = narrow.matches ? 0.5 : 0.30;    // на мобиле больше лаг → видео дольше на экране
