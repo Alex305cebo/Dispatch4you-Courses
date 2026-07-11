@@ -4323,15 +4323,15 @@
       announce={text:'🛡 Безопасная зона впереди — передохни у лечащего здания перед 6-м боем!',life:3.4,color:'#4ade80'};
       sfxChime(392,4,0.09,0.1);
     }
-    if(player.level===20&&!megaDone)announce={text:'⚔ ВНИМАНИЕ: на 30 уровне ждёт МЕГА-БОСС ХРОНОС!',life:5,color:'#ff2d55'};
-    if(player.level===25&&!megaDone)announce={text:'☠ МЕГА-БОСС всё ближе — 5 уровней до встречи!',life:4,color:'#ff2d55'};
-    if(player.level===30&&!megaDone)pendingMegaBoss=true;
+    if(player.level===16&&!megaDone)announce={text:'⚔ ВНИМАНИЕ: на 20 уровне ждёт МЕГА-БОСС ХРОНОС!',life:5,color:'#ff2d55'};
+    if(player.level===18&&!megaDone)announce={text:'☠ ХРОНОС всё ближе — 2 уровня до встречи!',life:4,color:'#ff2d55'};
+    if(player.level===20&&!megaDone)pendingMegaBoss=true;
     // БОСС АКТА 2: обновлённый Хронос — только в старом флоу, НЕ в режиме обороны базы
     if(act===2&&!act2Def&&player.ship2&&!mega2Done&&act2BossLvl){
       if(player.level===act2BossLvl-3)announce={text:'☠ РАЗЛОМ ДРОЖИТ… ХРОНОС ПРОБУЖДАЕТСЯ — 3 уровня!',life:4,color:'#f43f5e'};
       if(player.level>=act2BossLvl&&!enemies.some(e=>e.megaboss)){mega2Pending=true;}
     }
-    if(player.level%5===0&&!(player.level===30&&!megaDone)){pendingLevelUps+=2;pendingBossLevel=player.level;
+    if(player.level%5===0&&!(player.level===20&&!megaDone)){pendingLevelUps+=2;pendingBossLevel=player.level;
       // рубеж сложности: враги делают шаг вверх — предупреждаем и даём передышку (+20% HP),
       // чтобы полоса оставалась играбельной
       if(player.level!==5)announce={text:'⚠ РУБЕЖ '+player.level+' — враги стали сильнее!',life:3,color:'#f59e0b'}; // на 5-м приоритет у баннера зоны-передышки
@@ -4342,7 +4342,7 @@
     if(player.level%25===1&&player.level>1){pendingSuperboss=player.level;}
     if(player.level===8){pendingLevelUps+=3;pendingLevel8Boss=true;}
     // достиг 29 — запускаем «прорыв к лесу» (один раз за забег): фикс. волна, потом ЛЕС на 30
-    if(player.level===29&&!forestDone){forestPending=true;}
+    if(player.level===19&&!forestDone){forestPending=true;}
     if(player.level%10===0){pendingEvent=player.level;eventDelay=7;
       // жизни теперь реально НАКАПЛИВАЮТСЯ по ходу забега, не только от редкого приза
       // лабиринта — раз в 10 уровней, вплоть до MAX_LIVES
@@ -6661,11 +6661,11 @@
     if(f>0.004){x.strokeStyle=col;x.lineCap='round';
       x.beginPath();x.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+f*Math.PI*2);x.stroke();x.lineCap='butt';}
   }
-  // ближайший босс: Хронос (акт 1 — ур.30, акт 2 — act2BossLvl) или мини-босс каждые 5 ур.
+  // ближайший босс: Хронос (акт 1 — ур.20, акт 2 — act2BossLvl) или мини-босс каждые 5 ур.
   function nextBossInfo(){
     if(act===2&&!mega2Done&&act2BossLvl>player.level)return['☠ Хронос '+(act2BossLvl-player.level)+' ур.','#ff6b7a'];
     const nm=Math.ceil((player.level+1)/5)*5;
-    if(!megaDone&&nm>=30)return['☠ Хронос '+Math.max(0,30-player.level)+' ур.','#ff6b7a'];
+    if(!megaDone&&nm>=20)return['☠ Хронос '+Math.max(0,20-player.level)+' ур.','#ff6b7a'];
     return['⚔ Босс '+(nm-player.level)+' ур.','#fca5a5'];
   }
   const MOBILE_HUD_H=62;
