@@ -2451,7 +2451,7 @@
     return Math.abs(px-B.cx)<B.R&&Math.abs(py-B.cy)<B.R;
   }
   // ═══ ЭКОНОМИКА КРИСТАЛЛОВ АКТА 2: подлетел к турели/зданию с кристаллами → апгрейд копится ═══
-  const TUR_MAX=8, UP_TIME=2.0;
+  const TUR_MAX=8, UP_TIME=2.0, AIM_DELAY=0.55; // AIM_DELAY: «прицеливание» — кристаллы уходят только продержавшись рядом, пролетая мимо не тратишь
   function turCost(lv){return 120+lv*150;} // стоимость апгрейда турели ур.lv→lv+1
   function bldRepairCost(b){return Math.round(b.maxHp*0.25);} // полный ремонт здания
   function bldUpCost(b){return 260+(b.lv||0)*220;} // апгрейд бонуса здания
@@ -2475,14 +2475,17 @@
       // === ПРОКАЧКА за кристаллы: игрок рядом + есть кристаллы + не макс ===
       tw.near=false;
       if(act2Def&&act2Def.active&&lv<TUR_MAX&&dist(player,tw)<70&&gemsCollected>0){
-        tw.near=true;
-        const cost=turCost(lv),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
-        gemsCollected-=pay;tw.paid+=pay;
-        crystalStream(player.x,player.y,tw.x,tw.y,'#7dd3fc');
-        if(tw.paid>=cost){tw.lv++;tw.paid=0;tw.upFx=0.9;
-          burst(tw.x,tw.y,'#7dd3fc',22);camShake=Math.max(camShake,5);sfxChime(660,5,0.08,0.12);
-          announce={text:'⬆ Турель улучшена — ур.'+tw.lv+(tw.lv>=TUR_MAX?' (ЛАЗЕР!)':''),life:2.2,color:'#7dd3fc'};}
-      }
+        tw.near=true; // подсказка стоимости видна сразу при подлёте
+        tw.dwell=(tw.dwell||0)+dt;
+        if(tw.dwell>=AIM_DELAY){ // но кристаллы уходят только после «прицеливания» — пролетая мимо, не тратишь
+          const cost=turCost(lv),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+          gemsCollected-=pay;tw.paid+=pay;
+          crystalStream(player.x,player.y,tw.x,tw.y,'#7dd3fc');
+          if(tw.paid>=cost){tw.lv++;tw.paid=0;tw.upFx=0.9;
+            burst(tw.x,tw.y,'#7dd3fc',22);camShake=Math.max(camShake,5);sfxChime(660,5,0.08,0.12);
+            announce={text:'⬆ Турель улучшена — ур.'+tw.lv+(tw.lv>=TUR_MAX?' (ЛАЗЕР!)':''),life:2.2,color:'#7dd3fc'};}
+        }
+      }else tw.dwell=0;
       // === АВТООГОНЬ ===
       let best=null,bestScore=-1;
       for(const e of enemies){const d=dist(tw,e);if(d>TR)continue;
@@ -2515,19 +2518,23 @@
     // === ЗДАНИЯ: ремонт/апгрейд за кристаллы ===
     if(act2Def&&act2Def.active&&B.buildings)for(const b of B.buildings){
       b.near=false;
-      if(dist(player,b)>b.r+70||gemsCollected<=0)continue;
+      if(dist(player,b)>b.r+70||gemsCollected<=0){b.dwell=0;if(b.upFx>0)b.upFx-=dt;continue;}
+      b.dwell=(b.dwell||0)+dt;const armed=b.dwell>=AIM_DELAY; // «прицеливание» перед тратой кристаллов
       if(!b.alive){ // ремонт разрушенного
-        b.near='repair';const cost=bldRepairCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        b.near='repair';
+        if(armed){const cost=bldRepairCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
         gemsCollected-=pay;b.paid=(b.paid||0)+pay;crystalStream(player.x,player.y,b.x,b.y,'#4ade80');
-        if(b.paid>=cost){b.alive=true;b.hp=b.maxHp;b.paid=0;burst(b.x,b.y,'#4ade80',24);camShake=Math.max(camShake,5);sfxChime(523,5,0.08,0.12);announce={text:'🔧 Здание восстановлено!',life:2.2,color:'#4ade80'};}
+        if(b.paid>=cost){b.alive=true;b.hp=b.maxHp;b.paid=0;burst(b.x,b.y,'#4ade80',24);camShake=Math.max(camShake,5);sfxChime(523,5,0.08,0.12);announce={text:'🔧 Здание восстановлено!',life:2.2,color:'#4ade80'};}}
       }else if(b.hp<b.maxHp*0.999){ // подлатать целое, но повреждённое
-        b.near='fix';const pay=Math.min(gemsCollected,b.maxHp*0.4*dt/UP_TIME);
-        gemsCollected-=pay;b.hp=Math.min(b.maxHp,b.hp+pay*2.2);crystalStream(player.x,player.y,b.x,b.y,'#4ade80');
+        b.near='fix';
+        if(armed){const pay=Math.min(gemsCollected,b.maxHp*0.4*dt/UP_TIME);
+        gemsCollected-=pay;b.hp=Math.min(b.maxHp,b.hp+pay*2.2);crystalStream(player.x,player.y,b.x,b.y,'#4ade80');}
       }else if((b.lv||0)<5){ // апгрейд бонуса
-        b.near='up';const cost=bldUpCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        b.near='up';
+        if(armed){const cost=bldUpCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
         gemsCollected-=pay;b.paid=(b.paid||0)+pay;crystalStream(player.x,player.y,b.x,b.y,'#fde047');
         if(b.paid>=cost){b.lv=(b.lv||0)+1;b.paid=0;b.maxHp=Math.round(b.maxHp*1.2);b.hp=b.maxHp;b.upFx=0.9;
-          burst(b.x,b.y,'#fde047',22);camShake=Math.max(camShake,5);sfxChime(784,5,0.08,0.12);announce={text:'⬆ '+({shield:'Генератор щита',armory:'Арсенал',workshop:'Мастерская',medbay:'Медблок',main:'Главное здание'}[b.kind]||'Здание')+' — ур.'+b.lv,life:2.2,color:'#fde047'};}
+          burst(b.x,b.y,'#fde047',22);camShake=Math.max(camShake,5);sfxChime(784,5,0.08,0.12);announce={text:'⬆ '+({shield:'Генератор щита',armory:'Арсенал',workshop:'Мастерская',medbay:'Медблок',main:'Главное здание'}[b.kind]||'Здание')+' — ур.'+b.lv,life:2.2,color:'#fde047'};}}
       }
       if(b.upFx>0)b.upFx-=dt;
     }
@@ -4898,20 +4905,20 @@
     act2TeleFx={x:0,y:180,t:0};
     act2Tower=null;act2Base=null; // старый флоу починки не используется — теперь оборона базы
     // КВАДРАТНАЯ БАЗА-ФОРТ: 4 ворот (С/В/Ю/З), купол-щит, разрушаемые здания внутри.
-    const R=480,t=26,gateHalf=76;
+    const R=960,t=32,gateHalf=100; // ×4 площади (×2 по стороне): просторный форт с дорожками и разнесёнными зданиями
     act2BaseWalls={cx:0,cy:0,R,t,gateHalf,sealed:false,towers:[
-      // 4 угловые + 3 у центра — все прокачиваются за кристаллы (ур.1-8, лазер на 8)
+      // 4 угловые + 3 внутренних (стерегут дорожки) — все прокачиваются за кристаллы (ур.1-8, лазер на 8)
       {x:-(R-64),y:-(R-64),lv:1,paid:0},{x:R-64,y:-(R-64),lv:1,paid:0},
       {x:-(R-64),y:R-64,lv:1,paid:0},{x:R-64,y:R-64,lv:1,paid:0},
-      {x:0,y:-138,lv:1,paid:0},{x:120,y:70,lv:1,paid:0},{x:-120,y:70,lv:1,paid:0}]};
+      {x:0,y:-300,lv:1,paid:0},{x:260,y:150,lv:1,paid:0},{x:-260,y:150,lv:1,paid:0}]};
     act2BaseWalls.gates=['N','E','S','W'].map(s=>makeAct2Gate(s,act2BaseWalls));
     // ЗДАНИЯ: главное в центре (кольцо лечения, поражение при сносе) + 4 боковых по секторам
     act2BaseWalls.buildings=[
-      {kind:'main',main:true,x:0,y:0,r:56,hp:1600,maxHp:1600,alive:true,hitT:0,heal:170},
-      {kind:'shield', x:0,y:-250,r:38,hp:820,maxHp:820,alive:true,hitT:0},
-      {kind:'armory', x:250,y:0, r:38,hp:820,maxHp:820,alive:true,hitT:0},
-      {kind:'workshop',x:0,y:250, r:38,hp:820,maxHp:820,alive:true,hitT:0},
-      {kind:'medbay',  x:-250,y:0,r:38,hp:820,maxHp:820,alive:true,hitT:0}];
+      {kind:'main',main:true,x:0,y:0,r:64,hp:1600,maxHp:1600,alive:true,hitT:0,heal:170},
+      {kind:'shield', x:-380,y:-380,r:46,hp:820,maxHp:820,alive:true,hitT:0}, // по диагоналям — дорожки С/В/Ю/З свободны
+      {kind:'armory', x:380,y:-380, r:46,hp:820,maxHp:820,alive:true,hitT:0},
+      {kind:'workshop',x:380,y:380, r:46,hp:820,maxHp:820,alive:true,hitT:0},
+      {kind:'medbay',  x:-380,y:380,r:46,hp:820,maxHp:820,alive:true,hitT:0}];
     rebuildBaseWallRects();
     act2Def={active:true,phase:'intro',phaseT:0,wave:1,maxWaves:ACT2_MAXWAVES,
       shield:{up:false,hp:1000,maxHp:1000},breakSides:[],toSpawn:0,spawnAcc:0,powerT:0};
@@ -7659,6 +7666,13 @@
       const gstep=80,gph=(t*14)%gstep;
       for(let gx=B.cx-B.R;gx<=B.cx+B.R;gx+=gstep){x.beginPath();x.moveTo(gx,B.cy-B.R);x.lineTo(gx,B.cy+B.R);x.stroke();}
       for(let gy=B.cy-B.R+gph;gy<=B.cy+B.R;gy+=gstep){x.beginPath();x.moveTo(B.cx-B.R,gy);x.lineTo(B.cx+B.R,gy);x.stroke();}
+      // ДОРОЖКИ от центра к каждым воротам — читаемые маршруты по большой базе
+      x.strokeStyle='rgba(125,211,252,0.09)';x.lineWidth=120;x.lineCap='round';
+      for(const ga of (B.gates||[]))x.beginPath(),x.moveTo(B.cx,B.cy),x.lineTo(ga.cx,ga.cy),x.stroke();
+      x.lineCap='butt';
+      x.strokeStyle='rgba(125,211,252,0.18)';x.lineWidth=2/zoom;x.setLineDash([16,14]);
+      for(const ga of (B.gates||[]))x.beginPath(),x.moveTo(B.cx,B.cy),x.lineTo(ga.cx,ga.cy),x.stroke();
+      x.setLineDash([]);
       // стены (сегменты + створки закрытых ворот)
       B.rects.forEach(w=>{x.fillStyle='#334155';x.fillRect(w.x,w.y,w.w,w.h);x.strokeStyle='#64748b';x.lineWidth=1.5/zoom;x.strokeRect(w.x,w.y,w.w,w.h);});
       // ВОРОТА: столбы + маячок состояния + HP + отсчёт открытия
