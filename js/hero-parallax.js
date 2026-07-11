@@ -82,7 +82,8 @@
  * декод + loop), в отличие от посекундного seek. Новый скролл прерывает
  * проигрывание и продолжает скраб с текущего кадра — без прыжка.
  *
- * НА СТАРТЕ кадр замер (не играет), пока не было первого скролла.
+ * НА СТАРТЕ видео сразу медленно играет (через IDLE_DELAY) — чтобы фон был живым,
+ * а не выглядел статичной картинкой. Первый же скролл перехватывает на скраб.
  * Живёт отдельно от параллакса: работает и на телефоне.
  */
 (function () {
@@ -150,7 +151,10 @@
     lastY = window.scrollY || window.pageYOffset || 0;
     current = target = Math.min(dur, Math.max(0, lastY * sens));
     try { video.currentTime = current; } catch (e) {}
-    // idle-play НЕ запускаем на старте — только после первого скролла (onScroll).
+    // Оживляем сразу: через IDLE_DELAY видео начинает медленно играть само,
+    // чтобы фон не выглядел статичной картинкой. Скролл перехватит на скраб.
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(startIdlePlay, IDLE_DELAY);
   }
 
   video.addEventListener('loadedmetadata', start);
