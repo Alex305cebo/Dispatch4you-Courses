@@ -22,10 +22,10 @@
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
   var narrow = window.matchMedia('(max-width: 768px)');
 
-  var RANGE   = 1600;   // px скролла ↔ вся длительность видео / жизнь фона (≈2 секции)
+  var RANGE   = narrow.matches ? 2400 : 1600;   // мобильные секции выше → фон живёт дольше
   var SPEED   = 0.30;   // параллакс: доля скролла, на которую фон отстаёт
-  var OP_TOP  = 0.30;   // яркость на самом верху (затемнено)
-  var OP_PEAK = 0.70;   // пик яркости
+  var OP_TOP  = narrow.matches ? 0.45 : 0.30;   // мобайл ярче (был слишком тусклый)
+  var OP_PEAK = narrow.matches ? 0.90 : 0.70;   // пик яркости
   var PEAK_AT = 0.32;   // где пик, доля RANGE (≈ 1-я секция)
   var RATE    = 6;      // плавность подхода кадра к цели при скрабе (меньше = мягче)
 
