@@ -4349,9 +4349,8 @@
       if(lives<MAX_LIVES){lives++;announce={text:'❤ +1 ЖИЗНЬ! Резервов: '+lives+'/'+MAX_LIVES,life:2.6,color:'#ff2d55'};flashFx(0.4,'255,45,85');sfxChime(660,4,0.09,0.12);}
     }
     if(player.level>=30&&player.level%10===0){pendingCurse=player.level;}
-    if(player.level%10===1&&player.level>1){
-      announce={text:'— АКТ '+(Math.floor(player.level/10)+1)+' —',life:2.5,color:'#e8ebf2'};
-    }
+    // (убран баннер «— АКТ N — » каждые 10 ур.: противоречил реальной структуре актов
+    //  — Акт 1 теперь 20 ур. + Хронос, Акт 2 = оборона базы. Остаётся обычный «Уровень N».)
     if(player.level===100){
       announce={text:'⚠ АКТ 2 — мир меняется ⚠',life:3,color:'#f43f5e'};
     }else if(player.level>100&&(player.level-100)%20===0){
@@ -6678,7 +6677,7 @@
   // все кнопки-меню спрятаны под гамбургер (☰) сверху слева
   function drawMobileBar(){
     const P=10,BH=MOBILE_HUD_H,innerW=W-P*2,narrow=W<380;
-    const S=narrow?0.9:1,FS=s=>Math.round(s*S);
+    const S=narrow?0.96:1,FS=s=>Math.round(s*S); // почти не ужимаем: читаемость важнее, переполнение снимаем обрезкой ниже
     x.save();
     x.translate(0,H-BH); // полоса прижата к низу экрана
     // фон-полоса + верхняя светящаяся грань (отделяет от поля боя)
@@ -6688,27 +6687,36 @@
     x.strokeStyle='rgba(125,211,252,0.35)';x.lineWidth=1.5;x.beginPath();x.moveTo(0,0.5);x.lineTo(W,0.5);x.stroke();
     x.textBaseline='middle';
     const MUT='#8b98ad',VAL='#e8eefc';
-    // === РЯД 1: кольцо уровня (дуга = прогресс) + Mk + «до уровня» · справа пилюля босса ===
+    // === РЯД 1: [кольцо ур.][Mk][N до ур.] .... [пилюля босса] — левый кластер обрезается по пилюле ===
     const budgM=Math.max(1,levelBudget(player.level)),remainM=Math.max(0,budgM-killsThisLevel);
     const progM=Math.max(0,Math.min(1,killsThisLevel/budgM));
     const rcy=FS(14);
+    // пилюлю босса считаем ПЕРВОЙ — она задаёт правую границу левому кластеру
+    const nb=nextBossInfo();
+    x.font='700 '+FS(9)+'px system-ui,sans-serif';const bpw=x.measureText(nb[0]).width+FS(12),bossLeft=W-P-bpw;
+    x.fillStyle='rgba(244,63,94,0.14)';x.beginPath();x.roundRect(bossLeft,rcy-FS(8),bpw,FS(16),FS(8));x.fill();
+    x.fillStyle=nb[1];x.textAlign='center';x.fillText(nb[0],bossLeft+bpw/2,rcy);
+    // кольцо уровня + число внутри
     hudRing(P+12,rcy,FS(10.5),progM,'#7dd3fc',3);
     x.fillStyle='#eaf6ff';x.font='800 '+FS(player.level>=100?8:10)+'px system-ui,sans-serif';x.textAlign='center';
     x.fillText(player.level,P+12,rcy+0.5);
-    let lx=P+29;
+    // чип Mk
+    let lx=P+FS(27);
     const stT=shipTier(),mk='Mk '+ROMAN[stT]+((player.ascTier||0)>0?' ✦'+player.ascTier:'');
-    x.font='700 '+FS(9)+'px system-ui,sans-serif';const mw=x.measureText(mk).width+11;
+    x.font='700 '+FS(9)+'px system-ui,sans-serif';const mw=x.measureText(mk).width+FS(11);
     const mkCol=stT>=5?'#fde047':(stT>=3?'#7dd3fc':'#9db4d0');
-    x.fillStyle='rgba(125,211,252,0.12)';x.beginPath();x.roundRect(lx,rcy-FS(7.5),mw,FS(15),FS(7.5));x.fill();
+    x.fillStyle='rgba(125,211,252,0.12)';x.beginPath();x.roundRect(lx,rcy-FS(8),mw,FS(16),FS(8));x.fill();
     x.fillStyle=mkCol;x.textAlign='center';x.fillText(mk,lx+mw/2,rcy);
-    x.textAlign='left';x.font='700 '+FS(9)+'px system-ui,sans-serif';
+    lx+=mw+FS(7);
+    // «N до ур.» — только если помещается до пилюли босса (иначе прогресс виден по кольцу и XP-шкале)
+    x.textAlign='left';x.font='700 '+FS(9.5)+'px system-ui,sans-serif';
     const remSM=fmtNum(remainM),remWM=x.measureText(remSM).width;
-    x.fillStyle='#fbbf24';x.fillText(remSM,lx+mw+FS(7),rcy);
-    x.fillStyle=MUT;x.font='600 '+FS(8.5)+'px system-ui,sans-serif';x.fillText('до уровня',lx+mw+FS(10)+remWM,rcy);
-    const nb=nextBossInfo();
-    x.font='700 '+FS(8.5)+'px system-ui,sans-serif';const bpw=x.measureText(nb[0]).width+FS(12);
-    x.fillStyle='rgba(244,63,94,0.14)';x.beginPath();x.roundRect(W-P-bpw,rcy-FS(7.5),bpw,FS(15),FS(7.5));x.fill();
-    x.fillStyle=nb[1];x.textAlign='center';x.fillText(nb[0],W-P-bpw/2,rcy);
+    let labSM=narrow?'':' до ур.',labWM=0;
+    if(labSM){x.font='600 '+FS(8.5)+'px system-ui,sans-serif';labWM=x.measureText(labSM).width;}
+    if(lx+remWM+labWM<bossLeft-FS(6)){
+      x.fillStyle='#fbbf24';x.font='700 '+FS(9.5)+'px system-ui,sans-serif';x.fillText(remSM,lx,rcy);
+      if(labSM){x.fillStyle=MUT;x.font='600 '+FS(8.5)+'px system-ui,sans-serif';x.fillText(labSM,lx+remWM,rcy);}
+    }
     // === РЯД 2: ХП-БАР во всю ширину, сердца-жизни внутри слева + число ===
     const hh=FS(15),hy=FS(27);
     const hf=Math.max(0,Math.min(1,player.hp/player.maxHp));
@@ -6725,21 +6733,14 @@
       x.fillStyle=i<lives?'#ff2d55':'rgba(255,255,255,0.22)';x.fillText('♥',hxp,hy+hh/2);hxp+=FS(15);}
     x.fillStyle='#fff';x.font='bold '+FS(11)+'px system-ui,sans-serif';x.shadowColor='rgba(0,0,0,0.95)';x.shadowBlur=2;
     x.fillText(fmtNum(Math.max(0,Math.round(player.hp)))+' / '+fmtNum(player.maxHp),(hxp+FS(4)+P+innerW)/2,hy+hh/2);x.shadowBlur=0;
-    // === РЯД 3: время · убийства · урон/сек слева · баффы справа ===
-    const y3=hy+hh+FS(10);
-    x.textAlign='left';x.font='600 '+FS(9.5)+'px system-ui,sans-serif';x.fillStyle=MUT;
-    let cx=P;const l3=(act>=2?'🚀 '+fmtNum(shipLevel)+' · ':'')+'⏱ '+fmtTime(t)+' · ☠ '+fmtNum(kills)+' · ';
-    x.fillText(l3,cx,y3);cx+=x.measureText(l3).width;
-    x.fillStyle='#7dd3fc';x.font='700 '+FS(9.5)+'px system-ui,sans-serif';
-    const dpsS='⚔ '+fmtNum(Math.round(estPlayerDps()));x.fillText(dpsS,cx,y3);cx+=x.measureText(dpsS).width;
-    x.fillStyle=MUT;x.font='600 '+FS(8.5)+'px system-ui,sans-serif';x.fillText(' урон/с',cx,y3);
     // === ШКАЛА ОПЫТА: во всю ширину, ПРЯМО над хабом (заполняется по мере набора уровня) ===
     const xpH=FS(6),xpY=-xpH; // над верхней гранью полосы
     x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(0,xpY,W,xpH);
     if(progM>0){const xg=x.createLinearGradient(0,0,W,0);xg.addColorStop(0,'#4D96FF');xg.addColorStop(1,'#B388FF');
       x.fillStyle=xg;x.fillRect(0,xpY,W*progM,xpH);}
     x.fillStyle='rgba(255,255,255,0.14)';x.fillRect(0,xpY,W,1); // тонкий блик сверху
-    // баффы справа: ⚡ускорение 🛡щит 🔥берсерк (пока действуют)
+    // === РЯД 3: баффы справа МЕРЯЕМ ПЕРВЫМИ (задают предел) · слева время/киллы/DPS — режем чтобы не наехать ===
+    const y3=hy+hh+FS(10);
     const buffs=[];
     if(player.hasteActive>0)buffs.push(['⚡',Math.ceil(player.hasteActive),'#4ade80']);
     if(player.shieldActive>0)buffs.push(['🛡',Math.ceil(player.shieldActive),'#38bdf8']);
@@ -6749,6 +6750,15 @@
     x.textAlign='right';let bxp=W-P;
     for(const bf of buffs){x.fillStyle=bf[2];x.font='bold '+FS(9)+'px system-ui,sans-serif';x.fillText(bf[1]+'',bxp,y3);
       bxp-=x.measureText(bf[1]+'').width+FS(2);x.font=FS(12)+'px system-ui,sans-serif';x.fillText(bf[0],bxp,y3);bxp-=FS(14);}
+    const leftLimit=(buffs.length?bxp:W-P)-FS(6);
+    // левые сегменты — добавляем по одному, пока помещаются до баффов
+    x.textAlign='left';let cx=P;const sep=narrow?'  ':'  ·  ';
+    const seg3=(txt,col,fs,w)=>{x.font=(w||'600')+' '+FS(fs)+'px system-ui,sans-serif';const ww=x.measureText(txt).width;if(cx+ww>leftLimit)return;x.fillStyle=col;x.fillText(txt,cx,y3);cx+=ww;};
+    if(act>=2)seg3('🚀'+fmtNum(shipLevel)+sep,MUT,9.5);
+    seg3('⏱'+fmtTime(t)+sep,MUT,9.5);
+    seg3('☠'+fmtNum(kills)+sep,MUT,9.5);
+    seg3('⚔'+fmtNum(Math.round(estPlayerDps())),'#7dd3fc',9.5,'700');
+    if(!narrow)seg3(' урон/с',MUT,8.5);
     x.restore();
   }
   function drawHudOverlay(){
