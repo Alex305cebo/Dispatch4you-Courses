@@ -1005,7 +1005,15 @@
       }).catch(()=>rebuildAudio());
     }catch(e){rebuildAudio();}
   }
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)resumeAudioIfNeeded();});
+  // Пауза звука, когда страница игры не видна (свёрнуто/другая вкладка/окно webview в фоне):
+  // музыка и все звуки замолкают, пока игру физически не видно на экране, и возвращаются при показе.
+  function suspendAudioIfHidden(){
+    try{if(actx&&actx.state==='running')actx.suspend();}catch(e){}
+    if(musicNodes==='file'&&musicEl&&!musicEl.paused){try{musicEl.pause();}catch(e){}}
+  }
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)suspendAudioIfHidden();else resumeAudioIfNeeded();});
+  window.addEventListener('pagehide',suspendAudioIfHidden);
+  window.addEventListener('blur',()=>{if(document.hidden)suspendAudioIfHidden();});
   window.addEventListener('pageshow',resumeAudioIfNeeded);
   window.addEventListener('focus',resumeAudioIfNeeded);
   document.addEventListener('pointerdown',resumeAudioIfNeeded,true);
