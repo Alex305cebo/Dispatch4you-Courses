@@ -2568,6 +2568,12 @@
   // войдя внутрь, грызёт ближайшее здание. Закрытые ворота, упёршись, ломает по HP.
   function moveDefenseMob(e,dt,spd){
     const B=act2BaseWalls;if(!B){e.x+=Math.cos(e._da||0)*spd*dt;return;}
+    // МИНИ-БОСС: периодически призывает пару обычных мобов рядом с собой
+    if(e.miniBoss){e.summonCd-=dt;
+      if(e.summonCd<=0&&enemies.length<effEnemyCap()-2){e.summonCd=rand(5,7);const wv=(act2Def&&act2Def.wave)||1,wf=1+(wv-1)*0.11;
+        for(let i=0;i<2;i++){const a=spawnEnemy(false);a.defense=true;a.beh=null;a.x=e.x+rand(-40,40);a.y=e.y+rand(-40,40);a.maxHp=a.hp=a.maxHp*wf;a.dmg*=1+(wv-1)*0.06;}
+        burst(e.x,e.y,e.glow||'#e879f9',14);sfxChime(300,3,0.05,0.08);}
+    }
     // МАЯК-ПРИМАНКА: пока активен — мобы прут на него, а не на здания
     const lure=act2Def&&act2Def.lure&&act2Def.lure.t>0?act2Def.lure:null;
     // ТАРАН-ОСАДНИК целится строго в главное здание; ЛЕТУН летит к зданию поверх стен
@@ -2618,15 +2624,23 @@
   function act2StartWave(){
     const D=act2Def,B=act2BaseWalls;if(!D||!B)return;
     D.phase='wave';
-    const nOpen=Math.min(4,1+Math.floor((D.wave-1)/4)); // раньше открывается больше ворот: 1→2(в5)→3(в9)→4(в13)
+    // ФОРМА ВОЛНЫ: чередуем характер атаки, чтобы волны не были одинаковыми; каждая 5-я (кроме финала 30-й) — мини-босс
+    const SHAPES=['horde','swarm','siege','breach'];
+    D.shape=(D.wave%5===0&&D.wave<D.maxWaves)?'boss':SHAPES[(D.wave-1)%SHAPES.length];
+    const boss=D.shape==='boss';
+    let nOpen=Math.min(4,1+Math.floor((D.wave-1)/4)); // 1→2(в5)→3(в9)→4(в13)
+    if(D.shape==='breach')nOpen=1; else if(D.shape==='swarm')nOpen=Math.min(4,nOpen+1); // прорыв — одни ворота; рой — шире фронт
     const sides=['N','E','S','W'].slice().sort(()=>Math.random()-0.5).slice(0,nOpen);
     D.breakSides=sides;
     for(const ga of B.gates){if(sides.indexOf(ga.side)>=0){ga.wave=true;ga.flick=1.1;}}
     rebuildBaseWallRects();
-    D.toSpawn=Math.round(70+D.wave*16);D.spawnAcc=0.12;D.shield.up=false;D.waveClean=true; // ОЧЕНЬ много мобов
-    D.siegeLeft=D.wave>=2?Math.floor(D.wave/2)+1:0; // тараны — почти каждую волну, чаще
-    announce={text:'⚔ ВОЛНА '+D.wave+'/'+D.maxWaves+'! Купол пробит: '+sides.join(' · ')+' — держи ворота!',life:4,color:'#ff2d55'};
-    flashFx(0.5,'255,45,85');camShake=Math.max(camShake,10);sfxBoom(0.5,0.3,700,60,true);
+    let cnt=Math.round(70+D.wave*16);if(D.shape==='breach')cnt=Math.round(cnt*0.8); // плотный поток из одних ворот
+    D.toSpawn=cnt;D.spawnAcc=0.12;D.shield.up=false;D.waveClean=true;
+    D.siegeLeft=D.shape==='siege'?Math.floor(D.wave/2)+3:(D.wave>=2?Math.floor(D.wave/2)+1:0);
+    if(boss)act2SpawnMiniBoss(); // мини-босс входит вместе с волной
+    const shapeLbl={horde:'ОРДА',swarm:'РОЙ ЛЕТУНОВ',siege:'ОСАДА ТАРАНОВ',breach:'ПРОРЫВ',boss:'МИНИ-БОСС'}[D.shape];
+    announce={text:'⚔ ВОЛНА '+D.wave+'/'+D.maxWaves+' · '+shapeLbl+'! Ворота: '+sides.join(' · '),life:4,color:boss?'#f0abfc':'#ff2d55'};
+    flashFx(0.5,boss?'240,171,252':'255,45,85');camShake=Math.max(camShake,10);sfxBoom(0.5,0.3,700,60,true);
   }
   // спавн одного моба у выбранной стороны с типом (обычный/таран/летун)
   function act2SpawnOne(side,kind){
@@ -2659,13 +2673,36 @@
     const D=act2Def,B=act2BaseWalls;if(!D||!B||!D.breakSides.length)return;
     if(enemies.length>=effEnemyCap())return; // держим одновременное число мобов под потолком (перф), бюджет ждёт
     const rndSide=()=>D.breakSides[Math.floor(Math.random()*D.breakSides.length)];
-    // тараны — чаще
-    if(D.siegeLeft>0&&Math.random()<0.7){D.siegeLeft--;act2SpawnOne(rndSide(),'siege');D.toSpawn=Math.max(0,D.toSpawn-1);}
-    // ЛЕТУНЫ через стену — часто и по нескольку (со 2-й волны): толпа лезет и по воздуху
-    if(D.wave>=2&&Math.random()<0.6){const fn=1+Math.floor(Math.random()*3);for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
-    // основная волна — крупные пачки
-    const n=Math.min(D.toSpawn,9+Math.floor(Math.random()*6)+Math.floor(D.wave/3));
+    const sh=D.shape||'horde';
+    // тараны — в осадных волнах гуще
+    if(D.siegeLeft>0&&Math.random()<(sh==='siege'?0.95:0.7)){D.siegeLeft--;act2SpawnOne(rndSide(),'siege');D.toSpawn=Math.max(0,D.toSpawn-1);}
+    // ЛЕТУНЫ через стену — в роевых волнах гуще и больше
+    if(D.wave>=2&&Math.random()<(sh==='swarm'?0.95:0.6)){const fn=1+Math.floor(Math.random()*(sh==='swarm'?5:3));for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
+    // основная волна — крупные пачки (в роевых меньше обычных, упор на летунов)
+    let n=9+Math.floor(Math.random()*6)+Math.floor(D.wave/3);if(sh==='swarm')n=Math.ceil(n*0.5);
+    n=Math.min(D.toSpawn,n);
     for(let i=0;i<n;i++){act2SpawnOne(rndSide(),'normal');D.toSpawn--;if(D.toSpawn<=0)break;}
+  }
+  // МИНИ-БОСС обороны: толстый именной громила — идёт на главное здание (как таран) и периодически
+  // призывает подмогу. Не мега-босс, а ограниченный элитник; за смерть — щедрый чанк кристаллов.
+  const ACT2_MINIBOSSES=[
+    {name:'🛡 БРОНЕНОСЕЦ',col:'#f0abfc',glow:'#e879f9',skin:'shield'},
+    {name:'👑 ПОВЕЛИТЕЛЬ РОЯ',col:'#c084fc',glow:'#a855f7',skin:'fang'},
+    {name:'💥 ТАРАН-ГИГАНТ',col:'#fb7185',glow:'#f43f5e',skin:'blob'},
+  ];
+  function act2SpawnMiniBoss(){
+    const D=act2Def,B=act2BaseWalls;if(!D||!B||!D.breakSides.length)return;
+    const side=D.breakSides[Math.floor(Math.random()*D.breakSides.length)],ga=B.gates.find(g=>g.side===side);if(!ga)return;
+    const e=spawnEnemy(false),spread=B.R*0.5;
+    if(side==='N'||side==='S'){e.x=B.cx+rand(-spread,spread);e.y=ga.cy+ga.ny*rand(300,700);}
+    else{e.y=B.cy+rand(-spread,spread);e.x=ga.cx+ga.nx*rand(300,700);}
+    const def=ACT2_MINIBOSSES[Math.floor(D.wave/5-1)%ACT2_MINIBOSSES.length],wf=1+(D.wave-1)*0.11;
+    e.defense=true;e.siege=true;e.miniBoss=true;e.beh=null;
+    e.maxHp=e.hp=Math.max(e.maxHp*wf*14,Math.max(1,estPlayerDps())*8); // тонна HP, но привязана и к DPS игрока
+    e.dmg*=1.6*(1+(D.wave-1)*0.06);e.r=Math.max(e.r*2.4,34);e.speed=Math.max(46,e.speed*0.6);
+    e.color=def.col;e.glow=def.glow;e.skinShape=def.skin;e.skinName=def.name;e.miniName=def.name;e.summonCd=rand(4,6);
+    announce={text:def.name+' идёт на базу — уничтожь его!',life:3.5,color:def.col};
+    flashFx(0.4,'240,171,252');camShake=Math.max(camShake,9);sfxBoom(0.5,0.35,420,50,true);
   }
   function act2Win(){
     const D=act2Def;if(!D)return;D.phase='won';
@@ -3673,6 +3710,12 @@
       }
       gems.push({x:e.x,y:e.y,r:e.superboss?14:11,val:bonus,big:true,hue:flawless?'#fde047':(e.superboss?'#ff2d55':'#facc15')});
       if(floaters.length<40)floaters.push({x:e.x,y:e.y-30,vy:-30,life:1.2,val:flawless?'🏅 БЕЗУПРЕЧНО ×2':'💎 КРИСТАЛЛ ОПЫТА',crit:true});
+    }
+    if(e.miniBoss){ // мини-босс обороны пал — щедрый чанк кристаллов на апгрейды
+      const rw=120+((act2Def&&act2Def.wave)||1)*10;gemsCollected+=rw;
+      if(floaters.length<40)floaters.push({x:e.x,y:e.y-34,vy:-30,life:1.4,val:'💎 +'+rw,crit:true});
+      burst(e.x,e.y,e.glow||'#e879f9',26);camShake=Math.max(camShake,10);flashFx(0.4,'240,171,252');sfxChime(720,6,0.08,0.13);
+      announce={text:'🏆 '+(e.miniName||'Мини-босс')+' повержен! +'+rw+' 💎',life:3,color:'#f0abfc'};
     }
     if(e.forestLord){ // Лесной Хозяин пал — лес растворяется, награда
       forestField=false;
@@ -7729,6 +7772,14 @@
         x.strokeStyle='rgba(125,211,252,'+(0.4+0.28*pulse)+')';x.lineWidth=5/zoom;x.shadowColor='#7dd3fc';x.shadowBlur=16;
         x.strokeRect(B.cx-o,B.cy-o,o*2,o*2);x.shadowBlur=0;
         x.fillStyle='rgba(125,211,252,0.055)';x.fillRect(B.cx-B.R,B.cy-B.R,B.R*2,B.R*2);
+      }
+      // HP-полоски мини-боссов обороны — чтобы читались как боссы
+      for(const e of enemies){if(!e.miniBoss||e.hp<=0)continue;
+        const bw=Math.max(64,e.r*2.6),bx=e.x-bw/2,byy=e.y-e.r-18,hpf=Math.max(0,Math.min(1,e.hp/(e.maxHp||1)));
+        x.fillStyle='rgba(0,0,0,0.65)';x.fillRect(bx,byy,bw,7);
+        x.fillStyle=e.glow||'#e879f9';x.fillRect(bx,byy,bw*hpf,7);
+        x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1/zoom;x.strokeRect(bx,byy,bw,7);
+        x.fillStyle='#fff';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='bottom';x.fillText(e.miniName||'МИНИ-БОСС',e.x,byy-3);
       }
       x.restore();
     }
