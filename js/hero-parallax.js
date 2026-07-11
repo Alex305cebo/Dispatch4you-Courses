@@ -22,8 +22,8 @@
   var calm = window.matchMedia('(prefers-reduced-motion: reduce)');
   var narrow = window.matchMedia('(max-width: 768px)');
 
-  var RANGE   = narrow.matches ? 2400 : 1600;   // мобильные секции выше → фон живёт дольше
-  var SPEED   = 0.30;   // параллакс: доля скролла, на которую фон отстаёт
+  var RANGE   = narrow.matches ? 1700 : 1600;   // затухание к концу 2-й секции (моб ~1593px)
+  var SPEED   = narrow.matches ? 0.5 : 0.30;    // на мобиле больше лаг → видео дольше на экране
   var OP_TOP  = narrow.matches ? 0.45 : 0.30;   // мобайл ярче (был слишком тусклый)
   var OP_PEAK = narrow.matches ? 0.90 : 0.70;   // пик яркости
   var PEAK_AT = 0.32;   // где пик, доля RANGE (≈ 1-я секция)
