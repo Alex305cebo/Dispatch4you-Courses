@@ -70,29 +70,18 @@
     tgtT = paint(y) * dur;                         // прогресс скролла → кадр видео
     if (!raf) { lastT = 0; raf = requestAnimationFrame(tick); }
   }
-  function onScrollMobile() {
-    paint(window.scrollY || window.pageYOffset || 0);
-  }
-
   if (calm.matches) {                              // reduced-motion — статичный кадр
     video.pause();
     video.style.opacity = OP_TOP.toFixed(3);
     return;
   }
 
-  if (narrow.matches) {                            // мобильный — видео играет по кругу
-    video.loop = true; video.muted = true;
-    var pm = video.play();
-    if (pm && pm.catch) pm.catch(function () {});
-    window.addEventListener('scroll', onScrollMobile, { passive: true });
-    window.addEventListener('resize', onScrollMobile);
-    onScrollMobile();
-  } else {                                         // десктоп — scrub по скроллу
-    video.removeAttribute('autoplay');
-    video.pause();
-    window.addEventListener('scroll', onScrollDesktop, { passive: true });
-    window.addEventListener('resize', onScrollDesktop);
-    video.addEventListener('loadedmetadata', onScrollDesktop);
-    if (video.readyState >= 1) onScrollDesktop();
-  }
+  // SCRUB на ВСЕХ ширинах: мобайл тоже останавливается на скролле, как десктоп.
+  // Нужен HTTP Range (прод Apache — есть) + all-intra видео (scrub.mp4 — есть).
+  video.removeAttribute('autoplay');
+  video.pause();
+  window.addEventListener('scroll', onScrollDesktop, { passive: true });
+  window.addEventListener('resize', onScrollDesktop);
+  video.addEventListener('loadedmetadata', onScrollDesktop);
+  if (video.readyState >= 1) onScrollDesktop();
 })();
