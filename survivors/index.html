@@ -4503,14 +4503,17 @@
     btnLure.style.display=on?'block':'none';
     if(on){const cd=Math.max(0,Math.ceil((act2Def.lureCd||0)));btnLure.disabled=cd>0;btnLure.textContent=cd>0?('📡 '+cd+'с'):'📡 Маяк';}
   }
-  let shipStatsOpen=false;
+  let shipStatsOpen=true; // статы корабля ОТКРЫТЫ по умолчанию (на ПК)
   btnShipStats.addEventListener('click',()=>{
     shipStatsOpen=!shipStatsOpen;shipStatsPanel.classList.toggle('open',shipStatsOpen);
     if(shipStatsOpen)updateShipStatsPanel();
   });
+  // клик по самой панели тоже сворачивает её (закрыть можно и панелью, и кнопкой)
+  shipStatsPanel.addEventListener('click',()=>{shipStatsOpen=false;shipStatsPanel.classList.remove('open');});
   function syncShipStatsVisibility(){
     btnShipStats.style.display=uiMobile?'none':'block';
-    if(uiMobile&&shipStatsOpen){shipStatsOpen=false;shipStatsPanel.classList.remove('open');}
+    if(uiMobile){shipStatsOpen=false;shipStatsPanel.classList.remove('open');} // на мобилке панель скрыта
+    else{shipStatsPanel.classList.toggle('open',shipStatsOpen);if(shipStatsOpen)updateShipStatsPanel();} // на ПК — отражаем состояние (по умолчанию открыта)
   }
   function updateShipStatsPanel(){
     if(!shipStatsOpen||uiMobile||!player)return;
