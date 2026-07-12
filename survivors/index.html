@@ -380,6 +380,7 @@
       </div>
       <button id="btnFinishSide" style="padding:8px 6px;min-width:0;white-space:nowrap;">⏹ Завершить</button>
       <button id="btnMenuSide" style="padding:8px 6px;min-width:0;white-space:nowrap;">☰ Меню</button>
+      <button id="btnDevSide" style="padding:8px 6px;min-width:0;white-space:nowrap;color:#7dd3fc;">🛠 DevTool</button>
     </div>
     <div id="hubPointsBox" class="box full" style="display:none;padding:8px 10px;text-align:center;border:1px solid #4D96FF;background:rgba(77,150,255,0.1);">
       <span id="hubPoints" style="color:#7dd3fc;font-weight:700;font-size:13px;"></span>
@@ -8583,7 +8584,8 @@
   (function(){
     let devMode=false;
     try{devMode=new URLSearchParams(location.search).has('dev');}catch(e){}
-    if(!devMode)return;
+    // панель строится ВСЕГДА, но по умолчанию скрыта; показывается кнопкой «🛠 DevTool» в боковом меню
+    // (или сразу видна при ?dev=1). Раньше здесь был ранний выход, если не ?dev=1.
     function ensureRun(){ if(state!=='running'&&state!=='levelup'){ start(); } }
     // прокачать игрока до уровня lvl и выдать ups улучшений (чтобы бой на 40+ был честным)
     function boost(lvl,ups){
@@ -8644,6 +8646,13 @@
       body.appendChild(b);
     });
     wrap.appendChild(head);wrap.appendChild(body);document.body.appendChild(wrap);
+    wrap.style.display=devMode?'flex':'none'; // по умолчанию скрыта, если не ?dev=1
+    const btnDevSide=document.getElementById('btnDevSide');
+    if(btnDevSide)btnDevSide.addEventListener('click',()=>{
+      const showing=wrap.style.display!=='none';
+      wrap.style.display=showing?'none':'flex';
+      if(!showing)body.style.display='flex'; // при показе сразу раскрываем список кнопок
+    });
   })();
 
   resizeCanvas();reset();draw();
