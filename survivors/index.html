@@ -2460,12 +2460,12 @@
   }
   // ═══ ЭКОНОМИКА КРИСТАЛЛОВ АКТА 2: подлетел к турели/зданию с кристаллами → апгрейд копится ═══
   const TUR_MAX=8, UP_TIME=2.0, AIM_DELAY=0.55; // AIM_DELAY: «прицеливание» — кристаллы уходят только продержавшись рядом, пролетая мимо не тратишь
-  function turCost(lv){return 120+lv*150;} // стоимость апгрейда турели ур.lv→lv+1
-  function bldRepairCost(b){return Math.round(b.maxHp*0.25);} // полный ремонт здания
-  function bldUpCost(b){return 260+(b.lv||0)*220;} // апгрейд бонуса здания
+  function turCost(lv){return 60+lv*75;} // стоимость апгрейда турели ур.lv→lv+1 (×2 дешевле)
+  function bldRepairCost(b){return Math.round(b.maxHp*0.125);} // ремонт здания (×2 дешевле)
+  function bldUpCost(b){return 130+(b.lv||0)*110;} // апгрейд бонуса здания (×2 дешевле)
   // «поток кристаллов»: летят ОТ счётчика 💎 сверху экрана В улучшаемую конструкцию (tx,ty — мир)
   function crystalStream(sx,sy,tx,ty,col){
-    if(Math.random()>0.4||act2Spend.length>60)return; // троттлинг потока
+    if(Math.random()>0.14||act2Spend.length>24)return; // реже и меньше — поток кристаллов менее заметен
     act2Spend.push({wx:tx,wy:ty,col:col||'#7dd3fc',t:0,dur:0.5});
   }
   // ТУРЕЛИ БАЗЫ: автоцель (приоритет — прорвавшимся внутрь) + прокачка за кристаллы (ур.1-8,
@@ -2485,8 +2485,9 @@
       if(act2Def&&act2Def.active&&lv<TUR_MAX&&dist(player,tw)<70&&gemsCollected>0){
         tw.near=true; // подсказка стоимости видна сразу при подлёте
         tw.dwell=(tw.dwell||0)+dt;
-        if(tw.dwell>=AIM_DELAY){ // но кристаллы уходят только после «прицеливания» — пролетая мимо, не тратишь
-          const cost=turCost(lv),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        const cost=turCost(lv);
+        if(tw.dwell>=AIM_DELAY&&gemsCollected+tw.paid>=cost){ // тратим ТОЛЬКО если хватает на полный апгрейд (не сливаем кристаллы впустую)
+          const pay=Math.min(gemsCollected,cost*dt/UP_TIME);
           gemsCollected-=pay;tw.paid+=pay;
           crystalStream(player.x,player.y,tw.x,tw.y,'#7dd3fc');
           if(tw.paid>=cost){tw.lv++;tw.paid=0;tw.upFx=0.9;
@@ -2529,17 +2530,17 @@
       if(dist(player,b)>b.r+70||gemsCollected<=0){b.dwell=0;if(b.upFx>0)b.upFx-=dt;continue;}
       b.dwell=(b.dwell||0)+dt;const armed=b.dwell>=AIM_DELAY; // «прицеливание» перед тратой кристаллов
       if(!b.alive){ // ремонт разрушенного
-        b.near='repair';
-        if(armed){const cost=bldRepairCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        b.near='repair';const cost=bldRepairCost(b);
+        if(armed&&gemsCollected+(b.paid||0)>=cost){const pay=Math.min(gemsCollected,cost*dt/UP_TIME); // только если хватает на полный ремонт
         gemsCollected-=pay;b.paid=(b.paid||0)+pay;crystalStream(player.x,player.y,b.x,b.y,'#4ade80');
         if(b.paid>=cost){b.alive=true;b.hp=b.maxHp;b.paid=0;burst(b.x,b.y,'#4ade80',24);camShake=Math.max(camShake,5);sfxChime(523,5,0.08,0.12);announce={text:'🔧 Здание восстановлено!',life:2.2,color:'#4ade80'};}}
-      }else if(b.hp<b.maxHp*0.999){ // подлатать целое, но повреждённое
+      }else if(b.hp<b.maxHp*0.999){ // подлатать целое, но повреждённое (пропорционально — не «полный апгрейд», тратится по чуть-чуть)
         b.near='fix';
-        if(armed){const pay=Math.min(gemsCollected,b.maxHp*0.4*dt/UP_TIME);
+        if(armed&&gemsCollected>0){const pay=Math.min(gemsCollected,b.maxHp*0.4*dt/UP_TIME);
         gemsCollected-=pay;b.hp=Math.min(b.maxHp,b.hp+pay*2.2);crystalStream(player.x,player.y,b.x,b.y,'#4ade80');}
       }else if((b.lv||0)<5){ // апгрейд бонуса
-        b.near='up';
-        if(armed){const cost=bldUpCost(b),pay=Math.min(gemsCollected,cost*dt/UP_TIME);
+        b.near='up';const cost=bldUpCost(b);
+        if(armed&&gemsCollected+(b.paid||0)>=cost){const pay=Math.min(gemsCollected,cost*dt/UP_TIME); // только если хватает на полный апгрейд
         gemsCollected-=pay;b.paid=(b.paid||0)+pay;crystalStream(player.x,player.y,b.x,b.y,'#fde047');
         if(b.paid>=cost){b.lv=(b.lv||0)+1;b.paid=0;b.maxHp=Math.round(b.maxHp*1.2);b.hp=b.maxHp;b.upFx=0.9;
           burst(b.x,b.y,'#fde047',22);camShake=Math.max(camShake,5);sfxChime(784,5,0.08,0.12);announce={text:'⬆ '+({shield:'Генератор щита',armory:'Арсенал',workshop:'Мастерская',medbay:'Медблок',main:'Главное здание'}[b.kind]||'Здание')+' — ур.'+b.lv,life:2.2,color:'#fde047'};}}
@@ -2629,17 +2630,23 @@
     e.x+=Math.cos(a)*spd*dt;e.y+=Math.sin(a)*spd*dt;
     if(chipGate){chipGate.hp-=e.dmg*dt*1.3;chipGate.hitT=0.12;}
   }
+  function act2PlanWave(){ // заранее выбираем форму волны и какие ворота откроются (для предупреждения в перерыв)
+    const D=act2Def;if(!D)return;
+    const SHAPES=['horde','swarm','siege','breach'];
+    let sh=(D.wave%5===0&&D.wave<D.maxWaves)?'boss':SHAPES[(D.wave-1)%SHAPES.length];
+    if(sh==='swarm'&&D.wave<4)sh='horde'; // летуны — не раньше 4-й волны
+    D.nextShape=sh;
+    let nOpen=Math.min(4,1+Math.floor((D.wave-1)/4)); // 1→2(в5)→3(в9)→4(в13)
+    if(sh==='breach')nOpen=1; else if(sh==='swarm')nOpen=Math.min(4,nOpen+1); // прорыв — одни ворота; рой — шире фронт
+    D.nextSides=['N','E','S','W'].slice().sort(()=>Math.random()-0.5).slice(0,nOpen);
+  }
   function act2StartWave(){
     const D=act2Def,B=act2BaseWalls;if(!D||!B)return;
     D.phase='wave';
-    // ФОРМА ВОЛНЫ: чередуем характер атаки, чтобы волны не были одинаковыми; каждая 5-я (кроме финала 30-й) — мини-босс
-    const SHAPES=['horde','swarm','siege','breach'];
-    D.shape=(D.wave%5===0&&D.wave<D.maxWaves)?'boss':SHAPES[(D.wave-1)%SHAPES.length];
-    const boss=D.shape==='boss';
-    let nOpen=Math.min(4,1+Math.floor((D.wave-1)/4)); // 1→2(в5)→3(в9)→4(в13)
-    if(D.shape==='breach')nOpen=1; else if(D.shape==='swarm')nOpen=Math.min(4,nOpen+1); // прорыв — одни ворота; рой — шире фронт
-    const sides=['N','E','S','W'].slice().sort(()=>Math.random()-0.5).slice(0,nOpen);
-    D.breakSides=sides;
+    if(!D.nextShape)act2PlanWave();
+    D.shape=D.nextShape;const boss=D.shape==='boss';
+    const sides=D.nextSides;D.breakSides=sides;
+    D.nextShape=null;D.nextSides=null;
     for(const ga of B.gates){if(sides.indexOf(ga.side)>=0){ga.wave=true;ga.flick=1.1;}}
     rebuildBaseWallRects();
     let cnt=Math.round(70+D.wave*16);if(D.shape==='breach')cnt=Math.round(cnt*0.8); // плотный поток из одних ворот
@@ -2647,7 +2654,8 @@
     D.siegeLeft=D.shape==='siege'?Math.floor(D.wave/2)+3:(D.wave>=2?Math.floor(D.wave/2)+1:0);
     if(boss)act2SpawnMiniBoss(); // мини-босс входит вместе с волной
     const shapeLbl={horde:'ОРДА',swarm:'РОЙ ЛЕТУНОВ',siege:'ОСАДА ТАРАНОВ',breach:'ПРОРЫВ',boss:'МИНИ-БОСС'}[D.shape];
-    announce={text:'⚔ ВОЛНА '+D.wave+'/'+D.maxWaves+' · '+shapeLbl+'! Ворота: '+sides.join(' · '),life:4,color:boss?'#f0abfc':'#ff2d55'};
+    if(D.wave===4)announce={text:'⚠ С ЭТОЙ ВОЛНЫ — ЛЕТУНЫ: перелетают стены, бьют по зданиям! ('+shapeLbl+', ворота '+sides.join(' · ')+')',life:5,color:'#c4b5fd'};
+    else announce={text:'⚔ ВОЛНА '+D.wave+'/'+D.maxWaves+' · '+shapeLbl+'! Ворота: '+sides.join(' · '),life:4,color:boss?'#f0abfc':'#ff2d55'};
     flashFx(0.5,boss?'240,171,252':'255,45,85');camShake=Math.max(camShake,10);sfxBoom(0.5,0.3,700,60,true);
   }
   // спавн одного моба у выбранной стороны с типом (обычный/таран/летун)
@@ -2684,8 +2692,8 @@
     const sh=D.shape||'horde';
     // тараны — в осадных волнах гуще
     if(D.siegeLeft>0&&Math.random()<(sh==='siege'?0.95:0.7)){D.siegeLeft--;act2SpawnOne(rndSide(),'siege');D.toSpawn=Math.max(0,D.toSpawn-1);}
-    // ЛЕТУНЫ через стену — в роевых волнах гуще и больше
-    if(D.wave>=2&&Math.random()<(sh==='swarm'?0.95:0.6)){const fn=1+Math.floor(Math.random()*(sh==='swarm'?5:3));for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
+    // ЛЕТУНЫ через стену — НЕ раньше 4-й волны (с предупреждением); в роевых гуще и больше
+    if(D.wave>=4&&Math.random()<(sh==='swarm'?0.95:0.6)){const fn=1+Math.floor(Math.random()*(sh==='swarm'?5:3));for(let i=0;i<fn;i++){act2SpawnOne(rndSide(),'flyer');D.toSpawn=Math.max(0,D.toSpawn-1);}}
     // основная волна — крупные пачки (в роевых меньше обычных, упор на летунов)
     let n=9+Math.floor(Math.random()*6)+Math.floor(D.wave/3);if(sh==='swarm')n=Math.ceil(n*0.5);
     n=Math.min(D.toSpawn,n);
@@ -2743,8 +2751,9 @@
         if(Math.random()<0.5)particles.push({x:mb.x+rand(-16,16),y:mb.y-36,vx:0,vy:-1.6,life:0.6,color:'#7dd3fc',sz:2.5});
         if(D.powerT>=2.4){
           player.ship2=true;player.wounded=false;player.hp=player.maxHp;
-          D.phase='break';D.phaseT=9;D.shield.up=true;D.shield.hp=D.shield.maxHp;
-          announce={text:'🛡 БАЗА ЗАПУЩЕНА! Купол держит периметр. Волна 1 через 10с — готовь оборону!',life:5,color:'#7dd3fc'};
+          D.phase='break';D.phaseT=62;D.shield.up=true;D.shield.hp=D.shield.maxHp; // ворота закрыты ≥1 минуты до 1-й волны
+          act2PlanWave();D.guideT=12; // спланировать 1-ю волну (какие ворота) + стрелка к зданию улучшений
+          announce={text:'🛡 БАЗА ЗАПУЩЕНА! Ты — новый корабль, купол держит периметр. Подлетай к зданиям — трать 💎 на турели и апгрейды. 1-я волна через ~минуту.',life:6,color:'#7dd3fc'};
           flashFx(0.6,'125,211,252');camShake=Math.max(camShake,12);sfxChime(523,5,0.09,0.13);
         }
       }else D.powerT=Math.max(0,(D.powerT||0)-dt);
@@ -2760,6 +2769,7 @@
     // МАЯК-ПРИМАНКА: таймеры активности и перезарядки
     if(D.lure&&D.lure.t>0){D.lure.t-=dt;if(Math.random()<0.4)particles.push({x:D.lure.x+rand(-14,14),y:D.lure.y+rand(-14,14),vx:0,vy:-1,life:0.6,color:'#fb7185',sz:2.5});}
     if(D.lureCd>0)D.lureCd-=dt;
+    if(D.guideT>0)D.guideT-=dt; // таймер стрелки-гида к зданию улучшений (после запуска базы)
     // поток «покупки» — кристаллы летят от счётчика к конструкции
     if(act2Spend.length){for(const sp of act2Spend)sp.t+=dt;act2Spend=act2Spend.filter(sp=>sp.t<sp.dur);}
     if(D.phase==='break'){
@@ -2780,8 +2790,8 @@
         D.wave++;
         if(D.wave>D.maxWaves){act2Win();return;}
         for(const ga of B.gates)ga.wave=false;
-        D.phase='break';D.phaseT=D.wave%5===1?9:6;
-        if(!D.waveClean)announce={text:'✅ Волна '+cleared+' отбита! Волна '+D.wave+' через '+Math.ceil(D.phaseT)+'с — чини и улучшай.',life:4,color:'#4ade80'};
+        D.phase='break';D.phaseT=D.wave%5===1?12:8;act2PlanWave(); // спланировать ворота следующей волны для телеграфа
+        if(!D.waveClean)announce={text:'✅ Волна '+cleared+' отбита! Волна '+D.wave+' (ворота '+(D.nextSides||[]).join('·')+') через '+Math.ceil(D.phaseT)+'с — чини и улучшай.',life:4,color:'#4ade80'};
         sfxChime(660,5,0.08,0.12);
       }
     }
@@ -4973,7 +4983,9 @@
     act2Def={active:true,phase:'intro',phaseT:0,wave:1,maxWaves:ACT2_MAXWAVES,
       shield:{up:false,hp:1000,maxHp:1000},breakSides:[],toSpawn:0,spawnAcc:0,powerT:0};
     mobSpawnPaused=true;pendingSpawns=[];enemies=[];
-    announce={text:'🛰 АКТ 2: ОБОРОНА БАЗЫ. Подлети к главному зданию (центр) и запусти купол — начнутся 30 волн!',life:7,color:'#7dd3fc'};
+    // БЕЗ остаточных событий Акта 1 в обороне (иначе осада/риф/зоны спамят мобов ВНУТРИ базы):
+    siege=null;pendingEvent=null;eventDelay=0;altarAcc=0;czAcc=0;safeZone=null;cursedZones=[];forestPending=false;forestGate=false;
+    announce={text:'🛰 АКТ 2: ОБОРОНА БАЗЫ. Подлети к главному зданию (центр) и почини его — станешь новым кораблём, поднимется купол.',life:7,color:'#7dd3fc'};
     flashFx(0.6,'125,211,252');screenFlash=0.5;
     state='running';last=performance.now();
   }
@@ -5517,11 +5529,12 @@
     if(freezeT>0)freezeT-=dt;
 
     // scheduled wave event (delayed a few seconds past the level-up so it doesn't stack the boss intro)
-    if(pendingEvent&&!inVault&&!enemies.some(e2=>e2.megaboss)){ // события ждут вне лабиринта и арены
+    const inAct2Def=act2Def&&act2Def.active; // в обороне базы полевые события Акта 1 (осада/зоны/безопасная зона) НЕ запускаем
+    if(pendingEvent&&!inVault&&!inAct2Def&&!enemies.some(e2=>e2.megaboss)){ // события ждут вне лабиринта и арены
       eventDelay-=dt;
       if(eventDelay<=0){const lvl=pendingEvent;pendingEvent=null;fireEvent(lvl);}
     }
-    siegeTick(dt);
+    if(!inAct2Def)siegeTick(dt);
 
     // safe zone: a periodic sanctuary — enemies can't enter, and the shop only works inside.
     // ВАЖНО: тикаем существующую зону, только если она есть; спавним новую лишь вне лабиринта.
@@ -5544,7 +5557,7 @@
         safeZone=null;
         announce={text:'Безопасная зона исчезла',life:1.6,color:'#8891a3'};
       }
-    }else if(!inVault){
+    }else if(!inVault&&!inAct2Def){
       safeZoneAcc+=dt;
       if(safeZoneAcc>=45){
         safeZoneAcc=0;
@@ -5562,7 +5575,7 @@
       if(gleft===0){forestGate=false;forestDone=true;startForestField();}
     }
     // СВЯТИЛИЩА (PoE-стиль): раз в ~45с на поле встаёт обелиск — коснись и получи мощный бафф
-    if(!inVault&&!enemies.some(e2=>e2.megaboss)){
+    if(!inVault&&!inAct2Def&&!enemies.some(e2=>e2.megaboss)){
       shrineAcc+=dt;
       if(shrineAcc>=45&&player.level>=4){
         shrineAcc=0;
@@ -5578,7 +5591,7 @@
       }
     }
     // АЛТАРЬ-ЖЕРТВЕННИК (PoE-стиль): раз в ~70с — сделка «минус в обмен на плюс»
-    if(!inVault&&!enemies.some(e2=>e2.megaboss)){
+    if(!inVault&&!inAct2Def&&!enemies.some(e2=>e2.megaboss)){
       altarAcc+=dt;
       if(altarAcc>=70&&player.level>=8){
         altarAcc=0;
@@ -7894,7 +7907,7 @@
       x.save();x.textAlign='center';x.textBaseline='top';
       const cyy=HUD_STRIP_H+HUD_XP_H+10;
       if(D.phase==='intro'){
-        x.fillStyle='#7dd3fc';x.font='bold 15px system-ui';x.fillText('🛰 Подлети к главному зданию (центр) и запусти купол',W/2,cyy);
+        x.fillStyle='#7dd3fc';x.font='bold 15px system-ui';x.fillText('🛰 Подлети к центральному зданию и почини его — станешь новым кораблём, поднимется купол',W/2,cyy);
         if(D.powerT>0){x.fillStyle='#4ade80';x.font='bold 13px system-ui';x.fillText('запуск… '+Math.round(D.powerT/2.4*100)+'%',W/2,cyy+20);}
       }else if(D.phase==='won'){
         x.fillStyle='#fde047';x.font='bold 18px system-ui';x.fillText('🏆 БАЗА ВЫСТОЯЛА — 30 ВОЛН!',W/2,cyy);
@@ -7903,13 +7916,16 @@
         x.fillStyle=col;x.font='bold 17px system-ui';
         x.fillText('🛡 ОБОРОНА · Волна '+Math.min(D.wave,D.maxWaves)+'/'+D.maxWaves,W/2,cyy);
         x.font='bold 13px system-ui';x.fillStyle=D.phase==='break'?'#7dd3fc':'#fca5a5';
-        x.fillText(D.phase==='break'?('Купол держит · след. волна через '+Math.max(0,Math.ceil(D.phaseT))+'с · подлетай к турелям/зданиям — трать 💎'):('Прорыв: '+(D.breakSides||[]).join(' · ')+' · осталось мобов: '+(D.toSpawn+enemies.filter(e=>e.defense).length)),W/2,cyy+20);
+        x.fillText(D.phase==='break'?('🛡 Купол держит · ⚠ ворота '+(D.nextSides||[]).join('·')+' откроются через '+Math.max(0,Math.ceil(D.phaseT))+'с · трать 💎 у зданий/турелей'):('Прорыв: '+(D.breakSides||[]).join(' · ')+' · осталось мобов: '+(D.toSpawn+enemies.filter(e=>e.defense).length)),W/2,cyy+20);
       }
       x.restore();
       // ИНДИКАТОРЫ ПРОРЫВА: стрелки к открытым воротам + к главному зданию, если под ударом
       if(D.phase==='wave'){
         for(const ga of (B2.gates||[]))if(ga.open){x.save();edgeArrow(ga.cx,ga.cy,10,'#ff6b6b',1.3);x.restore();}
       }
+      // СТРЕЛКА-ГИД после запуска базы: показывает здание, где тратятся 💎 на улучшения
+      if(D.guideT>0){const ab=(B2.buildings||[]).find(b=>b.kind==='armory'&&b.alive)||(B2.buildings||[]).find(b=>b.main&&b.alive);
+        if(ab){x.save();edgeArrow(ab.x,ab.y,ab.r,'#fde047',1.7+0.3*Math.sin(t*6));x.restore();}}
       // ПОКУПКА: голубые кристаллы летят от счётчика 💎 в улучшаемую конструкцию (старт чуть НИЖЕ
       // пилюли, чтобы не перекрывать саму цифру суммы; ближние к счётчику точки не рисуем)
       if(act2Spend.length){
@@ -7921,8 +7937,8 @@
           const ef=f*f*(3-2*f);
           const ex=(sp.wx-player.x)*zoom+W/2,ey=(sp.wy-player.y)*zoom+H/2;
           const px=src.x+(ex-src.x)*ef,py=src.y+(ey-src.y)*ef;
-          x.globalAlpha=Math.min(1,(f-0.12)*4)*(1-f*0.2);x.fillStyle='#7dd3fc';x.shadowColor='#38bdf8';x.shadowBlur=5;
-          x.beginPath();x.arc(px,py,2.7,0,Math.PI*2);x.fill();
+          x.globalAlpha=0.4;x.fillStyle='#7dd3fc';x.shadowBlur=0; // спокойная ровная альфа, без свечения и мерцания
+          x.beginPath();x.arc(px,py,2,0,Math.PI*2);x.fill();
         }
         x.shadowBlur=0;x.globalAlpha=1;x.restore();
       }
