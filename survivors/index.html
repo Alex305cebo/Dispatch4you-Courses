@@ -2589,6 +2589,24 @@
   function moveDefenseMob(e,dt,spd){
     const B=act2BaseWalls;if(!B){e.x+=Math.cos(e._da||0)*spd*dt;return;}
     if(e.nest){updateNest(e,dt);return;} // гнездо неподвижно — только плодит мобов
+    // РОЙ (мелочь босса): гонится за ИГРОКОМ с лёгким вилянием
+    if(e.swarm){const a=Math.atan2(player.y-e.y,player.x-e.x);e._w=(e._w||e._aseed||0)+dt*4;
+      const wob=Math.sin(e._w)*0.4;e.x+=Math.cos(a+wob)*spd*dt;e.y+=Math.sin(a+wob)*spd*dt;return;}
+    // БОСС-СТРАЖ / БОСС НА ПОДСТУПАХ: настоящий элитный босс — гонится за игроком (атаки/щит идут в общем цикле)
+    if(e.elite){
+      const dpx=Math.hypot(player.x-e.x,player.y-e.y);
+      // страж извергает ТУЧУ очень мелких мобов, пока игрок рядом (лимит по перфу)
+      if(e.swarmCd!=null){e.swarmCd-=dt;
+        const swarmN=enemies.reduce((n,x)=>n+(x.swarm?1:0),0);
+        if(e.swarmCd<=0&&dpx<820&&swarmN<(perfMode?55:95)&&enemies.length<effEnemyCap()){
+          e.swarmCd=rand(0.45,0.9);const k=5+Math.floor(Math.random()*6);
+          for(let i=0;i<k&&enemies.length<effEnemyCap();i++)spawnTinySwarm(e);
+          if(Math.random()<0.5)burst(e.x,e.y,'#f87171',6);
+        }
+      }
+      if(dpx>e.r+player.r+34){const a=Math.atan2(player.y-e.y,player.x-e.x);e.x+=Math.cos(a)*spd*dt;e.y+=Math.sin(a)*spd*dt;}
+      return;
+    }
     // МИНИ-БОСС: периодически призывает пару обычных мобов рядом с собой
     if(e.miniBoss){e.summonCd-=dt;
       if(e.summonCd<=0&&enemies.length<effEnemyCap()-2){e.summonCd=rand(5,7);const wv=(act2Def&&act2Def.wave)||1,wf=1+(wv-1)*0.11;
@@ -2762,26 +2780,33 @@
   // Это обычные враги (e.nest=true) — их бьёт любое оружие игрока. Уничтожил все → победа.
   function spawnAct2Nests(){
     const B=act2BaseWalls,D=act2Def;if(!B||!D)return;
-    const spots=[{x:-1180,y:-1180},{x:1180,y:-1180},{x:1180,y:1180},{x:-1180,y:1180}];
+    // ГНЁЗДА далеко и на РАЗНЫХ сторонах карты (С/В/Ю/З) — до каждого нужна долгая вылазка
+    const D2=2600;
+    const spots=[{x:0,y:-D2,side:'N'},{x:D2,y:0,side:'E'},{x:0,y:D2,side:'S'},{x:-D2,y:0,side:'W'}];
     D.nestsTotal=spots.length;D.nestsLeft=spots.length;
     spots.forEach((s,i)=>{
       const e=spawnEnemy(false);
       e.nest=true;e.defense=true;e.immobile=true;e.beh=null;e.sleep=false;e.elite=false;
       e.x=B.cx+s.x;e.y=B.cy+s.y;
-      let best='N',bd=1e18;for(const ga of B.gates){const dd=(ga.cx-e.x)**2+(ga.cy-e.y)**2;if(dd<bd){bd=dd;best=ga.side;}}
-      e.nestGate=best;
+      e.nestGate=s.side; // мобы гнезда идут к своим воротам
       e.maxHp=e.hp=Math.max(1800,estPlayerDps()*14);
       e.r=56;e.dmg=0;e.speed=0;e.color='#7c3aed';e.glow='#a855f7';e.skinShape='blob';e.skinName='🕳 ГНЕЗДО';
-      e.spawnCd=rand(1.5,3.5)+i*0.5;e.nestIdx=i;
+      e.spawnCd=rand(1.5,3.5)+i*0.6;e.nestIdx=i;
+      e.guardAlive=true;e.awake=false; // страж-босс появляется при подходе игрока, до тех пор гнездо неуязвимо
       // spawnEnemy уже добавил e в enemies — повторно не пушим
     });
-    announce={text:'🎯 ЦЕЛЬ: выйди за базу и уничтожь все '+spots.length+' ГНЕЗДА! Пока живы — из них лезут мобы.',life:6,color:'#a855f7'};
+    announce={text:'🎯 ЦЕЛЬ: выйди далеко за базу и уничтожь все '+spots.length+' ГНЕЗДА (С/В/Ю/З). Каждое стережёт босс с тучей мелких мобов!',life:7,color:'#a855f7'};
     flashFx(0.4,'168,85,247');sfxChime(392,5,0.08,0.12);
   }
-  // спавн мобов из гнезда — направляются к ближайшим к гнезду воротам, крепчают со временем
+  // спавн мобов из гнезда + пробуждение босса-стража при подходе игрока
   function updateNest(e,dt){
     const B=act2BaseWalls,D=act2Def;if(!B||!D||D.phase!=='hunt')return;
     if(Math.random()<0.4)particles.push({x:e.x+rand(-e.r,e.r),y:e.y+rand(-e.r,e.r),vx:rand(-0.4,0.4),vy:-1,life:0.6,color:'#a855f7',sz:2.5});
+    // ПОКА ЖИВ СТРАЖ — гнездо неуязвимо (щит): держим HP полным
+    if(e.guardAlive)e.hp=e.maxHp;
+    // ПРОБУЖДЕНИЕ: игрок подошёл близко → появляется босс-страж, начинается бой у гнезда
+    if(!e.awake&&e.guardAlive&&dist(player,e)<820){e.awake=true;spawnAct2Guardian(e);}
+    // обычный поток мобов к базе (не зависит от боя у гнезда)
     e.spawnCd-=dt;
     if(e.spawnCd>0)return;
     if(enemies.length>=effEnemyCap()){e.spawnCd=0.6;return;}
@@ -2796,6 +2821,45 @@
       m.hp=m.maxHp=m.maxHp*wf;m.dmg*=wf*0.9;m.speed*=1+Math.min(0.4,(D.huntT||0)/300);
       if(Math.random()<0.16){m.flyer=true;m.color='#a78bfa';m.glow='#c4b5fd';m.skinShape='triangle';m.hp=m.maxHp=m.maxHp*0.7;m.speed=Math.max(80,m.speed);}
     }
+  }
+  // БОСС-СТРАЖ ГНЕЗДА: настоящий элитный босс (свои атаки/щит), извергает тучу очень мелких мобов.
+  // Пока он жив — гнездо под защитой; убил стража → гнездо уязвимо.
+  function spawnAct2Guardian(nest){
+    const bn=6+Math.floor(Math.random()*3);
+    const e=spawnEnemy(true,bn);
+    e.x=nest.x+rand(-70,70);e.y=nest.y+rand(-70,70);
+    e.defense=true;e.guardian=true;e.guardOf=nest;e.invulnT=Math.max(e.invulnT||0,1.2);
+    e.maxHp=e.hp=Math.max(e.maxHp,Math.max(1,estPlayerDps())*16);
+    e.swarmCd=rand(0.5,1.0);
+    e.skinName=e.skinName||'СТРАЖ ГНЕЗДА';
+    announce={text:'⚔ '+e.skinName+' СТЕРЕЖЁТ ГНЕЗДО! Из него хлещет туча мелочи — прорвись и убей стража!',life:5,color:'#f0abfc'};
+    flashFx(0.5,'240,171,252');camShake=Math.max(camShake,11);sfxBoom(0.6,0.4,420,50,true);
+  }
+  // СЛОЖНЫЙ БОСС НА ПОДСТУПАХ: встречает игрока в вылазке за периметром (по пути к гнезду)
+  function spawnAct2RoadBoss(){
+    const B=act2BaseWalls;if(!B)return;
+    const bn=5+Math.floor(Math.random()*3);
+    const e=spawnEnemy(true,bn);
+    // ставим ЧУТЬ впереди игрока по ходу от базы наружу
+    const ox=player.x-B.cx,oy=player.y-B.cy,L=Math.hypot(ox,oy)||1;
+    e.x=player.x+ox/L*rand(480,640)+rand(-120,120);
+    e.y=player.y+oy/L*rand(480,640)+rand(-120,120);
+    e.defense=true;e.roadBoss=true;e.invulnT=Math.max(e.invulnT||0,1);
+    e.maxHp=e.hp=Math.max(e.maxHp,Math.max(1,estPlayerDps())*11);
+    announce={text:'⚔ СЛОЖНЫЙ БОСС НА ПУТИ — '+(e.skinName||'элита')+'!',life:3.5,color:'#f87171'};
+    camShake=Math.max(camShake,8);sfxBoom(0.5,0.3,460,55,true);
+  }
+  // ОЧЕНЬ мелкий, дохлый, быстрый моб роя — гибнет пачками, но их ОЧЕНЬ много
+  function spawnTinySwarm(src){
+    const m=spawnEnemy(false);
+    m.defense=true;m.swarm=true;m.beh=null;
+    const a=Math.random()*Math.PI*2,rr=rand(8,64);
+    m.x=src.x+Math.cos(a)*rr;m.y=src.y+Math.sin(a)*rr;
+    m.r=rand(3.5,6);
+    m.maxHp=m.hp=Math.max(1,estPlayerDps()*0.12);
+    m.speed=Math.max(150,player.speed*0.95);
+    m.dmg=Math.max(2,(m.dmg||8)*0.22);
+    m.color='#fca5a5';m.glow='#f87171';m.skinShape='blob';m.xp=0;m._exec=true; // без спец-эффектов казни
   }
   function act2Win(){
     const D=act2Def;if(!D)return;D.phase='won';
@@ -2856,6 +2920,12 @@
     if(act2Spend.length){for(const sp of act2Spend)sp.t+=dt;act2Spend=act2Spend.filter(sp=>sp.t<sp.dur);}
     // страховка миграции: старый сейв (волновой act2Def) без гнёзд — досоздать источники
     if(D.phase==='hunt'&&D.nestsTotal==null)spawnAct2Nests();
+    // БОССЫ НА ПОДСТУПАХ: пока игрок в вылазке за периметром — периодически встречает сложных боссов
+    D.roadBossCd=(D.roadBossCd!=null?D.roadBossCd:10)-dt;
+    const pdC=Math.hypot(player.x-B.cx,player.y-B.cy);
+    if(pdC>B.R+280&&D.roadBossCd<=0&&enemies.reduce((n,x)=>n+(x.roadBoss?1:0),0)<2&&enemies.length<effEnemyCap()-12){
+      D.roadBossCd=rand(13,19);spawnAct2RoadBoss();
+    }
     // открытие ворот подходом игрока
     for(const ga of B.gates){
       const near=Math.hypot(ga.cx-player.x,ga.cy-player.y)<B.gateHalf+player.r+42;
@@ -3780,6 +3850,12 @@
         if(D.nestsLeft<=0)act2Win();
         else announce={text:'🕳 Гнездо уничтожено! Осталось: '+D.nestsLeft+'. Держи базу и добей остальные.',life:4,color:'#a855f7'};}
       return;
+    }
+    if(e.guardOf){ // СТРАЖ ГНЕЗДА пал — снимаем щит с гнезда, оно становится уязвимым (награда-кристалл ниже как у элиты)
+      const nst=e.guardOf;
+      if(nst&&nst.nest){nst.guardAlive=false;
+        announce={text:'🛡 Страж повержен! ГНЕЗДО уязвимо — добей его!',life:4.5,color:'#a855f7'};
+        flashFx(0.4,'168,85,247');rings.push({x:nst.x,y:nst.y,r:0,maxR:180,life:0.7,color:'#a855f7'});}
     }
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
@@ -6112,6 +6188,7 @@
     }
     enemies=enemies.filter(e=>{
       if(e._fled)return false; // гоблин сбежал — без наград
+      if(e.nest&&e.guardAlive){e.hp=e.maxHp;return true;} // гнездо неуязвимо, пока жив страж-босс
       if(e.hp<=0){killEnemy(e);return false;}
       return true;
     });
@@ -7760,12 +7837,17 @@
       cg.addColorStop(0,'rgba(253,224,71,'+(0.6+0.35*pulse)+')');cg.addColorStop(0.5,'rgba(232,121,249,0.7)');cg.addColorStop(1,'rgba(88,28,135,0)');
       x.fillStyle=cg;x.beginPath();x.arc(0,0,r*0.72*(0.9+0.15*pulse),0,Math.PI*2);x.fill();
       if(e.hitFlash>0){x.fillStyle='rgba(255,255,255,'+Math.min(0.6,e.hitFlash*6)+')';x.beginPath();x.arc(0,0,r*0.72,0,Math.PI*2);x.fill();}
+      // ЩИТ от стража: пока страж жив — гнездо неуязвимо, рисуем голубой купол
+      if(e.guardAlive){const sp=0.5+0.5*Math.sin(t*3);
+        x.strokeStyle='rgba(56,189,248,'+(0.5+0.3*sp)+')';x.lineWidth=3/zoom;x.beginPath();x.arc(0,0,r*1.35+sp*4,0,Math.PI*2);x.stroke();
+        x.fillStyle='rgba(56,189,248,0.06)';x.beginPath();x.arc(0,0,r*1.35,0,Math.PI*2);x.fill();}
       // HP-полоса + подпись
       const bw=Math.max(70,r*2.2),byy=-r-20;
       x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(-bw/2,byy,bw,7);
-      x.fillStyle='#c084fc';x.fillRect(-bw/2,byy,bw*hpf,7);
+      x.fillStyle=e.guardAlive?'#38bdf8':'#c084fc';x.fillRect(-bw/2,byy,bw*(e.guardAlive?1:hpf),7);
       x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1/zoom;x.strokeRect(-bw/2,byy,bw,7);
-      x.fillStyle='#f0abfc';x.font='bold '+Math.round(13/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='bottom';x.fillText('🕳 ГНЕЗДО',0,byy-3);
+      x.fillStyle=e.guardAlive?'#7dd3fc':'#f0abfc';x.font='bold '+Math.round(13/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='bottom';
+      x.fillText(e.guardAlive?(e.awake?'🛡 ГНЕЗДО ПОД ЗАЩИТОЙ':'🕳 ГНЕЗДО'):'🕳 ГНЕЗДО — БЕЙ!',0,byy-3);
       x.restore();
     }
     function drawAct2Building(b){
@@ -7916,13 +7998,14 @@
         x.strokeRect(B.cx-o,B.cy-o,o*2,o*2);x.shadowBlur=0;
         x.fillStyle='rgba(125,211,252,0.055)';x.fillRect(B.cx-B.R,B.cy-B.R,B.R*2,B.R*2);
       }
-      // HP-полоски мини-боссов обороны — чтобы читались как боссы
-      for(const e of enemies){if(!e.miniBoss||e.hp<=0)continue;
+      // HP-полоски боссов обороны (мини-боссы, стражи гнёзд, боссы на подступах) — чтобы читались как боссы
+      for(const e of enemies){if(!(e.miniBoss||e.guardian||e.roadBoss)||e.hp<=0)continue;
         const bw=Math.max(64,e.r*2.6),bx=e.x-bw/2,byy=e.y-e.r-18,hpf=Math.max(0,Math.min(1,e.hp/(e.maxHp||1)));
         x.fillStyle='rgba(0,0,0,0.65)';x.fillRect(bx,byy,bw,7);
         x.fillStyle=e.glow||'#e879f9';x.fillRect(bx,byy,bw*hpf,7);
         x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1/zoom;x.strokeRect(bx,byy,bw,7);
-        x.fillStyle='#fff';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='bottom';x.fillText(e.miniName||'МИНИ-БОСС',e.x,byy-3);
+        const lbl=e.miniName||(e.guardian?('🛡 '+(e.skinName||'СТРАЖ ГНЕЗДА')):(e.roadBoss?('⚔ '+(e.skinName||'БОСС')):'МИНИ-БОСС'));
+        x.fillStyle='#fff';x.font='bold '+Math.round(12/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='bottom';x.fillText(lbl,e.x,byy-3);
       }
       x.restore();
     }
@@ -8353,12 +8436,12 @@
       '⚔ Раз в 5 уровней — мини-босс. Отпустишь управление — время замедляется (буллет-тайм).',
       '☠ На <b>20-м уровне</b> — МЕГА-БОСС ХРОНОС. Победишь — начнётся Акт 2: оборона базы.',
     ]},
-    2:{title:'Акт 2 — Оборона базы',go:'▶ В бой',rows:[
-      '🛰 Подлети к <b>центральному зданию</b> и почини его — станешь новым кораблём, поднимется купол.',
-      '⬆ Сразу собери корабль: возьми <b>улучшения</b> (кнопка снизу) и потрать <b>💎</b> на турели и здания — купол держит ~минуту.',
-      '⚔ Затем <b>30 волн</b>. Ворота открываются с одной стороны — сверху предупреждение, с какой.',
-      '💎 Кристаллы падают с врагов — трать у турелей (ур.1-8, на 8 — лазер) и зданий. За чистую волну — бонус 💎.',
-      '🏛 <b>Главное здание падёт — проигрыш.</b> Защищай его.',
+    2:{title:'Акт 2 — Охота на гнёзда',go:'▶ В бой',rows:[
+      '🛰 Подлети к <b>центральному зданию</b> и почини его — станешь новым кораблём.',
+      '⬆ Сразу собери корабль: возьми <b>улучшения</b> (кнопка снизу) и потрать <b>💎</b> на турели и здания — база отбивает поток мобов.',
+      '🎯 <b>Цель: выйди далеко за периметр и уничтожь все 4 ГНЕЗДА</b> (С/В/Ю/З). Пока живы — из них лезут мобы.',
+      '⚔ По пути — <b>сложные боссы</b>, а каждое гнездо стережёт <b>босс-страж</b> с тучей очень мелких мобов. Убей стража → гнездо уязвимо.',
+      '💎 Кристаллы — трать у турелей (ур.1-8, на 8 — лазер) и зданий. 🏛 <b>Главное здание падёт — проигрыш.</b>',
     ]},
   };
   function showIntroPopup(actNum){
