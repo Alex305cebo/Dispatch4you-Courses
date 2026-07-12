@@ -4442,8 +4442,25 @@
   }
 
   function openChest(){
+    // ДЖЕКПОТ (≈18%, с 🍀 Удачей чаще): «однорукий бандит» — сундук иногда выдаёт крупный куш.
+    // Если готова эволюция — форс-эволюция (мгновенно), иначе +3 улучшения и щедрый опыт.
+    const jackpot=Math.random()<Math.min(0.4,0.18+0.05*(player.luckLevel||0));
+    if(jackpot){
+      const evo=readyEvolutions()[0];
+      if(evo){evo.apply(player);
+        announce={text:'🎰 ДЖЕКПОТ! Форс-эволюция: '+evo.name,life:3.4,color:'#fde047'};
+        flashFx(0.5,'253,224,71');camShake=Math.max(camShake,9);doHitStop(0.14);sfxChime(880,6,0.09,0.14);
+      }else{
+        pendingLevelUps+=3;chestPending=true;
+        gems.push({x:player.x,y:player.y,r:12,val:bossXp(0.12),big:true,hue:'#fde047'});
+        announce={text:'🎰 ДЖЕКПОТ! +3 улучшения и кристалл опыта!',life:3.2,color:'#fde047'};
+        flashFx(0.45,'253,224,71');camShake=Math.max(camShake,8);sfxChime(784,6,0.09,0.13);
+      }
+      for(let i=0;i<24;i++)particles.push({x:player.x,y:player.y,vx:rand(-6,6),vy:rand(-6,6),life:1.3,color:i%2?'#fde047':'#facc15',sz:3});
+      return;
+    }
     chestPending=true;pendingLevelUps++;
-    // сундук больше НЕ прерывает бой мгновенно: выбор улучшений (все накопленные
+    // обычный сундук больше НЕ прерывает бой мгновенно: выбор улучшений (все накопленные
     // подряд) откроется после следующего повышения уровня
     announce={text:'🎁 Сундук: +1 улучшение на выбор!',life:2.2,color:'#facc15'};
     sfxChime(520,3,0.07,0.1);
@@ -4813,12 +4830,23 @@
     for(const u of sh){if(opts.length>=3)break;opts.push({u});}
     return opts;
   }
+  // ПОДСКАЗКА-СИНЕРГИЯ: учим игрока комбо «оружие+пассивка → эволюция» (как в Vampire Survivors) —
+  // показываем ближайшую почти готовую эволюцию и что докачать. Появляется, когда реально близко.
+  function evoHint(){
+    const cand=EVOLUTIONS.filter(e=>!player[e.flag]&&(e.wlvl?((player[e.wlvl]||0)>=3):((shopBought.multi||0)>=3)));
+    if(!cand.length)return '';
+    cand.sort((a,b)=>((player[b.wlvl]||0)-(player[a.wlvl]||0)));
+    const e=cand[0],catU=UPGRADES.find(u=>u.id===e.cat),catName=catU?catU.name:e.cat;
+    const wpart=e.wlvl?(' + оружие до ур.5 (сейчас '+Math.floor(player[e.wlvl]||0)+')'):'';
+    return '💡 До «'+e.name.replace('⭐ ','')+'»: качай '+catName+wpart;
+  }
   function renderChoice(){
     // Готово — закрыть (остальные выборы ждут); Авто — применить всё оставшееся сразу
     btnDonePick.style.display='';btnAutoPick.style.display=pendingLevelUps>UP_COST?'':'none';
     levelTitle.innerHTML='⬆ Уровень! · <span style="color:#4ade80;">выборов: '+pendingLevelUps+'</span>';
     levelSub.style.display='block';
-    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Выбери одно улучшение из трёх';
+    const eh=evoHint();
+    levelSub.textContent=(chestPending?'🎁 Сундук! ':'')+'Выбери одно улучшение из трёх'+(eh?' · '+eh:'');
     chestPending=false;
     cardsEl.innerHTML='';
     // АНТИ-РЕРОЛЛ: карты фиксируются и НЕ перекатываются при повторной отрисовке.
@@ -5505,6 +5533,39 @@
   }
   function gameOver(){endSession('death');}
 
+  // ═══ РЕЖИССЁР РИТМА: чередует затишье → напор → передышку с наградой → элитную охоту,
+  // чтобы игра «дышала» (tension/release), а не давила ровным потоком (как в топовых survivors)
+  let director={phase:'calm',t:13,mul:1,quotaBonus:0,cycle:0};
+  const DIR_PHASES={
+    calm:    {dur:[11,15],mul:0.5, quota:0},   // доминируешь, выдыхаешь
+    surge:   {dur:[9,13], mul:1.75,quota:50},  // всплеск: толпа хлынула
+    breather:{dur:[6,9],  mul:0.12,quota:0},   // почти пусто + падает награда
+    hunt:    {dur:[9,13], mul:1.0, quota:15},  // элитная охота: помеченная элита прёт на тебя
+  };
+  const DIR_SEQ=['calm','surge','breather','hunt'];
+  function directorSpawnHunt(){
+    const n=Math.min(5,2+Math.floor(player.level/18));
+    for(let i=0;i<n;i++){const e=spawnEnemy(false);
+      e.huntPack=true;e.champion=true;e.maxHp=e.hp=e.maxHp*2.3;e.dmg*=1.3;e.speed=Math.max(e.speed,150);
+      e.glow='#f0abfc';e.color='#e879f9';}
+  }
+  function directorEnter(ph){
+    const cfg=DIR_PHASES[ph];director.phase=ph;
+    director.t=rand(cfg.dur[0],cfg.dur[1]);director.mul=cfg.mul;director.quotaBonus=cfg.quota;
+    if(ph==='surge'){announce={text:'⚠ НАПОР! Толпа хлынула — держись!',life:2.6,color:'#ff6b6b'};camShake=Math.max(camShake,5);sfxBoom(0.4,0.22,600,60,true);}
+    else if(ph==='breather'){
+      announce={text:'🎁 Передышка — забери награду и выдохни',life:2.6,color:'#4ade80'};
+      pickups.push({x:player.x+rand(-60,60),y:player.y-70,r:12,type:'chest',color:'#facc15',label:'★'});
+      pickups.push({x:player.x+rand(-60,60),y:player.y+70,r:11,type:'heal',color:'#4ade80',label:'+'});
+      sfxChime(660,4,0.07,0.11);
+    }
+    else if(ph==='hunt'){directorSpawnHunt();announce={text:'🎯 ОХОТА! Элита идёт по твою душу',life:2.8,color:'#f0abfc'};camShake=Math.max(camShake,6);}
+  }
+  function updateDirector(dt){
+    director.t-=dt;
+    if(director.t<=0){const i=DIR_SEQ.indexOf(director.phase);directorEnter(DIR_SEQ[(i+1)%DIR_SEQ.length]);if(director.phase==='calm')director.cycle++;}
+  }
+
   function step(dt){
     if(inArcade){arcadeStep(dt);return;} // бонус-уровень SPACE INVADERS — своя логика
     t+=dt;
@@ -5601,6 +5662,7 @@
     // в лабиринте обычный спавн ВЫКЛЮЧЕН — иначе offscreenRad() сыпал мобов за стенами
     const d=difficulty();
     if(!mobSpawnPaused&&!inVault&&!(act2Def&&act2Def.active)){
+      if(!enemies.some(e=>e.megaboss)&&!siege&&!forestGate)updateDirector(dt); // ритм-режиссёр только в обычном течении
       // охотник: с 40 уровня, ~раз в 20с, не больше 2 живых одновременно
       if(player.level>=40&&Math.random()<0.05*dt&&enemies.filter(e=>e.hunter).length<2)spawnHunter();
       // жадный гоблин: с 5 уровня, редко (~раз в 2.5-3 мин), один за раз
@@ -5612,11 +5674,13 @@
       // и спавнер сам доспавнивает недостающих. Жёсткий счётчик «заспавнено за уровень»
       // такие утечки не переживал: квота тратилась, килы не добирались — софтлок уровня
       let aliveNormal=0;for(const e2 of enemies){if(!e2.elite&&!e2.goblin&&!e2.hunter)aliveNormal++;}
-      const levelQuota=levelBudget(player.level);
+      const dmul=(!enemies.some(e=>e.megaboss)&&!siege&&!forestGate)?(director.mul||1):1; // ритм-множитель напора
+      const levelQuota=levelBudget(player.level)+(dmul!==1?director.quotaBonus:0);
       if(killsThisLevel+aliveNormal<levelQuota&&enemies.length<effEnemyCap()+(player.curseCapBonus||0)){
         spawnAcc+=dt*1000;
-        if(spawnAcc>d.interval){spawnAcc=0;
-          const n=Math.min(d.count,Math.ceil(levelQuota-killsThisLevel-aliveNormal));
+        if(spawnAcc>d.interval/Math.max(0.4,dmul)){spawnAcc=0;
+          const dcount=Math.max(1,Math.round(d.count*dmul));
+          const n=Math.min(dcount,Math.ceil(levelQuota-killsThisLevel-aliveNormal));
           for(let i=0;i<n;i++)spawnEnemy(false);
         }
       }else{
@@ -6874,6 +6938,7 @@
     enemies.forEach(e=>{if(e.hunter)edgeArrow(e.x,e.y,e.r,'#facc15',1.6+0.3*Math.sin(t*6));});
     enemies.forEach(e=>{if(e.goblin)edgeArrow(e.x,e.y,e.r,'#fde047',1.7+0.35*Math.sin(t*8));});
     enemies.forEach(e=>{if(e.nest&&e.hp>0)edgeArrow(e.x,e.y,e.r,'#a855f7',1.7+0.3*Math.sin(t*6));}); // указатели на гнёзда-цели
+    enemies.forEach(e=>{if(e.huntPack)edgeArrow(e.x,e.y,e.r,'#f0abfc',1.5+0.3*Math.sin(t*7));}); // элитная охота режиссёра
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,portal.kind==='arcade'?'#4ade80':'#c084fc',1.7+0.3*Math.sin(t*6));
