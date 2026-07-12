@@ -245,6 +245,11 @@
       </div>
       <p style="font-size:11px;color:var(--muted);opacity:0.75;margin-top:8px;">created by Ilya Ce</p>
     </div>
+    <div id="ointro" class="overlay">
+      <h2 id="introTitle">Как играть</h2>
+      <div id="introBody" style="max-width:400px;text-align:left;color:#c3cad8;font-size:13.5px;line-height:1.6;display:flex;flex-direction:column;gap:10px;"></div>
+      <button class="ostart primary" id="btnIntroGo">▶ Начать</button>
+    </div>
     <div id="oweaponchoice" class="overlay">
       <h2>Выбери 2 оружия</h2>
       <p id="weaponChoiceHint" style="color:#4D96FF;font-size:13px;margin:-8px 0 0;">Выбрано: 0/2</p>
@@ -4990,9 +4995,10 @@
     mobSpawnPaused=true;pendingSpawns=[];enemies=[];
     // БЕЗ остаточных событий Акта 1 в обороне (иначе осада/риф/зоны спамят мобов ВНУТРИ базы):
     siege=null;pendingEvent=null;eventDelay=0;altarAcc=0;czAcc=0;safeZone=null;cursedZones=[];forestPending=false;forestGate=false;
-    announce={text:'🛰 АКТ 2: ОБОРОНА БАЗЫ. Подлети к главному зданию (центр) и почини его — станешь новым кораблём, поднимется купол.',life:7,color:'#7dd3fc'};
+    announce={text:'🛰 АКТ 2 — ОБОРОНА БАЗЫ',life:4,color:'#7dd3fc'};
     flashFx(0.6,'125,211,252');screenFlash=0.5;
     state='running';last=performance.now();
+    showIntroPopup(2); // инструкция Акта 2 — модалка перед обороной базы (всё объясняет)
   }
   // два ближайших РАЗНЫХ врага (для двух орудий)
   function twoNearest(range){
@@ -7912,7 +7918,7 @@
       x.save();x.textAlign='center';x.textBaseline='top';
       const cyy=HUD_STRIP_H+HUD_XP_H+10;
       if(D.phase==='intro'){
-        x.fillStyle='#7dd3fc';x.font='bold 15px system-ui';x.fillText('🛰 Подлети к центральному зданию и почини его — станешь новым кораблём, поднимется купол',W/2,cyy);
+        x.fillStyle='#7dd3fc';x.font='bold 15px system-ui';x.fillText('🔧 Почини центральное здание (в центре) — станешь новым кораблём',W/2,cyy);
         if(D.powerT>0){x.fillStyle='#4ade80';x.font='bold 13px system-ui';x.fillText('запуск… '+Math.round(D.powerT/2.4*100)+'%',W/2,cyy+20);}
       }else if(D.phase==='won'){
         x.fillStyle='#fde047';x.font='bold 18px system-ui';x.fillText('🏆 БАЗА ВЫСТОЯЛА — 30 ВОЛН!',W/2,cyy);
@@ -8168,7 +8174,7 @@
     if(state==='running'&&!paused&&deathCine<=0&&hitStop<=0)dt*=bulletTime;
     try{
       if(finale){finaleTick(real);}
-      else if(state==='running'&&!paused){step(dt);maybeOpenChoice();}
+      else if(state==='running'&&!paused&&!introOpen){step(dt);maybeOpenChoice();}
       // таймер «нетерпеливых» кнопок: копится в РЕАЛЬНОМ времени (буллет-тайм не тормозит его)
       if(state==='running'&&!paused&&!optChoice&&pendingLevelUps>0)pendingIdleT+=real;else pendingIdleT=0;
       draw();
@@ -8225,7 +8231,34 @@
     document.getElementById('oweaponchoice').classList.remove('show');
     ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');olb.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
+    showIntroPopup(1); // инструкция Акта 1 — модалка до начала игры
   }
+
+  // ── ИНТРО-ПОПАП: модалка с инструкцией акта; замораживает игру (introOpen) до кнопки «Начать» ──
+  const ointro=document.getElementById('ointro'),introTitle=document.getElementById('introTitle'),introBody=document.getElementById('introBody'),btnIntroGo=document.getElementById('btnIntroGo');
+  const INTRO_CONTENT={
+    1:{title:'Акт 1 — Выживание',go:'▶ Начать',rows:[
+      '🎮 <b>WASD / стрелки</b> — движение (на телефоне — тяни пальцем по полю). Оружие стреляет само.',
+      '💎 Собирай синие <b>кристаллы опыта</b> — растёт уровень; на уровне бери улучшения кнопками снизу.',
+      '⚔ Раз в 5 уровней — мини-босс. Отпустишь управление — время замедляется (буллет-тайм).',
+      '☠ На <b>20-м уровне</b> — МЕГА-БОСС ХРОНОС. Победишь — начнётся Акт 2: оборона базы.',
+    ]},
+    2:{title:'Акт 2 — Оборона базы',go:'▶ В бой',rows:[
+      '🛰 Подлети к <b>центральному зданию</b> и почини его — станешь новым кораблём, поднимется купол.',
+      '⬆ Сразу собери корабль: возьми <b>улучшения</b> (кнопка снизу) и потрать <b>💎</b> на турели и здания — купол держит ~минуту.',
+      '⚔ Затем <b>30 волн</b>. Ворота открываются с одной стороны — сверху предупреждение, с какой.',
+      '💎 Кристаллы падают с врагов — трать у турелей (ур.1-8, на 8 — лазер) и зданий. За чистую волну — бонус 💎.',
+      '🏛 <b>Главное здание падёт — проигрыш.</b> Защищай его.',
+    ]},
+  };
+  function showIntroPopup(actNum){
+    const c=INTRO_CONTENT[actNum];if(!c||!ointro)return;
+    introTitle.textContent=c.title;
+    introBody.innerHTML=c.rows.map(r=>'<div>'+r+'</div>').join('');
+    btnIntroGo.textContent=c.go;
+    ointro.classList.add('show');introOpen=true;
+  }
+  if(btnIntroGo)btnIntroGo.addEventListener('click',()=>{ointro.classList.remove('show');introOpen=false;last=performance.now();});
 
   function resumeRun(){
     if(!loadRun()){start();return;}
@@ -8439,7 +8472,7 @@
   document.getElementById('btnChoicePause').addEventListener('click',toggleChoiceOpt);
   applyChoiceOpt();
   // пауза
-  let paused=false;
+  let paused=false,introOpen=false; // introOpen: показан интро-попап акта → игра заморожена до «Начать»
   const opause=document.getElementById('opause');
   function pauseGame(){if(state!=='running'||paused)return;paused=true;endJoy();keys={};moveVec={x:0,y:0};saveRun();opause.classList.add('show');updatePendingBtn();}
   function unpause(){if(!paused)return;paused=false;opause.classList.remove('show');last=performance.now();}
