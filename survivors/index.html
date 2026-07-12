@@ -1970,7 +1970,10 @@
   }
 
   function pickType(){
-    const tier=ENEMY_TIERS[tierIndexForLevel(player.level)];
+    // в обороне базы (Акт 2) разнообразие мобов растёт по НОМЕРУ ВОЛНЫ, а не по уровню игрока —
+    // с 3-4 волны приходят всё новые/необычные типы (уровень для выбора тира ≈ (волна-1)×7)
+    const lvlForTier=(act2Def&&act2Def.active)?Math.max(player.level,(act2Def.wave-1)*7):player.level;
+    const tier=ENEMY_TIERS[tierIndexForLevel(lvlForTier)];
     // fast small mobs swarm-glue onto the player when they're half of every spawn —
     // keep them as spice (~30%), not the main course
     const fast=tier.filter(k=>ENEMY_TYPES[k].speed>=130);
@@ -4358,7 +4361,7 @@
   // кристаллы просто удалялись без награды — теперь ни один не пропадает бесследно.
   function creditGem(g,silent){
     grantXp(Math.round(g.val*(1+0.15*player.wisdomLevel)));
-    gemsCollected++;
+    gemsCollected+=(act2Def&&act2Def.active?10:1);
     if(challenge&&challenge.type==='gems')challenge.progress++;
     killsThisLevel+=0.25;
     let gg=0;while(killsThisLevel>=levelBudget(player.level)&&gg++<50){killsThisLevel-=levelBudget(player.level);levelUpOnce();}
@@ -5701,7 +5704,7 @@
           if(Math.random()<0.25&&particles.length<560)particles.push({x:L.x,y:L.y,vx:rand(-0.5,0.5),vy:rand(-0.5,0.5),life:0.35,color:L.color,sz:1.6});
           if(dist(player,L)<player.r+12){
             L._got=true;
-            if(L.kind==='gem'){gemsCollected++;killsThisLevel+=0.25;
+            if(L.kind==='gem'){gemsCollected+=(act2Def&&act2Def.active?10:1);killsThisLevel+=0.25;
               let gg2=0;while(killsThisLevel>=levelBudget(player.level)&&gg2++<50){killsThisLevel-=levelBudget(player.level);levelUpOnce();}}
             else if(L.kind==='shard'){metaState.shards++;saveMeta();
               if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-18,vy:-26,life:1,val:'+1 ✨',crit:false});}
@@ -5745,7 +5748,7 @@
         if(Math.random()<0.3&&particles.length<560)particles.push({x:L.x,y:L.y,vx:rand(-0.5,0.5),vy:rand(-0.5,0.5),life:0.35,color:L.color,sz:1.6});
         if(dist(player,L)<player.r+12){
           L._got=true;
-          if(L.kind==='gem'){gemsCollected++;killsThisLevel+=0.25;
+          if(L.kind==='gem'){gemsCollected+=(act2Def&&act2Def.active?10:1);killsThisLevel+=0.25;
             let gg3=0;while(killsThisLevel>=levelBudget(player.level)&&gg3++<50){killsThisLevel-=levelBudget(player.level);levelUpOnce();}
             sfxChime(700,2,0.04,0.06);}
           else if(L.kind==='shard'){metaState.shards++;saveMeta();
@@ -5820,7 +5823,7 @@
           if(Math.random()<0.3&&particles.length<560)particles.push({x:L.x,y:L.y,vx:rand(-0.5,0.5),vy:rand(-0.5,0.5),life:0.35,color:L.color,sz:1.6});
           if(dist(player,L)<player.r+12){
             L._got=true;
-            if(L.kind==='gem'){gemsCollected++;sfxChime(700,2,0.04,0.06);}
+            if(L.kind==='gem'){gemsCollected+=(act2Def&&act2Def.active?10:1);sfxChime(700,2,0.04,0.06);}
             else if(L.kind==='shard'){metaState.shards++;saveMeta();
               if(floaters.length<40)floaters.push({x:player.x,y:player.y-player.r-20,vy:-28,life:1,val:'+1 ✨',crit:true});
               sfxChime(880,3,0.05,0.09);}
