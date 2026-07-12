@@ -52,6 +52,10 @@
     .subtitle{font-size:15px;color:rgba(255,255,255,.9);max-width:600px;margin:0 auto 24px;line-height:1.5;font-weight:600}
     .gradient-text{background:linear-gradient(90deg,#667eea,#764ba2,#667eea);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .container{max-width:1000px;margin:0 auto;padding:0 clamp(12px,3vw,32px);width:100%}
+    /* «Комьюнити»: критичный размер иконок-декора — гасит вспышку до загрузки why-section.css */
+    .benefits-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;max-width:1000px;margin:0 auto}
+    .benefit-card{position:relative;overflow:hidden}
+    .benefit-img{position:absolute;top:50%;right:16px;transform:translateY(-50%);width:80px;height:80px;object-fit:contain;opacity:.08;pointer-events:none}
     /* Мобильная оптимизация */
     @media(max-width:768px){h1{font-size:30px}.subtitle{font-size:14px}}
   </style>
@@ -73,7 +77,7 @@
   <link rel="stylesheet" href="css/profession-section.css?v=2.2" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="css/features-carousel.css?v=2.9" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="css/how-it-works.css?v=2" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="css/pricing-section.css?v=2" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="css/pricing-section.css?v=8" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="css/final-cta.css" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="interactive-feedback.css" media="print" onload="this.media='all'">
   
@@ -84,7 +88,7 @@
     <link rel="stylesheet" href="css/profession-section.css?v=2.2">
     <link rel="stylesheet" href="css/features-carousel.css?v=2.9">
     <link rel="stylesheet" href="css/how-it-works.css?v=2">
-    <link rel="stylesheet" href="css/pricing-section.css?v=2">
+    <link rel="stylesheet" href="css/pricing-section.css?v=8">
     <link rel="stylesheet" href="css/final-cta.css">
     <link rel="stylesheet" href="interactive-feedback.css">
   </noscript>
@@ -933,30 +937,13 @@
 
   <!-- Pricing Section -->
   <section class="pricing-section p2-root" id="pricing">
+    <canvas class="p2-fx" aria-hidden="true"></canvas>
     <div class="p2-head">
       <h2 class="p2-title">Выберите свой Тариф</h2>
       <p class="p2-sub">Гибкие планы для любых целей и бюджета</p>
     </div>
 
     <div class="p2-grid">
-
-      <!-- БАЗОВЫЙ -->
-      <div class="p2-card p2-card--side">
-        <span class="p2-tag p2-tag--free">Бесплатно</span>
-        <div class="p2-name">Базовый</div>
-        <div class="p2-price"><span class="p2-amount">FREE</span></div>
-        <p class="p2-desc">Теоретические материалы без ограничений по времени.</p>
-        <div class="p2-divider"></div>
-        <ul class="p2-feats">
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Доступ к 3 базовым модулям</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Основная документация</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Базовые тесты и квизы</li>
-          <li class="p2-off"><svg class="p2-ic p2-ic--off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>AI-симулятор переговоров</li>
-          <li class="p2-off"><svg class="p2-ic p2-ic--off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Менторская поддержка</li>
-          <li class="p2-off"><svg class="p2-ic p2-ic--off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Реальные кейсы</li>
-        </ul>
-        <a class="p2-btn" href="pages/documentation.html">Начать бесплатно</a>
-      </div>
 
       <!-- ПОЛНЫЙ ДОСТУП (FEATURED) -->
       <div class="p2-card p2-card--feat">
@@ -966,16 +953,14 @@
         </span>
         <span class="p2-tag" style="border-color:rgba(139,92,246,.5);color:#c4b5fd">Полный доступ</span>
         <div class="p2-name">Полный доступ</div>
-        <div class="p2-price"><span class="p2-amount">$1,000</span><span class="p2-per">/ год</span></div>
-        <p class="p2-desc">15 уроков · Симулятор · Инструменты · Групповые еженедельные уроки · Доступ на 1 год.</p>
+        <div class="p2-price"><span class="p2-old">$1,000</span><span class="p2-amount">$850</span><span class="p2-save">−15%</span></div>
+        <p class="p2-desc">15 уроков, AI-симулятор и все инструменты.</p>
         <div class="p2-divider"></div>
         <ul class="p2-feats">
           <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Все 15 модулей курса</li>
           <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>AI-симулятор диспетчера</li>
           <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>300+ реальных кейсов</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Полная документация</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Групповые уроки каждую неделю</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Поддержка в чате 24/7</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Групповые уроки + чат 24/7</li>
         </ul>
         <a class="p2-btn p2-btn--primary" href="pricing.html">Оформить подписку</a>
       </div>
@@ -984,18 +969,21 @@
       <div class="p2-card p2-card--side">
         <span class="p2-tag p2-tag--prem">Премиум</span>
         <div class="p2-name">Премиум</div>
-        <div class="p2-price"><span class="p2-amount">$1,750</span><span class="p2-per">/ год</span></div>
-        <p class="p2-desc">Всё из «Полного» + личный ментор 24/7 и закрытое сообщество.</p>
+        <div class="p2-price"><span class="p2-old">$1,750</span><span class="p2-amount">$1,500</span><span class="p2-save p2-save--hot">−14%</span></div>
+        <p class="p2-desc">Гарантируем готовность к работе и первый груз.</p>
         <div class="p2-divider"></div>
         <ul class="p2-feats">
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Всё из тарифа «Полный доступ»</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Всё из «Полного доступа»</li>
           <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Личный ментор 24/7</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Персональные занятия несколько раз в неделю</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Помощь в трудоустройстве</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Закрытое комьюнити профи</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Приоритетная поддержка</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Гарантия готовности к работе</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Доводим до первого груза</li>
         </ul>
         <a class="p2-btn" href="pricing.html">Выбрать Премиум</a>
+        <div class="p2-spots">
+          <div class="p2-spots-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg>Осталось <b>6</b> из 15 вводных мест</div>
+          <div class="p2-spots-bar"><i style="width:60%"></i></div>
+          <div class="p2-spots-note">Скидка сгорает, когда группа наберётся полностью</div>
+        </div>
       </div>
 
     </div>
@@ -1099,6 +1087,7 @@
   <script src="js/profession-modal.js" defer></script>
   <script src="js/stats-animation.js" defer></script>
   <script src="js/features-carousel.js?v=2.6" defer></script>
+  <script src="js/pricing-fx.js?v=5" defer></script>
   <script src="js/how-it-works.js" defer></script>
 
   <!-- Структурированные данные вынесены в единый Schema.org-блок в <head> -->

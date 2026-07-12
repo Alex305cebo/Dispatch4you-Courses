@@ -52,6 +52,10 @@
     .subtitle{font-size:15px;color:rgba(255,255,255,.9);max-width:600px;margin:0 auto 24px;line-height:1.5;font-weight:600}
     .gradient-text{background:linear-gradient(90deg,#667eea,#764ba2,#667eea);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .container{max-width:1000px;margin:0 auto;padding:0 clamp(12px,3vw,32px);width:100%}
+    /* «Комьюнити»: критичный размер иконок-декора — гасит вспышку до загрузки why-section.css */
+    .benefits-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;max-width:1000px;margin:0 auto}
+    .benefit-card{position:relative;overflow:hidden}
+    .benefit-img{position:absolute;top:50%;right:16px;transform:translateY(-50%);width:80px;height:80px;object-fit:contain;opacity:.08;pointer-events:none}
     /* Мобильная оптимизация */
     @media(max-width:768px){h1{font-size:30px}.subtitle{font-size:14px}}
   </style>
@@ -73,7 +77,7 @@
   <link rel="stylesheet" href="/css/profession-section.css?v=2.2" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/css/features-carousel.css?v=2.9" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/css/how-it-works.css?v=2" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="/css/pricing-section.css?v=2" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="/css/pricing-section.css?v=8" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/css/final-cta.css" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/interactive-feedback.css" media="print" onload="this.media='all'">
 
@@ -84,7 +88,7 @@
     <link rel="stylesheet" href="/css/profession-section.css?v=2.2">
     <link rel="stylesheet" href="/css/features-carousel.css?v=2.9">
     <link rel="stylesheet" href="/css/how-it-works.css?v=2">
-    <link rel="stylesheet" href="/css/pricing-section.css?v=2">
+    <link rel="stylesheet" href="/css/pricing-section.css?v=8">
     <link rel="stylesheet" href="/css/final-cta.css">
     <link rel="stylesheet" href="/interactive-feedback.css">
   </noscript>
@@ -933,30 +937,13 @@
 
   <!-- Pricing Section -->
   <section class="pricing-section p2-root" id="pricing">
+    <canvas class="p2-fx" aria-hidden="true"></canvas>
     <div class="p2-head">
       <h2 class="p2-title">Choose Your Plan</h2>
       <p class="p2-sub">Flexible plans for any goal and budget</p>
     </div>
 
     <div class="p2-grid">
-
-      <!-- BASIC -->
-      <div class="p2-card p2-card--side">
-        <span class="p2-tag p2-tag--free">Free</span>
-        <div class="p2-name">Basic</div>
-        <div class="p2-price"><span class="p2-amount">FREE</span></div>
-        <p class="p2-desc">Theory materials with no time limits.</p>
-        <div class="p2-divider"></div>
-        <ul class="p2-feats">
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Access to 3 basic modules</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Core documentation</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Basic tests and quizzes</li>
-          <li class="p2-off"><svg class="p2-ic p2-ic--off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>AI negotiation simulator</li>
-          <li class="p2-off"><svg class="p2-ic p2-ic--off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Mentor support</li>
-          <li class="p2-off"><svg class="p2-ic p2-ic--off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>Real-world cases</li>
-        </ul>
-        <a class="p2-btn" href="/en/pages/documentation.html">Start for free</a>
-      </div>
 
       <!-- FULL ACCESS (FEATURED) -->
       <div class="p2-card p2-card--feat">
@@ -966,16 +953,14 @@
         </span>
         <span class="p2-tag" style="border-color:rgba(139,92,246,.5);color:#c4b5fd">Full Access</span>
         <div class="p2-name">Full Access</div>
-        <div class="p2-price"><span class="p2-amount">$1,000</span><span class="p2-per">/ year</span></div>
-        <p class="p2-desc">15-lesson course · Simulator · Tools · Weekly group lessons · 1-year access.</p>
+        <div class="p2-price"><span class="p2-old">$1,000</span><span class="p2-amount">$850</span><span class="p2-save">−15%</span></div>
+        <p class="p2-desc">15 lessons, AI simulator and all the tools.</p>
         <div class="p2-divider"></div>
         <ul class="p2-feats">
           <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>All 15 course modules</li>
           <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>AI dispatcher simulator</li>
           <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>300+ real-world cases</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Complete documentation</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Weekly group lessons</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>24/7 chat support</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--feat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Group lessons + 24/7 chat</li>
         </ul>
         <a class="p2-btn p2-btn--primary" href="/en/pricing.html">Get the subscription</a>
       </div>
@@ -984,18 +969,21 @@
       <div class="p2-card p2-card--side">
         <span class="p2-tag p2-tag--prem">Premium</span>
         <div class="p2-name">Premium</div>
-        <div class="p2-price"><span class="p2-amount">$1,750</span><span class="p2-per">/ year</span></div>
-        <p class="p2-desc">Everything in Full Access + a personal mentor 24/7 and a private community.</p>
+        <div class="p2-price"><span class="p2-old">$1,750</span><span class="p2-amount">$1,500</span><span class="p2-save p2-save--hot">−14%</span></div>
+        <p class="p2-desc">We guarantee work-readiness and your first load.</p>
         <div class="p2-divider"></div>
         <ul class="p2-feats">
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Everything in the Full Access plan</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Everything in Full Access</li>
           <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Personal mentor 24/7</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>One-on-one sessions several times a week</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Job placement help</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Private pro community</li>
-          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Priority support</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>Work-readiness guarantee</li>
+          <li class="p2-on"><svg class="p2-ic p2-ic--on" style="color:var(--p2-orange)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>We get you to your first load</li>
         </ul>
         <a class="p2-btn" href="/en/pricing.html">Choose Premium</a>
+        <div class="p2-spots">
+          <div class="p2-spots-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg><b>6</b> of 15 intro spots left</div>
+          <div class="p2-spots-bar"><i style="width:60%"></i></div>
+          <div class="p2-spots-note">The discount ends once the group is full</div>
+        </div>
       </div>
 
     </div>
@@ -1099,6 +1087,7 @@
   <script src="/js/en/profession-modal.js" defer></script>
   <script src="/js/en/stats-animation.js" defer></script>
   <script src="/js/en/features-carousel.js?v=2.6" defer></script>
+  <script src="/js/pricing-fx.js?v=5" defer></script>
   <script src="/js/en/how-it-works.js" defer></script>
 
   <!-- Structured data consolidated in the single Schema.org block in <head> -->

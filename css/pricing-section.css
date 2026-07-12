@@ -8,7 +8,7 @@
   --p2-glass:rgba(255,255,255,.05); --p2-border:rgba(255,255,255,.1);
   --p2-txt:#fff; --p2-mut:rgba(255,255,255,.7); --p2-dim:rgba(255,255,255,.4);
   font-family:'Montserrat',sans-serif; color:var(--p2-txt);
-  background:linear-gradient(180deg,#050810 0%,#0f1626 100%);
+  /* без своего фона — секция прозрачная, сливается с тёмным body (без шва между секциями) */
   padding:clamp(48px,8vw,96px) clamp(16px,4vw,32px);
   -webkit-font-smoothing:antialiased;
 }
@@ -22,9 +22,10 @@
 .p2-sub{margin-top:14px;font-size:clamp(15px,2.2vw,18px);color:var(--p2-mut);font-weight:400}
 
 .p2-grid{
-  display:grid;gap:clamp(16px,2.5vw,24px);align-items:center;
-  grid-template-columns:1fr 1.12fr 1fr;
-  max-width:1120px;margin:0 auto;
+  /* десктоп/планшет — 2 карточки в ряд; мобилка — друг под другом (см. медиа ниже) */
+  display:grid;gap:clamp(16px,2.5vw,24px);align-items:start;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  max-width:760px;margin:0 auto;
 }
 
 .p2-card{
@@ -38,9 +39,9 @@
 .p2-card--side:hover{transform:translateY(-6px);border-color:rgba(255,255,255,.2);
   box-shadow:0 20px 50px -20px rgba(0,0,0,.6)}
 
-/* Featured */
+/* Featured — те же размеры, что у второй карточки (для симметрии), выделен только свечением/лентой */
 .p2-card--feat{
-  padding:38px 28px;z-index:2;
+  padding:28px 24px;z-index:2;
   background:linear-gradient(180deg,rgba(139,92,246,.14),rgba(6,182,212,.06)),var(--p2-glass);
   border:1px solid transparent;
   background-clip:padding-box;
@@ -70,29 +71,27 @@
 .p2-ribbon svg{width:13px;height:13px}
 
 .p2-tag{
-  align-self:flex-start;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  align-self:center;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
   padding:5px 12px;border-radius:999px;border:1px solid var(--p2-border);color:var(--p2-mut);
 }
 .p2-tag--free{color:var(--p2-cyan);border-color:rgba(6,182,212,.4)}
 .p2-tag--prem{color:var(--p2-orange);border-color:rgba(249,115,22,.4)}
 
-.p2-name{margin-top:16px;font-size:20px;font-weight:700;letter-spacing:-.01em}
-.p2-card--feat .p2-name{font-size:23px}
+.p2-name{margin-top:16px;font-size:20px;font-weight:700;letter-spacing:-.01em;text-align:center}
 
-.p2-price{display:flex;align-items:baseline;gap:6px;margin-top:8px}
+.p2-price{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:8px}
 .p2-amount{font-size:clamp(34px,5vw,40px);font-weight:800;letter-spacing:-.02em;line-height:1}
 .p2-card--feat .p2-amount{
-  font-size:clamp(42px,6vw,52px);
   background:linear-gradient(120deg,#fff,var(--p2-cyan));
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
 .p2-per{font-size:13px;color:var(--p2-dim);font-weight:500}
 
-.p2-desc{margin-top:14px;font-size:13.5px;line-height:1.55;color:var(--p2-mut);min-height:44px}
+.p2-desc{margin-top:14px;font-size:13.5px;line-height:1.5;color:var(--p2-mut);min-height:42px;text-align:center}
 
 .p2-divider{height:1px;background:linear-gradient(90deg,transparent,var(--p2-border),transparent);margin:20px 0 18px}
 
-.p2-feats{list-style:none;display:flex;flex-direction:column;gap:12px;flex:1}
+.p2-feats{list-style:none;display:flex;flex-direction:column;gap:12px}
 .p2-feats li{display:flex;align-items:flex-start;gap:10px;font-size:13.5px;line-height:1.4;color:var(--p2-mut)}
 .p2-feats li.p2-on{color:rgba(255,255,255,.9)}
 .p2-ic{flex:0 0 18px;width:18px;height:18px;margin-top:1px}
@@ -127,8 +126,61 @@
 .p2-footer span{display:inline-flex;align-items:center;gap:8px}
 .p2-footer svg{width:16px;height:16px;color:var(--p2-cyan)}
 
-@media(max-width:900px){
-  .p2-grid{grid-template-columns:1fr;max-width:440px}
-  .p2-card--feat{order:-1;padding:34px 26px}
+/* Мобилка/узкий экран: тарифы друг под другом, компактно и аккуратно */
+@media(max-width:760px){
+  .p2-grid{grid-template-columns:1fr;max-width:400px;gap:16px}
+  .p2-card{padding:24px 22px}
+  .p2-card--feat{padding:28px 24px}
   .p2-card--feat::after{display:none}
+  .p2-desc{min-height:0}
+}
+
+/* ==== СКИДКА + КАНВАС-ЭФФЕКТ ==== */
+/* канвас-искры за карточками (сквозь стеклянный blur — мягкое свечение) */
+.pricing-section.p2-root{position:relative}
+/* canvas — replaced-элемент: inset:0 его высоту НЕ растягивает, нужен явный 100% */
+.p2-fx{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.p2-head,.p2-grid,.p2-footer{position:relative;z-index:1}
+
+.p2-price{flex-wrap:wrap;row-gap:4px}
+/* старая (перечёркнутая) цена */
+.p2-old{
+  align-self:center;font-size:16px;font-weight:600;color:var(--p2-dim);
+  text-decoration:line-through;text-decoration-color:rgba(255,255,255,.4);
+}
+.p2-card--feat .p2-old{font-size:19px}
+
+/* бейдж «−15%» с бегущим бликом */
+.p2-save{
+  align-self:center;margin-left:6px;position:relative;overflow:hidden;
+  font-size:12px;font-weight:800;letter-spacing:.02em;padding:4px 9px;border-radius:999px;
+  color:#052e18;background:linear-gradient(120deg,#34d399,#10b981);
+  box-shadow:0 4px 14px -4px rgba(16,185,129,.7);
+}
+.p2-save--hot{color:#2a1206;background:linear-gradient(120deg,#fb923c,#f97316);
+  box-shadow:0 4px 14px -4px rgba(249,115,22,.75)}
+.p2-save::after{
+  content:"";position:absolute;top:0;left:-60%;width:45%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);
+  transform:skewX(-20deg);animation:p2shine 2.8s ease-in-out infinite;
+}
+@keyframes p2shine{0%{left:-60%}55%,100%{left:135%}}
+
+/* «сгорающая» премиум-скидка: осталось N вводных мест из 15 */
+.p2-spots{
+  align-self:stretch;margin-top:12px;padding:11px 13px;border-radius:12px;
+  background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.32);
+  animation:p2pulse 2.4s ease-in-out infinite;
+}
+.p2-spots-lbl{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:#fed7aa}
+.p2-spots-lbl b{color:#fff;font-weight:800}
+.p2-spots-lbl svg{width:14px;height:14px;color:var(--p2-orange);flex:0 0 14px}
+.p2-spots-bar{margin-top:8px;height:6px;border-radius:999px;background:rgba(255,255,255,.12);overflow:hidden}
+.p2-spots-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#fb923c,#f97316)}
+.p2-spots-note{margin-top:6px;font-size:10.5px;color:rgba(255,255,255,.5)}
+@keyframes p2pulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,0)}50%{box-shadow:0 0 0 4px rgba(249,115,22,.13)}}
+
+@media(prefers-reduced-motion:reduce){
+  .p2-save::after{animation:none}
+  .p2-spots{animation:none}
 }
