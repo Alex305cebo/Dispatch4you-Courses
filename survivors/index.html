@@ -2649,7 +2649,7 @@
     D.nextShape=null;D.nextSides=null;
     for(const ga of B.gates){if(sides.indexOf(ga.side)>=0){ga.wave=true;ga.flick=1.1;}}
     rebuildBaseWallRects();
-    let cnt=Math.round(70+D.wave*16);if(D.shape==='breach')cnt=Math.round(cnt*0.8); // плотный поток из одних ворот
+    let cnt=Math.round(34+D.wave*11);if(D.shape==='breach')cnt=Math.round(cnt*0.8); // мягче старт, но волны растут (34+11·волна); прорыв — плотнее из одних ворот
     D.toSpawn=cnt;D.spawnAcc=0.12;D.shield.up=false;D.waveClean=true;
     D.siegeLeft=D.shape==='siege'?Math.floor(D.wave/2)+3:(D.wave>=2?Math.floor(D.wave/2)+1:0);
     if(boss)act2SpawnMiniBoss(); // мини-босс входит вместе с волной
@@ -2753,7 +2753,9 @@
           player.ship2=true;player.wounded=false;player.hp=player.maxHp;
           D.phase='break';D.phaseT=62;D.shield.up=true;D.shield.hp=D.shield.maxHp; // ворота закрыты ≥1 минуты до 1-й волны
           act2PlanWave();D.guideT=12; // спланировать 1-ю волну (какие ворота) + стрелка к зданию улучшений
-          announce={text:'🛡 БАЗА ЗАПУЩЕНА! Ты — новый корабль, купол держит периметр. Подлетай к зданиям — трать 💎 на турели и апгрейды. 1-я волна через ~минуту.',life:6,color:'#7dd3fc'};
+          // СНАЧАЛА собери корабль: 6 улучшений на выбор + стартовый запас 💎 на турели — только ПОТОМ волны
+          pendingLevelUps=Math.max(pendingLevelUps||0,6);gemsCollected+=400;try{updatePendingBtn();}catch(e){}
+          announce={text:'🛡 БАЗА ЗАПУЩЕНА! Ты — новый корабль. СНАЧАЛА собери корабль (жми кнопку улучшений ⬆) и трать 💎 на турели/здания — купол держит минуту, затем волны.',life:8,color:'#7dd3fc'};
           flashFx(0.6,'125,211,252');camShake=Math.max(camShake,12);sfxChime(523,5,0.09,0.13);
         }
       }else D.powerT=Math.max(0,(D.powerT||0)-dt);
@@ -2790,7 +2792,7 @@
         D.wave++;
         if(D.wave>D.maxWaves){act2Win();return;}
         for(const ga of B.gates)ga.wave=false;
-        D.phase='break';D.phaseT=D.wave%5===1?12:8;act2PlanWave(); // спланировать ворота следующей волны для телеграфа
+        D.phase='break';D.phaseT=D.wave%5===1?22:16;act2PlanWave(); // больше времени на починку/апгрейд + план ворот следующей волны
         if(!D.waveClean)announce={text:'✅ Волна '+cleared+' отбита! Волна '+D.wave+' (ворота '+(D.nextSides||[]).join('·')+') через '+Math.ceil(D.phaseT)+'с — чини и улучшай.',life:4,color:'#4ade80'};
         sfxChime(660,5,0.08,0.12);
       }
@@ -5569,8 +5571,8 @@
     }
 
     // «Прорыв к лесу» (29 ур.): стартуем волну; как зачистил всех — уходим в ЛЕС (30)
-    if(forestPending&&!inVault&&!paused){forestPending=false;startForestGate();}
-    if(forestGate&&!inVault){
+    if(forestPending&&!inVault&&!paused&&!inAct2Def){forestPending=false;startForestGate();}
+    if(forestGate&&!inVault&&!inAct2Def){
       const gleft=enemies.length+pendingSpawns.length;
       if(gleft===0){forestGate=false;forestDone=true;startForestField();}
     }
