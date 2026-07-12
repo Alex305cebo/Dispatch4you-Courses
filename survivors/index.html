@@ -1971,9 +1971,9 @@
   }
 
   function pickType(){
-    // в обороне базы (Акт 2) разнообразие мобов растёт по НОМЕРУ ВОЛНЫ, а не по уровню игрока —
-    // с 3-4 волны приходят всё новые/необычные типы (уровень для выбора тира ≈ (волна-1)×7)
-    const lvlForTier=(act2Def&&act2Def.active)?Math.max(player.level,(act2Def.wave-1)*7):player.level;
+    // в обороне базы (Акт 2, режим охоты на гнёзда) разнообразие мобов растёт со ВРЕМЕНЕМ охоты,
+    // а не по уровню игрока — чем дольше живут гнёзда, тем необычнее и опаснее лезут типы
+    const lvlForTier=(act2Def&&act2Def.active)?Math.max(player.level,Math.floor((act2Def.huntT||0)/10)*6):player.level;
     const tier=ENEMY_TIERS[tierIndexForLevel(lvlForTier)];
     // fast small mobs swarm-glue onto the player when they're half of every spawn —
     // keep them as spice (~30%), not the main course
@@ -2439,7 +2439,8 @@
   // столкновения со стенами базы Акта 2 — тот же алгоритм, что и у лабиринта, но на своём массиве
   function collideBaseWalls(o){
     const B=act2BaseWalls;if(!B||!B.rects)return;
-    for(const w of B.rects){
+    const rects=B.maze?B.rects.concat(B.maze):B.rects; // стены форта + внутренний лабиринт
+    for(const w of rects){
       const cx=Math.max(w.x,Math.min(o.x,w.x+w.w)),cy=Math.max(w.y,Math.min(o.y,w.y+w.h));
       const dx=o.x-cx,dy=o.y-cy,d2=dx*dx+dy*dy;
       if(d2<o.r*o.r){
@@ -2506,8 +2507,8 @@
       }else tw.dwell=0;
       // === АВТООГОНЬ ===
       let best=null,bestScore=-1;
-      for(const e of enemies){const inside=pointInsideBase(e.x,e.y);const d=dist(tw,e);
-        if(d>(inside?TR*1.5:TR))continue; // прорвавшихся ВНУТРЬ базы (идут на атаку) видим на 50% дальше
+      for(const e of enemies){if(e.nest)continue;const inside=pointInsideBase(e.x,e.y);const d=dist(tw,e);
+        if(d>(inside?TR*1.5:TR))continue; // гнёзда не бьём (цель игрока); прорвавшихся ВНУТРЬ видим на 50% дальше
         const score=(inside?1:0)*1e6-d;if(score>bestScore){bestScore=score;best=e;}}
       if(!best)continue;
       tw.aim=Math.atan2(best.y-tw.y,best.x-tw.x);
@@ -2521,7 +2522,7 @@
           best.hp-=tdmg*1.4;best.hitFlash=Math.max(best.hitFlash||0,0.1);pts.push({x:cur.x,y:cur.y});
           for(let j=0;j<4;j++){ // до 4 перескоков
             let nx=null,nd=170*170;
-            for(const e2 of enemies){if(hit.has(e2))continue;const dd=(e2.x-cur.x)**2+(e2.y-cur.y)**2;if(dd<nd){nd=dd;nx=e2;}}
+            for(const e2 of enemies){if(hit.has(e2)||e2.nest)continue;const dd=(e2.x-cur.x)**2+(e2.y-cur.y)**2;if(dd<nd){nd=dd;nx=e2;}}
             if(!nx)break;hit.add(nx);nx.hp-=tdmg*1.0;nx.hitFlash=Math.max(nx.hitFlash||0,0.1);pts.push({x:nx.x,y:nx.y});cur=nx;
           }
           act2Zaps.push({pts,life:0.16,maxLife:0.16});
@@ -2587,6 +2588,7 @@
   // войдя внутрь, грызёт ближайшее здание. Закрытые ворота, упёршись, ломает по HP.
   function moveDefenseMob(e,dt,spd){
     const B=act2BaseWalls;if(!B){e.x+=Math.cos(e._da||0)*spd*dt;return;}
+    if(e.nest){updateNest(e,dt);return;} // гнездо неподвижно — только плодит мобов
     // МИНИ-БОСС: периодически призывает пару обычных мобов рядом с собой
     if(e.miniBoss){e.summonCd-=dt;
       if(e.summonCd<=0&&enemies.length<effEnemyCap()-2){e.summonCd=rand(5,7);const wv=(act2Def&&act2Def.wave)||1,wf=1+(wv-1)*0.11;
@@ -2607,17 +2609,25 @@
       for(const b of B.buildings){if(!b.alive)continue;const dd=(b.x-e.x)**2+(b.y-e.y)**2;if(dd<bd){bd=dd;best=b;}}
       if(best){const dd=Math.sqrt(bd);if(dd<=best.r+e.r+3){chipBld=best;}else{wx=best.x;wy=best.y;}}else{wx=B.cx;wy=B.cy;}
     }else if(inside){
-      let best=null,bd=1e18;
-      if(e.siege&&mainB){best=mainB;bd=(mainB.x-e.x)**2+(mainB.y-e.y)**2;} // таран — только главное
-      else for(const b of B.buildings){if(!b.alive)continue;const dd=(b.x-e.x)*(b.x-e.x)+(b.y-e.y)*(b.y-e.y);if(dd<bd){bd=dd;best=b;}}
-      if(best){const dd=Math.sqrt(bd),reach=best.r+e.r+3;
-        if(dd<=reach){chipBld=best;}else{wx=best.x;wy=best.y;}
-      }else{wx=B.cx;wy=B.cy;}
+      // ВНУТРИ ФОРТА: идём по коридорам лабиринта (путевые точки своих ворот) к главному зданию.
+      // Пройдя все проёмы — добиваем главное здание (единственная цель мобов, снос = поражение).
+      const path=B.mazePaths&&B.mazePaths[e._mzSide||'N'];
+      if(path){
+        if(e._wp==null)e._wp=0;
+        while(e._wp<path.length&&Math.hypot(path[e._wp].x-e.x,path[e._wp].y-e.y)<54)e._wp++;
+        if(e._wp<path.length){wx=path[e._wp].x;wy=path[e._wp].y;}
+        else if(mainB){const dd=Math.hypot(mainB.x-e.x,mainB.y-e.y);if(dd<=mainB.r+e.r+3)chipBld=mainB;else{wx=mainB.x;wy=mainB.y;}}
+        else{wx=B.cx;wy=B.cy;}
+      }else{ // страховка (лабиринт не построен): напрямую к главному
+        if(mainB){const dd=Math.hypot(mainB.x-e.x,mainB.y-e.y);if(dd<=mainB.r+e.r+3)chipBld=mainB;else{wx=mainB.x;wy=mainB.y;}}
+        else{wx=B.cx;wy=B.cy;}
+      }
     }else{
       let og=null,od=1e18,ng=null,nd=1e18;
       for(const ga of B.gates){const dd=(ga.cx-e.x)*(ga.cx-e.x)+(ga.cy-e.y)*(ga.cy-e.y);
         if(ga.open&&dd<od){od=dd;og=ga;} if(dd<nd){nd=dd;ng=ga;}}
       if(og){
+        e._mzSide=og.side;e._wp=0; // войдёт через эти ворота — по их коридору к центру
         const outX=og.cx+og.nx*(B.t+30),outY=og.cy+og.ny*(B.t+30);
         const past=(e.x-outX)*og.nx+(e.y-outY)*og.ny; // >0 если снаружи дальше створа
         if(past>0){wx=outX;wy=outY;}else{wx=og.cx-og.nx*34;wy=og.cy-og.ny*34;}
@@ -2628,6 +2638,7 @@
         e._lastGD=gd;
         if(e._defT>6){e._defT=0;e.x=outX;e.y=outY;burst(e.x,e.y,e.color||'#f43f5e',4);}
       }else if(ng){
+        e._mzSide=ng.side;e._wp=0; // ломится в эти ворота — по их коридору пойдёт внутри
         wx=ng.cx+ng.nx*(e.r+4);wy=ng.cy+ng.ny*(e.r+4);
         if(Math.hypot(ng.cx-e.x,ng.cy-e.y)<B.gateHalf+e.r+16)chipGate=ng;
       }else{wx=B.cx;wy=B.cy;}
@@ -2730,9 +2741,65 @@
     announce={text:def.name+' идёт на базу — уничтожь его!',life:3.5,color:def.col};
     flashFx(0.4,'240,171,252');camShake=Math.max(camShake,9);sfxBoom(0.5,0.35,420,50,true);
   }
+  // ═══ ЛАБИРИНТ БАЗЫ: извилистые баффл-стены со смещёнными проёмами, ведущие от ворот к центру ═══
+  // Строим по «северному шаблону» и поворачиваем на 90° для В/Ю/З (T: (x,y)->(-y,x)). Мобы идут
+  // по путевым точкам через проёмы (moveDefenseMob), у внешних проёмов — killzone-турели.
+  function buildAct2Maze(B){
+    const tmplWalls=[{cx:-60,cy:-560,hw:170,hh:14},{cx:60,cy:-300,hw:170,hh:14}]; // 2 баффла, проёмы с разных сторон
+    const tmplPath=[{x:170,y:-560},{x:-170,y:-300}]; // точки-проёмы: через правый, затем левый
+    const tmplTur=[{x:170,y:-560}]; // турель у внешнего проёма — простреливает узкое место
+    const rot=(px,py,k)=>{let x=px,y=py;for(let i=0;i<k;i++){const nx=-y,ny=x;x=nx;y=ny;}return{x,y};};
+    const sides=['N','E','S','W'],walls=[],paths={},turs=[];
+    sides.forEach((side,k)=>{
+      for(const w of tmplWalls){const c=rot(w.cx,w.cy,k);const hw=k%2?w.hh:w.hw,hh=k%2?w.hw:w.hh;walls.push({x:B.cx+c.x-hw,y:B.cy+c.y-hh,w:hw*2,h:hh*2});}
+      paths[side]=tmplPath.map(p=>{const c=rot(p.x,p.y,k);return{x:B.cx+c.x,y:B.cy+c.y};});
+      for(const tp of tmplTur){const c=rot(tp.x,tp.y,k);turs.push({x:B.cx+c.x,y:B.cy+c.y,lv:1,paid:0});}
+    });
+    B.maze=walls;B.mazePaths=paths;
+    return turs;
+  }
+  // ═══ ГНЁЗДА (цель Акта 2): неподвижные порталы за пределами базы, непрерывно плодят мобов ═══
+  // Это обычные враги (e.nest=true) — их бьёт любое оружие игрока. Уничтожил все → победа.
+  function spawnAct2Nests(){
+    const B=act2BaseWalls,D=act2Def;if(!B||!D)return;
+    const spots=[{x:-1180,y:-1180},{x:1180,y:-1180},{x:1180,y:1180},{x:-1180,y:1180}];
+    D.nestsTotal=spots.length;D.nestsLeft=spots.length;
+    spots.forEach((s,i)=>{
+      const e=spawnEnemy(false);
+      e.nest=true;e.defense=true;e.immobile=true;e.beh=null;e.sleep=false;e.elite=false;
+      e.x=B.cx+s.x;e.y=B.cy+s.y;
+      let best='N',bd=1e18;for(const ga of B.gates){const dd=(ga.cx-e.x)**2+(ga.cy-e.y)**2;if(dd<bd){bd=dd;best=ga.side;}}
+      e.nestGate=best;
+      e.maxHp=e.hp=Math.max(1800,estPlayerDps()*14);
+      e.r=56;e.dmg=0;e.speed=0;e.color='#7c3aed';e.glow='#a855f7';e.skinShape='blob';e.skinName='🕳 ГНЕЗДО';
+      e.spawnCd=rand(1.5,3.5)+i*0.5;e.nestIdx=i;
+      // spawnEnemy уже добавил e в enemies — повторно не пушим
+    });
+    announce={text:'🎯 ЦЕЛЬ: выйди за базу и уничтожь все '+spots.length+' ГНЕЗДА! Пока живы — из них лезут мобы.',life:6,color:'#a855f7'};
+    flashFx(0.4,'168,85,247');sfxChime(392,5,0.08,0.12);
+  }
+  // спавн мобов из гнезда — направляются к ближайшим к гнезду воротам, крепчают со временем
+  function updateNest(e,dt){
+    const B=act2BaseWalls,D=act2Def;if(!B||!D||D.phase!=='hunt')return;
+    if(Math.random()<0.4)particles.push({x:e.x+rand(-e.r,e.r),y:e.y+rand(-e.r,e.r),vx:rand(-0.4,0.4),vy:-1,life:0.6,color:'#a855f7',sz:2.5});
+    e.spawnCd-=dt;
+    if(e.spawnCd>0)return;
+    if(enemies.length>=effEnemyCap()){e.spawnCd=0.6;return;}
+    e.spawnCd=rand(2.4,4.2);
+    const wf=1+Math.min(1.5,(D.huntT||0)/80);
+    const n=1+Math.floor(Math.random()*3);
+    for(let i=0;i<n;i++){
+      const m=spawnEnemy(false);
+      m.defense=true;m.beh=null;
+      m.x=e.x+rand(-50,50);m.y=e.y+rand(-50,50);
+      m._mzSide=e.nestGate;
+      m.hp=m.maxHp=m.maxHp*wf;m.dmg*=wf*0.9;m.speed*=1+Math.min(0.4,(D.huntT||0)/300);
+      if(Math.random()<0.16){m.flyer=true;m.color='#a78bfa';m.glow='#c4b5fd';m.skinShape='triangle';m.hp=m.maxHp=m.maxHp*0.7;m.speed=Math.max(80,m.speed);}
+    }
+  }
   function act2Win(){
     const D=act2Def;if(!D)return;D.phase='won';
-    announce={text:'🏆 БАЗА ВЫСТОЯЛА! 30 волн отбито. Впереди — Акт 3 «Сердце разлома».',life:8,color:'#fde047'};
+    announce={text:'🏆 ВСЕ ГНЁЗДА УНИЧТОЖЕНЫ! База спасена. Впереди — Акт 3 «Сердце разлома».',life:8,color:'#fde047'};
     flashFx(0.85,'253,224,71');camShake=Math.max(camShake,16);
     for(let i=0;i<50;i++)particles.push({x:player.x,y:player.y,vx:rand(-6,6),vy:rand(-6,6),life:1.4,color:i%2?'#fde047':'#7dd3fc',sz:3});
     endSession('finish'); // победа: сессия сохраняется, «Продолжить» доступно (задел Акта 3 — позже)
@@ -2761,52 +2828,34 @@
         if(Math.random()<0.5)particles.push({x:mb.x+rand(-16,16),y:mb.y-36,vx:0,vy:-1.6,life:0.6,color:'#7dd3fc',sz:2.5});
         if(D.powerT>=2.4){
           player.ship2=true;player.wounded=false;player.hp=player.maxHp;
-          D.phase='break';D.phaseT=62;D.shield.up=true;D.shield.hp=D.shield.maxHp; // ворота закрыты ≥1 минуты до 1-й волны
-          act2PlanWave();D.guideT=12; // спланировать 1-ю волну (какие ворота) + стрелка к зданию улучшений
-          // СНАЧАЛА собери корабль: 6 улучшений на выбор + стартовый запас 💎 на турели — только ПОТОМ волны
+          D.phase='hunt';D.huntT=0;D.shield.up=false;D.guideT=12; // стрелка-гид к зданию улучшений
+          // СНАЧАЛА собери корабль: 6 улучшений на выбор + стартовый запас 💎 на турели/здания
           pendingLevelUps=Math.max(pendingLevelUps||0,6);gemsCollected+=400;try{updatePendingBtn();}catch(e){}
-          announce={text:'🛡 БАЗА ЗАПУЩЕНА! Ты — новый корабль. СНАЧАЛА собери корабль (жми кнопку улучшений ⬆) и трать 💎 на турели/здания — купол держит минуту, затем волны.',life:8,color:'#7dd3fc'};
+          spawnAct2Nests(); // цель: выйти за периметр и снести все гнёзда
+          announce={text:'🛡 БАЗА ЗАПУЩЕНА! Собери корабль (⬆ улучшения) и вложи 💎 в турели/здания, затем выйди за периметр и уничтожь все ГНЁЗДА.',life:8,color:'#7dd3fc'};
           flashFx(0.6,'125,211,252');camShake=Math.max(camShake,12);sfxChime(523,5,0.09,0.13);
         }
       }else D.powerT=Math.max(0,(D.powerT||0)-dt);
       return;
     }
     if(D.phase==='won'||D.phase==='lost')return;
-    D.phaseT-=dt;
+    if(D.phase!=='hunt')D.phase='hunt'; // миграция старых сейвов (волновые фазы break/wave) в режим охоты
+    // ═══ ФАЗА ОХОТЫ: гнёзда живы → непрерывный поток мобов; цель — снести все гнёзда за периметром ═══
+    D.huntT=(D.huntT||0)+dt;
     const inBase=pointInsideBase(player.x,player.y);
-    // кольцо лечения главного здания работает всегда; ✚ Медблок усиливает лечение
+    // кольцо лечения главного здания (Медблок усиливает) + лёгкая регенерация в периметре
     const mb=B.buildings.find(b=>b.main&&b.alive);
     const healMul=0.8+0.2*act2BuildingBonus('medbay');
     if(mb&&dist(player,mb)<mb.r+90)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.16*healMul*dt);
+    else if(inBase)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.05*dt);
     // МАЯК-ПРИМАНКА: таймеры активности и перезарядки
     if(D.lure&&D.lure.t>0){D.lure.t-=dt;if(Math.random()<0.4)particles.push({x:D.lure.x+rand(-14,14),y:D.lure.y+rand(-14,14),vx:0,vy:-1,life:0.6,color:'#fb7185',sz:2.5});}
     if(D.lureCd>0)D.lureCd-=dt;
     if(D.guideT>0)D.guideT-=dt; // таймер стрелки-гида к зданию улучшений (после запуска базы)
     // поток «покупки» — кристаллы летят от счётчика к конструкции
     if(act2Spend.length){for(const sp of act2Spend)sp.t+=dt;act2Spend=act2Spend.filter(sp=>sp.t<sp.dur);}
-    if(D.phase==='break'){
-      D.shield.up=true;
-      if(inBase)player.hp=Math.min(player.maxHp,player.hp+player.maxHp*0.18*dt);
-      const gateRegen=0.3*(0.8+0.2*act2BuildingBonus('shield')); // 🛡 Генератор щита ускоряет починку ворот
-      for(const ga of B.gates){ga.wave=false;ga.hp=Math.min(ga.maxHp,ga.hp+ga.maxHp*gateRegen*dt);}
-      if(D.phaseT<=0)act2StartWave();
-    }else if(D.phase==='wave'){
-      D.shield.up=false;
-      if(D.toSpawn>0){D.spawnAcc-=dt;if(D.spawnAcc<=0){act2SpawnBatch();D.spawnAcc=rand(0.2,0.5);}}
-      if(D.toSpawn<=0&&!enemies.some(e=>e.defense)){
-        const cleared=D.wave;
-        // БОНУС ЗА ЧИСТУЮ ВОЛНУ: ни одно здание не задето
-        if(D.waveClean){const bonus=200+cleared*25;gemsCollected+=bonus;
-          announce={text:'✨ ЧИСТАЯ ВОЛНА! Здания целы — бонус '+bonus+' 💎',life:3.5,color:'#fde047'};
-          for(let i=0;i<20;i++)particles.push({x:player.x,y:player.y,vx:rand(-4,4),vy:rand(-5,-1),life:1,color:'#fde047',sz:2.5});}
-        D.wave++;
-        if(D.wave>D.maxWaves){act2Win();return;}
-        for(const ga of B.gates)ga.wave=false;
-        D.phase='break';D.phaseT=D.wave%5===1?22:16;act2PlanWave(); // больше времени на починку/апгрейд + план ворот следующей волны
-        if(!D.waveClean)announce={text:'✅ Волна '+cleared+' отбита! Волна '+D.wave+' (ворота '+(D.nextSides||[]).join('·')+') через '+Math.ceil(D.phaseT)+'с — чини и улучшай.',life:4,color:'#4ade80'};
-        sfxChime(660,5,0.08,0.12);
-      }
-    }
+    // страховка миграции: старый сейв (волновой act2Def) без гнёзд — досоздать источники
+    if(D.phase==='hunt'&&D.nestsTotal==null)spawnAct2Nests();
     // открытие ворот подходом игрока
     for(const ga of B.gates){
       const near=Math.hypot(ga.cx-player.x,ga.cy-player.y)<B.gateHalf+player.r+42;
@@ -2832,7 +2881,7 @@
       if(b.alive&&b.hp<=0){
         b.alive=false;burst(b.x,b.y,'#f97316',26);camShake=Math.max(camShake,10);flashFx(0.4,'249,115,22');sfxBoom(0.5,0.3,500,50,true);
         if(b.main){act2Lose();return;}
-        announce={text:'💥 Здание разрушено! Почини за кристаллы в перерыв.',life:3,color:'#f97316'};
+        announce={text:'💥 Здание разрушено! Подлети к нему с 💎 — почини за кристаллы.',life:3,color:'#f97316'};
       }
     }
   }
@@ -3720,6 +3769,18 @@
     burst(x,y,'#fde047',14);rings.push({x,y,r:0,maxR:80,life:0.5,color:'#fde047'});
   }
   function killEnemy(e){
+    if(e.nest){ // ГНЕЗДО уничтожено — крупная награда кристаллами, минус к счётчику цели; все снёс → победа
+      const D=act2Def;
+      burst(e.x,e.y,'#a855f7',40);
+      for(let i=0;i<30;i++)particles.push({x:e.x,y:e.y,vx:rand(-7,7),vy:rand(-7,7),life:1.4,color:i%2?'#c084fc':'#fde047',sz:3});
+      camShake=Math.max(camShake,14);flashFx(0.5,'168,85,247');sfxBoom(0.6,0.4,400,50,true);
+      const rw=450;gemsCollected+=rw;
+      if(floaters.length<40)floaters.push({x:e.x,y:e.y-40,vy:-30,life:1.6,val:'🕳 ГНЕЗДО +'+rw+'💎',crit:true});
+      if(D){D.nestsLeft=Math.max(0,(D.nestsLeft||1)-1);
+        if(D.nestsLeft<=0)act2Win();
+        else announce={text:'🕳 Гнездо уничтожено! Осталось: '+D.nestsLeft+'. Держи базу и добей остальные.',life:4,color:'#a855f7'};}
+      return;
+    }
     kills++;burst(e.x,e.y,e.color,8);deathShards(e);
     if(e.hunter)hunterKills++;else if(e.elite)bossKills++; // для составного рейтинга
     // бестиарий: считаем килы по типу/имени босса; сохраняем не на каждый кил (частый
@@ -4980,23 +5041,27 @@
     act2TeleFx={x:0,y:180,t:0};
     act2Tower=null;act2Base=null; // старый флоу починки не используется — теперь оборона базы
     // КВАДРАТНАЯ БАЗА-ФОРТ: 4 ворот (С/В/Ю/З), купол-щит, разрушаемые здания внутри.
-    const R=960,t=32,gateHalf=100; // ×4 площади (×2 по стороне): просторный форт с дорожками и разнесёнными зданиями
+    const R=960,t=32,gateHalf=100; // ×4 площади (×2 по стороне): просторный форт с лабиринтом и разнесёнными зданиями
     act2BaseWalls={cx:0,cy:0,R,t,gateHalf,sealed:false,towers:[
-      // 4 угловые + 3 внутренних (стерегут дорожки) — все прокачиваются за кристаллы (ур.1-8, лазер на 8)
+      // 4 угловые — все прокачиваются за кристаллы (ур.1-8, лазер на 8). Внутренние турели
+      // добавляет buildAct2Maze — они стоят у проёмов лабиринта (killzone)
       {x:-(R-64),y:-(R-64),lv:1,paid:0},{x:R-64,y:-(R-64),lv:1,paid:0},
-      {x:-(R-64),y:R-64,lv:1,paid:0},{x:R-64,y:R-64,lv:1,paid:0},
-      {x:0,y:-300,lv:1,paid:0},{x:260,y:150,lv:1,paid:0},{x:-260,y:150,lv:1,paid:0}]};
+      {x:-(R-64),y:R-64,lv:1,paid:0},{x:R-64,y:R-64,lv:1,paid:0}]};
     act2BaseWalls.gates=['N','E','S','W'].map(s=>makeAct2Gate(s,act2BaseWalls));
     // ЗДАНИЯ: главное в центре (кольцо лечения, поражение при сносе) + 4 боковых по секторам
     act2BaseWalls.buildings=[
       {kind:'main',main:true,x:0,y:0,r:64,hp:1600,maxHp:1600,alive:true,hitT:0,heal:170},
-      {kind:'shield', x:-380,y:-380,r:46,hp:820,maxHp:820,alive:true,hitT:0}, // по диагоналям — дорожки С/В/Ю/З свободны
+      {kind:'shield', x:-380,y:-380,r:46,hp:820,maxHp:820,alive:true,hitT:0}, // по диагоналям — коридоры лабиринта свободны
       {kind:'armory', x:380,y:-380, r:46,hp:820,maxHp:820,alive:true,hitT:0},
       {kind:'workshop',x:380,y:380, r:46,hp:820,maxHp:820,alive:true,hitT:0},
       {kind:'medbay',  x:-380,y:380,r:46,hp:820,maxHp:820,alive:true,hitT:0}];
+    // ЛАБИРИНТ: извилистые баффл-стены от ворот к центру + killzone-турели у проёмов
+    act2BaseWalls.towers.push(...buildAct2Maze(act2BaseWalls));
     rebuildBaseWallRects();
-    act2Def={active:true,phase:'intro',phaseT:0,wave:1,maxWaves:ACT2_MAXWAVES,
-      shield:{up:false,hp:1000,maxHp:1000},breakSides:[],toSpawn:0,spawnAcc:0,powerT:0};
+    // ЦЕЛЬ АКТА 2 — «охота на гнёзда»: разрушить все источники за периметром (гнёзда спавнятся
+    // после запуска базы). Волны убраны; давление даёт непрерывный поток из гнёзд.
+    act2Def={active:true,phase:'intro',phaseT:0,powerT:0,huntT:0,
+      shield:{up:false,hp:1000,maxHp:1000},nestsTotal:null,nestsLeft:0};
     mobSpawnPaused=true;pendingSpawns=[];enemies=[];
     // БЕЗ остаточных событий Акта 1 в обороне (иначе осада/риф/зоны спамят мобов ВНУТРИ базы):
     siege=null;pendingEvent=null;eventDelay=0;altarAcc=0;czAcc=0;safeZone=null;cursedZones=[];forestPending=false;forestGate=false;
@@ -5955,7 +6020,7 @@
       }
       // КАЗНЬ (PoE-стиль): обычный враг ниже 10% HP — помечается 💀, остаток HP режется
       // вдвое (эквивалент «урон ×2 по раненым») — толпа добивается быстрее и приятнее
-      if(!e.elite&&!e.goblin&&!e._exec&&e.hp>0&&e.maxHp>0&&e.hp<e.maxHp*0.10){e._exec=true;e.hp*=0.5;}
+      if(!e.elite&&!e.goblin&&!e.nest&&!e._exec&&e.hp>0&&e.maxHp>0&&e.hp<e.maxHp*0.10){e._exec=true;e.hp*=0.5;}
       if(e._bladeCd>0)e._bladeCd-=dt;
       if(e.goblin){ // таймер побега: не догнал — гоблин телепортируется прочь с добычей
         e.goblinT-=dt;
@@ -6054,8 +6119,8 @@
     if(enemies.length>240){
       // blind truncation once silently deleted an alive boss whose pauseSpawns flag was
       // never cleared — spawning stopped forever. Keep elites, trim regular mobs only.
-      const elites=enemies.filter(e=>e.elite||e.goblin); // гоблина тоже не выкидываем
-      enemies=elites.concat(enemies.filter(e=>!e.elite&&!e.goblin).slice(0,240-elites.length));
+      const elites=enemies.filter(e=>e.elite||e.goblin||e.nest); // гоблина и гнёзда-цели тоже не выкидываем
+      enemies=elites.concat(enemies.filter(e=>!e.elite&&!e.goblin&&!e.nest).slice(0,240-elites.length));
     }
     // self-heal: never let a leaked pause flag starve the field of enemies
     if(mobSpawnPaused&&!enemies.some(e=>e.pauseSpawns)&&!inVault&&!forestGate&&!(safeZone&&safeZone.perm)&&!(act2BaseWalls&&act2BaseWalls.sealed)&&!(act2Def&&act2Def.active))mobSpawnPaused=false;
@@ -6723,6 +6788,7 @@
     enemies.forEach(e=>{if(e.elite)edgeArrow(e.x,e.y,e.r,e.color,1.7+0.25*Math.sin(t*6));});
     enemies.forEach(e=>{if(e.hunter)edgeArrow(e.x,e.y,e.r,'#facc15',1.6+0.3*Math.sin(t*6));});
     enemies.forEach(e=>{if(e.goblin)edgeArrow(e.x,e.y,e.r,'#fde047',1.7+0.35*Math.sin(t*8));});
+    enemies.forEach(e=>{if(e.nest&&e.hp>0)edgeArrow(e.x,e.y,e.r,'#a855f7',1.7+0.3*Math.sin(t*6));}); // указатели на гнёзда-цели
     // safe zone: green arrow so the player can always find it
     if(safeZone)edgeArrow(safeZone.x,safeZone.y,safeZone.r,'#4ade80',1.6);
     if(portal)edgeArrow(portal.x,portal.y,portal.r,portal.kind==='arcade'?'#4ade80':'#c084fc',1.7+0.3*Math.sin(t*6));
@@ -7376,6 +7442,7 @@
     }
     // enemies
     enemies.forEach(e=>{
+      if(e.nest){drawAct2Nest(e);return;} // гнёзда рисуем как порталы, а не как обычных мобов
       groundShadow(e.x,e.y,e.r);
       // squash-stretch: короткий «поп» при получении урона (сплющивается по X, растёт по Y)
       const sq=e.hitFlash>0?e.hitFlash*7:0;
@@ -7681,6 +7748,26 @@
     // камера уже снята → возвращаем мировую трансформацию для станции (edgeArrow ниже — экранный)
     const camWorld=()=>{let ssx=0,ssy=0;if(camShake>0.3){ssx=Math.sin(t*47)*camShake*0.6;ssy=Math.cos(t*41)*camShake*0.6;}x.translate(W/2+ssx,H/2+ssy);x.scale(zoom,zoom);x.translate(-player.x,-player.y);};
     // ЗДАНИЕ БАЗЫ АКТА 2 (разные силуэты по типу, трещины/дым по мере урона, обломки если снесено)
+    // ГНЕЗДО: тёмный портал с вращающимися кольцами, пульсирующим ядром и HP-полосой
+    function drawAct2Nest(e){
+      const r=e.r,hpf=Math.max(0,e.hp/(e.maxHp||1)),pulse=0.5+0.5*Math.sin(t*4+(e.nestIdx||0));
+      x.save();x.translate(e.x,e.y);
+      x.fillStyle='rgba(30,10,50,0.55)';x.beginPath();x.arc(0,0,r*1.15,0,Math.PI*2);x.fill();
+      for(let k=0;k<3;k++){x.save();x.rotate(t*(k%2?-0.7:0.9)+k*1.1);
+        x.strokeStyle=k===1?'rgba(232,121,249,0.8)':'rgba(168,85,247,0.65)';x.lineWidth=(3-k*0.6)/zoom;
+        x.beginPath();x.arc(0,0,r*(0.55+k*0.24),0.3,Math.PI*1.6);x.stroke();x.restore();}
+      const cg=x.createRadialGradient(0,0,2,0,0,r*0.7);
+      cg.addColorStop(0,'rgba(253,224,71,'+(0.6+0.35*pulse)+')');cg.addColorStop(0.5,'rgba(232,121,249,0.7)');cg.addColorStop(1,'rgba(88,28,135,0)');
+      x.fillStyle=cg;x.beginPath();x.arc(0,0,r*0.72*(0.9+0.15*pulse),0,Math.PI*2);x.fill();
+      if(e.hitFlash>0){x.fillStyle='rgba(255,255,255,'+Math.min(0.6,e.hitFlash*6)+')';x.beginPath();x.arc(0,0,r*0.72,0,Math.PI*2);x.fill();}
+      // HP-полоса + подпись
+      const bw=Math.max(70,r*2.2),byy=-r-20;
+      x.fillStyle='rgba(0,0,0,0.6)';x.fillRect(-bw/2,byy,bw,7);
+      x.fillStyle='#c084fc';x.fillRect(-bw/2,byy,bw*hpf,7);
+      x.strokeStyle='rgba(255,255,255,0.4)';x.lineWidth=1/zoom;x.strokeRect(-bw/2,byy,bw,7);
+      x.fillStyle='#f0abfc';x.font='bold '+Math.round(13/zoom)+'px system-ui';x.textAlign='center';x.textBaseline='bottom';x.fillText('🕳 ГНЕЗДО',0,byy-3);
+      x.restore();
+    }
     function drawAct2Building(b){
       const r=b.r,hpf=Math.max(0,b.hp/b.maxHp),BC={shield:'#38bdf8',armory:'#fb923c',workshop:'#a78bfa',medbay:'#4ade80',main:'#7dd3fc'}[b.kind]||'#94a3b8';
       const ic={shield:'🛡',armory:'⚙',workshop:'🔧',medbay:'✚',main:'🏛'}[b.kind]||'▪';
@@ -7782,6 +7869,8 @@
       x.setLineDash([]);
       // стены (сегменты + створки закрытых ворот)
       B.rects.forEach(w=>{x.fillStyle='#334155';x.fillRect(w.x,w.y,w.w,w.h);x.strokeStyle='#64748b';x.lineWidth=1.5/zoom;x.strokeRect(w.x,w.y,w.w,w.h);});
+      // ЛАБИРИНТ: внутренние баффл-стены (чуть светлее, с голубой кромкой — читаются как энергобарьеры)
+      if(B.maze)B.maze.forEach(w=>{x.fillStyle='#3b4763';x.fillRect(w.x,w.y,w.w,w.h);x.strokeStyle='rgba(125,211,252,0.55)';x.lineWidth=2/zoom;x.strokeRect(w.x,w.y,w.w,w.h);});
       // ВОРОТА: столбы + маячок состояния + HP + отсчёт открытия
       for(const ga of (B.gates||[])){
         const open=ga.open,breaking=!open&&ga.hp<ga.maxHp*0.995;
@@ -7943,19 +8032,17 @@
         x.fillStyle='#7dd3fc';x.font='bold 15px system-ui';x.fillText('🔧 Почини центральное здание (в центре) — станешь новым кораблём',W/2,cyy);
         if(D.powerT>0){x.fillStyle='#4ade80';x.font='bold 13px system-ui';x.fillText('запуск… '+Math.round(D.powerT/2.4*100)+'%',W/2,cyy+20);}
       }else if(D.phase==='won'){
-        x.fillStyle='#fde047';x.font='bold 18px system-ui';x.fillText('🏆 БАЗА ВЫСТОЯЛА — 30 ВОЛН!',W/2,cyy);
+        x.fillStyle='#fde047';x.font='bold 18px system-ui';x.fillText('🏆 ВСЕ ГНЁЗДА УНИЧТОЖЕНЫ!',W/2,cyy);
       }else{
-        const col=D.phase==='break'?'#4ade80':'#ff6b6b';
-        x.fillStyle=col;x.font='bold 17px system-ui';
-        x.fillText('🛡 ОБОРОНА · Волна '+Math.min(D.wave,D.maxWaves)+'/'+D.maxWaves,W/2,cyy);
-        x.font='bold 13px system-ui';x.fillStyle=D.phase==='break'?'#7dd3fc':'#fca5a5';
-        x.fillText(D.phase==='break'?('🛡 Купол держит · ⚠ ворота '+(D.nextSides||[]).join('·')+' откроются через '+Math.max(0,Math.ceil(D.phaseT))+'с · трать 💎 у зданий/турелей'):('Прорыв: '+(D.breakSides||[]).join(' · ')+' · осталось мобов: '+(D.toSpawn+enemies.filter(e=>e.defense).length)),W/2,cyy+20);
+        const done=(D.nestsTotal||0)-(D.nestsLeft||0);
+        x.fillStyle='#c084fc';x.font='bold 17px system-ui';
+        x.fillText('🎯 ГНЁЗДА: '+done+'/'+(D.nestsTotal||0)+' уничтожено',W/2,cyy);
+        x.font='bold 13px system-ui';x.fillStyle='#fca5a5';
+        x.fillText('Выйди за базу и снеси гнёзда · защити главное здание (центр)',W/2,cyy+20);
       }
       x.restore();
-      // ИНДИКАТОРЫ ПРОРЫВА: стрелки к открытым воротам + к главному зданию, если под ударом
-      if(D.phase==='wave'){
-        for(const ga of (B2.gates||[]))if(ga.open){x.save();edgeArrow(ga.cx,ga.cy,10,'#ff6b6b',1.3);x.restore();}
-      }
+      // ИНДИКАТОРЫ: стрелки к открытым воротам, через которые прорывается поток
+      for(const ga of (B2.gates||[]))if(ga.open){x.save();edgeArrow(ga.cx,ga.cy,10,'#ff6b6b',1.1);x.restore();}
       // СТРЕЛКА-ГИД после запуска базы: показывает здание, где тратятся 💎 на улучшения
       if(D.guideT>0){const ab=(B2.buildings||[]).find(b=>b.kind==='armory'&&b.alive)||(B2.buildings||[]).find(b=>b.main&&b.alive);
         if(ab){x.save();edgeArrow(ab.x,ab.y,ab.r,'#fde047',1.7+0.3*Math.sin(t*6));x.restore();}}
@@ -8605,21 +8692,23 @@
     }
     // ── АКТ 2: ОБОРОНА БАЗЫ ──
     function act2Enter(){ ensureRun();if(!(act2Def&&act2Def.active))enterAct2(); } // обычный вход (с интро-попапом)
-    function act2Skip(wave){ // сразу активная база на нужной волне (мимо починки/интро) + корабль под волну
+    function act2Hunt(){ // сразу активная база в режиме охоты на гнёзда (мимо интро) + прокачанный корабль
       act2Enter();hideIntro();const D=act2Def;if(!D)return;
       player.ship2=true;player.wounded=false;
-      D.wave=Math.max(1,Math.min(D.maxWaves,wave||1));
-      for(let i=0;i<Math.min(20,D.wave+2);i++)autoApplyOne(); // иначе на поздней волне мгновенная смерть
+      for(let i=0;i<12;i++)autoApplyOne();
       player.hp=player.maxHp;lives=Math.max(lives,3);
-      D.phase='break';D.phaseT=1.2;D.shield.up=true;D.shield.hp=D.shield.maxHp;D.guideT=0;
+      D.phase='hunt';D.huntT=0;D.shield.up=false;D.guideT=0;
       gemsCollected=Math.max(gemsCollected,2000);
-      try{act2PlanWave();updatePendingBtn();}catch(e){}
-      announce={text:'🛠 DEV: Акт 2 — волна '+D.wave,life:2,color:'#7dd3fc'};
+      if(D.nestsTotal==null){try{spawnAct2Nests();}catch(e){}}
+      try{updatePendingBtn();}catch(e){}
+      announce={text:'🛠 DEV: Акт 2 — охота на гнёзда',life:2,color:'#7dd3fc'};
     }
-    function act2NextWave(){ // мгновенно закрыть текущую волну → следующая
+    function act2KillNest(){ // уничтожить одно ближайшее гнездо (проверка счётчика/победы)
       const D=act2Def;if(!D||!D.active)return;
-      enemies=enemies.filter(e=>!e.defense);D.toSpawn=0;D.siegeLeft=0;
-      announce={text:'🛠 DEV: волна зачищена',life:1.4,color:'#4ade80'};
+      const nests=enemies.filter(e=>e.nest);if(!nests.length)return;
+      let n=nests[0],bd=1e18;for(const e of nests){const dd=(e.x-player.x)**2+(e.y-player.y)**2;if(dd<bd){bd=dd;n=e;}}
+      n.hp=0; // подхватится фильтром смерти → killEnemy → счётчик/победа
+      announce={text:'🛠 DEV: −1 гнездо',life:1.4,color:'#a855f7'};
     }
     function spawnMini(){ if(act2Def&&act2Def.active){try{act2SpawnMiniBoss();}catch(e){}} }
     function toChronos2(){ // босс Акта 2 (пробуждённый Хронос)
@@ -8637,12 +8726,8 @@
       ['+10 апгр',()=>{ensureRun();for(let i=0;i<10;i++)autoApplyOne();player.hp=player.maxHp;}],
       ['☠ Хронос (Акт1)',toChronos],
       ['🏰 Акт 2: интро',act2Enter],
-      ['⚔ Акт 2: в бой',()=>act2Skip(1)],
-      ['🌊 Волна 5',()=>act2Skip(5)],
-      ['🌊 Волна 15',()=>act2Skip(15)],
-      ['🌊 Волна 28',()=>act2Skip(28)],
-      ['⏭ След. волна',act2NextWave],
-      ['👹 Мини-босс',spawnMini],
+      ['⚔ Акт 2: охота',act2Hunt],
+      ['🕳 −1 гнездо',act2KillNest],
       ['☠2 Хронос-2',toChronos2],
       ['💎 +5000',()=>{gemsCollected+=5000;}],
       ['❤ Бессмертие',godToggle],
