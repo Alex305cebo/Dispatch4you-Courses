@@ -8182,21 +8182,26 @@
     // ОБОРОНА БАЗЫ: HUD волн (экранные координаты, поверх всего)
     if(act2Def&&act2Def.active&&(state==='running'||state==='paused')){
       const D=act2Def,B2=act2BaseWalls;
-      x.save();x.textAlign='center';x.textBaseline='top';
-      const cyy=HUD_STRIP_H+HUD_XP_H+10;
-      if(D.phase==='intro'){
-        x.fillStyle='#7dd3fc';x.font='bold 15px system-ui';x.fillText('🔧 Почини центральное здание (в центре) — станешь новым кораблём',W/2,cyy);
-        if(D.powerT>0){x.fillStyle='#4ade80';x.font='bold 13px system-ui';x.fillText('запуск… '+Math.round(D.powerT/2.4*100)+'%',W/2,cyy+20);}
-      }else if(D.phase==='won'){
-        x.fillStyle='#fde047';x.font='bold 18px system-ui';x.fillText('🏆 ВСЕ ГНЁЗДА УНИЧТОЖЕНЫ!',W/2,cyy);
-      }else{
-        const done=(D.nestsTotal||0)-(D.nestsLeft||0);
-        x.fillStyle='#c084fc';x.font='bold 17px system-ui';
-        x.fillText('🎯 ГНЁЗДА: '+done+'/'+(D.nestsTotal||0)+' уничтожено',W/2,cyy);
-        x.font='bold 13px system-ui';x.fillStyle='#fca5a5';
-        x.fillText('Выйди за базу и снеси гнёзда · защити главное здание (центр)',W/2,cyy+20);
+      // На ТЕЛЕФОНЕ/портрете цель показывается компактным чипом в верхней строке рядом с 💎
+      // (см. act2Chip ниже) — большой двухстрочный баннер рисуем только на широком ПК-экране,
+      // иначе он наезжал на пилюлю кристаллов. Инструкции игрок видит всплывающими анонсами.
+      if(!uiMobile){
+        x.save();x.textAlign='center';x.textBaseline='top';
+        const cyy=HUD_STRIP_H+HUD_XP_H+10;
+        if(D.phase==='intro'){
+          x.fillStyle='#7dd3fc';x.font='bold 15px system-ui';x.fillText('🔧 Почини центральное здание (в центре) — станешь новым кораблём',W/2,cyy);
+          if(D.powerT>0){x.fillStyle='#4ade80';x.font='bold 13px system-ui';x.fillText('запуск… '+Math.round(D.powerT/2.4*100)+'%',W/2,cyy+20);}
+        }else if(D.phase==='won'){
+          x.fillStyle='#fde047';x.font='bold 18px system-ui';x.fillText('🏆 ВСЕ ГНЁЗДА УНИЧТОЖЕНЫ!',W/2,cyy);
+        }else{
+          const done=(D.nestsTotal||0)-(D.nestsLeft||0);
+          x.fillStyle='#c084fc';x.font='bold 17px system-ui';
+          x.fillText('🎯 ГНЁЗДА: '+done+'/'+(D.nestsTotal||0)+' уничтожено',W/2,cyy);
+          x.font='bold 13px system-ui';x.fillStyle='#fca5a5';
+          x.fillText('Выйди за базу и снеси гнёзда · защити главное здание (центр)',W/2,cyy+20);
+        }
+        x.restore();
       }
-      x.restore();
       // ИНДИКАТОРЫ: стрелки к открытым воротам, через которые прорывается поток
       for(const ga of (B2.gates||[]))if(ga.open){x.save();edgeArrow(ga.cx,ga.cy,10,'#ff6b6b',1.1);x.restore();}
       // СТРЕЛКА-ГИД после запуска базы: показывает здание, где тратятся 💎 на улучшения
