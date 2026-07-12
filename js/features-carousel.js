@@ -1,162 +1,115 @@
 // ========================================
-// FEATURES CAROUSEL - Циклическое переключение
+// FEATURES CAROUSEL — прокрутка + точки-пагинация
+// Кроссфейд idle→hover у карточек — чистый CSS (:hover на десктопе,
+// .is-active на активной карточке при тач-скролле). JS ведёт только навигацию.
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
   const slider = document.querySelector('.features-grid');
   const prevBtn = document.querySelector('.carousel-btn-prev');
   const nextBtn = document.querySelector('.carousel-btn-next');
-  const cards = document.querySelectorAll('.feature-card');
-  
+  const dotsWrap = document.querySelector('.carousel-dots');
+  const cards = Array.from(document.querySelectorAll('.feature-card'));
+
   if (!slider || !prevBtn || !nextBtn || !cards.length) {
     console.error('Carousel elements not found');
     return;
   }
-  
-  let currentIndex = 0;
-  const totalCards = cards.length;
-  
-  // Получаем количество видимых карточек
-  function getVisibleCount() {
-    const width = window.innerWidth;
-    if (width >= 1200) return 3;
-    if (width >= 768) return 2;
-    return 1;
-  }
-  
-  // Вычисляем максимальный индекс
-  function getMaxIndex() {
-    return Math.max(0, totalCards - getVisibleCount());
-  }
-  
-  // Прокрутка к карточке по индексу
-  function scrollToCard(index) {
-    const card = cards[index];
+
+  const total = cards.length;
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // Прокрутка так, чтобы карточка i встала ведущей (к левому краю; snap докрутит)
+  function goTo(i) {
+    i = Math.max(0, Math.min(total - 1, i));
+    const card = cards[i];
     if (!card) return;
-    
-    const cardWidth = card.offsetWidth;
-    const gap = 20; // gap между карточками
-    const scrollPosition = index * (cardWidth + gap);
-    
-    slider.scrollTo({
-      left: scrollPosition,
-      behavior: 'smooth'
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    activeIndex = i;
+    syncUI(i);
+  }
+  let activeIndex = 0;
+  function next() { goTo(activeIndex >= total - 1 ? 0 : activeIndex + 1); }
+  function prev() { goTo(activeIndex <= 0 ? total - 1 : activeIndex - 1); }
+
+  prevBtn.addEventListener('click', (e) => { e.preventDefault(); prev(); });
+  nextBtn.addEventListener('click', (e) => { e.preventDefault(); next(); });
+
+  // ---- Точки-пагинация: по одной на карточку ----
+  const dots = [];
+  if (dotsWrap) {
+    cards.forEach((_, i) => {
+      const b = document.createElement('button');
+      b.className = 'dot';
+      b.type = 'button';
+      b.setAttribute('aria-label', 'Карточка ' + (i + 1));
+      b.addEventListener('click', () => goTo(i));
+      dotsWrap.appendChild(b);
+      dots.push(b);
     });
-    
-    currentIndex = index;
   }
-  
-  // Следующая карточка (циклически)
-  function nextCard() {
-    const maxIndex = getMaxIndex();
-    
-    if (currentIndex >= maxIndex) {
-      // Если на последней позиции - возвращаемся к началу
-      currentIndex = 0;
-    } else {
-      currentIndex++;
+
+  // Индекс ведущей карточки: первая, что видна слева хотя бы наполовину
+  function leadingIndex() {
+    const sLeft = slider.getBoundingClientRect().left;
+    for (let i = 0; i < total; i++) {
+      const r = cards[i].getBoundingClientRect();
+      if (r.left - sLeft >= -r.width * 0.5) return i;
     }
-    
-    scrollToCard(currentIndex);
+    return total - 1;
   }
-  
-  // Предыдущая карточка (циклически)
-  function prevCard() {
-    const maxIndex = getMaxIndex();
-    
-    if (currentIndex <= 0) {
-      // Если на первой позиции - переходим к концу
-      currentIndex = maxIndex;
-    } else {
-      currentIndex--;
+
+  // Активная точка + (на тач) класс .is-active на центральной карточке → CSS-кроссфейд
+  function syncUI(idx) {
+    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+    if (!canHover) {
+      cards.forEach((c, i) => c.classList.toggle('is-active', i === idx));
     }
-    
-    scrollToCard(currentIndex);
   }
-  
-  // Обработчики кнопок
-  prevBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    prevCard();
-  });
-  
-  nextBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    nextCard();
-  });
-  
-  // Обработчик клика на карточки
-  cards.forEach(card => {
+
+  // Пересчёт при ручном скролле/свайпе (последняя точка — на самом правом крае)
+  let rafId = 0;
+  function onScroll() {
+    rafId = 0;
+    const maxLeft = slider.scrollWidth - slider.clientWidth;
+    const idx = slider.scrollLeft >= maxLeft - 4 ? total - 1 : leadingIndex();
+    activeIndex = idx;
+    syncUI(idx);
+  }
+  slider.addEventListener('scroll', () => {
+    if (!rafId) rafId = requestAnimationFrame(onScroll);
+  }, { passive: true });
+
+  // Клик по карточке → переход на страницу
+  cards.forEach((card) => {
     card.addEventListener('click', () => {
       const link = card.getAttribute('data-link');
-      if (link) {
-        window.location.href = link;
-      }
+      if (link) window.location.href = link;
     });
   });
-  
+
   // Клавиатурная навигация
   document.addEventListener('keydown', (e) => {
-    // Игнорируем если фокус в input/textarea
-    if (document.activeElement.tagName === 'INPUT' || 
-        document.activeElement.tagName === 'TEXTAREA') {
-      return;
-    }
-    
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      prevCard();
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      nextCard();
-    }
+    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
   });
-  
-  // Обновление при изменении размера окна
+
+  // Ресайз — пересчитать активную
   let resizeTimeout;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      // Корректируем текущий индекс если нужно
-      const maxIndex = getMaxIndex();
-      if (currentIndex > maxIndex) {
-        currentIndex = maxIndex;
-      }
-      scrollToCard(currentIndex);
-    }, 250);
+    resizeTimeout = setTimeout(onScroll, 250);
   });
-  
-  // Touch swipe support
+
+  // Свайп на тач-устройствах (в дополнение к нативному скроллу)
   let touchStartX = 0;
-  let touchEndX = 0;
-  
-  slider.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  }, { passive: true });
-  
+  slider.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
   slider.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
+    const diff = touchStartX - e.changedTouches[0].screenX;
+    if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); }
   }, { passive: true });
-  
-  function handleSwipe() {
-    const swipeThreshold = 50;
-    const diff = touchStartX - touchEndX;
-    
-    if (Math.abs(diff) > swipeThreshold) {
-      if (diff > 0) {
-        // Swipe left - next
-        nextCard();
-      } else {
-        // Swipe right - prev
-        prevCard();
-      }
-    }
-  }
-  
-  console.log('Carousel initialized:', {
-    totalCards,
-    currentIndex,
-    visibleCount: getVisibleCount()
-  });
+
+  // Стартовое состояние (после того как snap выставит первую карточку)
+  requestAnimationFrame(onScroll);
 });
