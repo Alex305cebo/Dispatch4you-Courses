@@ -106,7 +106,9 @@
   z-index: 3;
 }
 
-/* медиа-слой: две картинки — idle виден всегда, hover проступает кроссфейдом */
+/* медиа-слой: две картинки. РЕВЕРС кроссфейда — цветная (.feature-hover)
+   видна по умолчанию (карточка «светится»), приглушённая (.feature-idle)
+   проступает при наведении/касании. */
 .feature-media {
   position: absolute;
   inset: 0;
@@ -123,8 +125,8 @@
   display: block;
   transition: opacity 0.55s ease, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.feature-idle { opacity: 0.85; }
-.feature-hover { opacity: 0; }
+.feature-idle { opacity: 0; }
+.feature-hover { opacity: 0.85; }
 /* вуаль поверх картинок — держит читаемость заголовка/описания */
 .feature-media::after {
   content: '';
@@ -132,11 +134,11 @@
   inset: 0;
   background: linear-gradient(180deg, rgba(5, 8, 16, 0.35) 0%, rgba(5, 8, 16, 0.55) 55%, rgba(5, 8, 16, 0.82) 100%);
 }
-/* при наведении (десктоп) / активной карточке (мобайл): кроссфейд idle→hover + лёгкий зум */
+/* при наведении (десктоп) / активной карточке (мобайл): гаснет в тёмную (idle) + лёгкий зум */
 .feature-card:hover .feature-idle,
-.feature-card.is-active .feature-idle { opacity: 0; }
+.feature-card.is-active .feature-idle { opacity: 1; }
 .feature-card:hover .feature-hover,
-.feature-card.is-active .feature-hover { opacity: 1; }
+.feature-card.is-active .feature-hover { opacity: 0; }
 .feature-card:hover .feature-media img,
 .feature-card.is-active .feature-media img { transform: scale(1.05); }
 
@@ -156,19 +158,6 @@
   pointer-events: none;
   user-select: none;
   transition: -webkit-text-stroke-color 0.35s ease, transform 0.35s ease;
-}
-
-/* индекс «01 / 06» */
-.feature-index {
-  position: relative;
-  z-index: 2;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  color: rgba(255, 255, 255, 0.65);
-  font-variant-numeric: tabular-nums;
-  font-family: 'Montserrat', sans-serif;
-  transition: color 0.35s ease;
 }
 
 .feature-content {
@@ -212,10 +201,6 @@
 .feature-card.is-active .feature-num {
   -webkit-text-stroke-color: rgba(var(--rgb, 6,182,212), 0.6);
   transform: scale(1.04);
-}
-.feature-card:hover .feature-index,
-.feature-card.is-active .feature-index {
-  color: var(--a, #06b6d4);
 }
 
 /* Carousel Controls */

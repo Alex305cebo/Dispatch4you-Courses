@@ -1,7 +1,8 @@
 // ========================================
-// FEATURES CAROUSEL — scroll + pagination dots
+// FEATURES CAROUSEL — infinite (looped) scroll + pagination dots
 // The idle→hover crossfade is pure CSS (:hover on desktop, .is-active on the
-// centered card during touch scroll). JS only drives navigation.
+// centered card during touch scroll). JS drives navigation and a seamless
+// loop via clone buffers on both ends of the track.
 // ========================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,100 +10,152 @@ document.addEventListener('DOMContentLoaded', () => {
   const prevBtn = document.querySelector('.carousel-btn-prev');
   const nextBtn = document.querySelector('.carousel-btn-next');
   const dotsWrap = document.querySelector('.carousel-dots');
-  const cards = Array.from(document.querySelectorAll('.feature-card'));
+  const realCards = Array.from(document.querySelectorAll('.feature-card'));
 
-  if (!slider || !prevBtn || !nextBtn || !cards.length) {
+  if (!slider || !prevBtn || !nextBtn || !realCards.length) {
     console.error('Carousel elements not found');
     return;
   }
 
-  const total = cards.length;
+  const total = realCards.length;
   const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  function goTo(i) {
-    i = Math.max(0, Math.min(total - 1, i));
-    const card = cards[i];
-    if (!card) return;
-    card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-    activeIndex = i;
-    syncUI(i);
+  // ---- Clone buffers for a seamless ring: [set][real][set] ----
+  // Scrolling past an edge reveals a clone of the neighbouring card; once
+  // scrolling settles, scrollLeft jumps by one whole set back into the real
+  // zone — clones are identical, so the jump is invisible.
+  function makeClone(card) {
+    const clone = card.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    clone.setAttribute('tabindex', '-1');
+    clone.classList.add('feature-card--clone');
+    return clone;
   }
-  let activeIndex = 0;
-  function next() { goTo(activeIndex >= total - 1 ? 0 : activeIndex + 1); }
-  function prev() { goTo(activeIndex <= 0 ? total - 1 : activeIndex - 1); }
+  realCards.forEach((card) => slider.insertBefore(makeClone(card), realCards[0]));
+  realCards.forEach((card) => slider.appendChild(makeClone(card)));
+  const allCards = Array.from(slider.querySelectorAll('.feature-card'));
+  // allCards: [clones 0..total-1][real 0..total-1][clones 0..total-1]
+  // index i → real card i % total; the real set starts at index total
 
-  prevBtn.addEventListener('click', (e) => { e.preventDefault(); prev(); });
-  nextBtn.addEventListener('click', (e) => { e.preventDefault(); next(); });
+  // ---- Geometry ----
+  let step = 0; // card width + gap
+  let pad = 0;  // left inner padding of the track (snap edge)
+  function measure() {
+    pad = parseFloat(getComputedStyle(slider).paddingLeft) || 0;
+    step = allCards[1].getBoundingClientRect().left - allCards[0].getBoundingClientRect().left;
+  }
+  function leadEdge() {
+    return slider.getBoundingClientRect().left + pad;
+  }
+  // Instant scrollLeft shift, bypassing CSS scroll-behavior: smooth
+  function jumpTo(left) {
+    const prev = slider.style.scrollBehavior;
+    slider.style.scrollBehavior = 'auto';
+    slider.scrollLeft = left;
+    slider.style.scrollBehavior = prev;
+  }
+  // Index of the card (among all, incl. clones) sitting at the left edge
+  function leadingAll() {
+    const lead = leadEdge();
+    let best = 0, bestDist = Infinity;
+    for (let i = 0; i < allCards.length; i++) {
+      const d = Math.abs(allCards[i].getBoundingClientRect().left - lead);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    return best;
+  }
 
-  // ---- Pagination dots: one per card ----
+  // Put the first real card at the left edge (instant, no page scroll)
+  function centerReal() {
+    const real0 = allCards[total];
+    jumpTo(slider.scrollLeft + real0.getBoundingClientRect().left - leadEdge());
+  }
+
+  // After scrolling settles, bring the leading card back into the real zone —
+  // if a clone is currently leading, shift by one whole set to its real copy
+  function normalize() {
+    const li = leadingAll();
+    if (li < total || li >= total * 2) {
+      const shift = (total + (li % total)) - li; // in cards
+      jumpTo(slider.scrollLeft + shift * step);
+    }
+  }
+
+  // ---- Pagination dots: one per real card ----
   const dots = [];
   if (dotsWrap) {
-    cards.forEach((_, i) => {
+    for (let i = 0; i < total; i++) {
       const b = document.createElement('button');
       b.className = 'dot';
       b.type = 'button';
       b.setAttribute('aria-label', 'Card ' + (i + 1));
-      b.addEventListener('click', () => goTo(i));
+      b.addEventListener('click', () => goToReal(i));
       dotsWrap.appendChild(b);
       dots.push(b);
-    });
-  }
-
-  // Leading card index: first card at least half-visible from the left
-  function leadingIndex() {
-    const sLeft = slider.getBoundingClientRect().left;
-    for (let i = 0; i < total; i++) {
-      const r = cards[i].getBoundingClientRect();
-      if (r.left - sLeft >= -r.width * 0.5) return i;
     }
-    return total - 1;
   }
 
-  // Active dot + (on touch) .is-active on the centered card → CSS crossfade
-  function syncUI(idx) {
-    dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+  // Active dot (by modulo) + (on touch) .is-active on the centered card → CSS crossfade
+  function syncUI(li) {
+    const r = li % total;
+    dots.forEach((d, i) => d.classList.toggle('active', i === r));
     if (!canHover) {
-      cards.forEach((c, i) => c.classList.toggle('is-active', i === idx));
+      allCards.forEach((c, i) => c.classList.toggle('is-active', i === li));
     }
   }
 
+  // ---- Navigation ---- (measure() before each step: the CSS loads lazily,
+  // so on DOMContentLoaded the card geometry may still be zero)
+  function next() { measure(); slider.scrollBy({ left: step, behavior: 'smooth' }); }
+  function prev() { measure(); slider.scrollBy({ left: -step, behavior: 'smooth' }); }
+  // To real card i by the shortest path (through clones, no dead-end)
+  function goToReal(i) {
+    measure();
+    const cur = leadingAll() % total;
+    let d = (i - cur) % total;
+    if (d > total / 2) d -= total;
+    if (d < -total / 2) d += total;
+    slider.scrollBy({ left: d * step, behavior: 'smooth' });
+  }
+
+  prevBtn.addEventListener('click', (e) => { e.preventDefault(); prev(); });
+  nextBtn.addEventListener('click', (e) => { e.preventDefault(); next(); });
+
+  // Live dot/crossfade update while scrolling + deferred seamless shift
   let rafId = 0;
-  function onScroll() {
-    rafId = 0;
-    const maxLeft = slider.scrollWidth - slider.clientWidth;
-    const idx = slider.scrollLeft >= maxLeft - 4 ? total - 1 : leadingIndex();
-    activeIndex = idx;
-    syncUI(idx);
+  function onScroll() { rafId = 0; syncUI(leadingAll()); }
+  let settleTimer = 0;
+  function scheduleSettle() {
+    clearTimeout(settleTimer);
+    // 140ms after the last scroll event = scroll and snap have settled
+    // (during a smooth arrow animation events keep firing and the timer waits)
+    settleTimer = setTimeout(() => { normalize(); onScroll(); }, 140);
   }
   slider.addEventListener('scroll', () => {
     if (!rafId) rafId = requestAnimationFrame(onScroll);
+    scheduleSettle();
   }, { passive: true });
 
-  cards.forEach((card) => {
-    card.addEventListener('click', () => {
-      const link = card.getAttribute('data-link');
-      if (link) window.location.href = link;
-    });
-  });
-
+  // Keyboard navigation
   document.addEventListener('keydown', (e) => {
-    if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+    const t = document.activeElement.tagName;
+    if (t === 'INPUT' || t === 'TEXTAREA') return;
     if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
     else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
   });
 
-  let resizeTimeout;
+  // Resize — recompute geometry and return to the real zone
+  let resizeTimer;
   window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(onScroll, 250);
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { measure(); normalize(); onScroll(); }, 200);
   });
 
-  let touchStartX = 0;
-  slider.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
-  slider.addEventListener('touchend', (e) => {
-    const diff = touchStartX - e.changedTouches[0].screenX;
-    if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); }
-  }, { passive: true });
-
-  requestAnimationFrame(onScroll);
+  // ---- Start ----
+  measure();
+  centerReal();
+  onScroll();
+  // The CSS loads lazily (media=print→all) — on DOMContentLoaded geometry
+  // may be zero; re-center once all stylesheets have loaded
+  window.addEventListener('load', () => { measure(); centerReal(); onScroll(); });
 });
