@@ -2502,8 +2502,9 @@
       }else tw.dwell=0;
       // === АВТООГОНЬ ===
       let best=null,bestScore=-1;
-      for(const e of enemies){const d=dist(tw,e);if(d>TR)continue;
-        const score=(pointInsideBase(e.x,e.y)?1:0)*1e6-d;if(score>bestScore){bestScore=score;best=e;}}
+      for(const e of enemies){const inside=pointInsideBase(e.x,e.y);const d=dist(tw,e);
+        if(d>(inside?TR*1.5:TR))continue; // прорвавшихся ВНУТРЬ базы (идут на атаку) видим на 50% дальше
+        const score=(inside?1:0)*1e6-d;if(score>bestScore){bestScore=score;best=e;}}
       if(!best)continue;
       tw.aim=Math.atan2(best.y-tw.y,best.x-tw.x);
       // 🔧 Мастерская усиливает урон турелей, ⚙ Арсенал — скорострельность (разрушены → штраф)
@@ -2523,7 +2524,7 @@
         }else{
           const shots=lv>=5?3:lv>=3?2:1,spread=0.13;
           for(let s=0;s<shots;s++){const a=tw.aim+(s-(shots-1)/2)*spread;
-            projectiles.push({x:tw.x,y:tw.y,vx:Math.cos(a)*560,vy:Math.sin(a)*560,r:4.5,life:1.2,pierceLeft:lv>=6?1:0,hitSet:new Set(),dmg:tdmg,color:'#7dd3fc'});}
+            projectiles.push({x:tw.x,y:tw.y,vx:Math.cos(a)*560,vy:Math.sin(a)*560,r:4.5,life:8,pierceLeft:lv>=6?1:0,hitSet:new Set(),dmg:tdmg,color:'#7dd3fc',turret:true,bounce:0});} // ponytail: life=8с — потолок безопасности; по сути летит до попадания/отскока от стены (лимит 8 отскоков, иначе вечно бы летал по базе)
         }
         if(particles.length<600)for(let i=0;i<4;i++)particles.push({x:tw.x+Math.cos(tw.aim)*20,y:tw.y+Math.sin(tw.aim)*20,
           vx:Math.cos(tw.aim)*2+rand(-1,1),vy:Math.sin(tw.aim)*2+rand(-1,1),life:0.25,color:lv>=TUR_MAX?'#f43f5e':'#7dd3fc',sz:2});
@@ -6190,6 +6191,23 @@
       }
       p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
       if(inVault&&pointInWalls(p.x,p.y)){p.life=0;p.pierceLeft=-1;burst(p.x,p.y,'#c084fc',2);continue;}
+      // ВЫШЕЧНЫЙ СНАРЯД: рикошет от стен базы (отражение скорости v'=v-2(v·n)n), лимит отскоков
+      if(p.turret&&act2BaseWalls&&act2BaseWalls.rects){
+        for(const w of act2BaseWalls.rects){
+          const cw=Math.max(w.x,Math.min(p.x,w.x+w.w)),ch=Math.max(w.y,Math.min(p.y,w.y+w.h));
+          const dx=p.x-cw,dy=p.y-ch,d2=dx*dx+dy*dy;
+          if(d2<p.r*p.r){
+            let nx,ny;
+            if(d2>0.0001){const d=Math.sqrt(d2);nx=dx/d;ny=dy/d;}
+            else{nx=(p.x<w.x+w.w/2)?-1:1;ny=0;} // застряло внутри стены — толкаем по X
+            const dot=p.vx*nx+p.vy*ny;p.vx-=2*dot*nx;p.vy-=2*dot*ny;
+            p.x+=nx*(p.r+2);p.y+=ny*(p.r+2);
+            if((p.bounce=(p.bounce||0)+1)>8){p.life=0;p.pierceLeft=-1;}
+            sparkHit(p.x,p.y,p.color||'#7dd3fc');
+            break;
+          }
+        }
+      }
       for(const e of enemies){
         if(p.pierceLeft<0||p.hitSet.has(e))continue;
         if(dist(p,e)<p.r+e.r){
