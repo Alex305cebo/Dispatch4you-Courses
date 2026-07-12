@@ -8253,7 +8253,8 @@
     document.getElementById('oweaponchoice').classList.remove('show');
     ocooldown.classList.remove('show');oweapon.classList.remove('show');osuperwarn.classList.remove('show');olb.classList.remove('show');
     state='running';last=performance.now();raf=requestAnimationFrame(loop);
-    showIntroPopup(1); // инструкция Акта 1 — модалка до начала игры
+    // Акт 1 стартует СРАЗУ (без блокирующего попапа) — управление и так на стартовом меню.
+    // Попап-инструкция остаётся у Акта 2 (там он нужен). Для Акта 1 можно вернуть не блокирующим — по запросу.
   }
 
   // ── ИНТРО-ПОПАП: модалка с инструкцией акта; замораживает игру (introOpen) до кнопки «Начать» ──
@@ -8587,56 +8588,72 @@
     // панель строится ВСЕГДА, но по умолчанию скрыта; показывается кнопкой «🛠 DevTool» в боковом меню
     // (или сразу видна при ?dev=1). Раньше здесь был ранний выход, если не ?dev=1.
     function ensureRun(){ if(state!=='running'&&state!=='levelup'){ start(); } }
-    // прокачать игрока до уровня lvl и выдать ups улучшений (чтобы бой на 40+ был честным)
-    function boost(lvl,ups){
+    function hideIntro(){ try{ointro.classList.remove('show');introOpen=false;}catch(e){} } // снять интро-попап (dev-скипы идут мимо него)
+    function boost(lvl,ups){ // прокачать до уровня lvl + выдать ups улучшений
       ensureRun();
       if(lvl>player.level)player.level=lvl;
       player.xpNeed=xpNeedFor(player.level);player.xp=0;
-      for(let i=0;i<ups;i++)autoApplyOne();
-      player.hp=player.maxHp;lives=3;pendingLevelUps=0;
-      try{recalcLvlScale();}catch(e){}
-      try{updatePendingBtn();}catch(e){}
+      for(let i=0;i<(ups||0);i++)autoApplyOne();
+      player.hp=player.maxHp;lives=Math.max(lives,3);pendingLevelUps=0;
+      try{recalcLvlScale();}catch(e){}try{updatePendingBtn();}catch(e){}
     }
-    function toChronos(){
-      boost(Math.max(player.level,48),50);
+    // ── АКТ 1 ──
+    function toChronos(){ // мега-босс Акта 1 (Хронос на 20-м)
+      ensureRun();boost(Math.max(player.level,18),12);
       if(!enemies.some(e=>e.megaboss)){pendingMegaBoss=false;spawnMegaBoss();}
-      announce={text:'🛠 DEV: арена Хроноса',life:2.5,color:'#7dd3fc'};
+      announce={text:'🛠 DEV: Хронос (Акт 1)',life:2,color:'#ff2d55'};
     }
-    function toFinale(){
-      toChronos();
-      const mb=enemies.find(e=>e.megaboss);
-      if(mb){mb.invulnT=0;mb.shieldHp=0;mb._hpReal=mb.maxHp*0.02;} // <3% → следующий кадр запустит финал
-      announce={text:'🛠 DEV: финал Хроноса → Акт 2',life:2.5,color:'#ff2d55'};
+    // ── АКТ 2: ОБОРОНА БАЗЫ ──
+    function act2Enter(){ ensureRun();if(!(act2Def&&act2Def.active))enterAct2(); } // обычный вход (с интро-попапом)
+    function act2Skip(wave){ // сразу активная база на нужной волне (мимо починки/интро) + корабль под волну
+      act2Enter();hideIntro();const D=act2Def;if(!D)return;
+      player.ship2=true;player.wounded=false;
+      D.wave=Math.max(1,Math.min(D.maxWaves,wave||1));
+      for(let i=0;i<Math.min(20,D.wave+2);i++)autoApplyOne(); // иначе на поздней волне мгновенная смерть
+      player.hp=player.maxHp;lives=Math.max(lives,3);
+      D.phase='break';D.phaseT=1.2;D.shield.up=true;D.shield.hp=D.shield.maxHp;D.guideT=0;
+      gemsCollected=Math.max(gemsCollected,2000);
+      try{act2PlanWave();updatePendingBtn();}catch(e){}
+      announce={text:'🛠 DEV: Акт 2 — волна '+D.wave,life:2,color:'#7dd3fc'};
     }
-    function toChronos2(){ // босс Акта 2 (обновлённый Хронос)
-      ensureRun(); // ВАЖНО: сперва старт (может сбросить act), потом выставляем Акт 2
-      act=2;megaDone=true;megaFought=true;player.ship2=true;player.wounded=false;act2Tower=null;
-      boost(Math.max(player.level,56),58);mega2Done=false; // boost().ensureRun уже no-op — act не слетает
-      enemies=enemies.filter(e=>!e.megaboss);spawnMegaBoss();
-      announce={text:'🛠 DEV: ХРОНОС ПРОБУЖДЁННЫЙ',life:2.5,color:'#f43f5e'};
+    function act2NextWave(){ // мгновенно закрыть текущую волну → следующая
+      const D=act2Def;if(!D||!D.active)return;
+      enemies=enemies.filter(e=>!e.defense);D.toSpawn=0;D.siegeLeft=0;
+      announce={text:'🛠 DEV: волна зачищена',life:1.4,color:'#4ade80'};
     }
-    function toTrueForm(){ // сразу истинная форма (3 доп. стадии)
-      if(!enemies.some(e=>e.megaboss&&e.act2boss))toChronos2();
-      const mb=enemies.find(e=>e.megaboss&&e.act2boss);
-      if(mb&&mb.megaPhase==='ship'){mb.invulnT=0;mb.shieldHp=0;mb._hpReal=mb.maxHp*0.02;} // <2% → пробуждение
-      announce={text:'🛠 DEV: истинная форма Хроноса',life:2.5,color:'#a855f7'};
+    function spawnMini(){ if(act2Def&&act2Def.active){try{act2SpawnMiniBoss();}catch(e){}} }
+    function toChronos2(){ // босс Акта 2 (пробуждённый Хронос)
+      ensureRun();act=2;megaDone=true;megaFought=true;player.ship2=true;player.wounded=false;act2Tower=null;
+      boost(Math.max(player.level,20),20);mega2Done=false;
+      enemies=enemies.filter(e=>!e.megaboss);spawnMegaBoss();hideIntro();
+      announce={text:'🛠 DEV: Хронос-2 (Акт 2)',life:2,color:'#f43f5e'};
     }
+    // ── ОБЩЕЕ ──
+    function godToggle(){ player._god=!player._god;player.invuln=player._god?1e9:0;
+      announce={text:player._god?'🛠 DEV: БЕССМЕРТИЕ ВКЛ':'🛠 DEV: бессмертие выкл',life:1.6,color:'#fde047'}; }
+    function killAll(){ enemies=enemies.filter(e=>e.megaboss);announce={text:'🛠 DEV: поле очищено',life:1.4,color:'#f97316'}; }
     const acts=[
-      ['▶ Старт·45',()=>boost(45,55)],
-      ['+5 ур',()=>boost(player.level+5,6)],
+      ['+5 ур',()=>boost(player.level+5,5)],
       ['+10 апгр',()=>{ensureRun();for(let i=0;i<10;i++)autoApplyOne();player.hp=player.maxHp;}],
-      ['☠ Хронос',toChronos],
-      ['🌀 Акт 2 (финал)',toFinale],
-      ['🏰 Акт 2: сразу',()=>{ensureRun();enterAct2();}],
+      ['☠ Хронос (Акт1)',toChronos],
+      ['🏰 Акт 2: интро',act2Enter],
+      ['⚔ Акт 2: в бой',()=>act2Skip(1)],
+      ['🌊 Волна 5',()=>act2Skip(5)],
+      ['🌊 Волна 15',()=>act2Skip(15)],
+      ['🌊 Волна 28',()=>act2Skip(28)],
+      ['⏭ След. волна',act2NextWave],
+      ['👹 Мини-босс',spawnMini],
       ['☠2 Хронос-2',toChronos2],
-      ['🔥 Ист.форма',toTrueForm],
+      ['💎 +5000',()=>{gemsCollected+=5000;}],
+      ['❤ Бессмертие',godToggle],
+      ['💥 Убить всех',killAll],
     ];
     const wrap=document.createElement('div');
     wrap.style.cssText='position:fixed;left:8px;bottom:8px;z-index:9999;display:flex;flex-direction:column;gap:4px;'+
       'font:600 12px system-ui,sans-serif;background:rgba(10,14,23,.82);border:1px solid #334155;border-radius:10px;padding:6px;max-width:150px;';
     const head=document.createElement('div');
     head.textContent='🛠 DEV';head.style.cssText='color:#7dd3fc;cursor:pointer;text-align:center;user-select:none;';
-    const body=document.createElement('div');body.style.cssText='display:flex;flex-direction:column;gap:4px;';
+    const body=document.createElement('div');body.style.cssText='display:flex;flex-direction:column;gap:4px;max-height:74vh;overflow-y:auto;';
     head.onclick=()=>{body.style.display=body.style.display==='none'?'flex':'none';};
     acts.forEach(([label,fn])=>{
       const b=document.createElement('button');b.textContent=label;
