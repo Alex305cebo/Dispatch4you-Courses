@@ -9,6 +9,33 @@ import { onUserChange, signInWithGoogle, signOut, currentUser } from "./d4y-auth
 window.signInWithGoogle = signInWithGoogle;
 window.authLogout = async (e) => { if (e) e.preventDefault(); await signOut(); };
 
+// ── Защита от XSS: данные профиля идут из localStorage/Firebase и не
+// должны попадать в HTML сырыми ────────────────────────────────────
+function escHTML(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+// Разрешаем только http(s)-URL картинок (Google-аватары — https)
+function safePhotoURL(u) {
+    try {
+        const url = new URL(String(u), window.location.origin);
+        if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
+    } catch (e) {}
+    return '';
+}
+// Аватар <img> собирается DOM-API, а не строкой HTML
+function buildAvatarImg(photoURL, sizePx, fallbackText, fallbackEl) {
+    const img = document.createElement('img');
+    img.src = photoURL;
+    img.style.cssText = `width:${sizePx};height:${sizePx};border-radius:50%;object-fit:cover;`;
+    img.onerror = function () {
+        if (fallbackEl) { this.remove(); fallbackEl.textContent = fallbackText; }
+        else { this.remove(); }
+    };
+    return img;
+}
+
 // ── Применяем UI ──────────────────────────────────────────────────
 function applyUI(user, xpOverride) {
     const isPages = window.location.pathname.includes('/pages/');
@@ -37,9 +64,9 @@ function applyUI(user, xpOverride) {
     if (user) {
         const initials = ((user.firstName||'')[0] + (user.lastName||'')[0]).toUpperCase() || '?';
         const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ');
-        const avatarHTML = user.photoURL
-            ? `<img src="${user.photoURL}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid rgba(99,102,241,.5);" onerror="this.outerHTML='<div style=width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(99,102,241,.5)>${initials}</div>'">`
-            : `<div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(99,102,241,.5);">${initials}</div>`;
+        const photoURL = safePhotoURL(user.photoURL);
+        // Плейсхолдер-кружок с инициалами; фото (если есть) добавим DOM-API ниже
+        const avatarHTML = `<div class="nav-avatar-slot" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;border:2px solid rgba(99,102,241,.5);overflow:hidden;">${escHTML(initials)}</div>`;
 
         navActions.innerHTML = `
             <a href="${dashHref}" class="nav-profile-link" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12));border:1px solid rgba(99,102,241,.3);border-radius:14px;text-decoration:none;transition:all .2s;max-width:200px;overflow:hidden;"
@@ -47,7 +74,7 @@ function applyUI(user, xpOverride) {
                onmouseout="this.style.background='linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.12))';this.style.borderColor='rgba(99,102,241,.3)'">
                 ${avatarHTML}
                 <div style="display:flex;flex-direction:column;gap:1px;min-width:0;">
-                    <span style="font-size:12px;font-weight:700;color:#e0e7ff;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;">${fullName}</span>
+                    <span style="font-size:12px;font-weight:700;color:#e0e7ff;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px;">${escHTML(fullName)}</span>
                     <span id="nav-xp-badge" style="font-size:10px;color:#fbbf24;font-weight:700;line-height:1;white-space:nowrap;">⚡ ${xp} XP</span>
                 </div>
             </a>
@@ -59,6 +86,16 @@ function applyUI(user, xpOverride) {
         const logoutBtn = document.getElementById('nav-logout-btn');
         if (logoutBtn) logoutBtn.addEventListener('click', window.authLogout);
 
+        // Фото профиля поверх плейсхолдера (безопасно, DOM-API)
+        if (photoURL) {
+            const slot = navActions.querySelector('.nav-avatar-slot');
+            if (slot) {
+                const img = buildAvatarImg(photoURL, '100%', initials, slot);
+                slot.textContent = '';
+                slot.appendChild(img);
+            }
+        }
+
         // Mobile navbar badge
         const mobWrap = document.getElementById('mob-xp-wrap');
         if (mobWrap) {
@@ -66,8 +103,9 @@ function applyUI(user, xpOverride) {
             const mobAvatar = document.getElementById('mob-xp-avatar');
             const mobVal = document.getElementById('mob-xp-val');
             if (mobAvatar) {
-                if (user.photoURL) {
-                    mobAvatar.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+                if (photoURL) {
+                    mobAvatar.textContent = '';
+                    mobAvatar.appendChild(buildAvatarImg(photoURL, '100%', initials, mobAvatar));
                 } else {
                     mobAvatar.textContent = initials;
                 }
@@ -87,8 +125,9 @@ function applyUI(user, xpOverride) {
             if (el('mob-profile-dash')) el('mob-profile-dash').href = dashHref;
             const av = el('mob-profile-avatar');
             if (av) {
-                if (user.photoURL) {
-                    av.innerHTML = `<img src="${user.photoURL}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">`;
+                if (photoURL) {
+                    av.textContent = '';
+                    av.appendChild(buildAvatarImg(photoURL, '44px', initials, av));
                     av.style.background = 'none';
                 } else {
                     av.textContent = initials;

@@ -80,6 +80,24 @@
   // Нужен HTTP Range (прод Apache — есть) + all-intra видео (scrub.mp4 — есть).
   video.removeAttribute('autoplay');
   video.pause();
+
+  // В HTML стоит preload="metadata": 2 МБ фона не конкурируют с критичным
+  // рендером первого экрана. Полную буферизацию включаем после window.load
+  // (или первого скролла — что случится раньше).
+  var kicked = false;
+  function kickLoad() {
+    if (kicked) return;
+    kicked = true;
+    video.preload = 'auto';
+    try { video.load(); } catch (e) {}
+    window.removeEventListener('scroll', kickLoad);
+  }
+  if (document.readyState === 'complete') { kickLoad(); }
+  else {
+    window.addEventListener('load', kickLoad, { once: true });
+    window.addEventListener('scroll', kickLoad, { passive: true });
+  }
+
   window.addEventListener('scroll', onScrollDesktop, { passive: true });
   window.addEventListener('resize', onScrollDesktop);
   video.addEventListener('loadedmetadata', onScrollDesktop);

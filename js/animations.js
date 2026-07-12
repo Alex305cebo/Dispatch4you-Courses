@@ -7,24 +7,5 @@ if ('scrollRestoration' in history) {
   history.scrollRestoration = 'manual';
 }
 
-// Smooth scroll for anchor links
-document.addEventListener('DOMContentLoaded', function() {
-  const links = document.querySelectorAll('a[href^="#"]');
-  
-  links.forEach(link => {
-    link.addEventListener('click', function(e) {
-      const href = this.getAttribute('href');
-      if (href === '#') return;
-      
-      e.preventDefault();
-      const target = document.querySelector(href);
-      
-      if (target) {
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start'
-        });
-      }
-    });
-  });
-});
+// Плавный скролл по якорям делает CSS (html { scroll-behavior: smooth } в
+// main.css) — прежний JS-перехват дублировал его и ломал обновление #hash.
