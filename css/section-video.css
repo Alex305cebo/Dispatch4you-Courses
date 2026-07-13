@@ -1,49 +1,61 @@
 /* ============================================================
-   Фоновое видео СЕКЦИИ «Как это работает» — «симулированный пин».
-   Слой всегда position:absolute внутри секции; JS на каждом кадре
-   скролла двигает video.style.top так, чтобы видео визуально
-   совпадало с вьюпортом (js/section-video.js), а overflow:hidden
-   стейджа естественно обрезает всё за границами секции — видео
-   видно на протяжении ВСЕЙ прокрутки секции (вход → шаги → выход),
-   без утечки в соседние секции и без position:fixed.
+   Фоновый слой видео СЕКЦИИ «Как это работает» — ТОЧНАЯ КОПИЯ
+   hero-фона (css/hero.css + js/hero-parallax.js): скролл-скраб
+   кадра + параллакс (translate3d) + «колокол» яркости + радиальная
+   маска, растворяющая края. Слой вынесен ЗА секцию — абсолютный
+   в <main> (position:relative), его top/height под секцию ставит
+   JS (js/section-video.js). Отличие от hero только в привязке
+   (мид-страница, а не самый верх) — настройки те же.
    ============================================================ */
-.how-it-works-section { position: relative; }
+.how-it-works-section { position: relative; z-index: 1; }   /* контент над фон-слоем */
 .how-it-works-section > .container { position: relative; z-index: 2; }
 
 .section-bg-stage {
   position: absolute;
-  inset: 0;
+  left: 0;
+  width: 100%;
+  /* top и height ставит JS — под секцию */
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  /* Вертикальная маска растворяет ВЕРХ и низ слоя в прозрачность → видео
+     плавно втекает из секции сверху и вытекает вниз, без жёсткой линии
+     обреза (overflow:hidden давал резкий край поверх секции сверху). */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%);
 }
 
 .section-bg-video {
   position: absolute;
-  top: 0;                  /* дальше top двигает JS (симулированный пин) */
+  top: 0;
   left: 0;
   width: 100%;
-  height: 100vh;            /* высота = вьюпорту, не всей (высокой) секции — без экстрим-зума cover */
-  height: 100svh;
-  object-fit: cover;       /* полноэкранный кадр — как у Apple */
-  opacity: 0;              /* яркость «плато» пишет JS */
-  filter: blur(3px);       /* лёгкая атмосфера + читаемость текста */
-  will-change: top, opacity;
+  height: 120vh;            /* 20% запаса (10% сверху/снизу) под параллакс-дрейф — край не оголяется */
+  height: 120svh;
+  object-fit: cover;
+  opacity: 0;              /* яркость («колокол») целиком пишет JS — старт из темноты */
+  /* Радиальная маска гасит ВСЕ края в прозрачность → видео растворяется в фон
+     (точь-в-точь как у hero). */
+  -webkit-mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 46%, rgba(0,0,0,0.4) 72%, transparent 95%);
+  mask-image: radial-gradient(ellipse 88% 80% at 50% 46%, #000 46%, rgba(0,0,0,0.4) 72%, transparent 95%);
+  will-change: transform, opacity;
 }
 
-/* Градиент-оверлей: темнее у краёв (читаемость + плавный стык с соседними
-   секциями на входе/выходе), светлее в центре. */
 .section-bg-scrim {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(180deg,
-    rgba(5, 8, 16, 0.65) 0%,
-    rgba(5, 8, 16, 0.30) 45%,
-    rgba(5, 8, 16, 0.70) 100%);
+  background: #050810;
+  opacity: 0.25;
+  will-change: opacity;
+}
+
+@media (max-width: 768px) {
+  .section-bg-video { opacity: 0.45; }
+  .section-bg-scrim { opacity: 0.22; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .section-bg-video { opacity: 0.35; }
+  .section-bg-video { opacity: 0.45; }
 }
