@@ -1,19 +1,21 @@
 /**
  * section-video.js — фоновый слой видео СЕКЦИИ «Как это работает».
  *
- * Яркость привязана к ПОЛОЖЕНИЮ секции во вьюпорте (не к абсолютному скроллу):
- *   - секция входит снизу  → видео проявляется из темноты (осветляется);
- *   - секция заполняет/по центру экрана → светло (плато яркости);
- *   - секция уходит вверх   → снова затемняется.
- * Кривая — плато со smoothstep-краями (C1-плавно, без «излома»).
+ * Видео проигрывается ОДИН раз, когда секция входит во вьюпорт, и
+ * останавливается на последнем кадре — без loop и без scroll-scrub
+ * (перемотка currentTime на скролл убивала слабые машины; обычное
+ * воспроизведение декодируется аппаратно).
  *
- * Видео закреплено к вьюпорту (translateY = -r.top) — гарантированное
- * покрытие и на высокой (моб), и на короткой (десктоп) секции, без тёмных
- * провалов. Поверх — мягкий параллакс-дрейф (±, симметрично, в пределах
- * запаса высоты 120svh, поэтому край не оголяется даже на плато). Кадр
- * скрабится по прогрессу (currentTime), демпфинг k=1-exp(-RATE·dt).
+ * По скроллу остаются дешёвые эффекты (transform/opacity):
+ *   - яркость по положению секции: плато со smoothstep-краями —
+ *     входит снизу → проявляется, по центру → светло, уходит вверх → гаснет;
+ *   - видео закреплено к вьюпорту (translateY = -stageTop) + мягкий
+ *     параллакс-дрейф в пределах запаса высоты 120svh.
+ * Источник (моб/десктоп) подставляет JS из data-mobile/data-desktop:
+ * media= у <source> внутри <video> игнорирует Firefox.
+ * Отказ автоплея → повтор по первому жесту; не вышло — остаётся постер.
  * Края растворяет радиальная маска (CSS), читаемость держит scrim.
- * reduced-motion: статичный приглушённый кадр.
+ * reduced-motion: статичный приглушённый постер.
  */
 (function () {
   'use strict';
@@ -28,42 +30,30 @@
   var narrow = window.matchMedia('(max-width: 768px)');
 
   var PEAK  = narrow.matches ? 0.90 : 0.70;   // пик яркости (светло) — как у hero
-  var EDGE  = 0.22;                            // доля прохода на осветление/затемнение по краям
-  var SLACK = 0.10;                            // запас высоты видео (120svh → 10% сверху/снизу)
-  var PLX   = 0.12;                            // амплитуда параллакса (±6% vh, < SLACK → без провалов)
-  var RATE  = 3;                               // плавность подхода кадра при скрабе (было 6 — резче/дёргано)
-  var SEEK_MS = 40;                            // мин. интервал между реальными video.currentTime (не каждый rAF —
-                                                // сик видео дороже, чем просто transform/opacity; реже сик = меньше дёрганости)
-
-  var dur = 0, curT = 0, tgtT = 0, raf = 0, lastT = 0, lastSeek = 0;
+  var EDGE  = 0.22;                           // доля прохода на осветление/затемнение по краям
+  var SLACK = 0.10;                           // запас высоты видео (120svh → 10% сверху/снизу)
+  var PLX   = 0.12;                           // амплитуда параллакса (±6% vh, < SLACK → без провалов)
 
   function smooth(t) { return t * t * (3 - 2 * t); }   // smoothstep
 
   // Абсолютный слой ПОД секцию (top/height). offsetTop ненадёжен (offsetParent
-   // слоя мог отличаться от секции) → считаем через документные позиции.
+  // слоя мог отличаться от секции) → считаем через документные позиции.
   function layout() {
     var vh = window.innerHeight || document.documentElement.clientHeight;
     var scrollY = window.scrollY || window.pageYOffset || 0;
     var op = stage.offsetParent || document.documentElement;
-    var opTop = op.getBoundingClientRect().top + scrollY;              // документный top offsetParent
-    var secTop = section.getBoundingClientRect().top + scrollY;        // документный top секции
+    var opTop = op.getBoundingClientRect().top + scrollY;
+    var secTop = section.getBoundingClientRect().top + scrollY;
     stage.style.top = (secTop - opTop) + 'px';
     stage.style.height = (section.offsetHeight + vh) + 'px';
-  }
-
-  function ready() {
-    var d = video.duration;
-    if (isFinite(d) && d > 0) { dur = d; return true; }
-    return false;
   }
 
   function paint() {
     var vh = window.innerHeight || document.documentElement.clientHeight;
     var r = section.getBoundingClientRect();
-    var secH = r.height;
 
     // Прогресс по положению секции: 0 — только входит снизу, 1 — ушла вверх.
-    var p = (vh - r.top) / (vh + secH);
+    var p = (vh - r.top) / (vh + r.height);
     p = p < 0 ? 0 : (p > 1 ? 1 : p);
 
     // Плато-«колокол»: smoothstep-подъём за первые EDGE, светлое плато, smoothstep-спад.
@@ -71,79 +61,55 @@
           : (p > 1 - EDGE ? smooth((1 - p) / EDGE) : 1);
     video.style.opacity = (PEAK * e).toFixed(3);
 
-    // Закрепление к вьюпорту по ФАКТ-положению слоя (-stageRect.top, не по
-    // section.offsetTop) + центровка под 120%-видео (-SLACK·vh) + симметричный
-    // параллакс-дрейф. Всё одним GPU-transform.
+    // Закрепление к вьюпорту по факт-положению слоя + центровка под 120%-видео
+    // + симметричный параллакс-дрейф. Всё одним GPU-transform.
     var sr = stage.getBoundingClientRect();
     var parallax = (p - 0.5) * PLX * vh;
     var y = -sr.top - SLACK * vh + parallax;
     video.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0)';
-
-    return p;
-  }
-
-  // Scrub-петля: кадр мягко догоняет target. Сик видео throttle'нут (SEEK_MS) —
-  // на финальном кадре (диф погашен) пишем точно, без throttle, чтобы не залипнуть чуть мимо цели.
-  function tick(now) {
-    raf = 0;
-    if (!ready()) return;
-    var dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0.016;
-    lastT = now;
-    var diff = tgtT - curT;
-    if (Math.abs(diff) < 0.008) {
-      curT = tgtT;
-      try { video.currentTime = curT; } catch (e) {}
-      return;
-    }
-    curT += diff * (1 - Math.exp(-RATE * dt));
-    raf = requestAnimationFrame(tick);
-    if (now - lastSeek >= SEEK_MS) {
-      lastSeek = now;
-      try { video.currentTime = curT; } catch (e) {}
-    }
-  }
-
-  function onScroll() {
-    var p = paint();
-    if (!ready()) return;
-    tgtT = p * dur;
-    if (!raf) { lastT = 0; raf = requestAnimationFrame(tick); }
   }
 
   if (calm.matches) {                    // reduced-motion — статичный кадр
     layout();
-    video.pause();
     video.style.opacity = (PEAK * 0.5).toFixed(3);
     paint();
     return;
   }
 
-  video.removeAttribute('autoplay');
-  video.pause();
+  var src = video.getAttribute(narrow.matches ? 'data-mobile' : 'data-desktop');
+  if (src) video.src = src;
 
-  // preload="metadata" в HTML → полную буферизацию включаем после load/первого скролла.
-  var kicked = false;
-  function kickLoad() {
-    if (kicked) return;
-    kicked = true;
-    video.preload = 'auto';
-    try { video.load(); } catch (e) {}
-    window.removeEventListener('scroll', kickLoad);
+  // Однократное воспроизведение при входе секции во вьюпорт.
+  var retryArmed = false;
+  function tryPlay() {
+    if (video.ended) return;
+    var pr = video.play();
+    if (pr && pr.catch) pr.catch(function () {
+      if (retryArmed) return;
+      retryArmed = true;
+      var kick = function () { if (!video.ended) video.play().catch(function () {}); };
+      window.addEventListener('pointerdown', kick, { once: true });
+      window.addEventListener('scroll', kick, { once: true, passive: true });
+    });
   }
-  if (document.readyState === 'complete') { kickLoad(); }
-  else {
-    window.addEventListener('load', kickLoad, { once: true });
-    window.addEventListener('scroll', kickLoad, { passive: true });
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(function (entries) {
+      if (video.ended) return;
+      if (entries[0].isIntersecting) tryPlay();
+      else video.pause();
+    }, { threshold: 0 }).observe(stage);
+  } else {
+    tryPlay();
   }
 
-  function onResize() { layout(); onScroll(); }
+  function onScroll() { paint(); }
+  function onResize() { layout(); paint(); }
 
   layout();
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onResize);
-  video.addEventListener('loadedmetadata', onScroll);
   // Секция растёт (аккордеон) без scroll/resize → пересчитать layout.
   if (window.ResizeObserver) { new ResizeObserver(onResize).observe(section); }
 
-  onScroll();
+  paint();
 })();
