@@ -31,9 +31,11 @@
   var EDGE  = 0.22;                            // доля прохода на осветление/затемнение по краям
   var SLACK = 0.10;                            // запас высоты видео (120svh → 10% сверху/снизу)
   var PLX   = 0.12;                            // амплитуда параллакса (±6% vh, < SLACK → без провалов)
-  var RATE  = 6;                               // плавность подхода кадра при скрабе
+  var RATE  = 3;                               // плавность подхода кадра при скрабе (было 6 — резче/дёргано)
+  var SEEK_MS = 40;                            // мин. интервал между реальными video.currentTime (не каждый rAF —
+                                                // сик видео дороже, чем просто transform/opacity; реже сик = меньше дёрганости)
 
-  var dur = 0, curT = 0, tgtT = 0, raf = 0, lastT = 0;
+  var dur = 0, curT = 0, tgtT = 0, raf = 0, lastT = 0, lastSeek = 0;
 
   function smooth(t) { return t * t * (3 - 2 * t); }   // smoothstep
 
@@ -80,16 +82,25 @@
     return p;
   }
 
-  // Scrub-петля: кадр мягко догоняет target.
+  // Scrub-петля: кадр мягко догоняет target. Сик видео throttle'нут (SEEK_MS) —
+  // на финальном кадре (диф погашен) пишем точно, без throttle, чтобы не залипнуть чуть мимо цели.
   function tick(now) {
     raf = 0;
     if (!ready()) return;
     var dt = lastT ? Math.min(0.05, (now - lastT) / 1000) : 0.016;
     lastT = now;
     var diff = tgtT - curT;
-    if (Math.abs(diff) < 0.008) { curT = tgtT; }
-    else { curT += diff * (1 - Math.exp(-RATE * dt)); raf = requestAnimationFrame(tick); }
-    try { video.currentTime = curT; } catch (e) {}
+    if (Math.abs(diff) < 0.008) {
+      curT = tgtT;
+      try { video.currentTime = curT; } catch (e) {}
+      return;
+    }
+    curT += diff * (1 - Math.exp(-RATE * dt));
+    raf = requestAnimationFrame(tick);
+    if (now - lastSeek >= SEEK_MS) {
+      lastSeek = now;
+      try { video.currentTime = curT; } catch (e) {}
+    }
   }
 
   function onScroll() {

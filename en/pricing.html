@@ -1267,7 +1267,7 @@
 <body>
 
     <div id="nav-placeholder"></div>
-    <script src="/nav-loader.js?v=11.3"></script>
+    <script src="/nav-loader.js?v=11.5"></script>
 
     <!-- Hero Section -->
     <section class="pricing-hero">
@@ -1308,7 +1308,7 @@
                         <li><span class="feature-icon">✓</span> Weekly group classes</li>
                         <li><span class="feature-icon">✓</span> 24/7 chat support</li>
                     </ul>
-                    <a href="/en/checkout.html?plan=full" class="btn btn-primary plan-cta">Buy for $850</a>
+                    <a href="/en/checkout.html?plan=full" class="btn btn-primary plan-cta" onclick="openPayCallModal('Full Access — \$850'); return false;">Buy for $850</a>
                 </div>
 
                 <!-- Professional Plan -->
@@ -1332,6 +1332,7 @@
                         <li><span class="feature-icon">✓</span> Priority support</li>
                     </ul>
                     <a href="/en/checkout.html?plan=premium" class="btn btn-primary plan-cta"
+                        onclick="openPayCallModal('Premium — \$1,500'); return false;"
                         style="background: linear-gradient(135deg, #f59e0b, #f97316);">💎 Buy for $1,500</a>
                 </div>
 
@@ -1771,6 +1772,25 @@ document.addEventListener('click', function(e) {
     if (!isOpen) li.classList.add('open');
 });
 </script>
+
+<!-- Popup "Order via manager": online payment is disabled — instead of
+     checkout.html, clicking "Buy" pops up one window: call or Telegram.
+     Opened from pay-call-modal.js. -->
+<div id="payCallModal" class="pay-call-modal" role="dialog" aria-modal="true" aria-labelledby="payCallModalTitle">
+  <div class="pay-call-modal-overlay" onclick="closePayCallModal()"></div>
+  <div class="pay-call-modal-content">
+    <button class="pay-call-modal-close" aria-label="Close" onclick="closePayCallModal()">×</button>
+    <div class="pay-call-modal-icon">💳</div>
+    <h3 id="payCallModalTitle">Order via a manager</h3>
+    <p class="pay-call-modal-plan" id="payCallModalPlan"></p>
+    <p class="pay-call-modal-text">Online payment is temporarily unavailable. Call us or message on Telegram — we'll set up your access in a couple of minutes.</p>
+    <!-- TODO: replace with the real phone number (placeholder for now) -->
+    <a href="tel:+10000000000" class="pay-call-modal-btn pay-call-modal-btn--call">📞 Call: +1 (000) 000-0000</a>
+    <a href="https://t.me/Dispatch4You_Bot" target="_blank" class="pay-call-modal-btn pay-call-modal-btn--tg">💬 Message on Telegram</a>
+  </div>
+</div>
+<link rel="stylesheet" href="/css/pay-call-modal.css">
+<script src="/js/pay-call-modal.js"></script>
 </body>
 
 </html>

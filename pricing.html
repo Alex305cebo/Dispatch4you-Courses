@@ -1267,7 +1267,7 @@
 <body>
 
     <div id="nav-placeholder"></div>
-    <script src="nav-loader.js?v=11.3"></script>
+    <script src="nav-loader.js?v=11.5"></script>
 
     <!-- Hero Section -->
     <section class="pricing-hero">
@@ -1308,7 +1308,7 @@
                         <li><span class="feature-icon">✓</span> Групповые уроки каждую неделю</li>
                         <li><span class="feature-icon">✓</span> Поддержка в чате 24/7</li>
                     </ul>
-                    <a href="checkout.html?plan=full" class="btn btn-primary plan-cta">Купить за $850</a>
+                    <a href="checkout.html?plan=full" class="btn btn-primary plan-cta" onclick="openPayCallModal('Полный доступ — $850'); return false;">Купить за $850</a>
                 </div>
 
                 <!-- Professional Plan -->
@@ -1332,6 +1332,7 @@
                         <li><span class="feature-icon">✓</span> Приоритетная поддержка</li>
                     </ul>
                     <a href="checkout.html?plan=premium" class="btn btn-primary plan-cta"
+                        onclick="openPayCallModal('Премиум — \$1,500'); return false;"
                         style="background: linear-gradient(135deg, #f59e0b, #f97316);">💎 Купить за $1,500</a>
                 </div>
 
@@ -1771,6 +1772,25 @@ document.addEventListener('click', function(e) {
     if (!isOpen) li.classList.add('open');
 });
 </script>
+
+<!-- Попап «Оформление через менеджера»: онлайн-оплата отключена — вместо
+     checkout.html при клике «Купить» всплывает одно окно: позвонить или
+     написать в Telegram. Открывается из pay-call-modal.js. -->
+<div id="payCallModal" class="pay-call-modal" role="dialog" aria-modal="true" aria-labelledby="payCallModalTitle">
+  <div class="pay-call-modal-overlay" onclick="closePayCallModal()"></div>
+  <div class="pay-call-modal-content">
+    <button class="pay-call-modal-close" aria-label="Закрыть" onclick="closePayCallModal()">×</button>
+    <div class="pay-call-modal-icon">💳</div>
+    <h3 id="payCallModalTitle">Оформление через менеджера</h3>
+    <p class="pay-call-modal-plan" id="payCallModalPlan"></p>
+    <p class="pay-call-modal-text">Онлайн-оплата на сайте временно недоступна. Позвоните нам или напишите в Telegram — оформим доступ за пару минут.</p>
+    <!-- TODO: заменить номер телефона на реальный (сейчас плейсхолдер) -->
+    <a href="tel:+10000000000" class="pay-call-modal-btn pay-call-modal-btn--call">📞 Позвонить: +1 (000) 000-0000</a>
+    <a href="https://t.me/Dispatch4You_Bot" target="_blank" class="pay-call-modal-btn pay-call-modal-btn--tg">💬 Написать в Telegram</a>
+  </div>
+</div>
+<link rel="stylesheet" href="css/pay-call-modal.css">
+<script src="js/pay-call-modal.js"></script>
 </body>
 
 </html>

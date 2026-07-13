@@ -1,11 +1,13 @@
 /**
  * pricing-fx.js — канвас-эффект секции тарифов: дрейфующие вверх «искры»
  * брендовых цветов за карточками (сквозь стеклянный blur карточек — мягкое
- * свечение). Уважает prefers-reduced-motion; крутится только когда секция видима.
+ * свечение) + parallax-сдвиг всего канваса по скроллу (глубина). Уважает
+ * prefers-reduced-motion; крутится только когда секция видима.
  *
  * ВАЖНО: pricing-section.css грузится лениво (media=print→all) → размеры мерим
  * не на DOMContentLoaded, а в самом frame() (самовосстановление, пока clientW/H
- * не готовы). Размер канваса задаёт CSS (width/height:100%) — style НЕ трогаем.
+ * не готовы). Размер канваса (кроме высоты-запаса под parallax) задаёт CSS
+ * (width/height:100%) — style.width/height НЕ трогаем, только transform.
  * Видимость — по getBoundingClientRect на scroll (надёжнее IO на любом скролле).
  * («Осталось N мест» — статичный HTML/CSS.)
  */
@@ -66,13 +68,22 @@
     ctx.globalCompositeOperation = 'source-over';
     raf = requestAnimationFrame(frame);
   }
-  function inView() {
-    var r = section.getBoundingClientRect();
-    var vh = window.innerHeight || document.documentElement.clientHeight;
+  var PARALLAX = 50; // px — амплитуда сдвига канваса от верха до низа прохода секции
+  function inView(r, vh) {
     return r.bottom > 0 && r.top < vh;
   }
+  // Сдвигаем весь канвас-слой медленнее/быстрее контента — эффект глубины при скролле.
+  // Реальный запас (CSS: top:-60px, height:+120px) не даёт обнажиться пустому краю.
+  function parallax(r, vh) {
+    var p = (vh - r.top) / (vh + r.height); // 0 — секция снизу входит, 1 — сверху выходит
+    p = p < 0 ? 0 : p > 1 ? 1 : p;
+    canvas.style.transform = 'translate3d(0,' + ((p - 0.5) * PARALLAX).toFixed(1) + 'px,0)';
+  }
   function update() {
-    visible = inView();
+    var r = section.getBoundingClientRect();
+    var vh = window.innerHeight || document.documentElement.clientHeight;
+    visible = inView(r, vh);
+    if (visible) parallax(r, vh);
     if (visible && !raf) raf = requestAnimationFrame(frame);
   }
 
