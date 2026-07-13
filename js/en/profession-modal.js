@@ -175,13 +175,14 @@ function isMobile() {
 }
 
 // Открытие модального окна или аккордеона
-function openProfessionModal(type) {
+function openProfessionModal(type, evt) {
   const data = professionData[type];
   if (!data) return;
 
   if (isMobile()) {
     // На мобильных — аккордеон
-    const card = event.currentTarget;
+    const card = (evt && evt.currentTarget) || document.querySelector(`.profession-card[onclick*="'${type}'"]`);
+    if (!card) return;
     const accordion = card.querySelector('.profession-accordion-content');
     const allAccordions = document.querySelectorAll('.profession-accordion-content');
     const allCards = document.querySelectorAll('.profession-card');

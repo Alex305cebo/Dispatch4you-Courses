@@ -1,14 +1,20 @@
 /**
- * section-video.js — фоновое видео СЕКЦИИ «Как это работает», Apple-стиль пин.
+ * section-video.js — фоновое видео СЕКЦИИ «Как это работает».
  *
- * Пока секция ПОЛНОСТЬЮ покрывает вьюпорт, слой .section-bg-stage прилипает
- * (класс .is-pinned → position:fixed на весь экран), а кадр видео скрабится по
- * прогрессу прокрутки сквозь секцию (currentTime ↔ q). Яркость «колоколом»:
- * тёмный на входе → светлее в середине → снова тёмный к концу. На входе/выходе
- * (секция не покрывает экран целиком) слой отлеплён и погашен.
+ * «Симулированный пин» без position:fixed: видео всегда position:absolute
+ * внутри секции, но JS на каждом кадре скролла совмещает его по вертикали
+ * с вьюпортом (top = -r.top секции), а overflow:hidden стейджа естественно
+ * обрезает всё, что выходит за границы секции. Итог — тот же визуальный
+ * эффект «видео во весь экран, пока секция на экране», но:
+ *  - без утечки в соседние секции (в отличие от честного position:fixed,
+ *    который рисуется поверх всей страницы, если окно «пина» расширить);
+ *  - без бага «видео пропадает/скачет при росте секции» (аккордеон и т.п.) —
+ *    просто пересчитывается на каждом скролле/ResizeObserver, как обычно;
+ *  - видимо на протяжении ВСЕЙ прокрутки секции (вход → все шаги → выход),
+ *    а не только в узком окне «секция ровно = высоте экрана».
  *
- * Если секция короче экрана (десктоп) — пина нет, обычный проход cover в секции.
- * Пин сделан через fixed, а не sticky: у body overflow-x:hidden ломает sticky.
+ * Яркость — широкое плато с плавным подъёмом/спадом по краям (доля EDGE от
+ * общего прогресса прохождения секции), не короткий острый пик.
  * reduced-motion: статичный кадр, приглушённая яркость.
  */
 (function () {
@@ -19,10 +25,9 @@
   var items = [].slice.call(document.querySelectorAll('.section-bg-video'));
   if (!items.length) return;
 
-  var OP_PEAK = narrow.matches ? 0.55 : 0.60;   // пик яркости
-  var OP_TOP  = narrow.matches ? 0.20 : 0.30;   // яркость на входе (режим без пина)
-  var PEAK_AT = 0.4;   // где пик в режиме без пина, доля прогресса
-  var RATE    = 6;     // плавность подхода кадра к цели при скрабе
+  var OP_PEAK = narrow.matches ? 0.55 : 0.60;   // яркость на плато
+  var EDGE    = 0.1;    // доля общего прогресса на подъём/спад по краям
+  var RATE    = 6;      // плавность подхода кадра к цели при скрабе
 
   items.forEach(function (video) {
     var stage = video.closest('.section-bg-stage');
@@ -37,32 +42,20 @@
       return false;
     }
 
-    // Считает прогресс/пин/яркость, вешает класс, пишет opacity. Возвращает p (0..1).
+    // Совмещает видео с вьюпортом (симулированный пин) и считает яркость.
+    // Возвращает общий прогресс p (0 — секция только входит снизу, 1 — вышла).
     function apply() {
       var vh = window.innerHeight || document.documentElement.clientHeight;
       var r = section.getBoundingClientRect();
       var secH = r.height;
-      var p, op, pinned;
 
-      if (secH > vh + 40) {                 // секция выше экрана → возможен пин
-        var denom = secH - vh;
-        var q = -r.top / denom;
-        q = q < 0 ? 0 : (q > 1 ? 1 : q);
-        pinned = (r.top <= 0 && r.bottom >= vh);   // секция полностью покрывает экран
-        p = q;
-        op = pinned ? OP_PEAK * Math.sin(Math.PI * q) : 0;   // вне пина — скрыто
-      } else {                              // короткая секция (десктоп) — обычный проход
-        var pp = (vh - r.top) / (vh + secH);
-        pp = pp < 0 ? 0 : (pp > 1 ? 1 : pp);
-        pinned = false;
-        p = pp;
-        op = pp <= PEAK_AT
-          ? OP_TOP + (OP_PEAK - OP_TOP) * (pp / PEAK_AT)
-          : OP_PEAK * (1 - (pp - PEAK_AT) / (1 - PEAK_AT));
-      }
+      video.style.top = (-r.top) + 'px';
 
-      stage.classList.toggle('is-pinned', pinned);
-      video.style.opacity = op.toFixed(3);
+      var p = (vh - r.top) / (vh + secH);
+      p = p < 0 ? 0 : (p > 1 ? 1 : p);
+      var bell = p < EDGE ? p / EDGE : (p > 1 - EDGE ? (1 - p) / EDGE : 1);
+      video.style.opacity = (OP_PEAK * bell).toFixed(3);
+
       return p;
     }
 
@@ -87,9 +80,8 @@
 
     if (calm.matches) {
       video.pause();
-      stage.classList.remove('is-pinned');
+      video.style.top = '0px';
       video.style.opacity = (OP_PEAK * 0.5).toFixed(3);
-      apply();
       return;
     }
 
@@ -102,6 +94,15 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     video.addEventListener('loadedmetadata', onScroll);
+
+    // Высота секции может меняться без scroll/resize (аккордеон таймлайна
+    // открывает контент под узлом) — apply() опирается на getBoundingClientRect(),
+    // без пересчёта тут позиция/яркость зависают устаревшими. ResizeObserver
+    // ловит любое такое изменение.
+    if (window.ResizeObserver) {
+      new ResizeObserver(onScroll).observe(section);
+    }
+
     onScroll();
   });
 })();

@@ -48,6 +48,11 @@
     .hero{display:flex;align-items:center;position:relative;padding:40px 0 30px;min-height:auto}
     .hero-content{text-align:center;max-width:750px;margin:0 auto;padding:0 24px;width:100%;position:relative;z-index:1}
     .badge{display:inline-flex;align-items:center;gap:6px;padding:5px 14px;background:linear-gradient(135deg,rgba(6,182,212,.15),rgba(139,92,246,.15));border:1px solid rgba(6,182,212,.4);border-radius:100px;font-size:11px;font-weight:700;color:#06b6d4;margin-bottom:20px;backdrop-filter:blur(20px)}
+    .hero-lang-toggle{display:inline-flex;gap:4px;padding:4px;margin-bottom:20px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.35);border-radius:100px;backdrop-filter:blur(20px)}
+    .hlt-opt{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:100px;font-size:13.5px;font-weight:700;text-decoration:none;color:#94a3b8;white-space:nowrap;transition:color .2s,background .2s,box-shadow .2s}
+    .hlt-opt:hover{color:#e2e8f0}
+    .hlt-opt.active{color:#fff;background:linear-gradient(135deg,#06b6d4,#8b5cf6);box-shadow:0 4px 16px rgba(6,182,212,.4)}
+    @media(max-width:600px){.hlt-opt{padding:7px 12px;font-size:12px}}
     h1{font-size:38px;font-weight:900;line-height:1.2;letter-spacing:-1px;margin-bottom:16px;color:#fff}
     .subtitle{font-size:15px;color:rgba(255,255,255,.9);max-width:600px;margin:0 auto 24px;line-height:1.5;font-weight:600}
     .gradient-text{background:linear-gradient(90deg,#667eea,#764ba2,#667eea);background-size:200% auto;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -76,7 +81,7 @@
   <link rel="stylesheet" href="/css/map-trainer-banner.css" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/css/profession-section.css?v=2.2" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/css/features-carousel.css?v=2.9" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="/css/how-it-works.css?v=2" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="/css/how-it-works.css?v=6" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/css/pricing-section.css?v=8" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/css/final-cta.css" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="/interactive-feedback.css" media="print" onload="this.media='all'">
@@ -87,7 +92,7 @@
     <link rel="stylesheet" href="/css/map-trainer-banner.css">
     <link rel="stylesheet" href="/css/profession-section.css?v=2.2">
     <link rel="stylesheet" href="/css/features-carousel.css?v=2.9">
-    <link rel="stylesheet" href="/css/how-it-works.css?v=2">
+    <link rel="stylesheet" href="/css/how-it-works.css?v=6">
     <link rel="stylesheet" href="/css/pricing-section.css?v=8">
     <link rel="stylesheet" href="/css/final-cta.css">
     <link rel="stylesheet" href="/interactive-feedback.css">
@@ -334,7 +339,7 @@
   <script type="module" src="/firebase-auth-init.en.js?v=4.2" defer></script>
 
   <!-- Interactive feedback - отложенная загрузка -->
-  <script src="/interactive-feedback.en.js" defer></script>
+  <script src="/interactive-feedback.en.js?v=2" defer></script>
 </head>
 
 <body>
@@ -362,8 +367,9 @@
   <section class="hero">
     <div class="container">
       <div class="hero-content">
-        <div class="badge">
-          Enrollment Open
+        <div class="hero-lang-toggle" role="group" aria-label="Язык сайта / Site language">
+          <a href="/" class="hlt-opt" hreflang="ru">🇷🇺 Русская версия</a>
+          <a href="/en/" class="hlt-opt active" aria-current="true">🇺🇸 English version</a>
         </div>
 
         <h1>
@@ -620,7 +626,7 @@
       <!-- Заголовок -->
       <div class="section-header">
         <h2 class="section-title">
-          Why <span class="gradient-text">Dispatching</span> Is the Career of the Future
+          The <span class="gradient-text">Dispatcher</span> Career: Why Now
         </h2>
         <p class="section-description">
           Stable income, a flexible schedule, and the freedom to work from anywhere in the world
@@ -631,7 +637,7 @@
       <div class="profession-grid">
 
         <!-- Карточка 1 -->
-        <div class="profession-card" onclick="openProfessionModal('income')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+        <div class="profession-card" onclick="openProfessionModal('income', event)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
           <div class="profession-accent" style="background:rgba(6,182,212,0.5);"></div>
           <div style="display:flex;align-items:start;gap:12px;">
             <div class="profession-icon" style="background:rgba(6,182,212,0.1);border-color:rgba(6,182,212,0.2);">💰</div>
@@ -656,7 +662,7 @@
         </div>
 
         <!-- Карточка 2 -->
-        <div class="profession-card" onclick="openProfessionModal('remote')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+        <div class="profession-card" onclick="openProfessionModal('remote', event)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
           <div class="profession-accent" style="background:rgba(139,92,246,0.5);"></div>
           <div style="display:flex;align-items:start;gap:12px;">
             <div class="profession-icon" style="background:rgba(139,92,246,0.1);border-color:rgba(139,92,246,0.2);">🌍</div>
@@ -681,7 +687,7 @@
         </div>
 
         <!-- Карточка 3 -->
-        <div class="profession-card" onclick="openProfessionModal('schedule')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+        <div class="profession-card" onclick="openProfessionModal('schedule', event)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
           <div class="profession-accent" style="background:rgba(16,185,129,0.5);"></div>
           <div style="display:flex;align-items:start;gap:12px;">
             <div class="profession-icon" style="background:rgba(16,185,129,0.1);border-color:rgba(16,185,129,0.2);">⏰</div>
@@ -706,7 +712,7 @@
         </div>
 
         <!-- Карточка 4 -->
-        <div class="profession-card" onclick="openProfessionModal('demand')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
+        <div class="profession-card" onclick="openProfessionModal('demand', event)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click()}">
           <div class="profession-accent" style="background:rgba(249,115,22,0.5);"></div>
           <div style="display:flex;align-items:start;gap:12px;">
             <div class="profession-icon" style="background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.2);">📊</div>
@@ -1084,11 +1090,11 @@
   <script src="/js/animations.js?v=2" defer></script>
   <script src="/js/hero-parallax.js?v=4.8" defer></script>
   <script src="/js/en/benefits-modal.js" defer></script>
-  <script src="/js/en/profession-modal.js" defer></script>
+  <script src="/js/en/profession-modal.js?v=2" defer></script>
   <script src="/js/en/stats-animation.js" defer></script>
   <script src="/js/en/features-carousel.js?v=2.6" defer></script>
   <script src="/js/pricing-fx.js?v=5" defer></script>
-  <script src="/js/en/how-it-works.js" defer></script>
+  <script src="/js/en/how-it-works.js?v=4" defer></script>
 
   <!-- Structured data consolidated in the single Schema.org block in <head> -->
 

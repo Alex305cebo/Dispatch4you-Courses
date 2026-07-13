@@ -1,40 +1,34 @@
 /* ============================================================
-   Фоновое видео СЕКЦИИ «Как это работает» — Apple-стиль пин.
-   Пока секция полностью в экране, слой .section-bg-stage
-   прилипает (position:fixed) во весь вьюпорт, а кадр скрабится
-   по скроллу (js/section-video.js). Полноэкранный cover + blur +
-   градиент-оверлей. Пин через fixed (а не sticky), т.к. у body
-   overflow-x:hidden ломает sticky.
+   Фоновое видео СЕКЦИИ «Как это работает» — «симулированный пин».
+   Слой всегда position:absolute внутри секции; JS на каждом кадре
+   скролла двигает video.style.top так, чтобы видео визуально
+   совпадало с вьюпортом (js/section-video.js), а overflow:hidden
+   стейджа естественно обрезает всё за границами секции — видео
+   видно на протяжении ВСЕЙ прокрутки секции (вход → шаги → выход),
+   без утечки в соседние секции и без position:fixed.
    ============================================================ */
 .how-it-works-section { position: relative; }
 .how-it-works-section > .container { position: relative; z-index: 2; }
 
 .section-bg-stage {
-  position: absolute;      /* базово — в границах секции (вход/выход, десктоп) */
+  position: absolute;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
 }
 
-/* Пин: слой прилип к экрану во весь вьюпорт (класс вешает JS). */
-.section-bg-stage.is-pinned {
-  position: fixed;
-  inset: 0 auto auto 0;
-  width: 100%;
-  height: 100vh;
-  height: 100svh;
-}
-
 .section-bg-video {
   position: absolute;
-  inset: 0;
+  top: 0;                  /* дальше top двигает JS (симулированный пин) */
+  left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;            /* высота = вьюпорту, не всей (высокой) секции — без экстрим-зума cover */
+  height: 100svh;
   object-fit: cover;       /* полноэкранный кадр — как у Apple */
-  opacity: 0;              /* яркость «колоколом» пишет JS */
+  opacity: 0;              /* яркость «плато» пишет JS */
   filter: blur(3px);       /* лёгкая атмосфера + читаемость текста */
-  will-change: opacity;
+  will-change: top, opacity;
 }
 
 /* Градиент-оверлей: темнее у краёв (читаемость + плавный стык с соседними

@@ -100,15 +100,19 @@
         // Перехватываем клики на кнопках с onclick
         document.addEventListener('click', function(e) {
             const button = e.target.closest('button, .btn, [role="button"]');
-            
+
             if (!button || button.disabled) return;
 
-            // Проверяем, есть ли onclick или это навигация
-            const hasAction = button.hasAttribute('onclick') || 
-                            button.getAttribute('href') ||
+            // Спиннер — только для реальных действий (переход/отправка формы).
+            // Div с role="button" (аккордеоны/карточки-переключатели вроде
+            // .profession-card, .benefit-card) переключают локальный UI
+            // мгновенно — им спиннер не нужен, а showButtonLoading() своим
+            // innerHTML-свапом стирает их содержимое (ломает аккордеон).
+            const isRealAction = button.tagName === 'BUTTON' ||
+                            button.tagName === 'A' ||
                             button.closest('form');
 
-            if (hasAction) {
+            if (isRealAction) {
                 showButtonLoading(button);
             }
         }, true);

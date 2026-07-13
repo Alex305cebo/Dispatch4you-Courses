@@ -21,8 +21,11 @@
 
   nodes.forEach((node, i) => {
     node.addEventListener('click', () => {
-      // На всех устройствах переключаем активность при клике
-      node.classList.toggle('active');
+      // Открывается на месте, как и раньше (обычный поток, без модалок и
+      // absolute-позиционирования) — просто один узел открыт одновременно.
+      const willOpen = !node.classList.contains('active');
+      nodes.forEach(n => { if (n !== node) n.classList.remove('active'); });
+      node.classList.toggle('active', willOpen);
     });
   });
 

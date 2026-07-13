@@ -304,7 +304,7 @@
 }
 
 .how-it-works-section .node-content h3 {
-  font-size: 15px !important;
+  font-size: 16px !important;
   font-weight: 700 !important;
   color: #ffffff !important;
   margin-bottom: 6px !important;
@@ -322,45 +322,98 @@
   transition: all 0.4s cubic-bezier(0.45, 0.5, 0.45, 1);
 }
 
+/* Список деталей шага — крупнее прежнего (13px→15px) и уходит в 2 колонки
+   на достаточно широких раскрытых панелях (см. ниже), а не тянется одной
+   узкой колонкой. */
 .how-it-works-section .node-details {
   max-height: 0;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(-20px);
-  transition: all 0.4s cubic-bezier(0.45, 0.5, 0.45, 1);
-  font-size: 13px !important;
+  transform: translateY(-12px);
+  transition: max-height 0.4s cubic-bezier(0.45, 0.5, 0.45, 1), opacity 0.35s ease, transform 0.35s ease;
+  font-size: 15px !important;
   color: #ffffff !important;
-  line-height: 1.5 !important;
+  line-height: 1.6 !important;
   text-align: left;
 }
 
 .how-it-works-section .node-details p {
-  margin: 2px 0 !important;
+  margin: 3px 0 !important;
   text-align: left;
-  font-size: 13px !important;
+  font-size: 15px !important;
   color: #ffffff !important;
+  break-inside: avoid;
 }
 
 .how-it-works-section .node-details strong {
   display: block;
   text-align: left;
-  font-size: 13px !important;
-  margin-top: 6px !important;
-  margin-bottom: 3px !important;
+  font-size: 14px !important;
+  margin-top: 10px !important;
+  margin-bottom: 4px !important;
   font-weight: 700 !important;
-  color: #ffffff !important;
+  color: #06b6d4 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
+.how-it-works-section .node-details p:first-child strong {
+  margin-top: 0 !important;
+}
+
+/* Раскрытие — та же механика, что была изначально: узел .active просто
+   снимает max-height/opacity ограничение, контент проявляется на месте. */
 .timeline-node.active .node-details {
-  max-height: 350px;
+  max-height: 420px;
   opacity: 1;
-  margin-top: 6px;
+  margin-top: 8px;
   transform: translateY(0);
 }
 
 .cards-timeline {
   display: none;
 }
+
+/* ========================================
+   DESKTOP: открытый узел раскрывается на месте, как и раньше (обычный
+   поток, никакого absolute/модалок) — просто его колонка в ряду становится
+   шире (flex-grow), а не остаётся зажатой в 1/5 ширины ряда. Соседи
+   пропорционально сужаются (flex:1 у них не меняется).
+   ======================================== */
+@media (min-width: 769px) {
+  .timeline-node.active {
+    flex: 3 1 0%;
+  }
+
+  /* Медленнее открывается и медленнее закрывается (0.4s/0.35s → 0.9s/0.8s) —
+     тот же transition, что у базового .node-details, просто дольше. */
+  .how-it-works-section .node-details {
+    transition: max-height 0.9s cubic-bezier(0.45, 0.5, 0.45, 1),
+                opacity 0.8s ease,
+                transform 0.8s ease,
+                background-color 0.8s ease,
+                padding 0.8s ease;
+  }
+
+  /* Небольшой затемнённый прозрачный фон за раскрытым текстом. */
+  .timeline-node.active .node-details {
+    background: rgba(5, 8, 16, 0.45);
+    border-radius: 14px;
+    padding: 18px 22px;
+    column-count: 2;
+    column-gap: 24px;
+  }
+
+  .timeline-node.active .node-details strong {
+    -webkit-column-span: all;
+    column-span: all;
+  }
+}
+
+/* Мобильный размер/раскрытие .node-details задаёт более специфичное
+   правило .how-it-works-section .timeline-node.active .node-details ниже
+   по файлу (внутри @media max-width:768px рядом с остальными мобильными
+   правилами узлов) — здесь дублировать не нужно. */
 
 /* Рандомные анимации подпрыгивания для кружков */
 @keyframes randomBounce1 {
@@ -673,8 +726,8 @@
   }
 
   .how-it-works-section .node-details {
-    font-size: 12px !important;
-    line-height: 1.5 !important;
+    font-size: 15px !important;
+    line-height: 1.6 !important;
     max-height: 0;
     overflow: hidden;
     opacity: 0;
@@ -685,18 +738,20 @@
   }
 
   .how-it-works-section .node-details strong {
-    color: #ffffff !important;
+    color: #06b6d4 !important;
     display: block;
-    margin-top: 6px !important;
-    margin-bottom: 3px !important;
-    font-size: 13px !important;
+    margin-top: 10px !important;
+    margin-bottom: 4px !important;
+    font-size: 14px !important;
     font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
   }
 
   .how-it-works-section .node-details p {
-    margin: 2px 0 !important;
+    margin: 3px 0 !important;
     color: #ffffff !important;
-    font-size: 12px !important;
+    font-size: 15px !important;
     font-weight: 500 !important;
   }
 
