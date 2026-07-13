@@ -1,10 +1,10 @@
 /**
  * section-video.js — фоновый слой видео СЕКЦИИ «Как это работает».
  *
- * Видео проигрывается ОДИН раз, когда секция входит во вьюпорт, и
- * останавливается на последнем кадре — без loop и без scroll-scrub
- * (перемотка currentTime на скролл убивала слабые машины; обычное
- * воспроизведение декодируется аппаратно).
+ * Видео проигрывается, когда секция входит во вьюпорт, и останавливается
+ * на последнем кадре — без loop и без scroll-scrub (перемотка currentTime
+ * на скролл убивала слабые машины; обычное воспроизведение декодируется
+ * аппаратно). Секция ушла с экрана и вернулась — проигрывается заново.
  *
  * По скроллу остаются дешёвые эффекты (transform/opacity):
  *   - яркость по положению секции: плато со smoothstep-краями —
@@ -79,23 +79,22 @@
   var src = video.getAttribute(narrow.matches ? 'data-mobile' : 'data-desktop');
   if (src) video.src = src;
 
-  // Однократное воспроизведение при входе секции во вьюпорт.
+  // Воспроизведение при входе секции во вьюпорт; ушла и вернулась — заново.
   var retryArmed = false;
   function tryPlay() {
-    if (video.ended) return;
+    if (video.ended) { try { video.currentTime = 0; } catch (e) {} }   // повтор с начала
     var pr = video.play();
     if (pr && pr.catch) pr.catch(function () {
       if (retryArmed) return;
       retryArmed = true;
-      var kick = function () { if (!video.ended) video.play().catch(function () {}); };
+      var kick = function () { video.play().catch(function () {}); };
       window.addEventListener('pointerdown', kick, { once: true });
       window.addEventListener('scroll', kick, { once: true, passive: true });
     });
   }
   if (window.IntersectionObserver) {
     new IntersectionObserver(function (entries) {
-      if (video.ended) return;
-      if (entries[0].isIntersecting) tryPlay();
+      if (entries[0].isIntersecting) tryPlay();   // вернулась на экран — доиграть/заново
       else video.pause();
     }, { threshold: 0 }).observe(stage);
   } else {

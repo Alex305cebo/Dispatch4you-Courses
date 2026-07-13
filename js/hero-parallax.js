@@ -12,7 +12,8 @@
  * media= у <source> внутри <video> игнорирует Firefox.
  * Автоплей может быть заблокирован (энергосбережение, экономия данных) —
  * тогда повтор по первому жесту; не вышло — остаётся постер.
- * Вне экрана видео на паузе (IntersectionObserver), доигрывает при возврате.
+ * Вне экрана видео на паузе (IntersectionObserver); при возврате на экран
+ * доигрывает, а если уже доиграло — проигрывается заново с начала.
  * reduced-motion: статичный постер.
  */
 (function () {
@@ -56,12 +57,12 @@
   // в HTML не мешает). Отказ автоплея → повтор по первому жесту пользователя.
   var retryArmed = false;
   function tryPlay() {
-    if (video.ended) return;
+    if (video.ended) { try { video.currentTime = 0; } catch (e) {} }   // повтор с начала
     var pr = video.play();
     if (pr && pr.catch) pr.catch(function () {
       if (retryArmed) return;
       retryArmed = true;
-      var kick = function () { if (!video.ended) video.play().catch(function () {}); };
+      var kick = function () { video.play().catch(function () {}); };
       window.addEventListener('pointerdown', kick, { once: true });
       window.addEventListener('scroll', kick, { once: true, passive: true });
     });
@@ -71,8 +72,7 @@
   function start() {
     if (window.IntersectionObserver) {
       new IntersectionObserver(function (entries) {
-        if (video.ended) return;
-        if (entries[0].isIntersecting) tryPlay();
+        if (entries[0].isIntersecting) tryPlay();   // вернулось на экран — доиграть/заново
         else video.pause();
       }, { threshold: 0 }).observe(video);
     } else {
