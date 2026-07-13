@@ -1,0 +1,55 @@
+/* ============================================================
+   Фоновое видео СЕКЦИИ «Как это работает» — Apple-стиль пин.
+   Пока секция полностью в экране, слой .section-bg-stage
+   прилипает (position:fixed) во весь вьюпорт, а кадр скрабится
+   по скроллу (js/section-video.js). Полноэкранный cover + blur +
+   градиент-оверлей. Пин через fixed (а не sticky), т.к. у body
+   overflow-x:hidden ломает sticky.
+   ============================================================ */
+.how-it-works-section { position: relative; }
+.how-it-works-section > .container { position: relative; z-index: 2; }
+
+.section-bg-stage {
+  position: absolute;      /* базово — в границах секции (вход/выход, десктоп) */
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Пин: слой прилип к экрану во весь вьюпорт (класс вешает JS). */
+.section-bg-stage.is-pinned {
+  position: fixed;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+}
+
+.section-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;       /* полноэкранный кадр — как у Apple */
+  opacity: 0;              /* яркость «колоколом» пишет JS */
+  filter: blur(3px);       /* лёгкая атмосфера + читаемость текста */
+  will-change: opacity;
+}
+
+/* Градиент-оверлей: темнее у краёв (читаемость + плавный стык с соседними
+   секциями на входе/выходе), светлее в центре. */
+.section-bg-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(5, 8, 16, 0.65) 0%,
+    rgba(5, 8, 16, 0.30) 45%,
+    rgba(5, 8, 16, 0.70) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-bg-video { opacity: 0.35; }
+}
