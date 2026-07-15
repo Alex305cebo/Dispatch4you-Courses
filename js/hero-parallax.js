@@ -1,20 +1,11 @@
 /**
  * hero-parallax.js — фоновое видео верха страницы.
  *
- * Видео проигрывается ОДИН раз (muted+playsinline) и останавливается на
- * последнем кадре — без loop и без scroll-scrub: перемотка currentTime на
- * каждый кадр гоняла декодер вручную и убивала слабые машины; обычное
- * воспроизведение декодируется аппаратно и почти бесплатно.
- * По скроллу остаются только дешёвые эффекты: параллакс (transform)
- * и «колокол» яркости (opacity) — OP_TOP вверху → OP_PEAK на PEAK_AT
- * доле RANGE → 0 к концу RANGE.
- * Источник (моб/десктоп) подставляет JS из data-mobile/data-desktop:
- * media= у <source> внутри <video> игнорирует Firefox.
- * Автоплей может быть заблокирован (энергосбережение, экономия данных) —
- * тогда повтор по первому жесту; не вышло — остаётся постер.
- * Вне экрана видео на паузе (IntersectionObserver); при возврате на экран
- * доигрывает, а если уже доиграло — проигрывается заново с начала.
- * reduced-motion: статичный постер.
+ * Скролл (throttle rAF): параллакс (transform) + «колокол» яркости (opacity).
+ * Воспроизведение: обычная скорость. На конце — быстрый fade-out (в темноту),
+ * мгновенный рестарт с начала и fade-in (осветление). Зациклено вручную.
+ * Источник (моб/десктоп) из data-* ; media= у <source> игнорит Firefox.
+ * Вне экрана — пауза (IntersectionObserver). reduced-motion — статичный постер.
  */
 (function () {
   'use strict';
@@ -31,6 +22,9 @@
   var OP_PEAK = narrow.matches ? 0.90 : 0.70;   // пик яркости
   var PEAK_AT = 0.32;                           // где пик, доля RANGE
 
+  var FADE_OUT_MS = 650;   // уход в темноту на конце
+  var FADE_IN_MS  = 600;   // проявление после рестарта
+
   if (calm.matches) {                           // reduced-motion — статичный кадр
     video.style.opacity = OP_TOP.toFixed(3);
     return;
@@ -46,18 +40,58 @@
       : OP_PEAK * (1 - (p - PEAK_AT) / (1 - PEAK_AT));
   }
 
-  function onScroll() {
-    var y = window.scrollY || window.pageYOffset || 0;
-    var p = y > 0 ? Math.min(1, y / RANGE) : 0;
-    video.style.transform = 'translate3d(0,' + (y * SPEED).toFixed(1) + 'px,0)';
-    video.style.opacity = opacityAt(p).toFixed(3);
+  // Итоговая прозрачность = «колокол» скролла × fade лупа. transform — от скролла.
+  var curY = 0, curP = 0, fade = 1;
+  function writeStyles() {
+    video.style.transform = 'translate3d(0,' + (curY * SPEED).toFixed(1) + 'px,0)';
+    video.style.opacity = (opacityAt(curP) * fade).toFixed(3);
   }
 
-  // Однократное воспроизведение. play() сам дотягивает данные (preload=metadata
-  // в HTML не мешает). Отказ автоплея → повтор по первому жесту пользователя.
+  // ── Скролл: пишем стили раз в кадр, а не на каждый scroll-эвент ──
+  var tickScroll = false;
+  function paintScroll() {
+    tickScroll = false;
+    curY = window.scrollY || window.pageYOffset || 0;
+    curP = curY > 0 ? Math.min(1, curY / RANGE) : 0;
+    writeStyles();
+  }
+  function onScroll() {
+    if (tickScroll) return;
+    tickScroll = true;
+    requestAnimationFrame(paintScroll);
+  }
+
+  // ── Луп через fade. rAF крутится ТОЛЬКО во время перехода (быстро), не в игре ──
+  var fadeState = 'none';   // 'out' | 'in' | 'none'
+  var fadeStart = 0, rafFade = 0;
+  function fadeStep(ts) {
+    rafFade = 0;
+    if (fadeState === 'out') {                 // гаснем в темноту
+      var k = (ts - fadeStart) / FADE_OUT_MS;
+      if (k >= 1) {                            // погасли → мгновенный рестарт с начала
+        fade = 0;
+        try { video.currentTime = 0; } catch (e) {}
+        var pr = video.play(); if (pr && pr.catch) pr.catch(function () {});
+        fadeState = 'in'; fadeStart = ts;
+      } else { fade = 1 - k; }
+    } else if (fadeState === 'in') {           // проявляемся
+      var k2 = (ts - fadeStart) / FADE_IN_MS;
+      fade = k2 >= 1 ? 1 : k2;
+      if (k2 >= 1) fadeState = 'none';
+    }
+    writeStyles();
+    if (fadeState !== 'none') rafFade = requestAnimationFrame(fadeStep);
+  }
+  video.addEventListener('ended', function () {  // конец → быстрый fade-out → рестарт
+    if (fadeState === 'none') {
+      fadeState = 'out'; fadeStart = performance.now();
+      if (!rafFade) rafFade = requestAnimationFrame(fadeStep);
+    }
+  });
+
+  // ── Автоплей + пауза вне экрана ──
   var retryArmed = false;
   function tryPlay() {
-    if (video.ended) { try { video.currentTime = 0; } catch (e) {} }   // повтор с начала
     var pr = video.play();
     if (pr && pr.catch) pr.catch(function () {
       if (retryArmed) return;
@@ -72,7 +106,7 @@
   function start() {
     if (window.IntersectionObserver) {
       new IntersectionObserver(function (entries) {
-        if (entries[0].isIntersecting) tryPlay();   // вернулось на экран — доиграть/заново
+        if (entries[0].isIntersecting) tryPlay();
         else video.pause();
       }, { threshold: 0 }).observe(video);
     } else {
@@ -84,5 +118,5 @@
 
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', onScroll);
-  onScroll();
+  paintScroll();
 })();

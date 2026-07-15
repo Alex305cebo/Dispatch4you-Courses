@@ -34,6 +34,11 @@
   var SLACK = 0.10;                           // запас высоты видео (120svh → 10% сверху/снизу)
   var PLX   = 0.12;                           // амплитуда параллакса (±6% vh, < SLACK → без провалов)
 
+  // Под конец ролик тускнеет/полупрозрачен (как через стекло) и застывает так.
+  var ENDDIM_SEC = 2.5;                       // за сколько секунд до конца начать гасить
+  var ENDDIM_MIN = 0.2;                       // финальная доля яркости — тускло, сквозь стекло
+  var endFade = 1, curE = 0;                  // множитель к «колоколу» + кэш последнего e
+
   function smooth(t) { return t * t * (3 - 2 * t); }   // smoothstep
 
   // Абсолютный слой ПОД секцию (top/height). offsetTop ненадёжен (offsetParent
@@ -59,7 +64,8 @@
     // Плато-«колокол»: smoothstep-подъём за первые EDGE, светлое плато, smoothstep-спад.
     var e = p < EDGE ? smooth(p / EDGE)
           : (p > 1 - EDGE ? smooth((1 - p) / EDGE) : 1);
-    video.style.opacity = (PEAK * e).toFixed(3);
+    curE = e;
+    video.style.opacity = (PEAK * e * endFade).toFixed(3);
 
     // Закрепление к вьюпорту по факт-положению слоя + центровка под 120%-видео
     // + симметричный параллакс-дрейф. Всё одним GPU-transform.
@@ -77,12 +83,12 @@
   }
 
   var src = video.getAttribute(narrow.matches ? 'data-mobile' : 'data-desktop');
-  if (src) video.src = src;
 
   // Воспроизведение при входе секции во вьюпорт; ушла и вернулась — заново.
   var retryArmed = false;
   function tryPlay() {
-    if (video.ended) { try { video.currentTime = 0; } catch (e) {} }   // повтор с начала
+    if (src && !video.src) video.src = src;   // ленивая загрузка: 2.2 МБ ролика грузим только у вьюпорта, не на старте
+    if (video.ended) { try { video.currentTime = 0; } catch (e) {} endFade = 1; }   // повтор с начала, яркость сброшена
     var pr = video.play();
     if (pr && pr.catch) pr.catch(function () {
       if (retryArmed) return;
@@ -93,15 +99,43 @@
     });
   }
   if (window.IntersectionObserver) {
+    // rootMargin 300px — начинаем грузить/играть чуть раньше входа, без вспышки постера.
     new IntersectionObserver(function (entries) {
       if (entries[0].isIntersecting) tryPlay();   // вернулась на экран — доиграть/заново
       else video.pause();
-    }, { threshold: 0 }).observe(stage);
+    }, { threshold: 0, rootMargin: '300px 0px' }).observe(stage);
   } else {
+    if (src) video.src = src;
     tryPlay();
   }
 
-  function onScroll() { paint(); }
+  // Под конец ролика гасим яркость (endFade 1 → ENDDIM_MIN): картинка тускнеет,
+  // становится полупрозрачной и застывает так, растворяясь в тёмном фоне.
+  // Скорость НЕ трогаем. rAF крутится только пока видео играет.
+  var rafDim = 0;
+  function dimAt(t, d) {
+    var tail = d - ENDDIM_SEC;
+    return t > tail ? Math.max(ENDDIM_MIN, 1 - (1 - ENDDIM_MIN) * ((t - tail) / ENDDIM_SEC)) : 1;
+  }
+  function dimLoop() {
+    rafDim = 0;
+    if (video.paused) return;
+    var d = video.duration || 0;
+    if (d) {
+      var nf = dimAt(video.currentTime, d);
+      if (nf !== endFade) { endFade = nf; video.style.opacity = (PEAK * curE * endFade).toFixed(3); }
+    }
+    rafDim = requestAnimationFrame(dimLoop);
+  }
+  video.addEventListener('play', function () { if (!rafDim) rafDim = requestAnimationFrame(dimLoop); });
+
+  // rAF-throttle: один paint на кадр вместо записи на каждый scroll-эвент.
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { ticking = false; paint(); });
+  }
   function onResize() { layout(); paint(); }
 
   layout();
