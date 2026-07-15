@@ -1,0 +1,63 @@
+/* ============================================================
+   Видео-фон за секциями «Что вы получите» + «Профессия Диспетчера».
+   Абсолютный слой в <main> (position:relative), его top/height под
+   диапазон двух секций ставит JS (js/midsection-video.js). Видео яркое
+   (трасса/город) → сильно приглушаем opacity + тёмный scrim; края слоя
+   scrim гасит в фон страницы, чтобы не было жёсткой линии на стыках.
+   ============================================================ */
+
+/* Контент секций — над видео-слоем */
+.features-section,
+.profession-section { position: relative; z-index: 1; }
+
+.midfx-bg-stage {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  /* top и height ставит JS — от начала features до конца profession */
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  /* Верх/низ слоя РАСТВОРЯЮТСЯ в фон (маска → прозрачность), а не перекрываются
+     чёрным — на стыке нет ни линии, ни «прозрачной полосы» с просветом видео. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 11%, #000 89%, transparent 100%);
+          mask-image: linear-gradient(to bottom, transparent 0, #000 11%, #000 89%, transparent 100%);
+}
+
+.midfx-bg-video {
+  position: absolute;
+  /* ВАЖНО: <video> — replaced-элемент, одним inset НЕ растягивается (берёт
+     свою ширину 1280 → справа обрезалось). Нужны явные width/height. */
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Высота = вьюпорт + запас. JS закрепляет видео к вьюпорту (translateY=−sr.top)
+     → фон стоит на месте, контент прокручивается поверх = сильный параллакс. */
+  height: 120vh;
+  height: 120svh;
+  object-fit: cover;
+  object-position: 50% 50%;
+  opacity: 0.4;             /* база/reduced-motion; при движении яркость («колокол») пишет JS */
+  /* Радиальная маска растворяет ВСЕ края → видео читается как центральная «панель»
+     (овал), а не растянутый на весь экран прямоугольник — как у второго видео (Марины). */
+  -webkit-mask-image: radial-gradient(ellipse 70% 84% at 50% 50%, #000 38%, rgba(0, 0, 0, 0.4) 68%, transparent 92%);
+          mask-image: radial-gradient(ellipse 70% 84% at 50% 50%, #000 38%, rgba(0, 0, 0, 0.4) 68%, transparent 92%);
+  will-change: transform, opacity;   /* закрепление к вьюпорту + «колокол» пишет JS */
+}
+
+/* Лёгкая ровная вуаль для читаемости — края уже растворяет радиальная маска
+   видео + маска слоя (верх/низ), как у второго видео (Марины). */
+.midfx-bg-scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(5, 8, 16, 0.25);
+}
+
+@media (max-width: 768px) {
+  .midfx-bg-video { opacity: 0.34; object-position: 50% 45%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .midfx-bg-video { opacity: 0.3; }
+}
