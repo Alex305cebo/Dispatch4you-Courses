@@ -168,7 +168,16 @@
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 16px;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Сдвиг параллакса приходит переменной из js/stats-animation.js — раньше скрипт
+     писал сюда inline-transform, а inline перебивает таблицу стилей, поэтому
+     :hover ниже вообще не срабатывал. */
+  transform: translateY(var(--stat-parallax-y, 0px));
+  /* transform НАМЕРЕННО исключён из transition: он меняется на каждом кадре
+     скролла, и «transition: all» заставлял браузер непрерывно доигрывать
+     анимацию — карточки ехали «желе». Остальные свойства анимируются как прежде. */
+  transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   overflow: hidden;
   z-index: 1;
@@ -191,7 +200,8 @@
 }
 
 .stat-item:hover {
-  transform: translateY(-8px) scale(1.02);
+  /* Подъём складывается со сдвигом параллакса, а не затирается им. */
+  transform: translateY(calc(var(--stat-parallax-y, 0px) - 8px)) scale(1.02);
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(147, 51, 234, 0.3);
   box-shadow: 0 12px 40px rgba(147, 51, 234, 0.2);

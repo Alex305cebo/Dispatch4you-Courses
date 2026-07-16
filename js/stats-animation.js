@@ -106,23 +106,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   
-  // Параллакс эффект при скролле
+  // Параллакс эффект при скролле — ТОЛЬКО на десктопе. Раньше слушатель вешался
+  // безусловно, в том числе на мобильных, где анимации выше (строка 71)
+  // сознательно отключены: на каждый кадр скролла карточки получали новый
+  // inline-transform, а transition: all в profession-section.css заставлял
+  // браузер непрерывно доигрывать анимацию — отсюда «желейный» лаг.
   let ticking = false;
-  
-  window.addEventListener('scroll', () => {
-    if (!ticking) {
-      window.requestAnimationFrame(() => {
-        applyParallax();
-        ticking = false;
-      });
-      ticking = true;
-    }
-  });
-  
+
+  if (!isMobileOrBot) {
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          applyParallax();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+  }
+
   function applyParallax() {
     const statsSection = document.querySelector('.profession-stats');
     if (!statsSection) return;
-    
+
     const rect = statsSection.getBoundingClientRect();
     const scrollPercent = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
     
@@ -130,7 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const statItems = statsSection.querySelectorAll('.stat-item');
       statItems.forEach((item, index) => {
         const offset = (scrollPercent - 0.5) * 20 * (index % 2 === 0 ? 1 : -1);
-        item.style.transform = `translateY(${offset}px)`;
+        // Пишем переменную, а не inline-transform: иначе inline перебивает
+        // таблицу стилей и :hover у карточки перестаёт работать.
+        item.style.setProperty('--stat-parallax-y', offset + 'px');
       });
     }
   }
