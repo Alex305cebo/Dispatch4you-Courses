@@ -82,8 +82,12 @@
 
   if (calm.matches) {                    // reduced-motion — статичный кадр
     layout();
-    video.style.opacity = (PEAK * 0.5).toFixed(3);
     paint();
+    // Строго ПОСЛЕ paint(): он сам пишет opacity по положению секции (см. выше),
+    // и затирал это значение. На старте секция ниже вьюпорта → e = 0 → постер
+    // оставался невидимым НАВСЕГДА: обработчика скролла в этой ветке нет,
+    // пересчитать opacity больше некому.
+    video.style.opacity = (PEAK * 0.5).toFixed(3);
     return;
   }
 
