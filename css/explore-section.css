@@ -19,7 +19,12 @@
   display: flex;
   flex-direction: column;
   gap: clamp(10px, 1.4vw, 14px);
-  max-width: 760px;
+  /* РУЧКА РАЗМЕРА СЕКЦИИ. Высота карточки жёстко связана с шириной: она равна
+     ширина ÷ 3.88 (пропорция роликов), иначе кадр начнёт обрезаться. Поэтому
+     уменьшать карточки можно ТОЛЬКО отсюда: 760 → 620 дало 196 → 160 (−18%).
+     Хотите ещё компактнее — уменьшайте это число, высота подтянется сама.
+     На мобильной значение ни на что не влияет: там ширину задаёт экран. */
+  max-width: 620px;
   margin: clamp(24px, 3vw, 40px) auto 0;
   /* Точка отсчёта для cqw у карточек ниже — их высота считается от ШИРИНЫ ленты. */
   container-type: inline-size;
@@ -38,7 +43,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   /* Тёмная подложка под ВСЕ карточки: видео грузится лениво (preload=none, src
      ставит JS при подходе к вьюпорту), и без неё карточка до загрузки просвечивала
-     насквозь. У --static ниже свой фон — он это перекрывает. */
+     насквозь. */
   background: linear-gradient(150deg, rgba(20, 27, 45, 0.92), rgba(9, 12, 22, 0.97));
   cursor: pointer;
   transition: border-color 0.3s ease, transform 0.2s ease, box-shadow 0.25s ease;
@@ -70,24 +75,13 @@
   outline: none;
 }
 
-/* Карточки без видео (для «Стать незаменимым» и «Дойти до первой сделки» роликов
-   пока нет — остальные три уже на видео): тёмный градиент + мягкое акцентное
-   свечение своего оттенка (--ex-accent = "R,G,B"), усиливается на hover. */
-.explore-item--static {
-  background:
-    radial-gradient(ellipse 80% 120% at 62% 74%, rgba(var(--ex-accent), 0.18), transparent 66%),
-    linear-gradient(150deg, rgba(20, 27, 45, 0.92), rgba(9, 12, 22, 0.97));
-}
-.explore-item--static:hover,
-.explore-item--static:focus-visible {
-  background:
-    radial-gradient(ellipse 80% 120% at 62% 74%, rgba(var(--ex-accent), 0.28), transparent 68%),
-    linear-gradient(150deg, rgba(24, 32, 52, 0.96), rgba(10, 13, 24, 0.99));
-  border-color: rgba(var(--ex-accent), 0.5);
-}
+/* Здесь были правила .explore-item--static (заглушка «ролика ещё нет»: тёмный
+   градиент + свечение по --ex-accent) и .explore-item-img. Удалены: с
+   появлением ролика у «Дойти до первой сделки» видео есть у ВСЕХ пяти карточек,
+   разметка эти классы больше не использует. История в git, если понадобится
+   вернуть карточку на картинку. */
 
-/* Фоновое видео/картинка карточки: центр притемнён вуалью, стороны видны. */
-.explore-item-img,
+/* Фоновое видео карточки: центр притемнён вуалью, стороны видны. */
 .explore-item-video {
   position: absolute;
   inset: 0;
@@ -102,8 +96,7 @@
   -webkit-mask-image: radial-gradient(ellipse 66% 82% at 50% 50%, #000 0%, #000 62%, transparent 100%);
           mask-image: radial-gradient(ellipse 66% 82% at 50% 50%, #000 0%, #000 62%, transparent 100%);
 }
-.explore-item:hover .explore-item-video,
-.explore-item:hover .explore-item-img { opacity: 0.92; }
+.explore-item:hover .explore-item-video { opacity: 0.92; }
 
 /* Вуаль-притемнение: темнее ПО ЦЕНТРУ, прозрачно к бокам — под текстом
    контраст, а по краям видны диспетчер и объект. */
