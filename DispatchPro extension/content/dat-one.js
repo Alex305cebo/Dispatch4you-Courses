@@ -1058,15 +1058,6 @@ function tryInject() {
     injectCalcPanel(findDetailRow(link));
   });
 
-  // 1b. Same panel for expanded rows that have NO email — anchored to VIEW ROUTE.
-  document.querySelectorAll('button, a, [role="button"]').forEach(el => {
-    if (el.dataset.d4yCalcScan) return;
-    if (!/view\s*route/i.test(el.innerText || el.textContent || '')) return;
-    if (el.offsetParent === null) return;
-    el.dataset.d4yCalcScan = '1';
-    injectCalcPanel(findDetailRow(el));
-  });
-
   // 2. Maps + Copy buttons — stacked under VIEW ROUTE (one per VISIBLE VIEW ROUTE)
   document.querySelectorAll('button, a, [role="button"]').forEach(el => {
     if (el.dataset.d4yMaps) return;
