@@ -96,12 +96,21 @@
   object-position: 50% 50%;
   opacity: 0.8;
   transition: opacity 0.6s ease;
-  /* Виньетка: гасит края ролика ПО ВСЕМУ периметру, чтобы он растворялся в
-     подложке, а не обрывался рамкой. Радиусы одинаковы по X и по Y (72%) —
-     значит затемнение симметрично. Прежний вариант (66%/82%) гасил только
-     бока: по вертикали 82% оставляли кадр непрозрачным до самого края. */
-  -webkit-mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 0%, #000 22%, transparent 100%);
-          mask-image: radial-gradient(ellipse 72% 72% at 50% 50%, #000 0%, #000 22%, transparent 100%);
+  /* Виньетка: ДВА линейных градиента, пересечение — каждый край гаснет отдельно
+     и ДО НУЛЯ, поэтому ролик растворяется в подложке без видимой рамки.
+     Раньше тут был радиальный градиент, и это была ошибка дважды:
+       1) на краю он давал ~39% непрозрачности, а не 0 — граница оставалась видна;
+       2) эллипс, вписанный в бокс 5.5:1, срезает левый и правый концы сцены —
+          для длинной узкой полосы радиальная маска не годится по форме.
+     Проценты = ширина растушёвки: 14% по бокам, 20% сверху и снизу. */
+  -webkit-mask-image:
+    linear-gradient(to right,  transparent 0%, #000 14%, #000 86%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%);
+          mask-image:
+    linear-gradient(to right,  transparent 0%, #000 14%, #000 86%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, #000 20%, #000 80%, transparent 100%);
+  -webkit-mask-composite: source-in;   /* старый синтаксис WebKit */
+          mask-composite: intersect;
 }
 .explore-item:hover .explore-item-video { opacity: 0.92; }
 
