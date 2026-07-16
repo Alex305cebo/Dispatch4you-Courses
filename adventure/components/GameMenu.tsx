@@ -17,12 +17,13 @@ interface GameMenuProps {
   onOpenSettings?: () => void;
   onOpenHelp?: () => void;
   onOpenGuide?: () => void;
+  onOpenGarage?: () => void;
   onExit?: () => void;
   forceOpen?: boolean;
   onClose?: () => void;
 }
 
-export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onOpenStats, onOpenSettings, onOpenHelp, onOpenGuide, onExit, forceOpen, onClose }: GameMenuProps) {
+export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, onOpenMyLoads, onOpenStats, onOpenSettings, onOpenHelp, onOpenGuide, onOpenGarage, onExit, forceOpen, onClose }: GameMenuProps) {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
   const [isOpen, setIsOpen] = useState(false);
@@ -48,17 +49,22 @@ export default function GameMenu({ onOpenFleet, onOpenCompliance, onOpenEvents, 
       badge: undefined,
       isGuide: true,
     },
-    { 
-      icon: '🏪', 
-      label: 'Магазин траков', 
-      action: () => { 
-        handleClose(); 
-        const store = useGameStore.getState();
-        console.log('Opening truck shop, current state:', store.truckShopOpen);
-        store.setTruckShopOpen(true);
-        console.log('After setTruckShopOpen(true):', useGameStore.getState().truckShopOpen);
-      },
+    {
+      icon: '🏗️',
+      label: 'Гараж',
+      action: () => { handleClose(); onOpenGarage?.(); },
       color: '#f59e0b',
+      badge: undefined,
+      isGuide: false,
+    },
+    {
+      icon: '🏪',
+      label: 'Магазин траков',
+      action: () => {
+        handleClose();
+        useGameStore.getState().setTruckShopOpen(true);
+      },
+      color: '#06b6d4',
       badge: undefined,
       isGuide: false,
     },

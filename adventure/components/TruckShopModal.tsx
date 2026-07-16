@@ -6,19 +6,7 @@ import {
 import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
-
-// Функция для получения пути к картинке трака — вычисляется динамически при рендере
-const getTruckImageUri = (id: number): string => {
-  const isGame = typeof window !== 'undefined' && (
-    window.location.pathname.startsWith('/game') ||
-    window.location.pathname.includes('/game/')
-  );
-  const basePath = isGame ? '/game/assets/Truck_Pic' : '/assets/Truck_Pic';
-  return `${basePath}/${id}.webp`;
-};
-
-// Заглушка для совместимости с LOTS_BASE (реальный URI вычисляется при рендере)
-const getTruckImage = (id: number) => ({ uri: String(id) });
+import { getTruckImage } from '../utils/truckImages';
 
 // ─── ДАННЫЕ ЛОТОВ ───────────────────────────────────────────────────────────
 const LOTS_BASE = [
@@ -371,7 +359,7 @@ export default function TruckShopModal() {
                   >
                     {/* Фото */}
                     <View style={styles.miniPhotoWrap}>
-                      <Image source={{ uri: getTruckImageUri(lot.id) }} style={styles.miniPhoto} resizeMode="cover" />
+                      <Image source={getTruckImage(lot.id)} style={styles.miniPhoto} resizeMode="cover" />
                       {/* Имя трака */}
                       <View style={styles.truckNameBadge}>
                         <Text style={styles.truckNameText}>{lot.name.match(/«(.+)»/)?.[1] || lot.name.split(' ').pop()}</Text>
@@ -405,7 +393,7 @@ export default function TruckShopModal() {
 
                       {/* Большое фото */}
                       <View style={styles.bigPhotoWrap}>
-                        <Image source={{ uri: getTruckImageUri(lot.id) }} style={styles.bigPhoto} resizeMode="contain" />
+                        <Image source={getTruckImage(lot.id)} style={styles.bigPhoto} resizeMode="contain" />
                         {/* Оверлей с инфо — справа внизу */}
                         <View style={styles.bigPhotoOverlay}>
                           <View style={[styles.bigCondBadge, { backgroundColor: lot.conditionColor }]}>

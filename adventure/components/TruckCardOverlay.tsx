@@ -43,13 +43,13 @@ function getStatusMessage(truck: any): string {
   if (truck.status === 'waiting') return 'Ожидание на стоянке';
   if (truck.status === 'at_pickup') return 'Идёт погрузка';
   if (truck.status === 'at_delivery') return 'Идёт разгрузка';
-  if (truck.status === 'driving') {
+  if (truck.status === 'driving' || truck.status === 'loaded') {
+    // Источник истины — фаза груза, а не status (status и phase могут рассинхронизироваться).
+    const phase = truck.currentLoad?.phase;
+    const toDelivery = phase === 'to_delivery' || phase === 'unloading' || (!phase && truck.status === 'loaded');
     const city = truck.destinationCity ? truck.destinationCity.split(',')[0] : '';
+    if (toDelivery) return city ? `Везёт груз в ${city}` : 'Везёт груз';
     return city ? `Едет на погрузку в ${city}` : 'Едет на погрузку';
-  }
-  if (truck.status === 'loaded') {
-    const city = truck.destinationCity ? truck.destinationCity.split(',')[0] : '';
-    return city ? `Везёт груз в ${city}` : 'Везёт груз';
   }
   if (truck.status === 'idle') {
     const w = truck.idleWarningLevel ?? 0;
@@ -1347,6 +1347,13 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
   // Порядок карточек как state — изменение вызывает ре-рендер
   const [order, setOrder] = useState<string[]>([]);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
+  const [stripCollapsed, setStripCollapsed] = useState(() => {
+    try { return localStorage.getItem('dispatch-strip-collapsed') === '1'; } catch { return false; }
+  });
+  const toggleStrip = () => setStripCollapsed(v => {
+    try { localStorage.setItem('dispatch-strip-collapsed', v ? '0' : '1'); } catch {}
+    return !v;
+  });
 
   // Инициализация и синхронизация состава траков
   useEffect(() => {
@@ -1480,6 +1487,104 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
       el.removeEventListener('touchend', onTouchEnd);
     };
   }, []);
+
+  // Когда strip свёрнут — показываем ряд мини-карточек (аватар + имя + прогресс/статус).
+  // Клик по мини-карточке выбирает трак, включает слежение и разворачивает полосу.
+  if (stripCollapsed) {
+    const expandAndSelect = (truck: any) => {
+      setStripCollapsed(false);
+      try { localStorage.setItem('dispatch-strip-collapsed', '0'); } catch {}
+      onTruckClick(truck);
+    };
+    return (
+      <>
+        <style>{`
+          .mini-strip-scroll::-webkit-scrollbar{display:none}
+          @keyframes miniAlertPulse { 0%,100%{box-shadow:0 0 0 0 var(--mc)} 50%{box-shadow:0 0 8px 2px var(--mc)} }
+        `}</style>
+        <div className="mini-strip-scroll" style={{
+          display: 'flex', flexDirection: 'row', gap: 6, alignItems: 'center',
+          padding: '8px 8px 4px 36px', overflowX: 'auto',
+          scrollbarWidth: 'none', msOverflowStyle: 'none',
+          pointerEvents: 'auto',
+        } as any}>
+          {trucks.map(truck => {
+            const c = getTruckColor(truck);
+            const isMoving = truck.status === 'driving' || truck.status === 'loaded';
+            const progressPct = Math.round((truck.progress || 0) * 100);
+            const isSel = truck.id === selectedTruckId;
+            const evs = activeEvents.filter(e => e.truckId === truck.id);
+            const alert = truck.status === 'breakdown' || evs.some(e => e.urgency === 'critical' || e.urgency === 'high');
+            const firstName = (truck.driver || truck.name || '').split(' ')[0];
+            const moodEmoji = getMoodEmoji(truck.mood ?? 80, truck.status, truck);
+            const statusShort = getStatusMessage(truck);
+            return (
+              <div key={truck.id}
+                onClick={() => expandAndSelect(truck)}
+                style={{
+                  flexShrink: 0, width: 150, display: 'flex', alignItems: 'center', gap: 7,
+                  background: isDark ? 'rgba(15,20,35,0.92)' : 'rgba(255,255,255,0.94)',
+                  backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+                  border: `1.5px solid ${isSel ? c : alert ? '#f87171' : c + '55'}`,
+                  borderLeft: `4px solid ${c}`,
+                  borderRadius: 12, padding: '5px 9px 5px 7px', cursor: 'pointer',
+                  boxShadow: isDark ? '0 3px 12px rgba(0,0,0,0.35)' : '0 2px 8px rgba(0,0,0,0.1)',
+                  position: 'relative',
+                  ...(alert ? { '--mc': '#f8717188', animation: 'miniAlertPulse 1.6s ease-in-out infinite' } : {}),
+                } as any}
+              >
+                {/* Аватар + настроение */}
+                <div style={{ position: 'relative', flexShrink: 0 } as any}>
+                  <img src={getDriverAvatar(truck.driver || truck.id)} width={30} height={30}
+                    style={{ display: 'block', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' } as any} />
+                  <img src={moodEmoji} width={13} height={13}
+                    style={{ position: 'absolute', bottom: -2, right: -3 } as any} />
+                </div>
+                {/* Имя + прогресс/статус */}
+                <div style={{ flex: 1, minWidth: 0 } as any}>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: isDark ? '#fff' : '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 } as any}>
+                    {firstName}
+                  </div>
+                  {isMoving ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3 } as any}>
+                      <div style={{ flex: 1, height: 4, background: isDark ? 'rgba(255,255,255,0.1)' : '#e5e7eb', borderRadius: 2, overflow: 'hidden' } as any}>
+                        <div style={{ height: '100%', width: `${progressPct}%`, background: c, borderRadius: 2, transition: 'width 0.8s ease' } as any} />
+                      </div>
+                      <span style={{ fontSize: 9, fontWeight: 800, color: c, flexShrink: 0 } as any}>{progressPct}%</span>
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 9, fontWeight: 700, color: c, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 } as any}>
+                      {alert ? '⚠️ ' : ''}{statusShort}
+                    </div>
+                  )}
+                </div>
+                {/* Бейдж событий */}
+                {evs.length > 0 && (
+                  <div style={{ position: 'absolute', top: -5, right: -5, minWidth: 16, height: 16, padding: '0 4px', borderRadius: 8, background: alert ? '#ef4444' : '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 900, color: '#fff', boxShadow: '0 0 6px rgba(0,0,0,0.4)' } as any}>
+                    {evs.length}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {/* Развернуть полностью */}
+          <div onClick={toggleStrip} style={{
+            flexShrink: 0, width: 34, height: 42, borderRadius: 12,
+            border: `1.5px dashed ${isDark ? 'rgba(56,189,248,0.4)' : 'rgba(0,122,255,0.4)'}`,
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            gap: 1, cursor: 'pointer',
+          } as any}>
+            <span style={{ fontSize: 13, color: isDark ? '#38bdf8' : '#007aff' } as any}>▼</span>
+            <span style={{ fontSize: 7, fontWeight: 700, color: isDark ? '#38bdf8' : '#007aff' } as any}>детали</span>
+          </div>
+        </div>
+        <DayEndBanner isDark={isDark} />
+        <ShiftEndBanner isDark={isDark} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -1629,6 +1734,17 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           const fromLabel = fromSt ? `${truck.currentCity}, ${fromSt}` : truck.currentCity;
           const toLabel = toSt ? `${truck.destinationCity}, ${toSt}` : (truck.destinationCity || '');
           const statusLabel = getStatusMessage(truck);
+
+          // Реальный маршрут ГРУЗА (pickup → delivery) — единый источник, чтобы не путать
+          // дедхед-плечо «к погрузке» с самой доставкой. Подсвечиваем конец, куда трак едет сейчас.
+          const ld = truck.currentLoad;
+          const puLabel = ld ? (CITY_STATE[ld.fromCity] ? `${ld.fromCity}, ${CITY_STATE[ld.fromCity]}` : ld.fromCity) : '';
+          const doLabel = ld ? (CITY_STATE[ld.toCity] ? `${ld.toCity}, ${CITY_STATE[ld.toCity]}` : ld.toCity) : '';
+          // Фаза груза — единый источник; status только как запасной вариант, когда phase нет.
+          const legToPickup = ld
+            ? (ld.phase ? (ld.phase === 'to_pickup' || ld.phase === 'loading')
+                        : (truck.status === 'driving' || truck.status === 'at_pickup'))
+            : false;
 
           // События для этого трака
           const truckEvents = activeEvents.filter(e => e.truckId === truck.id);
@@ -1823,17 +1939,28 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
                       </div>
                     </div>
 
-                    {/* Строка 2: Маршрут */}
+                    {/* Строка 2: Маршрут ГРУЗА (📦 погрузка → 🏁 разгрузка), подсвечен текущий конец */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 2 } as any}>
-                      <span style={{ fontSize: 9 } as any}>📍</span>
-                      {truck.destinationCity ? (
-                        <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
-                          {fromLabel}
+                      {ld ? (
+                        <span style={{ fontSize: 10, fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                          <span style={{ color: legToPickup ? '#fbbf24' : (isDark ? '#64748b' : '#9ca3af') } as any}>📦 {puLabel}</span>
                           <span style={{ color: isDark ? '#475569' : '#9ca3af', margin: '0 3px' } as any}>→</span>
-                          <span style={{ color: isDark ? '#38bdf8' : '#007aff' } as any}>{toLabel}</span>
+                          <span style={{ color: !legToPickup ? (isDark ? '#38bdf8' : '#007aff') : (isDark ? '#64748b' : '#9ca3af') } as any}>🏁 {doLabel}</span>
                         </span>
+                      ) : truck.destinationCity ? (
+                        <>
+                          <span style={{ fontSize: 9 } as any}>📍</span>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#e2e8f0' : '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } as any}>
+                            {fromLabel}
+                            <span style={{ color: isDark ? '#475569' : '#9ca3af', margin: '0 3px' } as any}>→</span>
+                            <span style={{ color: isDark ? '#38bdf8' : '#007aff' } as any}>{toLabel}</span>
+                          </span>
+                        </>
                       ) : (
-                        <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#94a3b8' : '#6b7280' } as any}>{fromLabel}</span>
+                        <>
+                          <span style={{ fontSize: 9 } as any}>📍</span>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: isDark ? '#94a3b8' : '#6b7280' } as any}>{fromLabel}</span>
+                        </>
                       )}
                     </div>
 
@@ -1972,8 +2099,31 @@ const TruckCardOverlay = memo(function TruckCardOverlay({ onTruckClick, selected
           );
         })}
 
+        {/* Свернуть полосу */}
+        <div
+          onClick={toggleStrip}
+          style={{
+            flexShrink: 0, width: 36, borderRadius: 12,
+            border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
+            background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: 2, padding: '8px 4px', cursor: 'pointer',
+            boxShadow: isDark ? '-8px -2px 16px rgba(0,0,0,0.2)' : '0 2px 8px rgba(0,0,0,0.08)',
+            transform: 'translateY(-3px)',
+            transition: 'background 0.2s, transform 0.15s',
+            pointerEvents: 'auto',
+          } as any}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(240,245,255,0.98)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.85)'; }}
+        >
+          <span style={{ fontSize: 14, color: isDark ? '#64748b' : '#9ca3af' } as any}>▲</span>
+          <span style={{ fontSize: 8, fontWeight: 700, color: isDark ? '#64748b' : '#9ca3af', textAlign: 'center', lineHeight: 1.2 } as any}>скрыть</span>
+        </div>
+
         {/* Купить трак */}
-        <div 
+        <div
           onClick={() => {
             useGameStore.getState().setTruckShopOpen(true);
           }}

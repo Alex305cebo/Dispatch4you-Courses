@@ -11,11 +11,7 @@ import SettingsPopup from '../components/SettingsPopup';
 import TruckShopModal from '../components/TruckShopModal';
 import RepairGarageModal from '../components/RepairGarageModal';
 import ProfilePopup from '../components/ProfilePopup';
-// ── АРХИВ: Duolingo системы (законсервированы) ──
-// import DailyQuizPopup from '../components/DailyQuizPopup';
-// import DuolingoQuizDialog from '../components/DuolingoQuizDialog';
-// import AcademyScreen from '../components/AcademyScreen';
-// import { useLessonStore } from '../store/lessonStore';
+import AcademyScreen from '../components/AcademyScreen';
 
 export default function MainMenu() {
   const router = useRouter();
@@ -23,7 +19,7 @@ export default function MainMenu() {
   const isMobile = W < 600;
   const isSmall = W < 400;
   const isLandscape = W > H && H < 500;
-  const { startShift, loadGame } = useGameStore();
+  const { startGuidedGame, loadGame } = useGameStore();
   const [hasSave, setHasSave] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
@@ -33,6 +29,7 @@ export default function MainMenu() {
   const [showSaves, setShowSaves] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showAcademy, setShowAcademy] = useState(false);
   const [activeItem, setActiveItem] = useState<string | null>(null);
 
   useEffect(() => { checkSaveAndUser(); }, []);
@@ -161,7 +158,7 @@ export default function MainMenu() {
   async function doNewGame(slotId?: number) {
     setLoading(true);
     try {
-      await startShift(1, 'Новая смена', slotId);
+      await startGuidedGame('Новая карьера', slotId);
       sessionStorage.setItem('enteredViaMenu', '1');
       // Небольшая задержка для гарантии монтирования Root Layout
       setTimeout(() => router.replace('/game'), 50);
@@ -172,6 +169,7 @@ export default function MainMenu() {
   const items = [
     ...(hasSave ? [{ id:'continue', icon:'▶', label:'Продолжить', sub:'Последнее сохранение', color:'#22c55e', action: handleContinue, hot: true }] : []),
     { id:'new', icon:'⚡', label: hasSave ? 'Новая игра' : 'Начать игру', sub:'Выбрать слот сохранения', color:'#3b82f6', action: () => setShowProfile(true), hot: !hasSave },
+    { id:'academy', icon:'🎓', label:'Академия', sub:'Обучение диспетчера · 12 модулей', color:'#58cc02', action: () => setShowAcademy(true) },
     { id:'profile', icon:'◉', label:'Профиль', sub:'Сохранения · Гараж', color:'#ec4899', action: () => setShowProfile(true) },
     { id:'settings', icon:'⚙', label:'Настройки', sub:'Графика · Звук', color:'#06b6d4', action: () => setShowSettings(true) },
   ];
@@ -412,6 +410,7 @@ export default function MainMenu() {
       {/* Модалки */}
       {showSaves    && <SavesManagerPopup onClose={() => setShowSaves(false)} />}
       {showSettings && <SettingsPopup onClose={() => setShowSettings(false)} />}
+      {showAcademy && <AcademyScreen onClose={() => setShowAcademy(false)} />}
       <RepairGarageModal />
       {showProfile  && (
         <ProfilePopup 

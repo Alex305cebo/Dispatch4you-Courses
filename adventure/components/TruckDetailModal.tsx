@@ -50,7 +50,7 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
   const [showCancelLoad, setShowCancelLoad] = useState(false);
   const [showMechanic, setShowMechanic] = useState(false);
   const [showServiceChoice, setShowServiceChoice] = useState(false);
-  const { gameMinute, removeMoney, serviceVehicles } = useGameStore();
+  const { gameMinute, removeMoney, serviceVehicles, openGarageUpgrade } = useGameStore();
 
   // Live-подписка: всегда берём актуальный трак из store
   const liveTruck = useLiveTruck(truckProp?.id);
@@ -369,6 +369,20 @@ export default function TruckDetailModal({ truck: truckProp, onClose, onFindLoad
                   <Text style={s.findBtnArrow}>→</Text>
                 </TouchableOpacity>
               )}
+
+              {/* Гараж */}
+              <TouchableOpacity
+                style={[s.findBtn, { borderColor: 'rgba(245,158,11,0.4)', backgroundColor: 'rgba(245,158,11,0.08)' }]}
+                onPress={() => { openGarageUpgrade(truck.id); onClose(); }}
+                activeOpacity={0.85}
+              >
+                <Text style={s.findBtnIcon}>🔧</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[s.findBtnTitle, { color: '#f59e0b' }]}>Гараж — тюнинг</Text>
+                  <Text style={s.findBtnSub}>Апгрейды · Характеристики</Text>
+                </View>
+                <Text style={[s.findBtnArrow, { color: '#f59e0b' }]}>→</Text>
+              </TouchableOpacity>
 
               {/* Водитель + Брокер — 2 карточки рядом */}
               <View style={{ flexDirection: 'row', gap: 8 }}>

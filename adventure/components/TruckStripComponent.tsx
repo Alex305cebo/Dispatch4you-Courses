@@ -268,7 +268,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
                       {fromLabel}<span style={{ color: '#475569', margin: '0 4px' } as any}>→</span><span style={{ color: '#38bdf8' } as any}>{toLabel}</span>
                     </span>
                   ) : (
-                    <span style={{ fontSize: isWide ? 11 : 11, fontWeight: 700, color: '#94a3b8' } as any}>{fromLabel}</span> {/* Увеличено с 10 до 11 */}
+                    <span style={{ fontSize: isWide ? 11 : 11, fontWeight: 700, color: '#94a3b8' } as any}>{fromLabel}</span>
                   )}
                 </div>
                 <div style={{ marginBottom: 4 } as any}>
@@ -341,7 +341,7 @@ const TruckStripComponent = memo(function TruckStripComponent({
         }}
         onMouseDown={(e) => e.stopPropagation()}
         onTouchStart={(e) => e.stopPropagation()}
-        style={{ minWidth: isWide ? 90 : 86, flexShrink: 0, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '2px dashed rgba(56,189,248,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } as any} {/* Увеличено с 78 до 86 */}
+        style={{ minWidth: isWide ? 90 : 86, flexShrink: 0, borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '2px dashed rgba(56,189,248,0.25)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' } as any}
         onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(6,182,212,0.08)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.6)'; }}
         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(56,189,248,0.25)'; }}
       >

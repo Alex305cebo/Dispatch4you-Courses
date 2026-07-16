@@ -9,7 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useLessonStore } from '../store/lessonStore';
 import { allDuolingoDialogs, getDialogById, getTotalXP } from '../data/duolingoDialogs';
 import type { DuolingoDialog } from '../data/duolingoDialogs';
-import DuolingoQuizDialog from './DuolingoQuizDialog';
+import LessonPopup from './LessonPopup';
 
 interface Props {
   onClose: () => void;
@@ -93,7 +93,7 @@ export default function AcademyScreen({ onClose }: Props) {
   // ── ACTIVE LESSON QUIZ ──
   if (activeLesson) {
     return (
-      <DuolingoQuizDialog
+      <LessonPopup
         lessonId={activeLesson.id}
         visible={true}
         title={`${activeLesson.module} · ${activeLesson.topic}`}

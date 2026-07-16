@@ -13,6 +13,7 @@ import {
 import { hybridSave, hybridLoad, startAutoSave, stopAutoSave, clearAllSaves } from '../utils/firebaseSaveSystem';
 import { sendDriverQuestion, sendBreakdownAlert, sendSystemNotification } from '../utils/chatHelpers';
 import { logger } from '../utils/logger';
+import { TRUCK_UPGRADES } from '../data/truckUpgrades';
 
 // ─── GOOGLE MAPS DIRECTIONS API (без CORS проблем) ──────────────────────────────────────
 async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat: number, retries = 1): Promise<Array<[number,number]> | null> {
@@ -56,6 +57,43 @@ async function fetchRoute(fromLng: number, fromLat: number, toLng: number, toLat
     logger.error('❌ Google Maps routing error:', err);
     return null;
   }
+}
+
+// ─── ДВИЖЕНИЕ: геометрия плеча ───────────────────────────────────────────────
+// Реалистичная крейсерская скорость трака (масштаб игрового времени уже в TICK_MINUTES).
+const TRUCK_MPH = 58;
+
+// Темп игрового времени при ×1: сколько игровых минут проходит за реальную секунду.
+// Прирост времени привязан к реально прошедшим мс (см. tickClock), поэтому скорость
+// одинакова на любом железе. Раньше TICK_MINUTES был фиксирован на тик и зависел от
+// tickInterval качества графики — на High (4 тика/сек) трак летел в 4× быстрее, чем на Low.
+const GAME_MINUTES_PER_REAL_SECOND = 0.5; // ~вдвое медленнее прежнего High → реалистичнее
+let lastTickAt = 0; // метка реального времени предыдущего тика (мс)
+
+// Длина ломаной маршрута в милях (Haversine по сегментам).
+function routeLengthMiles(route: Array<[number, number]>): number {
+  let m = 0;
+  for (let i = 0; i < route.length - 1; i++) {
+    const [aLng, aLat] = route[i];
+    const [bLng, bLat] = route[i + 1];
+    m += calculateDistance(aLat, aLng, bLat, bLng);
+  }
+  return m;
+}
+
+// Прямое расстояние между двумя точками [lng,lat] в милях.
+function straightMiles(a: [number, number], b: [number, number]): number {
+  return calculateDistance(a[1], a[0], b[1], b[0]);
+}
+
+// Применить загруженный маршрут к траку, СОХРАНИВ пройденную дистанцию (без скачка).
+// progress пересчитывается из абсолютных пройденных миль на длину нового маршрута.
+function applyRouteToTruck(t: any, route: Array<[number, number]>): any {
+  const newLegMiles = Math.max(routeLengthMiles(route), 1);
+  const oldLegMiles = t.legMiles || newLegMiles;
+  const milesDone = (t.progress || 0) * oldLegMiles;
+  const progress = Math.min(0.999, milesDone / newLegMiles);
+  return { ...t, routePath: route, legMiles: newLegMiles, progress };
 }
 
 // ─── ТИПЫ ───────────────────────────────────────────────────────────────────
@@ -393,6 +431,14 @@ export interface DeliveryResult {
   minute: number;
 }
 
+// Гайдед-старт новой игры: водитель → выбор трака → гараж → груз → доставка
+export type GuidedStartStep =
+  | 'done'         // не в гайдед-старте (обычная игра / завершён)
+  | 'driver_intro' // водитель приветствует, зовёт купить трак
+  | 'pick_truck'   // открыт Truck Shop, ждём покупки
+  | 'garage_offer' // трак куплен, предлагаем заехать в гараж
+  | 'find_load';   // зовём найти первый груз
+
 interface GameState {
   // Мета
   phase: 'menu' | 'playing' | 'day_end' | 'shift_end';
@@ -480,8 +526,12 @@ interface GameState {
   // ─── ACTIONS ───
 
   startShift: (truckCount?: number, sessionName?: string, slotId?: number) => void;
+  // Гайдед-старт: новая игра с пустым флотом, ведёт игрока выбор трака → гараж → груз
+  guidedStartStep: GuidedStartStep;
+  startGuidedGame: (sessionName?: string, slotId?: number) => Promise<void>;
+  setGuidedStartStep: (step: GuidedStartStep) => void;
   tickClock: () => void;
-  triggerRandomEvent: () => void;
+  triggerRandomEvent: (forceType?: string) => void;
   setTimeSpeed: (speed: 1 | 2 | 5 | 10) => void;
 
   openNegotiation: (load: LoadOffer) => void;
@@ -537,6 +587,12 @@ interface GameState {
   upgradeTruckInGarage: (truckId: string, upgradeId: string) => void;
   releaseFromGarage: (truckId: string) => void;
   sendTruckToGarage: (truckId: string, city: string) => void;
+
+  // Экран тюнинга трака (слева трак, справа апгрейды) — работает для ЛЮБОГО своего трака
+  garageUpgradeTruckId: string | null;
+  openGarageUpgrade: (truckId: string) => void;
+  closeGarageUpgrade: () => void;
+  installUpgrade: (truckId: string, upgradeId: string) => boolean;
 }
 
 // ─── НАЧАЛЬНЫЕ ДАННЫЕ ────────────────────────────────────────────────────────
@@ -1421,6 +1477,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   reputation: 100,
   sessionName: '',
   trucks: INITIAL_TRUCKS,
+  guidedStartStep: 'done',
+  garageUpgradeTruckId: null,
   serviceVehicles: [], // Roadside assist, tow trucks, etc.
   availableLoads: [],
   activeLoads: [],
@@ -1465,7 +1523,10 @@ export const useGameStore = create<GameState>((set, get) => ({
     const newTruckId = `T${newTruckNum}`;
     const driverNames = ['Carlos Rivera', 'Mike Chen', 'Tom Wilson', 'Lisa Brown', 'James Anderson', 'Maria Garcia', 'David Kim', 'Robert Johnson'];
     const usedDrivers = trucks.map(t => t.driver);
-    const availableDriver = driverNames.find(d => !usedDrivers.includes(d)) ?? `Driver ${newTruckNum}`;
+    // Первый трак в гайдед-старте — за рулём Джон (совпадает с нарративом старта)
+    const availableDriver = trucks.length === 0
+      ? 'Джон'
+      : driverNames.find(d => !usedDrivers.includes(d)) ?? `Driver ${newTruckNum}`;
     const startCity = trucks[0]?.currentCity ?? 'Knoxville';
     const startPos = CITIES[startCity] ?? CITIES['Knoxville'];
 
@@ -1589,6 +1650,61 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true;
   },
 
+  setGuidedStartStep: (step: GuidedStartStep) => set({ guidedStartStep: step }),
+
+  // Новая игра «с нуля»: пустой флот, водитель ведёт игрока через выбор трака → гараж → груз.
+  // Переиспользует существующие системы (Truck Shop, гараж, Load Board, движение).
+  startGuidedGame: async (sessionName: string = '', slotId?: number) => {
+    logger.log(`🎮 Guided new game, session: "${sessionName}", slot: ${slotId || 'default'}`);
+    get().clearSave();
+    try {
+      localStorage.removeItem('guide-email-visited');
+      localStorage.removeItem('guide-map-visited');
+      localStorage.removeItem('dispatch-guide-done');
+    } catch {}
+
+    const welcomeEmail: Notification = {
+      id: 'GUIDED-WELCOME',
+      type: 'email',
+      from: 'Джон (твой водитель)',
+      subject: '🚛 Готов работать — нужен трак!',
+      message: `Привет, босс!\n\nЯ Джон, твой первый водитель. Прав у меня полный набор, опыта вагон — дай только машину.\n\nЗайди в Truck Shop и выбери мне трак. Старый дешевле, но чаще ломается; новый дороже, зато надёжный. Реши сам — а дальше найдём груз и поедем зарабатывать!`,
+      minute: 0,
+      read: false,
+      priority: 'high',
+      actionRequired: true,
+    };
+
+    set({
+      phase: 'playing',
+      gameMinute: 0,
+      day: 1,
+      balance: 40000, // хватает на входной трак ($21k Old Red / $33k Day Cab) + рабочий буфер
+      totalEarned: 0,
+      totalLost: 0,
+      financeLog: [],
+      reputation: 100,
+      sessionName: sessionName || 'Новая карьера',
+      currentSlotId: slotId,
+      trucks: [],            // пустой флот — игрок выберет трак сам
+      availableLoads: [
+        ...generateLoads(0),
+        ...generateLoads(1),
+        ...generateLoads(2),
+      ],
+      activeLoads: [],
+      bookedLoads: [],
+      activeEvents: [],
+      resolvedEvents: [],
+      notifications: [welcomeEmail],
+      unreadCount: 1,
+      pendingEmailResponses: [],
+      deliveryResults: [],
+      guidedStartStep: 'driver_intro',
+    });
+    setTimeout(() => get().saveGame(), 500);
+  },
+
   startShift: async (truckCount: number = 1, sessionName: string = '', slotId?: number) => {
     logger.log(`🎮 Starting shift with ${truckCount} trucks, session: "${sessionName}", slot: ${slotId || 'default'}`);
     
@@ -1696,12 +1812,17 @@ export const useGameStore = create<GameState>((set, get) => ({
   tickClock: () => {
     const phase = get().phase;
     if (phase !== 'playing') {
+      lastTickAt = 0; // сброс — после паузы первый тик берёт номинальный шаг, без скачка
       return;
     }
     try {
     const { gameMinute, trucks, availableLoads, activeLoads, timeSpeed } = get();
-    // 0.25 минуты за тик × 4 тика/сек = 1 мин/сек (как раньше)
-    const TICK_MINUTES = 0.25 * (timeSpeed ?? 1);
+    // Прирост игрового времени = реально прошедшие секунды × темп × множитель скорости.
+    // clamp(2с) гасит скачок после паузы/сворачивания вкладки (setInterval тротлится).
+    const now = Date.now();
+    const elapsedSec = lastTickAt ? Math.min((now - lastTickAt) / 1000, 2) : 0.25;
+    lastTickAt = now;
+    const TICK_MINUTES = GAME_MINUTES_PER_REAL_SECOND * elapsedSec * (timeSpeed ?? 1);
     const newMinute = Math.round((gameMinute + TICK_MINUTES) * 100) / 100;
 
     // Время НИКОГДА не останавливается — автоматический переход на новый день
@@ -1727,13 +1848,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     }
 
     // Скорость движения
-    const MILES_PER_TICK = (10 * TICK_MINUTES) / 3;
+    const MILES_PER_TICK = TRUCK_MPH / 60 * TICK_MINUTES; // 58mph → реалистичная скорость
     const HOS_MAX_DRIVE = 660;
     const HOS_REST = 600;
 
     // Обновляем прогресс траков — СИНХРОННО (без await)
     const newDeliveryResults: DeliveryResult[] = [];
-    console.log(`🚛 Trucks status:`, trucks.map(t => `${t.id}:${t.status}`).join(', '));
     const updatedTrucks = trucks.map((truckOrig) => {
       let truck = truckOrig;
 
@@ -2101,7 +2221,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             status: resumeStatus,
             destinationCity: destCity,
             progress: progress,
-            routePath: null, // Будет перестроен асинхронно от текущей позиции
+            routePath: null,
+            legStart: undefined,
+            legMiles: undefined,
             outOfOrderUntil: 0,
             awaitingRepairChoice: false,
             breakdownType: undefined,
@@ -2258,8 +2380,6 @@ export const useGameStore = create<GameState>((set, get) => ({
         const loadDuration = (truck as any).loadDuration ?? (45 + Math.floor(Math.random() * 46));
         const waitTime = newMinute - pickupArrivalMinute;
 
-        console.log(`📦 PICKUP ${truck.id}: waitTime=${waitTime.toFixed(1)}/${loadDuration}min, arrival=${pickupArrivalMinute.toFixed(1)}, now=${newMinute.toFixed(1)}, hasDuration=${!!(truck as any).loadDuration}`);
-
         // Уведомление когда погрузка началась (первый тик)
         if (!(truck as any).loadDuration) {
           const hrs = (loadDuration / 60).toFixed(1);
@@ -2275,7 +2395,6 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         if (waitTime >= loadDuration) {
           // Погрузка завершена — едем на delivery
-          console.log(`✅ PICKUP DONE ${truck.id}: waited ${waitTime.toFixed(1)}min >= ${loadDuration}min, going to ${truck.currentLoad.toCity}`);
           // ВАЖНО: маршрут мог быть уже загружен заранее (при прибытии на pickup)
           // Проверяем есть ли уже routePath на траке (загруженный ранее)
           const existingRoute = truck.routePath;
@@ -2305,7 +2424,9 @@ export const useGameStore = create<GameState>((set, get) => ({
             status: 'loaded' as TruckStatus,
             destinationCity: truck.currentLoad.toCity,
             progress: 0,
-            routePath: existingRoute ?? null,  // Используем уже загруженный маршрут если есть
+            routePath: existingRoute ?? null,
+            legStart: undefined,
+            legMiles: undefined,
             loadDuration: undefined,
             pickupArrivalMinute: undefined,
             currentLoad: { ...truck.currentLoad, phase: 'to_delivery' as any },
@@ -2544,14 +2665,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         }
       }
 
-      // Логируем состояние каждого трака
-      if (truck.status === 'driving' || truck.status === 'loaded') {
-        console.log(`🔍 Truck ${truck.id}: status=${truck.status}, destCity=${truck.destinationCity}, hasLoad=${!!truck.currentLoad}`);
-      }
-
       // Двигаем трак только если он реально едет с грузом
       if ((truck.status === 'driving' || truck.status === 'loaded') && truck.destinationCity) {
-        console.log(`🚛 Truck ${truck.id}: status=${truck.status}, dest=${truck.destinationCity}, progress=${truck.progress}`);
         const to = CITIES[truck.destinationCity];
         // БАГ-ФИX: город назначения не найден в CITIES — сбрасываем в idle
         if (!to) {
@@ -2572,29 +2687,23 @@ export const useGameStore = create<GameState>((set, get) => ({
           } as any;
         }
 
-        // Расстояние маршрута
-        let totalMiles = 500;
-        if (truck.status === 'loaded' && truck.currentLoad) {
-          // Едет к delivery — используем мили груза
-          totalMiles = truck.currentLoad.miles;
-        } else if (truck.status === 'driving') {
-          // Едет к pickup (deadhead) — считаем по координатам
-          const from = CITIES[truck.currentCity] || truck.position;
-          const dx = to[0] - from[0];
-          const dy = to[1] - from[1];
-          const calcMiles = Math.round(Math.sqrt(dx * dx + dy * dy) * 69);
-          totalMiles = Math.max(calcMiles, 50); // минимум 50 миль чтобы не зависнуть
-        } else if (truck.currentLoad) {
-          totalMiles = truck.currentLoad.miles;
-        } else {
-          const from = CITIES[truck.currentCity] || truck.position;
-          const dx = to[0] - from[0];
-          const dy = to[1] - from[1];
-          totalMiles = Math.max(Math.round(Math.sqrt(dx * dx + dy * dy) * 69), 50);
+        // ── ГЕОМЕТРИЯ ПЛЕЧА ──────────────────────────────────────────────
+        // Плечо = от legStart до destinationCity; progress 0..1 по нему.
+        // legStart/legMiles фиксируются на ПЕРВОМ тике плеча и больше не меняются —
+        // поэтому скорость ровная, а позиция не прыгает из-за смены currentCity.
+        const route = (truck.routePath && truck.routePath.length > 1) ? truck.routePath : null;
+        let legStart = (truck as any).legStart as [number, number] | undefined;
+        let legMiles = (truck as any).legMiles as number | undefined;
+        if (!legStart || !legMiles || legMiles <= 0) {
+          legStart = truck.position;
+          legMiles = route
+            ? Math.max(routeLengthMiles(route), 1)
+            : Math.max(straightMiles(legStart, to), 1);
+          truck = { ...truck, legStart, legMiles } as any;
         }
+        const totalMiles = legMiles;
 
-        // 10 миль/игровую минуту × 1.2 мин/тик = 12 миль/тик
-        // Каждый трак имеет свой speedMultiplier для рандомизации
+        // Индивидуальный разброс скорости трака (±25%)
         const speedMult = (truck as any).speedMultiplier ?? 1.0;
 
         // ── ТЕХНИЧЕСКИЕ ПЕНАЛЬТИ И ЖАЛОБЫ ──
@@ -2660,66 +2769,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             }));
           }
 
-          // Динамический шанс поломки на основе Reliability
-          if (Math.floor(newMinute / 45) > Math.floor((newMinute - TICK_MINUTES) / 45)) {
-            // Базовый шанс 1% (у новых) + до 30% если Reliability=0
-            const breakdownChance = 0.01 + (100 - (truck.reliability ?? 100)) / 333;
-            if (Math.random() < breakdownChance) {
-              setTimeout(() => {
-                const state = get();
-                const oldTruck = state.trucks.find(t => t.id === truck.id);
-                if (oldTruck && (oldTruck.status === 'driving' || oldTruck.status === 'loaded')) {
-                  // Форсируем событие поломки для этого трака
-                  // Цена зависит от safetyScore: 100 → 125$, 0 → 550$
-                  const safetyFactor = 1 - (oldTruck.safetyScore / 100);
-                  const calcCost = (base: number) => Math.round(125 + (base - 125) * safetyFactor);
-                  const bdTypes = [
-                    { label: 'Двигатель перегрелся',     roadside: calcCost(550), tow: 1400, delayRoadside: 90,  delayTow: 240 },
-                    { label: 'Электрика вышла из строя', roadside: calcCost(480), tow: 1200, delayRoadside: 75,  delayTow: 210 },
-                    { label: 'Закончилось топливо',      roadside: calcCost(150), tow: 0,    delayRoadside: 30,  delayTow: 0   },
-                    { label: 'Утечка масла',             roadside: calcCost(320), tow: 900,  delayRoadside: 60,  delayTow: 180 },
-                  ];
-                  const bd = bdTypes[Math.floor(Math.random() * bdTypes.length)];
-                  const canRoadside = bd.roadside > 0;
-                  useGameStore.setState(s => ({
-                    trucks: s.trucks.map(t => t.id === truck.id ? {
-                      ...t, status: 'breakdown' as any,
-                      awaitingRepairChoice: canRoadside,
-                      breakdownType: bd.label,
-                      breakdownCostRoadside: bd.roadside,
-                      breakdownCostTow: bd.tow,
-                      breakdownDelayRoadside: bd.delayRoadside,
-                      breakdownDelayTow: bd.delayTow,
-                      breakdownStartMinute: state.gameMinute,
-                      outOfOrderUntil: canRoadside ? undefined : state.gameMinute + bd.delayTow,
-                      // Сохраняем состояние до поломки для восстановления
-                      preBreakdownProgress: t.progress,
-                      preBreakdownDestCity: t.destinationCity,
-                      preBreakdownRoutePath: t.routePath,
-                    } : t),
-                  }));
-                  if (!canRoadside) {
-                    get().removeMoney(bd.tow, `Эвакуатор — ${truck.name}: ${bd.label}`);
-                  }
-                  get().addNotification({
-                    type: 'text', priority: 'critical', from: truck.driver,
-                    subject: `🚨 Поломка — ${truck.name} (старый трак)`,
-                    message: canRoadside
-                      ? `${bd.label} возле ${oldTruck.currentCity}.\n\n🔧 Roadside: $${bd.roadside} (~${bd.delayRoadside} мин)\n🚛 Эвакуатор: $${bd.tow} (~${bd.delayTow} мин)\n\n💡 Это старый трак — он ломается чаще. Купи новый!`
-                      : `${bd.label} возле ${oldTruck.currentCity}. Только эвакуатор ($${bd.tow}). Задержка ~${bd.delayTow} мин.\n\n💡 Старый трак — пора в гараж за новым!`,
-                    actionRequired: canRoadside, relatedTruckId: truck.id,
-                  });
-                  window.dispatchEvent(new CustomEvent('mapToast', {
-                    detail: { message: `🚨 ${truck.name} — ${bd.label} (старый трак)!`, color: '#ef4444', truckId: truck.id }
-                  }));
-                  // Открываем EventDialog для поломки
-                  window.dispatchEvent(new CustomEvent('openEventDialog', {
-                    detail: { type: 'breakdown', truckId: truck.id, breakdownType: bd.label }
-                  }));
-                }
-              }, 200);
-            }
-          }
+          // Поломка теперь НЕ случайна — трак ломается только когда Состояние (reliability)
+          // доходит до нуля. Логика срабатывания — ниже, после расчёта износа.
         }
 
         // Влияние комфорта на настроение — плавное по всему диапазону
@@ -2752,7 +2803,6 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         const progressPerTick = (MILES_PER_TICK / totalMiles) * speedMult * weatherSpeedMult * performancePenalty;
         const newProgress = Math.min(1, truck.progress + progressPerTick);
-        console.log(`📊 Progress: ${truck.progress.toFixed(4)} + ${progressPerTick.toFixed(6)} = ${newProgress.toFixed(4)}`);
 
         // ── ЕСТЕСТВЕННЫЙ ИЗНОС (WEAR & TEAR) ──
         // Характеристики падают пропорционально пройденным милям за тик.
@@ -2770,6 +2820,11 @@ export const useGameStore = create<GameState>((set, get) => ({
 
         // Уменьшаем HOS: 1.2 игровых минуты = 1.2/60 часа (погода увеличивает расход)
         const newHoursLeft = Math.round(Math.max(0, truck.hoursLeft - (TICK_MINUTES / 60) * weatherHosMult) * 10) / 10;
+
+        // Поломка когда надёжность достигла нуля
+        if (truck.reliability <= 0 && !(truck as any).awaitingRepairChoice) {
+          setTimeout(() => get().triggerRandomEvent('breakdown'), 100);
+        }
 
         if (newProgress >= 1) {
           // Трак приехал в пункт назначения
@@ -2813,6 +2868,8 @@ export const useGameStore = create<GameState>((set, get) => ({
             currentCity: truck.destinationCity,
             destinationCity: null,
             routePath: null,
+            legStart: undefined,
+            legMiles: undefined,
             hoursLeft: newHoursLeft,
             pickupArrivalMinute: newStatus === 'at_pickup' ? newMinute : undefined,
             deliveryArrivalMinute: newStatus === 'at_delivery' ? newMinute : undefined,
@@ -2822,17 +2879,14 @@ export const useGameStore = create<GameState>((set, get) => ({
         // Двигаемся по routePath используя getPositionOnRoute (как машина ремонта)
         if (truck.routePath && truck.routePath.length > 1) {
           const newPosition = getPositionOnRoute(truck.routePath, newProgress);
-          console.log(`🛣️ Moving on route: progress=${newProgress.toFixed(4)}, points=${truck.routePath.length}`);
           return { ...truck, progress: newProgress, position: newPosition, hoursLeft: newHoursLeft, currentCity: getNearestCity(newPosition[0], newPosition[1]), [`wn_${truckStateCode}`]: weatherZone ? true : (truck as any)[`wn_${truckStateCode}`] } as any;
         } else if (truck.destinationCity && CITIES[truck.destinationCity]) {
           // Fallback: линейное движение если нет routePath
-          console.log(`📏 LINEAR movement (no route): ${truck.currentCity} → ${truck.destinationCity}`);
           const dest = CITIES[truck.destinationCity];
           const startPos = CITIES[truck.currentCity] || truck.position;
           const t = Math.min(newProgress, 1);
           const lng = startPos[0] + (dest[0] - startPos[0]) * t;
           const lat = startPos[1] + (dest[1] - startPos[1]) * t;
-          console.log(`📍 New position: [${lng.toFixed(4)}, ${lat.toFixed(4)}]`);
           // Если достигли цели — переходим в нужный статус
           if (newProgress >= 1) {
             const newStatus = truck.status === 'driving' ? 'at_pickup' as TruckStatus : 'at_delivery' as TruckStatus;
@@ -3058,16 +3112,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       get().saveGame();
     }
     } catch(e) {
-      // Ошибка в тике — просто двигаем время вперёд
+      // Ошибка в тике — просто двигаем время вперёд (номинальный шаг)
       const { gameMinute, timeSpeed } = get();
-      const TICK_MINUTES = 0.25 * (timeSpeed ?? 1);
+      const TICK_MINUTES = GAME_MINUTES_PER_REAL_SECOND * 0.25 * (timeSpeed ?? 1);
       const newMinute = Math.round((gameMinute + TICK_MINUTES) * 100) / 100;
       logger.error('tickClock error:', e);
       set({ gameMinute: newMinute });
     }
   },
 
-  triggerRandomEvent: () => {
+  triggerRandomEvent: (forceType?: string) => {
     const { trucks, activeLoads, gameMinute } = get();
     const drivingTrucks = trucks.filter(t => t.status === 'driving' || t.status === 'loaded');
     const allActiveTrucks = trucks.filter(t => t.status !== 'idle');
@@ -3089,13 +3143,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       'shipper_closed',
     ];
     
-    const eventType = eventPool[Math.floor(Math.random() * eventPool.length)];
+    const eventType = forceType ?? eventPool[Math.floor(Math.random() * eventPool.length)];
     const truck = drivingTrucks.length > 0
       ? drivingTrucks[Math.floor(Math.random() * drivingTrucks.length)]
       : allActiveTrucks[Math.floor(Math.random() * allActiveTrucks.length)];
     
     switch (eventType) {
       case 'breakdown': {
+        // Поломка только когда надёжность = 0 (изношен до нуля)
+        if ((truck.reliability ?? 100) > 0) return;
         // Цена зависит от safetyScore: 100 → 125$, 0 → 550$
         const safetyFactor = 1 - (truck.safetyScore / 100);
         const calcCost = (base: number) => Math.round(125 + (base - 125) * safetyFactor);
@@ -3500,6 +3556,8 @@ case 'detention': {
           deliveryArrivalMinute: undefined,
           unloadDuration: undefined,
           detentionNotified: undefined,
+          legStart: undefined,
+          legMiles: undefined,
           // Сбрасываем флаги перерывов для нового рейса
           mandatoryBreakDone: false,
           nightStopDone: false,
@@ -4636,6 +4694,28 @@ case 'detention': {
       message: `Улучшение "${upgrade.label}" установлено на ${truck.name}. Стоимость: $${upgrade.cost.toLocaleString()}.`,
       actionRequired: false, relatedTruckId: truckId,
     });
+  },
+
+  // ── Экран тюнинга трака ──
+  openGarageUpgrade: (truckId: string) => set({ garageUpgradeTruckId: truckId }),
+  closeGarageUpgrade: () => set({ garageUpgradeTruckId: null }),
+
+  // Установка апгрейда из экрана тюнинга — БЕЗ требования status==='in_garage'
+  // (можно тюнинговать свой трак сразу после покупки). Возвращает true при успехе.
+  installUpgrade: (truckId: string, upgradeId: string) => {
+    const { trucks, balance } = get();
+    const truck = trucks.find(t => t.id === truckId);
+    if (!truck) return false;
+    const up = TRUCK_UPGRADES.find(u => u.id === upgradeId);
+    if (!up) return false;
+    const existing = truck.garageUpgrades || [];
+    if (existing.includes(upgradeId)) return false;
+    if (balance < up.cost) return false;
+    get().removeMoney(up.cost, `${up.icon} ${up.label} — ${truck.name}`);
+    set({
+      trucks: trucks.map(t => t.id === truckId ? { ...up.apply(t), garageUpgrades: [...existing, upgradeId] } : t),
+    });
+    return true;
   },
 
   releaseFromGarage: (truckId: string) => {

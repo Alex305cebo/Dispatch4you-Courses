@@ -5,6 +5,7 @@ import { ThemeColors } from '../constants/themes';
 import { cityState, CITY_STATE } from '../constants/config';
 import { useGameStore, Truck, TruckStatus } from '../store/gameStore';
 import TruckDetailModal from './TruckDetailModal';
+import { getTruckImage } from '../utils/truckImages';
 
 interface TruckPanelProps {
   onSwitchToLoadBoard?: () => void;
@@ -25,14 +26,11 @@ const STATUS_ICON: Record<string, string> = {
   at_delivery: '🟣', breakdown: '🔴', waiting: '🟠', in_garage: '🔧',
 };
 
-const getTruckImageUri = (id: number): string => {
-  const isGame = typeof window !== 'undefined' && window.location.pathname.startsWith('/game');
-  return `${isGame ? '/game' : ''}/assets/Truck_Pic/${id}.webp`;
-};
-
 export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}) {
   const T = useTheme();
   const { trucks, selectedTruckId, selectTruck, setLoadBoardSearch, balance } = useGameStore();
+  const openGarageUpgrade = useGameStore(s => s.openGarageUpgrade);
+  const setRepairGarageOpen = useGameStore(s => s.setRepairGarageOpen);
   const [detailTruck, setDetailTruck] = useState<Truck | null>(null);
   const [filter, setFilter] = useState<'all' | 'active' | 'idle' | 'issue'>('all');
   const { width } = useWindowDimensions();
@@ -128,7 +126,7 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
                 alignItems: 'center', justifyContent: 'center',
               }}>
                 {imgId ? (
-                  <Image source={{ uri: getTruckImageUri(imgId) }} style={{ width: 48, height: 48 } as any} resizeMode="cover" />
+                  <Image source={getTruckImage(imgId)} style={{ width: 48, height: 48 } as any} resizeMode="cover" />
                 ) : (
                   <Text style={{ fontSize: 24 }}>{truck.status === 'breakdown' ? '🚨' : '🚛'}</Text>
                 )}
@@ -210,14 +208,23 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
 
             {/* Actions — only when selected */}
             {isSelected && (
-              <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 10, paddingBottom: 10 }}>
-                <TouchableOpacity
-                  onPress={(e: any) => { e.stopPropagation(); setDetailTruck(truck); }}
-                  style={{ flex: 1, backgroundColor: 'rgba(6,182,212,0.08)', borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#06b6d4' }}>📊 Аналитика</Text>
-                </TouchableOpacity>
+              <View style={{ gap: 6, paddingHorizontal: 10, paddingBottom: 10 }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  <TouchableOpacity
+                    onPress={(e: any) => { e.stopPropagation(); setDetailTruck(truck); }}
+                    style={{ flex: 1, backgroundColor: 'rgba(6,182,212,0.08)', borderWidth: 1.5, borderColor: 'rgba(6,182,212,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#06b6d4' }}>📊 Аналитика</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={(e: any) => { e.stopPropagation(); openGarageUpgrade(truck.id); }}
+                    style={{ flex: 1, backgroundColor: 'rgba(245,158,11,0.08)', borderWidth: 1.5, borderColor: 'rgba(245,158,11,0.3)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#f59e0b' }}>🔧 Гараж</Text>
+                  </TouchableOpacity>
+                </View>
                 {truck.status === 'idle' && (
                   <TouchableOpacity
                     onPress={(e: any) => {
@@ -225,7 +232,7 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
                       setLoadBoardSearch(truck.currentCity);
                       onSwitchToLoadBoard?.();
                     }}
-                    style={{ flex: 1, backgroundColor: 'rgba(74,222,128,0.08)', borderWidth: 1.5, borderColor: 'rgba(74,222,128,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}
+                    style={{ backgroundColor: 'rgba(74,222,128,0.08)', borderWidth: 1.5, borderColor: 'rgba(74,222,128,0.25)', borderRadius: 10, paddingVertical: 8, alignItems: 'center' }}
                     activeOpacity={0.7}
                   >
                     <Text style={{ fontSize: 11, fontWeight: '800', color: '#4ade80' }}>📦 Найти груз</Text>
@@ -237,27 +244,41 @@ export default function TruckPanel({ onSwitchToLoadBoard }: TruckPanelProps = {}
         );
       })}
 
-      {/* ── SHOP BANNER ── */}
-      <TouchableOpacity
-        activeOpacity={0.75}
-        onPress={() => useGameStore.getState().setTruckShopOpen(true)}
-        style={{
-          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-          backgroundColor: 'rgba(245,158,11,0.06)', borderWidth: 1.5,
-          borderColor: 'rgba(245,158,11,0.2)', borderRadius: 14, padding: 12, marginTop: 2,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-          <Text style={{ fontSize: 24 }}>🏪</Text>
+      {/* ── BANNERS ── */}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 2 }}>
+        {/* Garage */}
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={() => setRepairGarageOpen(true)}
+          style={{
+            flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+            backgroundColor: 'rgba(245,158,11,0.07)', borderWidth: 1.5,
+            borderColor: 'rgba(245,158,11,0.25)', borderRadius: 14, padding: 12,
+          }}
+        >
+          <Text style={{ fontSize: 22 }}>🏗️</Text>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', color: '#fde68a' }}>Расширь флот!</Text>
-            <Text style={{ fontSize: 10, color: T.textMuted }}>Б/У траки от $12,000</Text>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: '#f59e0b' }}>Гараж</Text>
+            <Text style={{ fontSize: 9, color: T.textMuted }}>Ремонт · Апгрейд</Text>
           </View>
-        </View>
-        <View style={{ backgroundColor: 'rgba(6,182,212,0.12)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(6,182,212,0.3)' }}>
-          <Text style={{ fontSize: 10, fontWeight: '800', color: '#06b6d4' }}>Магазин →</Text>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+        {/* Shop */}
+        <TouchableOpacity
+          activeOpacity={0.75}
+          onPress={() => useGameStore.getState().setTruckShopOpen(true)}
+          style={{
+            flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
+            backgroundColor: 'rgba(6,182,212,0.06)', borderWidth: 1.5,
+            borderColor: 'rgba(6,182,212,0.2)', borderRadius: 14, padding: 12,
+          }}
+        >
+          <Text style={{ fontSize: 22 }}>🏪</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: '#06b6d4' }}>Магазин</Text>
+            <Text style={{ fontSize: 9, color: T.textMuted }}>Траки от $12k</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
 
       {/* Detail Modal */}
       <TruckDetailModal

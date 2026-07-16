@@ -151,27 +151,36 @@ export function getPositionOnRoute(
   progress: number
 ): [number, number] {
   if (route.length === 0) return [0, 0];
+  if (route.length === 1) return route[0];
   if (progress <= 0) return route[0];
   if (progress >= 1) return route[route.length - 1];
-  
-  const index = progress * (route.length - 1);
-  const lowerIndex = Math.floor(index);
-  const upperIndex = Math.ceil(index);
-  
-  if (lowerIndex === upperIndex) {
-    return route[lowerIndex];
+
+  // Интерполяция по НАКОПЛЕННОМУ РАССТОЯНИЮ, а не по индексу точек.
+  // Точки Google-маршрута неравномерны (густо на поворотах, редко на прямых);
+  // индексная интерполяция давала рывки/телепорт. Долготу масштабируем на cos(lat),
+  // чтобы пропорции сегментов были географически верными (миля широты ≈ миля долготы).
+  const segLen = (a: [number, number], b: [number, number]): number => {
+    const dLng = (b[0] - a[0]) * Math.cos((((a[1] + b[1]) / 2) * Math.PI) / 180);
+    const dLat = b[1] - a[1];
+    return Math.sqrt(dLng * dLng + dLat * dLat);
+  };
+
+  let total = 0;
+  for (let i = 0; i < route.length - 1; i++) total += segLen(route[i], route[i + 1]);
+  if (total === 0) return route[0];
+
+  let target = progress * total;
+  for (let i = 0; i < route.length - 1; i++) {
+    const len = segLen(route[i], route[i + 1]);
+    if (target <= len || i === route.length - 2) {
+      const t = len > 0 ? target / len : 0;
+      const [lng1, lat1] = route[i];
+      const [lng2, lat2] = route[i + 1];
+      return [lng1 + (lng2 - lng1) * t, lat1 + (lat2 - lat1) * t];
+    }
+    target -= len;
   }
-  
-  // Interpolate between two points
-  // GeoJSON format: [longitude, latitude]
-  const t = index - lowerIndex;
-  const [lng1, lat1] = route[lowerIndex];
-  const [lng2, lat2] = route[upperIndex];
-  
-  return [
-    lng1 + (lng2 - lng1) * t,
-    lat1 + (lat2 - lat1) * t,
-  ];
+  return route[route.length - 1];
 }
 
 /**

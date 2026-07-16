@@ -57,13 +57,11 @@ import { useOnboardingStore } from '../store/onboardingStore';
 // import { ONBOARDING_STEPS } from '../data/onboardingConfig';
 // import OnboardingOverlay from '../components/OnboardingOverlay'; // Система #4 — архив
 import { OnboardingWrapper, triggerOnboardingAction } from '../components/OnboardingWrapper'; // Система #3 — ЭТАЛОН
+import StartFlowOverlay from '../components/StartFlowOverlay';
+import GarageUpgradeScreen from '../components/GarageUpgradeScreen';
 import EventDialog from '../components/EventDialog';
 import { SCENARIOS, getScenarioByType, getScenarioForBreakdown, EventDialogScenario } from '../data/eventDialogs';
 import LoadAssignedToast from '../components/LoadAssignedToast';
-// ── АРХИВ: Duolingo квизы в чате (законсервированы) ──
-// import MentorTipCard from '../components/MentorTipCard';
-// import { useLessonStore } from '../store/lessonStore';
-// import { getTriggerForEvent, type ContextTrigger } from '../data/contextTriggers';
 
 type Tab = 'map' | 'loadboard' | 'trucks' | 'chat';
 
@@ -215,7 +213,7 @@ export default function GameScreen() {
     trucks, availableLoads, negotiation, bookedLoads, activeLoads,
     tickClock, selectedTruckId, selectTruck, notifications, sessionName,
     refreshLoadBoard, setLoadBoardSearch, timeSpeed, setTimeSpeed, loadGame,
-    deliveryResults, totalEarned, closeNegotiation,
+    deliveryResults, totalEarned, closeNegotiation, guidedStartStep, setRepairGarageOpen,
   } = useGameStore();
 
   const [guideVisible, setGuideVisible] = useState(false);
@@ -437,29 +435,17 @@ export default function GameScreen() {
 
   useEffect(() => { if (availableLoads.length < 5) refreshLoadBoard(); }, []);
 
-  // Если остался 1 трак и скорость ×10 — сбрасываем до ×5
   useEffect(() => {
-    if (trucks.length <= 1 && timeSpeed === 10) {
-      setTimeSpeed(5);
-    }
-  }, [trucks.length]);
-  useEffect(() => {
-    console.log('🎮 Setting up game clock...');
     if (clockRef.current) {
-      console.log('⏹️ Clearing existing interval');
       clearInterval(clockRef.current);
     }
     // Динамический тик на основе производительности устройства
     const perfSettings = getCurrentPerformanceSettings();
-    console.log(`⚙️ Game tick interval: ${perfSettings.tickInterval}ms (${1000/perfSettings.tickInterval} ticks/sec)`);
-    clockRef.current = setInterval(() => { 
-      console.log('⏰ Tick called');
-      tickClock(); 
+    clockRef.current = setInterval(() => {
+      tickClock();
     }, perfSettings.tickInterval);
-    console.log(`✅ Game clock started with interval ID: ${clockRef.current}`);
-    return () => { 
-      console.log('🛑 Cleaning up game clock');
-      if (clockRef.current) clearInterval(clockRef.current); 
+    return () => {
+      if (clockRef.current) clearInterval(clockRef.current);
     };
   }, []);
 
@@ -667,9 +653,7 @@ export default function GameScreen() {
             <button
               onClick={() => {
                 // Циклическое переключение: 1 → 3 → 5 → 10 → 1
-                // ×10 доступен только если траков больше одного
-                const canUse10x = trucks.length > 1;
-                const nextSpeed = timeSpeed === 1 ? 3 : timeSpeed === 3 ? 5 : timeSpeed === 5 ? (canUse10x ? 10 : 1) : 1;
+                const nextSpeed = timeSpeed === 1 ? 3 : timeSpeed === 3 ? 5 : timeSpeed === 5 ? 10 : 1;
                 setTimeSpeed(nextSpeed);
               }}
               onMouseDown={(e) => {
@@ -738,7 +722,6 @@ export default function GameScreen() {
                   fontWeight: 700,
                 } as any}>
                   · {timeSpeed === 1 ? '60' : timeSpeed === 3 ? '180' : timeSpeed === 5 ? '300' : '600'} MPH
-                  {trucks.length <= 1 && ' · ×10 🔒'}
                 </span>
               )}
             </button>
@@ -1828,6 +1811,7 @@ export default function GameScreen() {
         onOpenSettings={() => setShowSettings(true)}
         onOpenHelp={() => setShowHelp(true)}
         onOpenGuide={() => setShowDriverDialog(true)}
+        onOpenGarage={() => setRepairGarageOpen(true)}
         onExit={() => { if (clockRef.current) clearInterval(clockRef.current); }}
       />
       {/* Онбординг включён через OnboardingOverlay выше */}
@@ -1902,10 +1886,16 @@ export default function GameScreen() {
         />
       )} */}
 
+      {/* ── ГАЙДЕД-СТАРТ: водитель → выбор трака → гараж → груз ── */}
+      <StartFlowOverlay onOpenLoadBoard={() => switchTab('loadboard')} />
+      <GarageUpgradeScreen />
+
       {/* ── ЭТАЛОННАЯ СИСТЕМА ДИАЛОГОВ: #3 DialogBubble glassmorphism ── */}
-      <OnboardingWrapper isNewGame={!onbCheckCompleted(sessionName || 'player')}>
-        <></>
-      </OnboardingWrapper>
+      {guidedStartStep === 'done' && (
+        <OnboardingWrapper isNewGame={!onbCheckCompleted(sessionName || 'player')}>
+          <></>
+        </OnboardingWrapper>
+      )}
     </View>
   );
 }

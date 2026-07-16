@@ -68,7 +68,6 @@ export default function SettingsPopup({ onClose }: { onClose: () => void }) {
         borderRadius: 20,
         boxShadow: '0 24px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)',
         maxHeight: '85vh', overflowY: 'auto',
-        overflow: 'hidden',
       }}>
 
         {/* Header */}

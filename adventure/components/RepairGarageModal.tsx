@@ -4,15 +4,7 @@ import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
 import TruckStatsView from './TruckStatsView';
-
-const getTruckImageUri = (id: number): string => {
-  const isGame = typeof window !== 'undefined' && (
-    window.location.pathname.startsWith('/game') ||
-    window.location.pathname.includes('/game/')
-  );
-  const basePath = isGame ? '/game/assets/Truck_Pic' : '/assets/Truck_Pic';
-  return `${basePath}/${id}.webp`;
-};
+import { getTruckImage } from '../utils/truckImages';
 
 const STATUS_LABEL: Record<string, string> = {
   idle: 'Свободен', driving: 'К погрузке', loaded: 'В пути',
@@ -109,7 +101,7 @@ export default function RepairGarageModal() {
                   <View key={truck.id} style={s.fleetRow}>
                     <View style={s.fleetImgWrap}>
                       {imgId ? (
-                        <Image source={{ uri: getTruckImageUri(imgId) }} style={{ width: 48, height: 48, borderRadius: 10 } as any} resizeMode="cover" />
+                        <Image source={getTruckImage(imgId)} style={{ width: 48, height: 48, borderRadius: 10 } as any} resizeMode="cover" />
                       ) : (
                         <Text style={{ fontSize: 24 }}>{isOld ? '🚚' : '🚛'}</Text>
                       )}
@@ -147,7 +139,7 @@ export default function RepairGarageModal() {
                     <View key={truck.id} style={s.truckCard}>
                       <View style={s.truckHeader}>
                         {imgId ? (
-                          <Image source={{ uri: getTruckImageUri(imgId) }} style={{ width: 40, height: 40, borderRadius: 8 } as any} resizeMode="cover" />
+                          <Image source={getTruckImage(imgId)} style={{ width: 40, height: 40, borderRadius: 8 } as any} resizeMode="cover" />
                         ) : (
                           <Text style={{ fontSize: 28 }}>🚛</Text>
                         )}

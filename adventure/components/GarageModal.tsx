@@ -6,18 +6,9 @@ import {
 import { useGameStore } from '../store/gameStore';
 import { useTheme } from '../hooks/useTheme';
 import { ThemeColors } from '../constants/themes';
+import { getTruckImage } from '../utils/truckImages';
 
 const NEW_TRUCK_PRICE = 15_000;
-
-// Функция для получения пути к картинке трака
-const getTruckImageUri = (id: number): string => {
-  const isGame = typeof window !== 'undefined' && (
-    window.location.pathname.startsWith('/game') ||
-    window.location.pathname.includes('/game/')
-  );
-  const basePath = isGame ? '/game/assets/Truck_Pic' : '/assets/Truck_Pic';
-  return `${basePath}/${id}.webp`;
-};
 
 const TRUCKS = [
   {
@@ -405,7 +396,7 @@ export default function GarageModal() {
                   <View key={t.id} style={[styles.garageRow, isOld && { backgroundColor: 'rgba(239,68,68,0.04)' }]}>
                     <View style={[styles.garageIconWrap, { backgroundColor: isOld ? 'rgba(239,68,68,0.1)' : 'rgba(6,182,212,0.1)' }]}>
                       {imgId ? (
-                        <Image source={{ uri: getTruckImageUri(imgId) }} style={{ width: 42, height: 42, borderRadius: 10 } as any} resizeMode="cover" />
+                        <Image source={getTruckImage(imgId)} style={{ width: 42, height: 42, borderRadius: 10 } as any} resizeMode="cover" />
                       ) : (
                         <Text style={{ fontSize: 18 }}>{isOld ? '🚚' : '🚛'}</Text>
                       )}
