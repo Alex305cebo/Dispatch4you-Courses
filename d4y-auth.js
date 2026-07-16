@@ -257,6 +257,26 @@ export function currentUser() {
 }
 
 /**
+ * Приватные контакты для оплаты (телефоны/Telegram) — НЕ лежат ни в одном
+ * файле сайта, только в Firestore (config/paymentContacts), чтение которого
+ * ограничено правилом безопасности `allow read: if request.auth != null`.
+ * Анонимный запрос получит permission-denied на уровне Firestore, а не
+ * просто скрытый на клиенте div — реальная защита от скрейпинга, не
+ * визуальная. Возвращает null, если не залогинен, документ не создан или
+ * чтение отклонено (вызывающий код должен красиво обработать null).
+ */
+export async function getPaymentContacts() {
+  if (!auth.currentUser) return null;
+  try {
+    const snap = await getDoc(doc(db, "config", "paymentContacts"));
+    return snap.exists() ? snap.data() : null;
+  } catch (e) {
+    console.warn("[d4y-auth] getPaymentContacts failed:", e?.code || e?.message);
+    return null;
+  }
+}
+
+/**
  * Вход через Google.
  *   • в нормальном браузере → popup
  *   • если popup заблокирован или в in-app браузере (Telegram/Instagram) → redirect
@@ -316,7 +336,7 @@ export async function signOut() {
 // ── Совместимость со старыми скриптами (window.* API) ────────────────────────
 try {
   window._fbAuth = auth;
-  window.D4Y_AUTH = { signInWithGoogle, signOut, onUserChange, currentUser, isInAppBrowser };
+  window.D4Y_AUTH = { signInWithGoogle, signOut, onUserChange, currentUser, isInAppBrowser, getPaymentContacts };
   // Старые хэндлеры
   window.signInWithGoogle = signInWithGoogle;
   window.authLogout = async (e) => { if (e) e.preventDefault(); await signOut(); };

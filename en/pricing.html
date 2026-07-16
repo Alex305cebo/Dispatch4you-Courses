@@ -1267,7 +1267,7 @@
 <body>
 
     <div id="nav-placeholder"></div>
-    <script src="/nav-loader.js?v=11.5"></script>
+    <script src="/nav-loader.js?v=11.7"></script>
 
     <!-- Hero Section -->
     <section class="pricing-hero">
@@ -1774,8 +1774,10 @@ document.addEventListener('click', function(e) {
 </script>
 
 <!-- Popup "Order via manager": online payment is disabled — instead of
-     checkout.html, clicking "Buy" pops up one window: call or Telegram.
-     Opened from pay-call-modal.js. -->
+     checkout.html, clicking "Buy" pops up one window. Phone/Telegram are
+     private contacts, shown only to users signed in via Google (a real
+     account, not an anonymous scraper) — see payCallGate/payCallContacts
+     and updatePayCallGate() in pay-call-modal.js. -->
 <div id="payCallModal" class="pay-call-modal" role="dialog" aria-modal="true" aria-labelledby="payCallModalTitle">
   <div class="pay-call-modal-overlay" onclick="closePayCallModal()"></div>
   <div class="pay-call-modal-content">
@@ -1783,10 +1785,14 @@ document.addEventListener('click', function(e) {
     <div class="pay-call-modal-icon">💳</div>
     <h3 id="payCallModalTitle">Order via a manager</h3>
     <p class="pay-call-modal-plan" id="payCallModalPlan"></p>
-    <p class="pay-call-modal-text">Online payment is temporarily unavailable. Call us or message on Telegram — we'll set up your access in a couple of minutes.</p>
-    <!-- TODO: replace with the real phone number (placeholder for now) -->
-    <a href="tel:+10000000000" class="pay-call-modal-btn pay-call-modal-btn--call">📞 Call: +1 (000) 000-0000</a>
-    <a href="https://t.me/Dispatch4You_Bot" target="_blank" class="pay-call-modal-btn pay-call-modal-btn--tg">💬 Message on Telegram</a>
+    <p class="pay-call-modal-text">Online payment is temporarily unavailable. We'll set up your access in a couple of minutes by phone or Telegram.</p>
+
+    <div id="payCallGate">
+      <p class="pay-call-modal-text" style="margin-bottom:16px">Payment contacts are only shown to signed-in users — this protects them from spam bots. Sign in with Google to see the phone number and Telegram.</p>
+      <button class="pay-call-modal-btn pay-call-modal-btn--call" onclick="window.signInWithGoogle && window.signInWithGoogle()">🔐 Sign in with Google</button>
+    </div>
+
+    <div id="payCallContacts" style="display:none"></div>
   </div>
 </div>
 <link rel="stylesheet" href="/css/pay-call-modal.css">

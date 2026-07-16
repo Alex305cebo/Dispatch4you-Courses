@@ -1267,7 +1267,7 @@
 <body>
 
     <div id="nav-placeholder"></div>
-    <script src="nav-loader.js?v=11.5"></script>
+    <script src="nav-loader.js?v=11.7"></script>
 
     <!-- Hero Section -->
     <section class="pricing-hero">
@@ -1774,8 +1774,13 @@ document.addEventListener('click', function(e) {
 </script>
 
 <!-- Попап «Оформление через менеджера»: онлайн-оплата отключена — вместо
-     checkout.html при клике «Купить» всплывает одно окно: позвонить или
-     написать в Telegram. Открывается из pay-call-modal.js. -->
+     checkout.html при клике «Купить» всплывает одно окно. Номер/Telegram —
+     приватные контакты; НЕ лежат в файлах сайта (иначе их достанет любой
+     скрейпер, даже не выполняющий JS) — подтягиваются из Firestore
+     (config/paymentContacts) только после входа через Google, доступ к
+     чтению документа ограничен правилом безопасности Firestore
+     (request.auth != null). См. getPaymentContacts() в d4y-auth.js и
+     updatePayCallGate() в pay-call-modal.js. -->
 <div id="payCallModal" class="pay-call-modal" role="dialog" aria-modal="true" aria-labelledby="payCallModalTitle">
   <div class="pay-call-modal-overlay" onclick="closePayCallModal()"></div>
   <div class="pay-call-modal-content">
@@ -1783,10 +1788,14 @@ document.addEventListener('click', function(e) {
     <div class="pay-call-modal-icon">💳</div>
     <h3 id="payCallModalTitle">Оформление через менеджера</h3>
     <p class="pay-call-modal-plan" id="payCallModalPlan"></p>
-    <p class="pay-call-modal-text">Онлайн-оплата на сайте временно недоступна. Позвоните нам или напишите в Telegram — оформим доступ за пару минут.</p>
-    <!-- TODO: заменить номер телефона на реальный (сейчас плейсхолдер) -->
-    <a href="tel:+10000000000" class="pay-call-modal-btn pay-call-modal-btn--call">📞 Позвонить: +1 (000) 000-0000</a>
-    <a href="https://t.me/Dispatch4You_Bot" target="_blank" class="pay-call-modal-btn pay-call-modal-btn--tg">💬 Написать в Telegram</a>
+    <p class="pay-call-modal-text">Онлайн-оплата на сайте временно недоступна. Оформим доступ за пару минут по звонку или в Telegram.</p>
+
+    <div id="payCallGate">
+      <p class="pay-call-modal-text" style="margin-bottom:16px">Контакты для оплаты видны только авторизованным пользователям — так мы защищаем их от спам-ботов. Войдите через Google, чтобы увидеть номер и Telegram.</p>
+      <button class="pay-call-modal-btn pay-call-modal-btn--call" onclick="window.signInWithGoogle && window.signInWithGoogle()">🔐 Войти через Google</button>
+    </div>
+
+    <div id="payCallContacts" style="display:none"></div>
   </div>
 </div>
 <link rel="stylesheet" href="css/pay-call-modal.css">
