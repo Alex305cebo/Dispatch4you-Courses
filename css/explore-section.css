@@ -21,6 +21,8 @@
   gap: clamp(10px, 1.4vw, 14px);
   max-width: 760px;
   margin: clamp(24px, 3vw, 40px) auto 0;
+  /* Точка отсчёта для cqw у карточек ниже — их высота считается от ШИРИНЫ ленты. */
+  container-type: inline-size;
 }
 
 /* ── Карточка-кнопка ── */
@@ -30,14 +32,6 @@
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
-  /* Пропорции самого ролика (1280x330). Без этого карточка была 5.29:1 при
-     видео 3.88:1, и object-fit: cover срезал ~27% кадра ВСЕГДА — на десктопе
-     снизу, на мобильной тоже. object-position такое не лечит: он выбирает лишь
-     КАКУЮ часть отрезать, а не отрезать ли вообще. Теперь высота считается от
-     ширины, и кадр входит целиком на любой ширине, без чёрных полос.
-     На узких экранах min-height ниже перевешивает — там режется по бокам, а не
-     снизу, и края всё равно гасит радиальная маска. */
-  aspect-ratio: 1280 / 330;
   min-height: clamp(104px, 16vw, 140px);
   border-radius: 14px;
   overflow: hidden;
@@ -50,11 +44,24 @@
   transition: border-color 0.3s ease, transform 0.2s ease, box-shadow 0.25s ease;
   -webkit-tap-highlight-color: transparent;
 }
-/* interactive-feedback.css в @media(max-width:768px) ставит [role="button"]
-   { min-height:44px } — карточки помечены role=button (доступность), поэтому
-   поднимаем специфичность (.explore-list .explore-item), чтобы своя высота
-   карточки выигрывала и на мобильном тоже. */
-.explore-list .explore-item { min-height: clamp(104px, 16vw, 140px); }
+/* Высота карточки = её ширина ÷ 3.88 — то есть ПРОПОРЦИИ САМОГО РОЛИКА
+   (1280x330; 330/1280 = 25.781%). Без этого карточка была 5.29:1 при видео
+   3.88:1, и object-fit: cover срезал ~27% кадра ВСЕГДА — и на десктопе, и
+   снизу на мобильной. object-position такое не лечит: он выбирает лишь КАКУЮ
+   часть отрезать, а не отрезать ли вообще.
+
+   Почему min-height + cqw, а НЕ aspect-ratio: aspect-ratio вместе с явным
+   min-height отключает авторазмер по содержимому, и у «Договариваться с
+   брокерами» на мобильной (тег в три строки) текст обрезался. Здесь height
+   остаётся auto — пропорция работает как ПОЛ, а длинный текст всё ещё может
+   растянуть карточку.
+
+   max(...) со старым clamp сохраняет прежний нижний предел: он же перебивает
+   [role="button"]{min-height:44px}, который инжектит interactive-feedback.css
+   на мобильных (карточки помечены role=button для доступности). На узких
+   экранах он перевешивает пропорцию — там кадр режется по БОКАМ, а не снизу,
+   и края всё равно гасит радиальная маска. */
+.explore-list .explore-item { min-height: max(clamp(104px, 16vw, 140px), 25.781cqw); }
 .explore-item:hover,
 .explore-item:focus-visible {
   border-color: rgba(6, 182, 212, 0.45);
