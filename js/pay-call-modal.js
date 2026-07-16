@@ -31,9 +31,11 @@
     if (!modal) return;
     var planEl = document.getElementById('payCallModalPlan');
     if (planEl) planEl.textContent = planLabel || '';
-    updatePayCallGate();
+    // Пометку 'active' ставим ДО updatePayCallGate: она же служит признаком
+    // «попап открыт», по которому гейт решает, тянуть ли контакты.
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    updatePayCallGate();
   };
 
   window.closePayCallModal = function () {
@@ -80,6 +82,13 @@
     var contacts = document.getElementById('payCallContacts');
     if (!gate || !contacts) return;
 
+    // Контакты тянем только при открытом попапе. onUserChange ниже срабатывает
+    // на КАЖДОЙ загрузке страницы у залогиненного, и без этой проверки мы
+    // ходили в Firestore за приватными контактами, даже если попап никто не
+    // открывал. Вход через кнопку внутри попапа не ломается: там он уже 'active'.
+    var modal = document.getElementById('payCallModal');
+    if (!modal || !modal.classList.contains('active')) return;
+
     var user = window.D4Y_AUTH && window.D4Y_AUTH.currentUser && window.D4Y_AUTH.currentUser();
     if (!user) {
       gate.style.display = 'block';
@@ -112,10 +121,15 @@
   // импортирует) — window.D4Y_AUTH может появиться позже, чем этот скрипт.
   // Ждём и подписываемся: как только пользователь входит (в т.ч. через
   // кнопку прямо в попапе, без перезагрузки страницы), контакты подтянутся сами.
+  var authWaitTries = 0;
   (function waitForAuth() {
     if (window.D4Y_AUTH && window.D4Y_AUTH.onUserChange) {
       window.D4Y_AUTH.onUserChange(updatePayCallGate);
-    } else {
+    } else if (++authWaitTries < 100) {
+      // Потолок ~10 секунд. Раньше опрос шёл бесконечно: если Firebase не
+      // поднялся (блокировщик, обрыв сети), таймер тикал каждые 100 мс, пока
+      // открыта вкладка. За 10 с авторизация либо появилась, либо уже не придёт —
+      // попап тогда честно покажет гейт «войдите», а не будет молча жечь таймер.
       setTimeout(waitForAuth, 100);
     }
   })();

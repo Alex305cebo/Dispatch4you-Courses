@@ -136,12 +136,22 @@ document.addEventListener('DOMContentLoaded', () => {
     scheduleSettle();
   }, { passive: true });
 
-  // Клавиатурная навигация
+  // Клавиатурная навигация — только когда карусель на экране.
+  // Раньше слушатель был глобальным и безусловным: стрелки в ЛЮБОМ месте
+  // страницы крутили карусель и глушились preventDefault — страницу нельзя
+  // было прокрутить с клавиатуры, а <select> и contenteditable перехватывались.
   document.addEventListener('keydown', (e) => {
-    const t = document.activeElement.tagName;
-    if (t === 'INPUT' || t === 'TEXTAREA') return;
-    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+    const el = document.activeElement;
+    const t = el ? el.tagName : '';
+    if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || (el && el.isContentEditable)) return;
+
+    const r = slider.getBoundingClientRect();
+    if (r.bottom <= 0 || r.top >= window.innerHeight) return;  // карусель не видна
+
+    e.preventDefault();
+    if (e.key === 'ArrowLeft') prev(); else next();
   });
 
   // Ресайз — пересчитать геометрию и вернуть в реальную зону

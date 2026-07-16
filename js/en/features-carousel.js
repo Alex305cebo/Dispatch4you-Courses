@@ -137,11 +137,22 @@ document.addEventListener('DOMContentLoaded', () => {
   }, { passive: true });
 
   // Keyboard navigation
+  // Only while the carousel is on screen. This listener used to be global and
+  // unconditional: arrow keys anywhere on the page drove the carousel and were
+  // swallowed by preventDefault — the page could not be scrolled from the
+  // keyboard, and <select>/contenteditable were hijacked too.
   document.addEventListener('keydown', (e) => {
-    const t = document.activeElement.tagName;
-    if (t === 'INPUT' || t === 'TEXTAREA') return;
-    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
-    else if (e.key === 'ArrowRight') { e.preventDefault(); next(); }
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+
+    const el = document.activeElement;
+    const t = el ? el.tagName : '';
+    if (t === 'INPUT' || t === 'TEXTAREA' || t === 'SELECT' || (el && el.isContentEditable)) return;
+
+    const r = slider.getBoundingClientRect();
+    if (r.bottom <= 0 || r.top >= window.innerHeight) return;  // out of view
+
+    e.preventDefault();
+    if (e.key === 'ArrowLeft') prev(); else next();
   });
 
   // Resize — recompute geometry and return to the real zone
