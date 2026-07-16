@@ -67,12 +67,16 @@
     curE = e;
     video.style.opacity = (PEAK * e * endFade).toFixed(3);
 
-    // Мягкий параллакс как у героя: видео едет медленнее контента ((1−SPEED)×), не
-    // закреплено намертво → задержка JS на кадр не читается рывком. Авто-центровка
-    // по высоте слоя. Всё одним GPU-transform.
+    // Видео ПРИКРЕПЛЕНО к вьюпорту (центрируем на нём) + мягкий параллакс-дрейф,
+    // ОГРАНИЧЕННЫЙ фактическим запасом высоты (vidH − vh). Запас меряем по реальной
+    // высоте видео (устойчиво к расхождению svh/vh на мобильных), а НЕ от высоты
+    // секции — поэтому на высоких вертикальных секциях край видео не оголяется.
     var sr = stage.getBoundingClientRect();
-    var half = (sr.height - vh) / 2;
-    var y = -SPEED * sr.top - CENTER * vh + (1 - SPEED) * half;
+    var vidH = video.getBoundingClientRect().height || vh * 1.35;
+    var spare = Math.max(0, vidH - vh);
+    var prog = (vh - sr.top) / (vh + sr.height);
+    prog = prog < 0 ? 0 : (prog > 1 ? 1 : prog);
+    var y = -sr.top - spare / 2 + (prog - 0.5) * spare * 0.8;
     video.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0)';
   }
 

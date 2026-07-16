@@ -182,7 +182,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=11.3';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=11.6';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
@@ -343,15 +343,22 @@
 
     function positionDropdown(btn, dd) {
         if (!dd) return;
-        var r = btn.getBoundingClientRect();
+        // .dropdown — position:fixed, НО у предка .nav-links есть transform
+        // (translateX(-50%) при центрировании) → containing block для fixed =
+        // .nav-links, а НЕ вьюпорт. Если ставить left = r.left (координаты во
+        // вьюпорте), меню уезжает вбок. Решение: ставим left/top в 0, меряем куда
+        // реально встал угол (= смещение контейнера) и вычитаем его из желаемой
+        // позиции. Работает и когда контейнер = вьюпорт (смещение ≈ 0).
         dd.style.position = 'fixed';
-        dd.style.top = (r.bottom + 6) + 'px';
-        dd.style.left = r.left + 'px';
         dd.style.right = 'auto';
-        var w = dd.getBoundingClientRect().width || 200;
-        if (r.left + w > window.innerWidth - 10) {
-            dd.style.left = (r.right - w) + 'px';
-        }
+        dd.style.left = '0px';
+        dd.style.top = '0px';
+        var o = dd.getBoundingClientRect();        // где угол при left:0/top:0 → смещение блока
+        var r = btn.getBoundingClientRect();
+        var w = o.width || 200;
+        var wantLeft = (r.left + w > window.innerWidth - 10) ? (r.right - w) : r.left;
+        dd.style.left = (wantLeft - o.left) + 'px';
+        dd.style.top = (r.bottom + 6 - o.top) + 'px';
     }
 
     // ── Mobile menu ───────────────────────────────────────────────

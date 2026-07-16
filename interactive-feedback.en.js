@@ -103,14 +103,12 @@
 
             if (!button || button.disabled) return;
 
-            // Спиннер — только для реальных действий (переход/отправка формы).
-            // Div с role="button" (аккордеоны/карточки-переключатели вроде
-            // .profession-card, .benefit-card) переключают локальный UI
-            // мгновенно — им спиннер не нужен, а showButtonLoading() своим
-            // innerHTML-свапом стирает их содержимое (ломает аккордеон).
-            const isRealAction = button.tagName === 'BUTTON' ||
-                            button.tagName === 'A' ||
-                            button.closest('form');
+            // Спиннер — ТОЛЬКО для отправки формы (логин/регистрация/оплата,
+            // где реально ждём Firebase). Ссылки-переходы (меню, кнопки-CTA)
+            // грузятся мгновенно — спиннер «Loading…» там только мелькает и
+            // раздражает, поэтому на <a> и обычных <button> его не показываем.
+            const isRealAction =
+                (button.tagName === 'BUTTON' && button.closest('form'));
 
             if (isRealAction) {
                 showButtonLoading(button);

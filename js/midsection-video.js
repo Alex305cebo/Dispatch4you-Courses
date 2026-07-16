@@ -41,9 +41,9 @@
   var SPEED  = 0.30;  // видео 0.7× к скорости контента (совпадает с героем)
   var CENTER = 0.10;  // видео 120svh: (1.2−1)/2 → центр вьюпорта в середине прохода
   var narrowVp = window.matchMedia('(max-width: 768px)');
-  var PEAK = narrowVp.matches ? 0.5 : 0.62;   // пик яркости «колокола»
-  var EDGE = 0.40;    // доля прохода на осветление/затемнение по краям (широкая зона →
-                      // затемнение на входе/выходе видно при скролле, как у Марины)
+  var PEAK = narrowVp.matches ? 0.72 : 0.62;  // пик яркости «колокола» (на мобильном ярче — было плохо видно)
+  var EDGE = narrowVp.matches ? 0.26 : 0.40;  // доля прохода на осветление/затемнение по краям;
+                      // на мобильном зона у́же → видео ярко бо́льшую часть прокрутки
   function smooth(t) { return t * t * (3 - 2 * t); }   // smoothstep
   // Под конец ролик гаснет до полупрозрачного (как у Марины) и застывает таким.
   var ENDDIM_SEC = 2.5;   // за сколько секунд до конца начинать гасить
@@ -95,11 +95,14 @@
     }
     rafDim = requestAnimationFrame(dimLoop);
   }
-  video.addEventListener('play', function () { if (!rafDim) rafDim = requestAnimationFrame(dimLoop); });
+  video.addEventListener('play', function () { if (video.loop) return; if (!rafDim) rafDim = requestAnimationFrame(dimLoop); });
 
   var narrow = window.matchMedia('(max-width: 768px)');
   var src = video.getAttribute(narrow.matches ? 'data-mobile' : 'data-desktop');
   if (!src) return;
+  // На узких экранах секция высокая → ЗАЦИКЛИВАЕМ, чтобы фон не «доигрывал» и не
+  // тускнел, пока пользователь долго скроллит. Десктоп — как Марина: раз + freeze.
+  video.loop = narrow.matches;
   // Как у второго видео (Марины): играет ОДИН раз и застывает на последнем кадре
   // (без loop). Затемнение даёт «колокол» яркости выше. Секция ушла и вернулась —
   // проигрывается заново с начала.
