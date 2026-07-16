@@ -102,11 +102,20 @@
     });
   }
 
+  // Вернулись на экран — играем заново с начала (сброс лупа и состояния fade).
+  function replay() {
+    if (rafFade) { cancelAnimationFrame(rafFade); rafFade = 0; }
+    fadeState = 'none'; fade = 1;
+    try { video.currentTime = 0; } catch (e) {}
+    writeStyles();
+    tryPlay();
+  }
+
   // Запуск после window.load — 2 МБ фона не конкурируют с критичным рендером.
   function start() {
     if (window.IntersectionObserver) {
       new IntersectionObserver(function (entries) {
-        if (entries[0].isIntersecting) tryPlay();
+        if (entries[0].isIntersecting) replay();
         else video.pause();
       }, { threshold: 0 }).observe(video);
     } else {

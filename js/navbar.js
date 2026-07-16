@@ -27,17 +27,18 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Navbar scroll effect
-  let lastScroll = 0;
-  window.addEventListener('scroll', function() {
-    const currentScroll = window.pageYOffset;
-
-    if (currentScroll > 50) {
-      navbar.classList.add('scrolled');
-    } else {
-      navbar.classList.remove('scrolled');
-    }
-
-    lastScroll = currentScroll;
-  });
+  // Navbar scroll effect — throttled through rAF (same ticking pattern as
+  // stats-animation.js / features-carousel.js) so scroll never triggers
+  // synchronous class churn on every event.
+  if (navbar) {
+    let ticking = false;
+    window.addEventListener('scroll', function() {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function() {
+        navbar.classList.toggle('scrolled', window.pageYOffset > 50);
+        ticking = false;
+      });
+    }, { passive: true });
+  }
 });

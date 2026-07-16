@@ -2,10 +2,10 @@
 // ANIMATIONS & INTERACTIONS
 // ========================================
 
-// Scroll restoration
-if ('scrollRestoration' in history) {
-  history.scrollRestoration = 'manual';
-}
+// Восстановление позиции скролла при F5/Refresh — родное поведение браузера
+// (scrollRestoration: 'auto', это уже default). Раньше тут стоял 'manual' без
+// какой-либо ручной save/restore-логики взамен — это и держало страницу на
+// верхней позиции после каждого обновления.
 
 // Плавный скролл по якорям делает CSS (html { scroll-behavior: smooth } в
 // main.css) — прежний JS-перехват дублировал его и ломал обновление #hash.

@@ -27,10 +27,10 @@
   function mk() {
     return {
       x: Math.random() * W, y: Math.random() * H,
-      r: 1 + Math.random() * 2.4,
+      r: 0.6 + Math.random() * 1.3,
       vx: (Math.random() - 0.5) * 0.25,
       vy: -0.12 - Math.random() * 0.4,
-      a: 0.14 + Math.random() * 0.4,
+      a: 0.12 + Math.random() * 0.28,
       c: COLORS[(Math.random() * COLORS.length) | 0],
       tw: Math.random() * Math.PI * 2
     };

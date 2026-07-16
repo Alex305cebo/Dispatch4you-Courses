@@ -34,15 +34,21 @@
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // постер
 
-  // Параллакс как у первого видео: видео ЗАКРЕПЛЕНО к вьюпорту (translateY = −sr.top)
-  // → фон стоит на месте, контент/текст прокручивается поверх (сильный эффект),
-  // + мягкий дрейф. rAF-throttle, GPU-transform (нет маски → без лагов при скролле).
-  var SLACK = 0.10;   // запас высоты видео (120svh → 10% сверху/снизу)
-  var PLX = 0.14;     // амплитуда мягкого дрейфа (< SLACK → без провалов)
+  // Параллакс как у ГЕРОЯ (мягкий), а не жёсткое закрепление: видео едет на
+  // (1−SPEED)× скорости контента. Жёсткий пиннинг (translateY=−sr.top) требует
+  // компенсировать скролл 1:1 каждый кадр, а JS отстаёт на кадр → видео дёргалось.
+  // Мягкий сдвиг эту задержку не выдаёт (как у героя — там рывка нет). rAF-throttle.
+  var SPEED  = 0.30;  // видео 0.7× к скорости контента (совпадает с героем)
+  var CENTER = 0.10;  // видео 120svh: (1.2−1)/2 → центр вьюпорта в середине прохода
   var narrowVp = window.matchMedia('(max-width: 768px)');
   var PEAK = narrowVp.matches ? 0.5 : 0.62;   // пик яркости «колокола»
-  var EDGE = 0.22;    // доля прохода на осветление/затемнение по краям
+  var EDGE = 0.40;    // доля прохода на осветление/затемнение по краям (широкая зона →
+                      // затемнение на входе/выходе видно при скролле, как у Марины)
   function smooth(t) { return t * t * (3 - 2 * t); }   // smoothstep
+  // Под конец ролик гаснет до полупрозрачного (как у Марины) и застывает таким.
+  var ENDDIM_SEC = 2.5;   // за сколько секунд до конца начинать гасить
+  var ENDDIM_MIN = 0.2;   // финальная доля яркости — тускло, «сквозь стекло»
+  var endFade = 1, curE = 0;   // множитель к «колоколу» + кэш последнего e
   var ticking = false;
   function paintParallax() {
     ticking = false;
@@ -54,9 +60,12 @@
     // ярко по центру — плавное затемнение при скролле.
     var e = p < EDGE ? smooth(p / EDGE)
           : (p > 1 - EDGE ? smooth((1 - p) / EDGE) : 1);
-    video.style.opacity = (PEAK * e).toFixed(3);
-    var drift = (p - 0.5) * PLX * vh;
-    var y = -sr.top - SLACK * vh + drift;       // закрепляем к вьюпорту + дрейф
+    curE = e;
+    video.style.opacity = (PEAK * e * endFade).toFixed(3);
+    // Мягкий параллакс (не жёсткое закрепление): видео едет медленнее контента.
+    // Авто-центровка по высоте слоя, чтобы панель не уезжала за кадр на высоком слое.
+    var half = (sr.height - vh) / 2;
+    var y = -SPEED * sr.top - CENTER * vh + (1 - SPEED) * half;
     video.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0)';
   }
   function onScroll() {
@@ -68,14 +77,37 @@
   window.addEventListener('resize', paintParallax);
   paintParallax();
 
+  // Под конец ролика гасим яркость (endFade 1 → ENDDIM_MIN): картинка тускнеет,
+  // становится полупрозрачной и застывает так, растворяясь в тёмном фоне — как Марина.
+  // rAF крутится только пока видео играет. Скорость НЕ трогаем.
+  var rafDim = 0;
+  function dimAt(t, d) {
+    var tail = d - ENDDIM_SEC;
+    return t > tail ? Math.max(ENDDIM_MIN, 1 - (1 - ENDDIM_MIN) * ((t - tail) / ENDDIM_SEC)) : 1;
+  }
+  function dimLoop() {
+    rafDim = 0;
+    if (video.paused) return;
+    var d = video.duration || 0;
+    if (d) {
+      var nf = dimAt(video.currentTime, d);
+      if (nf !== endFade) { endFade = nf; video.style.opacity = (PEAK * curE * endFade).toFixed(3); }
+    }
+    rafDim = requestAnimationFrame(dimLoop);
+  }
+  video.addEventListener('play', function () { if (!rafDim) rafDim = requestAnimationFrame(dimLoop); });
+
   var narrow = window.matchMedia('(max-width: 768px)');
   var src = video.getAttribute(narrow.matches ? 'data-mobile' : 'data-desktop');
   if (!src) return;
-  video.loop = true;
+  // Как у второго видео (Марины): играет ОДИН раз и застывает на последнем кадре
+  // (без loop). Затемнение даёт «колокол» яркости выше. Секция ушла и вернулась —
+  // проигрывается заново с начала.
 
   var retryArmed = false;
   function tryPlay() {
     if (src && !video.src) video.src = src;   // ленивая загрузка — только у вьюпорта
+    try { video.currentTime = 0; } catch (e) {} endFade = 1;   // вход/возврат — всегда с начала, яркость сброшена
     var pr = video.play();
     if (pr && pr.catch) pr.catch(function () {
       if (retryArmed) return;

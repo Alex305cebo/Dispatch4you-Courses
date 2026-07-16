@@ -31,8 +31,8 @@
 
   var PEAK  = narrow.matches ? 0.90 : 0.70;   // пик яркости (светло) — как у hero
   var EDGE  = 0.22;                           // доля прохода на осветление/затемнение по краям
-  var SLACK = 0.10;                           // запас высоты видео (120svh → 10% сверху/снизу)
-  var PLX   = 0.12;                           // амплитуда параллакса (±6% vh, < SLACK → без провалов)
+  var SPEED = 0.30;                           // мягкий параллакс как у героя: видео на 0.7× скорости контента (не рвётся)
+  var CENTER = 0.10;                          // видео 120svh: (1.2−1)/2 → центр вьюпорта в середине прохода
 
   // Под конец ролик тускнеет/полупрозрачен (как через стекло) и застывает так.
   var ENDDIM_SEC = 2.5;                       // за сколько секунд до конца начать гасить
@@ -67,11 +67,12 @@
     curE = e;
     video.style.opacity = (PEAK * e * endFade).toFixed(3);
 
-    // Закрепление к вьюпорту по факт-положению слоя + центровка под 120%-видео
-    // + симметричный параллакс-дрейф. Всё одним GPU-transform.
+    // Мягкий параллакс как у героя: видео едет медленнее контента ((1−SPEED)×), не
+    // закреплено намертво → задержка JS на кадр не читается рывком. Авто-центровка
+    // по высоте слоя. Всё одним GPU-transform.
     var sr = stage.getBoundingClientRect();
-    var parallax = (p - 0.5) * PLX * vh;
-    var y = -sr.top - SLACK * vh + parallax;
+    var half = (sr.height - vh) / 2;
+    var y = -SPEED * sr.top - CENTER * vh + (1 - SPEED) * half;
     video.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0)';
   }
 
@@ -88,7 +89,7 @@
   var retryArmed = false;
   function tryPlay() {
     if (src && !video.src) video.src = src;   // ленивая загрузка: 2.2 МБ ролика грузим только у вьюпорта, не на старте
-    if (video.ended) { try { video.currentTime = 0; } catch (e) {} endFade = 1; }   // повтор с начала, яркость сброшена
+    try { video.currentTime = 0; } catch (e) {} endFade = 1;   // вход/возврат в секцию — всегда с начала, яркость сброшена
     var pr = video.play();
     if (pr && pr.catch) pr.catch(function () {
       if (retryArmed) return;
