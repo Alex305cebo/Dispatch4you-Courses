@@ -165,21 +165,18 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   
-  console.log('Stats grid found, setting up delegation');
   
   // Используем делегирование событий
   statsGrid.addEventListener('click', function(e) {
     const statItem = e.target.closest('.stat-item');
     
     if (!statItem) {
-      console.log('Click not on stat-item');
       return;
     }
     
     const allStatItems = Array.from(statsGrid.querySelectorAll('.stat-item'));
     const index = allStatItems.indexOf(statItem);
     
-    console.log(`Clicked on stat item ${index}`);
     
     // Эффект "взрыва"
     statItem.style.transform = 'scale(1.05)';
@@ -219,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 600);
     
     // Открываем модал с детальной информацией
-    console.log(`Opening modal for index ${index}`);
     openStatsModal(index);
   });
 });

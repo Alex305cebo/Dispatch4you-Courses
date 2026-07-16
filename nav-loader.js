@@ -176,7 +176,6 @@
         console.assert(isEditable(allow) === true, 'allow-select passes');
         console.assert(isEditable(plain) === false, 'plain p NOT editable');
         document.body.removeChild(wrap);
-        console.log('[d4y] isEditable self-check done');
     }
 
     // ── Load nav HTML ──────────────────────────────────────────────
@@ -388,7 +387,6 @@
 
         // Nested submenu toggle - only on arrow click
         var arrows = document.querySelectorAll('.mob-sub-arrow');
-        console.log('Found arrows:', arrows.length);
         arrows.forEach(function (arrow) {
             arrow.onclick = function (e) {
                 e.preventDefault();
@@ -397,7 +395,6 @@
                 var wrapper = this.parentElement;
                 var nextElement = wrapper.nextElementSibling;
                 
-                console.log('Arrow clicked, wrapper:', wrapper, 'next:', nextElement);
                 
                 if (nextElement && nextElement.classList.contains('mob-sub-nested')) {
                     this.classList.toggle('expanded');
