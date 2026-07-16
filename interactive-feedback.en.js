@@ -42,6 +42,13 @@
             // Пропускаем disabled элементы
             if (element.disabled || element.hasAttribute('disabled')) return;
 
+            // Уже обработан — выходим. Без этой отметки MutationObserver ниже
+            // навешивал бы полный набор обработчиков заново при КАЖДОЙ вставке
+            // в DOM (навигация, футер, клоны карусели, тосты), а анонимные
+            // функции каждый раз новые — браузер их не дедуплицирует.
+            if (element.dataset.ifInit) return;
+            element.dataset.ifInit = '1';
+
             // Добавляем класс при клике
             element.addEventListener('mousedown', function(e) {
                 this.classList.add('clicking');
@@ -192,13 +199,17 @@
 
     // === ДОПОЛНИТЕЛЬНАЯ ОБРАБОТКА ДЛЯ ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ ===
     // Наблюдаем за добавлением новых элементов
+    // Один таймер на всю пачку мутаций: раньше setTimeout ставился на КАЖДУЮ
+    // запись, и одна вставка навигации порождала десятки полных проходов по DOM.
+    let rescanTimer = null;
     const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.addedNodes.length) {
-                // Переинициализируем feedback для новых элементов
-                setTimeout(addClickFeedback, 100);
+        for (let i = 0; i < mutations.length; i++) {
+            if (mutations[i].addedNodes.length) {
+                clearTimeout(rescanTimer);
+                rescanTimer = setTimeout(addClickFeedback, 100);
+                return;
             }
-        });
+        }
     });
 
     observer.observe(document.body, {
