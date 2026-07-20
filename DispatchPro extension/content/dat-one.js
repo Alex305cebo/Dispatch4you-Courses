@@ -2,6 +2,11 @@
 
 const PANEL_ID = 'dispatchpro-panel';
 
+// Where the QR points. The iPhone's stock camera opens this by itself — no scanner
+// app, no camera permission, nothing to install on the phone.
+// CHANGE THIS after deploying the app to Vercel.
+const APP_URL = 'https://dispatch-app.vercel.app';
+
 const DEFAULT_SETTINGS = {
   companyName: '',
   dispatcherName: '',
@@ -84,6 +89,29 @@ function parseLoad() {
   return { origin, dest, miles, rate, rpm, mc, email, phone, refId, deadhead, dho, spotRpm };
 }
 
+// Hand the load to the phone. Nothing is recognized from pixels — parseLoad()
+// already has the real values, so this is a transfer, not an OCR round trip.
+//
+// Keys MUST match parseLoadHash() in the app (D:\Dispatch App\lib\qr-load.ts);
+// its test pins this exact param spelling. Data rides in the '#' fragment, which
+// browsers never send to a server — the phone computes the analysis offline.
+function buildQrUrl(d) {
+  const p = new URLSearchParams();
+  const put = (k, v) => { if (v !== '' && v !== 0 && v != null) p.set(k, v); };
+  put('rate', d.rate);
+  put('miles', d.miles);
+  put('dh', d.dho);          // deadhead MILES
+  put('spot', d.spotRpm);
+  put('origin', d.origin);
+  put('dest', d.dest);
+  put('truck', d.deadhead);  // deadhead CITY — where the truck sits
+  put('mc', d.mc);
+  put('email', d.email);
+  put('phone', d.phone);
+  put('ref', d.refId);
+  return `${APP_URL}/load#${p}`;
+}
+
 function hasLoadDetail(text) {
   return /[A-Z][A-Za-z]+(?:\s[A-Za-z]+)*,\s*[A-Z]{2}[\s\S]{0,30}?[A-Z][A-Za-z]+(?:\s[A-Za-z]+)*,\s*[A-Z]{2}\s+\d{2,4}\s*mi/.test(text);
 }
@@ -144,6 +172,15 @@ function buildPanel() {
         <button class="dp-btn" id="dp-maps">🗺 Google Maps</button>
         <button class="dp-btn" id="dp-fmcsa">🔍 FMCSA</button>
         <button class="dp-btn" id="dp-c411">💳 Credit</button>
+        <button class="dp-btn" id="dp-qr">📱 QR</button>
+      </div>
+      <div class="dp-qr-panel" id="dp-qr-panel">
+        <div class="dp-qr-head">
+          <span class="dp-qr-title">Наведи камеру айфона</span>
+          <button class="dp-voice-close" id="dp-qr-close">✕</button>
+        </div>
+        <div class="dp-qr-img" id="dp-qr-img"></div>
+        <div class="dp-qr-note" id="dp-qr-note"></div>
       </div>
       <button class="dp-mic" id="dp-mic">🎤 Voice</button>
       <div class="dp-voice-panel" id="dp-voice-panel">
@@ -245,6 +282,26 @@ function attachActions(panel) {
   panel.querySelector('#dp-c411').addEventListener('click', () => {
     if (!currentData.mc) return;
     window.open(`https://www.carrier411.com/brokerSearch.cfm?search=MC&q=${currentData.mc}`, '_blank');
+  });
+
+  const qrPanel = panel.querySelector('#dp-qr-panel');
+  panel.querySelector('#dp-qr-close').addEventListener('click', () => qrPanel.classList.remove('dp-qr-open'));
+
+  panel.querySelector('#dp-qr').addEventListener('click', () => {
+    const d = currentData;
+    if (!d.origin && !d.dest && !d.miles) return;
+
+    const url = buildQrUrl(d);
+    const qr = qrcode(0, 'M'); // 0 = pick the smallest version that fits
+    qr.addData(url);
+    qr.make();
+
+    // Inline SVG, not a data: <img> — DAT's CSP could block the image source and
+    // the code would silently not render.
+    panel.querySelector('#dp-qr-img').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+    panel.querySelector('#dp-qr-note').textContent =
+      `${d.origin || '—'} → ${d.dest || '—'} · ${url.length} символов`;
+    qrPanel.classList.add('dp-qr-open');
   });
 
   attachVoice(panel);
