@@ -1286,11 +1286,6 @@
                     <div class="say-this-text" id="sayThisText">Hi, this is Alex from Swift Dispatch. I'm calling about the load you posted on DAT, from Chicago to Nashville.</div>
                 </div>
 
-                <!-- Voice Switch (Admin only) -->
-                <div class="voice-switch active" onclick="toggleVoiceEngine()" id="voiceSwitch" aria-label="Переключить голосовой движок" style="display:none">
-                    <div class="voice-switch-track"><div class="voice-switch-thumb"></div></div>
-                </div>
-
                 <!-- ── SIDEBAR TIPS (desktop only) ── -->
                 <div class="sidebar-tips" id="sidebarTips">
                   <div class="sidebar-tips-title" id="tipsSectionTitle">Советы диспетчера</div>
@@ -1382,8 +1377,33 @@ async function checkAdminRole(user) {
 </html>
 
 <script>
-const _k=['gsk_7b9aEN1PMQBKSKbw','GOyoWGdyb3FYcNiq4FWZScbJ4iZYYSYOF4Qh'];
-const GK=_k[0]+_k[1], GU='https://api.groq.com/openai/v1/chat/completions', MD='llama-3.1-8b-instant';
+// Ключи Groq/Cerebras НИКОГДА не лежат в клиентском коде — оба провайдера
+// проксируются через api/groq.php и api/cerebras.php (ключ на сервере на
+// уровень выше public_html). MD_MAIN — основная модель диалога/оценки
+// (Cerebras первым, Groq — запасной при ошибке/лимите). MD_FAST — дешёвая
+// модель для второстепенных фоновых вызовов (подсказки, промежуточный анализ).
+const GU_CEREBRAS='https://dispatch4you.com/api/cerebras.php?path=chat/completions';
+const GU_GROQ='https://dispatch4you.com/api/groq.php?path=chat/completions';
+const GU=GU_GROQ; // legacy alias — второстепенные вызовы ниже используют только Groq
+const MD_MAIN='llama-3.3-70b-versatile', MD_FAST='llama-3.1-8b-instant', MD=MD_FAST;
+
+// Каскад для основного диалога/оценки: Cerebras первым (щедрый бесплатный
+// лимит токенов/день), при ошибке/исчерпанном лимите — Groq (запасной, свой
+// бесплатный лимит). Оба провайдера дают OpenAI-совместимый chat/completions
+// с одинаковой формой тела запроса — меняется только URL. Возвращает НЕ
+// распарсенный Response — вызывающий код сам обрабатывает ok/статус/json,
+// как раньше делал с одиночным fetch(GU,...).
+async function fetchBrokerCompletion(bodyObj, signal){
+  const payload = JSON.stringify(bodyObj);
+  try{
+    const r = await fetch(GU_CEREBRAS,{method:'POST',mode:'cors',signal,headers:{'Content-Type':'application/json'},body:payload});
+    if(r.ok) return r;
+    console.warn('[AI] Cerebras failed, falling back to Groq:', r.status);
+  }catch(e){
+    console.warn('[AI] Cerebras unreachable, falling back to Groq:', e.message);
+  }
+  return fetch(GU_GROQ,{method:'POST',mode:'cors',signal,headers:{'Content-Type':'application/json'},body:payload});
+}
 let hist=[],scen='free',broker='Mike',busy=false,isRec=false,recognition=null,synth=window.speechSynthesis;
 let widgetState='idle',dialogActive=false;
 let accumulatedText=''; // накапливает весь текст пока микрофон включён
@@ -1548,7 +1568,7 @@ function updateWidgetState(state){
 // Init AI
 (async()=>{
   try{
-    const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:'ping'}],max_tokens:5})});
+    const r=await fetch(GU_GROQ,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MD_FAST,messages:[{role:'user',content:'ping'}],max_tokens:5})});
     if(!r.ok){
       const errorText = await r.text();
       console.error('[AI] Test failed:', r.status, errorText);
@@ -1566,7 +1586,7 @@ function updateWidgetState(state){
 })();
 
 // ── STT ENGINE: Groq Whisper (primary) + Web Speech API (fallback) ──────────
-const GROQ_STT_URL='https://api.groq.com/openai/v1/audio/transcriptions';
+const GROQ_STT_URL='https://dispatch4you.com/api/groq.php?path=audio/transcriptions';
 // Freight terms hint for Whisper — dramatically improves accuracy
 const WHISPER_PROMPT='Freight dispatcher call. Terms: MC number, dry van, 53-foot, reefer, flatbed, rate con, BOL, POD, DAT, deadhead, detention, lumper, TONU, RPM, all-in, ETA, HOS, ELD, factoring, OTR Solutions, Triumph, RTS Financial, rate per mile, pickup, delivery, dock, shipper, broker, carrier, dispatcher.';
 
@@ -1639,7 +1659,11 @@ function sendNow(){
 // ── Groq Whisper recording ──
 async function startWhisperRec(){
   try{
-    whisperStream=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1,echoCancellation:true,noiseSuppression:true}});
+    // Переиспользуем один поток микрофона на весь звонок вместо нового
+    // getUserMedia() на каждый тап — меньше задержки/хрупкости на iOS Safari.
+    if(!whisperStream || !whisperStream.getTracks().some(t=>t.readyState==='live')){
+      whisperStream=await navigator.mediaDevices.getUserMedia({audio:{sampleRate:16000,channelCount:1,echoCancellation:true,noiseSuppression:true}});
+    }
     whisperChunks=[];
     const mimeType=MediaRecorder.isTypeSupported('audio/webm;codecs=opus')?'audio/webm':
                    MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg';
@@ -1691,7 +1715,8 @@ function stopWhisperRec(){
   if(whisperRecorder && whisperRecorder.state!=='inactive'){
     whisperRecorder.stop();
   }
-  if(whisperStream){ whisperStream.getTracks().forEach(t=>t.stop()); whisperStream=null; }
+  // Поток НЕ останавливаем — переиспользуем на следующей записи в рамках
+  // звонка (releaseMicStream() освобождает его при полном сбросе).
   stopLivePreview();
 }
 
@@ -1717,7 +1742,6 @@ async function sendToWhisper(){
 
     const r=await fetch(GROQ_STT_URL,{
       method:'POST',
-      headers:{'Authorization':`Bearer ${GK}`},
       body:fd
     });
     if(!r.ok){
@@ -1972,8 +1996,11 @@ const waveRings=()=>document.querySelectorAll('.wave-ring');
 
 function startVoiceVisualizer(existingStream){
   if(audioCtx) return; // уже запущен
-  const useStream = existingStream || null;
+  // Переиспользуем уже открытый поток микрофона (если он жив) вместо нового
+  // getUserMedia() на каждый тап — меньше задержки/хрупкости, особенно на iOS.
+  const useStream = existingStream || (micStream && micStream.getTracks().some(t=>t.readyState==='live') ? micStream : null);
   if(useStream){
+    micStream=useStream;
     _initVisualizer(useStream);
   } else {
     navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(stream=>{
@@ -2013,9 +2040,15 @@ function _initVisualizer(stream){
 function stopVoiceVisualizer(){
   if(voiceRafId){cancelAnimationFrame(voiceRafId);voiceRafId=null;}
   waveRings().forEach(r=>{r.style.transform='scale(1)';r.style.opacity='0';});
-  if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null;}
+  // Поток микрофона НЕ останавливаем — переиспользуем на следующей записи в
+  // рамках звонка (releaseMicStream() освобождает его при полном сбросе).
   if(audioCtx){audioCtx.close();audioCtx=null;}
   analyser=null;
+}
+
+function releaseMicStream(){
+  if(whisperStream){ whisperStream.getTracks().forEach(t=>t.stop()); whisperStream=null; }
+  if(micStream){ micStream.getTracks().forEach(t=>t.stop()); micStream=null; }
 }
 
 function startRec(){
@@ -2054,8 +2087,12 @@ function _startBrowserSR(){
     showNotification('🎙️ Голосовой ввод недоступен. Обновите страницу.','error');
     isRec=false; if(micBtn){micBtn.classList.remove('rec');} updateWidgetState('idle'); return;
   }
-  // Явно запрашиваем getUserMedia чтобы браузер показал диалог разрешения
-  navigator.mediaDevices.getUserMedia({audio:true,video:false})
+  // Переиспользуем уже открытый поток микрофона (если жив) вместо нового
+  // getUserMedia() на каждый тап — иначе явно запрашиваем доступ.
+  const micReady = (micStream && micStream.getTracks().some(t=>t.readyState==='live'))
+    ? Promise.resolve(micStream)
+    : navigator.mediaDevices.getUserMedia({audio:true,video:false});
+  micReady
     .then(stream=>{
       // Разрешение получено — запускаем визуализатор и распознавание
       micStream=stream;
@@ -2370,7 +2407,7 @@ async function callAI(msg){
     const msgs=[{role:'system',content:sp},...histSlice];
     const ctrl=new AbortController();const t=setTimeout(()=>ctrl.abort(),8000);
     try{
-        const r=await fetch(GU,{method:'POST',mode:'cors',signal:ctrl.signal,headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:msgs,temperature:.92,max_tokens:80,top_p:.95})});
+        const r=await fetchBrokerCompletion({model:MD_MAIN,messages:msgs,temperature:.92,max_tokens:80,top_p:.95}, ctrl.signal);
         clearTimeout(t);
         if(!r.ok){
             const errorText = await r.text();
@@ -2410,41 +2447,76 @@ async function callAI(msg){
 }
 
 // OpenAI TTS config
-const OAI_TTS_URL='https://api.openai.com/v1/audio/speech';
-const OAI_TTS_VOICE='onyx';
-const OAI_TTS_MODEL='tts-1';
-let OAI_TTS_KEY=localStorage.getItem('oai_tts_key')||'';
-let useAIVoice=true;
+// ── Голос брокера ──────────────────────────────────────────────
+// Приоритет: Google Cloud TTS (естественный нейро-голос; бесплатно в пределах
+// 1-4 млн симв/мес при текущем объёме) → если ключ не задан или запрос не
+// удался — тихий откат на браузерный синтезатор (с фиксом гонки голосов ниже).
+// Ключ ограничивается в Google Cloud Console по HTTP-referrer dispatch4you.com/*
+// (тот же уровень защиты, что и Origin-проверка в api/groq.php) — подставить сюда,
+// когда будет готов; пусто = тренажёр просто продолжает работать на браузерном голосе.
+const GOOGLE_TTS_API_KEY='';
+const GOOGLE_TTS_VOICE='en-US-Wavenet-D';   // стабильный качественный мужской голос
+let googleTTSAudio=null;                     // текущий проигрываемый Audio — для остановки при перебивании
 
-function toggleVoiceEngine(){
-  useAIVoice=!useAIVoice;
-  const sw=$('voiceSwitch');
-  if(sw) sw.classList.toggle('active',useAIVoice);
+async function speakWithGoogleTTS(text){
+  const r=await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_API_KEY}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      input:{text},
+      voice:{languageCode:'en-US',name:GOOGLE_TTS_VOICE},
+      audioConfig:{audioEncoding:'MP3',speakingRate:1.05}
+    })
+  });
+  if(!r.ok) throw new Error('google_tts_'+r.status);
+  const d=await r.json();
+  if(!d.audioContent) throw new Error('google_tts_empty');
+  return new Promise((resolve,reject)=>{
+    if(googleTTSAudio){ googleTTSAudio.pause(); googleTTSAudio=null; }
+    const audio=new Audio('data:audio/mp3;base64,'+d.audioContent);
+    googleTTSAudio=audio;
+    audio.onended=()=>resolve();
+    audio.onerror=()=>reject(new Error('google_tts_playback'));
+    audio.play().catch(reject);
+  });
 }
 
-function setOpenAIKey(key){
-  OAI_TTS_KEY=key;
-  localStorage.setItem('oai_tts_key',key);
-  useAIVoice=true;
-  const sw=$('voiceSwitch');
-  if(sw) sw.classList.add('active');
-  console.log('[OpenAI TTS] Key set, AI voice enabled.');
+// Ждём, чтобы браузер реально успел загрузить список голосов — некоторые
+// браузеры заполняют его асинхронно после события voiceschanged. Без этого
+// первый вызов synth.getVoices() может вернуть [] и молча упасть на голос по
+// умолчанию, даже если через мгновение доступен качественный бесплатный голос.
+let voicesReadyPromise=null;
+function ensureVoicesLoaded(){
+  if(!synth) return Promise.resolve([]);
+  if(voicesReadyPromise) return voicesReadyPromise;
+  voicesReadyPromise=new Promise(resolve=>{
+    const existing=synth.getVoices();
+    if(existing.length){ resolve(existing); return; }
+    const onChange=()=>{
+      const v=synth.getVoices();
+      if(v.length){ synth.removeEventListener('voiceschanged',onChange); resolve(v); }
+    };
+    synth.addEventListener('voiceschanged',onChange);
+    // Не все браузеры шлют voiceschanged надёжно — не ждём вечно.
+    setTimeout(()=>{ synth.removeEventListener('voiceschanged',onChange); resolve(synth.getVoices()); },1000);
+  });
+  return voicesReadyPromise;
 }
 
-function speakText(text){
+async function speakWithBrowserVoice(text){
+    if(!synth) return;
+    const v=await ensureVoicesLoaded();
     return new Promise(resolve=>{
-        if(!text||!text.trim()){resolve();return}
-        if(!synth){resolve();return}
         synth.cancel();
         const u=new SpeechSynthesisUtterance(text);
         u.lang='en-GB';u.rate=1.1;u.pitch=0.75;u.volume=1.0;
-        const v=synth.getVoices();
 
         const priority=[
           'Google UK English Male',
           'Microsoft George Online (Natural)','Microsoft George',
           'Microsoft Ryan Online (Natural)','Microsoft Ryan',
           'Microsoft Andrew Online (Natural)','Microsoft Andrew',
+          'Microsoft Guy Online (Natural)','Microsoft Guy',
           'Google US English',
         ];
         const skipVoices=/female|zira|samantha|karen|moira|fiona|tessa|victoria|susan|hazel|jenny|aria|sara|shelley|sandy|allison|ava|sonia|libby|mia|michelle|ashley|nancy/i;
@@ -2457,13 +2529,23 @@ function speakText(text){
         if(!bv) bv=v.find(x=>x.lang==='en-GB'&&!skipVoices.test(x.name));
         if(!bv) bv=v.find(x=>x.lang.startsWith('en'));
 
-        console.log('[TTS] Using voice:', bv?.name||'default');
+        console.log('[TTS] Using browser voice:', bv?.name||'default');
         if(bv) u.voice=bv;
         u.onend=()=>{resolve()};u.onerror=()=>{resolve()};
         synth.speak(u);
     });
 }
-if(synth)synth.onvoiceschanged=()=>synth.getVoices();
+
+function speakText(text){
+    if(!text||!text.trim()) return Promise.resolve();
+    if(GOOGLE_TTS_API_KEY){
+      return speakWithGoogleTTS(text).catch(e=>{
+        console.warn('[TTS] Google TTS failed, falling back to browser voice:', e.message);
+        return speakWithBrowserVoice(text);
+      });
+    }
+    return speakWithBrowserVoice(text);
+}
 
 const MSG_LIMIT=50;
 function addMsg(type,text){
@@ -2521,12 +2603,12 @@ async function getAnalysis(){
     if(hist.length<4){addMsg('sys','📊 Поговори ещё немного для анализа.');return}
     addMsg('sys','📊 Анализирую...');
     const tr=hist.map(m=>`${m.role==='user'?'Dispatcher':'Broker'}: ${m.content}`).join('\n');
-    try{const r=await fetch(GU,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},body:JSON.stringify({model:MD,messages:[{role:'user',content:`Analyze this dispatcher-broker call. Rate dispatcher 1-10. Respond in Russian, 3-4 sentences: score, what's good, what to improve.\n\n${tr}`}],temperature:.3,max_tokens:200})});
+    try{const r=await fetch(GU_GROQ,{method:'POST',mode:'cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:MD_FAST,messages:[{role:'user',content:`Analyze this dispatcher-broker call. Rate dispatcher 1-10. Respond in Russian, 3-4 sentences: score, what's good, what to improve.\n\n${tr}`}],temperature:.3,max_tokens:200})});
     const d=await r.json();addMsg('sys','📊 '+( d.choices?.[0]?.message?.content||'Ошибка анализа'))}catch(e){addMsg('sys','📊 Ошибка анализа')}
     chat.scrollTop=chat.scrollHeight;
 }
 
-function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];if(chat)chat.innerHTML='';dialogActive=false;const al=$('appLayout');if(al)al.classList.remove('dialog-active');updateWidgetState('idle');const ti=$('transcriptInterim');if(ti){ti.textContent='';ti.classList.remove('show');}scen='free';broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;const hdr=document.querySelector('.hdr');if(hdr)hdr.style.display='none';}
+function resetChat(){synth?.cancel();if(recognition&&isRec)recognition.stop();isRec=false;busy=false;hist=[];if(chat)chat.innerHTML='';dialogActive=false;releaseMicStream();const al=$('appLayout');if(al)al.classList.remove('dialog-active');updateWidgetState('idle');const ti=$('transcriptInterim');if(ti){ti.textContent='';ti.classList.remove('show');}scen='free';broker=NAMES[Math.floor(Math.random()*NAMES.length)];$('bName').textContent=`AI Брокер — ${broker}`;const hdr=document.querySelector('.hdr');if(hdr)hdr.style.display='none';}
 
 // ── Adaptive tips: hide card2 if widget overflows ──
 function adaptTips(){
@@ -2906,24 +2988,15 @@ Respond ONLY with valid JSON:
   const timeout = setTimeout(() => controller.abort(), 10000);
   
   try {
-    const response = await fetch(GU, {
-      method: 'POST',
-      mode: 'cors',
-      signal: controller.signal,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GK}`
-      },
-      body: JSON.stringify({
-        model: MD,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.3,
-        max_tokens: 700
-      })
-    });
+    const response = await fetchBrokerCompletion({
+      model: MD_MAIN,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 700
+    }, controller.signal);
     
     clearTimeout(timeout);
     
@@ -3654,11 +3727,11 @@ STRICT RULES:
   }
 
   try{
-    const r = await fetch(GU,{
+    const r = await fetch(GU_GROQ,{
       method:'POST',mode:'cors',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model: MD,
+        model: MD_FAST,
         messages:[{role:'user',content:prompt}],
         temperature:0.75,
         max_tokens:220
@@ -3821,10 +3894,10 @@ RULES:
   };
 
   try{
-    const r=await fetch(GU,{
+    const r=await fetch(GU_GROQ,{
       method:'POST',mode:'cors',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${GK}`},
-      body:JSON.stringify({model:MD,messages:[{role:'user',content:prompt}],temperature:0.6,max_tokens:200})
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:MD_FAST,messages:[{role:'user',content:prompt}],temperature:0.6,max_tokens:200})
     });
     if(!r.ok) throw new Error('api_'+r.status);
     const d=await r.json();
@@ -3991,13 +4064,6 @@ if(typeof gsap!=='undefined'){
       );
     }
   };
-
-  // 7. Voice switch hover
-  const vs=$('voiceSwitch');
-  if(vs){
-    vs.addEventListener('mouseenter',()=>gsap.to(vs,{scale:1.05,duration:0.2}));
-    vs.addEventListener('mouseleave',()=>gsap.to(vs,{scale:1,duration:0.2}));
-  }
 
   // 8. Scenario buttons hover
   document.querySelectorAll('.sc').forEach(btn=>{

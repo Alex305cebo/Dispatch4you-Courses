@@ -1,13 +1,16 @@
 <?php
-// Groq API proxy for the Dispatch4you Chrome extension.
+// Groq API proxy — shared by the Dispatch4you Chrome extension AND the
+// ai-broker-chat.html voice trainer on dispatch4you.com.
 // The API key is read from a file ONE LEVEL ABOVE public_html, so it is never
-// web-accessible and never shipped inside the extension. Create that file once:
+// web-accessible and never shipped client-side. Create that file once:
 //   ~/domains/dispatch4you.com/groq.key   (one line: the gsk_... key)
 //
-// Only the two Groq endpoints the extension uses are allowed, and requests must
-// originate from the DAT page. ponytail: Origin/Referer check is spoofable by
-// curl — it stops casual browser abuse, not a determined attacker. Upgrade path
-// if the key gets abused: per-dispatcher token or real auth.
+// Only the two Groq endpoints callers use are allowed, and requests must
+// originate from one.dat.com (extension), dispatch4you.com (trainer), or
+// localhost (local dev testing of the trainer).
+// ponytail: Origin/Referer check is spoofable by curl — it stops casual
+// browser abuse, not a determined attacker. Upgrade path if the key gets
+// abused: per-dispatcher token or real auth.
 
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -18,7 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST')   { http_response_code(405); echo 'PO
 
 $origin  = isset($_SERVER['HTTP_ORIGIN'])  ? $_SERVER['HTTP_ORIGIN']  : '';
 $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-if (stripos($origin, 'one.dat.com') === false && stripos($referer, 'one.dat.com') === false) {
+$allowedOrigins = ['one.dat.com', 'dispatch4you.com', 'localhost', '127.0.0.1'];
+$originOk = false;
+foreach ($allowedOrigins as $o) {
+  if (stripos($origin, $o) !== false || stripos($referer, $o) !== false) { $originOk = true; break; }
+}
+if (!$originOk) {
   http_response_code(403); echo 'forbidden'; exit;
 }
 
