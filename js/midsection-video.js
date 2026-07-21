@@ -1,9 +1,10 @@
 /**
- * midsection-video.js — видео-фон за секциями «Что вы получите» + «USA Map
- * Trainer». Абсолютный слой в <main>; top/height ставим под диапазон от
- * начала features до конца map-trainer. Видео в loop, приглушено CSS.
- * Ленивая загрузка + пауза вне экрана (IntersectionObserver). Без скролл-
- * эффектов (нет параллакса/бела) → нет per-frame нагрузки при скролле.
+ * midsection-video.js — видео-фон за секциями «Что вы получите» + «Профессия
+ * диспетчера» (Марина). Абсолютный слой в <main>; top/height ставим под
+ * диапазон от начала features до конца profession. Позиция видео СТАТИЧНА —
+ * держит её CSS position:sticky (midsection-video.css), JS её не трогает.
+ * На скролл JS считает только яркость («колокол» + затухание в конце ролика).
+ * Ленивая загрузка + пауза вне экрана (IntersectionObserver).
  * reduced-motion: статичный постер.
  */
 (function () {
@@ -34,12 +35,11 @@
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // постер
 
-  // Параллакс как у ГЕРОЯ (мягкий), а не жёсткое закрепление: видео едет на
-  // (1−SPEED)× скорости контента. Жёсткий пиннинг (translateY=−sr.top) требует
-  // компенсировать скролл 1:1 каждый кадр, а JS отстаёт на кадр → видео дёргалось.
-  // Мягкий сдвиг эту задержку не выдаёт (как у героя — там рывка нет). rAF-throttle.
-  var SPEED  = 0.30;  // видео 0.7× к скорости контента (совпадает с героем)
-  var CENTER = 0.10;  // видео 120svh: (1.2−1)/2 → центр вьюпорта в середине прохода
+  // Позиция видео СТАТИЧНА — держит её CSS (position:sticky в midsection-video.css),
+  // JS сюда вообще не пишет transform. Раньше был JS-параллакс (или жёсткий
+  // пиннинг — дёргался от отставания JS на кадр, или смягчённая скорость —
+  // тогда видео заметно «плыло» относительно контента). Sticky не имеет ни
+  // одной из этих проблем. Ниже — только яркость («колокол» + затухание в конце).
   var narrowVp = window.matchMedia('(max-width: 768px)');
   var PEAK = narrowVp.matches ? 0.72 : 0.62;  // пик яркости «колокола» (на мобильном ярче — было плохо видно)
   var EDGE = narrowVp.matches ? 0.26 : 0.40;  // доля прохода на осветление/затемнение по краям;
@@ -50,32 +50,27 @@
   var ENDDIM_MIN = 0.2;   // финальная доля яркости — тускло, «сквозь стекло»
   var endFade = 1, curE = 0;   // множитель к «колоколу» + кэш последнего e
   var ticking = false;
-  function paintParallax() {
+  function updateBrightness() {
     ticking = false;
     var vh = window.innerHeight || document.documentElement.clientHeight;
     var sr = stage.getBoundingClientRect();
     var p = (vh - sr.top) / (vh + sr.height);   // прогресс прохода слоя через вьюпорт
     p = p < 0 ? 0 : (p > 1 ? 1 : p);
     // «Колокол» яркости, как у второго видео (Марины): тускло на входе/выходе,
-    // ярко по центру — плавное затемнение при скролле.
+    // ярко по центру — плавное затемнение при скролле. Позицию не трогаем.
     var e = p < EDGE ? smooth(p / EDGE)
           : (p > 1 - EDGE ? smooth((1 - p) / EDGE) : 1);
     curE = e;
     video.style.opacity = (PEAK * e * endFade).toFixed(3);
-    // Мягкий параллакс (не жёсткое закрепление): видео едет медленнее контента.
-    // Авто-центровка по высоте слоя, чтобы панель не уезжала за кадр на высоком слое.
-    var half = (sr.height - vh) / 2;
-    var y = -SPEED * sr.top - CENTER * vh + (1 - SPEED) * half;
-    video.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0)';
   }
   function onScroll() {
     if (ticking) return;
     ticking = true;
-    requestAnimationFrame(paintParallax);
+    requestAnimationFrame(updateBrightness);
   }
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', paintParallax);
-  paintParallax();
+  window.addEventListener('resize', updateBrightness);
+  updateBrightness();
 
   // Под конец ролика гасим яркость (endFade 1 → ENDDIM_MIN): картинка тускнеет,
   // становится полупрозрачной и застывает так, растворяясь в тёмном фоне — как Марина.
