@@ -230,12 +230,12 @@
 <div class="page-wrap">
   <div class="page-header">
     <h1>📋 Трекер уроков диспетчера</h1>
-    <p>15 уроков курса + 12 модулей тестов. Нажми на карточку — откроются детальные шаги урока.</p>
+    <p>Занятие 0 (знакомство) + 15 уроков курса + 12 модулей тестов. Нажми на карточку — откроются детальные шаги урока.</p>
     <div class="header-meta">
       <div class="meta-stat stat-done"><strong id="stat-done">0</strong>&nbsp;пройдено</div>
       <div class="meta-stat stat-progress"><strong id="stat-progress">0</strong>&nbsp;в процессе</div>
       <div class="meta-stat"><strong id="stat-pending">0</strong>&nbsp;не начато</div>
-      <div class="meta-stat"><strong>15</strong>&nbsp;всего уроков</div>
+      <div class="meta-stat"><strong>16</strong>&nbsp;всего занятий</div>
       <a href="#teacher-bank" style="display:flex;align-items:center;gap:8px;padding:10px 18px;background:linear-gradient(135deg,rgba(129,140,248,0.12),rgba(99,102,241,0.08));border:1px solid rgba(129,140,248,0.3);border-radius:12px;font-size:13px;font-weight:700;color:#a5b4fc;text-decoration:none;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.background='linear-gradient(135deg,rgba(129,140,248,0.22),rgba(99,102,241,0.15))';this.style.borderColor='rgba(129,140,248,0.5)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(129,140,248,0.12),rgba(99,102,241,0.08))';this.style.borderColor='rgba(129,140,248,0.3)'">📚 Банк вопросов ↓</a>
       <button id="orderToggleBtn" type="button" style="display:flex;align-items:center;gap:8px;padding:10px 18px;background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.08));border:1px solid rgba(16,185,129,0.3);border-radius:12px;font-size:13px;font-weight:700;color:#6ee7b7;white-space:nowrap;cursor:pointer;" onmouseover="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.22),rgba(5,150,105,0.15))';this.style.borderColor='rgba(16,185,129,0.5)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(16,185,129,0.12),rgba(5,150,105,0.08))';this.style.borderColor='rgba(16,185,129,0.3)'">🔀 Порядок: <span id="orderToggleLabel">новый</span></button>
     </div>
@@ -267,6 +267,24 @@
   <div class="progress-wrap">
     <div class="progress-label"><span>Общий прогресс</span><span id="progress-pct">0%</span></div>
     <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <!-- БЛОК 0: ЗНАКОМСТВО -->
+  <div class="block">
+    <div class="block-header"><div class="block-num">0</div><div class="block-title-text">Первое занятие — знакомство</div><span class="block-count">1 занятие</span></div>
+    <div class="cards-grid">
+
+      <div class="lesson-card" data-id="0">
+        <div class="card-top"><span class="card-num">ЗАНЯТИЕ 0</span><span class="card-status status-pending">⬜ Не начато</span></div>
+        <div class="card-icon-wrap"><span class="card-icon">🤝</span><div class="card-steps-mini"><div class="card-steps-mini-label">0 из 7 шагов</div><div class="card-steps-mini-bar"><div class="card-steps-mini-fill" style="width:0%"></div></div></div></div>
+        <div class="card-title">Первое занятие: знакомство и вопросы</div>
+        <div class="card-desc">Ориентационный звонок перед стартом курса. Не тема программы — подготовка к ней: узнать студента, снять тревогу, собрать вводные для персонализации 12 уроков.</div>
+        <div class="card-tags"><span class="tag">Ориентация</span><span class="tag">Знакомство</span><span class="tag">Вопросы</span></div>
+        <div class="card-footer"><button class="btn-status" data-action="in-progress">🔄 В процессе</button><button class="btn-status" data-action="done">✅ Пройдено</button></div>
+        <div class="card-note-wrap"><textarea class="card-note" rows="2" placeholder="Заметка..."></textarea></div>
+      </div>
+
+    </div>
   </div>
 
   <!-- БЛОК 1: ОСНОВЫ -->
@@ -616,6 +634,30 @@ let uid = null, lessonData = {}, selectedStudentUid = null, lessonDataLoaded = f
 // uid из localStorage сразу — не ждём Firebase
 try { const u = JSON.parse(localStorage.getItem('user') || 'null'); if (u) uid = u.uid; } catch(e) {}
 const LESSONS={
+"0":{title:"Первое занятие: знакомство и вопросы",modules:["Ориентация"],duration:"65 мин",
+topics:[
+{title:"Знакомство",subtitle:"Кто студент, откуда, что привело — разговор, а не анкета",time:"10 мин",done:false,
+content:'<div class="lecture-section"><div class="lecture-section-title">🔑 Вопросы для разговора</div><div class="dialog-wrap"><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 1</span><div class="dialog-text">«Как тебя зовут, откуда ты, чем занимаешься сейчас?» <em>(не для галочки — запомнить 2–3 детали и вернуться к ним на уроке 5–6, это показывает что это не конвейер)</em></div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 2</span><div class="dialog-text">«Где ты узнал(а) про курс и почему выбрал именно нас?» <em>(источник трафика + мотивация выбора — полезно и для студента, и для статистики набора)</em></div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 3</span><div class="dialog-text">«Пробовал(а) раньше что-то похожее на удалённую работу?» <em>(если да — на чём споткнулся, это подскажет на что обратить внимание в первых уроках)</em></div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 4</span><div class="dialog-text">«Что для тебя будет означать "у меня получилось" через полгода?» <em>(личное определение успеха — вернуться к этой фразе на финальном занятии)</em></div></div></div></div>'
+},
+{title:"Мотивация и цель",subtitle:"Доход, срок, подработка или замена основной работы",time:"8 мин",done:false,
+content:'<div class="lecture-section"><div class="lecture-section-title">🔑 Вопросы для разговора</div><div class="dialog-wrap"><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 1</span><div class="dialog-text">«Какой доход в месяц был бы для тебя "да, это сработало"?» <em>(пусть назовёт цифру — не спорить, не занижать, просто зафиксировать)</em></div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 2</span><div class="dialog-text">«К какому сроку хочешь выйти на первую сделку?»</div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 3</span><div class="dialog-text">«Это подработка или ты рассчитываешь заменить основной доход?» <em>(меняет и темп, и то, какие уроки/примеры давать в приоритете)</em></div></div></div></div><div class="tip-block"><div class="tip-icon">💡</div><div class="tip-text">Если названная цифра нереалистична для первого месяца (например «$10,000 сразу») — мягко приземлить здесь же, на реальной схеме роста: месяц 1–2 — $300–800, месяц 5–6 — $3,000–5,000. Лучше честно сейчас, чем разочарование через месяц.</div></div>'
+},
+{title:"Опыт",subtitle:"Продажи, переговоры, удалённая работа — было ли похожее раньше",time:"7 мин",done:false,
+content:'<div class="lecture-section"><div class="lecture-section-title">🔑 Вопросы для разговора</div><div class="dialog-wrap"><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 1</span><div class="dialog-text">«Был ли опыт продаж, переговоров, поддержки клиентов?» <em>(даже нерелевантный опыт — плюс, переговорные навыки переносятся напрямую)</em></div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 2</span><div class="dialog-text">«Работал(а) удалённо раньше? Что понравилось, а что нет?» <em>(вскрывает риски: самодисциплина, изоляция, тайм-менеджмент)</em></div></div></div></div>'
+},
+{title:"Английский и звонки",subtitle:"Самооценка уровня и отношение к звонкам незнакомым людям",time:"8 мин",done:false,
+content:'<div class="lecture-section"><div class="lecture-section-title">🔑 Вопросы для разговора</div><div class="dialog-wrap"><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 1</span><div class="dialog-text">«Как оцениваешь свой английский от 1 до 10 для рабочего звонка — не для экзамена?»</div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 2</span><div class="dialog-text">«Как относишься к звонкам незнакомым людям на английском — спокойно или это главный страх?»</div></div></div></div><div class="tip-block"><div class="tip-icon">💡</div><div class="tip-text">Если оценка ниже 4/10 — не пугать, но честно заложить больше повторений скриптов звонков в темп программы, а не молчать об этом и надеяться что само наладится.</div></div>'
+},
+{title:"Условия и время",subtitle:"Часы в неделю, часовой пояс, готовность техники",time:"8 мин",done:false,
+content:'<div class="lecture-section"><div class="lecture-section-title">🔑 Вопросы для разговора</div><div class="dialog-wrap"><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 1</span><div class="dialog-text">«Сколько часов в неделю реально готов(а) выделять — на уроки и на домашние задания отдельно?»</div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 2</span><div class="dialog-text">«В каком часовом поясе ты, и какое время удобно для регулярных уроков?»</div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 3</span><div class="dialog-text">«Ноутбук, наушники с микрофоном и стабильный интернет — есть?»</div></div></div></div>'
+},
+{title:"Ожидания и опасения",subtitle:"Как представляет профессию и чего боится",time:"8 мин",done:false,
+content:'<div class="lecture-section"><div class="lecture-section-title">🔑 Вопросы для разговора</div><div class="dialog-wrap"><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 1</span><div class="dialog-text">«Как ты сейчас представляешь себе рабочий день диспетчера?» <em>(частая ошибка — путают с диспетчером такси или логистом на складе; поправить сразу, мягко)</em></div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 2</span><div class="dialog-text">«Что тебя больше всего пугает в этом пути?» <em>(записать дословно — вернуться к этому страху в подходящем уроке, когда тема закроет именно его)</em></div></div></div></div>'
+},
+{title:"Закрытие — что дальше",subtitle:"Дата урока 1, задание, канал связи",time:"5 мин",done:false,
+content:'<div class="lecture-section"><div class="lecture-section-title">🔑 Вопросы для разговора</div><div class="dialog-wrap"><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 1</span><div class="dialog-text">«Когда тебе удобно поставить урок 1 — в ближайшие дни или в начале следующей недели?»</div></div><div class="dialog-line"><span class="dialog-role role-teacher">Вопрос 2</span><div class="dialog-text">«Остались вопросы после сегодняшнего разговора?»</div></div></div></div><div class="tip-block"><div class="tip-icon">💡</div><div class="tip-text">Закрывать разговор конкретикой: дата урока 1, одно простое домашнее действие (не «изучи материалы» — а «зайди в личный кабинет» или «ответь письмом на 1 вопрос»), канал связи для вопросов до урока 1.</div></div>'
+}
+]},
 "1":{title:"Введение в профессию диспетчера",page:"intro.html",modules:["Модуль 1","Модуль 3"],duration:"65 мин",
 topics:[
 {title:"Кто такой диспетчер США — роль, цепочка, отличие от брокера",subtitle:"Shipper → Broker → Carrier → Dispatcher. Почему без лицензии — законно",time:"13 мин",done:false,
@@ -1065,7 +1107,7 @@ async function saveLessonData() {
 }
 
 function renderCards() {
-  const TOTAL = 15;
+  const TOTAL = 16;
   let done=0, inprog=0, pending=0;
   document.querySelectorAll('.lesson-card').forEach(card => {
     const id = card.dataset.id;
@@ -1225,7 +1267,7 @@ function openModal(id) {
   currentLessonId = id;
   const lesson = LESSONS[id];
   if (!lesson) return;
-  document.getElementById('modal-lesson-num').textContent = 'УРОК ' + String(id).padStart(2,'0') + (lesson.modules ? ' · ' + lesson.modules.join(', ') : '');
+  document.getElementById('modal-lesson-num').textContent = (id === '0' ? 'ЗАНЯТИЕ 0' : 'УРОК ' + String(id).padStart(2,'0')) + (lesson.modules ? ' · ' + lesson.modules.join(', ') : '');
   document.getElementById('modal-title').textContent = lesson.title;
 
   // Meta bar
