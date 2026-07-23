@@ -621,14 +621,9 @@
 </div>
 
 <script type="module">
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import { db, onUserChange } from "../d4y-auth.js";
+import { doc, getDoc, setDoc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
-const FB = { apiKey:"AIzaSyC505dhT1WjUPhXbinqLvEOTlEXWxYy8GI", authDomain:"dispatch4you-80e0f.firebaseapp.com", projectId:"dispatch4you-80e0f", storageBucket:"dispatch4you-80e0f.appspot.com", messagingSenderId:"349235354473", appId:"1:349235354473:web:488aeb29211b02bb153bf8" };
-const app = getApps().length ? getApps()[0] : initializeApp(FB);
-const auth = getAuth(app);
-const db = getFirestore(app);
 let uid = null, lessonData = {}, selectedStudentUid = null, lessonDataLoaded = false;
 
 // uid из localStorage сразу — не ждём Firebase
@@ -1036,14 +1031,14 @@ function toggleLessonOrder() {
 document.getElementById('orderToggleBtn').addEventListener('click', toggleLessonOrder);
 applyLessonOrder(localStorage.getItem('lessonOrderVersion') || 'v2');
 
-// Загружаем студентов после инициализации auth
-onAuthStateChanged(auth, async (user) => {
+// Загружаем студентов через общий d4y-auth (уже ждёт реальную сессию,
+// не дёргает Firestore раньше времени — это и вызывало permission-denied)
+onUserChange((user) => {
   if (user) {
     uid = user.uid;
-    await loadStudents();
+    loadStudents();
   } else {
-    // Попробуем загрузить без auth (если правила Firestore позволяют)
-    await loadStudents();
+    document.getElementById('studentLoading').textContent = 'Сессия не найдена — обновите страницу';
   }
 });
 
