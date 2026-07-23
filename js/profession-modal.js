@@ -79,6 +79,13 @@ const professionData = {
             <p>Ноутбук, стабильный интернет, телефон — это всё что нужно</p>
           </div>
         </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🌐</span>
+          <div>
+            <strong>Реально работают из 50+ стран</strong>
+            <p>Диспетчеры этой профессии физически находятся в десятках стран мира — американскому carrier не важно, откуда вы звоните</p>
+          </div>
+        </div>
       </div>
       <div class="profession-modal-note">
         <p>🌐 <strong>Свобода:</strong> Офис не нужен — работайте там, где вам комфортно и продуктивно.</p>
@@ -151,7 +158,14 @@ const professionData = {
           <span class="item-icon">🇺🇸</span>
           <div>
             <strong>Стабильность</strong>
-            <p>Грузоперевозки — основа экономики США ($875B в год)</p>
+            <p>Грузоперевозки — основа экономики США, рынок объёмом в сотни миллиардов долларов в год</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🛒</span>
+          <div>
+            <strong>Amazon, Walmart, Target</strong>
+            <p>Крупнейшие ритейлеры генерируют тысячи грузов ежедневно, e-commerce растёт на 15–20% в год</p>
           </div>
         </div>
         <div class="profession-modal-item">
@@ -164,6 +178,88 @@ const professionData = {
       </div>
       <div class="profession-modal-note">
         <p>📈 <strong>Будущее:</strong> Профессия с долгосрочными перспективами и стабильным спросом.</p>
+      </div>
+    `
+  },
+  license: {
+    icon: '📜',
+    title: 'Лицензия не нужна',
+    subtitle: 'Диспетчер — независимый подрядчик',
+    content: `
+      <h4>Диспетчер — не брокер</h4>
+      <div class="profession-modal-list">
+        <div class="profession-modal-item">
+          <span class="item-icon">📋</span>
+          <div>
+            <strong>Не брокер</strong>
+            <p>Брокер обязан иметь федеральную MC Broker Authority. Диспетчер работает иначе — без лицензии</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🤝</span>
+          <div>
+            <strong>Independent contractor</strong>
+            <p>Вы действуете от имени перевозчика по договору (Dispatcher Agreement), используя его MC-номер</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">⚖️</span>
+          <div>
+            <strong>Юридически чисто</strong>
+            <p>Вся ответственность перед грузоотправителем — на перевозчике, не на вас</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🚀</span>
+          <div>
+            <strong>Старт без бюрократии</strong>
+            <p>Не нужно ждать месяцы на лицензирование — начинаете работать сразу после обучения</p>
+          </div>
+        </div>
+      </div>
+      <div class="profession-modal-note">
+        <p>💡 <strong>Важно:</strong> это не серая зона — это стандартная, законная модель работы тысяч диспетчеров в США.</p>
+      </div>
+    `
+  },
+  shortage: {
+    icon: '🚨',
+    title: 'Дефицит водителей — ваш шанс',
+    subtitle: 'Рынок труда играет на вас',
+    content: `
+      <h4>Перевозчикам не хватает рук за рулём</h4>
+      <div class="profession-modal-list">
+        <div class="profession-modal-item">
+          <span class="item-icon">🚛</span>
+          <div>
+            <strong>80,000 водителей</strong>
+            <p>Столько не хватает грузовым компаниям США (American Trucking Associations, 2024)</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">⏱️</span>
+          <div>
+            <strong>Первый груз быстро</strong>
+            <p>При должной подготовке первую сделку реально закрыть уже через 2–3 недели практики</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">💰</span>
+          <div>
+            <strong>Диапазон дохода</strong>
+            <p>$45,000–65,000/год в среднем; у топовых диспетчеров с 5–10 траками — от $100,000+/год</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">📈</span>
+          <div>
+            <strong>Растущий разрыв</strong>
+            <p>Прогнозы указывают на ещё больший дефицит водителей к концу десятилетия</p>
+          </div>
+        </div>
+      </div>
+      <div class="profession-modal-note">
+        <p>🎯 <strong>Вывод:</strong> перевозчикам не хватает рук за рулём — а значит, растёт спрос на тех, кто эти рули эффективно загружает работой.</p>
       </div>
     `
   }

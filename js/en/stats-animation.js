@@ -25,14 +25,6 @@ function animateCounter(element) {
   }, duration / steps);
 }
 
-// Анимация прогресс-бара
-function animateProgressBar(element) {
-  const targetWidth = element.getAttribute('data-width');
-  setTimeout(() => {
-    element.style.width = targetWidth;
-  }, 300);
-}
-
 // Intersection Observer для запуска анимаций
 const observerOptions = {
   threshold: 0.3,
@@ -48,12 +40,6 @@ const statsObserver = new IntersectionObserver((entries) => {
       const counters = entry.target.querySelectorAll('.stat-value');
       counters.forEach(counter => {
         animateCounter(counter);
-      });
-
-      // Анимация прогресс-баров
-      const progressBars = entry.target.querySelectorAll('.stat-progress-bar');
-      progressBars.forEach(bar => {
-        animateProgressBar(bar);
       });
     }
   });
@@ -81,12 +67,6 @@ function initStatsImmediately() {
       const displayValue = decimal > 0 ? target.toFixed(decimal) : Math.floor(target);
       counter.textContent = prefix + displayValue + suffix;
     });
-
-    const progressBars = statsSection.querySelectorAll('.stat-progress-bar');
-    progressBars.forEach(bar => {
-      const targetWidth = bar.getAttribute('data-width');
-      bar.style.width = targetWidth;
-    });
   }
 }
 
@@ -106,43 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Параллакс эффект при скролле — ТОЛЬКО на десктопе. Раньше слушатель вешался
-  // безусловно, в том числе на мобильных, где анимации выше сознательно
-  // отключены: на каждый кадр скролла карточки получали новый inline-transform,
-  // а transition: all в profession-section.css заставлял браузер непрерывно
-  // доигрывать анимацию — отсюда «желейный» лаг.
-  let ticking = false;
-
-  if (!isMobileOrBot) {
-    window.addEventListener('scroll', () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          applyParallax();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    }, { passive: true });
-  }
-
-  function applyParallax() {
-    const statsSection = document.querySelector('.profession-stats');
-    if (!statsSection) return;
-
-    const rect = statsSection.getBoundingClientRect();
-    const scrollPercent = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
-
-    if (scrollPercent > 0 && scrollPercent < 1) {
-      const statItems = statsSection.querySelectorAll('.stat-item');
-      statItems.forEach((item, index) => {
-        const offset = (scrollPercent - 0.5) * 20 * (index % 2 === 0 ? 1 : -1);
-        // Пишем переменную, а не inline-transform: иначе inline перебивает
-        // таблицу стилей и :hover у карточки перестаёт работать.
-        item.style.setProperty('--stat-parallax-y', offset + 'px');
-      });
-    }
-  }
-
   // Добавляем эффект при наведении на карточки профессии
   const professionCards = document.querySelectorAll('.profession-card');
   professionCards.forEach(card => {
@@ -158,30 +101,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Дополнительная анимация для статистики при клике
 document.addEventListener('DOMContentLoaded', () => {
-  const statsGrid = document.querySelector('.stats-grid');
+  const statsTicker = document.querySelector('.stats-ticker');
 
-  if (!statsGrid) {
-    console.error('Stats grid not found!');
+  if (!statsTicker) {
+    console.error('Stats ticker not found!');
     return;
   }
 
-
   // Используем делегирование событий
-  statsGrid.addEventListener('click', function(e) {
-    const statItem = e.target.closest('.stat-item');
+  statsTicker.addEventListener('click', function(e) {
+    const row = e.target.closest('.ticker-row');
 
-    if (!statItem) {
+    if (!row) {
       return;
     }
 
-    const allStatItems = Array.from(statsGrid.querySelectorAll('.stat-item'));
-    const index = allStatItems.indexOf(statItem);
-
+    const allRows = Array.from(statsTicker.querySelectorAll('.ticker-row'));
+    const index = allRows.indexOf(row);
 
     // Эффект "взрыва"
-    statItem.style.transform = 'scale(1.05)';
+    row.style.transform = 'scale(1.02)';
     setTimeout(() => {
-      statItem.style.transform = '';
+      row.style.transform = '';
     }, 200);
 
     // Создаём ripple эффект
@@ -194,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ripple.style.pointerEvents = 'none';
     ripple.style.zIndex = '1000';
 
-    const rect = statItem.getBoundingClientRect();
+    const rect = row.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
@@ -204,7 +145,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ripple.style.transition = 'transform 0.6s ease-out, opacity 0.6s ease-out';
     ripple.style.opacity = '1';
 
-    statItem.appendChild(ripple);
+    row.style.position = row.style.position || 'relative';
+    row.appendChild(ripple);
 
     setTimeout(() => {
       ripple.style.transform = 'translate(-50%, -50%) scale(20)';
@@ -226,125 +168,136 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const statsData = [
   {
-    title: 'Freight Market Revenue',
-    value: '$906B',
-    icon: '💰',
+    title: 'Dry Van Spot Rate',
+    value: '$2.44/mi',
+    icon: '🚚',
     color: '#9333ea',
     gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
-    description: 'Gross annual revenue of the US trucking industry',
-    chartUnit: 'B',
+    description: 'Average per-mile spot rate for dry van freight, weekly data',
+    chartUnit: '/mi',
     chartData: [
-      { year: '2021', value: 875.5 },
-      { year: '2022', value: 940.8 },
-      { year: '2023', value: 1004 },
-      { year: '2024', value: 906 }
+      { year: 'Jun 26', value: 2.38 },
+      { year: 'Jul 1', value: 2.43 },
+      { year: 'Jul 8', value: 2.49 },
+      { year: 'Jul 16', value: 2.50 },
+      { year: 'Jul 23', value: 2.44 }
     ],
     facts: [
-      { icon: '📈', text: '2023 was the peak year: $1.004 trillion in revenue' },
-      { icon: '📉', text: 'In 2024 the market cooled to $906 billion — a freight recession' },
-      { icon: '🌍', text: 'Still the largest freight market in the world' },
-      { icon: '🏢', text: '91.5% of carriers in this market are small businesses with 10 trucks or fewer' }
+      { icon: '📈', text: 'Up 48% (+79¢) year over year' },
+      { icon: '🏆', text: 'The highest level since 2022 — carriers have real leverage for the first time in 3 years' },
+      { icon: '❄️', text: 'Reefer is up 40%, flatbed up 42% year over year' },
+      { icon: '🔮', text: 'DAT iQ forecasts another +12% on spot over the next 12 months' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'Trucking Dive — weekly spot rate tracker, July 23, 2026'
   },
   {
-    title: 'Freight Moved by Truck',
-    value: '72.7%',
-    icon: '🛣️',
+    title: 'Reefer Spot Rate',
+    value: '$2.80/mi',
+    icon: '❄️',
     color: '#06b6d4',
     gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
-    description: 'Share of US freight tonnage moved by truck',
-    chartUnit: '%',
+    description: 'Average per-mile spot rate for refrigerated freight',
+    chartUnit: '/mi',
     chartData: [
-      { year: '2024', value: 72.7 }
+      { year: 'Jun 26', value: 2.68 },
+      { year: 'Jul 1', value: 2.74 },
+      { year: 'Jul 8', value: 2.85 },
+      { year: 'Jul 16', value: 2.83 },
+      { year: 'Jul 23', value: 2.80 }
     ],
     facts: [
-      { icon: '⚖️', text: '72.7% of all US freight weight moves by truck' },
-      { icon: '🚆', text: "That's more than rail, air, and barge combined" },
-      { icon: '🇨🇦', text: 'Trucks carry 67% of US-Canada surface trade' },
-      { icon: '🇲🇽', text: 'And 85% of goods crossing the Mexican border' }
+      { icon: '📈', text: 'Up 40% year over year' },
+      { icon: '🥶', text: 'Perishable freight keeps a premium over dry van year-round' },
+      { icon: '🚚', text: 'Dry van is running $2.44/mi in the same period, up 48% y/y' },
+      { icon: '🔮', text: 'DAT iQ forecasts continued rate growth over the next 12 months' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'Trucking Dive — weekly spot rate tracker, July 23, 2026'
   },
   {
-    title: 'Freight Tonnage Hauled',
-    value: '11.27B',
-    icon: '⚖️',
+    title: 'Flatbed Spot Rate',
+    value: '$2.95/mi',
+    icon: '🪵',
     color: '#10b981',
     gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
-    description: 'Total tons of freight trucks moved in a year',
-    chartUnit: 'B',
+    description: 'Average per-mile spot rate for flatbed freight',
+    chartUnit: '/mi',
     chartData: [
-      { year: '2023', value: 11.41 },
-      { year: '2024', value: 11.27 }
+      { year: 'Jun 26', value: 2.94 },
+      { year: 'Jul 1', value: 2.96 },
+      { year: 'Jul 8', value: 3.00 },
+      { year: 'Jul 16', value: 3.00 },
+      { year: 'Jul 23', value: 2.95 }
     ],
     facts: [
-      { icon: '📦', text: 'Trucks hauled 11.27 billion tons of freight in 2024' },
-      { icon: '📉', text: 'Down slightly from 11.41 billion tons the year before' },
-      { icon: '🛣️', text: 'Trucks logged 329.86 billion miles in 2023' },
-      { icon: '🔍', text: 'Every ton is a load someone had to find first' }
+      { icon: '📈', text: 'Up 42% year over year' },
+      { icon: '🏗️', text: 'Construction materials and industrial freight keep rates elevated' },
+      { icon: '🚚', text: 'The highest rate of the three main equipment types' },
+      { icon: '🔮', text: 'DAT iQ forecasts continued rate growth over the next 12 months' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'Trucking Dive — weekly spot rate tracker, July 23, 2026'
   },
   {
-    title: 'Active Motor Carriers',
-    value: '580K+',
-    icon: '🏢',
+    title: 'ATA Truck Tonnage Index',
+    value: '+1.4%',
+    icon: '📊',
     color: '#9333ea',
     gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
-    description: 'Companies and owner-operators registered with FMCSA',
-    chartUnit: 'K',
-    chartData: [
-      { year: 'Total', value: 580 },
-      { year: '≤10 trucks', value: 531 }
-    ],
-    facts: [
-      { icon: '🏢', text: '580,000+ active carriers are registered with the FMCSA (June 2025)' },
-      { icon: '🚚', text: '91.5% run a fleet of 10 trucks or fewer' },
-      { icon: '📋', text: '99.3% run fewer than 100 trucks' },
-      { icon: '🤝', text: 'These are your future clients — they need a dispatcher' }
-    ],
-    source: 'American Trucking Associations, FMCSA — as of June 2025'
-  },
-  {
-    title: 'Small Business Industry',
-    value: '91.5%',
-    icon: '🧩',
-    color: '#06b6d4',
-    gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
-    description: 'Share of US carriers that are small businesses',
+    description: 'US freight tonnage index, year over year, by month in 2026',
     chartUnit: '%',
     chartData: [
-      { year: '≤10 trucks', value: 91.5 },
-      { year: '≤100 trucks', value: 99.3 }
+      { year: 'Feb', value: 1.8 },
+      { year: 'Mar', value: 3.0 },
+      { year: 'Apr', value: 3.5 },
+      { year: 'May', value: -0.7 },
+      { year: 'Jun', value: -0.1 }
     ],
     facts: [
-      { icon: '🚚', text: '91.5% of US carriers run a fleet of 10 trucks or fewer' },
-      { icon: '📋', text: '99.3% run fewer than 100 trucks' },
-      { icon: '👤', text: 'Owner-operators and small fleets rarely have an in-house dispatcher' },
-      { icon: '🤝', text: "They're exactly who outsources dispatching" }
+      { icon: '📈', text: 'March 2026 rose 3% — the largest y/y gain since October 2022' },
+      { icon: '📉', text: 'April–May 2026 combined for a 4.1% contraction' },
+      { icon: '📊', text: 'First half of 2026 is up 1.4% year over year overall' },
+      { icon: '💬', text: '"The decrease in capacity over the last year probably has fleets feeling a little better" — Bob Costello, ATA Chief Economist' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'American Trucking Associations — ATA Truck Tonnage Index, June 2026'
   },
   {
-    title: 'People in the Industry',
-    value: '3.58M',
-    icon: '👷',
-    color: '#10b981',
-    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
-    description: 'Professional drivers and jobs in trucking',
-    chartUnit: 'M',
+    title: 'DAT iQ Rate Forecast',
+    value: '+12%',
+    icon: '📈',
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
+    description: 'Forecast rate growth over the next 12 months',
+    chartUnit: '%',
     chartData: [
-      { year: 'Drivers', value: 3.58 },
-      { year: 'Industry total', value: 8.4 }
+      { year: 'Contract', value: 8 },
+      { year: 'Spot', value: 12 }
     ],
     facts: [
-      { icon: '🚛', text: '3.58 million professional drivers work in the US (2024)' },
-      { icon: '💼', text: 'The industry supports 8.4 million jobs overall' },
-      { icon: '📉', text: 'Driver count dipped 0.8% year over year' },
-      { icon: '📞', text: 'A dispatcher is who finds the load and negotiates with the broker' }
+      { icon: '📈', text: 'DAT iQ expects dry van spot rates to rise ~12% over 12 months' },
+      { icon: '📋', text: 'Contract rates are expected to rise more modestly, ~8%' },
+      { icon: '🔀', text: 'ACT Research expects a more meaningful contract-rate increase in H2 2026' },
+      { icon: '⚖️', text: 'Spot is finally outpacing contract — a rare setup for this market' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'DAT iQ / ACT Research, 2026 forecast'
+  },
+  {
+    title: 'Rate Growth, Past 12 Months',
+    value: '+23%',
+    icon: '🔓',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
+    description: 'Actual spot rate growth over the trailing 12 months',
+    chartUnit: '%',
+    chartData: [
+      { year: 'Contract growth', value: 5 },
+      { year: 'Spot growth', value: 23 }
+    ],
+    facts: [
+      { icon: '📈', text: 'Spot rates rose 23%+ from March 2025 through February 2026' },
+      { icon: '📋', text: 'Contract rates over the same period rose only 5%' },
+      { icon: '🤝', text: 'Tender rejection rates sit in the low-to-mid teens — carriers have real leverage for the first time in 3 years' },
+      { icon: '🔮', text: 'DAT iQ expects another +12% spot and +8% contract over the next 12 months' }
+    ],
+    source: 'U.S. Bank Freight Payment Index / Trucking Dive, March 2025 – February 2026'
   }
 ];
 

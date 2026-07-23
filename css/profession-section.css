@@ -147,173 +147,128 @@
   font-family: 'Montserrat', sans-serif;
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+.stats-ticker {
+  display: flex;
+  flex-direction: column;
 }
 
-.stat-item {
-  text-align: center;
-  position: relative;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  /* Сдвиг параллакса приходит переменной из js/stats-animation.js — раньше скрипт
-     писал сюда inline-transform, а inline перебивает таблицу стилей, поэтому
-     :hover ниже вообще не срабатывал. */
-  transform: translateY(var(--stat-parallax-y, 0px));
-  /* transform НАМЕРЕННО исключён из transition: он меняется на каждом кадре
-     скролла, и «transition: all» заставлял браузер непрерывно доигрывать
-     анимацию — карточки ехали «желе». Остальные свойства анимируются как прежде. */
-  transition: background 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-              box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+.ticker-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  overflow: hidden;
-  z-index: 1;
+  transition: background 0.25s ease;
 }
 
-.stat-item:hover {
-  /* Подъём складывается со сдвигом параллакса, а не затирается им. */
-  transform: translateY(calc(var(--stat-parallax-y, 0px) - 8px)) scale(1.02);
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(147, 51, 234, 0.3);
-  box-shadow: 0 12px 40px rgba(147, 51, 234, 0.2);
+.ticker-row:last-child {
+  border-bottom: none;
 }
 
-.stat-item-cyan:hover {
-  border-color: rgba(6, 182, 212, 0.3);
-  box-shadow: 0 12px 40px rgba(6, 182, 212, 0.2);
+.ticker-row:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.stat-item-green:hover {
-  border-color: rgba(16, 185, 129, 0.3);
-  box-shadow: 0 12px 40px rgba(16, 185, 129, 0.2);
+.ticker-row.hero {
+  margin-bottom: 8px;
+  padding: 18px 14px;
+  border-bottom: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(249, 115, 22, 0.06));
+  border: 1px solid rgba(147, 51, 234, 0.2);
 }
 
-/* Пульсирующий индикатор */
-.stat-pulse {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 8px;
-  height: 8px;
-  background: #9333ea;
-  border-radius: 50%;
-  animation: pulse 2s ease-in-out infinite;
+.ticker-row.hero:hover {
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.16), rgba(249, 115, 22, 0.1));
 }
 
-.stat-item-cyan .stat-pulse {
-  background: #06b6d4;
-}
-
-.stat-item-green .stat-pulse {
-  background: #10b981;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-    box-shadow: 0 0 0 0 currentColor;
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.1);
-    box-shadow: 0 0 0 4px rgba(147, 51, 234, 0);
-  }
-}
-
-/* Tooltip */
-.stat-item:not([data-tooltip])::after { content: none; } /* no empty tooltip on plates without data-tooltip (hero rating) */
-.stat-item::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: calc(100% + 12px);
-  left: 50%;
-  transform: translateX(-50%) translateY(10px);
-  background: rgba(15, 23, 42, 0.98);
-  border: 1px solid rgba(6, 182, 212, 0.3);
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 500;
-  line-height: 1.4;
-  white-space: normal;
-  max-width: 220px;
+.ticker-icon {
+  font-size: 20px;
+  width: 28px;
+  flex-shrink: 0;
   text-align: center;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.3s ease;
-  z-index: 100;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
-.stat-item:hover::after {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-  pointer-events: none;
+.ticker-row.hero .ticker-icon {
+  font-size: 28px;
+  width: 36px;
 }
 
-/* Progress Bar */
-.stat-progress {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 2px;
-  margin: 12px 0 8px 0;
-  overflow: hidden;
+.ticker-main {
+  flex: 1;
+  min-width: 0;
 }
 
-.stat-progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #9333ea, #f97316);
-  border-radius: 2px;
-  width: 0;
-  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+.ticker-value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-/* Ensure stats are visible immediately on mobile/tablet for SEO */
-@media (max-width: 1024px) {
-  .stat-progress-bar {
-    width: var(--target-width, 95%) !important;
-  }
-  
-  .stat-progress-bar[data-width="95%"] {
-    --target-width: 95%;
-  }
-  
-  .stat-progress-bar[data-width="88%"] {
-    --target-width: 88%;
-  }
-  
-  .stat-progress-bar[data-width="70%"] {
-    --target-width: 70%;
-  }
+.ticker-badge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+  padding: 2px 9px;
+  white-space: nowrap;
+  font-family: 'Montserrat', sans-serif;
 }
 
-.stat-item-cyan .stat-progress-bar {
-  background: linear-gradient(90deg, #06b6d4, #0ea5e9);
+.ticker-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+  font-family: 'Montserrat', sans-serif;
+  margin-top: 2px;
 }
 
-.stat-item-green .stat-progress-bar {
-  background: linear-gradient(90deg, #10b981, #14b8a6);
+.ticker-row.hero .ticker-label {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ticker-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.ticker-change {
+  font-size: 13px;
+  font-weight: 800;
+  font-family: 'Montserrat', sans-serif;
+}
+
+.ticker-change.up { color: #34d399; }
+.ticker-change.down { color: #f87171; }
+
+.ticker-date {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  font-family: 'Montserrat', sans-serif;
+  white-space: nowrap;
 }
 
 .stat-value {
-  font-size: 40px;
+  font-size: 24px;
   font-weight: 900;
   background: linear-gradient(135deg, #9333ea, #f97316);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 6px;
   font-family: 'Montserrat', sans-serif;
-  letter-spacing: -1px;
+  letter-spacing: -0.5px;
+}
+
+.ticker-row.hero .stat-value {
+  font-size: 32px;
 }
 
 .stat-value-cyan {
@@ -328,22 +283,6 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
-  font-weight: 600;
-  font-family: 'Montserrat', sans-serif;
-}
-
-.stat-hint {
-  font-size: 11.5px;
-  color: rgba(255, 255, 255, 0.4);
-  font-weight: 500;
-  margin-top: 4px;
-  line-height: 1.4;
-  font-family: 'Montserrat', sans-serif;
 }
 
 .stats-source {
@@ -408,50 +347,37 @@
 
   .stats-title {
     font-size: 18px;
-    margin-bottom: 24px;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
+  .ticker-row {
+    gap: 10px;
+    padding: 11px 4px;
   }
 
-  .stat-item {
-    padding: 18px;
+  .ticker-icon {
+    font-size: 17px;
+    width: 24px;
   }
 
-  .stat-item:hover {
-    transform: translateY(-4px) scale(1.01);
-  }
-
-  .stat-item::after {
-    max-width: 200px;
-    font-size: 11px;
-    padding: 10px 14px;
-  }
-
-  .stat-pulse {
-    top: 14px;
-    right: 14px;
-    width: 6px;
-    height: 6px;
-  }
-
-  .stat-progress {
-    height: 3px;
-    margin: 10px 0 6px 0;
+  .ticker-row.hero .ticker-icon {
+    font-size: 22px;
+    width: 30px;
   }
 
   .stat-value {
-    font-size: 36px;
+    font-size: 19px;
   }
 
-  .stat-label {
-    font-size: 12px;
+  .ticker-row.hero .stat-value {
+    font-size: 25px;
   }
 
-  .stat-hint {
+  .ticker-label {
     font-size: 11px;
+  }
+
+  .ticker-change {
+    font-size: 12px;
   }
 }
 
@@ -496,15 +422,26 @@
     font-size: 16px;
   }
 
+  .ticker-row {
+    flex-wrap: wrap;
+  }
+
+  .ticker-meta {
+    margin-left: 42px;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
   .stat-value {
-    font-size: 32px;
+    font-size: 17px;
   }
 
-  .stat-label {
-    font-size: 11px;
+  .ticker-row.hero .stat-value {
+    font-size: 22px;
   }
 
-  .stat-hint {
+  .ticker-label {
     font-size: 10.5px;
   }
 }

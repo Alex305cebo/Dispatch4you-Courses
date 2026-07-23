@@ -12,25 +12,17 @@ function animateCounter(element) {
   const steps = 60;
   const increment = target / steps;
   let current = 0;
-  
+
   const timer = setInterval(() => {
     current += increment;
     if (current >= target) {
       current = target;
       clearInterval(timer);
     }
-    
+
     const displayValue = decimal > 0 ? current.toFixed(decimal) : Math.floor(current);
     element.textContent = prefix + displayValue + suffix;
   }, duration / steps);
-}
-
-// Анимация прогресс-бара
-function animateProgressBar(element) {
-  const targetWidth = element.getAttribute('data-width');
-  setTimeout(() => {
-    element.style.width = targetWidth;
-  }, 300);
 }
 
 // Intersection Observer для запуска анимаций
@@ -43,17 +35,11 @@ const statsObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
     if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
       entry.target.classList.add('animated');
-      
+
       // Анимация счётчиков
       const counters = entry.target.querySelectorAll('.stat-value');
       counters.forEach(counter => {
         animateCounter(counter);
-      });
-      
-      // Анимация прогресс-баров
-      const progressBars = entry.target.querySelectorAll('.stat-progress-bar');
-      progressBars.forEach(bar => {
-        animateProgressBar(bar);
       });
     }
   });
@@ -63,15 +49,15 @@ const statsObserver = new IntersectionObserver((entries) => {
 function initStatsImmediately() {
   const statsSection = document.querySelector('.profession-stats');
   if (!statsSection) return;
-  
+
   // Проверяем, является ли это бот или мобильное устройство
-  const isMobileOrBot = /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu/i.test(navigator.userAgent) || 
+  const isMobileOrBot = /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu/i.test(navigator.userAgent) ||
                         window.innerWidth <= 1024;
-  
+
   if (isMobileOrBot) {
     // Немедленно показываем финальные значения без анимации
     statsSection.classList.add('animated');
-    
+
     const counters = statsSection.querySelectorAll('.stat-value');
     counters.forEach(counter => {
       const target = parseFloat(counter.getAttribute('data-target'));
@@ -81,12 +67,6 @@ function initStatsImmediately() {
       const displayValue = decimal > 0 ? target.toFixed(decimal) : Math.floor(target);
       counter.textContent = prefix + displayValue + suffix;
     });
-    
-    const progressBars = statsSection.querySelectorAll('.stat-progress-bar');
-    progressBars.forEach(bar => {
-      const targetWidth = bar.getAttribute('data-width');
-      bar.style.width = targetWidth;
-    });
   }
 }
 
@@ -94,62 +74,25 @@ function initStatsImmediately() {
 document.addEventListener('DOMContentLoaded', () => {
   // Сначала инициализируем статистику немедленно для ботов и мобильных
   initStatsImmediately();
-  
+
   // Затем настраиваем observer для десктопа (для анимации при скролле)
-  const isMobileOrBot = /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu/i.test(navigator.userAgent) || 
+  const isMobileOrBot = /bot|crawler|spider|crawling|googlebot|bingbot|yandex|baidu/i.test(navigator.userAgent) ||
                         window.innerWidth <= 1024;
-  
+
   if (!isMobileOrBot) {
     const statsSection = document.querySelector('.profession-stats');
     if (statsSection) {
       statsObserver.observe(statsSection);
     }
   }
-  
-  // Параллакс эффект при скролле — ТОЛЬКО на десктопе. Раньше слушатель вешался
-  // безусловно, в том числе на мобильных, где анимации выше (строка 71)
-  // сознательно отключены: на каждый кадр скролла карточки получали новый
-  // inline-transform, а transition: all в profession-section.css заставлял
-  // браузер непрерывно доигрывать анимацию — отсюда «желейный» лаг.
-  let ticking = false;
 
-  if (!isMobileOrBot) {
-    window.addEventListener('scroll', () => {
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          applyParallax();
-          ticking = false;
-        });
-        ticking = true;
-      }
-    }, { passive: true });
-  }
-
-  function applyParallax() {
-    const statsSection = document.querySelector('.profession-stats');
-    if (!statsSection) return;
-
-    const rect = statsSection.getBoundingClientRect();
-    const scrollPercent = (window.innerHeight - rect.top) / (window.innerHeight + rect.height);
-    
-    if (scrollPercent > 0 && scrollPercent < 1) {
-      const statItems = statsSection.querySelectorAll('.stat-item');
-      statItems.forEach((item, index) => {
-        const offset = (scrollPercent - 0.5) * 20 * (index % 2 === 0 ? 1 : -1);
-        // Пишем переменную, а не inline-transform: иначе inline перебивает
-        // таблицу стилей и :hover у карточки перестаёт работать.
-        item.style.setProperty('--stat-parallax-y', offset + 'px');
-      });
-    }
-  }
-  
   // Добавляем эффект при наведении на карточки профессии
   const professionCards = document.querySelectorAll('.profession-card');
   professionCards.forEach(card => {
     card.addEventListener('mouseenter', function() {
       this.style.transform = 'translateY(-6px) scale(1.01)';
     });
-    
+
     card.addEventListener('mouseleave', function() {
       this.style.transform = 'translateY(0) scale(1)';
     });
@@ -158,32 +101,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Дополнительная анимация для статистики при клике
 document.addEventListener('DOMContentLoaded', () => {
-  const statsGrid = document.querySelector('.stats-grid');
-  
-  if (!statsGrid) {
-    console.error('Stats grid not found!');
+  const statsTicker = document.querySelector('.stats-ticker');
+
+  if (!statsTicker) {
+    console.error('Stats ticker not found!');
     return;
   }
-  
-  
+
   // Используем делегирование событий
-  statsGrid.addEventListener('click', function(e) {
-    const statItem = e.target.closest('.stat-item');
-    
-    if (!statItem) {
+  statsTicker.addEventListener('click', function(e) {
+    const row = e.target.closest('.ticker-row');
+
+    if (!row) {
       return;
     }
-    
-    const allStatItems = Array.from(statsGrid.querySelectorAll('.stat-item'));
-    const index = allStatItems.indexOf(statItem);
-    
-    
+
+    const allRows = Array.from(statsTicker.querySelectorAll('.ticker-row'));
+    const index = allRows.indexOf(row);
+
     // Эффект "взрыва"
-    statItem.style.transform = 'scale(1.05)';
+    row.style.transform = 'scale(1.02)';
     setTimeout(() => {
-      statItem.style.transform = '';
+      row.style.transform = '';
     }, 200);
-    
+
     // Создаём ripple эффект
     const ripple = document.createElement('div');
     ripple.style.position = 'absolute';
@@ -193,28 +134,29 @@ document.addEventListener('DOMContentLoaded', () => {
     ripple.style.height = '20px';
     ripple.style.pointerEvents = 'none';
     ripple.style.zIndex = '1000';
-    
-    const rect = statItem.getBoundingClientRect();
+
+    const rect = row.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     ripple.style.left = x + 'px';
     ripple.style.top = y + 'px';
     ripple.style.transform = 'translate(-50%, -50%) scale(0)';
     ripple.style.transition = 'transform 0.6s ease-out, opacity 0.6s ease-out';
     ripple.style.opacity = '1';
-    
-    statItem.appendChild(ripple);
-    
+
+    row.style.position = row.style.position || 'relative';
+    row.appendChild(ripple);
+
     setTimeout(() => {
       ripple.style.transform = 'translate(-50%, -50%) scale(20)';
       ripple.style.opacity = '0';
     }, 10);
-    
+
     setTimeout(() => {
       ripple.remove();
     }, 600);
-    
+
     // Открываем модал с детальной информацией
     openStatsModal(index);
   });
@@ -226,125 +168,136 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const statsData = [
   {
-    title: 'Оборот рынка грузоперевозок',
-    value: '$906B',
-    icon: '💰',
+    title: 'Спот-ставка Dry Van',
+    value: '$2.44/mi',
+    icon: '🚚',
     color: '#9333ea',
     gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
-    description: 'Валовая выручка индустрии грузоперевозок США',
-    chartUnit: 'B',
+    description: 'Средняя спот-ставка за милю на рынке dry van, еженедельные данные',
+    chartUnit: '/mi',
     chartData: [
-      { year: '2021', value: 875.5 },
-      { year: '2022', value: 940.8 },
-      { year: '2023', value: 1004 },
-      { year: '2024', value: 906 }
+      { year: '26 июня', value: 2.38 },
+      { year: '1 июля', value: 2.43 },
+      { year: '8 июля', value: 2.49 },
+      { year: '16 июля', value: 2.50 },
+      { year: '23 июля', value: 2.44 }
     ],
     facts: [
-      { icon: '📈', text: '2023 год был пиковым: $1.004 трлн выручки' },
-      { icon: '📉', text: 'В 2024-м рынок «остыл» до $906 млрд — фрахтовая рецессия' },
-      { icon: '🌍', text: 'Всё равно крупнейший грузовой рынок в мире' },
-      { icon: '🏢', text: '91.5% перевозчиков на этом рынке — малый бизнес до 10 траков' }
+      { icon: '📈', text: 'Ставка выросла на 48% (+79¢) год к году' },
+      { icon: '🏆', text: 'Пиковый уровень с 2022 года — carrier впервые за 3 года диктуют условия' },
+      { icon: '❄️', text: 'Reefer растёт на 40%, Flatbed — на 42% год к году' },
+      { icon: '🔮', text: 'DAT iQ прогнозирует ещё +12% по споту в течение 12 месяцев' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'Trucking Dive — еженедельный трекер спот-ставок, 23 июля 2026'
   },
   {
-    title: 'Грузы на траках',
-    value: '72.7%',
-    icon: '🛣️',
+    title: 'Спот-ставка Reefer',
+    value: '$2.80/mi',
+    icon: '❄️',
     color: '#06b6d4',
     gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
-    description: 'Доля веса грузов США, перевозимых автотранспортом',
-    chartUnit: '%',
+    description: 'Средняя спот-ставка за милю на рынке рефрижераторных перевозок',
+    chartUnit: '/mi',
     chartData: [
-      { year: '2024', value: 72.7 }
+      { year: '26 июня', value: 2.68 },
+      { year: '1 июля', value: 2.74 },
+      { year: '8 июля', value: 2.85 },
+      { year: '16 июля', value: 2.83 },
+      { year: '23 июля', value: 2.80 }
     ],
     facts: [
-      { icon: '⚖️', text: '72.7% веса всех грузов США едет именно на траках' },
-      { icon: '🚆', text: 'Это больше, чем поезда, самолёты и баржи вместе взятые' },
-      { icon: '🇨🇦', text: '67% сухопутной торговли с Канадой везут траки' },
-      { icon: '🇲🇽', text: '85% товаров через границу с Мексикой — тоже на траках' }
+      { icon: '📈', text: 'Ставка выросла на 40% год к году' },
+      { icon: '🥶', text: 'Скоропортящиеся грузы держат премию к dry van круглый год' },
+      { icon: '🚚', text: 'Dry van в это же время — $2.44/mi, +48% год к году' },
+      { icon: '🔮', text: 'DAT iQ прогнозирует дальнейший рост ставок в течение 12 месяцев' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'Trucking Dive — еженедельный трекер спот-ставок, 23 июля 2026'
   },
   {
-    title: 'Вес перевезённых грузов',
-    value: '11.27B',
-    icon: '⚖️',
+    title: 'Спот-ставка Flatbed',
+    value: '$2.95/mi',
+    icon: '🪵',
     color: '#10b981',
     gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
-    description: 'Сколько тонн грузов перевезли траки США за год',
-    chartUnit: 'B',
+    description: 'Средняя спот-ставка за милю на рынке flatbed-перевозок',
+    chartUnit: '/mi',
     chartData: [
-      { year: '2023', value: 11.41 },
-      { year: '2024', value: 11.27 }
+      { year: '26 июня', value: 2.94 },
+      { year: '1 июля', value: 2.96 },
+      { year: '8 июля', value: 3.00 },
+      { year: '16 июля', value: 3.00 },
+      { year: '23 июля', value: 2.95 }
     ],
     facts: [
-      { icon: '📦', text: '11.27 млрд тонн грузов перевезли траки США в 2024 году' },
-      { icon: '📉', text: 'Годом ранее было 11.41 млрд тонн — небольшое снижение' },
-      { icon: '🛣️', text: '329.86 млрд миль проехали траки США в 2023 году' },
-      { icon: '🔍', text: 'Каждая тонна — груз, который кто-то должен был найти' }
+      { icon: '📈', text: 'Ставка выросла на 42% год к году' },
+      { icon: '🏗️', text: 'Стройматериалы и промышленные грузы держат ставки высокими' },
+      { icon: '🚚', text: 'Самый высокий тариф из трёх основных типов кузова' },
+      { icon: '🔮', text: 'DAT iQ прогнозирует дальнейший рост ставок в течение 12 месяцев' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'Trucking Dive — еженедельный трекер спот-ставок, 23 июля 2026'
   },
   {
-    title: 'Активные перевозчики',
-    value: '580K+',
-    icon: '🏢',
+    title: 'ATA Truck Tonnage Index',
+    value: '+1.4%',
+    icon: '📊',
     color: '#9333ea',
     gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
-    description: 'Компании и owner-operators, зарегистрированные в FMCSA',
-    chartUnit: 'K',
-    chartData: [
-      { year: 'Всего', value: 580 },
-      { year: '≤10 траков', value: 531 }
-    ],
-    facts: [
-      { icon: '🏢', text: '580,000+ активных перевозчиков зарегистрировано в FMCSA (июнь 2025)' },
-      { icon: '🚚', text: '91.5% из них управляют парком из 10 траков или меньше' },
-      { icon: '📋', text: '99.3% — парком меньше 100 траков' },
-      { icon: '🤝', text: 'Это ваши будущие клиенты — им нужен диспетчер' }
-    ],
-    source: 'American Trucking Associations, FMCSA — данные на июнь 2025'
-  },
-  {
-    title: 'Малый бизнес индустрии',
-    value: '91.5%',
-    icon: '🧩',
-    color: '#06b6d4',
-    gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
-    description: 'Какая часть перевозчиков США — небольшие компании',
+    description: 'Индекс тоннажа грузоперевозок США, год к году, по месяцам 2026 года',
     chartUnit: '%',
     chartData: [
-      { year: '≤10 траков', value: 91.5 },
-      { year: '≤100 траков', value: 99.3 }
+      { year: 'Фев', value: 1.8 },
+      { year: 'Мар', value: 3.0 },
+      { year: 'Апр', value: 3.5 },
+      { year: 'Май', value: -0.7 },
+      { year: 'Июн', value: -0.1 }
     ],
     facts: [
-      { icon: '🚚', text: '91.5% перевозчиков США — парк из 10 траков или меньше' },
-      { icon: '📋', text: '99.3% перевозчиков управляют парком меньше 100 траков' },
-      { icon: '👤', text: 'У owner-operator и малых компаний обычно нет своего диспетчера' },
-      { icon: '🤝', text: 'Именно такие перевозчики чаще всего нанимают диспетчера на аутсорсе' }
+      { icon: '📈', text: 'Март 2026 — рост на 3%, максимум с октября 2022 года' },
+      { icon: '📉', text: 'Апрель–май 2026 — суммарное падение индекса на 4.1%' },
+      { icon: '📊', text: 'Итог за 1-е полугодие 2026 — рост на 1.4% год к году' },
+      { icon: '💬', text: '«Снижение мощностей за год, вероятно, помогает перевозчикам чувствовать себя увереннее» — Bob Costello, главный экономист ATA' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'American Trucking Associations — ATA Truck Tonnage Index, июнь 2026'
   },
   {
-    title: 'Люди в индустрии',
-    value: '3.58M',
-    icon: '👷',
-    color: '#10b981',
-    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
-    description: 'Профессиональные водители и рабочие места в грузоперевозках',
-    chartUnit: 'M',
+    title: 'Прогноз ставок DAT iQ',
+    value: '+12%',
+    icon: '📈',
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
+    description: 'Прогноз роста ставок на ближайшие 12 месяцев',
+    chartUnit: '%',
     chartData: [
-      { year: 'Водители', value: 3.58 },
-      { year: 'Всего в отрасли', value: 8.4 }
+      { year: 'Contract', value: 8 },
+      { year: 'Spot', value: 12 }
     ],
     facts: [
-      { icon: '🚛', text: '3.58 млн профессиональных водителей работают в США (2024)' },
-      { icon: '💼', text: 'Всего индустрия создаёт 8.4 млн рабочих мест' },
-      { icon: '📉', text: 'Число водителей снизилось на 0.8% за год' },
-      { icon: '📞', text: 'Диспетчер — тот, кто находит груз и договаривается с брокером' }
+      { icon: '📈', text: 'DAT iQ ожидает рост спот-ставок dry van на ~12% за 12 месяцев' },
+      { icon: '📋', text: 'Контрактные ставки при этом вырастут скромнее — на ~8%' },
+      { icon: '🔀', text: 'ACT Research ожидает более заметный рост контрактных ставок во 2-м полугодии 2026' },
+      { icon: '⚖️', text: 'Спот наконец обгоняет контракт — редкая ситуация для рынка' }
     ],
-    source: 'American Trucking Associations — Trucking Trends 2025'
+    source: 'DAT iQ / ACT Research, прогноз на 2026 год'
+  },
+  {
+    title: 'Рост ставок за 12 месяцев',
+    value: '+23%',
+    icon: '🔓',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
+    description: 'Фактический рост спот-ставок за последние 12 месяцев',
+    chartUnit: '%',
+    chartData: [
+      { year: 'Contract рост', value: 5 },
+      { year: 'Spot рост', value: 23 }
+    ],
+    facts: [
+      { icon: '📈', text: 'Спот-ставки выросли на 23%+ с марта 2025 по февраль 2026' },
+      { icon: '📋', text: 'Контрактные ставки за тот же период — только +5%' },
+      { icon: '🤝', text: 'Tender rejection держится на уровне low-to-mid teens % — у перевозчиков впервые за 3 года есть реальный рычаг в переговорах' },
+      { icon: '🔮', text: 'DAT iQ ожидает ещё +12% по споту и +8% по контракту в следующие 12 месяцев' }
+    ],
+    source: 'U.S. Bank Freight Payment Index / Trucking Dive, март 2025 – февраль 2026'
   }
 ];
 
@@ -352,9 +305,9 @@ function openStatsModal(index) {
   const modal = document.getElementById('statsModal');
   const modalContent = document.getElementById('statsModalContent');
   const data = statsData[index];
-  
+
   if (!data) return;
-  
+
   // Генерируем HTML для графика
   const maxValue = Math.max(...data.chartData.map(d => d.value));
   const chartBars = data.chartData.map(item => {
@@ -368,7 +321,7 @@ function openStatsModal(index) {
       </div>
     `;
   }).join('');
-  
+
   // Генерируем HTML для фактов
   const factsHTML = data.facts.map(fact => `
     <div class="stats-fact">
@@ -376,7 +329,7 @@ function openStatsModal(index) {
       <p>${fact.text}</p>
     </div>
   `).join('');
-  
+
   modalContent.innerHTML = `
     <div class="stats-modal-header">
       <div class="stats-modal-icon" style="background: ${data.gradient};">${data.icon}</div>
@@ -384,27 +337,27 @@ function openStatsModal(index) {
       <p class="stats-modal-subtitle">${data.description}</p>
       <div class="stats-modal-value" style="background: ${data.gradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">${data.value}</div>
     </div>
-    
+
     <div class="stats-modal-body">
       <h3>В цифрах</h3>
       <div class="stats-chart">
         ${chartBars}
       </div>
-      
+
       <h3>Интересные факты</h3>
       <div class="stats-facts">
         ${factsHTML}
       </div>
-      
+
       <div class="stats-modal-source">
         <p>📊 Источник: ${data.source}</p>
       </div>
     </div>
   `;
-  
+
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
-  
+
   // Анимация появления графика
   setTimeout(() => {
     const bars = modal.querySelectorAll('.chart-bar');

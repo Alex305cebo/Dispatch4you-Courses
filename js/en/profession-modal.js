@@ -79,6 +79,13 @@ const professionData = {
             <p>A laptop, stable internet, and a phone — that's all you need</p>
           </div>
         </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🌐</span>
+          <div>
+            <strong>Really works from 50+ countries</strong>
+            <p>Dispatchers in this profession are physically based across dozens of countries — a US carrier doesn't care where you're calling from</p>
+          </div>
+        </div>
       </div>
       <div class="profession-modal-note">
         <p>🌐 <strong>Freedom:</strong> No office required — work wherever you're comfortable and productive.</p>
@@ -151,7 +158,14 @@ const professionData = {
           <span class="item-icon">🇺🇸</span>
           <div>
             <strong>Stability</strong>
-            <p>Freight is the backbone of the US economy ($875B per year)</p>
+            <p>Freight is the backbone of the US economy — a market worth hundreds of billions of dollars a year</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🛒</span>
+          <div>
+            <strong>Amazon, Walmart, Target</strong>
+            <p>The largest retailers generate thousands of loads daily, and e-commerce is growing 15-20% a year</p>
           </div>
         </div>
         <div class="profession-modal-item">
@@ -164,6 +178,88 @@ const professionData = {
       </div>
       <div class="profession-modal-note">
         <p>📈 <strong>Future:</strong> A profession with long-term prospects and stable demand.</p>
+      </div>
+    `
+  },
+  license: {
+    icon: '📜',
+    title: 'No License Needed',
+    subtitle: 'A dispatcher is an independent contractor',
+    content: `
+      <h4>A dispatcher is not a broker</h4>
+      <div class="profession-modal-list">
+        <div class="profession-modal-item">
+          <span class="item-icon">📋</span>
+          <div>
+            <strong>Not a broker</strong>
+            <p>Brokers must hold a federal MC Broker Authority. Dispatchers work differently — no license required</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🤝</span>
+          <div>
+            <strong>Independent contractor</strong>
+            <p>You act on the carrier's behalf under a Dispatcher Agreement, using their MC number</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">⚖️</span>
+          <div>
+            <strong>Legally clean</strong>
+            <p>All liability toward the shipper stays with the carrier, not you</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">🚀</span>
+          <div>
+            <strong>Start without red tape</strong>
+            <p>No months-long wait for licensing — you start working right after training</p>
+          </div>
+        </div>
+      </div>
+      <div class="profession-modal-note">
+        <p>💡 <strong>Important:</strong> this isn't a gray area — it's the standard, legal way thousands of dispatchers work in the US.</p>
+      </div>
+    `
+  },
+  shortage: {
+    icon: '🚨',
+    title: 'Driver Shortage — Your Opening',
+    subtitle: 'The labor market is on your side',
+    content: `
+      <h4>Carriers are short on hands behind the wheel</h4>
+      <div class="profession-modal-list">
+        <div class="profession-modal-item">
+          <span class="item-icon">🚛</span>
+          <div>
+            <strong>80,000 drivers</strong>
+            <p>That's the shortage US trucking companies face (American Trucking Associations, 2024)</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">⏱️</span>
+          <div>
+            <strong>Fast first load</strong>
+            <p>With proper training, you can realistically close your first deal after 2-3 weeks of practice</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">💰</span>
+          <div>
+            <strong>Income range</strong>
+            <p>$45,000-65,000/year on average; top dispatchers with 5-10 trucks earn $100,000+/year</p>
+          </div>
+        </div>
+        <div class="profession-modal-item">
+          <span class="item-icon">📈</span>
+          <div>
+            <strong>The gap is growing</strong>
+            <p>Forecasts point to an even larger driver shortage by the end of the decade</p>
+          </div>
+        </div>
+      </div>
+      <div class="profession-modal-note">
+        <p>🎯 <strong>Bottom line:</strong> carriers are short on hands behind the wheel — which means growing demand for people who keep those wheels loaded with work.</p>
       </div>
     `
   }
