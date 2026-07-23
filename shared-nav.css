@@ -43,32 +43,25 @@ body {
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     filter: drop-shadow(0 2px 8px rgba(6,182,212,0.25)) 
             drop-shadow(0 1px 3px rgba(56,189,248,0.15));
-    animation: logo-float 8s ease-in-out infinite, logo-glow 6s ease-in-out infinite;
+    /* logo-float — дёшево (только transform, GPU) — оставлено.
+       ponytail: было ", logo-glow 6s ease-in-out infinite" (пульсация filter —
+       дорого, не-композитно, на каждой странице сайта). Убрано ради
+       производительности (см. NO_LCP); базовый filter выше остаётся. */
+    animation: logo-float 8s ease-in-out infinite;
 }
 
 @keyframes logo-float {
-    0%, 100% { 
+    0%, 100% {
         transform: translateY(0px) scale(1);
     }
     25% {
         transform: translateY(-1px) scale(1.005);
     }
-    50% { 
+    50% {
         transform: translateY(-2px) scale(1.01);
     }
     75% {
         transform: translateY(-1px) scale(1.005);
-    }
-}
-
-@keyframes logo-glow {
-    0%, 100% {
-        filter: drop-shadow(0 2px 8px rgba(6,182,212,0.25)) 
-                drop-shadow(0 1px 3px rgba(56,189,248,0.15));
-    }
-    50% {
-        filter: drop-shadow(0 3px 12px rgba(6,182,212,0.35)) 
-                drop-shadow(0 2px 5px rgba(56,189,248,0.2));
     }
 }
 
@@ -96,19 +89,13 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    white-space: nowrap; 
+    white-space: nowrap;
     letter-spacing: 1px;
-    animation: gradient-shift 8s ease infinite;
+    /* ponytail: было animation: gradient-shift 8s ease infinite
+       (background-position на background-clip:text — дорого, не-композитно,
+       на каждой странице сайта, ×2 со слоем-подсветкой ниже). Убрано ради
+       производительности (см. NO_LCP); градиент остаётся статичным. */
     position: relative;
-}
-
-@keyframes gradient-shift {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
 }
 
 /* Тонкий эффект свечения за текстом */
@@ -125,7 +112,6 @@ body {
     background-clip: text;
     filter: blur(6px);
     opacity: 0.3;
-    animation: gradient-shift 8s ease infinite;
 }
 
 .logo-subtitle {

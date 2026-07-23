@@ -93,16 +93,9 @@ body::before {
     linear-gradient(135deg, #050810 0%, #04060c 50%, #050810 100%);
   pointer-events: none;
   z-index: 0;
-  animation: backgroundShift 20s ease infinite;
-}
-
-@keyframes backgroundShift {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.92;
-  }
+  /* ponytail: было animation: backgroundShift 20s infinite (opacity 1↔0.92) —
+     бесконечный repaint во весь вьюпорт весь срок жизни страницы, глазом
+     разница почти не видна. Убрано ради производительности (см. NO_LCP). */
 }
 
 /* Neural Background Canvas */
@@ -157,17 +150,14 @@ p {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: rainbowShift 6s ease-in-out infinite;
+  /* ponytail: было animation: rainbowShift 6s infinite (background-position
+     shift на background-clip:text) — класс используется во множестве
+     заголовков сайта, т.е. столько же вечных анимаций разом. Убрано ради
+     производительности (см. NO_LCP); градиент остаётся, просто статичный. */
   font-size: inherit !important;
   font-weight: inherit !important;
   line-height: inherit !important;
   letter-spacing: inherit !important;
-}
-
-@keyframes rainbowShift {
-  0% { background-position: 0% center; }
-  50% { background-position: 100% center; }
-  100% { background-position: 0% center; }
 }
 
 /* Buttons */
