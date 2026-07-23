@@ -226,70 +226,125 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const statsData = [
   {
-    title: 'Объём рынка грузоперевозок',
-    value: '$875B',
+    title: 'Оборот рынка грузоперевозок',
+    value: '$906B',
     icon: '💰',
     color: '#9333ea',
     gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
-    description: 'Годовой оборот индустрии грузоперевозок США',
+    description: 'Валовая выручка индустрии грузоперевозок США',
+    chartUnit: 'B',
     chartData: [
-      { year: '2020', value: 732 },
-      { year: '2021', value: 796 },
-      { year: '2022', value: 823 },
-      { year: '2023', value: 850 },
-      { year: '2024', value: 875 }
+      { year: '2021', value: 875.5 },
+      { year: '2022', value: 940.8 },
+      { year: '2023', value: 1004 },
+      { year: '2024', value: 906 }
     ],
     facts: [
-      { icon: '📈', text: 'Рост на 12% за последний год' },
-      { icon: '🌍', text: 'Крупнейший рынок в мире' },
-      { icon: '💼', text: '7.4 млн рабочих мест в индустрии' },
-      { icon: '🚛', text: '70% всех грузов перевозится автотранспортом' }
+      { icon: '📈', text: '2023 год был пиковым: $1.004 трлн выручки' },
+      { icon: '📉', text: 'В 2024-м рынок «остыл» до $906 млрд — фрахтовая рецессия' },
+      { icon: '🌍', text: 'Всё равно крупнейший грузовой рынок в мире' },
+      { icon: '🏢', text: '91.5% перевозчиков на этом рынке — малый бизнес до 10 траков' }
     ],
-    source: 'American Trucking Associations, 2024'
+    source: 'American Trucking Associations — Trucking Trends 2025'
   },
   {
-    title: 'Грузовики на дорогах',
-    value: '3.5M+',
-    icon: '🚛',
+    title: 'Грузы на траках',
+    value: '72.7%',
+    icon: '🛣️',
     color: '#06b6d4',
     gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
-    description: 'Количество активных грузовиков в США',
+    description: 'Доля веса грузов США, перевозимых автотранспортом',
+    chartUnit: '%',
     chartData: [
-      { year: '2020', value: 3.1 },
-      { year: '2021', value: 3.2 },
-      { year: '2022', value: 3.3 },
-      { year: '2023', value: 3.4 },
-      { year: '2024', value: 3.5 }
+      { year: '2024', value: 72.7 }
     ],
     facts: [
-      { icon: '📊', text: 'Постоянный рост парка на 3-4% в год' },
-      { icon: '🔧', text: 'Средний возраст грузовика: 7.2 года' },
-      { icon: '⚡', text: '15% парка — электрические и гибридные' },
-      { icon: '🛣️', text: 'Средний пробег: 45,000 миль в год' }
+      { icon: '⚖️', text: '72.7% веса всех грузов США едет именно на траках' },
+      { icon: '🚆', text: 'Это больше, чем поезда, самолёты и баржи вместе взятые' },
+      { icon: '🇨🇦', text: '67% сухопутной торговли с Канадой везут траки' },
+      { icon: '🇲🇽', text: '85% товаров через границу с Мексикой — тоже на траках' }
     ],
-    source: 'Federal Motor Carrier Safety Administration, 2024'
+    source: 'American Trucking Associations — Trucking Trends 2025'
   },
   {
-    title: 'Доля грузовых перевозок',
-    value: '70%',
-    icon: '📦',
+    title: 'Вес перевезённых грузов',
+    value: '11.27B',
+    icon: '⚖️',
     color: '#10b981',
     gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
-    description: 'Процент грузов, перевозимых автотранспортом',
+    description: 'Сколько тонн грузов перевезли траки США за год',
+    chartUnit: 'B',
     chartData: [
-      { year: '2020', value: 68 },
-      { year: '2021', value: 68.5 },
-      { year: '2022', value: 69 },
-      { year: '2023', value: 69.5 },
-      { year: '2024', value: 70 }
+      { year: '2023', value: 11.41 },
+      { year: '2024', value: 11.27 }
     ],
     facts: [
-      { icon: '🏭', text: 'Основной способ доставки товаров' },
-      { icon: '📱', text: 'E-commerce увеличивает спрос на 15% ежегодно' },
-      { icon: '⏱️', text: 'Средняя скорость доставки: 2-3 дня' },
-      { icon: '🌐', text: 'Покрывает 100% территории США' }
+      { icon: '📦', text: '11.27 млрд тонн грузов перевезли траки США в 2024 году' },
+      { icon: '📉', text: 'Годом ранее было 11.41 млрд тонн — небольшое снижение' },
+      { icon: '🛣️', text: '329.86 млрд миль проехали траки США в 2023 году' },
+      { icon: '🔍', text: 'Каждая тонна — груз, который кто-то должен был найти' }
     ],
-    source: 'U.S. Department of Transportation, 2024'
+    source: 'American Trucking Associations — Trucking Trends 2025'
+  },
+  {
+    title: 'Активные перевозчики',
+    value: '580K+',
+    icon: '🏢',
+    color: '#9333ea',
+    gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
+    description: 'Компании и owner-operators, зарегистрированные в FMCSA',
+    chartUnit: 'K',
+    chartData: [
+      { year: 'Всего', value: 580 },
+      { year: '≤10 траков', value: 531 }
+    ],
+    facts: [
+      { icon: '🏢', text: '580,000+ активных перевозчиков зарегистрировано в FMCSA (июнь 2025)' },
+      { icon: '🚚', text: '91.5% из них управляют парком из 10 траков или меньше' },
+      { icon: '📋', text: '99.3% — парком меньше 100 траков' },
+      { icon: '🤝', text: 'Это ваши будущие клиенты — им нужен диспетчер' }
+    ],
+    source: 'American Trucking Associations, FMCSA — данные на июнь 2025'
+  },
+  {
+    title: 'Малый бизнес индустрии',
+    value: '91.5%',
+    icon: '🧩',
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
+    description: 'Какая часть перевозчиков США — небольшие компании',
+    chartUnit: '%',
+    chartData: [
+      { year: '≤10 траков', value: 91.5 },
+      { year: '≤100 траков', value: 99.3 }
+    ],
+    facts: [
+      { icon: '🚚', text: '91.5% перевозчиков США — парк из 10 траков или меньше' },
+      { icon: '📋', text: '99.3% перевозчиков управляют парком меньше 100 траков' },
+      { icon: '👤', text: 'У owner-operator и малых компаний обычно нет своего диспетчера' },
+      { icon: '🤝', text: 'Именно такие перевозчики чаще всего нанимают диспетчера на аутсорсе' }
+    ],
+    source: 'American Trucking Associations — Trucking Trends 2025'
+  },
+  {
+    title: 'Люди в индустрии',
+    value: '3.58M',
+    icon: '👷',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
+    description: 'Профессиональные водители и рабочие места в грузоперевозках',
+    chartUnit: 'M',
+    chartData: [
+      { year: 'Водители', value: 3.58 },
+      { year: 'Всего в отрасли', value: 8.4 }
+    ],
+    facts: [
+      { icon: '🚛', text: '3.58 млн профессиональных водителей работают в США (2024)' },
+      { icon: '💼', text: 'Всего индустрия создаёт 8.4 млн рабочих мест' },
+      { icon: '📉', text: 'Число водителей снизилось на 0.8% за год' },
+      { icon: '📞', text: 'Диспетчер — тот, кто находит груз и договаривается с брокером' }
+    ],
+    source: 'American Trucking Associations — Trucking Trends 2025'
   }
 ];
 
@@ -307,7 +362,7 @@ function openStatsModal(index) {
     return `
       <div class="chart-bar-wrapper">
         <div class="chart-bar" style="height: ${height}%; background: ${data.gradient};">
-          <span class="chart-value">${item.value}${data.value.includes('%') ? '%' : 'B'}</span>
+          <span class="chart-value">${item.value}${data.chartUnit}</span>
         </div>
         <span class="chart-year">${item.year}</span>
       </div>
@@ -331,7 +386,7 @@ function openStatsModal(index) {
     </div>
     
     <div class="stats-modal-body">
-      <h3>Динамика роста</h3>
+      <h3>В цифрах</h3>
       <div class="stats-chart">
         ${chartBars}
       </div>

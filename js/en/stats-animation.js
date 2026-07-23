@@ -226,70 +226,125 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const statsData = [
   {
-    title: 'Freight Market Size',
-    value: '$875B',
+    title: 'Freight Market Revenue',
+    value: '$906B',
     icon: '💰',
     color: '#9333ea',
     gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
-    description: 'Annual revenue of the US freight industry',
+    description: 'Gross annual revenue of the US trucking industry',
+    chartUnit: 'B',
     chartData: [
-      { year: '2020', value: 732 },
-      { year: '2021', value: 796 },
-      { year: '2022', value: 823 },
-      { year: '2023', value: 850 },
-      { year: '2024', value: 875 }
+      { year: '2021', value: 875.5 },
+      { year: '2022', value: 940.8 },
+      { year: '2023', value: 1004 },
+      { year: '2024', value: 906 }
     ],
     facts: [
-      { icon: '📈', text: 'Up 12% over the past year' },
-      { icon: '🌍', text: 'The largest market in the world' },
-      { icon: '💼', text: '7.4 million jobs in the industry' },
-      { icon: '🚛', text: '70% of all freight moves by truck' }
+      { icon: '📈', text: '2023 was the peak year: $1.004 trillion in revenue' },
+      { icon: '📉', text: 'In 2024 the market cooled to $906 billion — a freight recession' },
+      { icon: '🌍', text: 'Still the largest freight market in the world' },
+      { icon: '🏢', text: '91.5% of carriers in this market are small businesses with 10 trucks or fewer' }
     ],
-    source: 'American Trucking Associations, 2024'
+    source: 'American Trucking Associations — Trucking Trends 2025'
   },
   {
-    title: 'Trucks on the Road',
-    value: '3.5M+',
-    icon: '🚛',
+    title: 'Freight Moved by Truck',
+    value: '72.7%',
+    icon: '🛣️',
     color: '#06b6d4',
     gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
-    description: 'Number of active trucks in the US',
+    description: 'Share of US freight tonnage moved by truck',
+    chartUnit: '%',
     chartData: [
-      { year: '2020', value: 3.1 },
-      { year: '2021', value: 3.2 },
-      { year: '2022', value: 3.3 },
-      { year: '2023', value: 3.4 },
-      { year: '2024', value: 3.5 }
+      { year: '2024', value: 72.7 }
     ],
     facts: [
-      { icon: '📊', text: 'Steady fleet growth of 3-4% per year' },
-      { icon: '🔧', text: 'Average truck age: 7.2 years' },
-      { icon: '⚡', text: '15% of the fleet is electric or hybrid' },
-      { icon: '🛣️', text: 'Average mileage: 45,000 miles per year' }
+      { icon: '⚖️', text: '72.7% of all US freight weight moves by truck' },
+      { icon: '🚆', text: "That's more than rail, air, and barge combined" },
+      { icon: '🇨🇦', text: 'Trucks carry 67% of US-Canada surface trade' },
+      { icon: '🇲🇽', text: 'And 85% of goods crossing the Mexican border' }
     ],
-    source: 'Federal Motor Carrier Safety Administration, 2024'
+    source: 'American Trucking Associations — Trucking Trends 2025'
   },
   {
-    title: 'Share of Freight Transport',
-    value: '70%',
-    icon: '📦',
+    title: 'Freight Tonnage Hauled',
+    value: '11.27B',
+    icon: '⚖️',
     color: '#10b981',
     gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
-    description: 'Percentage of freight moved by truck',
+    description: 'Total tons of freight trucks moved in a year',
+    chartUnit: 'B',
     chartData: [
-      { year: '2020', value: 68 },
-      { year: '2021', value: 68.5 },
-      { year: '2022', value: 69 },
-      { year: '2023', value: 69.5 },
-      { year: '2024', value: 70 }
+      { year: '2023', value: 11.41 },
+      { year: '2024', value: 11.27 }
     ],
     facts: [
-      { icon: '🏭', text: 'The primary method of delivering goods' },
-      { icon: '📱', text: 'E-commerce increases demand by 15% annually' },
-      { icon: '⏱️', text: 'Average delivery time: 2-3 days' },
-      { icon: '🌐', text: 'Covers 100% of US territory' }
+      { icon: '📦', text: 'Trucks hauled 11.27 billion tons of freight in 2024' },
+      { icon: '📉', text: 'Down slightly from 11.41 billion tons the year before' },
+      { icon: '🛣️', text: 'Trucks logged 329.86 billion miles in 2023' },
+      { icon: '🔍', text: 'Every ton is a load someone had to find first' }
     ],
-    source: 'U.S. Department of Transportation, 2024'
+    source: 'American Trucking Associations — Trucking Trends 2025'
+  },
+  {
+    title: 'Active Motor Carriers',
+    value: '580K+',
+    icon: '🏢',
+    color: '#9333ea',
+    gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
+    description: 'Companies and owner-operators registered with FMCSA',
+    chartUnit: 'K',
+    chartData: [
+      { year: 'Total', value: 580 },
+      { year: '≤10 trucks', value: 531 }
+    ],
+    facts: [
+      { icon: '🏢', text: '580,000+ active carriers are registered with the FMCSA (June 2025)' },
+      { icon: '🚚', text: '91.5% run a fleet of 10 trucks or fewer' },
+      { icon: '📋', text: '99.3% run fewer than 100 trucks' },
+      { icon: '🤝', text: 'These are your future clients — they need a dispatcher' }
+    ],
+    source: 'American Trucking Associations, FMCSA — as of June 2025'
+  },
+  {
+    title: 'Small Business Industry',
+    value: '91.5%',
+    icon: '🧩',
+    color: '#06b6d4',
+    gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
+    description: 'Share of US carriers that are small businesses',
+    chartUnit: '%',
+    chartData: [
+      { year: '≤10 trucks', value: 91.5 },
+      { year: '≤100 trucks', value: 99.3 }
+    ],
+    facts: [
+      { icon: '🚚', text: '91.5% of US carriers run a fleet of 10 trucks or fewer' },
+      { icon: '📋', text: '99.3% run fewer than 100 trucks' },
+      { icon: '👤', text: 'Owner-operators and small fleets rarely have an in-house dispatcher' },
+      { icon: '🤝', text: "They're exactly who outsources dispatching" }
+    ],
+    source: 'American Trucking Associations — Trucking Trends 2025'
+  },
+  {
+    title: 'People in the Industry',
+    value: '3.58M',
+    icon: '👷',
+    color: '#10b981',
+    gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
+    description: 'Professional drivers and jobs in trucking',
+    chartUnit: 'M',
+    chartData: [
+      { year: 'Drivers', value: 3.58 },
+      { year: 'Industry total', value: 8.4 }
+    ],
+    facts: [
+      { icon: '🚛', text: '3.58 million professional drivers work in the US (2024)' },
+      { icon: '💼', text: 'The industry supports 8.4 million jobs overall' },
+      { icon: '📉', text: 'Driver count dipped 0.8% year over year' },
+      { icon: '📞', text: 'A dispatcher is who finds the load and negotiates with the broker' }
+    ],
+    source: 'American Trucking Associations — Trucking Trends 2025'
   }
 ];
 
@@ -307,7 +362,7 @@ function openStatsModal(index) {
     return `
       <div class="chart-bar-wrapper">
         <div class="chart-bar" style="height: ${height}%; background: ${data.gradient};">
-          <span class="chart-value">${item.value}${data.value.includes('%') ? '%' : 'B'}</span>
+          <span class="chart-value">${item.value}${data.chartUnit}</span>
         </div>
         <span class="chart-year">${item.year}</span>
       </div>
@@ -331,7 +386,7 @@ function openStatsModal(index) {
     </div>
 
     <div class="stats-modal-body">
-      <h3>Growth Trend</h3>
+      <h3>By the Numbers</h3>
       <div class="stats-chart">
         ${chartBars}
       </div>
