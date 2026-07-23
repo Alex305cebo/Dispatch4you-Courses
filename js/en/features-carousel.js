@@ -121,6 +121,55 @@ document.addEventListener('DOMContentLoaded', () => {
   prevBtn.addEventListener('click', (e) => { e.preventDefault(); prev(); });
   nextBtn.addEventListener('click', (e) => { e.preventDefault(); next(); });
 
+  // ---- Mouse-drag panning (pointer:fine only — touch already scrolls
+  // natively via swipe, no need for duplicate pointer handling there) ----
+  if (canHover) {
+    let isDragging = false;
+    let dragged = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    slider.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      dragged = false;
+      startX = e.pageX;
+      startScrollLeft = slider.scrollLeft;
+      slider.classList.add('dragging');
+      // scroll-behavior:smooth would make scrollLeft lag behind the cursor
+      // instead of tracking it 1:1 — disable it while actively dragging.
+      slider.style.scrollBehavior = 'auto';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.pageX - startX;
+      if (!dragged && Math.abs(dx) > 4) dragged = true;
+      if (dragged) slider.scrollLeft = startScrollLeft - dx;
+    });
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      slider.classList.remove('dragging');
+      slider.style.scrollBehavior = '';
+      // Snapping back to the nearest real card and dot sync are already
+      // handled by the existing scroll listener (scheduleSettle/normalize).
+    }
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('mouseleave', endDrag);
+
+    // After a drag, the click shouldn't follow the card's link — otherwise
+    // releasing the mouse immediately opens it. Intercept in the capture
+    // phase, before the link itself handles the click.
+    slider.addEventListener('click', (e) => {
+      if (dragged) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  }
+
   // Live dot/crossfade update while scrolling + deferred seamless shift
   let rafId = 0;
   function onScroll() { rafId = 0; syncUI(leadingAll()); }

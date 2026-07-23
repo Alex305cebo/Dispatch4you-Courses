@@ -121,6 +121,55 @@ document.addEventListener('DOMContentLoaded', () => {
   prevBtn.addEventListener('click', (e) => { e.preventDefault(); prev(); });
   nextBtn.addEventListener('click', (e) => { e.preventDefault(); next(); });
 
+  // ---- Протаскивание мышью (только pointer:fine — тач уже скроллит нативно
+  // свайпом, вешать сюда же дублирующие pointer-события не нужно) ----
+  if (canHover) {
+    let isDragging = false;
+    let dragged = false;
+    let startX = 0;
+    let startScrollLeft = 0;
+
+    slider.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      dragged = false;
+      startX = e.pageX;
+      startScrollLeft = slider.scrollLeft;
+      slider.classList.add('dragging');
+      // scroll-behavior:smooth заставил бы scrollLeft "досогонять" курсор
+      // с задержкой вместо честного 1:1 следования — на время драга отключаем.
+      slider.style.scrollBehavior = 'auto';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.pageX - startX;
+      if (!dragged && Math.abs(dx) > 4) dragged = true;
+      if (dragged) slider.scrollLeft = startScrollLeft - dx;
+    });
+
+    function endDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      slider.classList.remove('dragging');
+      slider.style.scrollBehavior = '';
+      // Возврат к ближайшей реальной карточке и синхронизация точек уже
+      // подхватываются существующим scroll-listener'ом (scheduleSettle/normalize).
+    }
+    window.addEventListener('mouseup', endDrag);
+    window.addEventListener('mouseleave', endDrag);
+
+    // После протаскивания клик не должен переходить по ссылке карточки —
+    // иначе отпускание мыши сразу открывает её. Перехватываем на фазе
+    // погружения, до того как сработает сама ссылка.
+    slider.addEventListener('click', (e) => {
+      if (dragged) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, true);
+  }
+
   // Живое обновление точек/крессфейда при прокрутке + отложенный бесшовный сдвиг
   let rafId = 0;
   function onScroll() { rafId = 0; syncUI(leadingAll()); }
