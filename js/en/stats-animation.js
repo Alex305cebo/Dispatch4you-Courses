@@ -65,9 +65,14 @@ function renderWaveChart(index) {
   const last = points[points.length - 1];
   const areaPath = `${linePath} L ${last.x},${H} L ${points[0].x},${H} Z`;
 
+  const unit = statsData[index].chartUnit || '';
   const dotsSVG = points.map((p, i) => {
     const isEnd = i === points.length - 1;
-    return `<circle class="wave-dot${isEnd ? ' end' : ''}" cx="${p.x}" cy="${p.y}" r="${isEnd ? 5 : 4}" style="animation-delay:${0.9 + i * 0.15}s"></circle>`;
+    const label = `${data[i].year}: ${data[i].value}${unit}`;
+    return `
+      <circle class="wave-dot${isEnd ? ' end' : ''}" cx="${p.x}" cy="${p.y}" r="${isEnd ? 5 : 4}" style="animation-delay:${0.9 + i * 0.15}s"></circle>
+      <circle class="wave-dot-hit" cx="${p.x}" cy="${p.y}" r="12"><title>${label}</title></circle>
+    `;
   }).join('');
 
   mount.innerHTML = `
@@ -134,7 +139,7 @@ const statsObserver = new IntersectionObserver((entries) => {
       entry.target.classList.add('animated');
 
       // Анимация счётчиков
-      const counters = entry.target.querySelectorAll('.stat-value');
+      const counters = entry.target.querySelectorAll('.stat-value[data-target]');
       counters.forEach(counter => {
         animateCounter(counter);
       });
@@ -162,7 +167,7 @@ function initStatsImmediately() {
     // Немедленно показываем финальные значения без анимации
     statsSection.classList.add('animated');
 
-    const counters = statsSection.querySelectorAll('.stat-value');
+    const counters = statsSection.querySelectorAll('.stat-value[data-target]');
     counters.forEach(counter => {
       const target = parseFloat(counter.getAttribute('data-target'));
       const suffix = counter.getAttribute('data-suffix') || '';
