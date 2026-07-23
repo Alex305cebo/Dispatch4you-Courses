@@ -1052,10 +1052,19 @@
   border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 16px;
   margin-bottom: 24px;
+  /* Раньше .chart-bar-wrapper{flex:1} без min-width не сжимался ниже
+     контента ("2.32/mi") — на 7 барах (год по месяцам) это распирало
+     контейнер, и лишние бары обрезались рамкой модалки на мобильных.
+     overflow-x — страховка: если сжатие упрётся в min-width, график
+     скроллится, а не обрезается. */
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 .chart-bar-wrapper {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 36px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1171,16 +1180,20 @@
 
   .stats-chart {
     height: 160px;
-    padding: 16px;
-    gap: 8px;
+    padding: 16px 12px;
+    gap: 6px;
+  }
+
+  .chart-bar-wrapper {
+    min-width: 30px;
   }
 
   .chart-value {
-    font-size: 10px;
+    font-size: 9px;
   }
 
   .chart-year {
-    font-size: 11px;
+    font-size: 10px;
   }
 
   .stats-facts {
