@@ -407,7 +407,7 @@ function openStatsModal(index) {
     return `
       <div class="chart-bar-wrapper">
         <div class="chart-bar" style="height: ${height}%; background: ${data.gradient};">
-          <span class="chart-value">${item.value}${data.chartUnit}</span>
+          <span class="chart-value">${item.value}</span>
         </div>
         <span class="chart-year">${item.year}</span>
       </div>
