@@ -393,9 +393,17 @@ function openStatsModal(index) {
   if (!data) return;
 
   // Генерируем HTML для графика
-  const maxValue = Math.max(...data.chartData.map(d => d.value));
+  // Шкала от минимума, а не от нуля/максимума: у значений в узком диапазоне
+  // (2.32..3.00) высота от maxValue почти не отличалась (77%..100%) — бары
+  // выглядели одинаковыми. От min до max + пол 20% — разница видна, и
+  // отрицательные значения (ATA Tonnage: -0.7 и т.п.) больше не дают
+  // invalid отрицательную высоту.
+  const values = data.chartData.map(d => d.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const range = (maxValue - minValue) || 1;
   const chartBars = data.chartData.map(item => {
-    const height = (item.value / maxValue) * 100;
+    const height = 20 + ((item.value - minValue) / range) * 80;
     return `
       <div class="chart-bar-wrapper">
         <div class="chart-bar" style="height: ${height}%; background: ${data.gradient};">
