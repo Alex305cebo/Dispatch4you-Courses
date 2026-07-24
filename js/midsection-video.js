@@ -28,10 +28,23 @@
     stage.style.height = (bottom - top) + 'px';
   }
   layout();
-  window.addEventListener('resize', layout);
   window.addEventListener('load', layout);
-  // Контент выше/внутри может менять высоту (ленивый CSS, шрифты, карусель).
-  if (window.ResizeObserver) { new ResizeObserver(layout).observe(document.body); }
+  // Контент выше/внутри может менять высоту (ленивый CSS, шрифты, карусель) —
+  // ResizeObserver на document.body может сработать МНОГО раз подряд, пока
+  // страница ещё "устаканивается" (особенно на планшетах — медленнее грузятся
+  // шрифты/видео-постеры, и это чаще совпадает с моментом, когда пользователь
+  // уже скроллит). Каждый такой вызов layout() переставляет inline top/height
+  // у .midfx-bg-stage — а раз видео внутри стоит на position:sticky, смена
+  // геометрии контейнера ПРЯМО ВО ВРЕМЯ скролла дёргает его "прилипшую"
+  // позицию. Раньше сюда попадал ещё голый window resize — тоже без дебаунса.
+  // Дебаунсим оба источника — синхронно оставляем только самый первый вызов.
+  var layoutTimer = 0;
+  function scheduleLayout() {
+    clearTimeout(layoutTimer);
+    layoutTimer = setTimeout(layout, 150);
+  }
+  window.addEventListener('resize', scheduleLayout);
+  if (window.ResizeObserver) { new ResizeObserver(scheduleLayout).observe(document.body); }
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // постер
 
