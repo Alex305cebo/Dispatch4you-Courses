@@ -963,9 +963,17 @@
 }
 
 .stats-modal-close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  /* .stats-modal-content — сам скроллящийся контейнер (overflow-y:auto).
+     Крестик был position:absolute относительно него — при скролле контента
+     вниз крестик уезжал вместе с ним и пропадал из виду. float+sticky:
+     остаётся в потоке (float:right ставит его у правого края, как раньше
+     right:20px), а sticky держит его прижатым к верху при скролле —
+     виден всегда, независимо от прокрутки. Отрицательный margin-bottom
+     компенсирует высоту float, чтобы не сдвигал контент под собой вниз. */
+  position: sticky;
+  top: 16px;
+  float: right;
+  margin-bottom: -40px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -977,8 +985,8 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
-  z-index: 2;
+  transition: background 0.3s ease, transform 0.3s ease;
+  z-index: 10;
   font-family: 'Montserrat', sans-serif;
 }
 
@@ -1105,7 +1113,13 @@
   font-weight: 600;
   color: rgba(255, 255, 255, 0.6);
   font-family: 'Montserrat', sans-serif;
-  margin-top: auto;
+  /* margin-top:auto — вот кто на самом деле ломал рост "снизу вверх":
+     auto-margin у флекс-айтема побеждает justify-content родителя
+     всегда. Раньше (justify-content по умолчанию flex-start) это
+     держало подпись месяца внизу, а сам бар — сверху с зазором. Теперь
+     это же правило сводило на нет уже добавленный justify-content:
+     flex-end на .chart-bar-wrapper. Убрано — bar+подпись выравниваются
+     как единая группа по низу через justify-content родителя. */
 }
 
 /* Facts Styles */
