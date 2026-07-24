@@ -1,11 +1,16 @@
 /**
  * midsection-video.js — видео-фон за секциями «Что вы получите» + «Профессия
- * диспетчера» (Марина). Абсолютный слой в <main>; top/height ставим под
- * диапазон от начала features до конца profession. Позиция видео СТАТИЧНА —
- * держит её CSS position:sticky (midsection-video.css), JS её не трогает.
- * На скролл JS считает только яркость («колокол» + затухание в конце ролика).
+ * диспетчера» (Марина). Видео — position:fixed (midsection-video.css):
+ * закреплено относительно экрана и в принципе не двигается, пока не
+ * скрыто — двигается только контент вокруг. Раньше было position:sticky,
+ * но у sticky есть фазы входа/выхода (пока элемент ещё не "прилип"/уже
+ * "отлип" — едет вместе с контентом), и смена геометрии контейнера во
+ * время скролла дёргала его в эти моменты. На fixed таких фаз нет вообще:
+ * позиция всегда одна точка экрана, видимость (opacity) включает/выключает
+ * JS по факту пересечения секции-диапазона с вьюпортом.
  * Ленивая загрузка + пауза вне экрана (IntersectionObserver).
- * reduced-motion: статичный постер.
+ * reduced-motion: статичный постер, тоже гейтится диапазоном (fixed иначе
+ * был бы виден на всей странице).
  */
 (function () {
   'use strict';
@@ -17,7 +22,9 @@
   var last = document.querySelector('.profession-section');
   if (!video || !first || !last) return;
 
-  // Слой абсолютный в <main> — считаем top/height через документные позиции.
+  // stage больше не визуальный контейнер видео (видео на position:fixed) —
+  // чисто измерительный ориентир: JS читает её геометрию для прогресса
+  // скролла (яркость) и для диапазона видимости.
   function layout() {
     var scrollY = window.scrollY || window.pageYOffset || 0;
     var op = stage.offsetParent || document.documentElement;
@@ -30,14 +37,9 @@
   layout();
   window.addEventListener('load', layout);
   // Контент выше/внутри может менять высоту (ленивый CSS, шрифты, карусель) —
-  // ResizeObserver на document.body может сработать МНОГО раз подряд, пока
-  // страница ещё "устаканивается" (особенно на планшетах — медленнее грузятся
-  // шрифты/видео-постеры, и это чаще совпадает с моментом, когда пользователь
-  // уже скроллит). Каждый такой вызов layout() переставляет inline top/height
-  // у .midfx-bg-stage — а раз видео внутри стоит на position:sticky, смена
-  // геометрии контейнера ПРЯМО ВО ВРЕМЯ скролла дёргает его "прилипшую"
-  // позицию. Раньше сюда попадал ещё голый window resize — тоже без дебаунса.
-  // Дебаунсим оба источника — синхронно оставляем только самый первый вызов.
+  // ResizeObserver на document.body может сработать несколько раз подряд,
+  // пока страница ещё "устаканивается". Дебаунсим — synchronно оставляем
+  // только самый первый вызов при загрузке.
   var layoutTimer = 0;
   function scheduleLayout() {
     clearTimeout(layoutTimer);
@@ -46,13 +48,29 @@
   window.addEventListener('resize', scheduleLayout);
   if (window.ResizeObserver) { new ResizeObserver(scheduleLayout).observe(document.body); }
 
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return; // постер
+  // ---- Видимость: видео на position:fixed было бы видно НА ВСЕЙ странице
+  // без явного гейта. Гейт — по пересечению stage с вьюпортом (запас 300px,
+  // чтобы видео успевало прогрузиться/сыграть до фактического появления). ----
+  var inRange = false;
+  function setInRange(v) {
+    inRange = v;
+    if (!v) video.style.opacity = '0';
+  }
 
-  // Позиция видео СТАТИЧНА — держит её CSS (position:sticky в midsection-video.css),
-  // JS сюда вообще не пишет transform. Раньше был JS-параллакс (или жёсткий
-  // пиннинг — дёргался от отставания JS на кадр, или смягчённая скорость —
-  // тогда видео заметно «плыло» относительно контента). Sticky не имеет ни
-  // одной из этих проблем. Ниже — только яркость («колокол» + затухание в конце).
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (reduced) {
+    // Статичный постер — без скролл-логики, просто показать/скрыть по диапазону.
+    if (window.IntersectionObserver) {
+      new IntersectionObserver(function (entries) {
+        var on = entries[0].isIntersecting;
+        setInRange(on);
+        if (on) video.style.opacity = '0.3';
+      }, { threshold: 0 }).observe(stage);
+    }
+    return;
+  }
+
   var narrowVp = window.matchMedia('(max-width: 768px)');
   var PEAK = narrowVp.matches ? 0.72 : 0.62;  // пик яркости «колокола» (на мобильном ярче — было плохо видно)
   var EDGE = narrowVp.matches ? 0.26 : 0.40;  // доля прохода на осветление/затемнение по краям;
@@ -65,6 +83,7 @@
   var ticking = false;
   function updateBrightness() {
     ticking = false;
+    if (!inRange) { video.style.opacity = '0'; return; }
     var vh = window.innerHeight || document.documentElement.clientHeight;
     var sr = stage.getBoundingClientRect();
     var p = (vh - sr.top) / (vh + sr.height);   // прогресс прохода слоя через вьюпорт
@@ -83,7 +102,6 @@
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', updateBrightness);
-  updateBrightness();
 
   // Под конец ролика гасим яркость (endFade 1 → ENDDIM_MIN): картинка тускнеет,
   // становится полупрозрачной и застывает так, растворяясь в тёмном фоне — как Марина.
@@ -131,11 +149,14 @@
 
   if (window.IntersectionObserver) {
     new IntersectionObserver(function (entries) {
-      if (entries[0].isIntersecting) tryPlay();
+      var intersecting = entries[0].isIntersecting;
+      setInRange(intersecting);
+      if (intersecting) { tryPlay(); onScroll(); }
       else video.pause();
     }, { threshold: 0, rootMargin: '300px 0px' }).observe(stage);
   } else {
     if (src) video.src = src;
+    setInRange(true);
     tryPlay();
   }
 })();
