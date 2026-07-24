@@ -970,9 +970,17 @@
      right:20px), а sticky держит его прижатым к верху при скролле —
      виден всегда, независимо от прокрутки. Отрицательный margin-bottom
      компенсирует высоту float, чтобы не сдвигал контент под собой вниз. */
-  position: sticky;
+  /* !important на position/float: без него на этой кнопке (<button>,
+     плавающая внутри скроллящегося .stats-modal-content) computed
+     position упорно возвращался "relative" вместо "sticky" — тот же
+     сценарий через инлайн-стиль (наивысшая специфичность) или !important
+     срабатывал верно. Что именно тут побеждает по каскаду — не нашёл
+     (grep по всем css на modal-close/button ничего не даёт), похоже на
+     браузерный edge-case конкретно для float+button+sticky. !important
+     решает надёжно, проверено вживую перед деплоем. */
+  position: sticky !important;
   top: 16px;
-  float: right;
+  float: right !important;
   margin-bottom: -40px;
   width: 40px;
   height: 40px;
