@@ -200,7 +200,8 @@ export default function QuizPanel({
           </div>
         </div>
 
-        {/* Текст вопроса */}
+        {/* Текст вопроса — для name-state скрываем до ответа: он дублирует инструкцию ниже */}
+        {(mode !== "name-state" || feedback) && (
         <button
           onClick={feedback ? handleOpenPronunciation : undefined}
           style={{
@@ -224,6 +225,7 @@ export default function QuizPanel({
             </p>
           )}
         </button>
+        )}
       </div>
 
       {/* Hint подсказка */}

@@ -42,6 +42,8 @@ export default function OnboardingModal({ onComplete }) {
         padding: "32px 28px",
         maxWidth: "380px",
         width: "100%",
+        maxHeight: "90dvh",
+        overflowY: "auto",
         textAlign: "center",
         position: "relative",
         boxShadow: "0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(6,182,212,0.1)",

@@ -71,6 +71,13 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
     setShowOnboarding(false);
   };
 
+  // Тост про разблокированный уровень сам скрывается — не блокирует экран
+  useEffect(() => {
+    if (!unlockedLevel) return;
+    const t = setTimeout(() => setUnlockedLevel(null), 4500);
+    return () => clearTimeout(t);
+  }, [unlockedLevel]);
+
   return (
     <div className="level-map-root" style={{
       minHeight: "100dvh",
@@ -339,6 +346,8 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
               padding: "28px 24px",
               maxWidth: "360px",
               width: "100%",
+              maxHeight: "90dvh",
+              overflowY: "auto",
               textAlign: "center",
               boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
               animation: "slideUp 0.3s ease",
@@ -422,6 +431,8 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
               padding: "24px 20px",
               maxWidth: "340px",
               width: "100%",
+              maxHeight: "90dvh",
+              overflowY: "auto",
               textAlign: "center",
               boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${difficultyLevel.color}33`,
               animation: "slideUp 0.3s ease",
@@ -571,105 +582,43 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
         </div>
       )}
 
-      {/* Popup: новый уровень разблокирован */}
+      {/* Тост: новый уровень разблокирован — не блокирует экран, сам скрывается */}
       {unlockedLevel && (
         <div
-          onClick={() => setUnlockedLevel(null)}
+          onClick={() => { setUnlockedLevel(null); onSelectLevel(unlockedLevel); }}
           style={{
-            position: "fixed", inset: 0, zIndex: 1001,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: "rgba(0,0,0,0.7)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            padding: "20px",
-            animation: "fadeIn 0.3s ease",
+            position: "fixed", left: "50%", bottom: "20px",
+            transform: "translateX(-50%)",
+            zIndex: 1001,
+            display: "flex", alignItems: "center", gap: "10px",
+            background: "linear-gradient(135deg, #1a1510 0%, #12100c 100%)",
+            border: `2px solid ${unlockedLevel.color}`,
+            borderRadius: "14px",
+            padding: "10px 14px",
+            maxWidth: "92vw",
+            boxShadow: `0 10px 30px rgba(0,0,0,0.5), 0 0 20px ${unlockedLevel.color}44`,
+            cursor: "pointer",
+            animation: "toastIn 0.3s ease",
           }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
+          <span style={{ fontSize: "24px", flexShrink: 0 }}>🔓</span>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontSize: "11px", color: "#d4a853", fontWeight: 700, margin: 0 }}>🎉 Новый уровень открыт</p>
+            <p style={{ fontSize: "13px", fontWeight: 800, color: "#f5e6c8", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {unlockedLevel.icon} {unlockedLevel.id}. {unlockedLevel.title}
+            </p>
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); setUnlockedLevel(null); }}
             style={{
-              background: "linear-gradient(135deg, #1a1510 0%, #12100c 50%, #1a1510 100%)",
-              border: `2px solid ${unlockedLevel.color}`,
-              borderRadius: "20px",
-              padding: "28px 24px",
-              maxWidth: "340px",
-              width: "100%",
-              textAlign: "center",
-              boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 30px ${unlockedLevel.color}33`,
-              animation: "slideUp 0.4s ease",
+              flexShrink: 0, width: "22px", height: "22px", borderRadius: "50%",
+              background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)",
+              color: "#94a3b8", fontSize: "13px", cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
             }}
           >
-            {/* Иконка */}
-            <div style={{
-              width: "64px", height: "64px", borderRadius: "50%",
-              background: `rgba(${unlockedLevel.colorRgb},0.15)`,
-              border: `3px solid ${unlockedLevel.color}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              margin: "0 auto 14px",
-              fontSize: "28px",
-              boxShadow: `0 0 20px ${unlockedLevel.color}44`,
-              animation: "resultPulse 2s ease-in-out infinite",
-            }}>
-              🔓
-            </div>
-
-            <p style={{ fontSize: "14px", color: "#d4a853", margin: "0 0 4px 0", fontWeight: 600 }}>
-              🎉 Поздравляем!
-            </p>
-            <p style={{ fontSize: "20px", fontWeight: 900, color: "#f5e6c8", margin: "0 0 6px 0" }}>
-              Новый уровень открыт!
-            </p>
-            <p style={{ fontSize: "14px", color: "#8b7355", margin: "0 0 16px 0" }}>
-              Ты набрал достаточно XP
-            </p>
-
-            {/* Карточка уровня */}
-            <div style={{
-              background: `rgba(${unlockedLevel.colorRgb},0.1)`,
-              border: `1px solid rgba(${unlockedLevel.colorRgb},0.3)`,
-              borderRadius: "12px",
-              padding: "14px",
-              marginBottom: "16px",
-            }}>
-              <p style={{ fontSize: "24px", margin: "0 0 4px 0" }}>{unlockedLevel.icon}</p>
-              <p style={{ fontSize: "17px", fontWeight: 800, color: "#fff", margin: "0 0 2px 0" }}>
-                Уровень {unlockedLevel.id}: {unlockedLevel.title}
-              </p>
-              <p style={{ fontSize: "12px", color: "#94a3b8", margin: 0 }}>
-                {unlockedLevel.subtitle}
-              </p>
-            </div>
-
-            {/* Кнопки */}
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button
-                onClick={() => setUnlockedLevel(null)}
-                style={{
-                  flex: 1, padding: "12px",
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "10px",
-                  color: "#94a3b8", fontSize: "13px", fontWeight: 600,
-                  cursor: "pointer", touchAction: "manipulation",
-                }}
-              >
-                Позже
-              </button>
-              <button
-                onClick={() => { setUnlockedLevel(null); onSelectLevel(unlockedLevel); }}
-                style={{
-                  flex: 1, padding: "12px",
-                  background: `linear-gradient(135deg, ${unlockedLevel.color}, ${unlockedLevel.color}bb)`,
-                  border: "none", borderRadius: "10px",
-                  color: "#fff", fontSize: "13px", fontWeight: 700,
-                  cursor: "pointer", touchAction: "manipulation",
-                  boxShadow: `0 4px 12px rgba(${unlockedLevel.colorRgb},0.3)`,
-                }}
-              >
-                Начать! →
-              </button>
-            </div>
-          </div>
+            ×
+          </button>
         </div>
       )}
 
@@ -687,6 +636,10 @@ export default function LevelMap({ progress, user, onSelectLevel, onOpenReferenc
           .header-row {
             grid-template-columns: 1fr !important;
           }
+        }
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
       `}</style>
     </div>

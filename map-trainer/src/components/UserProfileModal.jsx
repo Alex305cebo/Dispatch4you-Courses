@@ -39,8 +39,11 @@ export default function UserProfileModal({ user, rank, progress, onClose, onLogO
           padding: "24px",
           maxWidth: "400px",
           width: "100%",
+          maxHeight: "90dvh",
+          overflowY: "auto",
           boxShadow: `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${rank.color}22`,
           animation: "slideUp 0.3s ease",
+          position: "relative",
         }}
       >
         {/* Кнопка закрытия */}
