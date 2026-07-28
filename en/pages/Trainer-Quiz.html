@@ -3955,10 +3955,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   initTips();
   updateCardPanelSections(null);
   updateBannerProgress();
-  // Restore last active tab
+  // Вкладка из адреса (#cases) важнее сохранённой: на страницу приходят
+  // по ссылке «Практические кейсы», и она должна открывать именно кейсы.
   try{
+    const fromHash=(location.hash||'').replace('#','');
     const savedTab=localStorage.getItem('trainer_active_tab');
-    if(savedTab&&document.getElementById('p-'+savedTab)){tab(savedTab);}
+    const want=(fromHash&&document.getElementById('p-'+fromHash))?fromHash:savedTab;
+    if(want&&document.getElementById('p-'+want)){tab(want);}
   }catch(e){}
   // Load xp-system and make awardXP globally available
   import('../xp-system.js').then(m=>{
