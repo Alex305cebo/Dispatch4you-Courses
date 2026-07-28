@@ -40,7 +40,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .tabs{display:flex;gap:12px;align-items:stretch;justify-content:center}
 
 /* ── BANNER CARDS — Apple Glass ── */
-.banner-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0}
+.banner-row{display:grid;grid-template-columns:1fr;gap:10px;padding:4px 0}
 .banner-card{position:relative;border-radius:14px;padding:12px 12px 8px;cursor:pointer;
   overflow:hidden;transition:all .4s cubic-bezier(.4,0,.2,1);
   border:1.5px solid rgba(255,255,255,.12);
@@ -98,7 +98,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .banner-cases .banner-prog-pct{color:#f97316}
 
 @media(max-width:768px){
-  .banner-row{grid-template-columns:1fr 1fr;gap:6px;padding:2px 0}
+  .banner-row{grid-template-columns:1fr;gap:6px;padding:2px 0}
   .banner-card{padding:8px 10px 6px;border-radius:12px}
   .banner-top{gap:7px;margin-bottom:4px}
   .banner-title{font-size:14px}
@@ -1155,7 +1155,7 @@ body::before{content:'';position:fixed;inset:0;background:
   </div>
   <div class="hero-nums">
     <div class="hn"><div class="hn-v" id="h-cards">106</div><div class="hn-l">cards</div></div>
-    <div class="hn"><div class="hn-v" id="h-cases">50</div><div class="hn-l">cases</div></div>
+    
     <div class="hn"><div class="hn-v" id="h-known">0</div><div class="hn-l">learned</div></div>
     <div class="hn"><div class="hn-v" id="h-streak">0</div><div class="hn-l">days</div></div>
   </div>
@@ -1183,25 +1183,7 @@ body::before{content:'';position:fixed;inset:0;background:
         <div class="banner-prog-pct" id="bn-cards-pct">0%</div>
       </div>
     </div>
-    <div class="banner-card banner-cases" onclick="tab('cases')" id="t-cases">
-      <div class="banner-top">
-        <div class="banner-icon">💬</div>
-        <div>
-          <div class="banner-title">Cases</div>
-          <div class="banner-subtitle">Interactive chat scenarios</div>
-        </div>
-      </div>
-      <div class="banner-stats-row">
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-total">50</div><div class="banner-stat-lbl">total</div></div>
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-done" style="color:#10b981">0</div><div class="banner-stat-lbl">completed</div></div>
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-left" style="color:#f59e0b">50</div><div class="banner-stat-lbl">remaining</div></div>
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-cats" style="color:#a855f7">9</div><div class="banner-stat-lbl">categories</div></div>
-      </div>
-      <div class="banner-prog-wrap">
-        <div class="banner-prog-bar-full"><div class="banner-prog-fill" id="bn-cases-fill" style="width:0%"></div></div>
-        <div class="banner-prog-pct" id="bn-cases-pct">0%</div>
-      </div>
-    </div>
+    
   </div>
   <span id="t-stats" style="display:none"></span>
 </div>
@@ -1472,77 +1454,15 @@ body::before{content:'';position:fixed;inset:0;background:
           <span class="ib-link-ico">🤖</span>
           <span class="ib-link-text">AI Broker</span>
         </a>
-        <a href="simulator.html" class="ib-link">
-          <span class="ib-link-ico">🚛</span>
-          <span class="ib-link-text">Simulator</span>
+        <a href="cases.html" class="ib-link">
+          <span class="ib-link-ico">💬</span>
+          <span class="ib-link-text">Practical Cases</span>
         </a>
       </div>
     </div>
 
   </div>
 </div>
-<!-- ═══ PANEL: CASES (Chat Simulator) ═══ -->
-<div class="panel" id="p-cases">
-
-  <!-- CASE LIST VIEW -->
-  <div id="case-list-view">
-    <div class="toolbar">
-      <div class="fg" id="kcat-filters"></div>
-    </div>
-    <div class="prog-row"><span id="kprog-txt">Learned: 0 of 0</span><span id="kprog-pct">0%</span></div>
-    <div class="prog-wrap"><div class="prog-fill" id="kprog-fill" style="width:0%"></div></div>
-    <div class="cases-grid" id="cases-grid"></div>
-  </div>
-
-  <!-- CHAT SIMULATOR VIEW -->
-  <div id="case-chat-view" style="display:none">
-    <!-- Top bar -->
-    <div class="cs-topbar">
-      <button class="cs-back" onclick="exitCaseChat()">← Back</button>
-      <div class="cs-topbar-info">
-        <div class="cs-topbar-title" id="cs-title">—</div>
-        <div class="cs-topbar-cat" id="cs-cat">—</div>
-      </div>
-      <div class="cs-topbar-stars" id="cs-stars">⭐⭐⭐</div>
-    </div>
-
-    <!-- Chat area -->
-    <div class="cs-phone">
-      <div class="cs-phone-header">
-        <div class="cs-avatar" id="cs-avatar">👤</div>
-        <div>
-          <div class="cs-contact-name" id="cs-contact">Broker</div>
-          <div class="cs-contact-status">online</div>
-        </div>
-      </div>
-      <div class="cs-messages" id="cs-messages"></div>
-    </div>
-
-    <!-- Choice buttons -->
-    <div class="cs-choices" id="cs-choices"></div>
-
-    <!-- Tip/insight popup -->
-    <div class="cs-insight" id="cs-insight" style="display:none">
-      <div class="cs-insight-icon">💡</div>
-      <div class="cs-insight-text" id="cs-insight-text"></div>
-    </div>
-
-    <!-- Results screen -->
-    <div class="cs-results" id="cs-results" style="display:none">
-      <div class="cs-results-icon" id="cs-res-icon">🏆</div>
-      <div class="cs-results-title" id="cs-res-title">Great!</div>
-      <div class="cs-results-stars" id="cs-res-stars"></div>
-      <div class="cs-results-score" id="cs-res-score"></div>
-      <div class="cs-results-tip" id="cs-res-tip"></div>
-      <div class="cs-results-btns">
-        <button class="cs-btn-retry" onclick="replayCase()">🔄 Do it again</button>
-        <button class="cs-btn-next" onclick="exitCaseChat()">📋 Back to list</button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
 <!-- ═══ PANEL: STATS ═══ -->
 <div class="panel" id="p-stats">
   <div class="streak-box">
@@ -1711,319 +1631,19 @@ const CARDS=[
 ];
 </script>
 <script>
-const CASES=[
-{id:'k1',ico:'💵',cat:'Negotiation',diff:'easy',xp:8,title:'Broker offers a rate that\'s too low',desc:'Broker offers $1,500 on the Chicago–Atlanta lane (780 miles). DAT shows $2.10/mile.',sit:'Broker: "Best I can do is $1,500 all-in." DAT shows an average of $2.10/mile = $1,638 minimum.',steps:[{a:'Check DAT',d:'Open DAT and note the average rate on this lane right now.'},
-{a:'Name your number',d:'"DAT shows $2.10/mile on this lane — that\'s $1,638 minimum. I need $1,900."'},
-{a:'Justify it',d:'Mention deadhead, fuel cost, driver pay. Specific numbers are persuasive.'},
-{a:'Give an option',d:'"I can do $1,800 if you need it moved today, otherwise I\'ll pass."'},
-{a:'Be willing to walk away',d:'If the broker won\'t move — decline politely. A bad rate is worse than an empty truck.'}],tip:'Never accept the first offer. The broker always builds in room to negotiate.'},
-{id:'k2',ico:'🚛',cat:'Problems',diff:'medium',xp:12,title:'Driver broke down en route',desc:'Driver broke down on I-80 in Nebraska. 6 hours to delivery. Load is frozen goods.',sit:'Driver calls: "Truck broke down, mile marker 312 on I-80. Engine light on."',steps:[{a:'Reassure the driver',d:'Say you\'ll handle the situation. Panic doesn\'t help.'},
-{a:'Call the broker RIGHT AWAY',d:'"Driver broke down on I-80 mile 312. Working on solution. Will update in 30 min."'},
-{a:'Find a tow',d:'Roadside assistance, local shops. Ask for a repair ETA.'},
-{a:'Assess the situation',d:'If it\'s a reefer — critical. Need another truck or urgent repair.'},
-{a:'Update the broker',d:'Give an update every 30 minutes. Silence = lost trust.'},
-{a:'Document everything',d:'All calls, times, decisions — record them for a possible claim.'}],tip:'Brokers forgive breakdowns. They don\'t forgive silence and no plan.'},
-{id:'k3',ico:'📋',cat:'Documents',diff:'easy',xp:6,title:'Broker requires a carrier packet',desc:'A new broker wants to work with you but asks for a carrier packet before the first load.',sit:'"Before we can book you, I need your carrier packet. What\'s your email?"',steps:[{a:'Prepare documents in advance',d:'MC certificate, COI (liability + cargo), W-9, bank info (for direct pay or factoring NOA).'},
-{a:'Send it fast',d:'The faster the better. The broker works with whoever responds first.'},
-{a:'Check the insurance',d:'COI should list the broker as certificate holder if required.'},
-{a:'Confirm receipt',d:'"Sent to your email. Let me know if you need anything else."'},
-{a:'Track the status',d:'If no response in 2 hours — call and follow up.'}],tip:'Keep a carrier packet ready as a PDF. Sending it in 5 minutes = a competitive edge.'},
-{id:'k4',ico:'⚖️',cat:'Problems',diff:'hard',xp:15,title:'Driver overweight at the scale',desc:'Driver stopped at the scale. Weight 84,500 lbs against an 80,000 lbs limit.',sit:'Driver: "Scale shows 84,500 lbs. Officer says I can\'t move."',steps:[{a:'Don\'t panic',d:'This is solvable. Find out the exact weight and which axle is overweight.'},
-{a:'Call the broker',d:'"Driver overweight at scale — 84,500 lbs. Need instructions from shipper."'},
-{a:'Solution options',d:'1) Offload part of the cargo. 2) Get an oversize permit. 3) Redistribute the weight.'},
-{a:'Get a permit if needed',d:'An overweight permit can be obtained online in most states for $50–200.'},
-{a:'Document it',d:'Photograph the scale ticket. Important for billing and possible disputes.'},
-{a:'Decide who pays',d:'If the shipper loaded it wrong — they pay for the permit and delay.'}],tip:'Always check weight at the first available scale after loading — before hitting an official one.'},
-{id:'k5',ico:'💰',cat:'Finance',diff:'medium',xp:10,title:'Broker delaying payment',desc:'45 days have passed since delivery. Broker isn\'t paying. POD was sent.',sit:'Payment was due 2 weeks ago. Broker isn\'t responding to email.',steps:[{a:'Check the documents',d:'Make sure the POD, BOL, rate con — everything was sent correctly.'},
-{a:'Call directly',d:'Emails get ignored. A call is harder to ignore.'},
-{a:'Escalate',d:'If the manager doesn\'t respond — ask for a supervisor or the AR department.'},
-{a:'Send a demand letter',d:'A formal letter with a payment date and a warning of legal action.'},
-{a:'Check the bond',d:'Every broker has a $75K bond. File a claim through FMCSA if needed.'},
-{a:'File a Carrier411 complaint',d:'Leave a review on Carrier411 — it affects the broker\'s reputation.'}],tip:'Check Carrier411 BEFORE working with a new broker. A pattern of delays is visible in advance.'},
-{id:'k6',ico:'🌡️',cat:'Problems',diff:'hard',xp:15,title:'Reefer failed en route',desc:'The refrigeration unit stopped working. Load is fresh produce. 8 hours to delivery.',sit:'Driver: "Reefer unit stopped working. Temp rising — was 34°F, now 45°F."',steps:[{a:'Notify the broker immediately',d:'"Reefer unit failed. Temp at 45°F and rising. Need immediate instructions."'},
-{a:'Find a repair shop',d:'Thermo King, Carrier Transicold — nearest service center. Google Maps.'},
-{a:'Log the temperature',d:'Record the temperature every 15 minutes. Critical for the insurance claim.'},
-{a:'Assess the cargo',d:'If temp exceeded the safe zone — broker/shipper decide whether to accept the load.'},
-{a:'Alternative transport',d:'The broker can arrange another reefer truck for a trans-load.'},
-{a:'Insurance claim',d:'If the cargo is spoiled — notify cargo insurance immediately.'}],tip:'Reefer failure = a potential $50K+ cargo claim. Documenting every minute is critical.'},
-{id:'k7',ico:'📞',cat:'Negotiation',diff:'medium',xp:10,title:'Cold call to a broker',desc:'You\'re calling a new broker for the first time. Need to make a good impression and land a load.',sit:'Broker: "Yeah, who\'s this?" — busy, a bit irritated.',steps:[{a:'Be brief',d:'"Hi, this is [Name] from [Company], MC 123456. I run dry vans in the Midwest."'},
-{a:'Get to the point',d:'"Do you have any loads going Chicago to Southeast this week?"'},
-{a:'Show you\'re ready',d:'"Truck available Thursday, 53\' dry van, 45K capacity."'},
-{a:'Don\'t overshare',d:'Don\'t tell your company\'s life story. The broker wants to know: what, where, when.'},
-{a:'Ask for contact info',d:'"Can I get your direct email for future loads?"'},
-{a:'Watch your tone',d:'Confident, professional, no groveling.'}],tip:'Best time for cold calls: Tuesday–Thursday, 9–11 AM in the broker\'s time zone.'},
-{id:'k8',ico:'📦',cat:'Problems',diff:'medium',xp:10,title:'Receiver refuses the load',desc:'Driver arrived for delivery. Receiver says they didn\'t order this item.',sit:'Driver: "Receiver says they didn\'t order this. Won\'t accept delivery."',steps:[{a:'Don\'t leave',d:'The driver should stay on-site until getting instructions.'},
-{a:'Call the broker',d:'"Receiver refusing delivery — says wrong product. Need instructions ASAP."'},
-{a:'Check the paperwork',d:'Compare the BOL with what\'s on the trailer. Might be an address or product error.'},
-{a:'Contact the shipper',d:'The broker should reach out to the shipper for confirmation.'},
-{a:'Detention starts',d:'Log the arrival time — the detention clock runs from time of arrival.'},
-{a:'Get a written refusal',d:'Ask the receiver to write the reason for refusal on the BOL.'}],tip:'A refused load means potential re-delivery or return. Always get written confirmation of the refusal.'},
-{id:'k9',ico:'🔍',cat:'Brokers',diff:'easy',xp:6,title:'Vetting a new broker',desc:'A broker offers a good rate. You\'ve never worked with them before.',sit:'An unfamiliar broker offers $2,500 on the Dallas–Miami lane. Sounds good.',steps:[{a:'Check FMCSA SAFER',d:'Enter the MC number at safer.fmcsa.dot.gov. Check: active license, insurance, bond.'},
-{a:'Carrier411',d:'Check the payment rating. Red flags: "pays slow," "disputes charges," complaints.'},
-{a:'Check the bond',d:'The $75K surety bond must be active. Without it — don\'t work with them.'},
-{a:'Look for reviews',d:'Google "[Broker Name] reviews," dispatcher forums.'},
-{a:'A small test',d:'First load — small and close. See how they pay.'},
-{a:'Trust your instinct',d:'If something feels off — too high a rate, pressure tactics — that\'s a red flag.'}],tip:'5 minutes of vetting can save you $2,500 and a month of headaches.'},
-{id:'k10',ico:'⏰',cat:'HOS',diff:'hard',xp:15,title:'Driver running out of hours',desc:'Driver calls: 2 hours left on the clock, 3 hours of driving to delivery.',sit:'Driver: "I have 2 hours left on my clock but delivery is 3 hours away."',steps:[{a:'Don\'t panic and don\'t pressure',d:'Never tell the driver to "just push through" — that\'s an HOS violation.'},
-{a:'Call the broker',d:'"Driver has 2 hours HOS remaining, delivery is 3 hours out. Need to reschedule."'},
-{a:'Find a place to park',d:'Truck stop, rest area — the driver needs to stop safely.'},
-{a:'Clarify the delivery window',d:'Sometimes the receiver will accept the next day with no penalty.'},
-{a:'Document it',d:'Record the call time, the decision, the new ETA.'},
-{a:'Plan ahead',d:'In the future: check the driver\'s HOS BEFORE accepting the load.'}],tip:'HOS violation = a $16,000+ fine and an out-of-service order. Never pressure the driver.'}
-];
+
 </script>
 <script>
-CASES.push(
-{id:'k11',ico:'��',cat:'Negotiation',diff:'medium',xp:10,title:'The broker pushes urgency',desc:'The broker says "need a truck right now" to get you to agree to a low rate.',sit:'"I need a truck in 2 hours or I\'m calling someone else. $1,600 take it or leave it."',steps:[{a:'Don\'t give in to panic',d:'The broker\'s urgency is his problem, not yours. Stay calm.'},
-{a:'Check the market fast',d:'30 seconds on DAT. If the rate is below market, say so.'},
-{a:'A counteroffer',d:'"I can have a truck there in 2 hours for $1,900. That\'s my best number."'},
-{a:'Don\'t go below your CPM',d:'Know your minimum rate in advance. Below it, you\'re losing money.'},
-{a:'Be ready to walk away',d:'"If $1,600 is your max, I\'ll have to pass. Good luck finding a truck."'},
-{a:'They call back often',d:'If they don\'t find someone in 30 minutes, they\'ll call back with a better rate.'}],tip:'Manufactured urgency is a classic tactic. Real urgency means willingness to pay more.'},
-{id:'k12',ico:'📱',cat:'Technology',diff:'easy',xp:6,title:'The broker requires GPS tracking',desc:'The broker says they can\'t give you the load without GPS tracking.',sit:'"We require real-time GPS tracking on all loads. Do you have that?"',steps:[{a:'Confirm the system',d:'"We use Samsara/Motive. Do you use MacroPoint or your own system?"'},
-{a:'Give consent',d:'Most ELD systems support tracking. It\'s an industry standard.'},
-{a:'Explain to the driver',d:'The driver needs to accept the tracking request in the app.'},
-{a:'Check the work',d:'Make sure tracking is active before heading to pickup.'},
-{a:'If there\'s no system',d:'Consider free options: Google Maps sharing, or a basic ELD with tracking.'}],tip:'GPS tracking is standard. It puts brokers at ease and gets you more loads.'},
-{id:'k13',ico:'💼',cat:'Documents',diff:'medium',xp:10,title:'BOL lost at delivery',desc:'The driver lost the BOL. The receiver requires the document to accept the freight.',sit:'Driver: "I can\'t find the BOL. Receiver won\'t accept without it."',steps:[{a:'Don\'t panic',d:'The BOL can be reissued. It\'s fixable.'},
-{a:'Call the broker',d:'"Driver lost BOL. Can you get a copy from shipper and email to receiver?"'},
-{a:'The shipper can send a copy',d:'The original shipper always has a copy of the BOL.'},
-{a:'An email copy',d:'In most cases, an emailed copy is accepted for unloading.'},
-{a:'Get a signature on the copy',d:'Ask the receiver to sign a copy as the POD.'},
-{a:'Document the incident',d:'Write down what happened — for internal records.'}],tip:'The driver should keep the BOL in the cab at all times. Take a photo of the BOL at loading as a backup.'},
-{id:'k14',ico:'🌧️',cat:'Problems',diff:'medium',xp:10,title:'A weather delay',desc:'Heavy snow closed the highway. The driver has been stopped for 8 hours. Delivery is in jeopardy.',sit:'Driver: "I-70 closed due to blizzard. DOT says road opens in 8 hours minimum."',steps:[{a:'Notify the broker immediately',d:'"I-70 closed — weather delay. Driver stuck at mile 245. ETA unknown."'},
-{a:'Provide evidence',d:'A screenshot of the DOT road closure, weather report. This is force majeure.'},
-{a:'Update every 2 hours',d:'Regular updates show professionalism.'},
-{a:'Confirm the new ETA',d:'As soon as the road reopens, give an exact arrival time.'},
-{a:'Detention claim',d:'A weather delay usually isn\'t paid, but check with the broker.'},
-{a:'Document everything',d:'Closing time, opening time, all calls — in case of disputes.'}],tip:'Weather is force majeure. Brokers understand. What matters is communication, not silence.'},
-{id:'k15',ico:'🔄',cat:'Lanes',diff:'easy',xp:6,title:'Finding a backhaul',desc:'The driver delivered in Los Angeles. Needs a load back to Chicago.',sit:'The driver unloaded in LA. 2,000 empty miles to Chicago = $1,400 in fuel.',steps:[{a:'Open DAT/Truckstop',d:'Search: Los Angeles → Chicago, 53\' dry van, available date.'},
-{a:'Widen the search',d:'LA → Midwest, LA → Denver, LA → Dallas — more options.'},
-{a:'Call the brokers',d:'Brokers you\'ve already worked with get the first call. They know you.'},
-{a:'Assess the rate',d:'A backhaul out of CA is usually cheaper. But a $1,500 backhaul beats $0 running empty.'},
-{a:'Factor in deadhead',d:'If the load is 100 miles from the driver, that\'s normal. 300+ miles — calculate the costs.'},
-{a:'Plan ahead',d:'Ideally, start hunting for a backhaul 24 hours before unloading.'}],tip:'The best backhaul rates show up in the morning. Brokers fill trailers before end of day.'},
-{id:'k16',ico:'📊',cat:'Finance',diff:'hard',xp:15,title:'Calculating the load\'s profitability',desc:'The broker offers $2,200 on an 800-mile lane. Is it worth taking?',sit:'Chicago → Nashville, 800 miles, dry van, $2,200 all-in. Deadhead 50 miles.',steps:[{a:'Count total miles',d:'800 miles + 50 deadhead = 850 total miles.'},
-{a:'Fuel',d:'850 miles ÷ 6 mpg × $4.20/gal = $595 fuel cost.'},
-{a:'Driver pay',d:'850 miles × $0.45/mile = $382 driver pay.'},
-{a:'Other expenses',d:'Insurance, maintenance, tolls ≈ $150 for this run.'},
-{a:'Total expenses',d:'$595 + $382 + $150 = $1,127 total cost.'},
-{a:'Profit',d:'$2,200 - $1,127 = $1,073 net. Margin 49% — a good load!'}],tip:'Always calculate cost per mile BEFORE accepting a load. Target: at least 30% margin.'},
-{id:'k17',ico:'🚨',cat:'Problems',diff:'hard',xp:15,title:'Driver\'s accident',desc:'The driver was in an accident. No one was hurt, but the trailer is damaged.',sit:'Driver: "I was in an accident on I-94. No injuries but trailer is damaged."',steps:[{a:'Make sure it\'s safe',d:'First priority — the driver\'s health and everyone else\'s. Call 911 if needed.'},
-{a:'Don\'t move the vehicle',d:'Until police arrive — don\'t touch anything.'},
-{a:'Call insurance',d:'Notify liability insurance immediately. Give them every detail.'},
-{a:'Call the broker',d:'"Driver in accident on I-94. No injuries. Trailer damaged. Working with insurance."'},
-{a:'Document it',d:'Photos from every angle, the other parties\' info, the police report.'},
-{a:'Cargo status',d:'Check the cargo\'s condition. If damaged, notify cargo insurance.'}],tip:'An accident is an insurance matter. Never settle it directly without the insurance company.'},
-{id:'k18',ico:'💬',cat:'Negotiation',diff:'medium',xp:10,title:'Negotiating detention',desc:'The driver waited 5 hours at pickup. The broker refuses to pay detention.',sit:'"Our rate con says 2 hours free detention. Driver waited 5 hours — that\'s $225 owed."',steps:[{a:'Check the rate con',d:'Make sure the detention clause is in the document. If it is, you\'re in the right.'},
-{a:'Provide evidence',d:'The driver\'s arrival timestamp, departure time, ELD data.'},
-{a:'Call, don\'t text',d:'A phone call resolves things faster than an email back-and-forth.'},
-{a:'Be specific',d:'"Driver arrived 8:00 AM, departed 1:00 PM. That\'s 3 hours detention at $75/hr = $225."'},
-{a:'Escalate if needed',d:'If the manager refuses, ask for a supervisor.'},
-{a:'Document the refusal',d:'If the broker refuses without a reason, it affects the future relationship.'}],tip:'Detention is your legal right if it\'s in the rate con. Don\'t hesitate to claim it.'},
-{id:'k19',ico:'🏢',cat:'Brokers',diff:'medium',xp:10,title:'Building a relationship with a broker',desc:'You want to become a preferred carrier for a major broker.',sit:'You\'ve hauled 3 successful loads for this broker. You want regular freight from them.',steps:[{a:'Be reliable',d:'On-time pickup and delivery are the foundation. Without them, nothing else works.'},
-{a:'Communicate proactively',d:'Unsolicited updates: "Picked up on time", "On track for delivery".'},
-{a:'Ask for a direct contact',d:'"Can I get your direct number for future loads?"'},
-{a:'Offer a lane commitment',d:'"I run Chicago–Atlanta weekly. Can we set up a regular rate?"'},
-{a:'Solve problems fast',d:'When something goes wrong, fix it before the broker finds out.'},
-{a:'Ask for feedback',d:'"How was our service? Anything we can improve?"'}],tip:'Preferred carrier status means better rates, first call, less competition.'},
-{id:'k20',ico:'📝',cat:'Documents',diff:'medium',xp:10,title:'Filing a detention claim',desc:'The driver waited 4 hours. You need to file the detention claim correctly.',sit:'The driver waited from 6:00 to 10:00 AM. Free time is 2 hours. Rate is $75/hour.',steps:[{a:'Gather evidence',d:'ELD timestamp, gate log if available, time-stamped photos.'},
-{a:'Calculate the amount',d:'4 hours - 2 free = 2 billable hours × $75 = $150 detention.'},
-{a:'Send an email to the broker',d:'Topic: "Detention Claim - Load #12345 - [Date]". Attach the evidence.'},
-{a:'Provide the bank details',d:'How to submit an invoice: company name, MC, bank info, or factoring.'},
-{a:'Give a deadline',d:'"Please process within 30 days per our agreement."'},
-{a:'Track the payment',d:'If there\'s no answer in 2 weeks, call and check the status.'}],tip:'A detention claim without proof gets denied. ELD data is the best evidence.'}
-);
+
 </script>
 <script>
-CASES.push(
-{id:'k21',ico:'��',cat:'Lanes',diff:'medium',xp:10,title:'Route planning with tolls',desc:'The route runs through toll roads. You need to decide — take the toll or go around.',sit:'Chicago → NYC, 790 miles. Via I-80/I-78 toll $85. Detour adds 60 miles.',steps:[{a:'Calculate toll vs. detour',d:'Detour: 60 miles × $0.70/mile fuel = $42. Toll $85. The detour is $43 cheaper.'},
-{a:'Account for time',d:'The detour adds 1 hour. If HOS is tight, the toll road might be better.'},
-{a:'Confirm with the broker',d:'Some rate cons include toll reimbursement. Check it.'},
-{a:'EZPass saves money',d:'EZPass is usually 20-30% cheaper than cash tolls.'},
-{a:'Plan ahead',d:'Google Maps shows toll costs. Use it for planning.'}],tip:'Always factor tolls into the load\'s profitability. An $85 toll is 4% of a $2,000 rate.'},
-{id:'k22',ico:'🔒',cat:'Safety',diff:'hard',xp:15,title:'Suspected cargo theft',desc:'The driver notices the trailer seal is broken on arrival at delivery.',sit:'Driver: "Seal number doesn\'t match BOL. Looks like it was tampered with."',steps:[{a:'Don\'t open the trailer',d:'Preserve the scene. Don\'t touch anything.'},
-{a:'Call the police',d:'This is a potential criminal case. The police need to document it.'},
-{a:'Call the broker and the shipper',d:'Immediately. "Seal tampered — possible cargo theft. Police called."'},
-{a:'Notify cargo insurance',d:'Insurance needs to know immediately.'},
-{a:'Document it',d:'Photos of the seal, the seal number on the BOL vs. the actual one, and the surroundings.'},
-{a:'Don\'t accept blame',d:'Don\'t sign anything before the investigation.'}],tip:'Cargo theft costs $35 billion a year in the US. Documentation from the moment of loading is critical.'},
-{id:'k23',ico:'📞',cat:'Negotiation',diff:'easy',xp:6,title:'A follow-up call to the broker',desc:'You worked with this broker a month ago. You want to restart the relationship.',sit:'A month has passed since the last load. You want to remind them you exist.',steps:[{a:'Remind them of the past',d:'"Hi, this is [Name] from [Company]. We moved a load for you last month — Chicago to Atlanta."'},
-{a:'Be specific',d:'"I have a truck available Thursday in Chicago. Do you have anything going Southeast?"'},
-{a:'Don\'t be pushy',d:'One call, one email. If there\'s no answer, wait a week.'},
-{a:'Offer value',d:'"We delivered on time, no issues. Happy to work together again."'},
-{a:'Ask about future loads',d:'"Can you keep me in mind for your Chicago lanes?"'}],tip:'Follow up every 2-4 weeks — optimal. Too often is annoying. Too rare and they forget you.'},
-{id:'k24',ico:'⚡',cat:'HOS',diff:'medium',xp:10,title:'The driver violated the 14-hour window',desc:'The driver has been working 15 hours. The load isn\'t delivered yet.',sit:'The driver started their shift at 6 AM. It\'s now 9 PM — 15 hours. 2 hours to delivery.',steps:[{a:'Stop — the driver needs to pull over',d:'The 14-hour window has expired. Continuing to drive means an HOS violation.'},
-{a:'Find a safe place',d:'The nearest truck stop or rest area. Immediately.'},
-{a:'Call the broker',d:'"Driver out of hours. Must stop. Delivery rescheduled to tomorrow morning."'},
-{a:'Notify the receiver',d:'Through the broker — a new delivery time.'},
-{a:'10-hour break',d:'The driver needs at least 10 hours off before continuing.'},
-{a:'Situation analysis',d:'Why did this happen? Plan better next time.'}],tip:'The 14-hour window doesn\'t extend. Plan the route around HOS BEFORE accepting the load.'},
-{id:'k25',ico:'🏭',cat:'Problems',diff:'medium',xp:10,title:'The warehouse is closed on arrival',desc:'The driver arrived for pickup. The warehouse is closed, no one there.',sit:'Driver: "I\'m at the shipper. Nobody here. Doors locked. Appointment was 8 AM."',steps:[{a:'Check the address',d:'Make sure the driver is at the right address. Mistakes happen on rate cons.'},
-{a:'Call the broker',d:'"Driver at shipper — facility closed. No one here. Appointment was 8 AM."'},
-{a:'The broker calls the shipper',d:'It\'s the broker\'s job to find the contact and resolve the situation.'},
-{a:'Detention starts',d:'Log the arrival time. If waiting more than 2 hours, it\'s detention.'},
-{a:'If no one answers',d:'The driver isn\'t obligated to wait forever. After 2 hours — file a TONU claim.'},
-{a:'Document it',d:'A time-stamped photo of the closed warehouse.'}],tip:'Always keep the shipper\'s direct contact on the rate con. The broker isn\'t always reachable at 6 AM.'},
-{id:'k26',ico:'💡',cat:'Finance',diff:'medium',xp:10,title:'Calculating the dispatcher\'s commission',desc:'You\'re the dispatcher. You need to calculate your commission correctly.',sit:'The broker\'s rate is $3,500. Your commission is 4%. The carrier wants to know their take.',steps:[{a:'Calculate the commission',d:'$3,500 × 4% = $140 dispatcher fee.'},
-{a:'Amount to the carrier',d:'$3,500 - $140 = $3,360 to carrier.'},
-{a:'Explain it transparently',d:'Always tell the carrier the exact amount they\'ll receive.'},
-{a:'Draw up the agreement',d:'The dispatcher-carrier agreement needs to lock in the commission %.'},
-{a:'Don\'t hide the rate',d:'The carrier has the right to know the broker\'s rate. Hiding it means losing trust.'},
-{a:'Submit the invoice',d:'After delivery — invoice the carrier for $140.'}],tip:'Transparency means long-term relationships. Carriers leave dispatchers who hide rates.'},
-{id:'k27',ico:'🌐',cat:'Technology',diff:'medium',xp:10,title:'Working with a TMS',desc:'The broker requires load status updates in their TMS portal.',sit:'"You need to update load status in our portal: picked up, in transit, delivered."',steps:[{a:'Get access',d:'The broker will give you a login/password for their carrier portal.'},
-{a:'Update at loading',d:'Right after pickup — status "Picked Up" + actual time.'},
-{a:'In-Transit updates',d:'Some brokers require updates every 4-6 hours.'},
-{a:'Delivered status',d:'Right after unloading — "Delivered" + POD upload if required.'},
-{a:'Upload the documents',d:'BOL, POD, lumper receipt — all uploaded to the portal for fast payment.'},
-{a:'Automate',d:'Many ELD systems integrate with broker portals.'}],tip:'Brokers who see real-time updates give you more loads. It shows professionalism.'},
-{id:'k28',ico:'🔧',cat:'Problems',diff:'medium',xp:10,title:'A brake problem at the scale',desc:'The scale inspector found a brake problem. The driver got an out-of-service order.',sit:'Driver: "Inspector put me out of service — brake adjustment needed."',steps:[{a:'The driver can\'t move',d:'An out-of-service order means no driving until it\'s fixed.'},
-{a:'Find the nearest shop',d:'A truck stop with repair service, Speedco, Love\'s — the closest option.'},
-{a:'Call the broker',d:'"Driver OOS at weigh station — brake issue. Working on repair. ETA unknown."'},
-{a:'Estimate the repair time',d:'A brake adjustment usually takes 1-3 hours. Parts take longer.'},
-{a:'Document the expenses',d:'Repair is on the carrier. Keep every receipt.'},
-{a:'Clearance after the repair',d:'After the repair, an inspector needs to clear the OOS order.'}],tip:'A pre-trip inspection should catch these issues BEFORE departure. It saves time and money.'},
-{id:'k29',ico:'📈',cat:'Finance',diff:'hard',xp:15,title:'Analyzing monthly profitability',desc:'End of the month. You need to figure out how profitable it was.',sit:'For the month: 12 loads, $28,000 gross revenue. Expenses unknown.',steps:[{a:'Calculate the costs',d:'Fuel + driver pay + insurance + maintenance + dispatcher fee.'},
-{a:'Typical structure',d:'Fuel 25%, driver 35%, insurance 8%, maintenance 7% = 75% of costs.'},
-{a:'Example calculation',d:'$28,000 × 75% = $21,000 expenses. Net = $7,000 (25% margin).'},
-{a:'Analysis by lane',d:'Which lanes were the most profitable? Repeat them.'},
-{a:'Deadhead analysis',d:'How many empty miles? Target: under 15% of total miles.'},
-{a:'Plan the next month',d:'More contract lanes, less spot market = stability.'}],tip:'Successful carriers know their CPM by heart. Without it, you\'re working blind.'},
-{id:'k30',ico:'🤝',cat:'Brokers',diff:'easy',xp:6,title:'The first load with a new broker',desc:'A new broker offers the first load. How do you make a good impression?',sit:'A new broker gave you a load. This is a chance to become a preferred carrier.',steps:[{a:'Confirm every detail',d:'Reread the rate con. Address, time, contacts — is everything correct?'},
-{a:'Stay in touch',d:'Respond to calls and messages within 15 minutes.'},
-{a:'Proactive updates',d:'"Picked up on time." "On track for delivery." Without being asked.'},
-{a:'Deliver on time',d:'The first load matters most. No delays.'},
-{a:'Solve the problems yourself',d:'If something goes wrong, fix it and then report it. Don\'t wait for instructions.'},
-{a:'Ask for feedback',d:'"How was our service? Looking forward to working together again."'}],tip:'The first load is a job interview. Nail it and you\'ll get a steady stream of freight.'}
-);
+
 </script>
 <script>
-CASES.push(
-{id:'k31',ico:'��️',cat:'Problems',diff:'medium',xp:10,title:'A customs delay (cross-border)',desc:'The load is headed to Canada. Customs held it up 6 hours.',sit:'Driver: "Customs holding the load. They want additional documentation."',steps:[{a:'Confirm what\'s needed',d:'Which document? Commercial invoice, packing list, CUSMA certificate?'},
-{a:'Call the broker',d:'"Customs delay at border — need [document]. Can shipper provide?"'},
-{a:'The shipper needs to help',d:'Customs paperwork is the shipper\'s/exporter\'s responsibility.'},
-{a:'Customs broker',d:'If it\'s complicated, you need a licensed customs broker.'},
-{a:'Document the delay',d:'Time in at customs, time out — for the detention claim.'},
-{a:'Update the receiver',d:'Through the broker — a new delivery ETA.'}],tip:'Cross-border loads require extra paperwork. Check in advance.'},
-{id:'k32',ico:'💳',cat:'Finance',diff:'medium',xp:10,title:'Factoring vs Direct Pay',desc:'A new carrier asks: use factoring or wait for direct payment?',sit:'Carrier: "Should I use factoring or wait 30-45 days for direct pay?"',steps:[{a:'Explain factoring',d:'The factoring company pays you right away (minus 2-5%), then collects from the broker itself.'},
-{a:'Upsides of factoring',d:'Money right away, no need to wait 30-45 days, helps with cash flow.'},
-{a:'Downsides of factoring',d:'A 2-5% fee = $70-175 on a $3,500 load. Over a year, that\'s thousands of dollars.'},
-{a:'When factoring pays off',d:'A new business, needs cash for fuel, many loads running at once.'},
-{a:'When direct pay is better',d:'Stable cash flow, you work with reliable brokers, quick pay is available.'},
-{a:'A quick pay alternative',d:'Many brokers offer quick pay for 2-3% — cheaper than factoring.'}],tip:'Factoring is a growth tool. Once the business is stable, switch to direct pay.'},
-{id:'k33',ico:'📋',cat:'Documents',diff:'hard',xp:15,title:'Cargo claim — cargo damage',desc:'The receiver found damaged cargo. You need to file the claim correctly.',sit:'Receiver: "3 pallets damaged. We\'re filing a cargo claim."',steps:[{a:'Don\'t argue on the spot',d:'Document the damage. Don\'t admit fault, don\'t deny it either.'},
-{a:'Photo documentation',d:'Photos of the damage, packaging, seals, the whole trailer — before and after.'},
-{a:'Get a written statement',d:'The receiver needs to note the damage on the BOL when signing.'},
-{a:'Notify cargo insurance',d:'Immediately. Give them every detail and photo.'},
-{a:'Notify the broker',d:'"Cargo damage at delivery — 3 pallets. Insurance notified. Claim in process."'},
-{a:'Keep all the documents',d:'BOL, photos, a police report if there is one, repair estimates.'}],tip:'A cargo claim can take months. Documentation from minute one is your only protection.'},
-{id:'k34',ico:'🎯',cat:'Negotiation',diff:'hard',xp:15,title:'Negotiating a contract lane',desc:'The broker offers a 3-month contract. You need to negotiate a good rate.',sit:'Broker: "We need a carrier for Chicago–Atlanta, 3 loads/week, 3 months. What\'s your rate?"',steps:[{a:'Research the market',d:'The DAT 30-day average on this lane. That\'s your baseline.'},
-{a:'Calculate your costs',d:'CPM × miles + overhead. The minimum rate for profit.'},
-{a:'Add a premium for commitment',d:'A contract means stability for you. But also risk if the market rises.'},
-{a:'Offer slightly above market',d:'"Based on current DAT rates and our costs, $1,950/load works for us."'},
-{a:'Discuss the terms',d:'What if the market shifts a lot? Is there a fuel escalator clause?'},
-{a:'Get it in writing',d:'The contract needs to be signed. Verbal agreements don\'t hold up.'}],tip:'A contract rate is usually 5-10% below spot. The tradeoff is stability and predictable planning.'},
-{id:'k35',ico:'🚦',cat:'Lanes',diff:'easy',xp:6,title:'Planning the delivery time',desc:'You need to calculate the real delivery time accounting for every factor.',sit:'Pickup in Chicago at 6 AM. Delivery in Atlanta. Distance 720 miles.',steps:[{a:'Base time',d:'720 miles ÷ 55 mph average = 13 hours driving time.'},
-{a:'Add stops',d:'Fuel stop 30 min, meal 30 min, rest breaks = +1.5 hours.'},
-{a:'HOS limits',d:'11 hours of driving max. 720 miles is doable in one day.'},
-{a:'Account for traffic',d:'Chicago rush hour, Atlanta traffic — add 1-2 hours.'},
-{a:'Total',d:'6 AM + 13 + 1.5 + 1.5 = roughly a 10 PM arrival. Realistic.'},
-{a:'Tell the broker',d:'"ETA Atlanta approximately 10 PM today." Update if it changes.'}],tip:'Always give a realistic ETA. Better to arrive early than promised than to be late.'},
-{id:'k36',ico:'🔑',cat:'Safety',diff:'medium',xp:10,title:'Vetting a driver before hiring',desc:'You\'re hiring a new driver. Which checks are mandatory?',sit:'A driver candidate for the position. All mandatory checks need to be run.',steps:[{a:'MVR check',d:'Motor Vehicle Record — violation history over the last 3 years.'},
-{a:'DOT drug test',d:'Required before the first run. Without it, the truck can\'t go on the road.'},
-{a:'CDL verification',d:'Verify the CDL is valid through the DMV. Correct endorsements?'},
-{a:'PSP report',d:'Pre-Employment Screening Program — HOS violation and accident history.'},
-{a:'Employment history',d:'The last 3 years of work history. Check the reasons for leaving.'},
-{a:'Physical/Medical cert',d:'The DOT medical certificate needs to be current.'}],tip:'A bad driver means accidents, fines, lost insurance. Vetting takes a day, saves you years.'},
-{id:'k37',ico:'📊',cat:'Technology',diff:'medium',xp:10,title:'Using DAT for market analysis',desc:'You need to know the market rate before negotiating with the broker.',sit:'The broker offers a load. You want to know the fair rate.',steps:[{a:'Open DAT Rate View',d:'Enter origin, destination, equipment type, date.'},
-{a:'Look at the averages',d:'DAT shows: low, average, high over the last 7/30 days.'},
-{a:'Account for seasonality',d:'Rates fluctuate. December and March are usually higher.'},
-{a:'Check the volume',d:'How many loads on this lane? Fewer loads means lower rates.'},
-{a:'Use it in negotiations',d:'"DAT shows $2.15/mile average — I need $2.10 minimum."'},
-{a:'Update regularly',d:'The market shifts weekly. Check it before every negotiation.'}],tip:'DAT is your main negotiating argument. Data convinces better than words.'},
-{id:'k38',ico:'🏥',cat:'Problems',diff:'hard',xp:15,title:'The driver got sick on the road',desc:'The driver isn\'t feeling well. Can\'t continue the run.',sit:'Driver: "I\'m not feeling well. I think I need to see a doctor."',steps:[{a:'Health comes first',d:'The load can wait. The driver needs to get medical help.'},
-{a:'Find the nearest clinic',d:'Urgent care, hospital — Google Maps. Help the driver get there.'},
-{a:'Call the broker',d:'"Driver ill — seeking medical attention. Load will be delayed. Will update ASAP."'},
-{a:'Assess the situation',d:'If the driver can\'t continue, you need another driver or carrier.'},
-{a:'Document it',d:'Medical paperwork may be needed to explain the delay.'},
-{a:'Driver\'s insurance',d:'Check whether the driver has health insurance. Help them get set up.'}],tip:'A sick driver behind the wheel is a danger to everyone. Never pressure them to keep going.'},
-{id:'k39',ico:'💬',cat:'Negotiation',diff:'medium',xp:10,title:'Negotiating the lumper fee',desc:'The receiver demands a lumper service. The broker says it wasn\'t included in the rate con.',sit:'"Receiver requires lumper — $200. It\'s not in the rate con. Who pays?"',steps:[{a:'Check the rate con',d:'Is there a mention of a lumper? If not, that\'s a gray area.'},
-{a:'Call the broker',d:'"Receiver requires lumper $200 — not in rate con. Who covers this?"'},
-{a:'Standard practice',d:'Usually the shipper or broker pays the lumper. The driver shouldn\'t pay out of pocket.'},
-{a:'Get confirmation',d:'The broker needs to confirm in writing who pays BEFORE unloading.'},
-{a:'If the broker refuses',d:'The driver can pay and then invoice the broker with the lumper receipt.'},
-{a:'Document it',d:'A lumper receipt is required for reimbursement.'}],tip:'The lumper fee is a common point of conflict. Always confirm it when booking: "Who covers lumper if required?"'},
-{id:'k40',ico:'🌍',cat:'Lanes',diff:'hard',xp:15,title:'Organizing a team load on a long-haul lane',desc:'The broker offers a team load: LA → NYC, 2,800 miles, $5,500, 48 hours.',sit:'You need to decide: take the team load, and how to organize it.',steps:[{a:'Calculate the profitability',d:'$5,500 ÷ 2,800 miles = $1.96/mile. Normal for a team.'},
-{a:'Team expenses',d:'Two drivers × $0.45/mile = $0.90/mile driver cost. Fuel $0.70/mile.'},
-{a:'Net calculation',d:'$1.96 - $0.90 - $0.70 = $0.36/mile net. $1,008 profit. Acceptable.'},
-{a:'HOS for a team',d:'A team can drive 22 hours a day. 2,800 miles ÷ 55 mph = 51 hours ÷ 22 = 2.3 days.'},
-{a:'Logistics',d:'Drivers switch off every 10-11 hours. One sleeps while the other drives.'},
-{a:'Communication',d:'Both drivers need to know the route, contacts, and load details.'}],tip:'Team loads pay less per mile but more per day. Ideal for time-sensitive freight.'}
-);
+
 </script>
 <script>
-CASES.push(
-{id:'k41',ico:'��',cat:'Safety',diff:'hard',xp:15,title:'Suspected double brokering',desc:'You get a call from "broker" who themselves got the load from another broker.',sit:'Caller: "I have a load for you — $2,800 Chicago to Atlanta." But he\'s a carrier himself, not a broker.',steps:[{a:'Check the MC status',d:'Ask for the MC number. Check SAFER — are they a carrier or broker?'},
-{a:'Red flags',d:'A carrier offering a load is double brokering. It\'s illegal.'},
-{a:'Don\'t accept',d:'Double brokering means you might not get paid. The original broker doesn\'t know about you.'},
-{a:'Check the original',d:'Find the original broker through SAFER and contact them directly.'},
-{a:'Report it to the FMCSA',d:'Double brokering is a federal offense. You can file a complaint.'},
-{a:'Protect yourself',d:'Always work directly only with licensed brokers.'}],tip:'Double brokering is on the rise. Always check MC status on SAFER before accepting a load.'},
-{id:'k42',ico:'📱',cat:'Technology',diff:'easy',xp:6,title:'Setting up the ELD for a new driver',desc:'A new driver doesn\'t know how to use the ELD system.',sit:'Driver: "I\'ve never used Motive before. How do I log my hours?"',steps:[{a:'Create an account',d:'Register the driver in the system. Give them a login and password.'},
-{a:'Show the basics',d:'How to start a shift, how to change status (driving/on duty/off duty/sleeper).'},
-{a:'Explain why it matters',d:'ELD data is a legal document. Mistakes mean fines.'},
-{a:'Pre-trip inspection',d:'Show how to fill out the DVIR (Driver Vehicle Inspection Report) in the app.'},
-{a:'A trial run',d:'First run — verify the ELD is working correctly.'},
-{a:'Tech support',d:'Give them the Motive support number in case of issues.'}],tip:'ELD mistakes get caught at scales. An hour of training saves thousands in fines.'},
-{id:'k43',ico:'💰',cat:'Finance',diff:'medium',xp:10,title:'Managing cash flow during the slow season',desc:'January is a slow month. Rates are down, fewer loads. How do you manage your finances?',sit:'January: rates run 20% below December. Expenses stay the same.',steps:[{a:'Cut down deadhead',d:'Every empty mile is a pure loss. Hunt for a backhaul aggressively.'},
-{a:'Consider contract lanes',d:'Contract rates are more stable than spot during the slow season.'},
-{a:'Optimize expenses',d:'Can you cut costs: fuel (route optimization), maintenance (deferring non-urgent work)?'},
-{a:'Reserve fund',d:'Ideally keep 2-3 months of expenses in reserve for periods like this.'},
-{a:'Diversify',d:'Different brokers, different lanes — don\'t depend on a single source.'},
-{a:'Plan a year ahead',d:'January and February are always slow. Earn more in Q4.'}],tip:'Seasonality is a reality of freight. Successful carriers plan a year ahead.'},
-{id:'k44',ico:'📚',cat:'Brokers',diff:'easy',xp:6,title:'Understanding the broker-carrier agreement',desc:'The broker sends over a broker-carrier agreement to sign.',sit:'Broker: "Please sign our carrier agreement before we can book you."',steps:[{a:'Read carefully',d:'Especially: payment terms, cargo liability, exclusivity clauses.'},
-{a:'Payment terms',d:'When do they pay? 30 days? 45? Is quick pay available?'},
-{a:'Cargo liability',d:'Who\'s responsible for the cargo damage?'},
-{a:'Exclusivity',d:'Some agreements bar you from working with the broker\'s competitors. That\'s a red flag.'},
-{a:'Dispute resolution',d:'How are disputes resolved? Arbitration? Court? Which state?'},
-{a:'Sign if everything checks out',d:'Standard agreements are fine. Unusual terms — discuss them.'}],tip:'The broker-carrier agreement is a legal document. Don\'t sign it without reading it.'},
-{id:'k45',ico:'🌅',cat:'Lanes',diff:'medium',xp:10,title:'Route optimization to save fuel',desc:'You need to cut fuel costs on a long lane.',sit:'The Dallas → Chicago lane, 920 miles. Fuel is the biggest expense line.',steps:[{a:'Plan fuel stops',d:'GasBuddy or TruckPark — find cheap diesel stations along the route.'},
-{a:'Fuel up in Texas',d:'Fuel in TX is usually cheaper than in IL. Fill the tank there.'},
-{a:'Speed means savings',d:'55 mph vs 65 mph = 15% fuel savings. Over 920 miles, that\'s significant.'},
-{a:'Avoid idling',d:'Idling burns 0.8 gal/hour. Shut the engine off at stops.'},
-{a:'Fuel card',d:'Comdata, EFS — fuel discounts of 10-30 cents/gallon.'},
-{a:'A route with no detours',d:'Google Maps truck routing — avoid low bridges and restricted roads.'}],tip:'Saving $0.10/mile on fuel = $92 on this route. Over a year, that\'s thousands of dollars.'},
-{id:'k46',ico:'⚠️',cat:'Problems',diff:'hard',xp:15,title:'The load is held up at the receiver\'s warehouse',desc:'The receiver accepted the load but hasn\'t signed the POD in 3 days.',sit:'The driver unloaded 3 days ago. The POD isn\'t signed. The broker won\'t pay without it.',steps:[{a:'Call the receiver',d:'Go straight to the receiving department. Ask them to sign the POD.'},
-{a:'Through the broker',d:'The broker needs to lean on their client (shipper/receiver).'},
-{a:'An email with a deadline',d:'"Please sign POD by [date] or we will escalate to legal."'},
-{a:'Alternative proof',d:'ELD data, a gate log, unloading photos — can substitute for a POD for payment.'},
-{a:'Some brokers pay without a POD',d:'If there\'s other proof of delivery, ask for an exception.'},
-{a:'Legal action',d:'If the POD is intentionally not signed, that\'s a breach of contract.'}],tip:'Always get a signature on the BOL right at unloading. Don\'t leave without the signed document.'},
-{id:'k47',ico:'🏆',cat:'Negotiation',diff:'hard',xp:15,title:'Negotiating after a bad experience',desc:'The broker was late on payment last time. Now they\'re offering a new load.',sit:'The same broker who paid in 60 days instead of 30. Offering a good load.',steps:[{a:'Assess the risk',d:'One late payment — a fluke? Or a pattern on Carrier411?'},
-{a:'Ask for quick pay',d:'"Given our last experience, I need quick pay (3 days) for this load."'},
-{a:'Or an advance',d:'Some carriers require a 50% advance from brokers they don\'t trust yet.'},
-{a:'A smaller load as a test',d:'Take a small load. See if they pay on time.'},
-{a:'Document everything',d:'Get all agreements in writing. Email confirmations.'},
-{a:'Be ready to walk away',d:'If the terms don\'t work, there are other brokers.'}],tip:'A second chance — with conditions. Without conditions, you\'re risking the same money again.'},
-{id:'k48',ico:'📦',cat:'Problems',diff:'medium',xp:10,title:'Wrong delivery address',desc:'The driver arrived at the address on the rate con. The address doesn\'t exist.',sit:'Driver: "GPS says this address doesn\'t exist. I\'m in an industrial area but no warehouse."',steps:[{a:'Check the rate con',d:'Reread the address. There might be a typo in the number or street.'},
-{a:'Call the broker',d:'"Driver at delivery address — location not found. Need correct address ASAP."'},
-{a:'The broker calls the receiver',d:'The broker needs to get the correct address from their client.'},
-{a:'Detention starts',d:'The driver is waiting — log the time.'},
-{a:'Don\'t drive blind',d:'The driver shouldn\'t go looking for the warehouse on their own. It\'s a risk.'},
-{a:'Document it',d:'A GPS screenshot showing the wrong address — evidence for a detention claim.'}],tip:'Always check the delivery address on Google Maps BEFORE dispatching the driver.'},
-{id:'k49',ico:'🎯',cat:'Brokers',diff:'medium',xp:10,title:'Working with several brokers at once',desc:'How do you effectively manage relationships with 10+ brokers?',sit:'You have 15 brokers in your contacts. You need to organize the work.',steps:[{a:'A CRM or a spreadsheet',d:'Excel or Google Sheets: broker, contact, lanes, rates, payment rating.'},
-{a:'Prioritize',d:'Your top 5 brokers who pay well and on time are the backbone of the business.'},
-{a:'Regular contact',d:'Call your top brokers weekly. The rest — only when you need a load.'},
-{a:'Specialize',d:'Better to be an expert on 3-4 lanes than mediocre everywhere.'},
-{a:'Track payments',d:'Who pays on time? Who delays? This affects priority.'},
-{a:'New brokers',d:'Add 1-2 new brokers a month. Diversification matters.'}],tip:'Quality of relationships beats quantity. 5 reliable brokers beat 20 random ones.'},
-{id:'k50',ico:'🌟',cat:'Finance',diff:'hard',xp:15,title:'Scaling the business: a second truck',desc:'Business is going well. Is it worth buying a second truck?',sit:'One truck nets $8,000/month. You\'re thinking about expanding.',steps:[{a:'Analyzing the current business',d:'Is the first truck running steadily? Are there any repeat customers?'},
-{a:'A financial cushion',d:'You need at least 6 months of expenses in reserve before buying.'},
-{a:'The cost of a second truck',d:'New: $150K+. Used: $50-80K. Lease: $2,500-3,500/month.'},
-{a:'Extra costs',d:'Second driver, insurance, maintenance — +$6,000-8,000/month.'},
-{a:'Do you need a second driver',d:'Without a reliable driver, a second truck is a headache.'},
-{a:'Gradual growth',d:'Better one truck at 90% utilization than two at 50%.'}],tip:'Scaling doubles not just revenue, but problems too. Be ready for that.'}
-);
+
 </script>
 <script>
 // ═══════════════════════════════════════════════
@@ -2188,18 +1808,7 @@ function updateBannerProgress(){
   const cl=document.getElementById('bn-cards-left');if(cl)cl.textContent=cardsLeft;
   const ct=document.getElementById('bn-cards-total');if(ct)ct.textContent=cardsTotal;
   const ca=document.getElementById('bn-cards-acc');if(ca)ca.textContent=cardsAcc+'%';
-  // Cases
-  const casesDone=s.readCases.length;
-  const casesTotal=CASES.length;
-  const casesLeft=casesTotal-casesDone;
-  const casesPct=casesTotal?Math.round(casesDone/casesTotal*100):0;
-  const caseCats=[...new Set(CASES.map(c=>c.cat))].length;
-  const kf=document.getElementById('bn-cases-fill');if(kf)kf.style.width=casesPct+'%';
-  const kp=document.getElementById('bn-cases-pct');if(kp)kp.textContent=casesPct+'%';
-  const kd=document.getElementById('bn-cases-done');if(kd)kd.textContent=casesDone;
-  const kl=document.getElementById('bn-cases-left');if(kl)kl.textContent=casesLeft;
-  const kt=document.getElementById('bn-cases-total');if(kt)kt.textContent=casesTotal;
-  const kc=document.getElementById('bn-cases-cats');if(kc)kc.textContent=caseCats;
+  
 }
 
 // ═══════════════════════════════════════════════
@@ -3080,120 +2689,8 @@ function updateSideStats(){
 }
 </script>
 <script>
-// ═══════════════════════════════════════════════
-// CASES
-// ═══════════════════════════════════════════════
-let caseDiff='all';let caseCat='all';let currentCaseId=null;
-
-function initCases(){
-  const cats=[...new Set(CASES.map(c=>c.cat))];
-  const cf=document.getElementById('kcat-filters');
-  cf.innerHTML='<button class="fb on" onclick="kcat(\'all\')" id="kc-all">All topics</button>';
-  cats.forEach(c=>{
-    cf.innerHTML+=`<button class="fb" onclick="kcat('${c}')" id="kc-${c.replace(/\s/g,'_')}">${c}</button>`;
-  });
-  filterCases();
-}
-
-function filterCases(){
-  const s=getState();
-  let filtered=CASES.filter(c=>{
-    if(caseCat!=='all'&&c.cat!==caseCat)return false;
-    return true;
-  });
-  // Randomize order (seeded by day so it stays consistent within a session)
-  const day=new Date().toDateString();
-  let seed=0;for(let i=0;i<day.length;i++)seed+=day.charCodeAt(i);
-  const rng=(s)=>{s=Math.imul(s^(s>>>16),0x45d9f3b);s=Math.imul(s^(s>>>13),0x45d9f3b);return(s^(s>>>16))>>>0;};
-  filtered=[...filtered].sort((a,b)=>{
-    const ha=rng(seed+a.id.length+a.id.charCodeAt(0));
-    const hb=rng(seed+b.id.length+b.id.charCodeAt(0));
-    return ha-hb;
-  });
-  const g=document.getElementById('cases-grid');
-  if(!filtered.length){g.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Nothing found</p></div>';return;}
-  g.innerHTML=filtered.map(c=>{
-    const read=s.readCases.includes(c.id);
-    const hasStory=CASE_STORIES[c.id];
-    return`<div class="kc ${read?'read':''}" onclick="openCase('${c.id}')">
-      ${hasStory?'<div class="kc-play">▶</div>':''}
-      <div class="kc-head">
-        <div class="kc-ico">${c.ico}</div>
-        <div><div class="kc-cat">${c.cat}</div><div class="kc-title">${c.title}</div></div>
-      </div>
-      <div class="kc-desc">${c.desc}</div>
-      <div class="kc-foot">
-        <span class="diff-badge d-${c.diff}">${c.diff==='easy'?'Easy':c.diff==='medium'?'Medium':'Hard'}</span>
-        <span class="kc-xp">+${c.xp} XP</span>
-        ${read?'<span class="kc-read">✅ Completed</span>':''}
-      </div>
-    </div>`;
-  }).join('');
-  updateCasesProgress(filtered,s);
-}
-
-function updateCasesProgress(filtered,s){
-  const total=filtered.length;
-  const read=filtered.filter(c=>s.readCases.includes(c.id)).length;
-  const pct=total?Math.round(read/total*100):0;
-  document.getElementById('kprog-fill').style.width=pct+'%';
-  document.getElementById('kprog-txt').textContent=`Learned: ${read} of ${total}`;
-  document.getElementById('kprog-pct').textContent=pct+'%';
-}
-
-function kcat(c){
-  caseCat=c;
-  document.querySelectorAll('[id^="kc-"]').forEach(b=>b.classList.remove('on'));
-  const id=c==='all'?'kc-all':'kc-'+c.replace(/\s/g,'_');
-  const el=document.getElementById(id);
-  if(el)el.classList.add('on');
-  filterCases();
-}
-
-function openCase(id){
-  const c=CASES.find(x=>x.id===id);if(!c)return;
-  currentCaseId=id;
-  const story=CASE_STORIES[id];
-  if(story){
-    startCaseChat(id);
-  } else {
-    // Fallback: old modal for cases without stories
-    const s=getState();
-    document.getElementById('m-ico').textContent=c.ico;
-    document.getElementById('m-cat').textContent=c.cat+' · '+{easy:'Easy',medium:'Medium',hard:'Hard'}[c.diff];
-    document.getElementById('m-title').textContent=c.title;
-    document.getElementById('m-sit').textContent=c.sit;
-    document.getElementById('m-steps').innerHTML=c.steps.map((st,i)=>
-      `<div class="step"><div class="sn">${i+1}</div><div class="sc"><div class="sa">${st.a}</div><div class="sd">${st.d}</div></div></div>`
-    ).join('');
-    const tip=document.getElementById('m-tip');
-    const tipTxt=document.getElementById('m-tip-txt');
-    if(c.tip){tip.style.display='block';tipTxt.textContent=c.tip;}
-    else tip.style.display='none';
-    const btn=document.getElementById('m-mark-btn');
-    btn.style.display='block';
-    if(s.readCases.includes(id)){btn.textContent='✅ Already learned';btn.disabled=true;}
-    else{btn.textContent='✅ Learned';btn.disabled=false;}
-    document.getElementById('modal-ov').classList.add('open');
-  }
-}
-
-function markCase(){
-  if(!currentCaseId)return;
-  const c=CASES.find(x=>x.id===currentCaseId);if(!c)return;
-  const s=getState();
-  if(!s.readCases.includes(currentCaseId)){
-    s.readCases.push(currentCaseId);
-    s.xp=(s.xp||0)+c.xp;
-    setState(s);
-    checkAchievements(s);
-    updateHeroNums();
-    showToast(c.ico,'+'+c.xp+' XP','Case learned!');
-    document.getElementById('m-mark-btn').textContent='✅ Already learned';
-    document.getElementById('m-mark-btn').disabled=true;
-    filterCases();
-  }
-}
+// Модалка подробностей — используется карточками
+let currentCaseId=null;
 
 function closeModal(e){
   if(e&&e.target!==document.getElementById('modal-ov'))return;
@@ -3262,7 +2759,6 @@ function updateHeroNums(){
   document.getElementById('h-known').textContent=s.known.length;
   document.getElementById('h-streak').textContent=s.dayStreak;
   document.getElementById('h-cards').textContent=CARDS.length;
-  document.getElementById('h-cases').textContent=CASES.length;
   updateSideStats();
   if(typeof updateBannerProgress==='function')updateBannerProgress();
 }
@@ -3514,186 +3010,6 @@ function matchClick(id,type,el){
 // ═══════════════════════════════════════════════
 let csState={caseId:null,stepIdx:0,score:0,maxScore:0};
 
-const CASE_STORIES={
-k1:{
-  contact:'Mike — TQL Logistics',avatar:'📞',
-  nodes:[
-    {msgs:[{who:'sys',text:'📱 Incoming call from a broker...'},
-           {who:'them',text:'Hey, I got a load for you. Chicago to Atlanta, 780 miles. $1,500 all-in. Interested?'}],
-     choices:[
-       {text:'Sure, send me the rate con',score:0,next:1,feedback:'Accepted without negotiating — lost $300–500.'},
-       {text:'What\'s the pickup and delivery window?',score:2,next:2,feedback:'Correct! Details first, price second.'},
-       {text:'$1,500? That\'s way too low, no thanks',score:0,next:3,feedback:'Too abrupt — lost the opportunity.'}
-     ],insight:'💡 Always confirm the details before discussing rate — it shows professionalism.'},
-    {msgs:[{who:'them',text:'Great, I\'ll send it over. Pickup tomorrow 8 AM.'}],
-     choices:null,end:true,endScore:0},
-    {msgs:[{who:'them',text:'Pickup tomorrow 8 AM, delivery next day by 5 PM. Dry van, 42,000 lbs, no hazmat.'}],
-     choices:[
-       {text:'DAT shows $2.10/mile on this lane. I need at least $1,900.',score:2,next:4,feedback:'Excellent! DAT data is your best argument.'},
-       {text:'I can do $1,700',score:1,next:5,feedback:'Below market — could have gotten more.'},
-       {text:'I\'ll take the $1,500',score:0,next:1,feedback:'Below market. Always negotiate.'}
-     ],insight:'💡 DAT shows an average of $2.10/mile = $1,638 minimum. Ask for more.'},
-    {msgs:[{who:'them',text:'Alright, good luck finding something better. Call me if you change your mind.'}],
-     choices:null,end:true,endScore:0},
-    {msgs:[{who:'them',text:'$1,900 is too high. Best I can do is $1,750.'}],
-     choices:[
-       {text:'I can do $1,800 if you need it moved today. Final offer.',score:2,next:6,feedback:'A perfect compromise with a deadline.'},
-       {text:'Meet me at $1,850 and we have a deal.',score:1,next:7,feedback:'Good, but could have closed faster.'},
-       {text:'OK, $1,750 works',score:0,next:5,feedback:'Could have gotten more — don\'t give in so fast.'}
-     ],insight:'💡 "If you need it moved today" creates urgency and justifies the price.'},
-    {msgs:[{who:'them',text:'OK, $1,700 works. I\'ll send the rate con.'},
-           {who:'sys',text:'Rate: $1,700. Below market, but the load is booked.'}],
-     choices:null,end:true,endScore:1},
-    {msgs:[{who:'them',text:'Deal. $1,800. Sending rate con now.'},
-           {who:'sys',text:'🎉 Rate: $1,800 — excellent result!'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'them',text:'Hmm... $1,825 and you got a deal.'},
-           {who:'you',text:'Done. Send the rate con.'},
-           {who:'sys',text:'Rate: $1,825. Great result!'}],
-     choices:null,end:true,endScore:2}
-  ]
-},
-k2:{
-  contact:'Driver Ivan',avatar:'🚛',
-  nodes:[
-    {msgs:[{who:'sys',text:'📱 Urgent call from the driver...'},
-           {who:'them',text:'Boss, truck broke down on I-80, mile marker 312. Engine light came on, won\'t start. I got reefer load — frozen products.'}],
-     choices:[
-       {text:'Stay calm, Ivan. We\'ll sort it out. What\'s the reefer temperature reading?',score:2,next:1,feedback:'Correct — reassured the driver and asked for critical info.'},
-       {text:'How did this happen?! Did you check the truck before the trip?',score:0,next:2,feedback:'Blame won\'t help. Solve the problem first.'},
-       {text:'Calling the broker now, hang tight',score:1,next:3,feedback:'The broker does need a call, but get the details first.'}
-     ],insight:'💡 First step — calm the driver and gather information. Panic = bad decisions.'},
-    {msgs:[{who:'them',text:'Reefer is still running, temp is 34°F. But engine is dead. I\'m on the shoulder.'}],
-     choices:[
-       {text:'Good, the reefer is running — we have time. Finding a tow near you. Calling the broker in 5 minutes.',score:2,next:4,feedback:'Perfect — a plan of action, priorities in order.'},
-       {text:'Try starting it again',score:0,next:5,feedback:'The driver isn\'t a mechanic. You need a professional.'}
-     ],insight:'💡 The reefer runs independently from the engine — that buys time to solve the problem.'},
-    {msgs:[{who:'them',text:'I did the pre-trip! Everything was fine this morning. Look, I need help here, not blame.'}],
-     choices:[
-       {text:'You\'re right, sorry. Let\'s solve this. What\'s the reefer temperature?',score:1,next:1,feedback:'Good that you corrected course. But lost time.'},
-       {text:'Alright, finding a tow. Hang tight.',score:0,next:3,feedback:'Didn\'t get the critical temperature information.'}
-     ]},
-    {msgs:[{who:'you',text:'Driver broke down on I-80 mile 312. Working on solution. Will update in 30 min.'},
-           {who:'them',text:'OK thanks for the heads up. Keep me posted. What\'s the ETA impact?'}],
-     choices:[
-       {text:'Reefer is running, cargo is safe. Estimating 2-3 hour delay. Will confirm once tow truck arrives.',score:2,next:4,feedback:'Professional — gave status, estimate, plan.'},
-       {text:'I don\'t know yet, I\'ll call you back',score:0,next:6,feedback:'The broker wants specifics, not uncertainty.'}
-     ],insight:'💡 Brokers forgive breakdowns. They don\'t forgive silence and no plan.'},
-    {msgs:[{who:'sys',text:'You found a tow — ETA 45 minutes. Called the broker with an update.'},
-           {who:'them',text:'Thanks for staying on top of it. Appreciate the updates.'},
-           {who:'sys',text:'🎉 Situation under control. Load delivered with a 3-hour delay.'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'them',text:'That\'s not gonna help. I need a mechanic, not a restart.'},
-           {who:'sys',text:'Lost time. Should have gone straight to finding help.'}],
-     choices:[
-       {text:'Got it. Finding the nearest shop and a tow.',score:1,next:4,feedback:'Better late than never.'}
-     ]},
-    {msgs:[{who:'them',text:'I need more than that. What\'s the plan?'},
-           {who:'sys',text:'The broker isn\'t happy — no specifics.'}],
-     choices:[
-       {text:'Tow truck is on the way, ETA 45 min. Reefer running, cargo safe. Will update in 30.',score:1,next:4,feedback:'Corrected course, but the first impression was already hurt.'}
-     ]}
-  ]
-},
-k5:{
-  contact:'Accounting — Swift Logistics',avatar:'💰',
-  nodes:[
-    {msgs:[{who:'sys',text:'45 days have passed since delivery. Payment of $2,800 not received. POD was sent.'},
-           {who:'sys',text:'You\'re calling the broker\'s accounting department...'},
-           {who:'them',text:'Swift Logistics accounting, how can I help you?'}],
-     choices:[
-       {text:'Hi, this is [Name] from [Company]. I\'m calling about invoice #1247, $2,800, delivered 45 days ago. Can you check the status?',score:2,next:1,feedback:'Professional — all the data up front.'},
-       {text:'Where\'s my money? It\'s been 45 days!',score:0,next:2,feedback:'Aggression won\'t help. Accounting isn\'t the enemy.'},
-       {text:'Hi, I have an unpaid invoice...',score:1,next:3,feedback:'Too vague — specifics speed things up.'}
-     ],insight:'💡 Always give the invoice number, amount, and delivery date — it speeds up the process.'},
-    {msgs:[{who:'them',text:'Let me check... Invoice #1247, yes I see it. It\'s in the queue. Should be processed this week.'}],
-     choices:[
-       {text:'Can you give me a specific date? Our terms were Net 30 and it\'s been 45 days.',score:2,next:4,feedback:'Excellent — polite but firm.'},
-       {text:'OK, thanks. I\'ll wait.',score:0,next:5,feedback:'No specific date — you\'ll be waiting another month.'}
-     ],insight:'💡 "In the queue" is a standard brush-off. Always ask for a specific date.'},
-    {msgs:[{who:'them',text:'Sir, I understand your frustration but I need an invoice number to look anything up.'}],
-     choices:[
-       {text:'Sorry about that. Invoice #1247, $2,800, delivered March 15th.',score:1,next:1,feedback:'Corrected course, but the first impression was hurt.'}
-     ]},
-    {msgs:[{who:'them',text:'OK, what\'s the invoice number and amount?'}],
-     choices:[
-       {text:'Invoice #1247, $2,800, delivered March 15th. POD was sent same day.',score:1,next:1,feedback:'Good, but could have given it all up front.'}
-     ]},
-    {msgs:[{who:'them',text:'I can confirm payment will go out this Friday, March 28th.'},
-           {who:'you',text:'Thank you. Can you send me a confirmation email?'},
-           {who:'them',text:'Sure, I\'ll send it today.'},
-           {who:'sys',text:'🎉 Payment confirmed for Friday. Email confirmation requested.'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'sys',text:'Another week has passed. Still no payment. Time to escalate.'}],
-     choices:[
-       {text:'Calling again and asking for a supervisor',score:1,next:4,feedback:'The right move, but you lost a week.'}
-     ]}
-  ]
-},
-k7:{
-  contact:'Broker — CH Robinson',avatar:'📞',
-  nodes:[
-    {msgs:[{who:'sys',text:'You\'re making a cold call to a new broker...'},
-           {who:'them',text:'CH Robinson, this is Sarah. How can I help you?'}],
-     choices:[
-       {text:'Hi Sarah, this is [Name] from [Company], MC 123456. I run dry vans Midwest to Southeast. Got anything moving this week?',score:2,next:1,feedback:'Perfect — brief, to the point, with the MC number.'},
-       {text:'Hi, I\'m a carrier looking for loads. Do you have anything available?',score:0,next:2,feedback:'Too vague. The broker doesn\'t know what you offer.'},
-       {text:'Hi Sarah, my name is [Name]. I\'ve been in trucking for 5 years and I wanted to introduce my company...',score:0,next:3,feedback:'Too long. The broker is busy — get to the point.'}
-     ],insight:'💡 A cold call = 15 seconds. Name, MC, equipment, lane, question.'},
-    {msgs:[{who:'them',text:'Hey! Yeah actually I have a load going Chicago to Atlanta, pickup Thursday. 53\' dry van. Interested?'}],
-     choices:[
-       {text:'Absolutely. What\'s the rate and weight?',score:2,next:4,feedback:'Straight to business — shows experience.'},
-       {text:'Maybe. Tell me more about it.',score:1,next:4,feedback:'Fine, but "maybe" sounds uncertain.'}
-     ]},
-    {msgs:[{who:'them',text:'What equipment do you run? What lanes?'}],
-     choices:[
-       {text:'53\' dry van, Midwest to Southeast primarily. Truck available Thursday in Chicago.',score:1,next:1,feedback:'Good, but could have given this info right away.'}
-     ]},
-    {msgs:[{who:'them',text:'OK... what\'s your MC number and what do you run?'},
-           {who:'sys',text:'The broker is losing interest — you didn\'t give specifics.'}],
-     choices:[
-       {text:'MC 123456, 53\' dry van. Truck in Chicago, available Thursday.',score:1,next:1,feedback:'Saved the situation, but the first impression was weak.'}
-     ]},
-    {msgs:[{who:'them',text:'$1,850 all-in, 42,000 lbs. Pickup Thursday 8 AM.'},
-           {who:'you',text:'Works for me. Can I get your direct email for future loads?'},
-           {who:'them',text:'Sure — sarah.j@chrobinson.com. Send me your carrier packet.'},
-           {who:'sys',text:'🎉 First load booked + direct broker contact secured!'}],
-     choices:null,end:true,endScore:3}
-  ]
-},
-k9:{
-  contact:'Unknown Broker',avatar:'🔍',
-  nodes:[
-    {msgs:[{who:'sys',text:'An unfamiliar broker offers $2,500 Dallas → Miami. Sounds good. But you\'ve never worked with them.'},
-           {who:'them',text:'Hey, I got a hot load. Dallas to Miami, $2,500. Need it picked up today. You in?'}],
-     choices:[
-       {text:'Sounds good. What\'s your MC number? I need to verify before we proceed.',score:2,next:1,feedback:'Correct — always verify before booking.'},
-       {text:'$2,500? I\'m in! Send the rate con.',score:0,next:4,feedback:'Dangerous! Didn\'t check the broker — risking non-payment.'},
-       {text:'That rate seems too high. What\'s the catch?',score:1,next:2,feedback:'Good instinct, but better to verify via SAFER.'}
-     ],insight:'💡 A rate that\'s too high + "need it today" pressure = red flags.'},
-    {msgs:[{who:'them',text:'MC 987654. We\'re a legit operation, been in business 2 years.'},
-           {who:'sys',text:'You check SAFER.fmcsa.dot.gov...'},
-           {who:'sys',text:'⚠️ MC is active, but insurance expired 2 weeks ago. Bond is active.'}],
-     choices:[
-       {text:'Your insurance shows expired on SAFER. I can\'t book until that\'s updated.',score:2,next:3,feedback:'Excellent — found the problem, protected yourself.'},
-       {text:'Looks good on SAFER. Let\'s do it.',score:0,next:4,feedback:'Missed the expired insurance — dangerous!'}
-     ],insight:'💡 Verify: active license + valid insurance + bond. All three.'},
-    {msgs:[{who:'them',text:'No catch, just need it moved fast. So are you in or not?'}],
-     choices:[
-       {text:'Give me your MC number first. I verify every new broker.',score:2,next:1,feedback:'The right approach — didn\'t give in to pressure.'},
-       {text:'OK, send the rate con',score:0,next:4,feedback:'Gave in to pressure — risky.'}
-     ]},
-    {msgs:[{who:'them',text:'Oh, we just switched providers. It\'ll be updated tomorrow.'},
-           {who:'you',text:'I understand, but I can\'t move a load without valid insurance on file. Call me when it\'s updated.'},
-           {who:'sys',text:'🎉 The right call. 5 minutes of checking can save thousands.'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'sys',text:'⚠️ You booked the load without checking. 30 days later — no payment. Broker isn\'t answering calls.'},
-           {who:'sys',text:'Loss: $2,500 + fuel + driver time. Lesson learned.'}],
-     choices:null,end:true,endScore:0}
-  ]
-}
-};
-
 // Chat engine
 let csCurrentCase=null;
 let csNodeIdx=0;
@@ -3701,177 +3017,6 @@ let csScore=0;
 let csMaxScore=0;
 let csMsgQueue=[];
 let csAnimating=false;
-
-function startCaseChat(id){
-  const c=CASES.find(x=>x.id===id);
-  const story=CASE_STORIES[id];
-  if(!c||!story)return;
-  csCurrentCase=id;csNodeIdx=0;csScore=0;csMaxScore=0;
-  // Count max possible score
-  story.nodes.forEach(n=>{if(n.choices){const mx=Math.max(...n.choices.map(ch=>ch.score));csMaxScore+=mx;}});
-  // Setup UI
-  document.getElementById('case-list-view').style.display='none';
-  document.getElementById('case-chat-view').style.display='block';
-  document.getElementById('cs-title').textContent=c.title;
-  document.getElementById('cs-cat').textContent=c.cat+' · '+{easy:'Easy',medium:'Medium',hard:'Hard'}[c.diff];
-  document.getElementById('cs-contact').textContent=story.contact;
-  document.getElementById('cs-avatar').textContent=story.avatar;
-  document.getElementById('cs-stars').textContent='⭐⭐⭐';
-  document.getElementById('cs-messages').innerHTML='';
-  document.getElementById('cs-choices').innerHTML='';
-  document.getElementById('cs-insight').style.display='none';
-  document.getElementById('cs-results').style.display='none';
-  document.getElementById('cs-messages').parentElement.style.display='';
-  playNode(0);
-}
-
-function playNode(idx){
-  const story=CASE_STORIES[csCurrentCase];
-  if(!story||idx>=story.nodes.length)return;
-  csNodeIdx=idx;
-  const node=story.nodes[idx];
-  document.getElementById('cs-choices').innerHTML='';
-  document.getElementById('cs-insight').style.display='none';
-  // Queue messages
-  showMessagesSequence(node.msgs,()=>{
-    if(node.end){
-      csScore+=(node.endScore||0);
-      setTimeout(()=>showCaseResults(),600);
-    } else if(node.choices){
-      showChoices(node);
-    }
-  });
-}
-
-function showMessagesSequence(msgs,callback){
-  const container=document.getElementById('cs-messages');
-  let i=0;
-  function next(){
-    if(i>=msgs.length){if(callback)callback();return;}
-    const m=msgs[i];i++;
-    // Show typing indicator for "them" messages
-    if(m.who==='them'){
-      const typing=document.createElement('div');
-      typing.className='cs-typing';
-      typing.innerHTML='<div class="cs-typing-dot"></div><div class="cs-typing-dot"></div><div class="cs-typing-dot"></div>';
-      container.appendChild(typing);
-      container.scrollTop=container.scrollHeight;
-      setTimeout(()=>{
-        typing.remove();
-        addMessage(m);
-        setTimeout(next,400);
-      },800+Math.random()*600);
-    } else {
-      addMessage(m);
-      setTimeout(next,m.who==='sys'?600:300);
-    }
-  }
-  next();
-}
-
-function addMessage(m){
-  const container=document.getElementById('cs-messages');
-  const div=document.createElement('div');
-  const cls=m.who==='them'?'cs-msg cs-msg-them':m.who==='you'?'cs-msg cs-msg-you':'cs-msg cs-msg-system';
-  div.className=cls;
-  const whoLabel=m.who==='them'?'':'';
-  div.innerHTML=`<div class="cs-msg-bubble">${m.text}</div>`;
-  container.appendChild(div);
-  // Trigger animation
-  requestAnimationFrame(()=>{div.style.animationDelay='0s';});
-  container.scrollTop=container.scrollHeight;
-}
-
-function showChoices(node){
-  const container=document.getElementById('cs-choices');
-  container.innerHTML=node.choices.map((ch,i)=>
-    `<button class="cs-choice" onclick="pickChoice(${csNodeIdx},${i})">${ch.text}</button>`
-  ).join('');
-}
-
-function pickChoice(nodeIdx,choiceIdx){
-  const story=CASE_STORIES[csCurrentCase];
-  const node=story.nodes[nodeIdx];
-  const choice=node.choices[choiceIdx];
-  csScore+=choice.score;
-  // Highlight chosen, dim others
-  const btns=document.querySelectorAll('.cs-choice');
-  btns.forEach((btn,i)=>{
-    btn.style.pointerEvents='none';
-    if(i===choiceIdx){
-      btn.classList.add(choice.score>=2?'cs-correct':'cs-wrong');
-    } else {
-      btn.classList.add('cs-dim');
-    }
-  });
-  // Add your message to chat
-  addMessage({who:'you',text:choice.text});
-  // Show feedback as system message
-  if(choice.feedback){
-    setTimeout(()=>{
-      addMessage({who:'sys',text:(choice.score>=2?'✅ ':'⚠️ ')+choice.feedback});
-    },500);
-  }
-  // Show insight
-  if(node.insight){
-    setTimeout(()=>{
-      const ins=document.getElementById('cs-insight');
-      ins.style.display='flex';
-      document.getElementById('cs-insight-text').textContent=node.insight.replace('💡 ','');
-    },900);
-  }
-  // Advance to next node
-  setTimeout(()=>{
-    document.getElementById('cs-choices').innerHTML='';
-    document.getElementById('cs-insight').style.display='none';
-    playNode(choice.next);
-  },choice.score>=2?1800:2200);
-}
-
-function showCaseResults(){
-  const c=CASES.find(x=>x.id===csCurrentCase);
-  if(!c)return;
-  const pct=csMaxScore>0?Math.round(csScore/csMaxScore*100):0;
-  const stars=pct>=80?3:pct>=50?2:pct>0?1:0;
-  const starStr='⭐'.repeat(stars)+'☆'.repeat(3-stars);
-  const titles=['Try again','Not bad!','Nice work!','Great!'];
-  const icons=['😅','🙂','👍','🏆'];
-  // Hide chat, show results
-  document.getElementById('cs-messages').parentElement.style.display='none';
-  document.getElementById('cs-choices').innerHTML='';
-  document.getElementById('cs-insight').style.display='none';
-  const res=document.getElementById('cs-results');
-  res.style.display='block';
-  document.getElementById('cs-res-icon').textContent=icons[stars];
-  document.getElementById('cs-res-title').textContent=titles[stars];
-  document.getElementById('cs-res-stars').textContent=starStr;
-  document.getElementById('cs-res-score').innerHTML=`Result: <strong>${csScore}</strong> of <strong>${csMaxScore}</strong> points<br>Accuracy: <strong>${pct}%</strong>`;
-  document.getElementById('cs-res-tip').textContent=c.tip||'';
-  document.getElementById('cs-topbar-stars').textContent=starStr;
-  // Mark as read & award XP
-  const s=getState();
-  if(!s.readCases.includes(csCurrentCase)){
-    s.readCases.push(csCurrentCase);
-    const xpAmount=Math.round(c.xp*(0.5+pct/200));
-    s.xp=(s.xp||0)+xpAmount;
-    setState(s);
-    checkAchievements(s);
-    updateHeroNums();
-    if(window._awardXP)try{window._awardXP('CASE_STUDY_READ');}catch(e){}
-    showToast(c.ico,'+'+xpAmount+' XP','Case complete!');
-    filterCases();
-  }
-}
-
-function replayCase(){
-  if(csCurrentCase)startCaseChat(csCurrentCase);
-}
-
-function exitCaseChat(){
-  document.getElementById('case-chat-view').style.display='none';
-  document.getElementById('case-list-view').style.display='block';
-  csCurrentCase=null;
-}
 
 // ═══════════════════════════════════════════════
 // DIALOG + CATEGORY PROGRESS
@@ -3950,19 +3095,10 @@ function updateCardPanelSections(cardId){
 document.addEventListener('DOMContentLoaded',()=>{
   checkDayStreak();
   initCards();
-  initCases();
   updateHeroNums();
   initTips();
   updateCardPanelSections(null);
   updateBannerProgress();
-  // Вкладка из адреса (#cases) важнее сохранённой: на страницу приходят
-  // по ссылке «Практические кейсы», и она должна открывать именно кейсы.
-  try{
-    const fromHash=(location.hash||'').replace('#','');
-    const savedTab=localStorage.getItem('trainer_active_tab');
-    const want=(fromHash&&document.getElementById('p-'+fromHash))?fromHash:savedTab;
-    if(want&&document.getElementById('p-'+want)){tab(want);}
-  }catch(e){}
   // Load xp-system and make awardXP globally available
   import('../xp-system.js').then(m=>{
     window._awardXP=m.awardXP;
@@ -4016,7 +3152,4 @@ function nextTip(){
 <script src="../enhanced-quiz-system.js"></script>
 </body>
 </html>
-
-
-
 

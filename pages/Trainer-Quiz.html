@@ -40,7 +40,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .tabs{display:flex;gap:12px;align-items:stretch;justify-content:center}
 
 /* ── BANNER CARDS — Apple Glass ── */
-.banner-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:4px 0}
+.banner-row{display:grid;grid-template-columns:1fr;gap:10px;padding:4px 0}
 .banner-card{position:relative;border-radius:14px;padding:12px 12px 8px;cursor:pointer;
   overflow:hidden;transition:all .4s cubic-bezier(.4,0,.2,1);
   border:1.5px solid rgba(255,255,255,.12);
@@ -98,7 +98,7 @@ body::before{content:'';position:fixed;inset:0;background:
 .banner-cases .banner-prog-pct{color:#f97316}
 
 @media(max-width:768px){
-  .banner-row{grid-template-columns:1fr 1fr;gap:6px;padding:2px 0}
+  .banner-row{grid-template-columns:1fr;gap:6px;padding:2px 0}
   .banner-card{padding:8px 10px 6px;border-radius:12px}
   .banner-top{gap:7px;margin-bottom:4px}
   .banner-title{font-size:14px}
@@ -1155,7 +1155,7 @@ body::before{content:'';position:fixed;inset:0;background:
   </div>
   <div class="hero-nums">
     <div class="hn"><div class="hn-v" id="h-cards">106</div><div class="hn-l">карт.</div></div>
-    <div class="hn"><div class="hn-v" id="h-cases">50</div><div class="hn-l">кейсов</div></div>
+    
     <div class="hn"><div class="hn-v" id="h-known">0</div><div class="hn-l">изучено</div></div>
     <div class="hn"><div class="hn-v" id="h-streak">0</div><div class="hn-l">дней</div></div>
   </div>
@@ -1183,25 +1183,7 @@ body::before{content:'';position:fixed;inset:0;background:
         <div class="banner-prog-pct" id="bn-cards-pct">0%</div>
       </div>
     </div>
-    <div class="banner-card banner-cases" onclick="tab('cases')" id="t-cases">
-      <div class="banner-top">
-        <div class="banner-icon">💬</div>
-        <div>
-          <div class="banner-title">Кейсы</div>
-          <div class="banner-subtitle">Интерактивные чат-истории</div>
-        </div>
-      </div>
-      <div class="banner-stats-row">
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-total">50</div><div class="banner-stat-lbl">всего</div></div>
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-done" style="color:#10b981">0</div><div class="banner-stat-lbl">пройдено</div></div>
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-left" style="color:#f59e0b">50</div><div class="banner-stat-lbl">осталось</div></div>
-        <div class="banner-stat"><div class="banner-stat-val" id="bn-cases-cats" style="color:#a855f7">9</div><div class="banner-stat-lbl">категорий</div></div>
-      </div>
-      <div class="banner-prog-wrap">
-        <div class="banner-prog-bar-full"><div class="banner-prog-fill" id="bn-cases-fill" style="width:0%"></div></div>
-        <div class="banner-prog-pct" id="bn-cases-pct">0%</div>
-      </div>
-    </div>
+    
   </div>
   <span id="t-stats" style="display:none"></span>
 </div>
@@ -1472,77 +1454,15 @@ body::before{content:'';position:fixed;inset:0;background:
           <span class="ib-link-ico">🤖</span>
           <span class="ib-link-text">AI Брокер</span>
         </a>
-        <a href="simulator.html" class="ib-link">
-          <span class="ib-link-ico">🚛</span>
-          <span class="ib-link-text">Симулятор</span>
+        <a href="cases.html" class="ib-link">
+          <span class="ib-link-ico">💬</span>
+          <span class="ib-link-text">Практические кейсы</span>
         </a>
       </div>
     </div>
 
   </div>
 </div>
-<!-- ═══ PANEL: CASES (Chat Simulator) ═══ -->
-<div class="panel" id="p-cases">
-
-  <!-- CASE LIST VIEW -->
-  <div id="case-list-view">
-    <div class="toolbar">
-      <div class="fg" id="kcat-filters"></div>
-    </div>
-    <div class="prog-row"><span id="kprog-txt">Изучено: 0 из 0</span><span id="kprog-pct">0%</span></div>
-    <div class="prog-wrap"><div class="prog-fill" id="kprog-fill" style="width:0%"></div></div>
-    <div class="cases-grid" id="cases-grid"></div>
-  </div>
-
-  <!-- CHAT SIMULATOR VIEW -->
-  <div id="case-chat-view" style="display:none">
-    <!-- Top bar -->
-    <div class="cs-topbar">
-      <button class="cs-back" onclick="exitCaseChat()">← Назад</button>
-      <div class="cs-topbar-info">
-        <div class="cs-topbar-title" id="cs-title">—</div>
-        <div class="cs-topbar-cat" id="cs-cat">—</div>
-      </div>
-      <div class="cs-topbar-stars" id="cs-stars">⭐⭐⭐</div>
-    </div>
-
-    <!-- Chat area -->
-    <div class="cs-phone">
-      <div class="cs-phone-header">
-        <div class="cs-avatar" id="cs-avatar">👤</div>
-        <div>
-          <div class="cs-contact-name" id="cs-contact">Брокер</div>
-          <div class="cs-contact-status">онлайн</div>
-        </div>
-      </div>
-      <div class="cs-messages" id="cs-messages"></div>
-    </div>
-
-    <!-- Choice buttons -->
-    <div class="cs-choices" id="cs-choices"></div>
-
-    <!-- Tip/insight popup -->
-    <div class="cs-insight" id="cs-insight" style="display:none">
-      <div class="cs-insight-icon">💡</div>
-      <div class="cs-insight-text" id="cs-insight-text"></div>
-    </div>
-
-    <!-- Results screen -->
-    <div class="cs-results" id="cs-results" style="display:none">
-      <div class="cs-results-icon" id="cs-res-icon">🏆</div>
-      <div class="cs-results-title" id="cs-res-title">Отлично!</div>
-      <div class="cs-results-stars" id="cs-res-stars"></div>
-      <div class="cs-results-score" id="cs-res-score"></div>
-      <div class="cs-results-tip" id="cs-res-tip"></div>
-      <div class="cs-results-btns">
-        <button class="cs-btn-retry" onclick="replayCase()">🔄 Пройти заново</button>
-        <button class="cs-btn-next" onclick="exitCaseChat()">📋 К списку</button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
 <!-- ═══ PANEL: STATS ═══ -->
 <div class="panel" id="p-stats">
   <div class="streak-box">
@@ -1711,319 +1631,19 @@ const CARDS=[
 ];
 </script>
 <script>
-const CASES=[
-{id:'k1',ico:'��',cat:'Переговоры',diff:'easy',xp:8,title:'Брокер предлагает слишком низкую ставку',desc:'Брокер предлагает $1,500 на маршрут Chicago–Atlanta (780 миль). DAT показывает $2.10/mile.',sit:'Брокер: "Best I can do is $1,500 all-in." DAT показывает среднюю $2.10/mile = $1,638 минимум.',steps:[{a:'Проверь DAT',d:'Открой DAT и запиши среднюю ставку на этом маршруте прямо сейчас.'},
-{a:'Назови цифру',d:'"DAT shows $2.10/mile on this lane — that\'s $1,638 minimum. I need $1,900."'},
-{a:'Обоснуй',d:'Упомяни deadhead, fuel cost, driver pay. Конкретные цифры убеждают.'},
-{a:'Дай выбор',d:'"I can do $1,800 if you need it moved today, otherwise I\'ll pass."'},
-{a:'Будь готов уйти',d:'Если брокер не двигается — вежливо откажи. Плохая ставка хуже пустого грузовика.'}],tip:'Никогда не принимай первое предложение. Брокер всегда закладывает пространство для торга.'},
-{id:'k2',ico:'🚛',cat:'Проблемы',diff:'medium',xp:12,title:'Водитель сломался в пути',desc:'Водитель сломался на I-80 в Небраске. До доставки 6 часов. Груз — замороженные продукты.',sit:'Водитель звонит: "Truck broke down, mile marker 312 on I-80. Engine light on."',steps:[{a:'Успокой водителя',d:'Скажи что решишь ситуацию. Паника не помогает.'},
-{a:'Позвони брокеру СРАЗУ',d:'"Driver broke down on I-80 mile 312. Working on solution. Will update in 30 min."'},
-{a:'Найди буксир',d:'Roadside assistance, местные мастерские. Спроси ETA ремонта.'},
-{a:'Оцени ситуацию',d:'Если reefer — критично. Нужен другой грузовик или срочный ремонт.'},
-{a:'Обнови брокера',d:'Каждые 30 минут давай апдейт. Молчание = потеря доверия.'},
-{a:'Задокументируй',d:'Все звонки, время, решения — записывай для возможного claim.'}],tip:'Брокеры прощают поломки. Они не прощают молчание и отсутствие плана.'},
-{id:'k3',ico:'📋',cat:'Документы',diff:'easy',xp:6,title:'Брокер требует carrier packet',desc:'Новый брокер хочет работать с тобой, но просит carrier packet перед первым грузом.',sit:'"Before we can book you, I need your carrier packet. What\'s your email?"',steps:[{a:'Подготовь документы заранее',d:'MC certificate, COI (liability + cargo), W-9, bank info (для direct pay или factoring NOA).'},
-{a:'Отправь быстро',d:'Чем быстрее — тем лучше. Брокер работает с тем кто отвечает первым.'},
-{a:'Проверь страховку',d:'COI должен показывать брокера как certificate holder если требуют.'},
-{a:'Подтверди получение',d:'"Sent to your email. Let me know if you need anything else."'},
-{a:'Следи за статусом',d:'Если нет ответа через 2 часа — позвони и уточни.'}],tip:'Держи carrier packet готовым в PDF. Отправка за 5 минут = конкурентное преимущество.'},
-{id:'k4',ico:'⚖️',cat:'Проблемы',diff:'hard',xp:15,title:'Водитель перегружен на весовой',desc:'Водитель остановлен на весовой. Вес 84,500 lbs при лимите 80,000 lbs.',sit:'Водитель: "Scale shows 84,500 lbs. Officer says I can\'t move."',steps:[{a:'Не паникуй',d:'Это решаемо. Узнай точный вес и какой axle перегружен.'},
-{a:'Позвони брокеру',d:'"Driver overweight at scale — 84,500 lbs. Need instructions from shipper."'},
-{a:'Варианты решения',d:'1) Разгрузить часть груза. 2) Получить oversize permit. 3) Перераспределить вес.'},
-{a:'Permit если нужен',d:'Overweight permit можно получить онлайн в большинстве штатов за $50–200.'},
-{a:'Задокументируй',d:'Сфотографируй scale ticket. Это важно для billing и возможных споров.'},
-{a:'Реши кто платит',d:'Если shipper загрузил неправильно — они платят за permit и задержку.'}],tip:'Всегда проверяй вес на первой доступной весовой после загрузки — до того как попадёшь на официальную.'},
-{id:'k5',ico:'💰',cat:'Финансы',diff:'medium',xp:10,title:'Брокер задерживает оплату',desc:'Прошло 45 дней после доставки. Брокер не платит. POD отправлен.',sit:'Оплата должна была прийти 2 недели назад. Брокер не отвечает на email.',steps:[{a:'Проверь документы',d:'Убедись что POD, BOL, rate con — всё отправлено правильно.'},
-{a:'Позвони напрямую',d:'Email игнорируют. Звонок сложнее проигнорировать.'},
-{a:'Эскалируй',d:'Если менеджер не отвечает — попроси супервайзера или AR department.'},
-{a:'Отправь demand letter',d:'Официальное письмо с датой оплаты и предупреждением о legal action.'},
-{a:'Проверь bond',d:'У каждого брокера есть $75K bond. Подай claim через FMCSA если нужно.'},
-{a:'Carrier411 жалоба',d:'Оставь отзыв на Carrier411 — это влияет на репутацию брокера.'}],tip:'Проверяй Carrier411 ДО работы с новым брокером. Паттерн задержек виден заранее.'},
-{id:'k6',ico:'🌡️',cat:'Проблемы',diff:'hard',xp:15,title:'Reefer сломался в пути',desc:'Рефрижератор перестал работать. Груз — свежие продукты. До доставки 8 часов.',sit:'Водитель: "Reefer unit stopped working. Temp rising — was 34°F, now 45°F."',steps:[{a:'Немедленно брокеру',d:'"Reefer unit failed. Temp at 45°F and rising. Need immediate instructions."'},
-{a:'Найди ремонт',d:'Thermo King, Carrier Transicold — ближайший сервис. Google Maps.'},
-{a:'Задокументируй температуру',d:'Записывай температуру каждые 15 минут. Это критично для insurance claim.'},
-{a:'Оцени груз',d:'Если temp превысила safe zone — брокер/shipper решают принимать ли груз.'},
-{a:'Альтернативный транспорт',d:'Брокер может организовать другой reefer truck для перегрузки.'},
-{a:'Страховой claim',d:'Если груз испорчен — немедленно уведомляй cargo insurance.'}],tip:'Reefer failure = потенциальный cargo claim на $50K+. Документация каждой минуты критична.'},
-{id:'k7',ico:'📞',cat:'Переговоры',diff:'medium',xp:10,title:'Холодный звонок брокеру',desc:'Ты звонишь новому брокеру впервые. Нужно произвести впечатление и получить груз.',sit:'Брокер: "Yeah, who\'s this?" — занятой, немного раздражённый.',steps:[{a:'Будь кратким',d:'"Hi, this is [Name] from [Company], MC 123456. I run dry vans in the Midwest."'},
-{a:'Сразу к делу',d:'"Do you have any loads going Chicago to Southeast this week?"'},
-{a:'Покажи готовность',d:'"Truck available Thursday, 53\' dry van, 45K capacity."'},
-{a:'Не давай лишнего',d:'Не рассказывай историю компании. Брокер хочет знать: что, где, когда.'},
-{a:'Запроси контакт',d:'"Can I get your direct email for future loads?"'},
-{a:'Следи за тоном',d:'Уверенно, профессионально, без заискивания.'}],tip:'Лучшее время для холодных звонков: вторник–четверг, 9–11 утра по времени брокера.'},
-{id:'k8',ico:'📦',cat:'Проблемы',diff:'medium',xp:10,title:'Получатель отказывается принимать груз',desc:'Водитель приехал на доставку. Получатель говорит что не заказывал этот товар.',sit:'Водитель: "Receiver says they didn\'t order this. Won\'t accept delivery."',steps:[{a:'Не уезжай',d:'Водитель должен оставаться на месте до получения инструкций.'},
-{a:'Позвони брокеру',d:'"Receiver refusing delivery — says wrong product. Need instructions ASAP."'},
-{a:'Проверь документы',d:'Сравни BOL с тем что на трейлере. Возможно ошибка в адресе или товаре.'},
-{a:'Свяжись с shipper',d:'Брокер должен связаться с грузоотправителем для подтверждения.'},
-{a:'Detention начинается',d:'Фиксируй время прибытия — detention clock идёт с момента arrival.'},
-{a:'Получи письменный отказ',d:'Попроси получателя написать причину отказа на BOL.'}],tip:'Refused load = потенциальный re-delivery или return. Всегда получай письменное подтверждение отказа.'},
-{id:'k9',ico:'🔍',cat:'Брокеры',diff:'easy',xp:6,title:'Проверка нового брокера',desc:'Брокер предлагает хорошую ставку. Ты никогда с ним не работал.',sit:'Незнакомый брокер предлагает $2,500 на маршрут Dallas–Miami. Звучит хорошо.',steps:[{a:'Проверь FMCSA SAFER',d:'Введи MC number на safer.fmcsa.dot.gov. Проверь: активная лицензия, страховка, bond.'},
-{a:'Carrier411',d:'Проверь рейтинг оплат. Красные флаги: "pays slow", "disputes charges", жалобы.'},
-{a:'Проверь bond',d:'$75K surety bond должен быть активным. Без него — не работай.'},
-{a:'Поищи отзывы',d:'Google "[Broker Name] reviews", форумы диспетчеров.'},
-{a:'Маленький тест',d:'Первый груз — небольшой и близкий. Посмотри как платят.'},
-{a:'Доверяй инстинкту',d:'Если что-то кажется странным — слишком высокая ставка, давление — это red flag.'}],tip:'5 минут проверки могут сэкономить $2,500 и месяц нервов.'},
-{id:'k10',ico:'⏰',cat:'HOS',diff:'hard',xp:15,title:'Водитель заканчивает часы в пути',desc:'Водитель звонит: осталось 2 часа на часах, до доставки 3 часа езды.',sit:'Водитель: "I have 2 hours left on my clock but delivery is 3 hours away."',steps:[{a:'Не паникуй и не давай давления',d:'Никогда не говори водителю "just push through" — это нарушение HOS.'},
-{a:'Позвони брокеру',d:'"Driver has 2 hours HOS remaining, delivery is 3 hours out. Need to reschedule."'},
-{a:'Найди место для стоянки',d:'Truck stop, rest area — водитель должен остановиться безопасно.'},
-{a:'Уточни delivery window',d:'Иногда получатель принимает на следующий день без штрафа.'},
-{a:'Задокументируй',d:'Запиши время звонка, решение, новое ETA.'},
-{a:'Планируй заранее',d:'В будущем: проверяй HOS водителя ДО принятия груза.'}],tip:'HOS violation = штраф $16,000+ и out-of-service order. Никогда не давай давление на водителя.'}
-];
+
 </script>
 <script>
-CASES.push(
-{id:'k11',ico:'��',cat:'Переговоры',diff:'medium',xp:10,title:'Брокер давит на срочность',desc:'Брокер говорит "нужен водитель прямо сейчас" чтобы ты согласился на низкую ставку.',sit:'"I need a truck in 2 hours or I\'m calling someone else. $1,600 take it or leave it."',steps:[{a:'Не поддавайся панике',d:'Срочность брокера — его проблема, не твоя. Сохраняй спокойствие.'},
-{a:'Проверь рынок быстро',d:'30 секунд на DAT. Если ставка ниже рынка — скажи об этом.'},
-{a:'Контрпредложение',d:'"I can have a truck there in 2 hours for $1,900. That\'s my best number."'},
-{a:'Не снижай ниже CPM',d:'Знай свою минимальную ставку заранее. Ниже неё — убыток.'},
-{a:'Будь готов уйти',d:'"If $1,600 is your max, I\'ll have to pass. Good luck finding a truck."'},
-{a:'Часто перезванивают',d:'Если через 30 минут не нашли — позвонят снова с лучшей ставкой.'}],tip:'Искусственная срочность — классический приём. Реальная срочность = готовность платить больше.'},
-{id:'k12',ico:'📱',cat:'Технологии',diff:'easy',xp:6,title:'Брокер требует GPS трекинг',desc:'Брокер говорит что без GPS трекинга не может дать груз.',sit:'"We require real-time GPS tracking on all loads. Do you have that?"',steps:[{a:'Уточни систему',d:'"We use Samsara/Motive. Do you use MacroPoint or your own system?"'},
-{a:'Дай согласие',d:'Большинство ELD систем поддерживают трекинг. Это стандарт индустрии.'},
-{a:'Объясни водителю',d:'Водитель должен принять запрос на трекинг в приложении.'},
-{a:'Проверь работу',d:'Убедись что трекинг активен до выезда на загрузку.'},
-{a:'Если нет системы',d:'Рассмотри бесплатные опции: Google Maps sharing, или базовый ELD с трекингом.'}],tip:'GPS трекинг — стандарт. Брокеры с ним спокойнее, ты получаешь больше грузов.'},
-{id:'k13',ico:'💼',cat:'Документы',diff:'medium',xp:10,title:'Потерян BOL при доставке',desc:'Водитель потерял BOL. Получатель требует документ для приёмки груза.',sit:'Водитель: "I can\'t find the BOL. Receiver won\'t accept without it."',steps:[{a:'Не паникуй',d:'BOL можно восстановить. Это решаемо.'},
-{a:'Позвони брокеру',d:'"Driver lost BOL. Can you get a copy from shipper and email to receiver?"'},
-{a:'Shipper может выслать копию',d:'Оригинальный shipper всегда имеет копию BOL.'},
-{a:'Email копия',d:'В большинстве случаев email копия принимается для разгрузки.'},
-{a:'Получи подпись на копии',d:'Попроси получателя подписать копию как POD.'},
-{a:'Задокументируй инцидент',d:'Запиши что произошло — для внутреннего учёта.'}],tip:'Водитель должен хранить BOL в кабине всё время. Сделай фото BOL при загрузке как backup.'},
-{id:'k14',ico:'🌧️',cat:'Проблемы',diff:'medium',xp:10,title:'Задержка из-за погоды',desc:'Сильный снегопад закрыл трассу. Водитель стоит 8 часов. Доставка срывается.',sit:'Водитель: "I-70 closed due to blizzard. DOT says road opens in 8 hours minimum."',steps:[{a:'Уведоми брокера немедленно',d:'"I-70 closed — weather delay. Driver stuck at mile 245. ETA unknown."'},
-{a:'Предоставь доказательства',d:'Скриншот DOT road closure, weather report. Это force majeure.'},
-{a:'Обнови каждые 2 часа',d:'Регулярные апдейты показывают профессионализм.'},
-{a:'Уточни новое ETA',d:'Как только дорога открылась — дай точное время прибытия.'},
-{a:'Detention claim',d:'Погодная задержка обычно не оплачивается, но уточни у брокера.'},
-{a:'Документируй всё',d:'Время закрытия, открытия, все звонки — для возможных споров.'}],tip:'Погода — форс-мажор. Брокеры понимают. Главное — коммуникация, а не молчание.'},
-{id:'k15',ico:'🔄',cat:'Маршруты',diff:'easy',xp:6,title:'Поиск обратного груза',desc:'Водитель доставил в Лос-Анджелес. Нужен груз обратно в Чикаго.',sit:'Водитель выгрузился в LA. До Чикаго 2,000 миль пустым = $1,400 в топливо.',steps:[{a:'Открой DAT/Truckstop',d:'Ищи: Los Angeles → Chicago, 53\' dry van, дата доступности.'},
-{a:'Расширь поиск',d:'LA → Midwest, LA → Denver, LA → Dallas — больше вариантов.'},
-{a:'Позвони брокерам',d:'Брокеры с которыми уже работал — первый звонок. Они знают тебя.'},
-{a:'Оцени ставку',d:'Backhaul из CA обычно дешевле. Но лучше $1,500 backhaul чем $0 пустым.'},
-{a:'Учти deadhead',d:'Если груз в 100 милях от водителя — это нормально. 300+ миль — считай расходы.'},
-{a:'Планируй заранее',d:'Идеально искать backhaul за 24 часа до выгрузки.'}],tip:'Лучшие backhaul ставки — утром. Брокеры заполняют трейлеры до конца дня.'},
-{id:'k16',ico:'📊',cat:'Финансы',diff:'hard',xp:15,title:'Расчёт прибыльности груза',desc:'Брокер предлагает $2,200 на маршрут 800 миль. Стоит ли брать?',sit:'Chicago → Nashville, 800 miles, dry van, $2,200 all-in. Deadhead 50 miles.',steps:[{a:'Считай полный пробег',d:'800 miles + 50 deadhead = 850 total miles.'},
-{a:'Топливо',d:'850 miles ÷ 6 mpg × $4.20/gal = $595 fuel cost.'},
-{a:'Зарплата водителя',d:'850 miles × $0.45/mile = $382 driver pay.'},
-{a:'Прочие расходы',d:'Insurance, maintenance, tolls ≈ $150 на этот рейс.'},
-{a:'Итого расходы',d:'$595 + $382 + $150 = $1,127 total cost.'},
-{a:'Прибыль',d:'$2,200 - $1,127 = $1,073 net. Margin 49% — хороший груз!'}],tip:'Всегда считай cost per mile ДО принятия груза. Цель: минимум 30% margin.'},
-{id:'k17',ico:'🚨',cat:'Проблемы',diff:'hard',xp:15,title:'Авария водителя',desc:'Водитель попал в аварию. Никто не пострадал, но трейлер повреждён.',sit:'Водитель: "I was in an accident on I-94. No injuries but trailer is damaged."',steps:[{a:'Убедись в безопасности',d:'Первое — здоровье водителя и других участников. Вызови 911 если нужно.'},
-{a:'Не двигай транспорт',d:'До приезда полиции — ничего не трогать.'},
-{a:'Позвони страховой',d:'Немедленно уведоми liability insurance. Дай им все детали.'},
-{a:'Позвони брокеру',d:'"Driver in accident on I-94. No injuries. Trailer damaged. Working with insurance."'},
-{a:'Задокументируй',d:'Фото со всех сторон, номера участников, полицейский отчёт.'},
-{a:'Cargo status',d:'Проверь состояние груза. Если повреждён — уведоми cargo insurance.'}],tip:'Авария = страховой случай. Никогда не договаривайся напрямую без страховой компании.'},
-{id:'k18',ico:'💬',cat:'Переговоры',diff:'medium',xp:10,title:'Переговоры о detention',desc:'Водитель ждал 5 часов на загрузке. Брокер отказывается платить detention.',sit:'"Our rate con says 2 hours free detention. Driver waited 5 hours — that\'s $225 owed."',steps:[{a:'Проверь rate con',d:'Убедись что detention clause есть в документе. Если есть — ты прав.'},
-{a:'Предоставь доказательства',d:'Timestamp прибытия водителя, время выезда, ELD данные.'},
-{a:'Позвони, не пиши',d:'Телефонный разговор решает быстрее чем email переписка.'},
-{a:'Будь конкретным',d:'"Driver arrived 8:00 AM, departed 1:00 PM. That\'s 3 hours detention at $75/hr = $225."'},
-{a:'Эскалируй если нужно',d:'Если менеджер отказывает — попроси супервайзера.'},
-{a:'Документируй отказ',d:'Если брокер отказывает без причины — это влияет на будущие отношения.'}],tip:'Detention — твоё законное право если оно в rate con. Не стесняйся требовать.'},
-{id:'k19',ico:'🏢',cat:'Брокеры',diff:'medium',xp:10,title:'Построение отношений с брокером',desc:'Ты хочешь стать preferred carrier у крупного брокера.',sit:'Ты сделал 3 успешных груза с брокером. Хочешь получать грузы регулярно.',steps:[{a:'Будь надёжным',d:'On-time pickup и delivery — основа. Без этого ничего не работает.'},
-{a:'Коммуницируй проактивно',d:'Апдейты без запроса: "Picked up on time", "On track for delivery".'},
-{a:'Попроси прямой контакт',d:'"Can I get your direct number for future loads?"'},
-{a:'Предложи lane commitment',d:'"I run Chicago–Atlanta weekly. Can we set up a regular rate?"'},
-{a:'Реши проблемы быстро',d:'Когда что-то идёт не так — реши до того как брокер узнает.'},
-{a:'Попроси feedback',d:'"How was our service? Anything we can improve?"'}],tip:'Preferred carrier status = лучшие ставки, первый звонок, меньше конкуренции.'},
-{id:'k20',ico:'📝',cat:'Документы',diff:'medium',xp:10,title:'Оформление detention claim',desc:'Водитель ждал 4 часа. Нужно правильно оформить detention claim.',sit:'Водитель ждал с 6:00 до 10:00 AM. Бесплатное время — 2 часа. Ставка $75/час.',steps:[{a:'Собери доказательства',d:'ELD timestamp, gate log если есть, фото с временной меткой.'},
-{a:'Посчитай сумму',d:'4 hours - 2 free = 2 billable hours × $75 = $150 detention.'},
-{a:'Отправь email брокеру',d:'Тема: "Detention Claim - Load #12345 - [Date]". Приложи доказательства.'},
-{a:'Укажи реквизиты',d:'Как выставить invoice: company name, MC, bank info или factoring.'},
-{a:'Дай срок',d:'"Please process within 30 days per our agreement."'},
-{a:'Следи за оплатой',d:'Если нет ответа через 2 недели — позвони и уточни статус.'}],tip:'Detention claim без доказательств = отказ. ELD данные — лучшее доказательство.'}
-);
+
 </script>
 <script>
-CASES.push(
-{id:'k21',ico:'��',cat:'Маршруты',diff:'medium',xp:10,title:'Планирование маршрута с toll',desc:'Маршрут через платные дороги. Нужно решить — ехать через toll или объехать.',sit:'Chicago → NYC, 790 miles. Через I-80/I-78 toll $85. Объезд +60 miles.',steps:[{a:'Посчитай toll vs объезд',d:'Объезд: 60 miles × $0.70/mile fuel = $42. Toll $85. Объезд дешевле на $43.'},
-{a:'Учти время',d:'Объезд +1 час. Если HOS tight — toll может быть лучше.'},
-{a:'Уточни у брокера',d:'Некоторые rate con включают toll reimbursement. Проверь.'},
-{a:'EZPass экономит',d:'EZPass обычно дешевле cash toll на 20-30%.'},
-{a:'Планируй заранее',d:'Google Maps показывает toll costs. Используй для планирования.'}],tip:'Всегда включай toll в расчёт прибыльности груза. $85 toll = 4% от $2,000 ставки.'},
-{id:'k22',ico:'🔒',cat:'Безопасность',diff:'hard',xp:15,title:'Подозрение на кражу груза',desc:'Водитель замечает что пломба на трейлере повреждена при прибытии на доставку.',sit:'Водитель: "Seal number doesn\'t match BOL. Looks like it was tampered with."',steps:[{a:'Не открывай трейлер',d:'Сохрани место происшествия. Не трогай ничего.'},
-{a:'Вызови полицию',d:'Это потенциальное уголовное дело. Полиция должна задокументировать.'},
-{a:'Позвони брокеру и shipper',d:'Немедленно. "Seal tampered — possible cargo theft. Police called."'},
-{a:'Уведоми cargo insurance',d:'Страховая должна знать немедленно.'},
-{a:'Задокументируй',d:'Фото пломбы, номер пломбы на BOL vs фактический, всё окружение.'},
-{a:'Не принимай вину',d:'Не подписывай ничего до расследования.'}],tip:'Cargo theft — $35 млрд в год в США. Документация с момента загрузки критична.'},
-{id:'k23',ico:'📞',cat:'Переговоры',diff:'easy',xp:6,title:'Follow-up звонок брокеру',desc:'Ты работал с брокером месяц назад. Хочешь возобновить сотрудничество.',sit:'Прошёл месяц после последнего груза. Хочешь напомнить о себе.',steps:[{a:'Напомни о прошлом',d:'"Hi, this is [Name] from [Company]. We moved a load for you last month — Chicago to Atlanta."'},
-{a:'Будь конкретным',d:'"I have a truck available Thursday in Chicago. Do you have anything going Southeast?"'},
-{a:'Не будь навязчивым',d:'Один звонок, один email. Если нет ответа — подожди неделю.'},
-{a:'Предложи ценность',d:'"We delivered on time, no issues. Happy to work together again."'},
-{a:'Запроси будущие грузы',d:'"Can you keep me in mind for your Chicago lanes?"'}],tip:'Follow-up через 2-4 недели — оптимально. Слишком часто = раздражает. Слишком редко = забывают.'},
-{id:'k24',ico:'⚡',cat:'HOS',diff:'medium',xp:10,title:'Водитель нарушил 14-часовое окно',desc:'Водитель работает 15 часов. Груз ещё не доставлен.',sit:'Водитель начал смену в 6 AM. Сейчас 9 PM — 15 часов. До доставки 2 часа.',steps:[{a:'Стоп — водитель должен остановиться',d:'14-часовое окно истекло. Продолжение движения = HOS violation.'},
-{a:'Найди безопасное место',d:'Ближайший truck stop или rest area. Немедленно.'},
-{a:'Позвони брокеру',d:'"Driver out of hours. Must stop. Delivery rescheduled to tomorrow morning."'},
-{a:'Уведоми получателя',d:'Через брокера — новое время доставки.'},
-{a:'10-часовой отдых',d:'Водитель должен отдохнуть минимум 10 часов перед продолжением.'},
-{a:'Анализ ситуации',d:'Почему так получилось? Планируй лучше в следующий раз.'}],tip:'14-часовое окно не продлевается. Планируй маршрут с учётом HOS ДО принятия груза.'},
-{id:'k25',ico:'🏭',cat:'Проблемы',diff:'medium',xp:10,title:'Склад закрыт при прибытии',desc:'Водитель приехал на загрузку. Склад закрыт, никого нет.',sit:'Водитель: "I\'m at the shipper. Nobody here. Doors locked. Appointment was 8 AM."',steps:[{a:'Проверь адрес',d:'Убедись что водитель на правильном адресе. Бывают ошибки в rate con.'},
-{a:'Позвони брокеру',d:'"Driver at shipper — facility closed. No one here. Appointment was 8 AM."'},
-{a:'Брокер звонит shipper',d:'Это задача брокера — найти контакт и решить ситуацию.'},
-{a:'Detention начинается',d:'Фиксируй время прибытия. Если ждёт больше 2 часов — detention.'},
-{a:'Если никто не отвечает',d:'Водитель не обязан ждать бесконечно. Через 2 часа — TONU claim.'},
-{a:'Задокументируй',d:'Фото закрытого склада с временной меткой.'}],tip:'Всегда имей прямой контакт shipper в rate con. Брокер не всегда доступен в 6 AM.'},
-{id:'k26',ico:'💡',cat:'Финансы',diff:'medium',xp:10,title:'Расчёт комиссии диспетчера',desc:'Ты диспетчер. Нужно правильно рассчитать свою комиссию.',sit:'Ставка брокера $3,500. Твоя комиссия 4%. Перевозчик хочет знать сколько получит.',steps:[{a:'Посчитай комиссию',d:'$3,500 × 4% = $140 dispatcher fee.'},
-{a:'Сумма перевозчику',d:'$3,500 - $140 = $3,360 to carrier.'},
-{a:'Объясни прозрачно',d:'Всегда говори перевозчику точную сумму которую он получит.'},
-{a:'Оформи договор',d:'Dispatcher-carrier agreement должен фиксировать % комиссии.'},
-{a:'Не скрывай ставку',d:'Перевозчик имеет право знать ставку брокера. Скрытие = потеря доверия.'},
-{a:'Выставь invoice',d:'После доставки — invoice перевозчику на $140.'}],tip:'Прозрачность = долгосрочные отношения. Перевозчики уходят от диспетчеров которые скрывают ставки.'},
-{id:'k27',ico:'🌐',cat:'Технологии',diff:'medium',xp:10,title:'Работа с TMS системой',desc:'Брокер требует обновлять статус груза в их TMS портале.',sit:'"You need to update load status in our portal: picked up, in transit, delivered."',steps:[{a:'Получи доступ',d:'Брокер даст логин/пароль к их carrier portal.'},
-{a:'Обнови при загрузке',d:'Сразу после pickup — статус "Picked Up" + actual time.'},
-{a:'In Transit апдейты',d:'Некоторые брокеры требуют апдейты каждые 4-6 часов.'},
-{a:'Delivered статус',d:'Сразу после выгрузки — "Delivered" + POD upload если требуют.'},
-{a:'Загрузи документы',d:'BOL, POD, lumper receipt — всё в портал для быстрой оплаты.'},
-{a:'Автоматизируй',d:'Многие ELD системы интегрируются с брокерскими порталами.'}],tip:'Брокеры которые видят апдейты в реальном времени дают больше грузов. Это показывает профессионализм.'},
-{id:'k28',ico:'🔧',cat:'Проблемы',diff:'medium',xp:10,title:'Проблема с тормозами на весовой',desc:'Инспектор на весовой нашёл проблему с тормозами. Водитель получил out-of-service order.',sit:'Водитель: "Inspector put me out of service — brake adjustment needed."',steps:[{a:'Водитель не может двигаться',d:'Out-of-service order = запрет на движение до устранения.'},
-{a:'Найди ближайший сервис',d:'Truck stop с ремонтом, Speedco, Love\'s — ближайший вариант.'},
-{a:'Позвони брокеру',d:'"Driver OOS at weigh station — brake issue. Working on repair. ETA unknown."'},
-{a:'Оцени время ремонта',d:'Brake adjustment обычно 1-3 часа. Запчасти — дольше.'},
-{a:'Документируй расходы',d:'Ремонт за счёт перевозчика. Сохрани все чеки.'},
-{a:'Clearance после ремонта',d:'После ремонта — инспектор должен снять OOS order.'}],tip:'Pre-trip inspection должен выявлять такие проблемы ДО выезда. Это экономит время и деньги.'},
-{id:'k29',ico:'📈',cat:'Финансы',diff:'hard',xp:15,title:'Анализ прибыльности за месяц',desc:'Конец месяца. Нужно понять насколько прибыльным был месяц.',sit:'За месяц: 12 грузов, $28,000 gross revenue. Расходы неизвестны.',steps:[{a:'Посчитай расходы',d:'Топливо + зарплата водителя + страховка + обслуживание + dispatcher fee.'},
-{a:'Типичная структура',d:'Топливо 25%, водитель 35%, страховка 8%, обслуживание 7% = 75% расходов.'},
-{a:'Пример расчёта',d:'$28,000 × 75% = $21,000 расходы. Net = $7,000 (25% margin).'},
-{a:'Анализ по маршрутам',d:'Какие маршруты были самыми прибыльными? Повторяй их.'},
-{a:'Deadhead анализ',d:'Сколько пустых миль? Цель: менее 15% от общего пробега.'},
-{a:'Планируй следующий месяц',d:'Больше contract lanes, меньше spot market = стабильность.'}],tip:'Успешные перевозчики знают свой CPM наизусть. Без этого — работаешь вслепую.'},
-{id:'k30',ico:'🤝',cat:'Брокеры',diff:'easy',xp:6,title:'Первый груз с новым брокером',desc:'Новый брокер предлагает первый груз. Как произвести хорошее впечатление.',sit:'Новый брокер дал тебе груз. Это шанс стать preferred carrier.',steps:[{a:'Подтверди все детали',d:'Перечитай rate con. Адрес, время, контакты — всё правильно?'},
-{a:'Будь на связи',d:'Отвечай на звонки и сообщения в течение 15 минут.'},
-{a:'Проактивные апдейты',d:'"Picked up on time." "On track for delivery." Без запроса.'},
-{a:'Доставь вовремя',d:'Первый груз — самый важный. Никаких опозданий.'},
-{a:'Реши проблемы сам',d:'Если что-то пошло не так — реши и потом сообщи. Не жди инструкций.'},
-{a:'Попроси feedback',d:'"How was our service? Looking forward to working together again."'}],tip:'Первый груз = собеседование. Пройди его отлично — получишь постоянный поток грузов.'}
-);
+
 </script>
 <script>
-CASES.push(
-{id:'k31',ico:'��️',cat:'Проблемы',diff:'medium',xp:10,title:'Задержка на таможне (cross-border)',desc:'Груз идёт в Канаду. Таможня задержала на 6 часов.',sit:'Водитель: "Customs holding the load. They want additional documentation."',steps:[{a:'Уточни что нужно',d:'Какой документ? Commercial invoice, packing list, CUSMA certificate?'},
-{a:'Позвони брокеру',d:'"Customs delay at border — need [document]. Can shipper provide?"'},
-{a:'Shipper должен помочь',d:'Таможенные документы — ответственность shipper/exporter.'},
-{a:'Customs broker',d:'Если сложная ситуация — нужен licensed customs broker.'},
-{a:'Документируй задержку',d:'Время въезда на таможню, время выезда — для detention claim.'},
-{a:'Обнови получателя',d:'Через брокера — новое ETA доставки.'}],tip:'Cross-border грузы требуют дополнительной документации. Проверяй заранее.'},
-{id:'k32',ico:'💳',cat:'Финансы',diff:'medium',xp:10,title:'Factoring vs Direct Pay',desc:'Новый перевозчик спрашивает: использовать factoring или ждать прямой оплаты?',sit:'Перевозчик: "Should I use factoring or wait 30-45 days for direct pay?"',steps:[{a:'Объясни factoring',d:'Factoring company платит тебе сразу (минус 2-5%), потом сама получает от брокера.'},
-{a:'Плюсы factoring',d:'Деньги сразу, не нужно ждать 30-45 дней, помогает с cash flow.'},
-{a:'Минусы factoring',d:'Комиссия 2-5% = $70-175 с $3,500 груза. За год — тысячи долларов.'},
-{a:'Когда factoring выгоден',d:'Новый бизнес, нужны деньги на топливо, много грузов одновременно.'},
-{a:'Когда лучше direct pay',d:'Стабильный cash flow, работаешь с надёжными брокерами, quick pay доступен.'},
-{a:'Quick pay альтернатива',d:'Многие брокеры предлагают quick pay за 2-3% — дешевле factoring.'}],tip:'Factoring — инструмент для роста. Когда бизнес стабилен — переходи на direct pay.'},
-{id:'k33',ico:'📋',cat:'Документы',diff:'hard',xp:15,title:'Cargo claim — повреждение груза',desc:'Получатель обнаружил повреждение груза. Нужно правильно оформить claim.',sit:'Receiver: "3 pallets damaged. We\'re filing a cargo claim."',steps:[{a:'Не спорь на месте',d:'Зафиксируй повреждение. Не признавай вину и не отрицай.'},
-{a:'Фотодокументация',d:'Фото повреждений, упаковки, пломб, всего трейлера — до и после.'},
-{a:'Получи письменный акт',d:'Receiver должен описать повреждения на BOL при подписании.'},
-{a:'Уведоми cargo insurance',d:'Немедленно. Дай им все детали и фото.'},
-{a:'Уведоми брокера',d:'"Cargo damage at delivery — 3 pallets. Insurance notified. Claim in process."'},
-{a:'Сохрани все документы',d:'BOL, фото, police report если есть, repair estimates.'}],tip:'Cargo claim может занять месяцы. Документация с первой минуты — единственная защита.'},
-{id:'k34',ico:'🎯',cat:'Переговоры',diff:'hard',xp:15,title:'Переговоры о контрактном маршруте',desc:'Брокер предлагает контракт на 3 месяца. Нужно договориться о хорошей ставке.',sit:'Брокер: "We need a carrier for Chicago–Atlanta, 3 loads/week, 3 months. What\'s your rate?"',steps:[{a:'Исследуй рынок',d:'DAT 30-day average на этом маршруте. Это твоя база.'},
-{a:'Посчитай свои расходы',d:'CPM × miles + overhead. Минимальная ставка для прибыли.'},
-{a:'Добавь premium за commitment',d:'Контракт = стабильность для тебя. Но и риск если рынок вырастет.'},
-{a:'Предложи чуть выше рынка',d:'"Based on current DAT rates and our costs, $1,950/load works for us."'},
-{a:'Обсуди условия',d:'Что если рынок сильно изменится? Есть ли fuel escalator clause?'},
-{a:'Зафиксируй письменно',d:'Контракт должен быть подписан. Устные договорённости не работают.'}],tip:'Контрактная ставка обычно на 5-10% ниже spot. Компенсация — стабильность и планирование.'},
-{id:'k35',ico:'🚦',cat:'Маршруты',diff:'easy',xp:6,title:'Планирование времени доставки',desc:'Нужно рассчитать реальное время доставки с учётом всех факторов.',sit:'Загрузка в Chicago в 6 AM. Доставка в Atlanta. Расстояние 720 миль.',steps:[{a:'Базовое время',d:'720 miles ÷ 55 mph average = 13 hours driving time.'},
-{a:'Добавь остановки',d:'Fuel stop 30 min, meal 30 min, rest breaks = +1.5 hours.'},
-{a:'HOS ограничения',d:'11 часов вождения максимум. 720 miles = возможно за один день.'},
-{a:'Учти трафик',d:'Chicago rush hour, Atlanta traffic — добавь 1-2 часа.'},
-{a:'Итого',d:'6 AM + 13 + 1.5 + 1.5 = примерно 10 PM arrival. Реалистично.'},
-{a:'Сообщи брокеру',d:'"ETA Atlanta approximately 10 PM today." Обнови если изменится.'}],tip:'Всегда давай реалистичный ETA. Лучше приехать раньше чем обещал, чем опоздать.'},
-{id:'k36',ico:'🔑',cat:'Безопасность',diff:'medium',xp:10,title:'Проверка водителя перед наймом',desc:'Ты нанимаешь нового водителя. Какие проверки обязательны?',sit:'Кандидат на должность водителя. Нужно провести все обязательные проверки.',steps:[{a:'MVR проверка',d:'Motor Vehicle Record — история нарушений за последние 3 года.'},
-{a:'DOT drug test',d:'Обязателен перед первым рейсом. Без него — нельзя выпускать на дорогу.'},
-{a:'CDL verification',d:'Проверь действительность CDL через DMV. Правильные endorsements?'},
-{a:'PSP report',d:'Pre-Employment Screening Program — история нарушений HOS и аварий.'},
-{a:'Employment history',d:'Последние 3 года работы. Проверь причины увольнения.'},
-{a:'Physical/Medical cert',d:'DOT medical certificate должен быть действующим.'}],tip:'Плохой водитель = аварии, штрафы, потеря страховки. Проверка занимает день, экономит годы.'},
-{id:'k37',ico:'📊',cat:'Технологии',diff:'medium',xp:10,title:'Использование DAT для анализа рынка',desc:'Нужно понять рыночную ставку перед переговорами с брокером.',sit:'Брокер предлагает груз. Ты хочешь знать справедливую ставку.',steps:[{a:'Открой DAT Rate View',d:'Введи origin, destination, equipment type, дату.'},
-{a:'Смотри на средние',d:'DAT показывает: low, average, high за последние 7/30 дней.'},
-{a:'Учти сезонность',d:'Ставки меняются. Декабрь и март обычно выше.'},
-{a:'Проверь объём',d:'Сколько грузов на этом маршруте? Мало грузов = ниже ставки.'},
-{a:'Используй в переговорах',d:'"DAT shows $2.15/mile average — I need $2.10 minimum."'},
-{a:'Обнови регулярно',d:'Рынок меняется еженедельно. Проверяй перед каждыми переговорами.'}],tip:'DAT — твой главный аргумент в переговорах. Данные убеждают лучше слов.'},
-{id:'k38',ico:'🏥',cat:'Проблемы',diff:'hard',xp:15,title:'Водитель заболел в пути',desc:'Водитель почувствовал себя плохо. Не может продолжать рейс.',sit:'Водитель: "I\'m not feeling well. I think I need to see a doctor."',steps:[{a:'Здоровье — приоритет',d:'Груз подождёт. Водитель должен получить медицинскую помощь.'},
-{a:'Найди ближайшую клинику',d:'Urgent care, hospital — Google Maps. Помоги водителю добраться.'},
-{a:'Позвони брокеру',d:'"Driver ill — seeking medical attention. Load will be delayed. Will update ASAP."'},
-{a:'Оцени ситуацию',d:'Если водитель не может продолжить — нужен другой водитель или carrier.'},
-{a:'Документируй',d:'Медицинские документы могут понадобиться для объяснения задержки.'},
-{a:'Страховка водителя',d:'Проверь есть ли у водителя health insurance. Помоги с оформлением.'}],tip:'Больной водитель за рулём = опасность для всех. Никогда не давай давление продолжать.'},
-{id:'k39',ico:'💬',cat:'Переговоры',diff:'medium',xp:10,title:'Переговоры о lumper fee',desc:'Получатель требует lumper service. Брокер говорит что не включил в rate con.',sit:'"Receiver requires lumper — $200. It\'s not in the rate con. Who pays?"',steps:[{a:'Проверь rate con',d:'Есть ли упоминание lumper? Если нет — это спорный момент.'},
-{a:'Позвони брокеру',d:'"Receiver requires lumper $200 — not in rate con. Who covers this?"'},
-{a:'Стандартная практика',d:'Обычно lumper платит shipper или брокер. Водитель не должен платить из своего.'},
-{a:'Получи подтверждение',d:'Брокер должен письменно подтвердить кто платит ДО разгрузки.'},
-{a:'Если брокер отказывает',d:'Водитель может заплатить и потом выставить invoice брокеру с lumper receipt.'},
-{a:'Задокументируй',d:'Lumper receipt обязателен для возмещения.'}],tip:'Lumper fee — частая точка конфликта. Всегда уточняй при букинге: "Who covers lumper if required?"'},
-{id:'k40',ico:'🌍',cat:'Маршруты',diff:'hard',xp:15,title:'Организация team load на дальний маршрут',desc:'Брокер предлагает team load: LA → NYC, 2,800 miles, $5,500, 48 часов.',sit:'Нужно решить: брать ли team load и как организовать.',steps:[{a:'Посчитай прибыльность',d:'$5,500 ÷ 2,800 miles = $1.96/mile. Для team — нормально.'},
-{a:'Расходы team',d:'Два водителя × $0.45/mile = $0.90/mile driver cost. Топливо $0.70/mile.'},
-{a:'Net расчёт',d:'$1.96 - $0.90 - $0.70 = $0.36/mile net. $1,008 profit. Приемлемо.'},
-{a:'HOS для team',d:'Team может ехать 22 часа в сутки. 2,800 miles ÷ 55 mph = 51 час ÷ 22 = 2.3 дня.'},
-{a:'Логистика',d:'Водители меняются каждые 10-11 часов. Один спит, другой едет.'},
-{a:'Коммуникация',d:'Оба водителя должны знать маршрут, контакты, детали груза.'}],tip:'Team loads платят меньше per mile но больше per day. Идеально для time-sensitive грузов.'}
-);
+
 </script>
 <script>
-CASES.push(
-{id:'k41',ico:'��',cat:'Безопасность',diff:'hard',xp:15,title:'Подозрение на double brokering',desc:'Тебе звонит "брокер" который сам получил груз от другого брокера.',sit:'Звонящий: "I have a load for you — $2,800 Chicago to Atlanta." Но он сам carrier, не брокер.',steps:[{a:'Проверь MC статус',d:'Попроси MC number. Проверь на SAFER — это carrier или broker?'},
-{a:'Red flags',d:'Carrier предлагает груз = double brokering. Это незаконно.'},
-{a:'Не принимай',d:'Double brokering = ты можешь не получить оплату. Оригинальный брокер не знает о тебе.'},
-{a:'Проверь оригинал',d:'Найди оригинального брокера через SAFER и свяжись напрямую.'},
-{a:'Сообщи FMCSA',d:'Double brokering — федеральное преступление. Можно подать жалобу.'},
-{a:'Защити себя',d:'Всегда работай только с лицензированными брокерами напрямую.'}],tip:'Double brokering растёт. Всегда проверяй MC статус на SAFER перед принятием груза.'},
-{id:'k42',ico:'📱',cat:'Технологии',diff:'easy',xp:6,title:'Настройка ELD для нового водителя',desc:'Новый водитель не знает как пользоваться ELD системой.',sit:'Водитель: "I\'ve never used Motive before. How do I log my hours?"',steps:[{a:'Создай аккаунт',d:'Зарегистрируй водителя в системе. Дай логин и пароль.'},
-{a:'Покажи основы',d:'Как начать смену, как менять статус (driving/on duty/off duty/sleeper).'},
-{a:'Объясни важность',d:'ELD данные = юридический документ. Ошибки = штрафы.'},
-{a:'Pre-trip inspection',d:'Покажи как заполнять DVIR (Driver Vehicle Inspection Report) в приложении.'},
-{a:'Тестовый рейс',d:'Первый рейс — проверяй что ELD работает правильно.'},
-{a:'Техподдержка',d:'Дай номер техподдержки Motive на случай проблем.'}],tip:'ELD ошибки обнаруживаются на весовых. Обучение занимает час, экономит тысячи в штрафах.'},
-{id:'k43',ico:'💰',cat:'Финансы',diff:'medium',xp:10,title:'Управление cash flow в медленный сезон',desc:'Январь — медленный месяц. Ставки упали, грузов меньше. Как управлять финансами?',sit:'Январь: ставки на 20% ниже чем в декабре. Расходы те же.',steps:[{a:'Сократи deadhead',d:'Каждая пустая миля = чистый убыток. Ищи backhaul агрессивно.'},
-{a:'Рассмотри contract lanes',d:'Контрактные ставки стабильнее spot в медленный сезон.'},
-{a:'Оптимизируй расходы',d:'Можно ли сократить: fuel (route optimization), maintenance (отложить не срочное)?'},
-{a:'Резервный фонд',d:'Идеально иметь 2-3 месяца расходов в резерве для таких периодов.'},
-{a:'Диверсифицируй',d:'Разные брокеры, разные маршруты — не зависи от одного источника.'},
-{a:'Планируй на год',d:'Январь и февраль всегда медленные. Зарабатывай больше в Q4.'}],tip:'Сезонность — реальность фрахта. Успешные перевозчики планируют на год вперёд.'},
-{id:'k44',ico:'📚',cat:'Брокеры',diff:'easy',xp:6,title:'Понимание broker-carrier agreement',desc:'Брокер присылает broker-carrier agreement для подписания.',sit:'Брокер: "Please sign our carrier agreement before we can book you."',steps:[{a:'Читай внимательно',d:'Особенно: payment terms, cargo liability, exclusivity clauses.'},
-{a:'Payment terms',d:'Когда платят? 30 дней? 45? Quick pay доступен?'},
-{a:'Cargo liability',d:'Кто несёт ответственность за повреждение груза?'},
-{a:'Exclusivity',d:'Некоторые соглашения запрещают работать с конкурентами брокера. Это red flag.'},
-{a:'Dispute resolution',d:'Как решаются споры? Арбитраж? Суд? В каком штате?'},
-{a:'Подпиши если всё ок',d:'Стандартные соглашения — нормально. Необычные условия — обсуди.'}],tip:'Broker-carrier agreement — юридический документ. Не подписывай не читая.'},
-{id:'k45',ico:'🌅',cat:'Маршруты',diff:'medium',xp:10,title:'Оптимизация маршрута для экономии топлива',desc:'Нужно снизить расходы на топливо на длинном маршруте.',sit:'Маршрут Dallas → Chicago, 920 miles. Топливо — главная статья расходов.',steps:[{a:'Планируй заправки',d:'GasBuddy или TruckPark — найди дешёвые дизельные станции по маршруту.'},
-{a:'Заправляйся в Техасе',d:'Топливо в TX обычно дешевле чем в IL. Заправь полный бак.'},
-{a:'Скорость = экономия',d:'55 mph vs 65 mph = 15% экономия топлива. На 920 miles — значительно.'},
-{a:'Избегай холостого хода',d:'Idle = 0.8 gal/hour. Выключай двигатель на стоянках.'},
-{a:'Fuel card',d:'Comdata, EFS — скидки на топливо 10-30 центов/галлон.'},
-{a:'Маршрут без объездов',d:'Google Maps Truck routing — избегай низких мостов и запрещённых дорог.'}],tip:'Экономия $0.10/mile на топливе = $92 на этом маршруте. За год — тысячи долларов.'},
-{id:'k46',ico:'⚠️',cat:'Проблемы',diff:'hard',xp:15,title:'Груз задержан на складе получателя',desc:'Получатель принял груз но не подписывает POD уже 3 дня.',sit:'Водитель выгрузился 3 дня назад. POD не подписан. Брокер не платит без POD.',steps:[{a:'Позвони получателю',d:'Напрямую в receiving department. Попроси подписать POD.'},
-{a:'Через брокера',d:'Брокер должен надавить на своего клиента (shipper/receiver).'},
-{a:'Email с deadline',d:'"Please sign POD by [date] or we will escalate to legal."'},
-{a:'Альтернативные доказательства',d:'ELD данные, gate log, фото разгрузки — могут заменить POD для оплаты.'},
-{a:'Некоторые брокеры платят без POD',d:'Если есть другие доказательства доставки — попроси исключение.'},
-{a:'Legal action',d:'Если POD намеренно не подписывают — это нарушение контракта.'}],tip:'Всегда получай подпись на BOL сразу при разгрузке. Не уезжай без подписанного документа.'},
-{id:'k47',ico:'🏆',cat:'Переговоры',diff:'hard',xp:15,title:'Переговоры после плохого опыта',desc:'Брокер задержал оплату в прошлый раз. Теперь предлагает новый груз.',sit:'Тот же брокер который платил 60 дней вместо 30. Предлагает хороший груз.',steps:[{a:'Оцени риск',d:'Один раз задержал — случайность? Паттерн на Carrier411?'},
-{a:'Требуй quick pay',d:'"Given our last experience, I need quick pay (3 days) for this load."'},
-{a:'Или предоплату',d:'Некоторые перевозчики требуют 50% advance для ненадёжных брокеров.'},
-{a:'Меньший груз для теста',d:'Возьми небольшой груз. Посмотри платят ли вовремя.'},
-{a:'Документируй всё',d:'Все договорённости — письменно. Email подтверждения.'},
-{a:'Будь готов уйти',d:'Если условия не устраивают — есть другие брокеры.'}],tip:'Второй шанс — с условиями. Без условий — ты снова рискуешь теми же деньгами.'},
-{id:'k48',ico:'📦',cat:'Проблемы',diff:'medium',xp:10,title:'Неправильный адрес доставки',desc:'Водитель приехал по адресу из rate con. Адрес не существует.',sit:'Водитель: "GPS says this address doesn\'t exist. I\'m in an industrial area but no warehouse."',steps:[{a:'Проверь rate con',d:'Перечитай адрес. Возможно опечатка в номере или улице.'},
-{a:'Позвони брокеру',d:'"Driver at delivery address — location not found. Need correct address ASAP."'},
-{a:'Брокер звонит receiver',d:'Брокер должен получить правильный адрес от своего клиента.'},
-{a:'Detention начинается',d:'Водитель ждёт — фиксируй время.'},
-{a:'Не езди наугад',d:'Водитель не должен искать склад самостоятельно. Это риск.'},
-{a:'Задокументируй',d:'Фото GPS с неправильным адресом — доказательство для detention claim.'}],tip:'Всегда проверяй адрес доставки на Google Maps ДО отправки водителя.'},
-{id:'k49',ico:'🎯',cat:'Брокеры',diff:'medium',xp:10,title:'Работа с несколькими брокерами одновременно',desc:'Как эффективно управлять отношениями с 10+ брокерами?',sit:'У тебя 15 брокеров в контактах. Нужно организовать работу.',steps:[{a:'CRM или таблица',d:'Excel или Google Sheets: брокер, контакт, маршруты, ставки, рейтинг оплат.'},
-{a:'Приоритизируй',d:'Топ-5 брокеров которые платят хорошо и вовремя — основа бизнеса.'},
-{a:'Регулярный контакт',d:'Звони топ-брокерам еженедельно. Остальным — когда нужен груз.'},
-{a:'Специализируйся',d:'Лучше быть экспертом на 3-4 маршрутах чем посредственным везде.'},
-{a:'Отслеживай оплаты',d:'Кто платит вовремя? Кто задерживает? Это влияет на приоритет.'},
-{a:'Новые брокеры',d:'Добавляй 1-2 новых брокера в месяц. Диверсификация важна.'}],tip:'Качество отношений важнее количества. 5 надёжных брокеров лучше 20 случайных.'},
-{id:'k50',ico:'🌟',cat:'Финансы',diff:'hard',xp:15,title:'Масштабирование бизнеса: второй грузовик',desc:'Бизнес идёт хорошо. Стоит ли покупать второй грузовик?',sit:'Один грузовик приносит $8,000/месяц net. Думаешь о расширении.',steps:[{a:'Анализ текущего бизнеса',d:'Стабильно ли работает первый грузовик? Есть ли постоянные клиенты?'},
-{a:'Финансовая подушка',d:'Нужно минимум 6 месяцев расходов в резерве перед покупкой.'},
-{a:'Стоимость второго грузовика',d:'Новый: $150K+. Б/у: $50-80K. Лизинг: $2,500-3,500/месяц.'},
-{a:'Дополнительные расходы',d:'Второй водитель, страховка, обслуживание — +$6,000-8,000/месяц.'},
-{a:'Нужен ли второй водитель',d:'Без надёжного водителя второй грузовик = головная боль.'},
-{a:'Постепенный рост',d:'Лучше один грузовик с 90% загрузкой чем два с 50%.'}],tip:'Масштабирование удваивает не только доходы, но и проблемы. Будь готов к этому.'}
-);
+
 </script>
 <script>
 // ═══════════════════════════════════════════════
@@ -2188,18 +1808,7 @@ function updateBannerProgress(){
   const cl=document.getElementById('bn-cards-left');if(cl)cl.textContent=cardsLeft;
   const ct=document.getElementById('bn-cards-total');if(ct)ct.textContent=cardsTotal;
   const ca=document.getElementById('bn-cards-acc');if(ca)ca.textContent=cardsAcc+'%';
-  // Cases
-  const casesDone=s.readCases.length;
-  const casesTotal=CASES.length;
-  const casesLeft=casesTotal-casesDone;
-  const casesPct=casesTotal?Math.round(casesDone/casesTotal*100):0;
-  const caseCats=[...new Set(CASES.map(c=>c.cat))].length;
-  const kf=document.getElementById('bn-cases-fill');if(kf)kf.style.width=casesPct+'%';
-  const kp=document.getElementById('bn-cases-pct');if(kp)kp.textContent=casesPct+'%';
-  const kd=document.getElementById('bn-cases-done');if(kd)kd.textContent=casesDone;
-  const kl=document.getElementById('bn-cases-left');if(kl)kl.textContent=casesLeft;
-  const kt=document.getElementById('bn-cases-total');if(kt)kt.textContent=casesTotal;
-  const kc=document.getElementById('bn-cases-cats');if(kc)kc.textContent=caseCats;
+  
 }
 
 // ═══════════════════════════════════════════════
@@ -3080,120 +2689,8 @@ function updateSideStats(){
 }
 </script>
 <script>
-// ═══════════════════════════════════════════════
-// CASES
-// ═══════════════════════════════════════════════
-let caseDiff='all';let caseCat='all';let currentCaseId=null;
-
-function initCases(){
-  const cats=[...new Set(CASES.map(c=>c.cat))];
-  const cf=document.getElementById('kcat-filters');
-  cf.innerHTML='<button class="fb on" onclick="kcat(\'all\')" id="kc-all">Все темы</button>';
-  cats.forEach(c=>{
-    cf.innerHTML+=`<button class="fb" onclick="kcat('${c}')" id="kc-${c.replace(/\s/g,'_')}">${c}</button>`;
-  });
-  filterCases();
-}
-
-function filterCases(){
-  const s=getState();
-  let filtered=CASES.filter(c=>{
-    if(caseCat!=='all'&&c.cat!==caseCat)return false;
-    return true;
-  });
-  // Randomize order (seeded by day so it stays consistent within a session)
-  const day=new Date().toDateString();
-  let seed=0;for(let i=0;i<day.length;i++)seed+=day.charCodeAt(i);
-  const rng=(s)=>{s=Math.imul(s^(s>>>16),0x45d9f3b);s=Math.imul(s^(s>>>13),0x45d9f3b);return(s^(s>>>16))>>>0;};
-  filtered=[...filtered].sort((a,b)=>{
-    const ha=rng(seed+a.id.length+a.id.charCodeAt(0));
-    const hb=rng(seed+b.id.length+b.id.charCodeAt(0));
-    return ha-hb;
-  });
-  const g=document.getElementById('cases-grid');
-  if(!filtered.length){g.innerHTML='<div class="empty"><div class="ei">🔍</div><p>Ничего не найдено</p></div>';return;}
-  g.innerHTML=filtered.map(c=>{
-    const read=s.readCases.includes(c.id);
-    const hasStory=CASE_STORIES[c.id];
-    return`<div class="kc ${read?'read':''}" onclick="openCase('${c.id}')">
-      ${hasStory?'<div class="kc-play">▶</div>':''}
-      <div class="kc-head">
-        <div class="kc-ico">${c.ico}</div>
-        <div><div class="kc-cat">${c.cat}</div><div class="kc-title">${c.title}</div></div>
-      </div>
-      <div class="kc-desc">${c.desc}</div>
-      <div class="kc-foot">
-        <span class="diff-badge d-${c.diff}">${c.diff==='easy'?'Лёгкий':c.diff==='medium'?'Средний':'Сложный'}</span>
-        <span class="kc-xp">+${c.xp} XP</span>
-        ${read?'<span class="kc-read">✅ Пройдено</span>':''}
-      </div>
-    </div>`;
-  }).join('');
-  updateCasesProgress(filtered,s);
-}
-
-function updateCasesProgress(filtered,s){
-  const total=filtered.length;
-  const read=filtered.filter(c=>s.readCases.includes(c.id)).length;
-  const pct=total?Math.round(read/total*100):0;
-  document.getElementById('kprog-fill').style.width=pct+'%';
-  document.getElementById('kprog-txt').textContent=`Изучено: ${read} из ${total}`;
-  document.getElementById('kprog-pct').textContent=pct+'%';
-}
-
-function kcat(c){
-  caseCat=c;
-  document.querySelectorAll('[id^="kc-"]').forEach(b=>b.classList.remove('on'));
-  const id=c==='all'?'kc-all':'kc-'+c.replace(/\s/g,'_');
-  const el=document.getElementById(id);
-  if(el)el.classList.add('on');
-  filterCases();
-}
-
-function openCase(id){
-  const c=CASES.find(x=>x.id===id);if(!c)return;
-  currentCaseId=id;
-  const story=CASE_STORIES[id];
-  if(story){
-    startCaseChat(id);
-  } else {
-    // Fallback: old modal for cases without stories
-    const s=getState();
-    document.getElementById('m-ico').textContent=c.ico;
-    document.getElementById('m-cat').textContent=c.cat+' · '+{easy:'Лёгкий',medium:'Средний',hard:'Сложный'}[c.diff];
-    document.getElementById('m-title').textContent=c.title;
-    document.getElementById('m-sit').textContent=c.sit;
-    document.getElementById('m-steps').innerHTML=c.steps.map((st,i)=>
-      `<div class="step"><div class="sn">${i+1}</div><div class="sc"><div class="sa">${st.a}</div><div class="sd">${st.d}</div></div></div>`
-    ).join('');
-    const tip=document.getElementById('m-tip');
-    const tipTxt=document.getElementById('m-tip-txt');
-    if(c.tip){tip.style.display='block';tipTxt.textContent=c.tip;}
-    else tip.style.display='none';
-    const btn=document.getElementById('m-mark-btn');
-    btn.style.display='block';
-    if(s.readCases.includes(id)){btn.textContent='✅ Уже изучено';btn.disabled=true;}
-    else{btn.textContent='✅ Изучено';btn.disabled=false;}
-    document.getElementById('modal-ov').classList.add('open');
-  }
-}
-
-function markCase(){
-  if(!currentCaseId)return;
-  const c=CASES.find(x=>x.id===currentCaseId);if(!c)return;
-  const s=getState();
-  if(!s.readCases.includes(currentCaseId)){
-    s.readCases.push(currentCaseId);
-    s.xp=(s.xp||0)+c.xp;
-    setState(s);
-    checkAchievements(s);
-    updateHeroNums();
-    showToast(c.ico,'+'+c.xp+' XP','Кейс изучен!');
-    document.getElementById('m-mark-btn').textContent='✅ Уже изучено';
-    document.getElementById('m-mark-btn').disabled=true;
-    filterCases();
-  }
-}
+// Модалка подробностей — используется карточками
+let currentCaseId=null;
 
 function closeModal(e){
   if(e&&e.target!==document.getElementById('modal-ov'))return;
@@ -3262,7 +2759,6 @@ function updateHeroNums(){
   document.getElementById('h-known').textContent=s.known.length;
   document.getElementById('h-streak').textContent=s.dayStreak;
   document.getElementById('h-cards').textContent=CARDS.length;
-  document.getElementById('h-cases').textContent=CASES.length;
   updateSideStats();
   if(typeof updateBannerProgress==='function')updateBannerProgress();
 }
@@ -3514,187 +3010,6 @@ function matchClick(id,type,el){
 // ═══════════════════════════════════════════════
 let csState={caseId:null,stepIdx:0,score:0,maxScore:0};
 
-const CASE_STORIES={
-k1:{
-  contact:'Mike — TQL Logistics',avatar:'📞',
-  nodes:[
-    {msgs:[{who:'sys',text:'📱 Входящий звонок от брокера...'},
-           {who:'them',text:'Hey, I got a load for you. Chicago to Atlanta, 780 miles. $1,500 all-in. Interested?'}],
-     choices:[
-       {text:'Sure, send me the rate con',score:0,next:1,feedback:'Принял без торга — потерял $300–500.'},
-       {text:'What\'s the pickup and delivery window?',score:2,next:2,feedback:'Правильно! Сначала детали, потом цена.'},
-       {text:'$1,500? That\'s way too low, no thanks',score:0,next:3,feedback:'Слишком резко — потерял возможность.'}
-     ],insight:'💡 Всегда уточняй детали перед обсуждением ставки — это показывает профессионализм.'},
-    {msgs:[{who:'them',text:'Great, I\'ll send it over. Pickup tomorrow 8 AM.'}],
-     choices:null,end:true,endScore:0},
-    {msgs:[{who:'them',text:'Pickup tomorrow 8 AM, delivery next day by 5 PM. Dry van, 42,000 lbs, no hazmat.'}],
-     choices:[
-       {text:'DAT shows $2.10/mile on this lane. I need at least $1,900.',score:2,next:4,feedback:'Отлично! Данные DAT — твой главный аргумент.'},
-       {text:'I can do $1,700',score:1,next:5,feedback:'Ниже рынка — можно было больше.'},
-       {text:'I\'ll take the $1,500',score:0,next:1,feedback:'Ниже рынка. Всегда торгуйся.'}
-     ],insight:'💡 DAT показывает среднюю $2.10/mile = $1,638 минимум. Проси больше.'},
-    {msgs:[{who:'them',text:'Alright, good luck finding something better. Call me if you change your mind.'}],
-     choices:null,end:true,endScore:0},
-    {msgs:[{who:'them',text:'$1,900 is too high. Best I can do is $1,750.'}],
-     choices:[
-       {text:'I can do $1,800 if you need it moved today. Final offer.',score:2,next:6,feedback:'Идеальный компромисс с дедлайном.'},
-       {text:'Meet me at $1,850 and we have a deal.',score:1,next:7,feedback:'Хорошо, но мог закрыть быстрее.'},
-       {text:'OK, $1,750 works',score:0,next:5,feedback:'Мог получить больше — не сдавайся так быстро.'}
-     ],insight:'💡 "If you need it moved today" — создаёт urgency и оправдывает цену.'},
-    {msgs:[{who:'them',text:'OK, $1,700 works. I\'ll send the rate con.'},
-           {who:'sys',text:'Ставка: $1,700. Ниже рынка, но груз забукан.'}],
-     choices:null,end:true,endScore:1},
-    {msgs:[{who:'them',text:'Deal. $1,800. Sending rate con now.'},
-           {who:'sys',text:'🎉 Ставка: $1,800 — отличный результат!'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'them',text:'Hmm... $1,825 and you got a deal.'},
-           {who:'you',text:'Done. Send the rate con.'},
-           {who:'sys',text:'Ставка: $1,825. Хороший результат!'}],
-     choices:null,end:true,endScore:2}
-  ]
-},
-k2:{
-  contact:'Водитель Иван',avatar:'🚛',
-  nodes:[
-    {msgs:[{who:'sys',text:'📱 Срочный звонок от водителя...'},
-           {who:'them',text:'Boss, truck broke down on I-80, mile marker 312. Engine light came on, won\'t start. I got reefer load — frozen products.'}],
-     choices:[
-       {text:'Спокойно, Иван. Разберёмся. Какая температура в рефрижераторе?',score:2,next:1,feedback:'Правильно — успокоил и запросил критичную информацию.'},
-       {text:'Как это случилось?! Ты проверял грузовик перед рейсом?',score:0,next:2,feedback:'Обвинения не помогут. Сначала реши проблему.'},
-       {text:'Сейчас позвоню брокеру, жди',score:1,next:3,feedback:'Брокеру нужно звонить, но сначала узнай детали.'}
-     ],insight:'💡 Первый шаг — успокоить водителя и собрать информацию. Паника = плохие решения.'},
-    {msgs:[{who:'them',text:'Reefer is still running, temp is 34°F. But engine is dead. I\'m on the shoulder.'}],
-     choices:[
-       {text:'Хорошо, рефрижератор работает — время есть. Ищу буксир рядом с тобой. Звоню брокеру через 5 минут.',score:2,next:4,feedback:'Идеально — план действий, приоритеты расставлены.'},
-       {text:'Попробуй завести ещё раз',score:0,next:5,feedback:'Водитель не механик. Нужен профессионал.'}
-     ],insight:'💡 Reefer работает отдельно от двигателя — это даёт время на решение.'},
-    {msgs:[{who:'them',text:'I did the pre-trip! Everything was fine this morning. Look, I need help here, not blame.'}],
-     choices:[
-       {text:'Ты прав, извини. Давай решать. Какая температура в рефрижераторе?',score:1,next:1,feedback:'Хорошо что исправился. Но потерял время.'},
-       {text:'Ладно, ищу буксир. Жди.',score:0,next:3,feedback:'Не узнал критичную информацию о температуре.'}
-     ]},
-    {msgs:[{who:'sys',text:'Ты звонишь брокеру...'},
-           {who:'you',text:'Driver broke down on I-80 mile 312. Working on solution. Will update in 30 min.'},
-           {who:'them',text:'OK thanks for the heads up. Keep me posted. What\'s the ETA impact?'}],
-     choices:[
-       {text:'Reefer is running, cargo is safe. Estimating 2-3 hour delay. Will confirm once tow truck arrives.',score:2,next:4,feedback:'Профессионально — дал статус, оценку, план.'},
-       {text:'I don\'t know yet, I\'ll call you back',score:0,next:6,feedback:'Брокер хочет конкретику, не неопределённость.'}
-     ],insight:'💡 Брокеры прощают поломки. Они не прощают молчание и отсутствие плана.'},
-    {msgs:[{who:'sys',text:'Ты нашёл буксир — ETA 45 минут. Позвонил брокеру с апдейтом.'},
-           {who:'them',text:'Thanks for staying on top of it. Appreciate the updates.'},
-           {who:'sys',text:'🎉 Ситуация под контролем. Груз доставлен с задержкой 3 часа.'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'them',text:'That\'s not gonna help. I need a mechanic, not a restart.'},
-           {who:'sys',text:'Потерял время. Нужно было сразу искать помощь.'}],
-     choices:[
-       {text:'Понял. Ищу ближайший сервис и буксир.',score:1,next:4,feedback:'Лучше поздно чем никогда.'}
-     ]},
-    {msgs:[{who:'them',text:'I need more than that. What\'s the plan?'},
-           {who:'sys',text:'Брокер недоволен — нет конкретики.'}],
-     choices:[
-       {text:'Tow truck is on the way, ETA 45 min. Reefer running, cargo safe. Will update in 30.',score:1,next:4,feedback:'Исправился, но первое впечатление уже испорчено.'}
-     ]}
-  ]
-},
-k5:{
-  contact:'Accounting — Swift Logistics',avatar:'💰',
-  nodes:[
-    {msgs:[{who:'sys',text:'Прошло 45 дней после доставки. Оплата $2,800 не получена. POD отправлен.'},
-           {who:'sys',text:'Ты звонишь в бухгалтерию брокера...'},
-           {who:'them',text:'Swift Logistics accounting, how can I help you?'}],
-     choices:[
-       {text:'Hi, this is [Name] from [Company]. I\'m calling about invoice #1247, $2,800, delivered 45 days ago. Can you check the status?',score:2,next:1,feedback:'Профессионально — все данные сразу.'},
-       {text:'Where\'s my money? It\'s been 45 days!',score:0,next:2,feedback:'Агрессия не поможет. Бухгалтерия — не враг.'},
-       {text:'Hi, I have an unpaid invoice...',score:1,next:3,feedback:'Слишком расплывчато — нужны конкретные данные.'}
-     ],insight:'💡 Всегда называй номер инвойса, сумму и дату доставки — это ускоряет процесс.'},
-    {msgs:[{who:'them',text:'Let me check... Invoice #1247, yes I see it. It\'s in the queue. Should be processed this week.'}],
-     choices:[
-       {text:'Can you give me a specific date? Our terms were Net 30 and it\'s been 45 days.',score:2,next:4,feedback:'Отлично — вежливо но твёрдо.'},
-       {text:'OK, thanks. I\'ll wait.',score:0,next:5,feedback:'Без конкретной даты — будешь ждать ещё месяц.'}
-     ],insight:'💡 "In the queue" = стандартная отговорка. Всегда проси конкретную дату.'},
-    {msgs:[{who:'them',text:'Sir, I understand your frustration but I need an invoice number to look anything up.'}],
-     choices:[
-       {text:'Sorry about that. Invoice #1247, $2,800, delivered March 15th.',score:1,next:1,feedback:'Исправился, но первое впечатление подпорчено.'}
-     ]},
-    {msgs:[{who:'them',text:'OK, what\'s the invoice number and amount?'}],
-     choices:[
-       {text:'Invoice #1247, $2,800, delivered March 15th. POD was sent same day.',score:1,next:1,feedback:'Хорошо, но мог дать всё сразу.'}
-     ]},
-    {msgs:[{who:'them',text:'I can confirm payment will go out this Friday, March 28th.'},
-           {who:'you',text:'Thank you. Can you send me a confirmation email?'},
-           {who:'them',text:'Sure, I\'ll send it today.'},
-           {who:'sys',text:'🎉 Оплата подтверждена на пятницу. Email-подтверждение запрошено.'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'sys',text:'Прошла ещё неделя. Оплаты нет. Теперь нужно эскалировать.'}],
-     choices:[
-       {text:'Звоню снова и прошу супервайзера',score:1,next:4,feedback:'Правильно, но потерял неделю.'}
-     ]}
-  ]
-},
-k7:{
-  contact:'Broker — CH Robinson',avatar:'📞',
-  nodes:[
-    {msgs:[{who:'sys',text:'Ты делаешь холодный звонок новому брокеру...'},
-           {who:'them',text:'CH Robinson, this is Sarah. How can I help you?'}],
-     choices:[
-       {text:'Hi Sarah, this is [Name] from [Company], MC 123456. I run dry vans Midwest to Southeast. Got anything moving this week?',score:2,next:1,feedback:'Идеально — кратко, по делу, с MC номером.'},
-       {text:'Hi, I\'m a carrier looking for loads. Do you have anything available?',score:0,next:2,feedback:'Слишком общо. Брокер не знает что ты можешь.'},
-       {text:'Hi Sarah, my name is [Name]. I\'ve been in trucking for 5 years and I wanted to introduce my company...',score:0,next:3,feedback:'Слишком длинно. Брокер занят — сразу к делу.'}
-     ],insight:'💡 Холодный звонок = 15 секунд. Имя, MC, оборудование, маршрут, вопрос.'},
-    {msgs:[{who:'them',text:'Hey! Yeah actually I have a load going Chicago to Atlanta, pickup Thursday. 53\' dry van. Interested?'}],
-     choices:[
-       {text:'Absolutely. What\'s the rate and weight?',score:2,next:4,feedback:'Прямо к делу — показывает опыт.'},
-       {text:'Maybe. Tell me more about it.',score:1,next:4,feedback:'Нормально, но "maybe" звучит неуверенно.'}
-     ]},
-    {msgs:[{who:'them',text:'What equipment do you run? What lanes?'}],
-     choices:[
-       {text:'53\' dry van, Midwest to Southeast primarily. Truck available Thursday in Chicago.',score:1,next:1,feedback:'Хорошо, но мог дать эту информацию сразу.'}
-     ]},
-    {msgs:[{who:'them',text:'OK... what\'s your MC number and what do you run?'},
-           {who:'sys',text:'Брокер теряет интерес — ты не дал конкретики.'}],
-     choices:[
-       {text:'MC 123456, 53\' dry van. Truck in Chicago, available Thursday.',score:1,next:1,feedback:'Спас ситуацию, но первое впечатление слабое.'}
-     ]},
-    {msgs:[{who:'them',text:'$1,850 all-in, 42,000 lbs. Pickup Thursday 8 AM.'},
-           {who:'you',text:'Works for me. Can I get your direct email for future loads?'},
-           {who:'them',text:'Sure — sarah.j@chrobinson.com. Send me your carrier packet.'},
-           {who:'sys',text:'🎉 Первый груз забукан + прямой контакт брокера получен!'}],
-     choices:null,end:true,endScore:3}
-  ]
-},
-k9:{
-  contact:'Unknown Broker',avatar:'🔍',
-  nodes:[
-    {msgs:[{who:'sys',text:'Незнакомый брокер предлагает $2,500 Dallas → Miami. Звучит хорошо. Но ты никогда с ним не работал.'},
-           {who:'them',text:'Hey, I got a hot load. Dallas to Miami, $2,500. Need it picked up today. You in?'}],
-     choices:[
-       {text:'Sounds good. What\'s your MC number? I need to verify before we proceed.',score:2,next:1,feedback:'Правильно — всегда проверяй перед букингом.'},
-       {text:'$2,500? I\'m in! Send the rate con.',score:0,next:4,feedback:'Опасно! Не проверил брокера — рискуешь не получить оплату.'},
-       {text:'That rate seems too high. What\'s the catch?',score:1,next:2,feedback:'Хороший инстинкт, но лучше проверить через SAFER.'}
-     ],insight:'💡 Слишком высокая ставка + давление "нужно сегодня" = красные флаги.'},
-    {msgs:[{who:'them',text:'MC 987654. We\'re a legit operation, been in business 2 years.'},
-           {who:'sys',text:'Ты проверяешь на SAFER.fmcsa.dot.gov...'},
-           {who:'sys',text:'⚠️ MC активный, но страховка истекла 2 недели назад. Bond активный.'}],
-     choices:[
-       {text:'Your insurance shows expired on SAFER. I can\'t book until that\'s updated.',score:2,next:3,feedback:'Отлично — нашёл проблему, защитил себя.'},
-       {text:'Looks good on SAFER. Let\'s do it.',score:0,next:4,feedback:'Не заметил истёкшую страховку — опасно!'}
-     ],insight:'💡 Проверяй: активная лицензия + действующая страховка + bond. Все три.'},
-    {msgs:[{who:'them',text:'No catch, just need it moved fast. So are you in or not?'}],
-     choices:[
-       {text:'Give me your MC number first. I verify every new broker.',score:2,next:1,feedback:'Правильный подход — не поддался давлению.'},
-       {text:'OK, send the rate con',score:0,next:4,feedback:'Поддался давлению — рискованно.'}
-     ]},
-    {msgs:[{who:'them',text:'Oh, we just switched providers. It\'ll be updated tomorrow.'},
-           {who:'you',text:'I understand, but I can\'t move a load without valid insurance on file. Call me when it\'s updated.'},
-           {who:'sys',text:'🎉 Правильное решение. 5 минут проверки могут сэкономить тысячи.'}],
-     choices:null,end:true,endScore:3},
-    {msgs:[{who:'sys',text:'⚠️ Ты забукал груз без проверки. Через 30 дней — оплаты нет. Брокер не отвечает на звонки.'},
-           {who:'sys',text:'Потеря: $2,500 + топливо + время водителя. Урок усвоен.'}],
-     choices:null,end:true,endScore:0}
-  ]
-}
-};
-
 // Chat engine
 let csCurrentCase=null;
 let csNodeIdx=0;
@@ -3702,177 +3017,6 @@ let csScore=0;
 let csMaxScore=0;
 let csMsgQueue=[];
 let csAnimating=false;
-
-function startCaseChat(id){
-  const c=CASES.find(x=>x.id===id);
-  const story=CASE_STORIES[id];
-  if(!c||!story)return;
-  csCurrentCase=id;csNodeIdx=0;csScore=0;csMaxScore=0;
-  // Count max possible score
-  story.nodes.forEach(n=>{if(n.choices){const mx=Math.max(...n.choices.map(ch=>ch.score));csMaxScore+=mx;}});
-  // Setup UI
-  document.getElementById('case-list-view').style.display='none';
-  document.getElementById('case-chat-view').style.display='block';
-  document.getElementById('cs-title').textContent=c.title;
-  document.getElementById('cs-cat').textContent=c.cat+' · '+{easy:'Лёгкий',medium:'Средний',hard:'Сложный'}[c.diff];
-  document.getElementById('cs-contact').textContent=story.contact;
-  document.getElementById('cs-avatar').textContent=story.avatar;
-  document.getElementById('cs-stars').textContent='⭐⭐⭐';
-  document.getElementById('cs-messages').innerHTML='';
-  document.getElementById('cs-choices').innerHTML='';
-  document.getElementById('cs-insight').style.display='none';
-  document.getElementById('cs-results').style.display='none';
-  document.getElementById('cs-messages').parentElement.style.display='';
-  playNode(0);
-}
-
-function playNode(idx){
-  const story=CASE_STORIES[csCurrentCase];
-  if(!story||idx>=story.nodes.length)return;
-  csNodeIdx=idx;
-  const node=story.nodes[idx];
-  document.getElementById('cs-choices').innerHTML='';
-  document.getElementById('cs-insight').style.display='none';
-  // Queue messages
-  showMessagesSequence(node.msgs,()=>{
-    if(node.end){
-      csScore+=(node.endScore||0);
-      setTimeout(()=>showCaseResults(),600);
-    } else if(node.choices){
-      showChoices(node);
-    }
-  });
-}
-
-function showMessagesSequence(msgs,callback){
-  const container=document.getElementById('cs-messages');
-  let i=0;
-  function next(){
-    if(i>=msgs.length){if(callback)callback();return;}
-    const m=msgs[i];i++;
-    // Show typing indicator for "them" messages
-    if(m.who==='them'){
-      const typing=document.createElement('div');
-      typing.className='cs-typing';
-      typing.innerHTML='<div class="cs-typing-dot"></div><div class="cs-typing-dot"></div><div class="cs-typing-dot"></div>';
-      container.appendChild(typing);
-      container.scrollTop=container.scrollHeight;
-      setTimeout(()=>{
-        typing.remove();
-        addMessage(m);
-        setTimeout(next,400);
-      },800+Math.random()*600);
-    } else {
-      addMessage(m);
-      setTimeout(next,m.who==='sys'?600:300);
-    }
-  }
-  next();
-}
-
-function addMessage(m){
-  const container=document.getElementById('cs-messages');
-  const div=document.createElement('div');
-  const cls=m.who==='them'?'cs-msg cs-msg-them':m.who==='you'?'cs-msg cs-msg-you':'cs-msg cs-msg-system';
-  div.className=cls;
-  const whoLabel=m.who==='them'?'':'';
-  div.innerHTML=`<div class="cs-msg-bubble">${m.text}</div>`;
-  container.appendChild(div);
-  // Trigger animation
-  requestAnimationFrame(()=>{div.style.animationDelay='0s';});
-  container.scrollTop=container.scrollHeight;
-}
-
-function showChoices(node){
-  const container=document.getElementById('cs-choices');
-  container.innerHTML=node.choices.map((ch,i)=>
-    `<button class="cs-choice" onclick="pickChoice(${csNodeIdx},${i})">${ch.text}</button>`
-  ).join('');
-}
-
-function pickChoice(nodeIdx,choiceIdx){
-  const story=CASE_STORIES[csCurrentCase];
-  const node=story.nodes[nodeIdx];
-  const choice=node.choices[choiceIdx];
-  csScore+=choice.score;
-  // Highlight chosen, dim others
-  const btns=document.querySelectorAll('.cs-choice');
-  btns.forEach((btn,i)=>{
-    btn.style.pointerEvents='none';
-    if(i===choiceIdx){
-      btn.classList.add(choice.score>=2?'cs-correct':'cs-wrong');
-    } else {
-      btn.classList.add('cs-dim');
-    }
-  });
-  // Add your message to chat
-  addMessage({who:'you',text:choice.text});
-  // Show feedback as system message
-  if(choice.feedback){
-    setTimeout(()=>{
-      addMessage({who:'sys',text:(choice.score>=2?'✅ ':'⚠️ ')+choice.feedback});
-    },500);
-  }
-  // Show insight
-  if(node.insight){
-    setTimeout(()=>{
-      const ins=document.getElementById('cs-insight');
-      ins.style.display='flex';
-      document.getElementById('cs-insight-text').textContent=node.insight.replace('💡 ','');
-    },900);
-  }
-  // Advance to next node
-  setTimeout(()=>{
-    document.getElementById('cs-choices').innerHTML='';
-    document.getElementById('cs-insight').style.display='none';
-    playNode(choice.next);
-  },choice.score>=2?1800:2200);
-}
-
-function showCaseResults(){
-  const c=CASES.find(x=>x.id===csCurrentCase);
-  if(!c)return;
-  const pct=csMaxScore>0?Math.round(csScore/csMaxScore*100):0;
-  const stars=pct>=80?3:pct>=50?2:pct>0?1:0;
-  const starStr='⭐'.repeat(stars)+'☆'.repeat(3-stars);
-  const titles=['Попробуй ещё раз','Неплохо!','Хорошая работа!','Отлично!'];
-  const icons=['😅','🙂','👍','🏆'];
-  // Hide chat, show results
-  document.getElementById('cs-messages').parentElement.style.display='none';
-  document.getElementById('cs-choices').innerHTML='';
-  document.getElementById('cs-insight').style.display='none';
-  const res=document.getElementById('cs-results');
-  res.style.display='block';
-  document.getElementById('cs-res-icon').textContent=icons[stars];
-  document.getElementById('cs-res-title').textContent=titles[stars];
-  document.getElementById('cs-res-stars').textContent=starStr;
-  document.getElementById('cs-res-score').innerHTML=`Результат: <strong>${csScore}</strong> из <strong>${csMaxScore}</strong> баллов<br>Точность: <strong>${pct}%</strong>`;
-  document.getElementById('cs-res-tip').textContent=c.tip||'';
-  document.getElementById('cs-topbar-stars').textContent=starStr;
-  // Mark as read & award XP
-  const s=getState();
-  if(!s.readCases.includes(csCurrentCase)){
-    s.readCases.push(csCurrentCase);
-    const xpAmount=Math.round(c.xp*(0.5+pct/200));
-    s.xp=(s.xp||0)+xpAmount;
-    setState(s);
-    checkAchievements(s);
-    updateHeroNums();
-    if(window._awardXP)try{window._awardXP('CASE_STUDY_READ');}catch(e){}
-    showToast(c.ico,'+'+xpAmount+' XP','Кейс пройден!');
-    filterCases();
-  }
-}
-
-function replayCase(){
-  if(csCurrentCase)startCaseChat(csCurrentCase);
-}
-
-function exitCaseChat(){
-  document.getElementById('case-chat-view').style.display='none';
-  document.getElementById('case-list-view').style.display='block';
-  csCurrentCase=null;
-}
 
 // ═══════════════════════════════════════════════
 // DIALOG + CATEGORY PROGRESS
@@ -3951,19 +3095,10 @@ function updateCardPanelSections(cardId){
 document.addEventListener('DOMContentLoaded',()=>{
   checkDayStreak();
   initCards();
-  initCases();
   updateHeroNums();
   initTips();
   updateCardPanelSections(null);
   updateBannerProgress();
-  // Вкладка из адреса (#cases) важнее сохранённой: на страницу приходят
-  // по ссылке «Практические кейсы», и она должна открывать именно кейсы.
-  try{
-    const fromHash=(location.hash||'').replace('#','');
-    const savedTab=localStorage.getItem('trainer_active_tab');
-    const want=(fromHash&&document.getElementById('p-'+fromHash))?fromHash:savedTab;
-    if(want&&document.getElementById('p-'+want)){tab(want);}
-  }catch(e){}
   // Load xp-system and make awardXP globally available
   import('../xp-system.js').then(m=>{
     window._awardXP=m.awardXP;
@@ -4017,7 +3152,4 @@ function nextTip(){
 <script src="../enhanced-quiz-system.js"></script>
 </body>
 </html>
-
-
-
 
