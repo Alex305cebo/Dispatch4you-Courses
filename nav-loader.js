@@ -79,23 +79,39 @@
         return false;
     }
 
-    var warnOpen = false;
+    // ponytail: тост вместо полноэкранной модалки — предупреждение больше не
+    // перекрывает сайт и не ждёт клика: висит 3.5 с и снимает себя само.
+    // pointer-events:none, чтобы под ним можно было продолжать работать.
+    var warnEl = null, warnHideTimer = null, warnKillTimer = null;
+    var WARN_SHOWN_MS = 3500;
     function showCopyrightWarning() {
-        if (warnOpen) return;
-        warnOpen = true;
-        var ov = document.createElement('div');
-        ov.setAttribute('style', 'position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:rgba(3,6,14,.72);backdrop-filter:blur(6px);padding:20px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;');
-        ov.innerHTML = '<div style="max-width:440px;width:100%;background:#0b0f1a;border:1px solid rgba(6,182,212,.4);border-radius:18px;padding:30px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.6);">' +
-            '<div style="font-size:34px;margin-bottom:12px;">©️🔒</div>' +
-            '<div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:12px;">' + T.modalTitle + '</div>' +
-            '<div style="font-size:14px;line-height:1.6;color:rgba(255,255,255,.82);margin-bottom:22px;">' + T.modalBody + '</div>' +
-            '<button id="d4y-warn-ok" style="padding:11px 30px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:100px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">' + T.modalOk + '</button>' +
-            '</div>';
-        function close() { warnOpen = false; if (ov.parentNode) ov.parentNode.removeChild(ov); }
-        ov.addEventListener('click', function (e) { if (e.target === ov) close(); });
-        document.body.appendChild(ov);
-        var ok = document.getElementById('d4y-warn-ok');
-        if (ok) ok.onclick = close;
+        if (!document.body) return;
+        clearTimeout(warnHideTimer);
+        clearTimeout(warnKillTimer);
+        if (!warnEl) {
+            warnEl = document.createElement('div');
+            warnEl.setAttribute('style', 'position:fixed;left:50%;bottom:24px;z-index:2147483647;box-sizing:border-box;' +
+                'width:calc(100vw - 32px);max-width:440px;padding:14px 18px;text-align:center;' +
+                'background:rgba(11,15,26,.96);border:1px solid rgba(6,182,212,.45);border-radius:14px;' +
+                'box-shadow:0 12px 40px rgba(0,0,0,.55);color:#fff;pointer-events:none;' +
+                'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;' +
+                'opacity:0;transform:translateX(-50%) translateY(14px);transition:opacity .25s ease,transform .25s ease;');
+            warnEl.innerHTML = '<div style="font-size:15px;font-weight:800;margin-bottom:5px;">©️🔒 ' + T.modalTitle + '</div>' +
+                '<div style="font-size:13px;line-height:1.5;color:rgba(255,255,255,.82);">' + T.modalBody + '</div>';
+            document.body.appendChild(warnEl);
+            void warnEl.offsetWidth; // рефлоу, иначе transition не стартует с 0
+        }
+        warnEl.style.opacity = '1';
+        warnEl.style.transform = 'translateX(-50%) translateY(0)';
+        warnHideTimer = setTimeout(function () {
+            if (!warnEl) return;
+            warnEl.style.opacity = '0';
+            warnEl.style.transform = 'translateX(-50%) translateY(14px)';
+            warnKillTimer = setTimeout(function () {
+                if (warnEl && warnEl.parentNode) warnEl.parentNode.removeChild(warnEl);
+                warnEl = null;
+            }, 300);
+        }, WARN_SHOWN_MS);
     }
 
     function initContentProtection() {
@@ -181,7 +197,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=11.8';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.2';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
@@ -191,7 +207,7 @@
     var NAV_INLINE = `<nav class="navbar"><div class="nav-container"><div class="nav-content">
 <a href="{{BASE}}index.html" class="logo"><span class="logo-text-wrapper"><span class="logo-text">Dispatch4You</span></span></a>
 <div class="nav-links">
-  <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Курс обучения <span class="arrow">▾</span></button><div class="dropdown mega-dropdown expanded"><div class="dropdown-expandable"><a href="{{BASE}}pages/documentation.html" class="dropdown-main">📚 Курс - 15 Уроков</a><span class="dropdown-arrow expanded">▼</span></div><div class="dropdown-nested show"><div class="dropdown-nested-title">Разделы курса:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/documentation.html" class="dropdown-nested-item">1. Курс диспетчера грузоперевозок США</a><a href="{{BASE}}pages/intro.html" class="dropdown-nested-item">2. Введение в профессию</a><a href="{{BASE}}pages/role.html" class="dropdown-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="dropdown-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="dropdown-nested-item">5. Маршруты и география</a><a href="{{BASE}}pages/docs.html" class="dropdown-nested-item">6. Документы</a><a href="{{BASE}}pages/loadboards.html" class="dropdown-nested-item">7. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="dropdown-nested-item">8. Переговоры</a><a href="{{BASE}}pages/communication.html" class="dropdown-nested-item">9. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="dropdown-nested-item">10. Проблемные ситуации</a><a href="{{BASE}}pages/finances.html" class="dropdown-nested-item">11. Финансы</a><a href="{{BASE}}pages/regulations.html" class="dropdown-nested-item">12. Compliance</a><a href="{{BASE}}pages/technology.html" class="dropdown-nested-item">13. Технологии</a><a href="{{BASE}}pages/cases.html" class="dropdown-nested-item">14. Практические кейсы</a><a href="{{BASE}}pages/career.html" class="dropdown-nested-item">15. Карьера и развитие</a></div></div><div class="dropdown-expandable"><a href="{{BASE}}pages/modules-index.html" class="dropdown-main">✍️ Обучение - 12 Модулей</a><span class="dropdown-arrow">▼</span></div><div class="dropdown-nested"><div class="dropdown-nested-title">Модули тестирования:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/doc-module-1-complete.html" class="dropdown-nested-item">1. Основы профессии</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="dropdown-nested-item">2. Типы грузоперевозок</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="dropdown-nested-item">3. Документы диспетчера</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="dropdown-nested-item">4. Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="dropdown-nested-item">5. Переговоры</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="dropdown-nested-item">6. Маршруты</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="dropdown-nested-item">7. Коммуникация</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="dropdown-nested-item">8. Проблемы в пути</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="dropdown-nested-item">9. Финансы</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="dropdown-nested-item">10. Compliance</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="dropdown-nested-item">11. Технологии</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="dropdown-nested-item">12. Итоговый тест</a></div></div><a href="{{BASE}}pages/glossary.html">📖 Термины и Сокращения</a><a href="{{BASE}}pages/testing.html">🎯 Тестирование диспетчера</a><a href="{{BASE}}pages/Trainer-Quiz.html">💡 Тренажер диспетчера</a></div></div>
+  <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Курс обучения <span class="arrow">▾</span></button><div class="dropdown mega-dropdown"><div class="dropdown-expandable"><a href="{{BASE}}pages/documentation.html" class="dropdown-main">📚 Курс - 15 Уроков</a><span class="dropdown-arrow">▼</span></div><div class="dropdown-nested"><div class="dropdown-nested-title">Разделы курса:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/documentation.html" class="dropdown-nested-item">1. Курс диспетчера грузоперевозок США</a><a href="{{BASE}}pages/intro.html" class="dropdown-nested-item">2. Введение в профессию</a><a href="{{BASE}}pages/role.html" class="dropdown-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="dropdown-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="dropdown-nested-item">5. Маршруты и география</a><a href="{{BASE}}pages/loadboards.html" class="dropdown-nested-item">6. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="dropdown-nested-item">7. Переговоры</a><a href="{{BASE}}pages/brokers.html" class="dropdown-nested-item">8. Брокеры</a><a href="{{BASE}}pages/docs.html" class="dropdown-nested-item">9. Документы</a><a href="{{BASE}}pages/regulations.html" class="dropdown-nested-item">10. Законы и Compliance</a><a href="{{BASE}}pages/technology.html" class="dropdown-nested-item">11. Технологии</a><a href="{{BASE}}pages/communication.html" class="dropdown-nested-item">12. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="dropdown-nested-item">13. Проблемные ситуации</a><a href="{{BASE}}pages/finances.html" class="dropdown-nested-item">14. Финансы</a><a href="{{BASE}}pages/career.html" class="dropdown-nested-item">15. Карьера и развитие</a></div></div><div class="dropdown-expandable"><a href="{{BASE}}pages/modules-index.html" class="dropdown-main">✍️ Обучение - 12 Модулей</a><span class="dropdown-arrow">▼</span></div><div class="dropdown-nested"><div class="dropdown-nested-title">Модули тестирования:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/modules-index.html" class="dropdown-nested-item">📋 Все модули — обзор</a><a href="{{BASE}}pages/doc-module-1-complete.html" class="dropdown-nested-item">1. Введение в диспетчерство</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="dropdown-nested-item">2. Регулирование и законодательство</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="dropdown-nested-item">3. Типы оборудования и грузов</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="dropdown-nested-item">4. Работа с Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="dropdown-nested-item">5. Переговоры с брокерами</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="dropdown-nested-item">6. Планирование маршрутов</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="dropdown-nested-item">7. Документооборот и отчётность</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="dropdown-nested-item">8. Управление водителями</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="dropdown-nested-item">9. Безопасность и CSA Scores</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="dropdown-nested-item">10. Финансы и расчёты</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="dropdown-nested-item">11. Кризисные ситуации</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="dropdown-nested-item">12. Практика и карьера</a></div></div><a href="{{BASE}}pages/glossary.html">📖 Термины и Сокращения</a><a href="{{BASE}}pages/cases.html">🗂 Практические кейсы</a><a href="{{BASE}}pages/testing.html">🎯 Тестирование диспетчера</a><a href="{{BASE}}pages/Trainer-Quiz.html">💡 Тренажер диспетчера</a></div></div>
   <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="/map-trainer/">🗺️ USA Map Trainer</a><a href="{{BASE}}pages/ai-broker-chat.html">🎙️ AI – Симулятор переговоров</a><a href="/games/">🕹️ Мини-игры</a><a href="{{BASE}}pages/users-stats.html">🎖️ Рейтинг пользователей</a><a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a></div></div>
   <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">ℹ️ О нас</a><a href="{{BASE}}pricing.html">💎 Планы и цены</a><a href="{{BASE}}faq.html">❓ Частые вопросы</a><a href="{{BASE}}career.html">🚀 Карьера</a><a href="{{BASE}}contacts.html">📩 Написать нам</a></div></div>
   <a href="{{BASE}}pages/users-stats.html" class="nav-btn" style="text-decoration:none;display:none;">📊 Стат</a>
@@ -221,7 +237,7 @@
       </div>
     </div>
     <div class="mob-actions" id="mob-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
-    <div class="mob-acc" data-section="course"><div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div><div class="mob-acc-body"><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/documentation.html" class="mob-sub mob-sub-main">📚 Курс - 15 Уроков</a><span class="mob-sub-arrow">▼</span></div><div class="mob-sub-nested"><div class="mob-sub-nested-title">Разделы курса:</div><a href="{{BASE}}pages/documentation.html" class="mob-sub-nested-item">1. Курс диспетчера грузоперевозок США</a><a href="{{BASE}}pages/intro.html" class="mob-sub-nested-item">2. Введение в профессию</a><a href="{{BASE}}pages/role.html" class="mob-sub-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="mob-sub-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="mob-sub-nested-item">5. Маршруты и география</a><a href="{{BASE}}pages/docs.html" class="mob-sub-nested-item">6. Документы</a><a href="{{BASE}}pages/loadboards.html" class="mob-sub-nested-item">7. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="mob-sub-nested-item">8. Переговоры</a><a href="{{BASE}}pages/communication.html" class="mob-sub-nested-item">9. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="mob-sub-nested-item">10. Проблемные ситуации</a><a href="{{BASE}}pages/finances.html" class="mob-sub-nested-item">11. Финансы</a><a href="{{BASE}}pages/regulations.html" class="mob-sub-nested-item">12. Compliance</a><a href="{{BASE}}pages/technology.html" class="mob-sub-nested-item">13. Технологии</a><a href="{{BASE}}pages/cases.html" class="mob-sub-nested-item">14. Практические кейсы</a><a href="{{BASE}}pages/career.html" class="mob-sub-nested-item">15. Карьера и развитие</a></div><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/modules-index.html" class="mob-sub mob-sub-main">✍️ Обучение - 12 Модулей</a><span class="mob-sub-arrow">▼</span></div><div class="mob-sub-nested"><div class="mob-sub-nested-title">Модули тестирования:</div><a href="{{BASE}}pages/doc-module-1-complete.html" class="mob-sub-nested-item">1. Основы профессии</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="mob-sub-nested-item">2. Типы грузоперевозок</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="mob-sub-nested-item">3. Документы диспетчера</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="mob-sub-nested-item">4. Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="mob-sub-nested-item">5. Переговоры</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="mob-sub-nested-item">6. Маршруты</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="mob-sub-nested-item">7. Коммуникация</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="mob-sub-nested-item">8. Проблемы в пути</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="mob-sub-nested-item">9. Финансы</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="mob-sub-nested-item">10. Compliance</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="mob-sub-nested-item">11. Технологии</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="mob-sub-nested-item">12. Итоговый тест</a></div></div><a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Термины и Сокращения</a><a href="{{BASE}}pages/testing.html" class="mob-sub">🎯 Тестирование диспетчера</a><a href="{{BASE}}pages/Trainer-Quiz.html" class="mob-sub">💡 Тренажер диспетчера</a></div></div>
+    <div class="mob-acc" data-section="course"><div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div><div class="mob-acc-body"><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/documentation.html" class="mob-sub mob-sub-main">📚 Курс - 15 Уроков</a><span class="mob-sub-arrow expanded">▼</span></div><div class="mob-sub-nested show"><div class="mob-sub-nested-title">Разделы курса:</div><a href="{{BASE}}pages/documentation.html" class="mob-sub-nested-item">1. Курс диспетчера грузоперевозок США</a><a href="{{BASE}}pages/intro.html" class="mob-sub-nested-item">2. Введение в профессию</a><a href="{{BASE}}pages/role.html" class="mob-sub-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="mob-sub-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="mob-sub-nested-item">5. Маршруты и география</a><a href="{{BASE}}pages/loadboards.html" class="mob-sub-nested-item">6. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="mob-sub-nested-item">7. Переговоры</a><a href="{{BASE}}pages/brokers.html" class="mob-sub-nested-item">8. Брокеры</a><a href="{{BASE}}pages/docs.html" class="mob-sub-nested-item">9. Документы</a><a href="{{BASE}}pages/regulations.html" class="mob-sub-nested-item">10. Законы и Compliance</a><a href="{{BASE}}pages/technology.html" class="mob-sub-nested-item">11. Технологии</a><a href="{{BASE}}pages/communication.html" class="mob-sub-nested-item">12. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="mob-sub-nested-item">13. Проблемные ситуации</a><a href="{{BASE}}pages/finances.html" class="mob-sub-nested-item">14. Финансы</a><a href="{{BASE}}pages/career.html" class="mob-sub-nested-item">15. Карьера и развитие</a></div><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/modules-index.html" class="mob-sub mob-sub-main">✍️ Обучение - 12 Модулей</a><span class="mob-sub-arrow">▼</span></div><div class="mob-sub-nested"><div class="mob-sub-nested-title">Модули тестирования:</div><a href="{{BASE}}pages/modules-index.html" class="mob-sub-nested-item">📋 Все модули — обзор</a><a href="{{BASE}}pages/doc-module-1-complete.html" class="mob-sub-nested-item">1. Введение в диспетчерство</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="mob-sub-nested-item">2. Регулирование и законодательство</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="mob-sub-nested-item">3. Типы оборудования и грузов</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="mob-sub-nested-item">4. Работа с Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="mob-sub-nested-item">5. Переговоры с брокерами</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="mob-sub-nested-item">6. Планирование маршрутов</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="mob-sub-nested-item">7. Документооборот и отчётность</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="mob-sub-nested-item">8. Управление водителями</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="mob-sub-nested-item">9. Безопасность и CSA Scores</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="mob-sub-nested-item">10. Финансы и расчёты</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="mob-sub-nested-item">11. Кризисные ситуации</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="mob-sub-nested-item">12. Практика и карьера</a></div></div><a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Термины и Сокращения</a><a href="{{BASE}}pages/cases.html" class="mob-sub">🗂 Практические кейсы</a><a href="{{BASE}}pages/testing.html" class="mob-sub">🎯 Тестирование диспетчера</a><a href="{{BASE}}pages/Trainer-Quiz.html" class="mob-sub">💡 Тренажер диспетчера</a></div></div>
     <div class="mob-acc" data-section="tools"><div class="mob-acc-title">🛠️ Инструменты <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="/map-trainer/" class="mob-sub" style="color:#06b6d4;font-weight:700;">🗺️ USA Map Trainer</a><a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🎙️ AI – Симулятор переговоров</a><a href="/games/" class="mob-sub">🕹️ Мини-игры</a><a href="{{BASE}}pages/users-stats.html" class="mob-sub">🎖️ Рейтинг пользователей</a><a href="{{BASE}}pages/analytics.html" class="mob-sub">📊 Статистика рынка</a></div></div>
     <div class="mob-acc" data-section="info"><div class="mob-acc-title">ℹ️ Информация <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}about.html" class="mob-sub">ℹ️ О нас</a><a href="{{BASE}}pricing.html" class="mob-sub">💎 Планы и цены</a><a href="{{BASE}}faq.html" class="mob-sub">❓ Частые вопросы</a><a href="{{BASE}}career.html" class="mob-sub">🚀 Карьера</a><a href="{{BASE}}contacts.html" class="mob-sub">📩 Написать нам</a></div></div>
   </div>
@@ -338,6 +354,26 @@
                 }
             };
         });
+
+        bindMainToggle('.dropdown-main', '.dropdown-arrow', 'dropdown-nested');
+    }
+
+    // Клик по самой кнопке («📚 Курс - 15 Уроков») раскрывает/сворачивает
+    // подменю вместо перехода на страницу. Срабатывает только если эта же
+    // ссылка есть внутри списка — иначе («12 Модулей») переход остался бы
+    // единственным входом на страницу и мы бы её потеряли.
+    function bindMainToggle(mainSel, arrowSel, nestedClass) {
+        document.querySelectorAll(mainSel).forEach(function (link) {
+            var wrapper = link.parentElement;
+            var nested = wrapper.nextElementSibling;
+            var arrow = wrapper.querySelector(arrowSel);
+            if (!arrow || !nested || !nested.classList.contains(nestedClass)) return;
+            if (!nested.querySelector('a[href="' + link.getAttribute('href') + '"]')) return;
+            link.onclick = function (e) {
+                e.preventDefault();
+                arrow.click();
+            };
+        });
     }
 
     function positionDropdown(btn, dd) {
@@ -403,20 +439,7 @@
             };
         });
 
-        // Тап по самой кнопке («📚 Курс - 15 Уроков») раскрывает подменю, а не
-        // уводит на страницу. Только если эта же ссылка есть внутри списка —
-        // иначе (например «12 Модулей») переход остался бы единственным входом.
-        document.querySelectorAll('.mob-sub-main').forEach(function (link) {
-            var wrapper = link.parentElement;
-            var nested = wrapper.nextElementSibling;
-            var arrow = wrapper.querySelector('.mob-sub-arrow');
-            if (!arrow || !nested || !nested.classList.contains('mob-sub-nested')) return;
-            if (!nested.querySelector('a[href="' + link.getAttribute('href') + '"]')) return;
-            link.onclick = function (e) {
-                e.preventDefault();
-                arrow.click();
-            };
-        });
+        bindMainToggle('.mob-sub-main', '.mob-sub-arrow', 'mob-sub-nested');
     }
 
     function openMenu() {
@@ -428,11 +451,12 @@
         if (burger) burger.setAttribute('aria-expanded', 'true');
         document.body.style.overflow = 'hidden';
         
-        // Автоматически раскрываем секцию "Инструменты"
+        // На мобильном изначально раскрыт только «Курс - 15 Уроков»: сама секция
+        // «Курс обучения» + её первый вложенный список. Остальное — закрыто.
         setTimeout(function() {
-            var toolsAccordion = document.querySelector('.mob-acc[data-section="tools"]');
-            if (toolsAccordion && !toolsAccordion.classList.contains('open')) {
-                toolsAccordion.classList.add('open');
+            var courseAccordion = document.querySelector('.mob-acc[data-section="course"]');
+            if (courseAccordion && !courseAccordion.classList.contains('open')) {
+                courseAccordion.classList.add('open');
             }
         }, 100);
     }
