@@ -111,6 +111,9 @@ $sys = 'You extract structured data from freight Rate Confirmation documents. '
 $body = json_encode(array(
   'model' => GROQ_MODEL,
   'temperature' => 0,
+  // Без явного лимита Groq обрывает ответ на полуслове и JSON не валидируется
+  // ("max completion tokens reached before generating a valid document").
+  'max_tokens' => 4096,
   'response_format' => array('type' => 'json_object'),
   'messages' => array(
     array('role' => 'system', 'content' => $sys),
