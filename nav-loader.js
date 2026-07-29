@@ -42,7 +42,7 @@
             lGame: '🕹️ Мини-игры', lMap: '🗺️ USA Map Trainer', lAiChat: '🎙️ AI-симулятор',
             lRating: '🎖️ Рейтинг', lAnalytics: '📊 Статистика рынка',
             lAbout: 'ℹ️ О нас', lPricing: '💎 Планы и цены', lFaq: '❓ Частые вопросы', lCareer: '🚀 Карьера', lContacts: '📩 Написать нам',
-            copyright: '© 2025 Dispatch4You. Все права защищены.', status: 'Все системы работают',
+            copyright: '© {YEAR} Dispatch4You. Все права защищены.', status: 'Все системы работают',
             modalTitle: 'Материал защищён авторским правом',
             modalBody: 'Все материалы курса <b style="color:#06b6d4;">Dispatch4You</b> защищены авторским правом. Копирование, распространение и воспроизведение запрещены и преследуются по закону. Нарушение влечёт ответственность согласно действующему законодательству.',
             modalOk: 'Понятно'
@@ -53,15 +53,17 @@
             lCourse: '📚 Course — 15 lessons', lModules: '✍️ Modules — 12 tests', lGlossary: '📖 Glossary', lCases: '🗂 Cases',
             lTesting: '🎯 Testing', lTrainer: '💡 Trainer',
             lGame: '🕹️ Mini-Games', lMap: '🗺️ USA Map Trainer', lAiChat: '🎙️ AI Simulator',
-            lRating: '🎖️ Ranking', lAnalytics: '📊 Market Analytics',
+            lRating: '🎖️ Ranking', lAnalytics: '📊 Market Data',
             lAbout: 'ℹ️ About Us', lPricing: '💎 Plans & Pricing', lFaq: '❓ FAQ', lCareer: '🚀 Careers', lContacts: '📩 Contact Us',
-            copyright: '© 2025 Dispatch4You. All rights reserved.', status: 'All systems operational',
+            copyright: '© {YEAR} Dispatch4You. All rights reserved.', status: 'All systems operational',
             modalTitle: 'This content is protected by copyright',
             modalBody: 'All <b style="color:#06b6d4;">Dispatch4You</b> course materials are protected by copyright. Copying, distribution and reproduction are prohibited and prosecuted by law. Violations carry liability under applicable law.',
             modalOk: 'Got it'
         }
     };
     var T = STR[LANG] || STR.ru;
+    // год в копирайте не должен устаревать
+    T.copyright = T.copyright.replace('{YEAR}', new Date().getFullYear());
 
     // ── Content protection ─────────────────────────────────────────
     // ponytail: inlined here instead of a separate site-protection.js — this
@@ -197,7 +199,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.3';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.4';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
@@ -208,7 +210,7 @@
 <a href="{{BASE}}index.html" class="logo"><span class="logo-text-wrapper"><span class="logo-text">Dispatch4You</span></span></a>
 <div class="nav-links">
   <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Курс обучения <span class="arrow">▾</span></button><div class="dropdown mega-dropdown"><div class="dropdown-expandable"><a href="{{BASE}}pages/documentation.html" class="dropdown-main">📚 Курс — 15 уроков</a><span class="dropdown-arrow">▼</span></div><div class="dropdown-nested"><div class="dropdown-nested-title">Разделы курса:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/documentation.html" class="dropdown-nested-item">1. Программа курса</a><a href="{{BASE}}pages/intro.html" class="dropdown-nested-item">2. Введение</a><a href="{{BASE}}pages/role.html" class="dropdown-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="dropdown-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="dropdown-nested-item">5. Маршруты</a><a href="{{BASE}}pages/loadboards.html" class="dropdown-nested-item">6. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="dropdown-nested-item">7. Переговоры</a><a href="{{BASE}}pages/brokers.html" class="dropdown-nested-item">8. Брокеры</a><a href="{{BASE}}pages/docs.html" class="dropdown-nested-item">9. Документы</a><a href="{{BASE}}pages/regulations.html" class="dropdown-nested-item">10. Законы</a><a href="{{BASE}}pages/technology.html" class="dropdown-nested-item">11. Технологии</a><a href="{{BASE}}pages/communication.html" class="dropdown-nested-item">12. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="dropdown-nested-item">13. Проблемы</a><a href="{{BASE}}pages/finances.html" class="dropdown-nested-item">14. Финансы</a><a href="{{BASE}}pages/career.html" class="dropdown-nested-item">15. Карьера</a></div></div><div class="dropdown-expandable"><a href="{{BASE}}pages/modules-index.html" class="dropdown-main">✍️ Модули — 12 тестов</a><span class="dropdown-arrow">▼</span></div><div class="dropdown-nested"><div class="dropdown-nested-title">Модули тестирования:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/modules-index.html" class="dropdown-nested-item">📋 Все модули</a><a href="{{BASE}}pages/doc-module-1-complete.html" class="dropdown-nested-item">1. Введение</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="dropdown-nested-item">2. Законы</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="dropdown-nested-item">3. Оборудование</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="dropdown-nested-item">4. Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="dropdown-nested-item">5. Переговоры</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="dropdown-nested-item">6. Маршруты</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="dropdown-nested-item">7. Документы</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="dropdown-nested-item">8. Водители</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="dropdown-nested-item">9. CSA Scores</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="dropdown-nested-item">10. Финансы</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="dropdown-nested-item">11. Кризисы</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="dropdown-nested-item">12. Карьера</a></div></div><a href="{{BASE}}pages/glossary.html">📖 Глоссарий</a><a href="{{BASE}}pages/cases.html">🗂 Кейсы</a><a href="{{BASE}}pages/testing.html">🎯 Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html">💡 Тренажёр</a></div></div>
-  <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="/map-trainer/">🗺️ USA Map Trainer</a><a href="{{BASE}}pages/ai-broker-chat.html">🎙️ AI-симулятор</a><a href="/games/">🕹️ Мини-игры</a><a href="{{BASE}}pages/users-stats.html">🎖️ Рейтинг</a><a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a></div></div>
+  <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="/map-trainer/">🗺️ USA Map Trainer</a><a href="{{BASE}}pages/ai-broker-chat.html">🎙️ AI-симулятор</a><a href="/games/">🕹️ Мини-игры</a><a href="/games/">🕹️ Мини-игры</a><a href="{{BASE}}pages/users-stats.html">🎖️ Рейтинг</a><a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a></div></div>
   <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">ℹ️ О нас</a><a href="{{BASE}}pricing.html">💎 Планы и цены</a><a href="{{BASE}}faq.html">❓ Частые вопросы</a><a href="{{BASE}}career.html">🚀 Карьера</a><a href="{{BASE}}contacts.html">📩 Написать нам</a></div></div>
   <a href="{{BASE}}pages/users-stats.html" class="nav-btn" style="text-decoration:none;display:none;">📊 Стат</a>
 </div>
