@@ -71,6 +71,22 @@ $token = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
 if ($token === '' || $token === false) { http_response_code(500); echo 'tg-bot.key missing'; exit; }
 $secret = hash('sha256', $token);
 
+// ── Диагностика окружения (какие утилиты доступны для PDF) ──────────
+if (isset($_GET['diag'])) {
+  header('Content-Type: text/plain; charset=utf-8');
+  $exec = function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', (string)ini_get('disable_functions'))), true);
+  echo "shell_exec: " . ($exec ? 'yes' : 'NO') . "\n";
+  if ($exec) {
+    foreach (array('pdftotext', 'qpdf', 'gs', 'mutool', 'python3') as $bin) {
+      $p = trim((string)@shell_exec('command -v ' . $bin . ' 2>/dev/null'));
+      echo str_pad($bin, 10) . ': ' . ($p !== '' ? $p : '—') . "\n";
+    }
+  }
+  echo "openssl ext: " . (extension_loaded('openssl') ? 'yes' : 'NO') . "\n";
+  echo "mbstring ext: " . (extension_loaded('mbstring') ? 'yes' : 'NO') . "\n";
+  exit;
+}
+
 // ── Setup: webhook + описание бота + меню команд ────────────────────
 if (isset($_GET['setup'])) {
   $out = array();
@@ -206,8 +222,17 @@ $resp = json_decode(httpPost('https://api.groq.com/openai/v1/chat/completions', 
   'Authorization: Bearer ' . $groqKey, 'Content-Type: application/json')), true);
 $raw = isset($resp['choices'][0]['message']['content']) ? $resp['choices'][0]['message']['content'] : '';
 $load = json_decode($raw, true);
-if (!is_array($load) || empty($load['stops'])) {
-  fail($token, $chatId, 'groq bad answer: ' . mb_substr($raw !== '' ? $raw : json_encode($resp), 0, 500)); exit;
+if (!is_array($load)) {
+  // Причину называем словами пользователя, а не «попробуйте позже»:
+  // ошибки Groq различаются, и человек должен понимать, что делать.
+  $apiErr = isset($resp['error']['code']) ? $resp['error']['code'] : (isset($resp['error']['type']) ? $resp['error']['type'] : '');
+  $why = 'сервис разбора вернул неожиданный ответ';
+  if ($apiErr === 'json_validate_failed')      $why = 'документ слишком длинный — модель не успела дописать разбор';
+  elseif ($apiErr === 'rate_limit_exceeded')   $why = 'сервис разбора перегружен, попробуйте через минуту';
+  elseif (stripos($apiErr, 'authentication') !== false) $why = 'ключ сервиса разбора недействителен (это на нашей стороне)';
+  elseif ($raw === '')                         $why = 'сервис разбора не ответил';
+  fail($token, $chatId, 'groq bad answer: ' . mb_substr($raw !== '' ? $raw : json_encode($resp), 0, 500), $why);
+  exit;
 }
 
 // ── Сохраняем разбор для будущей веб-страницы полного разбора ───────
@@ -218,11 +243,36 @@ if (!is_dir($dir)) @mkdir($dir, 0755, true);
   'parsed' => $load, 'chat_id' => $chatId, 'file_name' => isset($doc['file_name']) ? $doc['file_name'] : '',
 ), JSON_UNESCAPED_UNICODE));
 
-// ── Карточка «драйвер-инфо» ─────────────────────────────────────────
+// ── Ответ ───────────────────────────────────────────────────────────
+clearProgress($token, $chatId);
+
+$missing = missingFields($load);
+
+if (empty($load['stops'])) {
+  // Адресов нет — карточка бессмысленна, но молчать нельзя: показываем
+  // всё, что удалось достать, и честно говорим, чего не хватило.
+  $found = array();
+  foreach (array('load_id' => 'Load ID', 'broker' => 'Брокер', 'rate' => 'Ставка',
+                 'commodity' => 'Груз', 'weight' => 'Вес') as $k => $label) {
+    if (!empty($load[$k])) $found[] = $label . ': ' . $load[$k];
+  }
+  reply($token, $chatId,
+    "⚠️ Не нашёл в документе адреса погрузки и доставки — карточку собрать не из чего.\n\n"
+    . ($found ? "Что удалось прочитать:\n" . implode("\n", $found) . "\n\n" : "")
+    . "Похоже, это не рейт-кон, либо адреса в документе — картинкой. Пришлите оригинальный PDF от брокера.");
+  echo 'ok'; exit;
+}
+
 // Карточка уходит отдельным сообщением, без единого лишнего символа —
 // её копируют целиком и пересылают водителю.
-clearProgress($token, $chatId);
 reply($token, $chatId, driverCard($load));
+
+// Чего в документе не нашлось — отдельным сообщением, чтобы не пачкать карточку.
+if ($missing) {
+  reply($token, $chatId,
+    "⚠️ Не найдено в документе: " . implode(', ', $missing) . ".\n"
+    . "Проверьте вручную — в рейт-коне этих данных нет или они записаны нестандартно.");
+}
 echo 'ok';
 exit;
 
@@ -265,6 +315,24 @@ function driverCard(array $d) {
   return mb_strlen($card) > 4000 ? mb_substr($card, 0, 4000) : $card;
 }
 
+// Список того, чего в разборе не хватает — по-человечески, с указанием стопа.
+function missingFields(array $d) {
+  $miss = array();
+  if (empty($d['load_id']))   $miss[] = 'номер загрузки';
+  if (empty($d['rate']))      $miss[] = 'ставка';
+  if (empty($d['weight']))    $miss[] = 'вес';
+  if (empty($d['commodity'])) $miss[] = 'груз';
+  $i = 0;
+  foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
+    $i++;
+    $who = ((isset($s['type']) && $s['type'] === 'delivery') ? 'доставка' : 'погрузка') . " #$i";
+    if (empty($s['name']) && empty($s['address_lines'])) $miss[] = "адрес ($who)";
+    if (empty($s['time'])) $miss[] = "время ($who)";
+    if (empty($s['refs'])) $miss[] = "реф-номера ($who)";
+  }
+  return $miss;
+}
+
 function tgApi($token, $method, array $params) {
   return httpPost('https://api.telegram.org/bot' . $token . '/' . $method,
     http_build_query($params), array('Content-Type: application/x-www-form-urlencoded'));
@@ -282,19 +350,21 @@ function clearProgress($token, $chatId) {
   $GLOBALS['progressId'] = null;
 }
 
-function fail($token, $chatId, $logMsg) {
+// $why — причина человеческим языком. Код ошибки печатаем и в чат, и в лог:
+// по нему находится конкретный случай, а сообщения перестают быть одинаковыми.
+function fail($token, $chatId, $logMsg, $why = '') {
+  $code = strtoupper(substr(md5($logMsg), 0, 6));
   @file_put_contents(__DIR__ . '/../../tg-bot.log',
-    date('c') . ' ' . $logMsg . "\n", FILE_APPEND);
+    date('c') . " [$code] " . $logMsg . "\n", FILE_APPEND);
   clearProgress($token, $chatId);
   reply($token, $chatId,
-    "😕 Не получилось разобрать этот документ.\n\n"
-  . "Чаще всего причина одна из трёх:\n"
-  . "• это скан или фото, а не текстовый PDF\n"
-  . "• файл защищён паролем\n"
-  . "• документ нестандартного вида\n\n"
-  . "Попробуйте прислать оригинальный PDF от брокера. /help — подробности.\n\n"
-  . "— — —\n"
-  . "Couldn't parse this document. Please send the original text-based PDF from the broker.");
+    "😕 Не смог разобрать этот документ.\n\n"
+  . ($why !== '' ? "Причина: $why.\n\n" : '')
+  . "Что можно сделать:\n"
+  . "• прислать оригинальный PDF от брокера (не скан и не фото)\n"
+  . "• проверить, что файл не защищён паролем\n"
+  . "• попробовать ещё раз через минуту\n\n"
+  . "Код ошибки: $code — назовите его, если напишете нам.");
   echo 'ok';
 }
 
