@@ -89,6 +89,14 @@ if (isset($_GET['diag'])) {
   exit;
 }
 
+// ── Что Telegram думает о нашем вебхуке (ошибки доставки, очередь) ──
+if (isset($_GET['webhookinfo'])) {
+  header('Content-Type: application/json');
+  echo json_encode(json_decode(tgApi($token, 'getWebhookInfo', array()), true),
+    JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+  exit;
+}
+
 // ── Setup: webhook + описание бота + меню команд ────────────────────
 if (isset($_GET['setup'])) {
   $out = array();
