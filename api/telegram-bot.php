@@ -16,6 +16,11 @@
 // бот честно просит текстовый PDF. Апгрейд: Groq vision по страницам-картинкам.
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
+// Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
+// по стандарту не отправляется на сервер — ставка брокера остаётся в браузере
+// диспетчера и в наши логи не попадает. Контракт параметров — lib/qr-load.ts в
+// репозитории приложения (Alex305cebo/dispatch-app), страница-приёмник /load.
+const APP_DEMO_URL = 'https://dispatch4you.pro/demo?next=/load';
 const MAX_PDF_BYTES = 15728640; // 15 MB (лимит Telegram getFile — 20 MB)
 // llama-3.3-70b на реальных рейт-конах выдумывала адреса и уходила в цикл
 // (13/14 против 0/14 на проверочном документе) — не возвращать.
@@ -31,6 +36,8 @@ const HELP_START =
 . "2. Подождите 5–15 секунд\n"
 . "3. Скопируйте карточку и отправьте водителю\n\n"
 . "Нужен PDF с текстом (как присылает брокер), не фото и не скан. До 15 МБ.\n\n"
+. "🔎 Ещё умею проверять брокера по FMCSA:\n"
+. "/mc 115789 · /dot 2100420\n\n"
 . "/help — подробнее и что делать при ошибке\n\n"
 . "— — —\n"
 . "Send a Rate Confirmation PDF and get a ready-to-forward driver info card. /help for details.";
@@ -43,6 +50,11 @@ const HELP_FULL =
 . "• все реф-номера (PU, PO, BOL, Ref#)\n"
 . "• ставку, груз, вес\n\n"
 . "Несколько пикапов или доставок — каждый стоп отдельным блоком, по порядку.\n\n"
+. "🔎 Проверка брокера по FMCSA:\n"
+. "/mc 115789 — по номеру MC\n"
+. "/dot 2100420 — по номеру DOT\n"
+. "/broker 115789 — если не знаете, какой это номер\n"
+. "Покажу название, право работать, авторити, бонд BMC-84 и адрес.\n\n"
 . "⚠️ Требования к файлу:\n"
 . "• PDF с текстовым слоем — тот, что брокер прислал на почту\n"
 . "• не фото документа и не скан (там нет текста, бот его не прочитает)\n"
@@ -147,6 +159,19 @@ if (!isset($msg['document'])) {
   if (stripos($text, '/id') === 0) {
     // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
     reply($token, $chatId, "Ваш chat id: " . $chatId);
+  } elseif (preg_match('~^/(broker|mc|dot)\b\s*(.*)$~i', $text, $bm)) {
+    $kind = strtolower($bm[1]);
+    $numArg = preg_replace('/\D/', '', $bm[2]);
+    if ($numArg === '') {
+      reply($token, $chatId,
+        "Проверка брокера по FMCSA.\n\n"
+        . "Пришлите номер:\n"
+        . "/mc 115789 — по MC\n"
+        . "/dot 2100420 — по DOT\n"
+        . "/broker 115789 — сначала MC, потом DOT");
+    } else {
+      reply($token, $chatId, brokerReport($kind, $numArg));
+    }
   } else {
     reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : HELP_START);
   }
@@ -348,6 +373,17 @@ if ($missing) {
     "⚠️ Не найдено в документе: " . implode(', ', $missing) . ".\n"
     . "Проверьте вручную — в рейт-коне этих данных нет или они записаны нестандартно.");
 }
+
+// Кнопка идёт ОТДЕЛЬНЫМ сообщением, а не на карточке: карточку копируют целиком и
+// пересылают водителю, и кнопка уехала бы вместе с ней. Последней — чтобы в чате
+// оказаться внизу, под глазами.
+$appUrl = appLink($load);
+if ($appUrl !== null) {
+  replyWithButton($token, $chatId,
+    "Посчитать этот груз: маржа, ставка за милю, порожний пробег.\n"
+    . "Откроется демо — смотреть можно всё, сохранять только в своём аккаунте.",
+    '📊 Открыть в приложении', $appUrl);
+}
 echo 'ok';
 exit;
 
@@ -445,6 +481,141 @@ function missingFields(array $d) {
     if (empty($s['refs'])) $miss[] = "реф-номера ($who)";
   }
   return $miss;
+}
+
+// ── Проверка брокера через FMCSA QCMobile ───────────────────────────
+// Тот же бесплатный API, что и в приложении (lib/fmcsa.ts). Ключ — отдельный файл
+// рядом с остальными секретами, ВЫШЕ public_html: бот живёт на dispatch4you.com, а
+// переменная FMCSA_WEBKEY задана у приложения на dispatch4you.pro — это разные
+// хостинги, общей переменной у них нет.
+// Без ключа отвечаем честной инструкцией и ничего не ломаем.
+function fmcsaGet($path, $key) {
+  $sep = strpos($path, '?') === false ? '?' : '&';
+  $url = 'https://mobile.fmcsa.dot.gov/qc/services/' . $path . $sep . 'webKey=' . urlencode($key);
+  $raw = httpGet($url);
+  if ($raw === false || $raw === null || $raw === '') return null;
+  $j = json_decode($raw, true);
+  return is_array($j) ? $j : null;
+}
+
+// Ответ QCMobile приходит в трёх разных обёртках в зависимости от эндпоинта.
+function unwrapCarrier($data) {
+  if (!is_array($data)) return null;
+  if (isset($data['content'][0]['carrier'])) return $data['content'][0]['carrier'];
+  if (isset($data['content']['carrier']))    return $data['content']['carrier'];
+  if (isset($data['carrier']))               return $data['carrier'];
+  return null;
+}
+
+function authWord($code) {
+  if ($code === 'A') return 'активно';
+  if ($code === 'I') return 'неактивно';
+  if ($code === 'N') return 'нет';
+  return 'неизвестно';
+}
+
+// $kind: mc | dot | broker (broker = сперва MC, затем DOT — диспетчер обычно
+// не знает, какой номер ему прислали).
+function brokerReport($kind, $number) {
+  $key = @trim(file_get_contents(__DIR__ . '/../../fmcsa.key'));
+  if ($key === '' || $key === false) {
+    return "Проверка брокера выключена — нужен бесплатный ключ FMCSA.\n\n"
+      . "Заведите его на mobile.fmcsa.dot.gov/QCDevsite (вход через Login.gov) "
+      . "и положите на сервер в файл fmcsa.key рядом с остальными ключами. "
+      . "После этого проверка заработает сразу.";
+  }
+
+  $rec = null;
+  if ($kind === 'mc' || $kind === 'broker') {
+    $rec = unwrapCarrier(fmcsaGet('carriers/docket-number/' . $number, $key));
+  }
+  if ($rec === null && ($kind === 'dot' || $kind === 'broker')) {
+    $rec = unwrapCarrier(fmcsaGet('carriers/' . $number, $key));
+  }
+  if ($rec === null) {
+    return "Не нашёл перевозчика по номеру " . $number . ".\n"
+      . "Проверьте номер: MC и DOT — разные, у брокера обычно есть оба.";
+  }
+
+  $name = isset($rec['legalName']) ? $rec['legalName'] : '—';
+  $dba  = !empty($rec['dbaName']) ? $rec['dbaName'] : null;
+  $dot  = isset($rec['dotNumber']) ? $rec['dotNumber'] : '—';
+  $L = array();
+  $L[] = '🔎 FMCSA';
+  $L[] = '';
+  $L[] = $name . ($dba !== null ? ' (DBA ' . $dba . ')' : '');
+  $L[] = 'DOT ' . $dot . ($kind !== 'dot' ? ' · MC ' . $number : '');
+  $L[] = '';
+  $allowed = isset($rec['allowedToOperate']) ? $rec['allowedToOperate'] : null;
+  $L[] = 'Право работать: ' . ($allowed === 'Y' ? 'ДА' : ($allowed === 'N' ? 'НЕТ ⚠️' : 'неизвестно'));
+  if (isset($rec['brokerAuthorityStatus']))   $L[] = 'Брокерская авторити: ' . authWord($rec['brokerAuthorityStatus']);
+  if (isset($rec['commonAuthorityStatus']))   $L[] = 'Common authority: ' . authWord($rec['commonAuthorityStatus']);
+  if (isset($rec['contractAuthorityStatus'])) $L[] = 'Contract authority: ' . authWord($rec['contractAuthorityStatus']);
+  // bondInsuranceOnFile — сумма в ТЫСЯЧАХ долларов, а не флаг Y/N: «75» = бонд
+  // BMC-84 на $75 000. В приложении на этом уже обжигались.
+  if (isset($rec['bondInsuranceOnFile']) && $rec['bondInsuranceOnFile'] !== '') {
+    $bond = preg_replace('/\D/', '', (string)$rec['bondInsuranceOnFile']);
+    $L[] = 'Бонд BMC-84: ' . ($bond === '' || $bond === '0' ? 'нет ⚠️' : '$' . number_format((float)$bond * 1000, 0, '.', ','));
+  }
+  if (!empty($rec['safetyRating'])) $L[] = 'Safety rating: ' . $rec['safetyRating'];
+  $city = isset($rec['phyCity']) ? $rec['phyCity'] : '';
+  $st   = isset($rec['phyState']) ? $rec['phyState'] : '';
+  if ($city !== '' || $st !== '') $L[] = 'Адрес: ' . trim($city . ', ' . $st, ' ,');
+  $L[] = '';
+  $L[] = 'Источник: FMCSA QCMobile, данные официальные.';
+  return implode("\n", $L);
+}
+
+// «Pine Hall, NC 27042» → «Pine Hall, NC». Приложению нужен город со штатом: по ним
+// оно считает мили и ставит точки на карте, индекс только мешает совпадению.
+// Идём с конца адреса — «City, ST ZIP» печатают последней строкой.
+function cityState(array $stop) {
+  $lines = (array)(isset($stop['address_lines']) ? $stop['address_lines'] : array());
+  foreach (array_reverse($lines) as $line) {
+    if (preg_match('/([A-Za-z][A-Za-z .\'\-]*),\s*([A-Z]{2})\b/', (string)$line, $m)) {
+      return trim($m[1]) . ', ' . $m[2];
+    }
+  }
+  return null;
+}
+
+// Ссылка «открыть разбор в приложении». Данные едут в ХЕШЕ (после #): браузер его
+// на сервер не отправляет, поэтому ставка не окажется ни в наших логах, ни в чужих.
+// Пустые поля не кладём — приложение само спросит то, чего в рейт-коне не было
+// (мили и дни в пути документ нередко не печатает).
+function appLink(array $d) {
+  $num = function ($v) { $v = preg_replace('/[^0-9.]/', '', (string)$v); return $v === '' ? null : $v; };
+  $pickup = null; $delivery = null;
+  foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
+    if (isset($s['type']) && $s['type'] === 'delivery') { $delivery = $s; }  // последняя выгрузка
+    elseif ($pickup === null) { $pickup = $s; }                              // первая погрузка
+  }
+  $p = array();
+  $rate = $num(isset($d['rate']) ? $d['rate'] : '');
+  $miles = $num(isset($d['miles']) ? $d['miles'] : '');
+  if ($rate !== null)  $p['rate']  = $rate;
+  if ($miles !== null) $p['miles'] = $miles;
+  if ($pickup)   { $c = cityState($pickup);   if ($c !== null) $p['origin'] = $c; }
+  if ($delivery) { $c = cityState($delivery); if ($c !== null) $p['dest']   = $c; }
+  if (!empty($d['broker']))  $p['bn']  = $d['broker'];
+  if (!empty($d['load_id'])) $p['ref'] = ltrim($d['load_id'], '#');
+  if (!$p) return null;
+  // http_build_query кодирует пробел как «+», а URLSearchParams на той стороне
+  // читает «+» как пробел — форматы совпадают, ничего конвертировать не нужно.
+  return APP_DEMO_URL . '#' . http_build_query($p);
+}
+
+// URL-кнопка, а не callback: подписка вебхука — только на "message", и callback_query
+// до нас бы просто не дошёл. Ссылка открывается сразу, без ответа от бота.
+function replyWithButton($token, $chatId, $text, $btnText, $url) {
+  return tgApi($token, 'sendMessage', array(
+    'chat_id' => $chatId,
+    'text' => $text,
+    'disable_web_page_preview' => true,
+    'reply_markup' => json_encode(array('inline_keyboard' => array(array(
+      array('text' => $btnText, 'url' => $url),
+    )))),
+  ));
 }
 
 function tgApi($token, $method, array $params) {
