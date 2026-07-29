@@ -17,7 +17,9 @@
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 const MAX_PDF_BYTES = 15728640; // 15 MB (лимит Telegram getFile — 20 MB)
-const GROQ_MODEL = 'llama-3.3-70b-versatile';
+// llama-3.3-70b на реальных рейт-конах выдумывала адреса и уходила в цикл
+// (13/14 против 0/14 на проверочном документе) — не возвращать.
+const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 // Тексты держим здесь, а не размазываем по коду: их правят чаще всего.
 const HELP_START =
@@ -162,6 +164,11 @@ $progressId = null;
 $sent = json_decode(reply($token, $chatId, '⏳ Разбираю документ… / Parsing…'), true);
 if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
 
+// Telegram ждёт ответ несколько секунд, иначе считает вебхук зависшим и
+// присылает тот же документ повторно — пользователь получал бы дубли карточек.
+// Отвечаем «ок» немедленно, разбор продолжается уже без него.
+finishRequest();
+
 // ── Скачиваем PDF с серверов Telegram ───────────────────────────────
 $info = json_decode(tgApi($token, 'getFile', array('file_id' => $doc['file_id'])), true);
 if (empty($info['ok']) || empty($info['result']['file_path'])) {
@@ -178,11 +185,34 @@ spl_autoload_register(function ($class) {
     if (is_file($file)) require $file;
   }
 });
+// Рейт-коны от Sertifi/DocuSign/TMS почти всегда «защищены от изменений»:
+// пароля на открытие нет, но парсер такие файлы не берёт. Снимаем защиту.
+require __DIR__ . '/lib/pdf-decrypt.php';
+list($pdf, $encProblem) = pdf_decrypt($pdf);
+if ($encProblem === 'aes') {
+  clearProgress($token, $chatId);
+  reply($token, $chatId,
+    "🔒 Этот PDF зашифрован по алгоритму AES — такие я пока не читаю.\n\n"
+    . "Обходной путь: откройте файл и «Печать → Сохранить как PDF», затем пришлите результат. "
+    . "Мы работаем над поддержкой таких файлов.");
+  echo 'ok'; exit;
+}
+if ($encProblem === 'password') {
+  clearProgress($token, $chatId);
+  reply($token, $chatId,
+    "🔒 PDF защищён паролем на открытие — без пароля я его прочитать не могу.\n\n"
+    . "Попросите у брокера версию без пароля или снимите защиту сами и пришлите заново.");
+  echo 'ok'; exit;
+}
+
 try {
   $parser = new \Smalot\PdfParser\Parser();
   $text = $parser->parseContent($pdf)->getText();
 } catch (\Throwable $e) {
-  fail($token, $chatId, 'pdf parse: ' . $e->getMessage()); exit;
+  $why = stripos($e->getMessage(), 'secured') !== false
+    ? 'PDF защищён нестандартным способом'
+    : 'файл повреждён или это не PDF';
+  fail($token, $chatId, 'pdf parse: ' . $e->getMessage(), $why); exit;
 }
 $text = trim(preg_replace('/[ \t]+/', ' ', $text));
 if (mb_strlen($text) < 100) {
@@ -196,30 +226,61 @@ if (mb_strlen($text) > 14000) $text = mb_substr($text, 0, 14000);
 $groqKey = @trim(file_get_contents(__DIR__ . '/../../groq.key'));
 if ($groqKey === '' || $groqKey === false) { fail($token, $chatId, 'groq.key missing'); exit; }
 
-$sys = 'You extract structured data from freight Rate Confirmation documents. '
-  . 'Return ONLY valid JSON with this exact schema: '
-  . '{"load_id":"","broker":"","rate":"","commodity":"","weight":"","stops":['
-  . '{"type":"pickup|delivery","name":"","address_lines":["street","city, ST zip"],'
-  . '"time":"MM/DD/YY HH:MM - HH:MM","refs":["PU 123","PO 456"]}]}. '
-  . 'Rules: stops in document order, pickups first if ambiguous. Include EVERY reference number '
-  . '(PU, PO, BOL, Order#, Ref#) attached to each stop. rate like "$1,956.34". weight like "11748.00 lbs". '
-  . 'time: keep the appointment date and window as written, prefer MM/DD/YY HH:MM - HH:MM. '
-  . 'Unknown fields: empty string or empty array. No commentary, JSON only.';
+// Промпт проверен на живых рейт-конах: без запрета «придумывать» модель
+// подставляет адрес офиса брокера и выдуманные реф-номера.
+$sys = "You extract data from freight Rate Confirmation documents.\n"
+. "The text is extracted from a PDF, so table columns may be interleaved and spacing is irregular. Read carefully.\n\n"
+. "Return ONLY a JSON object:\n"
+. "{\"load_id\":\"\",\"broker\":\"\",\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
+. "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
+. "CRITICAL RULES:\n"
+. "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
+. "- If a value is not in the document, use an empty string (or empty array). An empty field is CORRECT; an invented field is a serious error.\n"
+. "- Strip label words glued to a value: 'Appointment', 'Time', 'Ref', 'Weight', '#'. Keep only the value.\n"
+. "- load_id: the load/order/PRO number of this shipment.\n"
+. "- broker: the company issuing the rate confirmation (not the carrier).\n"
+. "- stops: pickups (PICK, PICKUP, SHIPPER) and deliveries (STOP, DROP, CONSIGNEE, DELIVERY), in document order.\n"
+. "- name: facility name. address_lines: the street line(s) AND then the 'CITY ST ZIP' line.\n"
+. "- address_lines MUST contain the CITY ST ZIP line whenever it appears in the document (e.g. 'EASTABOGA AL 36260'). "
+. "An address without its city line is unusable for a driver — never omit it.\n"
+. "- time: appointment date and window as printed, e.g. '02/02/26 @ 12:30' or '07/24/26 06:00 - 17:00'.\n"
+. "- refs: EVERY reference number belonging to that stop. Format each as '<LABEL> <NUMBER>' using the label as printed "
+. "(PU, PO, BOL, Order#). If the label is only 'Ref' or 'Ref #', output the number alone.\n"
+. "- rate: the TOTAL rate paid to the carrier, with currency as printed.\n"
+. "- weight: shipment weight in pounds. miles: trip distance. Labels and values are often on separate lines — "
+. "match them by column position, not adjacency.\n"
+. "- commodity: the goods description ONLY, never the trailer type. equipment: trailer type (VAN, REEFER, FLATBED, POWER ONLY).\n"
+. "Output JSON only, no commentary.";
 
 $body = json_encode(array(
   'model' => GROQ_MODEL,
   'temperature' => 0,
-  // Без явного лимита Groq обрывает ответ на полуслове и JSON не валидируется
-  // ("max completion tokens reached before generating a valid document").
-  'max_tokens' => 4096,
+  // Без явного лимита Groq обрывает ответ на полуслове и JSON не валидируется.
+  // Больше 2000 не нужно даже на рейт-кон с пятью стопами, а лимит TPM
+  // на бесплатном тарифе считает max_tokens как уже потраченные.
+  'max_tokens' => 2000,
   'response_format' => array('type' => 'json_object'),
   'messages' => array(
     array('role' => 'system', 'content' => $sys),
     array('role' => 'user', 'content' => $text),
   ),
 ));
-$resp = json_decode(httpPost('https://api.groq.com/openai/v1/chat/completions', $body, array(
-  'Authorization: Bearer ' . $groqKey, 'Content-Type: application/json')), true);
+
+// Бесплатный тариф Groq — 8000 токенов в минуту, один рейт-кон съедает
+// заметную часть. Упёрлись в лимит — ждём столько, сколько просит API, и
+// пробуем ещё раз, вместо того чтобы огорчать пользователя.
+$resp = null;
+for ($attempt = 1; $attempt <= 2; $attempt++) {
+  $resp = json_decode(httpPost('https://api.groq.com/openai/v1/chat/completions', $body, array(
+    'Authorization: Bearer ' . $groqKey, 'Content-Type: application/json')), true);
+  if (!isset($resp['error']['code']) || $resp['error']['code'] !== 'rate_limit_exceeded') break;
+  if ($attempt === 2) break;
+  $wait = 3;
+  if (preg_match('/try again in ([\d.]+)(ms|s)/i', (string)$resp['error']['message'], $rm)) {
+    $wait = $rm[2] === 'ms' ? 1 : min(20, (int)ceil((float)$rm[1]) + 1);
+  }
+  sleep($wait);
+}
 $raw = isset($resp['choices'][0]['message']['content']) ? $resp['choices'][0]['message']['content'] : '';
 $load = json_decode($raw, true);
 if (!is_array($load)) {
@@ -246,6 +307,7 @@ if (!is_dir($dir)) @mkdir($dir, 0755, true);
 // ── Ответ ───────────────────────────────────────────────────────────
 clearProgress($token, $chatId);
 
+$load = normalizeLoad($load);
 $missing = missingFields($load);
 
 if (empty($load['stops'])) {
@@ -315,6 +377,40 @@ function driverCard(array $d) {
   return mb_strlen($card) > 4000 ? mb_substr($card, 0, 4000) : $card;
 }
 
+// Вес и мили модель регулярно меняет местами: в рейт-конах подписи столбцов
+// и значения печатаются на разных строках. Разводим их арифметикой — это
+// надёжнее любых уговоров в промпте.
+// ponytail: порог 3000 (пробег редко больше, вес редко меньше). Если пойдут
+// сборные LTL-грузы легче 3000 lbs — брать вес из подписи, а не из величины.
+function normalizeLoad(array $d) {
+  $num = function ($v) {
+    $v = preg_replace('/[^0-9.]/', '', (string)$v);
+    return $v === '' ? null : (float)$v;
+  };
+  $w = $num(isset($d['weight']) ? $d['weight'] : '');
+  $m = $num(isset($d['miles']) ? $d['miles'] : '');
+
+  if ($w !== null && $m !== null && $m > $w) {           // явно перепутаны местами
+    $t = $d['weight']; $d['weight'] = $d['miles']; $d['miles'] = $t;
+    $t = $w; $w = $m; $m = $t;
+  } elseif ($w === null && $m !== null && $m >= 3000) {  // вес уехал в мили
+    $d['weight'] = $d['miles']; $d['miles'] = ''; $w = $m; $m = null;
+  } elseif ($m === null && $w !== null && $w < 3000) {   // мили уехали в вес
+    $d['miles'] = $d['weight']; $d['weight'] = ''; $m = $w; $w = null;
+  }
+
+  // «41438» → «41438 lbs»: в карточке единицы должны быть всегда
+  if ($w !== null && !preg_match('/[a-zA-Zа-яА-Я]/u', (string)$d['weight'])) {
+    $d['weight'] = trim($d['weight']) . ' lbs';
+  }
+  // «1200.00» → «$1,200.00»: в рейт-конах доллар часто в заголовке столбца
+  if (!empty($d['rate']) && preg_match('/^[\d.,]+$/', trim($d['rate']))) {
+    $r = (float)str_replace(',', '', $d['rate']);
+    if ($r > 0) $d['rate'] = '$' . number_format($r, 2);
+  }
+  return $d;
+}
+
 // Список того, чего в разборе не хватает — по-человечески, с указанием стопа.
 function missingFields(array $d) {
   $miss = array();
@@ -326,7 +422,12 @@ function missingFields(array $d) {
   foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
     $i++;
     $who = ((isset($s['type']) && $s['type'] === 'delivery') ? 'доставка' : 'погрузка') . " #$i";
-    if (empty($s['name']) && empty($s['address_lines'])) $miss[] = "адрес ($who)";
+    if (empty($s['name']) && empty($s['address_lines'])) {
+      $miss[] = "адрес ($who)";
+    } elseif (!preg_match('/\b[A-Z]{2}\b[ ,]+\d{5}/', implode(' ', (array)(isset($s['address_lines']) ? $s['address_lines'] : array())))) {
+      // без «CITY ST ZIP» водителю адрес бесполезен — предупреждаем явно
+      $miss[] = "город и индекс ($who)";
+    }
     if (empty($s['time'])) $miss[] = "время ($who)";
     if (empty($s['refs'])) $miss[] = "реф-номера ($who)";
   }
@@ -341,6 +442,15 @@ function tgApi($token, $method, array $params) {
 function reply($token, $chatId, $text) {
   return tgApi($token, 'sendMessage', array(
     'chat_id' => $chatId, 'text' => $text, 'disable_web_page_preview' => true));
+}
+
+// Закрывает HTTP-ответ, не прерывая скрипт: LiteSpeed (Hostinger) и PHP-FPM
+// называют это по-разному, на остальных SAPI просто работаем как раньше.
+function finishRequest() {
+  echo 'ok';
+  if (function_exists('litespeed_finish_request')) { litespeed_finish_request(); return; }
+  if (function_exists('fastcgi_finish_request')) { fastcgi_finish_request(); return; }
+  @ob_end_flush(); @flush();
 }
 
 // Убирает «⏳ Разбираю документ…», чтобы в чате не оставалось мусора.
