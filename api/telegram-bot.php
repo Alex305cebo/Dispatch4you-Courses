@@ -19,20 +19,84 @@ const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 const MAX_PDF_BYTES = 15728640; // 15 MB (лимит Telegram getFile — 20 MB)
 const GROQ_MODEL = 'llama-3.3-70b-versatile';
 
+// Тексты держим здесь, а не размазываем по коду: их правят чаще всего.
+const HELP_START =
+  "👋 Я разбираю Rate Confirmation.\n\n"
+. "Пришлите PDF рейт-кона — верну готовую карточку для водителя: адреса погрузки и выгрузки, "
+. "окна времени, все реф-номера, ставку, груз и вес. Карточку можно сразу скопировать и переслать водителю.\n\n"
+. "Как отправить:\n"
+. "1. Скрепка 📎 → Файл → выберите PDF\n"
+. "2. Подождите 5–15 секунд\n"
+. "3. Скопируйте карточку и отправьте водителю\n\n"
+. "Нужен PDF с текстом (как присылает брокер), не фото и не скан. До 15 МБ.\n\n"
+. "/help — подробнее и что делать при ошибке\n\n"
+. "— — —\n"
+. "Send a Rate Confirmation PDF and get a ready-to-forward driver info card. /help for details.";
+
+const HELP_FULL =
+  "📄 Что бот достаёт из рейт-кона:\n"
+. "• номер загрузки (Load ID / PRO#)\n"
+. "• адрес погрузки и адрес доставки полностью\n"
+. "• дату и окно времени по каждому стопу\n"
+. "• все реф-номера (PU, PO, BOL, Ref#)\n"
+. "• ставку, груз, вес\n\n"
+. "Несколько пикапов или доставок — каждый стоп отдельным блоком, по порядку.\n\n"
+. "⚠️ Требования к файлу:\n"
+. "• PDF с текстовым слоем — тот, что брокер прислал на почту\n"
+. "• не фото документа и не скан (там нет текста, бот его не прочитает)\n"
+. "• размер до 15 МБ\n\n"
+. "❓ Если бот не смог разобрать:\n"
+. "1. Проверьте, что это PDF, а не фото\n"
+. "2. Попробуйте переслать оригинал письма от брокера\n"
+. "3. Напишите нам — разберёмся: dispatch4you.com\n\n"
+. "🔒 Сам файл на сервере не хранится — только извлечённые данные загрузки.\n\n"
+. "— — —\n"
+. "Requirements: text-based PDF (not a photo or scan), up to 15 MB. "
+. "The file itself is not stored, only the extracted load data.";
+
+const HELP_SCAN =
+  "📷 В этом PDF нет текста — похоже, это скан или фото, вставленное в PDF.\n\n"
+. "Что делать: попросите брокера прислать оригинальный PDF (тот, что формирует их система) "
+. "или перешлите письмо с рейт-коном как есть — в нём файл обычно текстовый.\n\n"
+. "— — —\n"
+. "No text layer found — this looks like a scan. Please send the original text-based PDF.";
+
+const HELP_PHOTO =
+  "📷 Это фото, а из фото я текст не читаю.\n\n"
+. "Пришлите PDF-файл: скрепка 📎 → Файл. Если рейт-кон пришёл на почту — перешлите вложение как есть.\n\n"
+. "— — —\n"
+. "Photos are not supported — please send the PDF file itself (📎 → File).";
+
 $token = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
 if ($token === '' || $token === false) { http_response_code(500); echo 'tg-bot.key missing'; exit; }
 $secret = hash('sha256', $token);
 
-// ── Setup: регистрация webhook ──────────────────────────────────────
+// ── Setup: webhook + описание бота + меню команд ────────────────────
 if (isset($_GET['setup'])) {
-  $resp = tgApi($token, 'setWebhook', array(
+  $out = array();
+  $out['webhook'] = json_decode(tgApi($token, 'setWebhook', array(
     'url' => SELF_URL,
     'secret_token' => $secret,
     'allowed_updates' => json_encode(array('message')),
     'drop_pending_updates' => true,
-  ));
+  )), true);
+  // Короткое описание — в профиле бота; полное — на пустом экране чата
+  // (именно его человек читает до того, как нажать «Начать»).
+  $out['short_description'] = json_decode(tgApi($token, 'setMyShortDescription', array(
+    'short_description' => 'Rate Confirmation PDF → готовая карточка для водителя.',
+  )), true);
+  $out['description'] = json_decode(tgApi($token, 'setMyDescription', array(
+    'description' => "Пришлите PDF рейт-кона — верну карточку для водителя: адреса, окна времени, реф-номера, ставку, вес.\n\n"
+      . "Send a Rate Confirmation PDF — get a driver info card: addresses, time windows, reference numbers, rate, weight.",
+  )), true);
+  $out['commands'] = json_decode(tgApi($token, 'setMyCommands', array(
+    'commands' => json_encode(array(
+      array('command' => 'start', 'description' => 'Что умеет бот / What this bot does'),
+      array('command' => 'help',  'description' => 'Инструкция и требования / Help'),
+    )),
+  )), true);
   header('Content-Type: application/json');
-  echo $resp;
+  echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
   exit;
 }
 
@@ -46,11 +110,15 @@ $msg = isset($update['message']) ? $update['message'] : null;
 if (!$msg || !isset($msg['chat']['id'])) { echo 'ok'; exit; }
 $chatId = $msg['chat']['id'];
 
-// /start и любой текст без файла
+// Фото/скриншот рейт-кона — частый случай, отвечаем осмысленно
+if (isset($msg['photo'])) {
+  reply($token, $chatId, HELP_PHOTO); echo 'ok'; exit;
+}
+
+// /help, /start и любой текст без файла
 if (!isset($msg['document'])) {
-  reply($token, $chatId,
-    "Пришлите Rate Confirmation в PDF — я извлеку из него информацию для водителя: адреса, время, реф-номера, ставку и вес.\n\n" .
-    "Send me a Rate Confirmation PDF and I'll extract the driver info: addresses, times, ref numbers, rate and weight.");
+  $text = isset($msg['text']) ? trim($msg['text']) : '';
+  reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : HELP_START);
   echo 'ok'; exit;
 }
 
@@ -58,10 +126,25 @@ if (!isset($msg['document'])) {
 $doc = $msg['document'];
 $isPdf = (isset($doc['mime_type']) && $doc['mime_type'] === 'application/pdf')
       || (isset($doc['file_name']) && preg_match('/\.pdf$/i', $doc['file_name']));
-if (!$isPdf) { reply($token, $chatId, 'Это не PDF. Пришлите Rate Confirmation в формате PDF. / Please send a PDF file.'); echo 'ok'; exit; }
-if (isset($doc['file_size']) && $doc['file_size'] > MAX_PDF_BYTES) {
-  reply($token, $chatId, 'Файл слишком большой (лимит 15 MB). / File too large (15 MB limit).'); echo 'ok'; exit;
+if (!$isPdf) {
+  reply($token, $chatId,
+    "Это не PDF, а «" . (isset($doc['file_name']) ? $doc['file_name'] : 'файл') . "».\n"
+    . "Пришлите рейт-кон в формате PDF — брокеры присылают его именно так.\n\n"
+    . "Not a PDF. Please send the Rate Confirmation as a PDF file.");
+  echo 'ok'; exit;
 }
+if (isset($doc['file_size']) && $doc['file_size'] > MAX_PDF_BYTES) {
+  reply($token, $chatId,
+    "Файл слишком большой: " . round($doc['file_size'] / 1048576, 1) . " МБ при лимите 15 МБ.\n"
+    . "Обычно так бывает у сканов — попросите брокера прислать текстовый PDF.\n\n"
+    . "File too large (15 MB limit).");
+  echo 'ok'; exit;
+}
+
+// Разбор занимает 5–15 секунд — без этого сообщения кажется, что бот завис
+$progressId = null;
+$sent = json_decode(reply($token, $chatId, '⏳ Разбираю документ… / Parsing…'), true);
+if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
 
 // ── Скачиваем PDF с серверов Telegram ───────────────────────────────
 $info = json_decode(tgApi($token, 'getFile', array('file_id' => $doc['file_id'])), true);
@@ -87,9 +170,8 @@ try {
 }
 $text = trim(preg_replace('/[ \t]+/', ' ', $text));
 if (mb_strlen($text) < 100) {
-  reply($token, $chatId,
-    "Не нашёл текст в PDF — похоже, это скан (картинка). Пришлите PDF с текстовым слоем.\n" .
-    "No text layer found — this looks like a scanned image. Please send a text-based PDF.");
+  clearProgress($token, $chatId);
+  reply($token, $chatId, HELP_SCAN);
   echo 'ok'; exit;
 }
 if (mb_strlen($text) > 14000) $text = mb_substr($text, 0, 14000);
@@ -137,6 +219,9 @@ if (!is_dir($dir)) @mkdir($dir, 0755, true);
 ), JSON_UNESCAPED_UNICODE));
 
 // ── Карточка «драйвер-инфо» ─────────────────────────────────────────
+// Карточка уходит отдельным сообщением, без единого лишнего символа —
+// её копируют целиком и пересылают водителю.
+clearProgress($token, $chatId);
 reply($token, $chatId, driverCard($load));
 echo 'ok';
 exit;
@@ -186,15 +271,30 @@ function tgApi($token, $method, array $params) {
 }
 
 function reply($token, $chatId, $text) {
-  tgApi($token, 'sendMessage', array('chat_id' => $chatId, 'text' => $text));
+  return tgApi($token, 'sendMessage', array(
+    'chat_id' => $chatId, 'text' => $text, 'disable_web_page_preview' => true));
+}
+
+// Убирает «⏳ Разбираю документ…», чтобы в чате не оставалось мусора.
+function clearProgress($token, $chatId) {
+  if (empty($GLOBALS['progressId'])) return;
+  tgApi($token, 'deleteMessage', array('chat_id' => $chatId, 'message_id' => $GLOBALS['progressId']));
+  $GLOBALS['progressId'] = null;
 }
 
 function fail($token, $chatId, $logMsg) {
   @file_put_contents(__DIR__ . '/../../tg-bot.log',
     date('c') . ' ' . $logMsg . "\n", FILE_APPEND);
+  clearProgress($token, $chatId);
   reply($token, $chatId,
-    "Не получилось разобрать этот документ. Попробуйте другой PDF или позже.\n" .
-    "Couldn't parse this document. Try another PDF or try again later.");
+    "😕 Не получилось разобрать этот документ.\n\n"
+  . "Чаще всего причина одна из трёх:\n"
+  . "• это скан или фото, а не текстовый PDF\n"
+  . "• файл защищён паролем\n"
+  . "• документ нестандартного вида\n\n"
+  . "Попробуйте прислать оригинальный PDF от брокера. /help — подробности.\n\n"
+  . "— — —\n"
+  . "Couldn't parse this document. Please send the original text-based PDF from the broker.");
   echo 'ok';
 }
 
