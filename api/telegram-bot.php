@@ -141,10 +141,15 @@ if (isset($msg['photo'])) {
   reply($token, $chatId, HELP_PHOTO); echo 'ok'; exit;
 }
 
-// /help, /start и любой текст без файла
+// /help, /id, /start и любой текст без файла
 if (!isset($msg['document'])) {
   $text = isset($msg['text']) ? trim($msg['text']) : '';
-  reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : HELP_START);
+  if (stripos($text, '/id') === 0) {
+    // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
+    reply($token, $chatId, "Ваш chat id: " . $chatId);
+  } else {
+    reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : HELP_START);
+  }
   echo 'ok'; exit;
 }
 
