@@ -48,6 +48,8 @@ export interface TransportDeps {
   scenarioId: string
   /** Голос брокера у провайдера озвучки. */
   voice: string
+  /** Вокальная ремарка Orpheus под характер брокера: cheerful, serious… */
+  direction?: string
   /** Первая реплика — брокер снимает трубку и говорит первым. */
   opening: string
   /** Выполнить инструмент и вернуть результат для модели. */

@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { buildSystemPrompt } from '../src/call/prompt'
 import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
 import { buildDebriefPrompt } from '../src/call/debriefPrompt'
+import { normalizeVoice } from '../src/voice/voices'
 
 /**
  * Дев-сервер, который держит ключи у себя.
@@ -20,8 +21,14 @@ export function brokerApi(env: Record<string, string>): Plugin {
   const openaiKey = env.OPENAI_API_KEY ?? ''
   const transport = env.BROKER_CALL_TRANSPORT === 'realtime' ? 'realtime' : 'pipeline'
 
-  const CEREBRAS_MODEL = env.CEREBRAS_MODEL ?? 'llama-3.3-70b'
-  const GROQ_MODEL = env.GROQ_MODEL ?? 'llama-3.3-70b-versatile'
+  // Списки, а не одиночные имена: провайдеры снимают модели с бесплатного
+  // тарифа без предупреждения. Groq объявил llama-3.3-70b-versatile устаревшей
+  // 17.06.2026 — с одним именем в коде это положило бы весь звонок.
+  const CEREBRAS_MODELS = split(env.CEREBRAS_MODELS) ?? ['llama-3.3-70b']
+  const GROQ_MODELS = split(env.GROQ_MODELS) ?? [
+    'openai/gpt-oss-120b',
+    'llama-3.3-70b-versatile',
+  ]
   const TTS_MODEL = env.GROQ_TTS_MODEL ?? 'canopylabs/orpheus-v1-english'
 
   return {
@@ -60,20 +67,24 @@ export function brokerApi(env: Record<string, string>): Plugin {
         // фолбэк при каждом вызове.
         const attempts: Attempt[] = []
         if (cerebrasKey) {
-          attempts.push({
-            name: 'cerebras',
-            url: 'https://api.cerebras.ai/v1/chat/completions',
-            key: cerebrasKey,
-            model: CEREBRAS_MODEL,
-          })
+          for (const model of CEREBRAS_MODELS) {
+            attempts.push({
+              name: 'cerebras',
+              url: 'https://api.cerebras.ai/v1/chat/completions',
+              key: cerebrasKey,
+              model,
+            })
+          }
         }
         if (groqKey) {
-          attempts.push({
-            name: 'groq',
-            url: 'https://api.groq.com/openai/v1/chat/completions',
-            key: groqKey,
-            model: GROQ_MODEL,
-          })
+          for (const model of GROQ_MODELS) {
+            attempts.push({
+              name: 'groq',
+              url: 'https://api.groq.com/openai/v1/chat/completions',
+              key: groqKey,
+              model,
+            })
+          }
         }
         if (attempts.length === 0) throw new HttpError(503, 'no LLM key configured')
 
@@ -89,13 +100,14 @@ export function brokerApi(env: Record<string, string>): Plugin {
               body: JSON.stringify({ ...payload, model: attempt.model }),
             })
             if (!r.ok) {
-              lastError = `${attempt.name} ${r.status}: ${(await r.text()).slice(0, 300)}`
+              lastError = `${attempt.name}/${attempt.model} ${r.status}: ${(await r.text()).slice(0, 300)}`
               continue
             }
             const data = (await r.json()) as ChatCompletion
             const choice = data.choices?.[0]?.message
             return {
               provider: attempt.name,
+              model: attempt.model,
               // Сырое сообщение уходит обратно клиенту, чтобы он дописал его в
               // историю ровно в том виде, в каком его ждёт провайдер на
               // следующем ходу — вместе с tool_calls и их id.
@@ -145,7 +157,10 @@ export function brokerApi(env: Record<string, string>): Plugin {
           },
           body: JSON.stringify({
             model: TTS_MODEL,
-            voice: body.voice ?? 'zac',
+            // Белый список: неизвестное имя подменяется, а не улетает в Groq.
+            // Ровно на этом тренажёр немел — голос `zac` из оригинального
+            // Orpheus у Groq не существует, и каждый запрос падал в 400.
+            voice: normalizeVoice(body.voice),
             input: body.text,
             response_format: 'wav',
           }),
@@ -173,7 +188,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
             body: JSON.stringify({
-              model: useCerebras ? CEREBRAS_MODEL : GROQ_MODEL,
+              model: (useCerebras ? CEREBRAS_MODELS[0] : GROQ_MODELS[0]) ?? 'openai/gpt-oss-120b',
               messages: buildDebriefPrompt(body),
               temperature: 0.3,
               max_tokens: 700,
@@ -225,6 +240,15 @@ interface Attempt {
   url: string
   key: string
   model: string
+}
+
+/** "a, b" → ["a","b"]; пусто → undefined, чтобы сработал дефолт. */
+function split(value: string | undefined): string[] | undefined {
+  const items = (value ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+  return items.length ? items : undefined
 }
 
 interface TurnRequest {

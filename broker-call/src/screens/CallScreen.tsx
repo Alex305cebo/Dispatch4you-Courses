@@ -3,6 +3,7 @@ import './call.css'
 import { useCallStore, type FeedEntry, type LineState, type SpeechItem, type ToolItem } from '../store/useCallStore'
 import { getBroker } from '../data/brokers'
 import { useT } from '../i18n/useT'
+import type { TranslationKey } from '../i18n'
 import { ToolCard } from '../components/ToolCard'
 
 /**
@@ -68,8 +69,12 @@ export function CallScreen() {
         </div>
       </div>
 
+      {/* Ошибка отдельной строкой над подвалом: внутри flex-подвала она
+          схлопывалась между волной и кнопкой и была нечитаемой — из-за этого
+          «брокер молчит» пришлось диагностировать чтением исходников. */}
+      {error ? <ErrorBar raw={error} /> : null}
+
       <footer className="call-foot">
-        {error ? <div className="call-error">{error}</div> : null}
         <Waveform level={micLevel} live={line === 'listening'} />
         <span className="call-hint">{t(LINE_LABEL[line])}</span>
         <button className="call-end" onClick={endCall}>
@@ -88,6 +93,26 @@ const LINE_LABEL = {
   hold: 'call.hold',
   ended: 'call.ended',
 } as const satisfies Record<LineState, Parameters<ReturnType<typeof useT>>[0]>
+
+/**
+ * Полоса ошибки. Студенту — понятная фраза, мне — техническая подробность
+ * рядом мелким шрифтом. Раньше сюда попадало сырое `TTS 400`, что не говорило
+ * ни тому, ни другому.
+ */
+function ErrorBar({ raw }: { raw: string }) {
+  const t = useT()
+  const separator = raw.indexOf(':')
+  const code = separator === -1 ? raw : raw.slice(0, separator)
+  const detail = separator === -1 ? '' : raw.slice(separator + 1).trim()
+  const message = code.startsWith('error.') ? t(code as TranslationKey) : t('error.generic')
+
+  return (
+    <div className="call-error" role="status">
+      <span className="call-error-text">{message}</span>
+      {detail ? <span className="call-error-detail mono">{detail}</span> : null}
+    </div>
+  )
+}
 
 /**
  * Реплика. Слова брокера проявляются ровно за длительность его аудио —

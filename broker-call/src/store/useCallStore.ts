@@ -7,6 +7,7 @@ import { getScenario } from '../data/scenarios'
 import { getBroker } from '../data/brokers'
 import type { CallState, Scenario } from '../types'
 import { endpoint } from '../api'
+import { directionForStyle, voiceForBroker } from '../voice/voices'
 
 export type Phase = 'lobby' | 'incoming' | 'call' | 'debrief'
 
@@ -89,7 +90,8 @@ export const useCallStore = create<CallStore>((set, get) => ({
 
     const deps: TransportDeps = {
       scenarioId: scenario.id,
-      voice: voiceFor(broker.id),
+      voice: voiceForBroker(broker.id),
+      direction: directionForStyle(broker.style),
       opening: scenario.opening,
       runTool: (name, args) => {
         const result = machine.execute(name, args)
@@ -119,7 +121,10 @@ export const useCallStore = create<CallStore>((set, get) => ({
     try {
       await transport.connect()
     } catch (e) {
-      const message = (e as Error).name === 'NotAllowedError' ? 'micDenied' : (e as Error).message
+      const message =
+        (e as Error).name === 'NotAllowedError'
+          ? 'error.micDenied'
+          : `error.generic:${(e as Error).message}`
       set({ error: message })
     }
   },
@@ -297,14 +302,5 @@ function truncateToRatio(text: string, ratio: number): string {
   return words.slice(0, keep).join(' ') + '…'
 }
 
-/** Голоса Orpheus. Тембр подбираем под характер, а не наугад. */
-function voiceFor(brokerId: string): string {
-  const map: Record<string, string> = {
-    'mike-apex': 'zac',
-    'sarah-midwest': 'tara',
-    'dave-lonestar': 'leo',
-    'ray-atlas': 'dan',
-    'nina-summit': 'jess',
-  }
-  return map[brokerId] ?? 'zac'
-}
+// Голоса живут в src/voice/voices.ts — там же белый список, по которому
+// сервер подменяет неизвестное имя вместо того, чтобы получить 400 и онеметь.

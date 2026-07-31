@@ -4,6 +4,7 @@ import { TelephonyAudio } from './TelephonyAudio'
 import { encodeWav, durationSeconds } from './audio'
 import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript } from '../data/terms'
 import { endpoint } from '../api'
+import { estimateDurationMs, speakInBrowser, type BrowserSpeech } from './browserVoice'
 
 /**
  * Бесплатный транспорт: VAD → Whisper → LLM → Orpheus.
@@ -20,6 +21,7 @@ export class PipelineTransport implements VoiceTransport {
   /** История в формате провайдера. Системный промпт добавляет сервер. */
   private messages: ChatMessage[] = []
   private playing: AudioBufferSourceNode | null = null
+  private browserSpeech: BrowserSpeech | null = null
   private currentUtterance: { id: string; startedAt: number; durationMs: number } | null = null
   private preview: SpeechRecognitionLike | null = null
   private abort: AbortController | null = null
@@ -111,7 +113,11 @@ export class PipelineTransport implements VoiceTransport {
       this.messages.push({ role: 'user', content: clean })
       await this.runTurn()
     } catch (e) {
-      this.deps.emit({ type: 'error', message: (e as Error).message, fatal: false })
+      this.deps.emit({
+        type: 'error',
+        message: `error.sttFailed:${(e as Error).message}`,
+        fatal: false,
+      })
     } finally {
       this.vad.setPaused(false)
     }
@@ -167,9 +173,13 @@ export class PipelineTransport implements VoiceTransport {
         if (reply.content.trim()) await this.speak(reply.content.trim())
         return
       }
-      this.deps.emit({ type: 'error', message: 'Брокер завис на инструментах', fatal: false })
+      this.deps.emit({ type: 'error', message: 'error.llmFailed:tool loop', fatal: false })
     } catch (e) {
-      this.deps.emit({ type: 'error', message: (e as Error).message, fatal: false })
+      this.deps.emit({
+        type: 'error',
+        message: `error.llmFailed:${(e as Error).message}`,
+        fatal: false,
+      })
     } finally {
       this.cancelHold()
       this.busy = false
@@ -210,33 +220,48 @@ export class PipelineTransport implements VoiceTransport {
 
   // ── Голос брокера ─────────────────────────────────────────────────────────
 
+  /**
+   * Три ступени: Groq Orpheus → голос браузера → только текст.
+   *
+   * Раньше ступени было две, и падение провайдера означало немого брокера с
+   * бегущей строкой. Именно так тренажёр и вёл себя на боевом: голос `zac` у
+   * Groq не существует, каждый запрос отвечал 400, и звонок шёл беззвучно.
+   */
   private async speak(text: string): Promise<void> {
     const ctx = await this.telephony.ensureContext()
 
-    let buffer: AudioBuffer
+    let buffer: AudioBuffer | null = null
     try {
       const r = await fetch(endpoint('tts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, voice: this.deps.voice }),
+        // В провайдер уходит текст с вокальной ремаркой, на экран — чистый.
+        body: JSON.stringify({ text: this.withDirection(text), voice: this.deps.voice }),
       })
-      if (!r.ok) throw new Error(`TTS ${r.status}`)
+      if (!r.ok) {
+        throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`)
+      }
       buffer = await ctx.decodeAudioData(await r.arrayBuffer())
     } catch (e) {
-      // Озвучка отвалилась — реплику всё равно показываем. Молчащий брокер
-      // хуже, чем брокер без голоса.
-      this.deps.emit({ type: 'error', message: `Голос недоступен: ${(e as Error).message}`, fatal: false })
-      const fallbackMs = estimateDurationMs(text)
-      const id = nextId()
-      this.deps.emit({ type: 'agent_utterance_start', id, text, durationMs: fallbackMs })
-      this.currentUtterance = { id, startedAt: performance.now(), durationMs: fallbackMs }
-      await wait(fallbackMs)
-      this.finishUtterance(false)
-      return
+      // Причину показываем: раньше она уходила в консоль, и «почему молчит»
+      // приходилось выяснять чтением исходников.
+      this.deps.emit({
+        type: 'error',
+        message: `error.ttsFailed:${(e as Error).message}`,
+        fatal: false,
+      })
     }
 
     if (this.closed) return
 
+    if (buffer) {
+      await this.playBuffer(ctx, buffer, text)
+      return
+    }
+    await this.playInBrowser(text)
+  }
+
+  private async playBuffer(ctx: AudioContext, buffer: AudioBuffer, text: string): Promise<void> {
     const source = ctx.createBufferSource()
     source.buffer = buffer
     source.connect(this.telephony.getLineInput() ?? ctx.destination)
@@ -252,12 +277,47 @@ export class PipelineTransport implements VoiceTransport {
     await new Promise<void>((resolve) => {
       source.onended = () => resolve()
       source.start()
+      // Приостановленный контекст не шлёт onended, и звонок завис бы навсегда.
+      // Страховка на четверть секунды длиннее самой реплики.
+      window.setTimeout(resolve, durationMs + 250)
     })
 
     if (this.playing === source) this.finishUtterance(false)
   }
 
+  private async playInBrowser(text: string): Promise<void> {
+    const speech = speakInBrowser(text, this.deps.voice)
+    const id = nextId()
+    const durationMs = speech?.estimatedMs ?? estimateDurationMs(text)
+
+    this.deps.emit({ type: 'agent_utterance_start', id, text, durationMs })
+    this.currentUtterance = { id, startedAt: performance.now(), durationMs }
+    this.browserSpeech = speech
+
+    if (speech) await Promise.race([speech.done, wait(durationMs + 4000)])
+    else await wait(durationMs)
+
+    this.browserSpeech = null
+    this.finishUtterance(false)
+  }
+
+  /**
+   * Orpheus понимает ремарки в квадратных скобках. Дэйв на бегу и Нина, у
+   * которой горит груз, должны звучать по-разному — характер задан данными,
+   * а не только словами в промпте.
+   */
+  private withDirection(text: string): string {
+    const direction = this.deps.direction
+    return direction ? `[${direction}] ${text}` : text
+  }
+
   private stopPlayback(interrupted: boolean): void {
+    // Перебивание должно затыкать и запасной голос — иначе браузер продолжит
+    // договаривать реплику поверх студента.
+    if (this.browserSpeech) {
+      this.browserSpeech.cancel()
+      this.browserSpeech = null
+    }
     if (this.playing) {
       try {
         this.playing.onended = null
@@ -362,11 +422,6 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms))
 }
 
-/** Примерно 165 слов в минуту — темп делового телефонного разговора. */
-function estimateDurationMs(text: string): number {
-  const words = text.trim().split(/\s+/).length
-  return Math.max(900, (words / 165) * 60000)
-}
 
 interface SpeechRecognitionLike {
   continuous: boolean

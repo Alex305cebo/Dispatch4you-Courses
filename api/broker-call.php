@@ -31,6 +31,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 // ── Проверка происхождения ───────────────────────────────────────────────────
+// health проверяется ДО неё и намеренно открыт: диагностическую ручку нужно
+// уметь открыть тапом из адресной строки телефона, а Origin туда не приходит.
+// Секретов она не отдаёт — только «работает/не работает» и текст ошибки
+// провайдера. Без этого исключения «спроси у сервера, что сломалось» не
+// работает, и причину приходится выводить чтением исходников.
 $origin  = isset($_SERVER['HTTP_ORIGIN'])  ? $_SERVER['HTTP_ORIGIN']  : '';
 $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
 $allowedOrigins = ['dispatch4you.com', 'localhost', '127.0.0.1'];
@@ -38,7 +43,7 @@ $originOk = false;
 foreach ($allowedOrigins as $o) {
   if (stripos($origin, $o) !== false || stripos($referer, $o) !== false) { $originOk = true; break; }
 }
-if (!$originOk) { bc_fail(403, 'forbidden'); }
+if (!$originOk && $action !== 'health') { bc_fail(403, 'forbidden'); }
 
 // ── Ключи ────────────────────────────────────────────────────────────────────
 function bc_key($name) {
@@ -52,9 +57,25 @@ $groqKey     = bc_key('groq.key');
 $cerebrasKey = bc_key('cerebras.key');
 $openaiKey   = bc_key('openai.key');
 
-$CEREBRAS_MODEL = 'llama-3.3-70b';
-$GROQ_MODEL     = 'llama-3.3-70b-versatile';
-$TTS_MODEL      = 'canopylabs/orpheus-v1-english';
+// Списки, а не одиночные имена: провайдеры снимают модели с бесплатного тарифа
+// без предупреждения. Groq объявил llama-3.3-70b-versatile устаревшей
+// 17.06.2026 — с единственным именем в коде это положило бы весь звонок.
+$CEREBRAS_MODELS = ['llama-3.3-70b'];
+$GROQ_MODELS     = ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile'];
+$TTS_MODEL       = 'canopylabs/orpheus-v1-english';
+
+// Голоса Groq Orpheus. НЕ совпадают с именами оригинального Orpheus от
+// Canopy Labs (tara, leo, zac…) — именно на этом тренажёр немел: запрос уходил
+// с несуществующим голосом, Groq отвечал 400, и звонок шёл без звука.
+$ORPHEUS_VOICES = ['austin', 'daniel', 'troy', 'autumn', 'diana', 'hannah'];
+$DEFAULT_VOICE  = 'austin';
+
+/** Неизвестное имя подменяем, а не отправляем провайдеру: одна опечатка не должна обесточивать звонок. */
+function bc_voice($raw) {
+  global $ORPHEUS_VOICES, $DEFAULT_VOICE;
+  $v = strtolower(trim((string) $raw));
+  return in_array($v, $ORPHEUS_VOICES, true) ? $v : $DEFAULT_VOICE;
+}
 
 // ── Конфиг сценариев ─────────────────────────────────────────────────────────
 function bc_config() {
@@ -89,6 +110,17 @@ function bc_body() {
   $raw = file_get_contents('php://input');
   $data = json_decode($raw, true);
   return is_array($data) ? $data : [];
+}
+
+/** Полсекунды тишины в WAV 16 кГц — минимальный валидный файл для пробы STT. */
+function bc_silent_wav() {
+  $rate = 16000;
+  $samples = (int) ($rate * 0.5);
+  $data = str_repeat("\x00\x00", $samples);
+  return 'RIFF' . pack('V', 36 + strlen($data)) . 'WAVE'
+    . 'fmt ' . pack('V', 16) . pack('v', 1) . pack('v', 1)
+    . pack('V', $rate) . pack('V', $rate * 2) . pack('v', 2) . pack('v', 16)
+    . 'data' . pack('V', strlen($data)) . $data;
 }
 
 /** POST JSON к OpenAI-совместимому провайдеру. Возвращает [код, тело]. */
@@ -131,6 +163,113 @@ switch ($action) {
     ]);
   }
 
+  // ── Диагностика ────────────────────────────────────────────────────────────
+  // Живые пробы, а не догадки: короткий запрос к каждому сервису и текст
+  // ошибки провайдера как есть. Открывается тапом с телефона.
+  case 'health': {
+    $result = [
+      'keys' => [
+        'groq'     => $groqKey !== '',
+        'cerebras' => $cerebrasKey !== '',
+        'openai'   => $openaiKey !== '',
+      ],
+      'config' => [
+        'scenarios' => count(bc_config()['scenarios']),
+        'tools'     => count(bc_config()['tools']),
+        'tts_model' => $TTS_MODEL,
+        'voices'    => $ORPHEUS_VOICES,
+      ],
+      'probe' => [],
+    ];
+
+    // Диалог: перебираем те же модели и в том же порядке, что боевой звонок.
+    if ($groqKey !== '' || $cerebrasKey !== '') {
+      $chat = ['ok' => false];
+      $attempts = [];
+      if ($cerebrasKey !== '') {
+        foreach ($CEREBRAS_MODELS as $m) {
+          $attempts[] = ['cerebras', 'https://api.cerebras.ai/v1/chat/completions', $cerebrasKey, $m];
+        }
+      }
+      if ($groqKey !== '') {
+        foreach ($GROQ_MODELS as $m) {
+          $attempts[] = ['groq', 'https://api.groq.com/openai/v1/chat/completions', $groqKey, $m];
+        }
+      }
+      foreach ($attempts as $a) {
+        list($name, $url, $key, $model) = $a;
+        $t0 = microtime(true);
+        list($code, $body) = bc_post_json($url, $key, [
+          'model'      => $model,
+          'messages'   => [['role' => 'user', 'content' => 'ping']],
+          'max_tokens' => 5,
+        ]);
+        $ms = (int) round((microtime(true) - $t0) * 1000);
+        if ($code >= 200 && $code < 300) {
+          $chat = ['ok' => true, 'provider' => $name, 'model' => $model, 'ms' => $ms];
+          break;
+        }
+        $chat = [
+          'ok'    => false,
+          'provider' => $name,
+          'model' => $model,
+          'status' => $code,
+          'error' => substr((string) $body, 0, 200),
+        ];
+      }
+      $result['probe']['chat'] = $chat;
+    } else {
+      $result['probe']['chat'] = ['ok' => false, 'error' => 'no LLM key'];
+    }
+
+    // Озвучка: та самая проба, которой не хватило, чтобы поймать чужие голоса.
+    if ($groqKey !== '') {
+      $t0 = microtime(true);
+      list($code, $body) = bc_post_json(
+        'https://api.groq.com/openai/v1/audio/speech',
+        $groqKey,
+        [
+          'model'           => $TTS_MODEL,
+          'voice'           => $DEFAULT_VOICE,
+          'input'           => 'Apex Freight, this is Mike.',
+          'response_format' => 'wav',
+        ]
+      );
+      $ms = (int) round((microtime(true) - $t0) * 1000);
+      $result['probe']['tts'] = ($code >= 200 && $code < 300)
+        ? ['ok' => true, 'voice' => $DEFAULT_VOICE, 'bytes' => strlen((string) $body), 'ms' => $ms]
+        : ['ok' => false, 'voice' => $DEFAULT_VOICE, 'status' => $code, 'error' => substr((string) $body, 0, 200)];
+
+      // Распознавание: молчаливый WAV, нам важен факт приёма файла, а не текст.
+      $wav = bc_silent_wav();
+      $tmp = tempnam(sys_get_temp_dir(), 'bc');
+      file_put_contents($tmp, $wav);
+      $ch = curl_init('https://api.groq.com/openai/v1/audio/transcriptions');
+      curl_setopt($ch, CURLOPT_POST, true);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+      curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+      curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $groqKey]);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, [
+        'file'            => new CURLFile($tmp, 'audio/wav', 'probe.wav'),
+        'model'           => 'whisper-large-v3-turbo',
+        'response_format' => 'text',
+      ]);
+      $t0 = microtime(true);
+      $sttBody = curl_exec($ch);
+      $sttCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+      curl_close($ch);
+      @unlink($tmp);
+      $result['probe']['stt'] = ($sttCode >= 200 && $sttCode < 300)
+        ? ['ok' => true, 'ms' => (int) round((microtime(true) - $t0) * 1000)]
+        : ['ok' => false, 'status' => $sttCode, 'error' => substr((string) $sttBody, 0, 200)];
+    } else {
+      $result['probe']['tts'] = ['ok' => false, 'error' => 'no groq.key'];
+      $result['probe']['stt'] = ['ok' => false, 'error' => 'no groq.key'];
+    }
+
+    bc_json($result);
+  }
+
   // ── Ход разговора ──────────────────────────────────────────────────────────
   // Клиент присылает только историю. Системный промпт и инструменты
   // приклеиваются здесь, поэтому подменить характер брокера или потолок ставки
@@ -159,10 +298,14 @@ switch ($action) {
     // отвечал ошибкой, и каждый вызов молча уходил на запасного.
     $attempts = [];
     if ($cerebrasKey !== '') {
-      $attempts[] = ['cerebras', 'https://api.cerebras.ai/v1/chat/completions', $cerebrasKey, $CEREBRAS_MODEL];
+      foreach ($CEREBRAS_MODELS as $m) {
+        $attempts[] = ['cerebras', 'https://api.cerebras.ai/v1/chat/completions', $cerebrasKey, $m];
+      }
     }
     if ($groqKey !== '') {
-      $attempts[] = ['groq', 'https://api.groq.com/openai/v1/chat/completions', $groqKey, $GROQ_MODEL];
+      foreach ($GROQ_MODELS as $m) {
+        $attempts[] = ['groq', 'https://api.groq.com/openai/v1/chat/completions', $groqKey, $m];
+      }
     }
     if (!$attempts) { bc_fail(503, 'no LLM key configured'); }
 
@@ -172,7 +315,7 @@ switch ($action) {
       $payload['model'] = $model;
       list($code, $body) = bc_post_json($url, $key, $payload);
       if ($code < 200 || $code >= 300) {
-        $lastError = $name . ' ' . $code . ': ' . substr((string) $body, 0, 300);
+        $lastError = $name . '/' . $model . ' ' . $code . ': ' . substr((string) $body, 0, 300);
         continue;
       }
       $data = json_decode($body, true);
@@ -194,6 +337,7 @@ switch ($action) {
 
       bc_json([
         'provider'  => $name,
+        'model'     => $model,
         // Сырое сообщение уходит обратно клиенту, чтобы он дописал его в
         // историю ровно в том виде, в каком его ждёт провайдер на следующем
         // ходу — вместе с tool_calls и их id.
@@ -254,7 +398,7 @@ switch ($action) {
       $groqKey,
       [
         'model'           => $TTS_MODEL,
-        'voice'           => isset($in['voice']) ? (string) $in['voice'] : 'zac',
+        'voice'           => bc_voice(isset($in['voice']) ? $in['voice'] : ''),
         'input'           => $text,
         'response_format' => 'wav',
       ]
@@ -300,7 +444,7 @@ switch ($action) {
         : 'https://api.groq.com/openai/v1/chat/completions',
       $key,
       [
-        'model'           => $useCerebras ? $CEREBRAS_MODEL : $GROQ_MODEL,
+        'model'           => $useCerebras ? $CEREBRAS_MODELS[0] : $GROQ_MODELS[0],
         'messages'        => [
           ['role' => 'system', 'content' => $scenario['debrief']],
           ['role' => 'user',   'content' => $user],
