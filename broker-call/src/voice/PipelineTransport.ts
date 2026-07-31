@@ -22,6 +22,8 @@ export class PipelineTransport implements VoiceTransport {
   private messages: ChatMessage[] = []
   private playing: AudioBufferSourceNode | null = null
   private browserSpeech: BrowserSpeech | null = null
+  /** Об отказе озвучки сообщаем один раз за звонок, а не на каждой реплике. */
+  private ttsReported = false
   private currentUtterance: { id: string; startedAt: number; durationMs: number } | null = null
   private preview: SpeechRecognitionLike | null = null
   private abort: AbortController | null = null
@@ -244,12 +246,17 @@ export class PipelineTransport implements VoiceTransport {
       buffer = await ctx.decodeAudioData(await r.arrayBuffer())
     } catch (e) {
       // Причину показываем: раньше она уходила в консоль, и «почему молчит»
-      // приходилось выяснять чтением исходников.
-      this.deps.emit({
-        type: 'error',
-        message: `error.ttsFailed:${(e as Error).message}`,
-        fatal: false,
-      })
+      // приходилось выяснять чтением исходников. Но один раз за звонок —
+      // повторять её на каждой реплике значит превратить полезное сообщение
+      // в шум, который перестают читать.
+      if (!this.ttsReported) {
+        this.ttsReported = true
+        this.deps.emit({
+          type: 'error',
+          message: `error.ttsFailed:${(e as Error).message}`,
+          fatal: false,
+        })
+      }
     }
 
     if (this.closed) return

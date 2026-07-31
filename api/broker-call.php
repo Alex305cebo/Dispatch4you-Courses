@@ -236,9 +236,18 @@ switch ($action) {
         ]
       );
       $ms = (int) round((microtime(true) - $t0) * 1000);
-      $result['probe']['tts'] = ($code >= 200 && $code < 300)
-        ? ['ok' => true, 'voice' => $DEFAULT_VOICE, 'bytes' => strlen((string) $body), 'ms' => $ms]
-        : ['ok' => false, 'voice' => $DEFAULT_VOICE, 'status' => $code, 'error' => substr((string) $body, 0, 200)];
+      if ($code >= 200 && $code < 300) {
+        $result['probe']['tts'] = ['ok' => true, 'voice' => $DEFAULT_VOICE, 'bytes' => strlen((string) $body), 'ms' => $ms];
+      } else {
+        $tts = ['ok' => false, 'voice' => $DEFAULT_VOICE, 'status' => $code, 'error' => substr((string) $body, 0, 200)];
+        // Самый частый отказ — не поломка, а непринятые условия модели.
+        // Ответ провайдера обрезан, поэтому подсказку с рабочей ссылкой
+        // собираем сами: иначе адрес не дочитать.
+        if (stripos((string) $body, 'terms acceptance') !== false) {
+          $tts['hint'] = 'Модель требует однократного принятия условий: https://console.groq.com/playground?model=' . rawurlencode($TTS_MODEL);
+        }
+        $result['probe']['tts'] = $tts;
+      }
 
       // Распознавание: молчаливый WAV, нам важен факт приёма файла, а не текст.
       $wav = bc_silent_wav();
