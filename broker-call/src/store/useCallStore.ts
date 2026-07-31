@@ -6,6 +6,7 @@ import type { TransportDeps, VoiceEvent, VoiceTransport } from '../voice/types'
 import { getScenario } from '../data/scenarios'
 import { getBroker } from '../data/brokers'
 import type { CallState, Scenario } from '../types'
+import { endpoint } from '../api'
 
 export type Phase = 'lobby' | 'incoming' | 'call' | 'debrief'
 
@@ -155,7 +156,7 @@ interface ServerConfig {
 
 async function fetchConfig(): Promise<ServerConfig> {
   try {
-    const r = await fetch('/api/config')
+    const r = await fetch(endpoint('config'))
     if (r.ok) return (await r.json()) as ServerConfig
   } catch {
     // Сервер молчит — идём бесплатным путём и покажем ошибку на первом запросе.

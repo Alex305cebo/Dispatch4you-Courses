@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
 
   return {
+    // Приложение живёт в подпапке сайта, а не в корне домена.
+    base: '/broker-call/',
     plugins: [react(), brokerApi(env)],
     server: { port: 5180, host: true },
     // vad-web тянет .onnx и wasm — их нельзя инлайнить

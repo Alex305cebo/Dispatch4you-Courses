@@ -1,5 +1,6 @@
 import type { TransportDeps, VoiceTransport } from './types'
 import { TelephonyAudio } from './TelephonyAudio'
+import { endpoint } from '../api'
 
 /**
  * Платный транспорт: OpenAI Realtime по WebRTC.
@@ -103,7 +104,7 @@ export class RealtimeTransport implements VoiceTransport {
   }
 
   private async mintSecret(): Promise<string> {
-    const r = await fetch('/api/realtime-session', {
+    const r = await fetch(endpoint('realtime-session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ scenarioId: this.deps.scenarioId, voice: this.deps.voice }),

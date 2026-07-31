@@ -3,6 +3,7 @@ import { MicVad } from './vad'
 import { TelephonyAudio } from './TelephonyAudio'
 import { encodeWav, durationSeconds } from './audio'
 import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript } from '../data/terms'
+import { endpoint } from '../api'
 
 /**
  * Бесплатный транспорт: VAD → Whisper → LLM → Orpheus.
@@ -125,7 +126,7 @@ export class PipelineTransport implements VoiceTransport {
     form.append('response_format', 'text')
     form.append('temperature', '0')
 
-    const r = await fetch('/api/stt', { method: 'POST', body: form })
+    const r = await fetch(endpoint('stt'), { method: 'POST', body: form })
     if (!r.ok) throw new Error(`STT ${r.status}`)
     return (await r.text()).trim()
   }
@@ -180,7 +181,7 @@ export class PipelineTransport implements VoiceTransport {
     this.abort?.abort()
     this.abort = new AbortController()
 
-    const r = await fetch('/api/turn', {
+    const r = await fetch(endpoint('turn'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: this.abort.signal,
@@ -214,7 +215,7 @@ export class PipelineTransport implements VoiceTransport {
 
     let buffer: AudioBuffer
     try {
-      const r = await fetch('/api/tts', {
+      const r = await fetch(endpoint('tts'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, voice: this.deps.voice }),

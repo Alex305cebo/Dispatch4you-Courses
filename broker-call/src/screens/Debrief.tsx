@@ -5,6 +5,7 @@ import { scoreCall, type CallMetrics, type MetricKey } from '../call/scoring'
 import { useT } from '../i18n/useT'
 import type { TranslationKey } from '../i18n'
 import { recordAttempt } from '../store/progress'
+import { endpoint } from '../api'
 
 interface Analysis {
   summary?: string
@@ -48,7 +49,7 @@ export function Debrief() {
     recordAttempt(scenario.id, metrics.overall)
 
     let cancelled = false
-    fetch('/api/debrief', {
+    fetch(endpoint('debrief'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

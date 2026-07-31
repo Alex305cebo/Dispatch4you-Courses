@@ -17,11 +17,22 @@ export interface DebriefInput {
 }
 
 export function buildDebriefPrompt(input: DebriefInput) {
-  const scenario = getScenario(input.scenarioId)
+  return [
+    { role: 'system', content: buildDebriefSystemPrompt(input.scenarioId) },
+    { role: 'user', content: buildDebriefUserMessage(input) },
+  ]
+}
+
+/**
+ * Статическая часть: зависит только от сценария, поэтому выгружается в
+ * серверный конфиг при сборке и на боевом сервере не собирается заново.
+ */
+export function buildDebriefSystemPrompt(scenarioId: string): string {
+  const scenario = getScenario(scenarioId)
   const load = getLoad(scenario.loadId)
   const market = getMarketQuote(load)
 
-  const system = `You are a dispatcher coach with fifteen years on the desk. You have just listened to a student's call with a freight broker and you are about to tell them how it went.
+  return `You are a dispatcher coach with fifteen years on the desk. You have just listened to a student's call with a freight broker and you are about to tell them how it went.
 
 The scores are already calculated and given to you. Do not recalculate them, do not argue with them, do not invent new ones. Your job is to explain what happened in plain language.
 
@@ -44,12 +55,15 @@ Respond with JSON only:
   ],
   "next_call": "<одно конкретное действие на следующий звонок>"
 }`
+}
 
+/** Динамическая часть: транскрипт и уже посчитанные кодом числа. */
+export function buildDebriefUserMessage(input: DebriefInput): string {
   const transcript = input.transcript
     .map((m) => `${m.role === 'dispatcher' ? 'Dispatcher' : 'Broker'}: ${m.text}`)
     .join('\n')
 
-  const user = `Scores already calculated:
+  return `Scores already calculated:
 ${JSON.stringify(input.metrics, null, 2)}
 
 Facts recorded during the call:
@@ -57,9 +71,4 @@ ${JSON.stringify(input.facts, null, 2)}
 
 Transcript:
 ${transcript}`
-
-  return [
-    { role: 'system', content: system },
-    { role: 'user', content: user },
-  ]
 }
