@@ -1,0 +1,40 @@
+# Своя область mod_rewrite для /broker-call/.
+#
+# Зачем: корневой .htaccess снимает завершающий слэш у всего, что не является
+# каталогом. Пока каталога на сервере не было, /broker-call/ получал 301 на
+# /broker-call, браузер запоминал его как постоянный, а Apache тем временем
+# возвращал слэш обратно через mod_dir — и получалась бесконечная петля
+# ERR_TOO_MANY_REDIRECTS, живущая уже в кэше устройства.
+#
+# mod_rewrite не наследует конфигурацию в дочерние каталоги, если в родителе
+# не задано RewriteOptions Inherit. Поэтому собственный RewriteEngine здесь
+# полностью отменяет корневые правила для этого поддерева — то же самое, что
+# в корневом файле сделано исключениями для /game/ и /en/, только надёжнее:
+# не требует помнить про новый путь при каждой правке.
+
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /broker-call/
+
+  # Существующие файлы и каталоги отдаём как есть.
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Всё остальное — на index.html: приложение одностраничное.
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Файлы сборки содержат хэш в имени и никогда не меняются под тем же именем,
+# а вот сам index.html обязан перечитываться — иначе после выкладки браузер
+# продолжит грузить старые скрипты.
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(js|css|woff2|onnx|wasm)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+</IfModule>
