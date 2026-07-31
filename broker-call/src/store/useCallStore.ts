@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { CallMachine } from '../call/CallMachine'
 import { PipelineTransport } from '../voice/PipelineTransport'
-import type { VoiceEvent, VoiceTransport } from '../voice/types'
+import { RealtimeTransport } from '../voice/RealtimeTransport'
+import type { TransportDeps, VoiceEvent, VoiceTransport } from '../voice/types'
 import { getScenario } from '../data/scenarios'
 import { getBroker } from '../data/brokers'
 import type { CallState, Scenario } from '../types'
@@ -81,7 +82,11 @@ export const useCallStore = create<CallStore>((set, get) => ({
     machine.start()
     const broker = getBroker(scenario.brokerId)
 
-    const transport = new PipelineTransport({
+    // Какой транспорт использовать, решает сервер — из клиента платный режим
+    // не включить, даже подменив запрос.
+    const config = await fetchConfig()
+
+    const deps: TransportDeps = {
       scenarioId: scenario.id,
       voice: voiceFor(broker.id),
       opening: scenario.opening,
@@ -95,7 +100,10 @@ export const useCallStore = create<CallStore>((set, get) => ({
         return result
       },
       emit: (event) => applyEvent(set, get, event),
-    })
+    }
+
+    const useRealtime = config.transport === 'realtime' && config.ready.realtime
+    const transport = useRealtime ? new RealtimeTransport(deps) : new PipelineTransport(deps)
     transport.onLevel = (level) => set({ micLevel: level })
 
     set({
@@ -140,6 +148,21 @@ export const useCallStore = create<CallStore>((set, get) => ({
 type Set = (partial: Partial<CallStore> | ((s: CallStore) => Partial<CallStore>)) => void
 type Get = () => CallStore
 
+interface ServerConfig {
+  transport: 'pipeline' | 'realtime'
+  ready: { llm: boolean; stt: boolean; tts: boolean; realtime: boolean }
+}
+
+async function fetchConfig(): Promise<ServerConfig> {
+  try {
+    const r = await fetch('/api/config')
+    if (r.ok) return (await r.json()) as ServerConfig
+  } catch {
+    // Сервер молчит — идём бесплатным путём и покажем ошибку на первом запросе.
+  }
+  return { transport: 'pipeline', ready: { llm: false, stt: false, tts: false, realtime: false } }
+}
+
 function applyEvent(set: Set, get: Get, event: VoiceEvent): void {
   switch (event.type) {
     case 'user_speech_start':
@@ -181,6 +204,17 @@ function applyEvent(set: Set, get: Get, event: VoiceEvent): void {
             startedAt: performance.now(),
           },
         ],
+      }))
+      break
+
+    case 'agent_text_delta':
+      // Поток сам по себе и есть проявление слов — дорисовывать нечего.
+      set((s) => ({
+        feed: s.feed.map((item) =>
+          item.kind === 'speech' && item.id === event.id
+            ? { ...item, text: item.text + event.delta }
+            : item,
+        ),
       }))
       break
 

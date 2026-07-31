@@ -24,8 +24,15 @@ export type VoiceEvent =
   | { type: 'user_final'; text: string }
   /** Речь распознать не удалось — на экране ничего не остаётся. */
   | { type: 'user_dropped'; reason: 'too_short' | 'not_english' | 'empty' | 'error' }
-  /** Брокер начинает говорить: текст известен целиком, длительность — тоже. */
+  /**
+   * Брокер начинает говорить. В пайплайне текст известен целиком и есть
+   * длительность аудио — экран раскрывает слова синхронно с голосом.
+   * В Realtime текст приходит потоком: durationMs = 0, а слова добавляются
+   * событиями agent_text_delta по мере произнесения.
+   */
   | { type: 'agent_utterance_start'; id: string; text: string; durationMs: number }
+  /** Очередной кусок реплики брокера — только для потокового транспорта. */
+  | { type: 'agent_text_delta'; id: string; delta: string }
   /** Брокер закончил или был оборван на доле spokenRatio от реплики. */
   | { type: 'agent_utterance_end'; id: string; interrupted: boolean; spokenRatio: number }
   /** Брокер «думает» — в пайплайне это ожидание модели, на экране это пауза в трубке. */

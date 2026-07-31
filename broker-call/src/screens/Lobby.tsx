@@ -3,12 +3,16 @@ import { SCENARIOS } from '../data/scenarios'
 import { getBroker } from '../data/brokers'
 import { useCallStore } from '../store/useCallStore'
 import { useLangStore, useLocalized, useT } from '../i18n/useT'
+import { loadProgress } from '../store/progress'
 import type { Lang } from '../types'
+import { useMemo } from 'react'
 
 export function Lobby() {
   const t = useT()
   const localized = useLocalized()
   const openIncoming = useCallStore((s) => s.openIncoming)
+  // Читаем при входе в список: пока идёт звонок, прогресс всё равно не меняется.
+  const progress = useMemo(() => loadProgress(), [])
 
   return (
     <div className="shell">
@@ -35,6 +39,14 @@ export function Lobby() {
                   <span className="call-card-title">{localized(scenario.title)}</span>
                   <span className="call-card-who">
                     {broker.name} · {broker.company}
+                    {progress[scenario.id] ? (
+                      <>
+                        {' · '}
+                        <span className="call-card-best mono">
+                          {t('lobby.best')} {progress[scenario.id]!.bestScore}
+                        </span>
+                      </>
+                    ) : null}
                   </span>
                 </span>
                 <Difficulty level={scenario.difficulty} />
