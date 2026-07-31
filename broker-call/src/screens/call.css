@@ -1,0 +1,365 @@
+/* ── Экран звонка ──────────────────────────────────────────────────────────
+   Одна вертикальная колонка. Никаких боковых панелей: всё, что происходит,
+   происходит в ленте разговора — включая то, что брокер лезет в систему. */
+
+.call {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100dvh;
+  background:
+    radial-gradient(120% 80% at 50% 0%, rgba(217, 164, 65, 0.05), transparent 60%),
+    var(--bg);
+}
+
+/* ── Шапка ── */
+
+.call-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s4) var(--s5) var(--s3);
+  border-bottom: 1px solid var(--line);
+  padding-top: max(var(--s4), env(safe-area-inset-top));
+}
+
+.call-who {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  min-width: 0;
+}
+
+.call-name {
+  font-size: var(--text-md);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.call-company {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.call-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  flex-shrink: 0;
+}
+
+.call-timer {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+/* Состояние линии: точка + слово. Единственный «индикатор» в интерфейсе. */
+.line-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.line-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  transition: background var(--fast) var(--ease);
+}
+
+.line-state[data-state='live'] .line-dot,
+.line-state[data-state='listening'] .line-dot {
+  background: var(--live);
+}
+.line-state[data-state='listening'] .line-dot {
+  animation: pulse 1.3s var(--ease) infinite;
+}
+.line-state[data-state='ringing'] .line-dot,
+.line-state[data-state='hold'] .line-dot,
+.line-state[data-state='thinking'] .line-dot {
+  background: var(--accent);
+  animation: pulse 1.6s var(--ease) infinite;
+}
+.line-state[data-state='ended'] .line-dot {
+  background: var(--alert);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+/* ── Лента ── */
+
+.feed {
+  padding: var(--s6) var(--s5) var(--s7);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Реплики — стенограмма, а не пузыри мессенджера. Роль различается
+   типографикой и отступом, а не цветной плашкой. */
+.turn {
+  animation: rise var(--normal) var(--ease) both;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.turn-who {
+  font-size: var(--text-xs);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--s2);
+}
+
+.turn-broker .turn-text {
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  letter-spacing: -0.011em;
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.turn-dispatcher {
+  padding-left: var(--s5);
+  border-left: 1px solid var(--line-strong);
+}
+
+.turn-dispatcher .turn-text {
+  font-size: var(--text-md);
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+/* Прошедшие реплики отступают на второй план, текущая — в фокусе */
+.turn:not(.turn-active) .turn-text {
+  color: var(--ink-muted);
+}
+.turn-broker:not(.turn-active) .turn-text {
+  color: var(--ink-soft);
+}
+
+/* Слово появляется ровно тогда, когда его произносят */
+.word {
+  opacity: 0.12;
+  transition: opacity 260ms var(--ease);
+}
+.word-shown {
+  opacity: 1;
+}
+
+/* Черновик от Web Speech: виден мгновенно, но помечен как неточный */
+.turn-draft .turn-text {
+  color: var(--ink-muted);
+}
+.turn-draft .turn-text::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -0.13em;
+  background: var(--accent);
+  animation: caret 1s steps(2) infinite;
+}
+
+@keyframes caret {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.turn-cut {
+  font-size: var(--text-xs);
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-top: var(--s2);
+}
+
+/* ── Карточка инструмента ──
+   Вклинивается прямо в ленту: брокер лезет в систему на глазах у студента. */
+
+.tool {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-raised);
+  overflow: hidden;
+  animation: rise var(--normal) var(--ease) both;
+}
+
+.tool-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid transparent;
+}
+
+.tool[data-status='done'] .tool-head {
+  border-bottom-color: var(--line);
+}
+
+.tool-title {
+  font-size: var(--text-xs);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  flex: 1;
+}
+
+/* Бегущая полоска, пока инструмент работает — на линии в это время hold */
+.tool-progress {
+  height: 1px;
+  background: var(--accent-dim);
+  position: relative;
+  overflow: hidden;
+}
+.tool-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: var(--accent);
+  animation: sweep 1.1s var(--ease) infinite;
+}
+@keyframes sweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(350%); }
+}
+
+.tool-body {
+  padding: var(--s3) var(--s4) var(--s4);
+  display: grid;
+  gap: var(--s2);
+}
+
+.tool-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s4);
+  font-size: var(--text-sm);
+}
+
+.tool-key {
+  color: var(--ink-muted);
+}
+
+.tool-val {
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tool-val[data-tone='bad'] {
+  color: var(--alert);
+}
+.tool-val[data-tone='good'] {
+  color: var(--live);
+}
+
+.tool-lead {
+  font-size: var(--text-md);
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--s1);
+}
+
+/* ── Подвал: волна голоса и незаметный выход ── */
+
+.call-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s3) var(--s5);
+  padding-bottom: max(var(--s3), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+}
+
+/* Индикатор, а не орган управления: нажимать здесь нечего */
+.wave {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+}
+
+.wave-bar {
+  flex: 1;
+  min-width: 2px;
+  max-width: 3px;
+  border-radius: 2px;
+  background: var(--ink-faint);
+  transform-origin: center;
+  transition: transform 90ms linear, background 200ms var(--ease);
+}
+
+.wave-live .wave-bar {
+  background: var(--live);
+}
+
+.call-hint {
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
+
+.call-end {
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius);
+  transition: color var(--fast) var(--ease);
+}
+.call-end:hover {
+  color: var(--alert);
+}
+
+/* ── Полоса ошибки ── */
+
+.call-error {
+  margin: 0 var(--s5) var(--s3);
+  padding: var(--s3) var(--s4);
+  border: 1px solid rgba(217, 119, 87, 0.3);
+  border-radius: var(--radius);
+  background: rgba(217, 119, 87, 0.07);
+  color: var(--alert);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 560px) {
+  .feed {
+    padding: var(--s5) var(--s4) var(--s6);
+    gap: var(--s4);
+  }
+  .call-head,
+  .call-foot {
+    padding-left: var(--s4);
+    padding-right: var(--s4);
+  }
+  .call-company {
+    display: none;
+  }
+}

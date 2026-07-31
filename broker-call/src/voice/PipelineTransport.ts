@@ -1,0 +1,390 @@
+import type { TransportDeps, VoiceTransport } from './types'
+import { MicVad } from './vad'
+import { TelephonyAudio } from './TelephonyAudio'
+import { encodeWav, durationSeconds } from './audio'
+import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript } from '../data/terms'
+import { endpoint } from '../api'
+
+/**
+ * Бесплатный транспорт: VAD → Whisper → LLM → Orpheus.
+ *
+ * Медленнее Realtime (800–1500 мс против 300–800), но не стоит ничего и
+ * работает на тех же ключах, что уже есть у проекта. Наружу отдаёт ровно те же
+ * события, что и RealtimeTransport, поэтому экран звонка их не различает.
+ */
+export class PipelineTransport implements VoiceTransport {
+  private readonly deps: TransportDeps
+  private readonly telephony = new TelephonyAudio()
+  private readonly vad: MicVad
+
+  /** История в формате провайдера. Системный промпт добавляет сервер. */
+  private messages: ChatMessage[] = []
+  private playing: AudioBufferSourceNode | null = null
+  private currentUtterance: { id: string; startedAt: number; durationMs: number } | null = null
+  private preview: SpeechRecognitionLike | null = null
+  private abort: AbortController | null = null
+  private holdTimer: number | null = null
+  private closed = false
+  private busy = false
+
+  onLevel: ((level: number) => void) | null = null
+
+  constructor(deps: TransportDeps) {
+    this.deps = deps
+    this.vad = new MicVad({
+      onSpeechStart: () => this.handleSpeechStart(),
+      onSpeechEnd: (audio) => void this.handleSpeechEnd(audio),
+      onLevel: (level) => this.onLevel?.(level),
+    })
+  }
+
+  async connect(): Promise<void> {
+    await this.telephony.ensureContext()
+
+    // Микрофон запрашиваем ДО гудков: если студент откажет, лучше узнать это
+    // сразу, а не после десяти секунд ожидания ответа.
+    await this.vad.start()
+
+    const stopRing = await this.telephony.ring()
+    await wait(3200)
+    if (this.closed) return
+    stopRing()
+    await this.telephony.pickupClick()
+    void this.telephony.startAmbience()
+
+    this.startPreview()
+
+    // Брокер снимает трубку и говорит первым — как в жизни.
+    this.messages = [{ role: 'assistant', content: this.deps.opening }]
+    await this.speak(this.deps.opening)
+  }
+
+  disconnect(): void {
+    this.closed = true
+    this.abort?.abort()
+    this.stopPreview()
+    this.stopPlayback(false)
+    this.vad.stop()
+    void this.telephony.hangUp()
+    window.setTimeout(() => this.telephony.dispose(), 1200)
+  }
+
+  getMicStream(): MediaStream | null {
+    return this.vad.getStream()
+  }
+
+  /** Заглушить брокера немедленно. Это и есть перебивание. */
+  interrupt(): void {
+    this.stopPlayback(true)
+  }
+
+  // ── Речь студента ─────────────────────────────────────────────────────────
+
+  private handleSpeechStart(): void {
+    this.deps.emit({ type: 'user_speech_start' })
+    // Заговорил поверх брокера — брокер замолкает на полуслове, как человек.
+    if (this.currentUtterance) this.interrupt()
+  }
+
+  private async handleSpeechEnd(audio: Float32Array): Promise<void> {
+    if (this.closed) return
+
+    if (durationSeconds(audio) < 0.35) {
+      this.deps.emit({ type: 'user_dropped', reason: 'too_short' })
+      return
+    }
+
+    this.vad.setPaused(true)
+    try {
+      const text = await this.transcribe(audio)
+      if (!text) {
+        this.deps.emit({ type: 'user_dropped', reason: 'empty' })
+        return
+      }
+      if (looksNonEnglish(text)) {
+        this.deps.emit({ type: 'user_dropped', reason: 'not_english' })
+        return
+      }
+
+      const clean = normalizeTranscript(text)
+      this.deps.emit({ type: 'user_final', text: clean })
+      this.messages.push({ role: 'user', content: clean })
+      await this.runTurn()
+    } catch (e) {
+      this.deps.emit({ type: 'error', message: (e as Error).message, fatal: false })
+    } finally {
+      this.vad.setPaused(false)
+    }
+  }
+
+  private async transcribe(audio: Float32Array): Promise<string> {
+    const form = new FormData()
+    form.append('file', encodeWav(audio), 'speech.wav')
+    form.append('model', 'whisper-large-v3-turbo')
+    form.append('language', 'en')
+    form.append('prompt', WHISPER_PROMPT)
+    form.append('response_format', 'text')
+    form.append('temperature', '0')
+
+    const r = await fetch(endpoint('stt'), { method: 'POST', body: form })
+    if (!r.ok) throw new Error(`STT ${r.status}`)
+    return (await r.text()).trim()
+  }
+
+  // ── Ход брокера ───────────────────────────────────────────────────────────
+
+  private async runTurn(): Promise<void> {
+    if (this.busy) return
+    this.busy = true
+    this.deps.emit({ type: 'agent_thinking', active: true })
+
+    try {
+      // Модель может дёрнуть несколько инструментов подряд (проверить MC, потом
+      // открыть груз). Ограничение нужно, чтобы кривой ответ не закрутил цикл.
+      for (let hop = 0; hop < 5; hop++) {
+        const reply = await this.requestTurn()
+        if (this.closed) return
+
+        if (reply.message) this.messages.push(reply.message)
+
+        if (reply.toolCalls.length > 0) {
+          this.scheduleHold()
+          for (const call of reply.toolCalls) {
+            this.deps.emit({ type: 'tool_start', id: call.id, name: call.name, args: call.arguments })
+            const result = this.deps.runTool(call.name, call.arguments)
+            this.deps.emit({ type: 'tool_end', id: call.id, name: call.name, result })
+            this.messages.push({
+              role: 'tool',
+              tool_call_id: call.id,
+              content: JSON.stringify(result),
+            })
+          }
+          // Инструменты отработали — брокеру есть что сказать, идём на новый круг.
+          continue
+        }
+
+        this.cancelHold()
+        if (reply.content.trim()) await this.speak(reply.content.trim())
+        return
+      }
+      this.deps.emit({ type: 'error', message: 'Брокер завис на инструментах', fatal: false })
+    } catch (e) {
+      this.deps.emit({ type: 'error', message: (e as Error).message, fatal: false })
+    } finally {
+      this.cancelHold()
+      this.busy = false
+      this.deps.emit({ type: 'agent_thinking', active: false })
+    }
+  }
+
+  private async requestTurn(): Promise<TurnReply> {
+    this.abort?.abort()
+    this.abort = new AbortController()
+
+    const r = await fetch(endpoint('turn'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: this.abort.signal,
+      body: JSON.stringify({ scenarioId: this.deps.scenarioId, messages: this.messages }),
+    })
+    if (!r.ok) throw new Error(`LLM ${r.status}`)
+    return (await r.json()) as TurnReply
+  }
+
+  /**
+   * Музыка ожидания включается не сразу: быстрый инструмент отработает за
+   * полсекунды, и врубать hold ради этого — хуже, чем промолчать.
+   */
+  private scheduleHold(): void {
+    if (this.holdTimer !== null) return
+    this.holdTimer = window.setTimeout(() => void this.telephony.startHold(), 900)
+  }
+
+  private cancelHold(): void {
+    if (this.holdTimer !== null) {
+      clearTimeout(this.holdTimer)
+      this.holdTimer = null
+    }
+    this.telephony.stopHold()
+  }
+
+  // ── Голос брокера ─────────────────────────────────────────────────────────
+
+  private async speak(text: string): Promise<void> {
+    const ctx = await this.telephony.ensureContext()
+
+    let buffer: AudioBuffer
+    try {
+      const r = await fetch(endpoint('tts'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: this.deps.voice }),
+      })
+      if (!r.ok) throw new Error(`TTS ${r.status}`)
+      buffer = await ctx.decodeAudioData(await r.arrayBuffer())
+    } catch (e) {
+      // Озвучка отвалилась — реплику всё равно показываем. Молчащий брокер
+      // хуже, чем брокер без голоса.
+      this.deps.emit({ type: 'error', message: `Голос недоступен: ${(e as Error).message}`, fatal: false })
+      const fallbackMs = estimateDurationMs(text)
+      const id = nextId()
+      this.deps.emit({ type: 'agent_utterance_start', id, text, durationMs: fallbackMs })
+      this.currentUtterance = { id, startedAt: performance.now(), durationMs: fallbackMs }
+      await wait(fallbackMs)
+      this.finishUtterance(false)
+      return
+    }
+
+    if (this.closed) return
+
+    const source = ctx.createBufferSource()
+    source.buffer = buffer
+    source.connect(this.telephony.getLineInput() ?? ctx.destination)
+
+    const id = nextId()
+    const durationMs = buffer.duration * 1000
+    // Текст известен целиком ДО озвучки — экран раскрывает его по словам ровно
+    // за длительность аудио, поэтому слова совпадают с голосом.
+    this.deps.emit({ type: 'agent_utterance_start', id, text, durationMs })
+    this.currentUtterance = { id, startedAt: performance.now(), durationMs }
+    this.playing = source
+
+    await new Promise<void>((resolve) => {
+      source.onended = () => resolve()
+      source.start()
+    })
+
+    if (this.playing === source) this.finishUtterance(false)
+  }
+
+  private stopPlayback(interrupted: boolean): void {
+    if (this.playing) {
+      try {
+        this.playing.onended = null
+        this.playing.stop()
+      } catch {
+        /* уже остановлен */
+      }
+      this.playing = null
+    }
+    this.finishUtterance(interrupted)
+  }
+
+  private finishUtterance(interrupted: boolean): void {
+    const current = this.currentUtterance
+    if (!current) return
+    this.currentUtterance = null
+    this.playing = null
+    const spokenRatio = interrupted
+      ? Math.min(1, (performance.now() - current.startedAt) / current.durationMs)
+      : 1
+    this.deps.emit({ type: 'agent_utterance_end', id: current.id, interrupted, spokenRatio })
+  }
+
+  // ── Мгновенный черновик своих слов ────────────────────────────────────────
+
+  /**
+   * Web Speech API рядом с Whisper. Он менее точен, зато выдаёт слова прямо во
+   * время речи — на экране текст появляется без задержки, а через секунду
+   * бесшовно заменяется точным результатом Whisper.
+   */
+  private startPreview(): void {
+    const Ctor =
+      (window as WindowWithSpeech).SpeechRecognition ??
+      (window as WindowWithSpeech).webkitSpeechRecognition
+    if (!Ctor) return
+
+    try {
+      const recognition = new Ctor()
+      recognition.continuous = true
+      recognition.interimResults = true
+      recognition.lang = 'en-US'
+      recognition.onresult = (event: SpeechRecognitionEventLike) => {
+        let interim = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i]
+          if (result && !result.isFinal) interim += result[0]?.transcript ?? ''
+        }
+        if (interim.trim()) this.deps.emit({ type: 'user_partial', text: interim.trim() })
+      }
+      // Браузер сам останавливает распознавание — поднимаем обратно, пока идёт звонок.
+      recognition.onend = () => {
+        if (!this.closed) {
+          try {
+            recognition.start()
+          } catch {
+            /* уже запущен */
+          }
+        }
+      }
+      recognition.onerror = () => undefined
+      recognition.start()
+      this.preview = recognition
+    } catch {
+      // Черновик — приятное дополнение, а не необходимость.
+    }
+  }
+
+  private stopPreview(): void {
+    if (!this.preview) return
+    try {
+      this.preview.onend = null
+      this.preview.stop()
+    } catch {
+      /* всё равно закрываем */
+    }
+    this.preview = null
+  }
+}
+
+// ── Вспомогательное ─────────────────────────────────────────────────────────
+
+export interface ChatMessage {
+  role: 'user' | 'assistant' | 'tool' | 'system'
+  content: string
+  tool_call_id?: string
+  tool_calls?: unknown[]
+}
+
+interface TurnReply {
+  provider: string
+  message?: ChatMessage
+  content: string
+  toolCalls: { id: string; name: string; arguments: unknown }[]
+}
+
+let counter = 0
+function nextId(): string {
+  return `u${++counter}`
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms))
+}
+
+/** Примерно 165 слов в минуту — темп делового телефонного разговора. */
+function estimateDurationMs(text: string): number {
+  const words = text.trim().split(/\s+/).length
+  return Math.max(900, (words / 165) * 60000)
+}
+
+interface SpeechRecognitionLike {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null
+  onend: (() => void) | null
+  onerror: ((event: unknown) => void) | null
+  start(): void
+  stop(): void
+}
+
+interface SpeechRecognitionEventLike {
+  resultIndex: number
+  results: ArrayLike<{ isFinal: boolean; 0?: { transcript: string } }>
+}
+
+interface WindowWithSpeech extends Window {
+  SpeechRecognition?: new () => SpeechRecognitionLike
+  webkitSpeechRecognition?: new () => SpeechRecognitionLike
+}
