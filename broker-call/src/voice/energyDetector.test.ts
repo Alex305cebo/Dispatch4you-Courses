@@ -1,0 +1,79 @@
+import { describe, expect, it } from 'vitest'
+import { DEFAULT_ENERGY_OPTIONS, EnergyDetector, type DetectorSignal } from './energyDetector'
+
+const FRAME = DEFAULT_ENERGY_OPTIONS.frameMs
+
+/** Прогоняет через детектор n кадров одной громкости, собирая события. */
+function feed(d: EnergyDetector, level: number, ms: number): DetectorSignal[] {
+  const events: DetectorSignal[] = []
+  for (let t = 0; t < ms; t += FRAME) {
+    const signal = d.push(level)
+    if (signal) events.push(signal)
+  }
+  return events
+}
+
+/** Тишина, чтобы детектор нашёл уровень фона в комнате. */
+function settle(d: EnergyDetector, noise = 0.004): void {
+  feed(d, noise, 1500)
+}
+
+describe('EnergyDetector', () => {
+  it('ловит начало речи и её конец после паузы', () => {
+    const d = new EnergyDetector()
+    settle(d)
+    expect(feed(d, 0.05, 800)).toEqual(['start'])
+    expect(feed(d, 0.004, 900)).toEqual(['end'])
+  })
+
+  it('не режет фразу на короткой задумчивости', () => {
+    // Главная беда старой версии: пауза «эээ...» отправляла половину фразы.
+    const d = new EnergyDetector()
+    settle(d)
+    feed(d, 0.05, 600)
+    expect(feed(d, 0.004, DEFAULT_ENERGY_OPTIONS.hangoverMs - 100)).toEqual([])
+    expect(feed(d, 0.05, 400)).toEqual([])
+    expect(d.isSpeaking).toBe(true)
+    expect(feed(d, 0.004, 900)).toEqual(['end'])
+  })
+
+  it('игнорирует щелчок — слишком короткий, чтобы быть речью', () => {
+    const d = new EnergyDetector()
+    settle(d)
+    feed(d, 0.05, 64)
+    expect(feed(d, 0.004, 900)).toEqual([])
+  })
+
+  it('подстраивается под шумную комнату и не считает фон речью', () => {
+    const d = new EnergyDetector()
+    settle(d, 0.02) // заметный фон: вентилятор, улица
+    expect(feed(d, 0.02, 2000)).toEqual([])
+    expect(feed(d, 0.2, 800)).toEqual(['start'])
+  })
+
+  it('в тишине не теряет чувствительность к тихому голосу', () => {
+    const d = new EnergyDetector()
+    settle(d, 0.0005) // тише абсолютного пола
+    expect(feed(d, 0.01, 700)).toEqual(['start'])
+  })
+
+  it('переживает несколько фраз подряд', () => {
+    const d = new EnergyDetector()
+    settle(d)
+    const all: DetectorSignal[] = []
+    for (let i = 0; i < 3; i++) {
+      all.push(...feed(d, 0.06, 700))
+      all.push(...feed(d, 0.004, 900))
+    }
+    expect(all).toEqual(['start', 'end', 'start', 'end', 'start', 'end'])
+  })
+
+  it('reset обрывает текущую речь', () => {
+    const d = new EnergyDetector()
+    settle(d)
+    feed(d, 0.05, 500)
+    expect(d.isSpeaking).toBe(true)
+    d.reset()
+    expect(d.isSpeaking).toBe(false)
+  })
+})
