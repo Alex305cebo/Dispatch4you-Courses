@@ -1,0 +1,245 @@
+/* ── Разбор звонка ─────────────────────────────────────────────────────────
+   Не «поздравляем, 7 из 10», а отчёт: что произошло, во сколько это обошлось
+   и что сделать иначе. Цифры считает код, слова пишет модель поверх цифр. */
+
+.debrief {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.debrief-body {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: grid;
+  gap: var(--s6);
+}
+
+/* Итог: одно крупное число и то, что его объясняет */
+.verdict {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--s5);
+  padding-bottom: var(--s5);
+  border-bottom: 1px solid var(--line);
+}
+
+.verdict-score {
+  font-size: 3.5rem;
+  line-height: 0.9;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.verdict-of {
+  font-size: var(--text-md);
+  color: var(--ink-faint);
+  margin-left: 2px;
+}
+
+.verdict-summary {
+  flex: 1;
+  font-size: var(--text-md);
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+
+/* Факты звонка одной строкой */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--s4);
+}
+
+.stat-key {
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--s1);
+}
+
+.stat-val {
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.stat-val[data-tone='bad'] {
+  color: var(--alert);
+}
+
+/* Метрики — полосы, а не кольца: сравнивать между собой проще */
+.metrics {
+  display: grid;
+  gap: var(--s3);
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 10rem 1fr 2.5rem;
+  align-items: center;
+  gap: var(--s4);
+  font-size: var(--text-sm);
+}
+
+.metric-name {
+  color: var(--ink-soft);
+}
+
+.metric-track {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.metric-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+  transform-origin: left;
+  animation: grow var(--slow) var(--ease) both;
+}
+
+@keyframes grow {
+  from { transform: scaleX(0); }
+}
+
+.metric-val {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* Моменты звонка */
+.moments {
+  display: grid;
+  gap: var(--s3);
+}
+
+.moment {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--s3);
+  align-items: start;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+/* Тонкая вертикальная метка вместо иконки — иконки здесь были бы шумом */
+.moment-mark {
+  width: 2px;
+  align-self: stretch;
+  border-radius: 2px;
+  background: var(--live);
+  min-height: 1.2em;
+}
+
+.moment[data-type='miss'] .moment-mark {
+  background: var(--alert);
+}
+
+.section-title {
+  font-size: var(--text-xs);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: var(--s3);
+}
+
+.next-call {
+  padding: var(--s4);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius);
+  background: var(--accent-dim);
+  font-size: var(--text-md);
+  line-height: 1.55;
+}
+
+/* Стенограмма — свёрнутая, разворачивается по желанию */
+.transcript {
+  border-top: 1px solid var(--line);
+  padding-top: var(--s5);
+  display: grid;
+  gap: var(--s4);
+}
+
+.transcript-line {
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.transcript-line[data-role='dispatcher'] {
+  padding-left: var(--s4);
+  border-left: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+}
+
+.transcript-line[data-role='broker'] {
+  color: var(--ink);
+}
+
+.debrief-actions {
+  display: flex;
+  gap: var(--s3);
+  padding: var(--s4) var(--s5);
+  padding-bottom: max(var(--s4), env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+}
+
+.btn {
+  padding: var(--s3) var(--s5);
+  border-radius: var(--radius);
+  border: 1px solid var(--line-strong);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition: all var(--fast) var(--ease);
+}
+
+.btn:hover {
+  border-color: var(--accent-line);
+  color: var(--ink);
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #16100255;
+  color: #180f02;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.08);
+  color: #180f02;
+}
+
+.loading {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
+@media (max-width: 560px) {
+  .debrief-body {
+    padding: var(--s5) var(--s4) var(--s7);
+    gap: var(--s5);
+  }
+  .verdict {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s3);
+  }
+  .metric-row {
+    grid-template-columns: 7rem 1fr 2.5rem;
+  }
+  .debrief-actions {
+    padding-left: var(--s4);
+    padding-right: var(--s4);
+  }
+}

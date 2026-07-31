@@ -1,0 +1,71 @@
+import './shell.css'
+import { SCENARIOS } from '../data/scenarios'
+import { getBroker } from '../data/brokers'
+import { useCallStore } from '../store/useCallStore'
+import { useLangStore, useLocalized, useT } from '../i18n/useT'
+import type { Lang } from '../types'
+
+export function Lobby() {
+  const t = useT()
+  const localized = useLocalized()
+  const openIncoming = useCallStore((s) => s.openIncoming)
+
+  return (
+    <div className="shell">
+      <header className="shell-head">
+        <div>
+          <div className="shell-title">{t('app.title')}</div>
+          <div className="shell-sub">{t('app.subtitle')}</div>
+        </div>
+        <LangSwitch />
+      </header>
+
+      <div className="scroll">
+        <div className="calls">
+          {SCENARIOS.map((scenario, index) => {
+            const broker = getBroker(scenario.brokerId)
+            return (
+              <button
+                key={scenario.id}
+                className="call-card"
+                onClick={() => openIncoming(scenario.id)}
+              >
+                <span className="call-card-index mono">{String(index + 1).padStart(2, '0')}</span>
+                <span>
+                  <span className="call-card-title">{localized(scenario.title)}</span>
+                  <span className="call-card-who">
+                    {broker.name} · {broker.company}
+                  </span>
+                </span>
+                <Difficulty level={scenario.difficulty} />
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Difficulty({ level }: { level: number }) {
+  return (
+    <span className="difficulty" aria-label={`difficulty ${level} of 4`}>
+      {[1, 2, 3, 4].map((n) => (
+        <span key={n} data-on={n <= level} />
+      ))}
+    </span>
+  )
+}
+
+export function LangSwitch() {
+  const { lang, setLang } = useLangStore()
+  return (
+    <div className="lang-switch">
+      {(['ru', 'en'] as Lang[]).map((code) => (
+        <button key={code} aria-pressed={lang === code} onClick={() => setLang(code)}>
+          {code}
+        </button>
+      ))}
+    </div>
+  )
+}

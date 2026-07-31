@@ -119,7 +119,13 @@ export class CallMachine {
     }
 
     const verdict = evaluateCarrier(carrier, this.load)
-    this.patchFacts({ mcNumber: carrier.mc, carrier })
+    // Брокер пробивает номер сразу, как услышал, — значит текущий ход и есть
+    // тот, на котором диспетчер его назвал.
+    this.patchFacts({
+      mcNumber: carrier.mc,
+      mcGivenAtTurn: this.state.facts.mcGivenAtTurn ?? Math.max(1, this.state.turn),
+      carrier,
+    })
     this.advance('qualifying')
 
     if (!verdict.approved) {
@@ -429,6 +435,7 @@ function initialState(broker: BrokerPersona): CallState {
     endedAt: null,
     facts: {
       mcNumber: null,
+      mcGivenAtTurn: null,
       carrier: null,
       equipment: null,
       driverLocation: null,

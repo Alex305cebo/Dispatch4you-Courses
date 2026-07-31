@@ -161,6 +161,8 @@ export interface BookingInfo {
  */
 export interface CallFacts {
   mcNumber: string | null
+  /** На каком ходу диспетчера прозвучал MC. Профессионал называет его сразу. */
+  mcGivenAtTurn: number | null
   carrier: CarrierRecord | null
   equipment: Equipment | null
   driverLocation: string | null
