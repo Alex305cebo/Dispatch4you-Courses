@@ -8,9 +8,14 @@ export default defineConfig(({ mode }) => {
   // и ключей среди этого нет по построению.
   const env = loadEnv(mode, process.cwd(), '')
 
+  // Отпечаток сборки виден на экране списка звонков: «ты точно обновил
+  // страницу?» решается взглядом, а не перепиской.
+  const buildId = new Date().toISOString().slice(0, 16).replace('T', ' ')
+
   return {
     // Приложение живёт в подпапке сайта, а не в корне домена.
     base: '/broker-call/',
+    define: { __BUILD_ID__: JSON.stringify(buildId) },
     plugins: [react(), brokerApi(env)],
     server: { port: 5180, host: true },
     // vad-web тянет .onnx и wasm — их нельзя инлайнить

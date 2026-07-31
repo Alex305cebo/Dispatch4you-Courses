@@ -4,6 +4,7 @@ import { getBroker } from '../data/brokers'
 import { useCallStore } from '../store/useCallStore'
 import { useLangStore, useLocalized, useT } from '../i18n/useT'
 import { loadProgress } from '../store/progress'
+import { BUILD_ID } from '../fatal'
 import type { Lang } from '../types'
 import { useMemo } from 'react'
 
@@ -23,6 +24,10 @@ export function Lobby() {
         </div>
         <LangSwitch />
       </header>
+
+      {/* Отпечаток сборки: вопрос «а ты точно обновил страницу» решается
+          взглядом, а не перепиской. */}
+      <div className="build-id mono">{BUILD_ID}</div>
 
       <div className="scroll">
         <div className="calls">

@@ -141,14 +141,32 @@ const DICTS: Record<Lang, Record<Key, string>> = { ru: RU, en: EN }
 
 const STORAGE_KEY = 'broker-call:lang'
 
+/**
+ * Safari при строгих настройках приватности бросает исключение на самом
+ * обращении к localStorage — не возвращает null, а падает. Вызов стоит на
+ * старте модуля, поэтому непойманная ошибка роняла приложение до первой
+ * отрисовки: белый экран вместо тренажёра.
+ */
 export function detectLang(): Lang {
-  const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved === 'ru' || saved === 'en') return saved
-  return navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en'
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved === 'ru' || saved === 'en') return saved
+  } catch {
+    // Хранилище недоступно — язык определим по браузеру.
+  }
+  try {
+    return navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en'
+  } catch {
+    return 'ru'
+  }
 }
 
 export function saveLang(lang: Lang): void {
-  localStorage.setItem(STORAGE_KEY, lang)
+  try {
+    localStorage.setItem(STORAGE_KEY, lang)
+  } catch {
+    // Приватный режим: язык не запомнится, но переключение сработает.
+  }
 }
 
 export function translator(lang: Lang) {
