@@ -41,11 +41,17 @@ export function unlockAudio(): void {
 export function getSharedAudioContext(): AudioContext {
   if (!shared) {
     // iOS считает Web Audio фоновым звуком и глушит переключателем «без
-    // звука»; playback переводит его в категорию воспроизведения медиа.
+    // звука». Категорию надо поднять — но именно до play-and-record.
+    //
+    // Ловушка: playback выглядит подходящим и мьют действительно игнорирует,
+    // однако это режим плеера, и он ЗАПРЕЩАЕТ захват микрофона. Тренажёр на
+    // нём падал ещё до гудков с «AudioSession category is not compatible with
+    // audio capture», потому что звонок обязан одновременно и играть, и
+    // слушать. play-and-record разрешает оба и мьют тоже не слушается.
     const session = (navigator as NavigatorWithAudioSession).audioSession
     if (session) {
       try {
-        session.type = 'playback'
+        session.type = 'play-and-record'
       } catch {
         // Свойство нестандартное и не везде доступно на запись.
       }
