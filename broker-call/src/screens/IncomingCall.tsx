@@ -3,6 +3,7 @@ import './shell.css'
 import { useCallStore } from '../store/useCallStore'
 import { getBroker } from '../data/brokers'
 import { useLocalized, useT } from '../i18n/useT'
+import { unlockAudio } from '../voice/audioUnlock'
 
 /**
  * Входящий вызов — единственный экран, где студент что-то нажимает.
@@ -36,6 +37,10 @@ export function IncomingCall() {
           className="answer"
           disabled={answering}
           onClick={() => {
+            // Первым делом и строго синхронно: iOS отдаёт звук только тому,
+            // что стартовало внутри жеста. Всё, что после первого await, —
+            // уже поздно, и брокер остался бы немым без единой ошибки.
+            unlockAudio()
             setAnswering(true)
             void answer()
           }}

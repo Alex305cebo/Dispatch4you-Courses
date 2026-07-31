@@ -10,6 +10,8 @@
  * телефонного канала. Это единственная причина, по которой синтезированная
  * речь перестаёт звучать как диктор в наушниках и начинает — как человек в трубке.
  */
+import { getSharedAudioContext } from './audioUnlock'
+
 export class TelephonyAudio {
   private ctx: AudioContext | null = null
   private ringTimer: number | null = null
@@ -20,21 +22,10 @@ export class TelephonyAudio {
 
   async ensureContext(): Promise<AudioContext> {
     if (!this.ctx) {
-      // iOS считает Web Audio «фоновым» звуком (категория ambient), а такой
-      // звук глушится переключателем «без звука» и в Пункте управления. На
-      // iPad это выглядит как полностью немой тренажёр при исправном коде.
-      // Категория playback говорит системе, что это воспроизведение медиа —
-      // как у плеера, который мьют не выключает.
-      const session = (navigator as NavigatorWithAudioSession).audioSession
-      if (session) {
-        try {
-          session.type = 'playback'
-        } catch {
-          // Свойство есть не везде и не всегда доступно на запись.
-        }
-      }
-
-      this.ctx = new AudioContext()
+      // Берём общий контекст, разблокированный жестом в момент нажатия
+      // «Ответить». Свой собственный пришлось бы разблокировать отдельно, а
+      // жеста к этому моменту уже нет — на iOS он остался бы немым.
+      this.ctx = getSharedAudioContext()
       this.lineOut = this.ctx.createGain()
       this.lineOut.gain.value = 1
 
@@ -219,7 +210,9 @@ export class TelephonyAudio {
     this.stopHold()
     this.stopAmbience()
     if (this.ringTimer !== null) clearTimeout(this.ringTimer)
-    void this.ctx?.close()
+    // Контекст общий на всю страницу и разблокирован жестом — закрыть его
+    // значит остаться без звука до перезагрузки. Отпускаем только свои узлы.
+    this.lineOut?.disconnect()
     this.ctx = null
     this.lineOut = null
   }
@@ -245,10 +238,3 @@ export class TelephonyAudio {
   }
 }
 
-/**
- * `navigator.audioSession` — расширение Safari (16.4+). В стандартных типах
- * его нет, поэтому описываем ровно то, чем пользуемся.
- */
-interface NavigatorWithAudioSession extends Navigator {
-  audioSession?: { type: string }
-}
