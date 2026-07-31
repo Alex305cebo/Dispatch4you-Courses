@@ -20,6 +20,20 @@ export class TelephonyAudio {
 
   async ensureContext(): Promise<AudioContext> {
     if (!this.ctx) {
+      // iOS считает Web Audio «фоновым» звуком (категория ambient), а такой
+      // звук глушится переключателем «без звука» и в Пункте управления. На
+      // iPad это выглядит как полностью немой тренажёр при исправном коде.
+      // Категория playback говорит системе, что это воспроизведение медиа —
+      // как у плеера, который мьют не выключает.
+      const session = (navigator as NavigatorWithAudioSession).audioSession
+      if (session) {
+        try {
+          session.type = 'playback'
+        } catch {
+          // Свойство есть не везде и не всегда доступно на запись.
+        }
+      }
+
       this.ctx = new AudioContext()
       this.lineOut = this.ctx.createGain()
       this.lineOut.gain.value = 1
@@ -229,4 +243,12 @@ export class TelephonyAudio {
       osc.stop(now + seconds)
     }
   }
+}
+
+/**
+ * `navigator.audioSession` — расширение Safari (16.4+). В стандартных типах
+ * его нет, поэтому описываем ровно то, чем пользуемся.
+ */
+interface NavigatorWithAudioSession extends Navigator {
+  audioSession?: { type: string }
 }
