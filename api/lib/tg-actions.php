@@ -97,10 +97,13 @@ function handleCallback($token, array $cq) {
     $draft = brokerEmailDraft($src, isset($st['carrier']) ? $st['carrier'] : '');
     $st['draft'] = $draft;
     stateSet($chatId, $st);
-    reply($token, $chatId, draftAsText($draft) . "\n\n— — —\n"
-      . "✏️ Поправить: /edit и новый текст\n"
+    // Два отдельных сообщения: сначала «что это и куда», потом ЧИСТЫЙ текст
+    // письма — его и копируют целиком, без единой лишней строки.
+    reply($token, $chatId, draftMeta($draft,
+      "✏️ Поправить: /edit и новый текст\n"
       . "📤 Отправить: /send — открою письмо в вашей почте\n"
-      . "🖊 Подпись компании: /carrier");
+      . "🖊 Подпись компании: /carrier"));
+    reply($token, $chatId, draftAsText($draft));
     return;
   }
   if ($data === 'ph:an') {
