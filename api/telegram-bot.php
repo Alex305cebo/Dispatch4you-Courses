@@ -116,7 +116,9 @@ if (isset($_GET['diag'])) {
 if (isset($_GET['geminicheck'])) {
   header('Content-Type: text/plain; charset=utf-8');
   require_once __DIR__ . '/lib/load-photo.php';
-  if (geminiKey() === null) { echo "gemini.key: НЕТ ФАЙЛА\n"; exit; }
+  // Путь печатаем: перепутанный уровень вложенности уже подводил
+  $kp = realpath(__DIR__ . '/../..') . '/gemini.key';
+  if (geminiKey() === null) { echo "gemini.key: не найден или пуст\nискали тут: $kp\n"; exit; }
   // 1x1 白 PNG — минимальная картинка, чтобы проверить именно vision-путь
   $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
   list($data, $err) = photoExtractLoad($png, 'image/png');

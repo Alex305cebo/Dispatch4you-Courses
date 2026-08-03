@@ -15,8 +15,10 @@ const GEMINI_MODEL = 'gemini-2.5-flash';
 // Ориентиры $/милю по типу трейлера (без топливной надбавки), лето 2026.
 const RPM_BASELINE = array('VAN' => 2.15, 'REEFER' => 2.45, 'FLATBED' => 2.40, 'POWER ONLY' => 1.60);
 
+// Этот файл лежит в api/lib/, то есть на уровень глубже telegram-bot.php:
+// до папки с ключами (рядом с public_html) отсюда ТРИ шага вверх, а не два.
 function geminiKey() {
-  $k = @trim(file_get_contents(__DIR__ . '/../../gemini.key'));
+  $k = @trim(file_get_contents(__DIR__ . '/../../../gemini.key'));
   return ($k === '' || $k === false) ? null : $k;
 }
 
