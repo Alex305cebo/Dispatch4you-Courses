@@ -117,6 +117,10 @@ function photoKeyboard(array $d, $lang = 'ru') {
     array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'ph:mail')),
   );
   if (!empty($d['mc'])) $rows[] = array(array('text' => $lang === 'en' ? '🔎 Check broker' : '🔎 Проверить брокера', 'callback_data' => 'ph:mc'));
+  // Та же кнопка на полный разбор, что у рейт-кона — раньше её тут не было
+  // вообще, разбор со скриншота не вёл на сайт.
+  $url = photoAppLink($d);
+  if ($url !== null) $rows[] = array(array('text' => $lang === 'en' ? '📊 Full breakdown with map' : '📊 Полный разбор с картой', 'url' => $url));
   $rows[] = array(langToggleButton($lang, 'photo'));
   return $rows;
 }

@@ -935,6 +935,42 @@ function appLink(array $d) {
   return APP_DEMO_URL . '#' . http_build_query($p);
 }
 
+// Та же ссылка, но из плоской структуры груза со скриншота (photoExtractLoad) —
+// там нет стопов, только origin/destination и время текстом. Поля, которых
+// у скриншота в принципе не бывает (точный адрес склада, дата отдельно от
+// времени), просто не заполняются — приложение и на этом соберёт разбор.
+function photoAppLink(array $d) {
+  $num = function ($v) { $v = preg_replace('/[^0-9.]/', '', (string)$v); return $v === '' ? null : $v; };
+  $p = array();
+  $rate = $num(isset($d['rate']) ? $d['rate'] : '');
+  $miles = $num(isset($d['miles']) ? $d['miles'] : '');
+  $dh = $num(isset($d['deadhead']) ? $d['deadhead'] : '');
+  if ($rate !== null)  $p['rate']  = $rate;
+  if ($miles !== null) $p['miles'] = $miles;
+  if ($dh !== null)    $p['dh']    = $dh;
+  // Рыночная ставка биржи иногда сумма рейса, иногда уже $/милю — как и в аналитике.
+  $spot = $num(isset($d['spot_rate']) ? $d['spot_rate'] : '');
+  if ($spot !== null) {
+    $spotRpm = $spot < 20 ? $spot : ($miles !== null && (float)$miles > 0 ? $spot / (float)$miles : null);
+    if ($spotRpm !== null) $p['spot'] = round($spotRpm, 2);
+  }
+  if (!empty($d['origin']))      $p['origin'] = $d['origin'];
+  if (!empty($d['destination'])) $p['dest']   = $d['destination'];
+  if (!empty($d['broker']))      $p['bn']     = $d['broker'];
+  if (!empty($d['mc']))          $p['mc']     = $d['mc'];
+  if (!empty($d['email']))       $p['email']  = $d['email'];
+  if (!empty($d['phone']))       $p['phone']  = $d['phone'];
+  if (!empty($d['reference']))   $p['ref']    = $d['reference'];
+  if (!empty($d['pickup']))      $p['pt']     = $d['pickup'];
+  if (!empty($d['delivery']))    $p['dt']     = $d['delivery'];
+  if (!empty($d['weight']))      $p['wt']     = $d['weight'];
+  if (!empty($d['commodity']))   $p['cm']     = $d['commodity'];
+  if (!empty($d['equipment']))   $p['eq']     = $d['equipment'];
+  if (!empty($d['notes']))       $p['notes']  = $d['notes'];
+  if (!$p) return null;
+  return APP_DEMO_URL . '#' . http_build_query($p);
+}
+
 // URL-кнопка, а не callback: подписка вебхука — только на "message", и callback_query
 // до нас бы просто не дошёл. Ссылка открывается сразу, без ответа от бота.
 function replyWithButton($token, $chatId, $text, $btnText, $url) {
