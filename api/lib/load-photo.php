@@ -22,6 +22,87 @@ function geminiKey() {
   return ($k === '' || $k === false) ? null : $k;
 }
 
+// Цепочка моделей: кончилась квота у одной — молча переходим к следующей.
+// Порядок продиктован реальными лимитами аккаунта (консоль AI Studio):
+// у Flash-моделей всего 20 запросов В СУТКИ, у Flash Lite — 500. Поэтому
+// сначала более сильные Flash (пока дневной лимит цел), потом Lite с
+// 25-кратным запасом. TPM (250K) в расчёт не берём — он огромен.
+// Порядок: качество → выносливость. Список правится здесь одной строкой.
+const GEMINI_CHAIN = array(
+  'gemini-2.5-flash',       // основной: проверен на скриншотах и рейт-конах
+  'gemini-flash-latest',    // свежая Flash — алиас, живёт дольше версионных ID
+  'gemini-flash-lite-latest', // 500 запросов в сутки — рабочая лошадка при потоке
+  'gemini-2.5-flash-lite',  // явная версия Lite на случай, если алиас недоступен
+);
+
+/** Похоже ли на «квота/лимит», то есть стоит ли пробовать следующую модель. */
+function geminiQuotaError($msg) {
+  return stripos($msg, 'quota') !== false
+      || stripos($msg, 'rate limit') !== false
+      || stripos($msg, 'RESOURCE_EXHAUSTED') !== false
+      || stripos($msg, 'overloaded') !== false
+      || stripos($msg, 'UNAVAILABLE') !== false;
+}
+
+/**
+ * Текст -> структурированный JSON через Gemini. Используется для разбора
+ * рейт-конов: у Groq бесплатный лимит 8000 токенов/мин (≈1 документ в минуту),
+ * а один рейт-кон Trinity — 20+ тысяч символов, которые ещё и не влезали в
+ * прежнюю обрезку по 14000. У Gemini контекст на порядки больше, поэтому
+ * документ уходит целиком.
+ *
+ * @return array{0:?array,1:string,2:string} [данные, код ошибки, сработавшая модель]
+ */
+function geminiStructure($sys, $text, $models = null) {
+  $key = geminiKey();
+  if ($key === null) return array(null, 'nokey', '');
+  if ($models === null) $models = GEMINI_CHAIN;
+
+  $body = json_encode(array(
+    'contents' => array(array('parts' => array(array('text' => $text)))),
+    'systemInstruction' => array('parts' => array(array('text' => $sys))),
+    'generationConfig' => array(
+      'temperature' => 0,
+      'maxOutputTokens' => 4096,
+      // Без этого «размышления» съедают весь лимит вывода и приходит пустой
+      // ответ вообще без ошибки — грабля, на которую уже наступали.
+      'thinkingConfig' => array('thinkingBudget' => 0),
+      'responseMimeType' => 'application/json',
+    ),
+  ));
+
+  $lastErr = '';
+  foreach ($models as $model) {
+    $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent');
+    curl_setopt_array($ch, array(
+      CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 120,
+      CURLOPT_POSTFIELDS => $body,
+      CURLOPT_HTTPHEADER => array('Content-Type: application/json', 'x-goog-api-key: ' . $key),
+    ));
+    $raw = curl_exec($ch);
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    $resp = json_decode((string)$raw, true);
+
+    if (is_array($resp) && isset($resp['error'])) {
+      $msg = isset($resp['error']['message']) ? $resp['error']['message'] : '';
+      $lastErr = 'api[' . $model . ']:' . substr($msg, 0, 160);
+      // 429/квота/перегруз — пробуем следующую модель. Прочие ошибки (неверный
+      // ключ, кривой запрос) на другой модели повторятся, поэтому выходим сразу.
+      if ($code == 429 || geminiQuotaError($msg)) continue;
+      if ($code == 404) continue; // модели нет на этом аккаунте — просто идём дальше
+      return array(null, $lastErr, $model);
+    }
+    if (!is_array($resp)) { $lastErr = 'api[' . $model . ']:' . substr((string)$raw, 0, 160); continue; }
+
+    $out = isset($resp['candidates'][0]['content']['parts'][0]['text']) ? $resp['candidates'][0]['content']['parts'][0]['text'] : '';
+    $data = json_decode($out, true);
+    if (!is_array($data)) { $lastErr = 'nojson[' . $model . ']:' . substr($out, 0, 160); continue; }
+    return array($data, '', $model);
+  }
+  return array(null, $lastErr === '' ? 'no models available' : $lastErr, '');
+}
+
 /**
  * Картинка -> структура груза.
  * @return array{0:?array,1:string} [данные, код ошибки: ''|'nokey'|'api'|'nojson'|'notload']

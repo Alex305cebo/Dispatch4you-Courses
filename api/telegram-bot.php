@@ -144,6 +144,74 @@ if (isset($_GET['diag'])) {
   exit;
 }
 
+// ── ВРЕМЕННО: какие модели Gemini реально доступны нашему ключу ──────
+// Названия в консоли AI Studio — витринные, у API свои идентификаторы.
+// Спрашиваем сам API, а не гадаем. Удалить после настройки цепочки.
+if (isset($_GET['gemprobe'])) {
+  header('Content-Type: text/plain; charset=utf-8');
+  if ($_GET['gemprobe'] !== 'b41f7ac9e2d5') { http_response_code(403); echo 'bad token'; exit; }
+  require_once __DIR__ . '/lib/load-photo.php';
+  $key = geminiKey();
+  if ($key === null) { echo "gemini.key нет\n"; exit; }
+
+  // 1. Официальный список моделей аккаунта
+  $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200');
+  curl_setopt_array($ch, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 60,
+    CURLOPT_HTTPHEADER => array('x-goog-api-key: ' . $key)));
+  $list = json_decode((string)curl_exec($ch), true);
+  curl_close($ch);
+  echo "=== ДОСТУПНЫЕ МОДЕЛИ (generateContent) ===\n";
+  foreach ((array)(isset($list['models']) ? $list['models'] : array()) as $m) {
+    $methods = (array)(isset($m['supportedGenerationMethods']) ? $m['supportedGenerationMethods'] : array());
+    if (!in_array('generateContent', $methods, true)) continue;
+    $id = str_replace('models/', '', $m['name']);
+    if (stripos($id, 'flash') === false && stripos($id, 'pro') === false) continue;
+    echo str_pad($id, 44) . (isset($m['inputTokenLimit']) ? 'вход ' . number_format($m['inputTokenLimit']) : '') . "\n";
+  }
+
+  // 2. Живая проверка нашей цепочки — отвечает ли каждая модель на самом деле
+  echo "\n=== ПРОВЕРКА ЦЕПОЧКИ ===\n";
+  foreach (GEMINI_CHAIN as $model) {
+    list($d, $e) = geminiStructure('Return ONLY {"ok":true}', 'ping', array($model));
+    echo str_pad($model, 30) . ($d !== null ? 'РАБОТАЕТ' : 'нет: ' . substr($e, 0, 110)) . "\n";
+  }
+  exit;
+}
+
+// ── ВРЕМЕННО: сравнение Gemini vs Groq на реальном тексте рейт-кона ──
+// Нужно ровно на время переезда с Groq на Gemini, чтобы решение о смене
+// движка стояло на цифрах. Закрыто одноразовым токеном; удалить после проверки.
+if (isset($_GET['rctest'])) {
+  header('Content-Type: application/json; charset=utf-8');
+  if ($_GET['rctest'] !== 'b41f7ac9e2d5') { http_response_code(403); echo '{"error":"bad token"}'; exit; }
+  $t = file_get_contents('php://input');
+  if (trim($t) === '') { echo '{"error":"post the extracted text as the body"}'; exit; }
+  require_once __DIR__ . '/lib/load-photo.php';
+  $sysT = rcPrompt();
+
+  $t0 = microtime(true);
+  list($gem, $gemErr) = geminiStructure($sysT, $t);
+  $gemSec = round(microtime(true) - $t0, 1);
+
+  $groqKey = @trim(file_get_contents(__DIR__ . '/../../groq.key'));
+  $t1 = microtime(true);
+  $body = json_encode(array('model' => GROQ_MODEL, 'temperature' => 0, 'max_tokens' => 2000,
+    'response_format' => array('type' => 'json_object'),
+    'messages' => array(array('role' => 'system', 'content' => $sysT),
+                        array('role' => 'user', 'content' => mb_substr($t, 0, 14000)))));
+  $gr = json_decode(httpPost('https://api.groq.com/openai/v1/chat/completions', $body,
+    array('Authorization: Bearer ' . $groqKey, 'Content-Type: application/json')), true);
+  $groqSec = round(microtime(true) - $t1, 1);
+  $groqJson = isset($gr['choices'][0]['message']['content']) ? json_decode($gr['choices'][0]['message']['content'], true) : null;
+
+  echo json_encode(array(
+    'chars' => mb_strlen($t),
+    'gemini' => array('sec' => $gemSec, 'err' => $gemErr, 'data' => $gem),
+    'groq' => array('sec' => $groqSec, 'err' => isset($gr['error']['code']) ? $gr['error']['code'] : '', 'data' => $groqJson),
+  ), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+  exit;
+}
+
 // ── Живой ли ключ FMCSA (проверка брокера). Ключ наружу не отдаём ──
 if (isset($_GET['fmcsacheck'])) {
   header('Content-Type: text/plain; charset=utf-8');
@@ -410,83 +478,57 @@ if (mb_strlen($text) < 100) {
   reply($token, $chatId, HELP_SCAN);
   echo 'ok'; exit;
 }
-if (mb_strlen($text) > 14000) $text = mb_substr($text, 0, 14000);
+// Разбирает Gemini, а у него контекст на порядки больше — режем только для
+// защиты от аномалий (200-страничный скан вместо рейт-кона), а не потому,
+// что модель не потянет. Раньше стояло 14000, и документы Trinity (20-22 тыс.)
+// теряли хвост: сегодня повезло, что данные были на первой странице.
+if (mb_strlen($text) > 200000) $text = mb_substr($text, 0, 200000);
 
-// ── Groq: текст → структурированный JSON ────────────────────────────
+// ── Текст → структурированный JSON ─────────────────────────────────
 $groqKey = @trim(file_get_contents(__DIR__ . '/../../groq.key'));
-if ($groqKey === '' || $groqKey === false) { fail($token, $chatId, 'groq.key missing'); exit; }
 
-// Промпт проверен на живых рейт-конах: без запрета «придумывать» модель
-// подставляет адрес офиса брокера и выдуманные реф-номера.
-$sys = "You extract data from freight Rate Confirmation documents.\n"
-. "The text is extracted from a PDF, so table columns may be interleaved and spacing is irregular. Read carefully.\n\n"
-. "Return ONLY a JSON object:\n"
-. "{\"load_id\":\"\",\"broker\":\"\",\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
-. "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
-. "CRITICAL RULES:\n"
-. "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
-. "- If a value is not in the document, use an empty string (or empty array). An empty field is CORRECT; an invented field is a serious error.\n"
-. "- Strip label words glued to a value: 'Appointment', 'Time', 'Ref', 'Weight', '#'. Keep only the value.\n"
-. "- load_id: the load/order/PRO number of this shipment.\n"
-. "- broker: the company issuing the rate confirmation (not the carrier).\n"
-. "- stops: pickups (PICK, PICKUP, SHIPPER) and deliveries (STOP, DROP, CONSIGNEE, DELIVERY), in document order.\n"
-. "- name: facility name. address_lines: the street line(s) AND then the 'CITY ST ZIP' line.\n"
-. "- address_lines MUST contain the CITY ST ZIP line whenever it appears in the document (e.g. 'EASTABOGA AL 36260'). "
-. "An address without its city line is unusable for a driver — never omit it.\n"
-. "- time: appointment date and window as printed, e.g. '02/02/26 @ 12:30' or '07/24/26 06:00 - 17:00'.\n"
-. "- refs: EVERY reference number belonging to that stop. Format each as '<LABEL> <NUMBER>' using the label as printed "
-. "(PU, PO, BOL, Order#). If the label is only 'Ref' or 'Ref #', output the number alone.\n"
-. "- Some rate cons print stops as a TABLE with a 'Pick/Drop #' or 'PU/Delv #' column instead of labelled refs. "
-. "There the pickup/delivery number is a bare code sitting right after the stop's weight or time "
-. "(e.g. '41870.00lbs 1713693K' means ref '1713693K'). Treat those bare codes as that stop's refs. "
-. "Do NOT invent a label for them — output the code alone.\n"
-. "- rate: the TOTAL rate paid to the carrier, with currency as printed.\n"
-. "- weight: shipment weight in pounds. miles: trip distance. Labels and values are often on separate lines — "
-. "match them by column position, not adjacency.\n"
-. "- commodity: the goods description ONLY, never the trailer type. equipment: trailer type (VAN, REEFER, FLATBED, POWER ONLY).\n"
-. "Output JSON only, no commentary.";
+$sys = rcPrompt();
 
-$body = json_encode(array(
-  'model' => GROQ_MODEL,
-  'temperature' => 0,
-  // Без явного лимита Groq обрывает ответ на полуслове и JSON не валидируется.
-  // Больше 2000 не нужно даже на рейт-кон с пятью стопами, а лимит TPM
-  // на бесплатном тарифе считает max_tokens как уже потраченные.
-  'max_tokens' => 2000,
-  'response_format' => array('type' => 'json_object'),
-  'messages' => array(
-    array('role' => 'system', 'content' => $sys),
-    array('role' => 'user', 'content' => $text),
-  ),
-));
+// Основной разборщик — Gemini: документ уходит целиком, лимиты позволяют
+// пользоваться ботом больше чем одному человеку в минуту.
+require_once __DIR__ . '/lib/load-photo.php';
+list($load, $gemErr) = geminiStructure($sys, $text);
 
-// Бесплатный тариф Groq — 8000 токенов в минуту, один рейт-кон съедает
-// заметную часть. Упёрлись в лимит — ждём столько, сколько просит API, и
-// пробуем ещё раз, вместо того чтобы огорчать пользователя.
-$resp = null;
-for ($attempt = 1; $attempt <= 2; $attempt++) {
-  $resp = json_decode(httpPost('https://api.groq.com/openai/v1/chat/completions', $body, array(
-    'Authorization: Bearer ' . $groqKey, 'Content-Type: application/json')), true);
-  if (!isset($resp['error']['code']) || $resp['error']['code'] !== 'rate_limit_exceeded') break;
-  if ($attempt === 2) break;
-  $wait = 3;
-  if (preg_match('/try again in ([\d.]+)(ms|s)/i', (string)$resp['error']['message'], $rm)) {
-    $wait = $rm[2] === 'ms' ? 1 : min(20, (int)ceil((float)$rm[1]) + 1);
-  }
-  sleep($wait);
-}
-$raw = isset($resp['choices'][0]['message']['content']) ? $resp['choices'][0]['message']['content'] : '';
-$load = json_decode($raw, true);
+// Страховка: если Gemini недоступен (нет ключа, квота, сбой) — добираем через
+// Groq, он уже настроен для расширения DAT и голосового тренажёра. У Groq
+// контекст меньше, поэтому туда текст идёт обрезанным.
+$groqErrCode = '';
 if (!is_array($load)) {
-  // Причину называем словами пользователя, а не «попробуйте позже»:
-  // ошибки Groq различаются, и человек должен понимать, что делать.
-  $apiErr = isset($resp['error']['code']) ? $resp['error']['code'] : (isset($resp['error']['type']) ? $resp['error']['type'] : '');
+  $groqKey = @trim(file_get_contents(__DIR__ . '/../../groq.key'));
+  if ($groqKey !== '' && $groqKey !== false) {
+    $body = json_encode(array(
+      'model' => GROQ_MODEL,
+      'temperature' => 0,
+      // Без явного лимита Groq обрывает ответ на полуслове и JSON не валидируется.
+      'max_tokens' => 2000,
+      'response_format' => array('type' => 'json_object'),
+      'messages' => array(
+        array('role' => 'system', 'content' => $sys),
+        array('role' => 'user', 'content' => mb_substr($text, 0, 14000)),
+      ),
+    ));
+    $resp = json_decode(httpPost('https://api.groq.com/openai/v1/chat/completions', $body, array(
+      'Authorization: Bearer ' . $groqKey, 'Content-Type: application/json')), true);
+    $raw = isset($resp['choices'][0]['message']['content']) ? $resp['choices'][0]['message']['content'] : '';
+    $load = json_decode($raw, true);
+    $groqErrCode = isset($resp['error']['code']) ? $resp['error']['code'] : '';
+  }
+}
+
+if (!is_array($load)) {
+  // Причину называем словами пользователя, а не «попробуйте позже».
   $why = 'сервис разбора вернул неожиданный ответ';
-  if ($apiErr === 'json_validate_failed')      $why = 'документ слишком длинный — модель не успела дописать разбор';
-  elseif ($apiErr === 'rate_limit_exceeded')   $why = 'сервис разбора перегружен, попробуйте через минуту';
-  elseif (stripos($apiErr, 'authentication') !== false) $why = 'ключ сервиса разбора недействителен (это на нашей стороне)';
-  elseif ($raw === '')                         $why = 'сервис разбора не ответил';
-  fail($token, $chatId, 'groq bad answer: ' . mb_substr($raw !== '' ? $raw : json_encode($resp), 0, 500), $why);
+  if (strpos($gemErr, 'nokey') === 0)                  $why = 'ключ сервиса разбора не настроен (это на нашей стороне)';
+  elseif (stripos($gemErr, 'quota') !== false)          $why = 'дневной лимит сервиса разбора исчерпан';
+  elseif ($groqErrCode === 'rate_limit_exceeded')       $why = 'сервис разбора перегружен, попробуйте через минуту';
+  elseif (stripos($gemErr, 'api_key') !== false || stripos($gemErr, 'API key') !== false)
+                                                        $why = 'ключ сервиса разбора недействителен (это на нашей стороне)';
+  fail($token, $chatId, 'parse failed. gemini=' . mb_substr($gemErr, 0, 300) . ' groq=' . $groqErrCode, $why);
   exit;
 }
 
@@ -659,6 +701,39 @@ function driverCard(array $d, $lang = 'en') {
   if (!empty($d['weight']))    $L[] = $t['weight'] . ': ' . $d['weight'];
   $card = implode("\n", $L);
   return mb_strlen($card) > 4000 ? mb_substr($card, 0, 4000) : $card;
+}
+
+// Промпт разбора рейт-кона — один на всех потребителей (Gemini, запасной Groq,
+// диагностика ?rctest). Проверен на живых документах: без запрета «придумывать»
+// модель подставляет адрес офиса брокера и выдуманные реф-номера.
+function rcPrompt() {
+  return "You extract data from freight Rate Confirmation documents.\n"
+  . "The text is extracted from a PDF, so table columns may be interleaved and spacing is irregular. Read carefully.\n\n"
+  . "Return ONLY a JSON object:\n"
+  . "{\"load_id\":\"\",\"broker\":\"\",\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
+  . "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
+  . "CRITICAL RULES:\n"
+  . "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
+  . "- If a value is not in the document, use an empty string (or empty array). An empty field is CORRECT; an invented field is a serious error.\n"
+  . "- Strip label words glued to a value: 'Appointment', 'Time', 'Ref', 'Weight', '#'. Keep only the value.\n"
+  . "- load_id: the load/order/PRO number of this shipment.\n"
+  . "- broker: the company issuing the rate confirmation (not the carrier).\n"
+  . "- stops: pickups (PICK, PICKUP, SHIPPER) and deliveries (STOP, DROP, CONSIGNEE, DELIVERY), in document order.\n"
+  . "- name: facility name. address_lines: the street line(s) AND then the 'CITY ST ZIP' line.\n"
+  . "- address_lines MUST contain the CITY ST ZIP line whenever it appears in the document (e.g. 'EASTABOGA AL 36260'). "
+  . "An address without its city line is unusable for a driver — never omit it.\n"
+  . "- time: appointment date and window as printed, e.g. '02/02/26 @ 12:30' or '07/24/26 06:00 - 17:00'.\n"
+  . "- refs: EVERY reference number belonging to that stop. Format each as '<LABEL> <NUMBER>' using the label as printed "
+  . "(PU, PO, BOL, Order#). If the label is only 'Ref' or 'Ref #', output the number alone.\n"
+  . "- Some rate cons print stops as a TABLE with a 'Pick/Drop #' or 'PU/Delv #' column instead of labelled refs. "
+  . "There the pickup/delivery number is a bare code sitting right after the stop's weight or time "
+  . "(e.g. '41870.00lbs 1713693K' means ref '1713693K'). Treat those bare codes as that stop's refs. "
+  . "Do NOT invent a label for them — output the code alone.\n"
+  . "- rate: the TOTAL rate paid to the carrier, with currency as printed.\n"
+  . "- weight: shipment weight in pounds. miles: trip distance. Labels and values are often on separate lines — "
+  . "match them by column position, not adjacency.\n"
+  . "- commodity: the goods description ONLY, never the trailer type. equipment: trailer type (VAN, REEFER, FLATBED, POWER ONLY).\n"
+  . "Output JSON only, no commentary.";
 }
 
 // PDF-таблицы иногда извлекаются без пробела между соседними ячейками:
