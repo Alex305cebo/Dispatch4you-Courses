@@ -28,21 +28,27 @@ const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 // Тексты держим здесь, а не размазываем по коду: их правят чаще всего.
 const HELP_START =
-  "👋 Я разбираю Rate Confirmation.\n\n"
-. "Пришлите PDF рейт-кона — верну готовую карточку для водителя: адреса погрузки и выгрузки, "
-. "окна времени, все реф-номера, ставку, груз и вес. Карточку можно сразу скопировать и переслать водителю.\n\n"
-. "Как отправить:\n"
-. "1. Скрепка 📎 → Файл → выберите PDF\n"
-. "2. Подождите 5–15 секунд\n"
-. "3. Скопируйте карточку и отправьте водителю\n\n"
-. "Нужен PDF с текстом (как присылает брокер), не фото и не скан. До 15 МБ.\n\n"
-. "📷 Ещё пришлите скриншот груза с лоуборда (DAT, Truckstop) — разберу его, "
-. "посчитаю ставку за милю и подготовлю письмо брокеру, которое можно поправить и отправить.\n\n"
-. "🔎 Проверка брокера по FMCSA:\n"
-. "/mc 115789 · /dot 2100420\n\n"
-. "/help — подробнее и что делать при ошибке\n\n"
+  "Dispatch4You — рабочий инструмент диспетчера.\n"
+. "Разбираю документы по грузу и готовлю всё, что нужно отправить дальше.\n\n"
+. "📄 Rate Confirmation (PDF)\n"
+. "Пришлите файл от брокера — верну сводку по грузу, а по кнопкам:\n"
+. "• текст для водителя — адреса, окна времени, все реф-номера\n"
+. "• письмо брокеру — готовое, с возможностью правки\n"
+. "• полный разбор с картой маршрута и расчётом\n\n"
+. "📷 Скриншот груза с лоуборда (DAT, Truckstop)\n"
+. "Пришлите картинку — разберу и посчитаю:\n"
+. "• ставку за милю и остаток после топлива\n"
+. "• на что смотреть: перевес, тенты, hazmat, отсутствие контактов\n"
+. "• письмо брокеру по этому грузу\n\n"
+. "🔎 Проверка брокера по FMCSA\n"
+. "/mc 115789 — по номеру MC · /dot 2100420 — по DOT\n"
+. "Право работать, авторити, бонд BMC-84, адрес — из официального источника.\n\n"
+. "Требования: PDF с текстовым слоем до 15 МБ. Документ на сервере не хранится — "
+. "только данные загрузки.\n\n"
+. "/help — подробная инструкция\n\n"
 . "— — —\n"
-. "Send a Rate Confirmation PDF and get a ready-to-forward driver info card. /help for details.";
+. "A dispatcher's tool: rate confirmations and load screenshots in, driver text, "
+. "per-mile math, broker email and FMCSA checks out. Send a PDF or a screenshot to start.";
 
 const HELP_FULL =
   "📄 Что бот достаёт из рейт-кона:\n"
@@ -154,11 +160,20 @@ if (isset($_GET['setup'])) {
   // Короткое описание — в профиле бота; полное — на пустом экране чата
   // (именно его человек читает до того, как нажать «Начать»).
   $out['short_description'] = json_decode(tgApi($token, 'setMyShortDescription', array(
-    'short_description' => 'Rate Confirmation PDF → готовая карточка для водителя.',
+    'short_description' => 'Рейт-коны и скриншоты грузов: текст водителю, расчёт, письмо брокеру, проверка по FMCSA.',
   )), true);
+  // Лимит Telegram — 512 символов, поэтому здесь только суть; подробности в /start.
   $out['description'] = json_decode(tgApi($token, 'setMyDescription', array(
-    'description' => "Пришлите PDF рейт-кона — верну карточку для водителя: адреса, окна времени, реф-номера, ставку, вес.\n\n"
-      . "Send a Rate Confirmation PDF — get a driver info card: addresses, time windows, reference numbers, rate, weight.",
+    'description' =>
+        "Рабочий инструмент диспетчера.\n\n"
+      . "Пришлите Rate Confirmation в PDF или скриншот груза с лоуборда — получите:\n"
+      . "• текст для водителя: адреса, окна времени, реф-номера\n"
+      . "• расчёт: ставка за милю, топливо, на что смотреть\n"
+      . "• готовое письмо брокеру\n"
+      . "• проверку брокера по FMCSA\n\n"
+      . "— — —\n"
+      . "Rate confirmations and load screenshots in — driver text, per-mile math, "
+      . "broker email and FMCSA checks out.",
   )), true);
   $out['commands'] = json_decode(tgApi($token, 'setMyCommands', array(
     'commands' => json_encode(array(
@@ -192,6 +207,18 @@ if (isset($update['callback_query'])) {
 $msg = isset($update['message']) ? $update['message'] : null;
 if (!$msg || !isset($msg['chat']['id'])) { echo 'ok'; exit; }
 $chatId = $msg['chat']['id'];
+
+// Раз в час — напоминание о возможностях. Диспетчер заходит в бот между
+// звонками и половину функций просто не помнит; чаще показывать нельзя,
+// иначе это превращается в шум поверх рабочей переписки.
+$introState = stateGet($chatId);
+$introAge = time() - (int)(isset($introState['intro_at']) ? $introState['intro_at'] : 0);
+if ($introAge > 3600) {
+  $isStart = isset($msg['text']) && stripos(trim($msg['text']), '/start') === 0;
+  if (!$isStart) reply($token, $chatId, HELP_START); // на /start оно и так придёт
+  $introState['intro_at'] = time();
+  stateSet($chatId, $introState);
+}
 
 // Фото/скриншот груза с лоуборда: карточка + аналитика + черновик письма
 if (isset($msg['photo']) || (isset($msg['document']['mime_type']) && strpos($msg['document']['mime_type'], 'image/') === 0)) {
