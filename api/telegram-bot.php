@@ -47,6 +47,7 @@ const HELP_START_RU =
 . "Право работать, авторити, бонд BMC-84, адрес — из официального источника.\n\n"
 . "Требования: PDF с текстовым слоем до 15 МБ. Документ на сервере не хранится — "
 . "только данные загрузки.\n\n"
+. "/menu — все разделы одним списком\n"
 . "/help — подробная инструкция\n"
 . "/language — сменить язык бота";
 
@@ -68,6 +69,7 @@ const HELP_START_EN =
 . "Authority status, bond on file (BMC-84), address — straight from the official source.\n\n"
 . "Requirements: a text-based PDF, up to 15 MB. The document itself is never stored — "
 . "only the extracted load data.\n\n"
+. "/menu — every section in one list\n"
 . "/help — full instructions\n"
 . "/language — change the bot's language";
 
@@ -208,15 +210,20 @@ if (isset($_GET['setup'])) {
       . "Rate confirmations and load screenshots in — driver text, per-mile math, "
       . "broker email and FMCSA checks out.",
   )), true);
+  // Плоский список — так его и показывает Telegram, разделов внутри самого
+  // меню нет технически. Порядок группирует пункты по смыслу: сначала общее,
+  // потом работа с письмом брокеру, потом проверка брокера, потом настройки.
   $out['commands'] = json_decode(tgApi($token, 'setMyCommands', array(
     'commands' => json_encode(array(
-      array('command' => 'start',   'description' => 'Что умеет бот / What this bot does'),
-      array('command' => 'help',    'description' => 'Инструкция и требования / Help'),
-      array('command' => 'carrier', 'description' => 'Подпись перевозчика для писем брокерам'),
-      array('command' => 'edit',    'description' => 'Поправить черновик письма'),
-      array('command' => 'send',    'description' => 'Подготовить письмо к отправке'),
-      array('command' => 'mc',      'description' => 'Проверить брокера по MC'),
-      array('command' => 'language', 'description' => 'Сменить язык / Change language'),
+      array('command' => 'start',    'description' => '👋 Что умеет бот'),
+      array('command' => 'menu',     'description' => '📋 Все разделы одним списком'),
+      array('command' => 'help',     'description' => 'ℹ️ Подробная инструкция'),
+      array('command' => 'carrier',  'description' => '🖊 Подпись компании для писем'),
+      array('command' => 'edit',     'description' => '✏️ Поправить текст письма'),
+      array('command' => 'send',     'description' => '📤 Подготовить письмо к отправке'),
+      array('command' => 'mc',       'description' => '🔎 Проверить брокера по MC'),
+      array('command' => 'dot',      'description' => '🔎 Проверить брокера по DOT'),
+      array('command' => 'language', 'description' => '🌐 Сменить язык / Change language'),
     )),
   )), true);
   header('Content-Type: application/json');
@@ -306,6 +313,8 @@ if (!isset($msg['document'])) {
     }
   } elseif (stripos($text, '/language') === 0 || stripos($text, '/lang') === 0) {
     reply($token, $chatId, "🌐 Выберите язык / Choose your language", langKeyboard());
+  } elseif (stripos($text, '/menu') === 0) {
+    reply($token, $chatId, menuText($introState));
   } else {
     reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : helpStart($introState));
   }
@@ -521,6 +530,44 @@ function helpStart(array $state) {
   return (isset($state['lang']) && $state['lang'] === 'en') ? HELP_START_EN : HELP_START_RU;
 }
 
+// Разделы «по-человечески»: у Telegram нет заголовков-секций в самом меню команд
+// (кнопка «Menu» показывает строго плоский список) — здесь то же самое разложено
+// по группам текстом, /menu ссылается и в /start, и в описании бота.
+function menuText(array $state) {
+  if (isset($state['lang']) && $state['lang'] === 'en') {
+    return "📋 SECTIONS\n\n"
+    . "📄 Rate Confirmation\n"
+    . "Send the PDF — a summary and action buttons come back.\n\n"
+    . "📷 Load screenshot\n"
+    . "Send a photo from DAT/Truckstop — analysis and action buttons come back.\n\n"
+    . "✉️ Broker email\n"
+    . "/carrier — set your company's signature\n"
+    . "/edit — replace the draft text\n"
+    . "/send — get the ready-to-send email + mail link\n\n"
+    . "🔎 Broker check (FMCSA)\n"
+    . "/mc 115789 — by MC number\n"
+    . "/dot 2100420 — by DOT number\n\n"
+    . "🌐 Language\n"
+    . "/language — switch RU/EN\n\n"
+    . "/help — full instructions";
+  }
+  return "📋 РАЗДЕЛЫ\n\n"
+  . "📄 Rate Confirmation\n"
+  . "Пришлите PDF — придёт сводка и кнопки действий.\n\n"
+  . "📷 Скриншот груза\n"
+  . "Пришлите фото с DAT/Truckstop — придёт разбор и кнопки действий.\n\n"
+  . "✉️ Письмо брокеру\n"
+  . "/carrier — задать подпись компании\n"
+  . "/edit — заменить текст черновика\n"
+  . "/send — получить готовое письмо и ссылку на отправку\n\n"
+  . "🔎 Проверка брокера (FMCSA)\n"
+  . "/mc 115789 — по номеру MC\n"
+  . "/dot 2100420 — по номеру DOT\n\n"
+  . "🌐 Язык\n"
+  . "/language — сменить RU/EN\n\n"
+  . "/help — подробная инструкция";
+}
+
 function langKeyboard() {
   return array(array(
     array('text' => '🇷🇺 Русский', 'callback_data' => 'lang:ru'),
@@ -690,22 +737,42 @@ function brokerReport($kind, $number) {
   $dba  = !empty($rec['dbaName']) ? $rec['dbaName'] : null;
   $dot  = isset($rec['dotNumber']) ? $rec['dotNumber'] : '—';
   $L = array();
+  // Первым делом — что это НЕ проверяет. FMCSA не знает, платит ли брокер вовремя;
+  // это отдельная база у каждой факторинговой компании, и её нужно смотреть отдельно.
+  $L[] = '⚠️ Это проверка юридического статуса по FMCSA — она НЕ проверяет '
+       . 'платёжеспособность и НЕ заменяет факторинг. Обязательно проверьте этот '
+       . 'MC/DOT ещё и в личном кабинете вашей факторинговой компании перед тем как брать груз.';
+  $L[] = '';
   $L[] = '🔎 FMCSA';
   $L[] = '';
   $L[] = $name . ($dba !== null ? ' (DBA ' . $dba . ')' : '');
   $L[] = 'DOT ' . $dot . ($kind !== 'dot' ? ' · MC ' . $number : '');
   $L[] = '';
+  $L[] = 'Критерии проверки:';
+
+  // Каждая строка ниже — конкретный официальный критерий: галочка стоит, только
+  // если по нему всё чисто. Пропускаем поле целиком, если FMCSA его не вернул
+  // (например, у чистого перевозчика без брокерской авторити просто нет этого статуса).
   $allowed = isset($rec['allowedToOperate']) ? $rec['allowedToOperate'] : null;
-  $L[] = 'Право работать: ' . ($allowed === 'Y' ? 'ДА' : ($allowed === 'N' ? 'НЕТ ⚠️' : 'неизвестно'));
-  if (isset($rec['brokerAuthorityStatus']))   $L[] = 'Брокерская авторити: ' . authWord($rec['brokerAuthorityStatus']);
-  if (isset($rec['commonAuthorityStatus']))   $L[] = 'Common authority: ' . authWord($rec['commonAuthorityStatus']);
-  if (isset($rec['contractAuthorityStatus'])) $L[] = 'Contract authority: ' . authWord($rec['contractAuthorityStatus']);
+  $L[] = mark($allowed === 'Y') . ' Право работать: ' . ($allowed === 'Y' ? 'ДА' : ($allowed === 'N' ? 'НЕТ' : 'неизвестно'));
+
+  if (isset($rec['brokerAuthorityStatus'])) {
+    $ba = $rec['brokerAuthorityStatus'];
+    $L[] = mark($ba === 'A') . ' Брокерская авторити: ' . authWord($ba);
+  }
+
   // bondInsuranceOnFile — сумма в ТЫСЯЧАХ долларов, а не флаг Y/N: «75» = бонд
   // BMC-84 на $75 000. В приложении на этом уже обжигались.
   if (isset($rec['bondInsuranceOnFile']) && $rec['bondInsuranceOnFile'] !== '') {
     $bond = preg_replace('/\D/', '', (string)$rec['bondInsuranceOnFile']);
-    $L[] = 'Бонд BMC-84: ' . ($bond === '' || $bond === '0' ? 'нет ⚠️' : '$' . number_format((float)$bond * 1000, 0, '.', ','));
+    $hasBond = $bond !== '' && $bond !== '0';
+    $L[] = mark($hasBond) . ' Бонд BMC-84: ' . ($hasBond ? '$' . number_format((float)$bond * 1000, 0, '.', ',') : 'нет');
   }
+
+  // Common/Contract authority — статус перевозчика, не брокера; красным флагом не
+  // считаем, показываем справочно, без галочки.
+  if (isset($rec['commonAuthorityStatus']))   $L[] = 'Common authority: ' . authWord($rec['commonAuthorityStatus']);
+  if (isset($rec['contractAuthorityStatus'])) $L[] = 'Contract authority: ' . authWord($rec['contractAuthorityStatus']);
   if (!empty($rec['safetyRating'])) $L[] = 'Safety rating: ' . $rec['safetyRating'];
   $city = isset($rec['phyCity']) ? $rec['phyCity'] : '';
   $st   = isset($rec['phyState']) ? $rec['phyState'] : '';
@@ -714,6 +781,8 @@ function brokerReport($kind, $number) {
   $L[] = 'Источник: FMCSA QCMobile, данные официальные.';
   return implode("\n", $L);
 }
+
+function mark($ok) { return $ok ? '✅' : '⚠️'; }
 
 // «Pine Hall, NC 27042» → «Pine Hall, NC». Приложению нужен город со штатом: по ним
 // оно считает мили и ставит точки на карте, индекс только мешает совпадению.
