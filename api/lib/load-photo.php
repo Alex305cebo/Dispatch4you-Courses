@@ -35,7 +35,8 @@ function photoExtractLoad($bytes, $mime) {
     . "Return ONLY a JSON object:\n"
     . '{"is_load":true,"source":"","origin":"","destination":"","pickup":"","delivery":"","equipment":"",'
     . '"rate":"","miles":"","weight":"","length":"","commodity":"","broker":"","mc":"","contact_name":"",'
-    . '"email":"","phone":"","reference":"","notes":""}' . "\n\n"
+    . '"email":"","phone":"","reference":"","notes":"",'
+    . '"spot_rate":"","posted_age":"","trip_type":"","deadhead":"","broker_rating":"","days_to_pay":""}' . "\n\n"
     . "RULES:\n"
     . "- Copy values VERBATIM from the image. NEVER invent anything. Unknown -> empty string.\n"
     . "- is_load: false if the image is not a freight load listing or load-related email.\n"
@@ -46,6 +47,13 @@ function photoExtractLoad($bytes, $mime) {
     . "- broker: the posting company. mc: their MC/DOT number if visible.\n"
     . "- email/phone/contact_name: the broker contact details shown.\n"
     . "- notes: special requirements (tarps, hazmat, team, appointment, TONU terms).\n"
+    . "- spot_rate: the load board's OWN displayed market/average rate for this lane if shown "
+    . "(e.g. a 'DAT Rate', 'Market avg $X/mi' or trend figure next to the posted rate) — NOT the posted rate itself.\n"
+    . "- posted_age: how long ago it was posted, as printed (e.g. '2 hrs ago', '13 min ago').\n"
+    . "- trip_type: 'Full' or 'Partial' if shown.\n"
+    . "- deadhead: deadhead/empty miles to the pickup if the board shows them (only appears when searched from a truck location).\n"
+    . "- broker_rating: any broker trust/credit badge or tier shown next to their name (e.g. 'Blue', 'Gold', a star rating).\n"
+    . "- days_to_pay: broker's average days-to-pay if shown (e.g. 'Avg 32 days').\n"
     . "Output JSON only.";
 
   $body = json_encode(array(
@@ -104,6 +112,15 @@ function photoLoadCard(array $d) {
   $line('Телефон', isset($d['phone']) ? $d['phone'] : '');
   $line('Референс', isset($d['reference']) ? $d['reference'] : '');
   $line('Примечания', isset($d['notes']) ? $d['notes'] : '');
+  $extra = array();
+  $add = function ($label, $val) use (&$extra) { if (!empty($val)) $extra[] = $label . ': ' . $val; };
+  $add('Тип', isset($d['trip_type']) ? $d['trip_type'] : '');
+  $add('Опубликовано', isset($d['posted_age']) ? $d['posted_age'] : '');
+  $add('Рыночная ставка биржи', isset($d['spot_rate']) ? $d['spot_rate'] : '');
+  $add('Порожний пробег', isset($d['deadhead']) ? $d['deadhead'] : '');
+  $add('Рейтинг брокера', isset($d['broker_rating']) ? $d['broker_rating'] : '');
+  $add('Срок оплаты брокера', isset($d['days_to_pay']) ? $d['days_to_pay'] : '');
+  if ($extra) { $L[] = ''; foreach ($extra as $x) $L[] = $x; }
   return implode("\n", $L);
 }
 
@@ -113,9 +130,15 @@ function photoLoadAnalytics(array $d) {
     $v = preg_replace('/[^0-9.]/', '', (string)$v);
     return $v === '' ? null : (float)$v;
   };
-  $rate  = $num(isset($d['rate']) ? $d['rate'] : '');
-  $miles = $num(isset($d['miles']) ? $d['miles'] : '');
-  $weight = $num(isset($d['weight']) ? $d['weight'] : '');
+  $rate     = $num(isset($d['rate']) ? $d['rate'] : '');
+  $miles    = $num(isset($d['miles']) ? $d['miles'] : '');
+  $weight   = $num(isset($d['weight']) ? $d['weight'] : '');
+  $deadhead = $num(isset($d['deadhead']) ? $d['deadhead'] : '');
+  $spot     = $num(isset($d['spot_rate']) ? $d['spot_rate'] : '');
+  // Рыночную ставку биржи иногда печатают как «$/милю» (число вроде 2.5), иногда
+  // как полную сумму рейса — отличаем по величине, полную сумму переводим в $/mi.
+  $spotRpm = null;
+  if ($spot !== null) $spotRpm = ($spot < 20 ? $spot : ($miles > 0 ? $spot / $miles : null));
   $equip = strtoupper(trim((string)(isset($d['equipment']) ? $d['equipment'] : '')));
 
   $L = array('📊 АНАЛИТИКА', '');
@@ -126,20 +149,60 @@ function photoLoadAnalytics(array $d) {
     $L[] = sprintf('Ставка за милю: $%.2f  (%s за %s миль)',
       $rpm, '$' . number_format($rate, 2), number_format($miles));
 
-    $base = null;
-    foreach (RPM_BASELINE as $k => $v) if ($equip !== '' && strpos($equip, $k) !== false) { $base = $v; break; }
-    if ($base !== null) {
-      $diff = ($rpm - $base) / $base * 100;
-      $L[] = sprintf('Ориентир по %s: $%.2f/mi  →  %s%.0f%%', $k, $base, $diff >= 0 ? '+' : '', $diff);
-      if ($diff <= -15) $flags[] = 'Ставка заметно ниже ориентира — есть смысл торговаться.';
-      elseif ($diff >= 15) $flags[] = 'Ставка выше ориентира — брать можно быстро, такие разбирают.';
+    // Реальная ставка биржи важнее нашего статичного ориентира — если она есть
+    // на скриншоте, сравниваем с ней и ориентир по типу трейлера не показываем,
+    // чтобы не путать двумя разными цифрами.
+    if ($spotRpm !== null && $spotRpm > 0) {
+      $diff = ($rpm - $spotRpm) / $spotRpm * 100;
+      $L[] = sprintf('Рыночная ставка биржи: $%.2f/mi  →  %s%.0f%%', $spotRpm, $diff >= 0 ? '+' : '', $diff);
+      if ($diff <= -15) $flags[] = 'Ставка заметно ниже рыночной — есть смысл торговаться.';
+      elseif ($diff >= 15) $flags[] = 'Ставка выше рыночной — брать можно быстро, такие разбирают.';
+    } else {
+      $base = null;
+      foreach (RPM_BASELINE as $k => $v) if ($equip !== '' && strpos($equip, $k) !== false) { $base = $v; break; }
+      if ($base !== null) {
+        $diff = ($rpm - $base) / $base * 100;
+        $L[] = sprintf('Ориентир по %s: $%.2f/mi  →  %s%.0f%%', $k, $base, $diff >= 0 ? '+' : '', $diff);
+        if ($diff <= -15) $flags[] = 'Ставка заметно ниже ориентира — есть смысл торговаться.';
+        elseif ($diff >= 15) $flags[] = 'Ставка выше ориентира — брать можно быстро, такие разбирают.';
+      }
     }
     if ($rpm < 1.50) $flags[] = 'Меньше $1.50/mi — на большинстве машин это работа в минус.';
-    // Топливо ~$4.00/gal при 6.5 mpg ≈ $0.62/mi
-    $L[] = sprintf('Топливо ориентировочно: $%.0f (при 6.5 mpg и $4.00/gal)', $miles * 0.62);
-    $L[] = sprintf('Остаётся до прочих расходов: $%.0f', $rate - $miles * 0.62);
+
+    // Порожний пробег со скрина, если он там есть, — иначе честно только гружёные мили
+    $totalMiles = $miles + (float)$deadhead;
+    $fuel = $totalMiles * 0.62; // ~$4.00/gal при 6.5 mpg
+    if ($deadhead !== null && $deadhead > 0) {
+      $L[] = sprintf('Порожний пробег: %s миль (с биржи, не оценка)', number_format($deadhead));
+      $L[] = sprintf('Топливо ориентировочно: $%.0f на %s миль всего (при 6.5 mpg и $4.00/gal)', $fuel, number_format($totalMiles));
+    } else {
+      $L[] = sprintf('Топливо ориентировочно: $%.0f (при 6.5 mpg и $4.00/gal, без учёта порожнего пробега)', $fuel);
+    }
+    $L[] = sprintf('Остаётся до прочих расходов: $%.0f', $rate - $fuel);
   } else {
     $L[] = 'Ставку за милю не посчитать — на скриншоте нет ставки или миль.';
+  }
+
+  if (!empty($d['posted_age'])) {
+    $L[] = '';
+    $L[] = 'Опубликовано: ' . $d['posted_age'];
+    $age = strtolower((string)$d['posted_age']);
+    if (preg_match('/\b(\d+)\s*min/', $age, $am) && (int)$am[1] < 20) {
+      $flags[] = 'Совсем свежий пост — конкуренции по нему ещё почти нет.';
+    } elseif (preg_match('/\b(\d+)\s*(hr|hour)/', $age, $am) && (int)$am[1] >= 6) {
+      $flags[] = 'Висит уже несколько часов — вероятно, ставку уже снижали или груз проблемный. Уточните текущую цену.';
+    }
+  }
+  if (!empty($d['trip_type']) && stripos($d['trip_type'], 'partial') !== false) {
+    $flags[] = 'Partial — возможны доп. остановки/подсадка, уточните точный маршрут у брокера.';
+  }
+  if (!empty($d['broker_rating']) || !empty($d['days_to_pay'])) {
+    $L[] = '';
+    if (!empty($d['broker_rating'])) $L[] = 'Рейтинг брокера на бирже: ' . $d['broker_rating'];
+    if (!empty($d['days_to_pay']))   $L[] = 'Средний срок оплаты: ' . $d['days_to_pay'];
+    if (!empty($d['days_to_pay']) && preg_match('/(\d+)/', (string)$d['days_to_pay'], $dm) && (int)$dm[1] > 45) {
+      $flags[] = 'Оплата дольше 45 дней — если работаете без факторинга, посчитайте кассовый разрыв заранее.';
+    }
   }
 
   if ($weight !== null) {
@@ -155,7 +218,9 @@ function photoLoadAnalytics(array $d) {
 
   if ($flags) { $L[] = ''; $L[] = '⚠️ На что смотреть:'; foreach ($flags as $f) $L[] = '• ' . $f; }
   $L[] = '';
-  $L[] = 'Ориентиры приблизительные: своей статистики по лейнам пока мало, deadhead и ваши расходы не учтены.';
+  $L[] = $spotRpm !== null
+    ? 'Ставка рынка — с самого скриншота. Порожний пробег (если не указан выше) и ваши расходы всё ещё не учтены.'
+    : 'Ориентиры приблизительные: своей статистики по лейнам пока мало, deadhead и ваши расходы не учтены.';
   return implode("\n", $L);
 }
 
@@ -203,9 +268,9 @@ function draftMeta(array $draft, $extra = '') {
   $L[] = '✉️ Письмо готово — следующим сообщением придёт его текст целиком, для копирования.';
   $L[] = '';
   $L[] = 'Кому: ' . ($draft['to'] !== '' ? $draft['to'] : '(не найден — впишите вручную при отправке)');
-  if (substr_count($draft['body'], "\n") > 0 && preg_match('/Thank you,\s*$/', $draft['body'])) {
+  if (substr_count($draft['body'], "\n") > 0 && preg_match('/Thank you\s*$/', $draft['body'])) {
     $L[] = '';
-    $L[] = '⚠️ Подпись не задана — письмо заканчивается на «Thank you,» без имени. Задайте её: /carrier';
+    $L[] = '⚠️ Подпись не задана — письмо заканчивается на «Thank you» без имени. Задайте её: /carrier';
   }
   if ($extra !== '') { $L[] = ''; $L[] = $extra; }
   return implode("\n", $L);
