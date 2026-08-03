@@ -163,12 +163,14 @@ function photoLoadAnalytics(array $d) {
 function brokerEmailDraft(array $d, $carrier) {
   $route = trim((string)(isset($d['origin']) ? $d['origin'] : '') . ' to ' . (isset($d['destination']) ? $d['destination'] : ''), ' to');
   $ref = !empty($d['reference']) ? $d['reference'] : '';
-  $subject = 'Load inquiry' . ($route !== '' ? ' - ' . $route : '') . ($ref !== '' ? ' (Ref ' . $ref . ')' : '');
+  $subject = 'Checking your load' . ($route !== '' ? ' - ' . $route : '');
 
   $b = array();
   $b[] = 'Hello' . (!empty($d['contact_name']) ? ' ' . $d['contact_name'] : '') . ',';
   $b[] = '';
-  $b[] = 'We are interested in your load' . ($route !== '' ? ' ' . $route : '') . '.';
+  // Маршрут — отдельной строкой, а не приклеен к предыдущей фразе.
+  $b[] = 'We are interested in your load' . ($route === '' ? '.' : '');
+  if ($route !== '') $b[] = $route;
   $details = array();
   if (!empty($d['pickup']))    $details[] = 'Pickup: ' . $d['pickup'];
   if (!empty($d['delivery']))  $details[] = 'Delivery: ' . $d['delivery'];
@@ -178,13 +180,9 @@ function brokerEmailDraft(array $d, $carrier) {
   if ($details) { $b[] = ''; foreach ($details as $x) $b[] = $x; }
   $b[] = '';
   $b[] = 'Our truck is available and can cover it on time.';
-  if (!empty($d['rate'])) {
-    $b[] = 'Posted rate is ' . $d['rate'] . '. Please confirm the all-in rate you can do.';
-  } else {
-    $b[] = 'Please advise the all-in rate you can offer.';
-  }
+  $b[] = 'Please confirm BEST rate for this load.';
   $b[] = '';
-  $b[] = 'Thank you,';
+  $b[] = 'Thank you';
   // Заглушку сюда не кладём: письмо должно оставаться отправляемым как есть —
   // предупреждение о пустой подписи идёт отдельной строкой, а не в теле письма.
   if ($carrier !== '') $b[] = $carrier;
