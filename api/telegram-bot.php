@@ -602,7 +602,9 @@ function driverCard(array $d) {
     if ($counts[$type] > 1) $label .= ' ' . $seen[$type];
     $L[] = $label . ':';
     $L[] = '';
-    if (!empty($s['name'])) $L[] = $s['name'];
+    // Пустая строка после названия склада — иначе оно визуально слипается
+    // с адресом на следующей строке.
+    if (!empty($s['name'])) { $L[] = $s['name']; $L[] = ''; }
     foreach ((array)(isset($s['address_lines']) ? $s['address_lines'] : array()) as $a) if ($a !== '') $L[] = $a;
     $L[] = '';
     if (!empty($s['time'])) { $L[] = $hr; $L[] = 'Time: ' . $s['time']; }
