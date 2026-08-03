@@ -81,6 +81,30 @@
         return false;
     }
 
+    // Размытие при попытке снять экран. Оверлей с backdrop-filter кладём НАД
+    // содержимым, но ПОД тостом — сам текст предупреждения остаётся чётким.
+    // Ловим и PrintScreen, и потерю фокуса окна: Win+Shift+S и «Ножницы»
+    // клавишу не шлют, зато уводят фокус.
+    var blurEl = null, blurTimer = null;
+    function showBlur(autoHideMs) {
+        if (!document.body) return;
+        if (!blurEl) {
+            blurEl = document.createElement('div');
+            blurEl.setAttribute('style', 'position:fixed;inset:0;z-index:2147483646;pointer-events:none;' +
+                'backdrop-filter:blur(16px) saturate(.6);-webkit-backdrop-filter:blur(16px) saturate(.6);' +
+                'background:rgba(3,6,14,.35);opacity:0;transition:opacity .12s ease;');
+            document.body.appendChild(blurEl);
+            void blurEl.offsetWidth;
+        }
+        blurEl.style.opacity = '1';
+        clearTimeout(blurTimer);
+        if (autoHideMs) blurTimer = setTimeout(hideBlur, autoHideMs);
+    }
+    function hideBlur() {
+        clearTimeout(blurTimer);
+        if (blurEl) blurEl.style.opacity = '0';
+    }
+
     // ponytail: тост вместо полноэкранной модалки — предупреждение больше не
     // перекрывает сайт и не ждёт клика: висит 3.5 с и снимает себя само.
     // pointer-events:none, чтобы под ним можно было продолжать работать.
@@ -160,6 +184,7 @@
         // phone shots, or a camera. Upgrade path: none client-side (platform limit).
         function onPrintScreen(e) {
             if (e.key !== 'PrintScreen') return;
+            showBlur(2500);
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText('').catch(function () {});
@@ -169,6 +194,12 @@
         }
         document.addEventListener('keydown', onPrintScreen, true);
         document.addEventListener('keyup', onPrintScreen, true);
+
+        window.addEventListener('blur', function () { showBlur(0); });
+        window.addEventListener('focus', hideBlur);
+        document.addEventListener('visibilitychange', function () {
+            if (document.visibilityState === 'hidden') showBlur(0); else hideBlur();
+        });
     }
 
     initContentProtection();
@@ -234,7 +265,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.6';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.7';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
