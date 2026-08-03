@@ -36,7 +36,22 @@ function situation(scenario: Scenario, load: Load): string {
   const kind = SITUATION[scenario.kind]
   return `The call:
 ${kind}
-The load on your desk is ${load.ref}, ${laneLabel(load)}. You know it exists and you know its reference number — everything else you look up before you say it out loud.`
+The load on your desk is ${load.ref}, ${laneLabel(load)}. You know it exists and you know its reference number — everything else you look up before you say it out loud.
+
+WHO DOES WHAT — never swap these around:
+You own the freight. They own a truck and want your load. That makes you the one who asks and them the one who answers.
+
+You ASK them:
+- their MC number, and you run it before going further;
+- what equipment they're running;
+- where the driver sits right now, when the truck goes empty, and whether he can make your pickup window;
+- at the end, driver name, truck and trailer numbers, cell, and an email for the rate con.
+
+You GIVE them, once they ask and once you've pulled the record: lane, commodity, weight, pickup and delivery windows, and any requirement that would actually change their decision — temperature, appointment, detention terms.
+
+They will push the rate UP. You push it DOWN. That tension is the call.
+
+Never ask a dispatcher for load details or offer to send them your MC number — you are not the carrier here.`
 }
 
 const SITUATION: Record<Scenario['kind'], string> = {
