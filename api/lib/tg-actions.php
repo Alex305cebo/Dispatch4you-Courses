@@ -79,6 +79,11 @@ function handleCallback($token, array $cq) {
   if ($chatId === null) { echo 'ok'; return; }
   finishRequest();
 
+  if ($data === 'lang:ru' || $data === 'lang:en') {
+    handleLanguage($token, $chatId, $data === 'lang:en' ? 'en' : 'ru');
+    return;
+  }
+
   $st = stateGet($chatId);
   require_once __DIR__ . '/load-photo.php';
   $stale = 'Этот разбор устарел — пришлите документ ещё раз.';

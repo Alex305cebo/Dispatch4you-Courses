@@ -27,7 +27,9 @@ const MAX_PDF_BYTES = 15728640; // 15 MB (лимит Telegram getFile — 20 MB)
 const GROQ_MODEL = 'openai/gpt-oss-120b';
 
 // Тексты держим здесь, а не размазываем по коду: их правят чаще всего.
-const HELP_START =
+// Раздельные RU/EN версии — выбор языка (см. langKeyboard/handleLanguage) должен
+// реально менять то, что видит человек, а не просто переключать флаг в состоянии.
+const HELP_START_RU =
   "Dispatch4You — рабочий инструмент диспетчера.\n"
 . "Разбираю документы по грузу и готовлю всё, что нужно отправить дальше.\n\n"
 . "📄 Rate Confirmation (PDF)\n"
@@ -45,10 +47,29 @@ const HELP_START =
 . "Право работать, авторити, бонд BMC-84, адрес — из официального источника.\n\n"
 . "Требования: PDF с текстовым слоем до 15 МБ. Документ на сервере не хранится — "
 . "только данные загрузки.\n\n"
-. "/help — подробная инструкция\n\n"
-. "— — —\n"
-. "A dispatcher's tool: rate confirmations and load screenshots in, driver text, "
-. "per-mile math, broker email and FMCSA checks out. Send a PDF or a screenshot to start.";
+. "/help — подробная инструкция\n"
+. "/language — сменить язык бота";
+
+const HELP_START_EN =
+  "Dispatch4You — a dispatcher's working tool.\n"
+. "I read your load documents and prepare everything you need to send next.\n\n"
+. "📄 Rate Confirmation (PDF)\n"
+. "Send the file from the broker — I'll return a load summary, then buttons for:\n"
+. "• driver info text — addresses, time windows, every reference number\n"
+. "• broker email — ready to send, editable\n"
+. "• full breakdown with a route map and the numbers\n\n"
+. "📷 Load board screenshot (DAT, Truckstop)\n"
+. "Send a picture — I'll read it and calculate:\n"
+. "• rate per mile and what's left after fuel\n"
+. "• what to watch for: overweight, tarps, hazmat, missing contacts\n"
+. "• a broker email for this load\n\n"
+. "🔎 Broker check via FMCSA\n"
+. "/mc 115789 — by MC number · /dot 2100420 — by DOT number\n"
+. "Authority status, bond on file (BMC-84), address — straight from the official source.\n\n"
+. "Requirements: a text-based PDF, up to 15 MB. The document itself is never stored — "
+. "only the extracted load data.\n\n"
+. "/help — full instructions\n"
+. "/language — change the bot's language";
 
 const HELP_FULL =
   "📄 Что бот достаёт из рейт-кона:\n"
@@ -183,6 +204,7 @@ if (isset($_GET['setup'])) {
       array('command' => 'edit',    'description' => 'Поправить черновик письма'),
       array('command' => 'send',    'description' => 'Подготовить письмо к отправке'),
       array('command' => 'mc',      'description' => 'Проверить брокера по MC'),
+      array('command' => 'language', 'description' => 'Сменить язык / Change language'),
     )),
   )), true);
   header('Content-Type: application/json');
@@ -208,14 +230,24 @@ $msg = isset($update['message']) ? $update['message'] : null;
 if (!$msg || !isset($msg['chat']['id'])) { echo 'ok'; exit; }
 $chatId = $msg['chat']['id'];
 
+$introState = stateGet($chatId);
+
+// Первое сообщение от этого чата вообще — до всего остального спрашиваем язык.
+// Ответ на выбор не блокируется: пока человек не нажал кнопку, всё отвечает
+// на русском по умолчанию — большинство диспетчеров, писавших нам, русскоязычные.
+if (empty($introState['asked_lang'])) {
+  reply($token, $chatId, "🌐 Выберите язык / Choose your language", langKeyboard());
+  $introState['asked_lang'] = true;
+  stateSet($chatId, $introState);
+}
+
 // Раз в час — напоминание о возможностях. Диспетчер заходит в бот между
 // звонками и половину функций просто не помнит; чаще показывать нельзя,
 // иначе это превращается в шум поверх рабочей переписки.
-$introState = stateGet($chatId);
 $introAge = time() - (int)(isset($introState['intro_at']) ? $introState['intro_at'] : 0);
 if ($introAge > 3600) {
   $isStart = isset($msg['text']) && stripos(trim($msg['text']), '/start') === 0;
-  if (!$isStart) reply($token, $chatId, HELP_START); // на /start оно и так придёт
+  if (!$isStart) reply($token, $chatId, helpStart($introState)); // на /start оно и так придёт
   $introState['intro_at'] = time();
   stateSet($chatId, $introState);
 }
@@ -260,8 +292,10 @@ if (!isset($msg['document'])) {
     } else {
       reply($token, $chatId, brokerReport($kind, $numArg));
     }
+  } elseif (stripos($text, '/language') === 0 || stripos($text, '/lang') === 0) {
+    reply($token, $chatId, "🌐 Выберите язык / Choose your language", langKeyboard());
   } else {
-    reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : HELP_START);
+    reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : helpStart($introState));
   }
   echo 'ok'; exit;
 }
@@ -467,6 +501,28 @@ if ($missing) {
 reply($token, $chatId, $summary . "\n\n👇 Что сделать с этим грузом:", rcKeyboard($load));
 echo 'ok';
 exit;
+
+// ── Язык интерфейса ──────────────────────────────────────────────────
+// По умолчанию русский: до этой правки бот отвечал только на русском,
+// и вся текущая аудитория — русскоязычные диспетчеры.
+function helpStart(array $state) {
+  return (isset($state['lang']) && $state['lang'] === 'en') ? HELP_START_EN : HELP_START_RU;
+}
+
+function langKeyboard() {
+  return array(array(
+    array('text' => '🇷🇺 Русский', 'callback_data' => 'lang:ru'),
+    array('text' => '🇬🇧 English', 'callback_data' => 'lang:en'),
+  ));
+}
+
+function handleLanguage($token, $chatId, $lang) {
+  $st = stateGet($chatId);
+  $st['lang'] = $lang;
+  stateSet($chatId, $st);
+  reply($token, $chatId, $lang === 'en' ? '✅ Language set: English' : '✅ Язык установлен: Русский');
+  reply($token, $chatId, helpStart($st));
+}
 
 // ────────────────────────────────────────────────────────────────────
 function driverCard(array $d) {
