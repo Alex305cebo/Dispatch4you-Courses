@@ -184,8 +184,6 @@ function brokerEmailDraft(array $d, $carrier) {
     $b[] = 'Please advise the all-in rate you can offer.';
   }
   $b[] = '';
-  $b[] = 'Please send the rate confirmation once we agree, and let me know if you need our carrier packet.';
-  $b[] = '';
   $b[] = 'Thank you,';
   $b[] = $carrier !== '' ? $carrier : "[Ваша подпись не задана — команда /carrier]";
 
