@@ -888,3 +888,21 @@ body.la-mob-bar-visible {
     /* Скрываем мобильный бар на десктопе */
     .la-mobile-bottom-bar { display: none !important; }
 }
+
+
+/* ── Кнопка «наверх» не должна тонуть под плеером ──────────────────────────
+   Панель плеера фиксирована внизу (z-index 8500, высота ~126px), а кнопка
+   прокрутки стояла на bottom:24px с z-index:999 — её просто накрывало.
+   Пока панель развёрнута, поднимаем кнопку над ней; когда панель свёрнута
+   в полоску, возвращаем на место. */
+body.la-mob-bar-visible #scrollToTop,
+body.la-mob-bar-visible .scroll-to-top,
+body.la-mob-bar-visible .scroll-top-btn {
+  bottom: 148px !important;
+  z-index: 8600 !important;
+}
+body.la-mob-bar-visible:has(.la-mobile-bottom-bar.collapsed) #scrollToTop,
+body.la-mob-bar-visible:has(.la-mobile-bottom-bar.collapsed) .scroll-to-top,
+body.la-mob-bar-visible:has(.la-mobile-bottom-bar.collapsed) .scroll-top-btn {
+  bottom: 48px !important;
+}
