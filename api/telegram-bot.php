@@ -60,7 +60,7 @@ const HELP_FULL =
 . "Работа с письмом:\n"
 . "/carrier — задать подпись (компания, MC, телефон, ваш email)\n"
 . "/edit — прислать исправленный текст письма\n"
-. "/send email@брокера — отправить\n\n"
+. "/send — подготовить письмо к отправке (бот сам НЕ отправляет)\n\n"
 . "🔎 Проверка брокера по FMCSA:\n"
 . "/mc 115789 — по номеру MC\n"
 . "/dot 2100420 — по номеру DOT\n"
@@ -161,7 +161,7 @@ if (isset($_GET['setup'])) {
       array('command' => 'help',    'description' => 'Инструкция и требования / Help'),
       array('command' => 'carrier', 'description' => 'Подпись перевозчика для писем брокерам'),
       array('command' => 'edit',    'description' => 'Поправить черновик письма'),
-      array('command' => 'send',    'description' => 'Отправить письмо брокеру'),
+      array('command' => 'send',    'description' => 'Подготовить письмо к отправке'),
       array('command' => 'mc',      'description' => 'Проверить брокера по MC'),
     )),
   )), true);
@@ -788,7 +788,7 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   reply($token, $chatId, draftAsText($draft) . "\n\n"
     . "— — —\n"
     . "✏️ Изменить: /edit и новый текст письма\n"
-    . "✉️ Отправить: /send" . ($draft['to'] !== '' ? " (уйдёт на " . $draft['to'] . ")" : " email@брокера")
+    . "📤 Готово к отправке: /send — открою письмо в вашей почте"
     . "\n🖊 Подпись: /carrier и данные вашей компании");
 }
 
@@ -827,36 +827,32 @@ function handleEdit($token, $chatId, $newBody) {
     $st['draft']['body'] = $newBody;
   }
   stateSet($chatId, $st);
-  reply($token, $chatId, draftAsText($st['draft']) . "\n\n— — —\n✉️ Отправить: /send");
+  reply($token, $chatId, draftAsText($st['draft']) . "\n\n— — —\n📤 Готово к отправке: /send");
 }
 
+// Бот НЕ отправляет письма сам. Причины, по которым отправку убрали после первого
+// же теста: команда с опечаткой мгновенно уходила чужому адресату без подтверждения,
+// а письмо с домена сайта, а не перевозчика, брокеры всё равно считают спамом.
+// Здесь мы только готовим письмо — отправляет человек из своей почты.
 function handleSend($token, $chatId, $toArg) {
   $st = stateGet($chatId);
   if (empty($st['draft'])) { reply($token, $chatId, "Нечего отправлять — сначала пришлите скриншот груза."); return; }
   $draft = $st['draft'];
   $to = $toArg !== '' ? $toArg : $draft['to'];
-  if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
-    reply($token, $chatId, "Не вижу адреса брокера. Отправьте так:\n/send dispatch@broker.com");
-    return;
-  }
+  $hasTo = filter_var($to, FILTER_VALIDATE_EMAIL) !== false;
 
-  // Reply-To — email из подписи перевозчика: ответ брокера должен идти вам,
-  // а не на технический ящик сайта.
-  $replyTo = '';
-  if (!empty($st['carrier']) && preg_match('/[\w.+-]+@[\w-]+\.[\w.-]+/', $st['carrier'], $rm)) $replyTo = $rm[0];
+  $mailto = 'mailto:' . ($hasTo ? rawurlencode($to) : '')
+    . '?subject=' . rawurlencode($draft['subject'])
+    . '&body=' . rawurlencode($draft['body']);
 
-  $headers = "From: Dispatch4You <no-reply@dispatch4you.com>\r\n";
-  if ($replyTo !== '') $headers .= "Reply-To: " . $replyTo . "\r\n";
-  $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+  $text = "📤 Письмо готово к отправке — отправляете вы, из своей почты.\n\n"
+    . "Кому: " . ($hasTo ? $to : '(адрес брокера не найден)') . "\n"
+    . "Тема: " . $draft['subject'] . "\n\n"
+    . $draft['body'] . "\n\n"
+    . "— — —\n"
+    . "Скопируйте текст выше или нажмите кнопку — письмо откроется в вашей почтовой программе уже заполненным.\n"
+    . "Так брокер видит адрес вашей компании, а не наш, и ответ придёт прямо вам.";
 
-  $ok = @mail($to, $draft['subject'], $draft['body'], $headers);
-  if ($ok) {
-    $st['sent_to'] = $to;
-    stateSet($chatId, $st);
-    reply($token, $chatId, "✅ Письмо отправлено на " . $to
-      . ($replyTo !== '' ? "\nОтвет придёт вам на " . $replyTo : "\n\n⚠️ В подписи нет вашего email — ответ брокера уйдёт в никуда. Задайте подпись: /carrier"));
-  } else {
-    reply($token, $chatId, "Не удалось отправить письмо с сервера.\n\n"
-      . "Скопируйте текст выше и отправьте со своей почты — брокеры и так больше доверяют письмам с домена перевозчика.");
-  }
+  // mailto в inline-кнопке Telegram не пропускает — отдаём ссылкой в тексте
+  reply($token, $chatId, $text . "\n\nОткрыть в почте:\n" . $mailto);
 }
