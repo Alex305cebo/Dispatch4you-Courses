@@ -404,6 +404,7 @@ try {
   fail($token, $chatId, 'pdf parse: ' . $e->getMessage(), $why); exit;
 }
 $text = trim(preg_replace('/[ \t]+/', ' ', $text));
+$text = fixGluedUnits($text);
 if (mb_strlen($text) < 100) {
   clearProgress($token, $chatId);
   reply($token, $chatId, HELP_SCAN);
@@ -435,6 +436,10 @@ $sys = "You extract data from freight Rate Confirmation documents.\n"
 . "- time: appointment date and window as printed, e.g. '02/02/26 @ 12:30' or '07/24/26 06:00 - 17:00'.\n"
 . "- refs: EVERY reference number belonging to that stop. Format each as '<LABEL> <NUMBER>' using the label as printed "
 . "(PU, PO, BOL, Order#). If the label is only 'Ref' or 'Ref #', output the number alone.\n"
+. "- Some rate cons print stops as a TABLE with a 'Pick/Drop #' or 'PU/Delv #' column instead of labelled refs. "
+. "There the pickup/delivery number is a bare code sitting right after the stop's weight or time "
+. "(e.g. '41870.00lbs 1713693K' means ref '1713693K'). Treat those bare codes as that stop's refs. "
+. "Do NOT invent a label for them — output the code alone.\n"
 . "- rate: the TOTAL rate paid to the carrier, with currency as printed.\n"
 . "- weight: shipment weight in pounds. miles: trip distance. Labels and values are often on separate lines — "
 . "match them by column position, not adjacency.\n"
@@ -654,6 +659,22 @@ function driverCard(array $d, $lang = 'en') {
   if (!empty($d['weight']))    $L[] = $t['weight'] . ': ' . $d['weight'];
   $card = implode("\n", $L);
   return mb_strlen($card) > 4000 ? mb_substr($card, 0, 4000) : $card;
+}
+
+// PDF-таблицы иногда извлекаются без пробела между соседними ячейками:
+// «41870.00lbs1713693K» — вес и реф-номер доставки слиплись в одно слово,
+// модель на реальном документе (Armstrong Transport, 3 стопа) потеряла оба
+// реф-номера доставки именно из-за этого. Вставляем границу после единицы
+// измерения, если сразу за ней идёт буква/цифра без пробела — дёшево и не
+// трогает легитимные слитные токены вроде «MC123456» или «53V».
+function fixGluedUnits($text) {
+  // \b перед «lbs» не сработал бы: между цифрой и буквой нет границы слова
+  // (обе — \w). Требуем цифру непосредственно перед единицей — она и так
+  // всегда стоит перед lbs/kg в весе, а от случайных слов это защищает.
+  // Группа атомарная: иначе «s» в lbs?/kgs? необязательна, и на «36000.0lbs TUBS»
+  // движок откатывался к короткому «lb», принимал «s» из самого «lbs» за начало
+  // следующего слова и резал слово пополам.
+  return preg_replace('/(\d)(?>lbs?|kgs?)(?=[A-Za-z0-9])/i', '$0 ', $text);
 }
 
 // Вес и мили модель регулярно меняет местами: в рейт-конах подписи столбцов
