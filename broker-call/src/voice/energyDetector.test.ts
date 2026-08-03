@@ -72,7 +72,10 @@ describe('EnergyDetector', () => {
     // Пауза платится на каждой реплике. Если её тихо поднять «на всякий
     // случай», разговор снова станет похож на автоответчик, и заметить это
     // будет некому — поэтому граница закреплена тестом.
-    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeLessThanOrEqual(500)
+    // Верхняя граница — чтобы её не подняли обратно «с запасом».
+    // Нижняя — чтобы не резало живую речь на куски: на 450 мс фразы уже рвались.
+    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeLessThanOrEqual(650)
+    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeGreaterThanOrEqual(550)
 
     const d = new EnergyDetector()
     settle(d)

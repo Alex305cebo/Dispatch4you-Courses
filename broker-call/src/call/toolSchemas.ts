@@ -25,7 +25,19 @@ export const TOOL_SCHEMAS = [
       name: 'pull_up_load',
       description:
         'Open the load record so you can read the details out. Call this BEFORE describing route, commodity, weight, pickup or delivery. Never state load details from memory.',
-      parameters: { type: 'object', properties: {} },
+      // Пустой properties: {} валидатор Groq отвергает — «/properties does not
+      // validate» — и роняет ЗАПРОС ЦЕЛИКОМ, на всех моделях сразу. Поэтому у
+      // инструмента без аргументов всё равно есть один необязательный: он и
+      // схему делает валидной, и по делу полезен.
+      parameters: {
+        type: 'object',
+        properties: {
+          reference: {
+            type: 'string',
+            description: 'Load reference number, if the dispatcher named one',
+          },
+        },
+      },
     },
   },
   {
@@ -64,7 +76,12 @@ export const TOOL_SCHEMAS = [
       name: 'check_market_rate',
       description:
         'Look up current market data for this lane. Use it when the dispatcher quotes market numbers at you, or before you decide how hard to push back.',
-      parameters: { type: 'object', properties: {} },
+      parameters: {
+        type: 'object',
+        properties: {
+          lane: { type: 'string', description: 'Lane to check, if different from the posted load' },
+        },
+      },
     },
   },
   {
