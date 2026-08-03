@@ -142,6 +142,18 @@ if (isset($_GET['diag'])) {
   exit;
 }
 
+// ── Живой ли ключ FMCSA (проверка брокера). Ключ наружу не отдаём ──
+if (isset($_GET['fmcsacheck'])) {
+  header('Content-Type: text/plain; charset=utf-8');
+  $kp = realpath(__DIR__ . '/../..') . '/fmcsa.key';
+  $key = @trim(file_get_contents(__DIR__ . '/../../fmcsa.key'));
+  if ($key === '' || $key === false) { echo "fmcsa.key: не найден или пуст\nискали тут: $kp\n"; exit; }
+  echo "fmcsa.key: есть\n";
+  // MC 115789 — реальный действующий брокер (TQL), используем как проверочный
+  echo "ответ: " . brokerReport('mc', '115789') . "\n";
+  exit;
+}
+
 // ── Живой ли ключ Gemini (разбор скриншотов). Ключ наружу не отдаём ──
 if (isset($_GET['geminicheck'])) {
   header('Content-Type: text/plain; charset=utf-8');
