@@ -36,7 +36,9 @@ const HELP_START =
 . "2. Подождите 5–15 секунд\n"
 . "3. Скопируйте карточку и отправьте водителю\n\n"
 . "Нужен PDF с текстом (как присылает брокер), не фото и не скан. До 15 МБ.\n\n"
-. "🔎 Ещё умею проверять брокера по FMCSA:\n"
+. "📷 Ещё пришлите скриншот груза с лоуборда (DAT, Truckstop) — разберу его, "
+. "посчитаю ставку за милю и подготовлю письмо брокеру, которое можно поправить и отправить.\n\n"
+. "🔎 Проверка брокера по FMCSA:\n"
 . "/mc 115789 · /dot 2100420\n\n"
 . "/help — подробнее и что делать при ошибке\n\n"
 . "— — —\n"
@@ -50,6 +52,15 @@ const HELP_FULL =
 . "• все реф-номера (PU, PO, BOL, Ref#)\n"
 . "• ставку, груз, вес\n\n"
 . "Несколько пикапов или доставок — каждый стоп отдельным блоком, по порядку.\n\n"
+. "📷 Скриншот груза с лоуборда:\n"
+. "Пришлите картинку карточки груза (DAT, Truckstop) или письма брокера — верну:\n"
+. "• карточку груза: маршрут, даты, трейлер, вес, контакты\n"
+. "• аналитику: ставка за милю, сравнение с ориентиром, топливо, на что смотреть\n"
+. "• черновик письма брокеру\n\n"
+. "Работа с письмом:\n"
+. "/carrier — задать подпись (компания, MC, телефон, ваш email)\n"
+. "/edit — прислать исправленный текст письма\n"
+. "/send email@брокера — отправить\n\n"
 . "🔎 Проверка брокера по FMCSA:\n"
 . "/mc 115789 — по номеру MC\n"
 . "/dot 2100420 — по номеру DOT\n"
@@ -129,8 +140,12 @@ if (isset($_GET['setup'])) {
   )), true);
   $out['commands'] = json_decode(tgApi($token, 'setMyCommands', array(
     'commands' => json_encode(array(
-      array('command' => 'start', 'description' => 'Что умеет бот / What this bot does'),
-      array('command' => 'help',  'description' => 'Инструкция и требования / Help'),
+      array('command' => 'start',   'description' => 'Что умеет бот / What this bot does'),
+      array('command' => 'help',    'description' => 'Инструкция и требования / Help'),
+      array('command' => 'carrier', 'description' => 'Подпись перевозчика для писем брокерам'),
+      array('command' => 'edit',    'description' => 'Поправить черновик письма'),
+      array('command' => 'send',    'description' => 'Отправить письмо брокеру'),
+      array('command' => 'mc',      'description' => 'Проверить брокера по MC'),
     )),
   )), true);
   header('Content-Type: application/json');
@@ -148,9 +163,19 @@ $msg = isset($update['message']) ? $update['message'] : null;
 if (!$msg || !isset($msg['chat']['id'])) { echo 'ok'; exit; }
 $chatId = $msg['chat']['id'];
 
-// Фото/скриншот рейт-кона — частый случай, отвечаем осмысленно
-if (isset($msg['photo'])) {
-  reply($token, $chatId, HELP_PHOTO); echo 'ok'; exit;
+// Фото/скриншот груза с лоуборда: карточка + аналитика + черновик письма
+if (isset($msg['photo']) || (isset($msg['document']['mime_type']) && strpos($msg['document']['mime_type'], 'image/') === 0)) {
+  if (isset($msg['photo'])) {
+    // Telegram присылает лесенку размеров, последний — самый крупный
+    $ph = end($msg['photo']);
+    $fileId = $ph['file_id'];
+    $mime = 'image/jpeg';
+  } else {
+    $fileId = $msg['document']['file_id'];
+    $mime = $msg['document']['mime_type'];
+  }
+  handlePhotoLoad($token, $chatId, $fileId, $mime);
+  exit;
 }
 
 // /help, /id, /start и любой текст без файла
@@ -159,6 +184,12 @@ if (!isset($msg['document'])) {
   if (stripos($text, '/id') === 0) {
     // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
     reply($token, $chatId, "Ваш chat id: " . $chatId);
+  } elseif (preg_match('~^/carrier\b\s*(.*)$~is', $text, $cm)) {
+    handleCarrier($token, $chatId, trim($cm[1]));
+  } elseif (preg_match('~^/edit\b\s*(.*)$~is', $text, $em)) {
+    handleEdit($token, $chatId, trim($em[1]));
+  } elseif (preg_match('~^/send\b\s*(.*)$~i', $text, $sm)) {
+    handleSend($token, $chatId, trim($sm[1]));
   } elseif (preg_match('~^/(broker|mc|dot)\b\s*(.*)$~i', $text, $bm)) {
     $kind = strtolower($bm[1]);
     $numArg = preg_replace('/\D/', '', $bm[2]);
@@ -677,4 +708,138 @@ function httpPost($url, $body, array $headers) {
   ));
   $r = curl_exec($ch); curl_close($ch);
   return $r === false ? '' : $r;
+}
+
+// ── Груз со скриншота: разбор, аналитика, письмо брокеру ────────────
+
+// Состояние диалога (подпись перевозчика и текущий черновик) — по одному
+// файлу на чат, рядом с ключами и вне публичной папки.
+function statePath($chatId) { return __DIR__ . '/../../tg-state/' . preg_replace('/\D/', '', $chatId) . '.json'; }
+
+function stateGet($chatId) {
+  $j = @file_get_contents(statePath($chatId));
+  $s = $j === false ? null : json_decode($j, true);
+  return is_array($s) ? $s : array();
+}
+
+function stateSet($chatId, array $s) {
+  $dir = __DIR__ . '/../../tg-state';
+  if (!is_dir($dir)) @mkdir($dir, 0700, true);
+  @file_put_contents(statePath($chatId), json_encode($s, JSON_UNESCAPED_UNICODE));
+}
+
+function handlePhotoLoad($token, $chatId, $fileId, $mime) {
+  global $progressId;
+  $sent = json_decode(reply($token, $chatId, '⏳ Читаю скриншот… / Reading…'), true);
+  if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
+  finishRequest();
+
+  require_once __DIR__ . '/lib/load-photo.php';
+
+  $info = json_decode(tgApi($token, 'getFile', array('file_id' => $fileId)), true);
+  if (empty($info['result']['file_path'])) { fail($token, $chatId, 'photo getFile: ' . json_encode($info), 'Telegram не отдал картинку'); return; }
+  $bytes = httpGet('https://api.telegram.org/file/bot' . $token . '/' . $info['result']['file_path']);
+  if ($bytes === false || $bytes === '') { fail($token, $chatId, 'photo download failed', 'не удалось скачать картинку'); return; }
+
+  list($load, $err) = photoExtractLoad($bytes, $mime);
+  clearProgress($token, $chatId);
+
+  if ($err === 'nokey') {
+    reply($token, $chatId,
+      "Разбор скриншотов выключен — нужен бесплатный ключ Google Gemini.\n\n"
+      . "Заведите его на aistudio.google.com/apikey и положите на сервер в файл gemini.key "
+      . "рядом с groq.key и fmcsa.key. После этого фото начнут читаться сразу.");
+    return;
+  }
+  if ($err === 'notload') {
+    reply($token, $chatId,
+      "На картинке нет груза — я вижу что-то другое.\n\n"
+      . "Пришлите скриншот карточки груза с лоуборда (DAT, Truckstop) или письма брокера. "
+      . "Рейт-кон лучше присылать файлом PDF — так точнее.");
+    return;
+  }
+  if ($err !== '') { fail($token, $chatId, 'photo vision: ' . $err, 'сервис распознавания не справился с картинкой'); return; }
+
+  $st = stateGet($chatId);
+  $draft = brokerEmailDraft($load, isset($st['carrier']) ? $st['carrier'] : '');
+  $st['load'] = $load;
+  $st['draft'] = $draft;
+  stateSet($chatId, $st);
+
+  reply($token, $chatId, photoLoadCard($load));
+  reply($token, $chatId, photoLoadAnalytics($load));
+  reply($token, $chatId, draftAsText($draft) . "\n\n"
+    . "— — —\n"
+    . "✏️ Изменить: /edit и новый текст письма\n"
+    . "✉️ Отправить: /send" . ($draft['to'] !== '' ? " (уйдёт на " . $draft['to'] . ")" : " email@брокера")
+    . "\n🖊 Подпись: /carrier и данные вашей компании");
+}
+
+function handleCarrier($token, $chatId, $sig) {
+  $st = stateGet($chatId);
+  if ($sig === '') {
+    $cur = isset($st['carrier']) ? $st['carrier'] : '';
+    reply($token, $chatId, $cur === ''
+      ? "Подпись пока не задана.\n\nПришлите её так:\n/carrier ABC Trucking LLC\nMC 123456\nJohn, (555) 111-2233\njohn@abctrucking.com\n\nОна будет подставляться в письма брокерам, а email из неё — в поле «ответить»."
+      : "Ваша подпись:\n\n" . $cur . "\n\nЗаменить — пришлите /carrier с новым текстом.");
+    return;
+  }
+  $st['carrier'] = $sig;
+  if (!empty($st['load'])) { // пересобираем черновик с новой подписью
+    require_once __DIR__ . '/lib/load-photo.php';
+    $st['draft'] = brokerEmailDraft($st['load'], $sig);
+  }
+  stateSet($chatId, $st);
+  reply($token, $chatId, "Подпись сохранена:\n\n" . $sig);
+}
+
+function handleEdit($token, $chatId, $newBody) {
+  $st = stateGet($chatId);
+  if (empty($st['draft'])) { reply($token, $chatId, "Нечего редактировать — сначала пришлите скриншот груза."); return; }
+  if ($newBody === '') {
+    reply($token, $chatId,
+      "Пришлите письмо целиком после команды:\n\n/edit Hello John,\n\nWe can cover this load at $2,400 all-in...\n\n"
+      . "Можно менять и тему — первой строкой «Subject: ...»");
+    return;
+  }
+  // Первая строка «Subject: ...» меняет тему, остальное — тело
+  if (preg_match('~^\s*subject:\s*(.+?)\R+(.*)$~is', $newBody, $m)) {
+    $st['draft']['subject'] = trim($m[1]);
+    $st['draft']['body'] = trim($m[2]);
+  } else {
+    $st['draft']['body'] = $newBody;
+  }
+  stateSet($chatId, $st);
+  reply($token, $chatId, draftAsText($st['draft']) . "\n\n— — —\n✉️ Отправить: /send");
+}
+
+function handleSend($token, $chatId, $toArg) {
+  $st = stateGet($chatId);
+  if (empty($st['draft'])) { reply($token, $chatId, "Нечего отправлять — сначала пришлите скриншот груза."); return; }
+  $draft = $st['draft'];
+  $to = $toArg !== '' ? $toArg : $draft['to'];
+  if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
+    reply($token, $chatId, "Не вижу адреса брокера. Отправьте так:\n/send dispatch@broker.com");
+    return;
+  }
+
+  // Reply-To — email из подписи перевозчика: ответ брокера должен идти вам,
+  // а не на технический ящик сайта.
+  $replyTo = '';
+  if (!empty($st['carrier']) && preg_match('/[\w.+-]+@[\w-]+\.[\w.-]+/', $st['carrier'], $rm)) $replyTo = $rm[0];
+
+  $headers = "From: Dispatch4You <no-reply@dispatch4you.com>\r\n";
+  if ($replyTo !== '') $headers .= "Reply-To: " . $replyTo . "\r\n";
+  $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+  $ok = @mail($to, $draft['subject'], $draft['body'], $headers);
+  if ($ok) {
+    $st['sent_to'] = $to;
+    stateSet($chatId, $st);
+    reply($token, $chatId, "✅ Письмо отправлено на " . $to
+      . ($replyTo !== '' ? "\nОтвет придёт вам на " . $replyTo : "\n\n⚠️ В подписи нет вашего email — ответ брокера уйдёт в никуда. Задайте подпись: /carrier"));
+  } else {
+    reply($token, $chatId, "Не удалось отправить письмо с сервера.\n\n"
+      . "Скопируйте текст выше и отправьте со своей почты — брокеры и так больше доверяют письмам с домена перевозчика.");
+  }
 }
