@@ -156,45 +156,93 @@ export class TelephonyAudio {
     this.holdNodes = []
   }
 
-  /** Еле слышный гул офиса на фоне — брокер сидит не в вакууме. */
+  /**
+   * Офис за спиной брокера.
+   *
+   * Прошлая версия была четырёхсекундной петлёй широкополосного шума и звучала
+   * ровно как шум: слышно, что что-то шипит, и непонятно что. Комната
+   * узнаётся не громкостью, а двумя вещами — она НЕ повторяется и она слегка
+   * дышит. Поэтому здесь:
+   *
+   *  — петля на 11 секунд: короткую ухо ловит как рисунок и начинает считать
+   *    её артефактом;
+   *  — два узких голоса вместо одной широкой полосы. Узкая полоса около 600 Гц
+   *    читается как отдалённый говор, широкая — как помехи на линии;
+   *  — медленное дыхание громкости: неподвижный фон мозг вычитает как дефект
+   *    записи, шевелящийся — принимает за помещение;
+   *  — вход через двухсекундное нарастание, чтобы фон никогда не объявлял
+   *    о себе, а просто оказывался там.
+   *
+   * Громкость намеренно на грани слышимости: фон должен замечаться только
+   * когда пропадает.
+   */
   async startAmbience(): Promise<void> {
     const ctx = await this.ensureContext()
     if (this.ambienceNodes.length) return
 
-    const seconds = 4
-    const buffer = ctx.createBuffer(1, ctx.sampleRate * seconds, ctx.sampleRate)
+    const seconds = 11
+    const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * seconds), ctx.sampleRate)
     const data = buffer.getChannelData(0)
-    let last = 0
+    // Розовый шум по Voss–McCartney: белый звучит как шипение утюга, розовый —
+    // как воздух в комнате.
+    const octaves = [0, 0, 0, 0, 0, 0, 0]
     for (let i = 0; i < data.length; i++) {
-      // Розовый шум через простой фильтр первого порядка: белый шум звучит
-      // как шипение, розовый — как помещение.
-      const white = Math.random() * 2 - 1
-      last = 0.98 * last + 0.02 * white
-      data[i] = last * 3
+      let sum = 0
+      for (let o = 0; o < octaves.length; o++) {
+        if (i % (1 << o) === 0) octaves[o] = Math.random() * 2 - 1
+        sum += octaves[o]!
+      }
+      data[i] = (sum / octaves.length) * 0.8
     }
 
-    const src = ctx.createBufferSource()
-    src.buffer = buffer
-    src.loop = true
+    const output = ctx.createGain()
+    output.gain.setValueAtTime(0.0001, ctx.currentTime)
+    // Не ступенькой, а вплывая — иначе включение фона слышно как щелчок.
+    output.gain.exponentialRampToValueAtTime(0.02, ctx.currentTime + 2)
+    output.connect(this.lineOut ?? ctx.destination)
 
-    const band = ctx.createBiquadFilter()
-    band.type = 'bandpass'
-    band.frequency.value = 900
-    band.Q.value = 0.6
+    const nodes: AudioNode[] = [output]
 
-    const gain = ctx.createGain()
-    gain.gain.value = 0.012
+    // Два «голоса» комнаты на разной высоте и с разным дыханием: в сумме это
+    // перестаёт читаться как один источник шума.
+    for (const layer of [
+      { freq: 620, q: 2.2, level: 1, lfo: 0.07 },
+      { freq: 1150, q: 3.0, level: 0.5, lfo: 0.11 },
+    ]) {
+      const src = ctx.createBufferSource()
+      src.buffer = buffer
+      src.loop = true
 
-    src.connect(band)
-    band.connect(gain)
-    gain.connect(this.lineOut ?? ctx.destination)
-    src.start()
-    this.ambienceNodes = [src, band, gain]
+      const band = ctx.createBiquadFilter()
+      band.type = 'bandpass'
+      band.frequency.value = layer.freq
+      band.Q.value = layer.q
+
+      const level = ctx.createGain()
+      level.gain.value = layer.level
+
+      // Медленное дыхание громкости.
+      const lfo = ctx.createOscillator()
+      lfo.frequency.value = layer.lfo
+      const lfoDepth = ctx.createGain()
+      lfoDepth.gain.value = layer.level * 0.45
+      lfo.connect(lfoDepth)
+      lfoDepth.connect(level.gain)
+
+      src.connect(band)
+      band.connect(level)
+      level.connect(output)
+      src.start()
+      lfo.start()
+      nodes.push(src, band, level, lfo, lfoDepth)
+    }
+
+    this.ambienceNodes = nodes
   }
 
   stopAmbience(): void {
     for (const node of this.ambienceNodes) {
-      if (node instanceof AudioBufferSourceNode) {
+      if (node instanceof AudioBufferSourceNode || node instanceof OscillatorNode) {
         try {
           node.stop()
         } catch {

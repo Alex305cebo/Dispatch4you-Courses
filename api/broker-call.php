@@ -61,8 +61,31 @@ $openaiKey   = bc_key('openai.key');
 // без предупреждения. Groq объявил llama-3.3-70b-versatile устаревшей
 // 17.06.2026 — с единственным именем в коде это положило бы весь звонок.
 $CEREBRAS_MODELS = ['llama-3.3-70b'];
-$GROQ_MODELS     = ['openai/gpt-oss-120b', 'llama-3.3-70b-versatile'];
+$GROQ_MODELS     = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.3-70b-versatile'];
 $TTS_MODEL       = 'canopylabs/orpheus-v1-english';
+
+/**
+ * Приводит тело запроса под конкретную модель.
+ *
+ * gpt-oss — рассуждающие модели, и они НЕ принимают max_tokens: запрос
+ * отваливается целиком. Именно на этом звонок падал с «LLM 502», хотя проба
+ * health показывала зелёное — она слала простой ping без этого параметра и без
+ * инструментов, то есть проверяла не тот путь, которым идёт разговор.
+ *
+ * reasoning_effort=low заодно держит задержку низкой: брокеру в трубке не надо
+ * рассуждать, ему надо отвечать.
+ */
+function bc_shape_payload($payload, $model) {
+  if (strpos($model, 'gpt-oss') !== false) {
+    if (isset($payload['max_tokens'])) {
+      $payload['max_completion_tokens'] = $payload['max_tokens'];
+      unset($payload['max_tokens']);
+    }
+    $payload['reasoning_effort'] = 'low';
+  }
+  $payload['model'] = $model;
+  return $payload;
+}
 
 // Голоса Groq Orpheus. НЕ совпадают с именами оригинального Orpheus от
 // Canopy Labs (tara, leo, zac…) — именно на этом тренажёр немел: запрос уходил
@@ -199,11 +222,17 @@ switch ($action) {
       foreach ($attempts as $a) {
         list($name, $url, $key, $model) = $a;
         $t0 = microtime(true);
-        list($code, $body) = bc_post_json($url, $key, [
-          'model'      => $model,
-          'messages'   => [['role' => 'user', 'content' => 'ping']],
-          'max_tokens' => 5,
-        ]);
+        // Проба обязана идти ТЕМ ЖЕ путём, что и звонок: с инструментами и
+        // через ту же подгонку тела. Прежняя слала голый ping и показывала
+        // зелёное, пока настоящий разговор падал с 502 — проверять надо то,
+        // что ломается, а не то, что удобно проверить.
+        list($code, $body) = bc_post_json($url, $key, bc_shape_payload([
+          'messages'    => [['role' => 'user', 'content' => 'ping']],
+          'tools'       => bc_config()['tools'],
+          'tool_choice' => 'auto',
+          'temperature' => 0.85,
+          'max_tokens'  => 32,
+        ], $model));
         $ms = (int) round((microtime(true) - $t0) * 1000);
         if ($code >= 200 && $code < 300) {
           $chat = ['ok' => true, 'provider' => $name, 'model' => $model, 'ms' => $ms];
@@ -321,8 +350,7 @@ switch ($action) {
     $lastError = '';
     foreach ($attempts as $a) {
       list($name, $url, $key, $model) = $a;
-      $payload['model'] = $model;
-      list($code, $body) = bc_post_json($url, $key, $payload);
+      list($code, $body) = bc_post_json($url, $key, bc_shape_payload($payload, $model));
       if ($code < 200 || $code >= 300) {
         $lastError = $name . '/' . $model . ' ' . $code . ': ' . substr((string) $body, 0, 300);
         continue;
@@ -452,8 +480,7 @@ switch ($action) {
         ? 'https://api.cerebras.ai/v1/chat/completions'
         : 'https://api.groq.com/openai/v1/chat/completions',
       $key,
-      [
-        'model'           => $useCerebras ? $CEREBRAS_MODELS[0] : $GROQ_MODELS[0],
+      bc_shape_payload([
         'messages'        => [
           ['role' => 'system', 'content' => $scenario['debrief']],
           ['role' => 'user',   'content' => $user],
@@ -461,7 +488,7 @@ switch ($action) {
         'temperature'     => 0.3,
         'max_tokens'      => 700,
         'response_format' => ['type' => 'json_object'],
-      ]
+      ], $useCerebras ? $CEREBRAS_MODELS[0] : $GROQ_MODELS[0])
     );
     if ($code < 200 || $code >= 300) { bc_fail(502, substr((string) $body, 0, 300)); }
 

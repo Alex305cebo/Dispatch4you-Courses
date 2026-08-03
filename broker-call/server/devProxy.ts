@@ -27,6 +27,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
   const CEREBRAS_MODELS = split(env.CEREBRAS_MODELS) ?? ['llama-3.3-70b']
   const GROQ_MODELS = split(env.GROQ_MODELS) ?? [
     'openai/gpt-oss-120b',
+    'openai/gpt-oss-20b',
     'llama-3.3-70b-versatile',
   ]
   const TTS_MODEL = env.GROQ_TTS_MODEL ?? 'canopylabs/orpheus-v1-english'
@@ -97,7 +98,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${attempt.key}`,
               },
-              body: JSON.stringify({ ...payload, model: attempt.model }),
+              body: JSON.stringify(shapePayload(payload, attempt.model)),
             })
             if (!r.ok) {
               lastError = `${attempt.name}/${attempt.model} ${r.status}: ${(await r.text()).slice(0, 300)}`
@@ -188,7 +189,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
             body: JSON.stringify({
-              model: (useCerebras ? CEREBRAS_MODELS[0] : GROQ_MODELS[0]) ?? 'openai/gpt-oss-120b',
+              ...shapePayload({}, (useCerebras ? CEREBRAS_MODELS[0] : GROQ_MODELS[0]) ?? 'openai/gpt-oss-120b'),
               messages: buildDebriefPrompt(body),
               temperature: 0.3,
               max_tokens: 700,
@@ -240,6 +241,26 @@ interface Attempt {
   url: string
   key: string
   model: string
+}
+
+/**
+ * Подгоняет тело под конкретную модель.
+ *
+ * gpt-oss — рассуждающие модели, они НЕ принимают max_tokens и отвечают
+ * ошибкой на весь запрос. Ровно на этом звонок падал с «LLM 502».
+ * reasoning_effort=low заодно держит задержку низкой: брокеру в трубке надо
+ * отвечать, а не рассуждать.
+ */
+function shapePayload(payload: Record<string, unknown>, model: string): Record<string, unknown> {
+  const shaped: Record<string, unknown> = { ...payload, model }
+  if (model.includes('gpt-oss')) {
+    if ('max_tokens' in shaped) {
+      shaped.max_completion_tokens = shaped.max_tokens
+      delete shaped.max_tokens
+    }
+    shaped.reasoning_effort = 'low'
+  }
+  return shaped
 }
 
 /** "a, b" → ["a","b"]; пусто → undefined, чтобы сработал дефолт. */

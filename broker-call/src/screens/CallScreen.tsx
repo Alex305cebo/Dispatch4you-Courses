@@ -1,20 +1,27 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './call.css'
-import { useCallStore, type FeedEntry, type LineState, type SpeechItem, type ToolItem } from '../store/useCallStore'
+import {
+  useCallStore,
+  type LineState,
+  type SpeechItem,
+  type ToolItem,
+} from '../store/useCallStore'
 import { getBroker } from '../data/brokers'
+import { getLoad, laneLabel } from '../data/loads'
 import { useT } from '../i18n/useT'
 import type { TranslationKey } from '../i18n'
 import { ToolCard } from '../components/ToolCard'
 
 /**
- * Экран звонка. За весь разговор здесь нечего нажимать — в этом вся идея.
- * Всё, что происходит, происходит в одной ленте: реплики, обращения брокера к
- * системе, результаты. Никаких боковых панелей и никаких подсказок с готовой
- * фразой для зачитывания — студент говорит сам.
+ * Экран звонка.
+ *
+ * За весь разговор здесь нечего нажимать — в этом вся идея. Две зоны:
+ * слева собеседник (живой индикатор, состояние линии, что он уже записал),
+ * справа сам разговор. На узком экране левая сжимается в шапку.
  */
 export function CallScreen() {
   const t = useT()
-  const { scenario, feed, line, micLevel, error, startedAt, endCall } = useCallStore()
+  const { scenario, callState, feed, line, micLevel, error, startedAt, endCall } = useCallStore()
   const feedRef = useRef<HTMLDivElement>(null)
 
   // Esc — единственная клавиша. Звонок и так закончится сам.
@@ -26,7 +33,6 @@ export function CallScreen() {
     return () => window.removeEventListener('keydown', onKey)
   }, [endCall])
 
-  // Лента всегда держит последнюю реплику в поле зрения.
   useEffect(() => {
     const el = feedRef.current
     if (!el) return
@@ -39,50 +45,98 @@ export function CallScreen() {
 
   return (
     <div className="call">
-      <header className="call-head">
-        <div className="call-who">
-          <span className="call-name">{broker.name}</span>
-          <span className="call-company">{broker.company}</span>
+      <aside className="call-side">
+        <Orb state={line} level={micLevel} />
+
+        <div className="call-id">
+          <div className="call-name">{broker.name}</div>
+          <div className="call-company">{broker.company}</div>
         </div>
-        <div className="call-meta">
+
+        <div className="call-status" data-state={line}>
+          <span className="dot" />
+          <span className="label-text">{t(LINE_LABEL[line])}</span>
           <CallTimer startedAt={startedAt} />
-          <span className="line-state" data-state={line}>
-            <span className="line-dot" />
-            {t(LINE_LABEL[line])}
-          </span>
         </div>
-      </header>
 
-      <div className="scroll" ref={feedRef}>
-        <div className="feed">
-          {feed.map((entry) =>
-            entry.kind === 'tool' ? (
-              <ToolCard key={entry.id} item={entry as ToolItem} />
-            ) : (
-              <Turn
-                key={entry.id}
-                item={entry as SpeechItem}
-                active={entry.id === lastSpeechId}
-              />
-            ),
-          )}
-        </div>
-      </div>
+        <CallFacts scenarioLoadId={scenario.loadId} />
 
-      {/* Ошибка отдельной строкой над подвалом: внутри flex-подвала она
-          схлопывалась между волной и кнопкой и была нечитаемой — из-за этого
-          «брокер молчит» пришлось диагностировать чтением исходников. */}
-      {error ? <ErrorBar raw={error} /> : null}
+        <div className="call-side-spacer" />
 
-      <footer className="call-foot">
-        <Waveform level={micLevel} live={line === 'listening'} />
-        <span className="call-hint">{t(LINE_LABEL[line])}</span>
         <button className="call-end" onClick={endCall}>
           {t('call.end')}
         </button>
-      </footer>
+      </aside>
+
+      <main className="call-main">
+        <div className="scroll" ref={feedRef}>
+          <div className="feed">
+            {feed.map((entry) =>
+              entry.kind === 'tool' ? (
+                <ToolCard key={entry.id} item={entry as ToolItem} />
+              ) : (
+                <Turn key={entry.id} item={entry as SpeechItem} active={entry.id === lastSpeechId} />
+              ),
+            )}
+          </div>
+        </div>
+
+        {error ? <ErrorBar raw={error} /> : null}
+
+        <footer className="call-foot">
+          <Waveform level={micLevel} live={line === 'listening'} />
+          <span className="call-hint">{t(LINE_LABEL[line])}</span>
+        </footer>
+      </main>
     </div>
   )
+
+  /** Факты, которые брокер уже записал. Пусто — пока ничего не выяснено. */
+  function CallFacts({ scenarioLoadId }: { scenarioLoadId: string }) {
+    const facts = callState?.facts
+    if (!facts) return null
+
+    const load = getLoad(scenarioLoadId)
+    const rows: { key: string; value: string; tone?: 'good' | 'bad' }[] = []
+
+    if (facts.carrier) {
+      rows.push({
+        key: 'MC',
+        value: facts.carrier.mc,
+        tone: facts.carrier.blocker ? 'bad' : 'good',
+      })
+    }
+    if (facts.equipment) {
+      rows.push({ key: 'Equipment', value: facts.equipment.replace('_', ' ') })
+    }
+    if (facts.loadPresented) {
+      rows.push({ key: 'Load', value: load.ref })
+      rows.push({ key: 'Lane', value: laneLabel(load) })
+    }
+    if (facts.agreedRate) {
+      rows.push({ key: 'Rate', value: `$${facts.agreedRate.toLocaleString('en-US')}`, tone: 'good' })
+    } else if (facts.currentBrokerOffer) {
+      rows.push({ key: 'Offer', value: `$${facts.currentBrokerOffer.toLocaleString('en-US')}` })
+    }
+    if (facts.rateConSentTo) {
+      rows.push({ key: 'Rate con', value: 'sent', tone: 'good' })
+    }
+
+    if (rows.length === 0) return null
+
+    return (
+      <div className="call-facts">
+        {rows.map((row) => (
+          <div className="call-fact" key={row.key}>
+            <span className="call-fact-key">{row.key}</span>
+            <span className="call-fact-val" data-tone={row.tone}>
+              {row.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
 }
 
 const LINE_LABEL = {
@@ -92,7 +146,32 @@ const LINE_LABEL = {
   thinking: 'call.thinking',
   hold: 'call.hold',
   ended: 'call.ended',
-} as const satisfies Record<LineState, Parameters<ReturnType<typeof useT>>[0]>
+} as const satisfies Record<LineState, TranslationKey>
+
+/**
+ * Присутствие собеседника. Дышит в тишине, ускоряется когда брокер думает,
+ * раскрывается кольцами на твой голос. Единственная «картинка» на экране —
+ * и та работает, а не украшает: по ней видно, слышат тебя или нет.
+ */
+function Orb({ state, level }: { state: LineState; level: number }) {
+  const scale = 1 + Math.min(1, level) * 0.35
+  return (
+    <div className="orb" data-state={state} aria-hidden="true">
+      <span
+        className="orb-ring"
+        style={{ transform: `scale(${0.75 + Math.min(1, level) * 0.5})` }}
+      />
+      <span
+        className="orb-ring"
+        style={{ transform: `scale(${0.6 + Math.min(1, level) * 0.75})`, opacity: 0.5 }}
+      />
+      <span
+        className="orb-core"
+        style={state === 'listening' ? { transform: `scale(${scale})` } : undefined}
+      />
+    </div>
+  )
+}
 
 /**
  * Полоса ошибки. Студенту — понятная фраза, мне — техническая подробность
@@ -178,7 +257,7 @@ function useWordReveal(item: SpeechItem, wordCount: number): number {
 
 /** Живая волна своего голоса. Смотреть можно, нажимать нечего. */
 function Waveform({ level, live }: { level: number; live: boolean }) {
-  const bars = 32
+  const bars = 40
   const [history, setHistory] = useState<number[]>(() => new Array(bars).fill(0))
 
   useEffect(() => {
@@ -210,5 +289,3 @@ function CallTimer({ startedAt }: { startedAt: number | null }) {
   const ss = String(seconds % 60).padStart(2, '0')
   return <span className="call-timer mono">{`${mm}:${ss}`}</span>
 }
-
-export type { FeedEntry }

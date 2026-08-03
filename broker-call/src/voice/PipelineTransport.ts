@@ -155,7 +155,9 @@ export class PipelineTransport implements VoiceTransport {
     form.append('temperature', '0')
 
     const r = await fetch(endpoint('stt'), { method: 'POST', body: form })
-    if (!r.ok) throw new Error(`STT ${r.status}`)
+    // Тело ответа несёт причину. Раньше оно отбрасывалось, и на экране
+    // оставался голый код — по нему нельзя было понять ничего.
+    if (!r.ok) throw new Error(`${r.status} ${(await r.text()).slice(0, 200)}`)
     return (await r.text()).trim()
   }
 
@@ -219,7 +221,12 @@ export class PipelineTransport implements VoiceTransport {
       signal: this.abort.signal,
       body: JSON.stringify({ scenarioId: this.deps.scenarioId, messages: this.messages }),
     })
-    if (!r.ok) throw new Error(`LLM ${r.status}`)
+    if (!r.ok) {
+      // Сервер кладёт сюда дословный ответ провайдера — единственное, что
+      // объясняет отказ. «LLM 502» без него не говорит ни о чём.
+      const detail = await r.text().catch(() => '')
+      throw new Error(`${r.status} ${extractError(detail).slice(0, 220)}`)
+    }
     return (await r.json()) as TurnReply
   }
 
@@ -440,6 +447,17 @@ interface TurnReply {
   message?: ChatMessage
   content: string
   toolCalls: { id: string; name: string; arguments: unknown }[]
+}
+
+/** Вытаскивает человекочитаемую часть из ответа об ошибке. */
+function extractError(raw: string): string {
+  try {
+    const parsed = JSON.parse(raw) as { error?: unknown }
+    if (typeof parsed.error === 'string') return parsed.error
+  } catch {
+    // Не JSON — покажем как есть.
+  }
+  return raw
 }
 
 let counter = 0

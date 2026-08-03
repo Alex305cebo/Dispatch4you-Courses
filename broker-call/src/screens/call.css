@@ -1,76 +1,71 @@
 /* ── Экран звонка ──────────────────────────────────────────────────────────
-   Одна вертикальная колонка. Никаких боковых панелей: всё, что происходит,
-   происходит в ленте разговора — включая то, что брокер лезет в систему. */
+   Переделан после отзыва «узкая колонка в пустоте».
+
+   Прежняя вёрстка была одной колонкой текста на всю ширину экрана: на телефоне
+   терпимо, на десктопе — пара строк в чёрном поле, будто страница не
+   догрузилась. Причина была в подходе: я сделал стенограмму, а нужен экран
+   звонка. У звонка есть собеседник, и он должен быть виден.
+
+   Теперь две зоны. Слева — присутствие: живой индикатор голоса, имя, состояние
+   линии и то, что уже выяснено по грузу. Справа — разговор. На узком экране
+   левая зона сжимается в шапку. */
 
 .call {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-columns: minmax(300px, 360px) 1fr;
   height: 100dvh;
   background:
-    radial-gradient(120% 80% at 50% 0%, rgba(217, 164, 65, 0.05), transparent 60%),
+    radial-gradient(60% 50% at 20% 0%, rgba(217, 164, 65, 0.06), transparent 70%),
+    radial-gradient(50% 40% at 100% 100%, rgba(91, 189, 139, 0.04), transparent 70%),
     var(--bg);
 }
 
-/* ── Шапка ── */
+/* ── Левая зона: собеседник ── */
 
-.call-head {
+.call-side {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s4);
-  padding: var(--s4) var(--s5) var(--s3);
-  border-bottom: 1px solid var(--line);
-  padding-top: max(var(--s4), env(safe-area-inset-top));
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s5);
+  padding: var(--s7) var(--s5) var(--s5);
+  padding-top: max(var(--s7), calc(env(safe-area-inset-top) + var(--s5)));
+  border-right: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 40%);
+  overflow-y: auto;
 }
 
-.call-who {
-  display: flex;
-  align-items: baseline;
-  gap: var(--s3);
-  min-width: 0;
+.call-id {
+  text-align: center;
 }
 
 .call-name {
-  font-size: var(--text-md);
+  font-size: 1.375rem;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: -0.02em;
 }
 
 .call-company {
   font-size: var(--text-sm);
   color: var(--ink-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
-.call-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--s4);
-  flex-shrink: 0;
-}
-
-.call-timer {
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-}
-
-/* Состояние линии: точка + слово. Единственный «индикатор» в интерфейсе. */
-.line-state {
+/* Состояние линии и таймер одной строкой — это одна мысль, а не две */
+.call-status {
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
+  padding: var(--s2) var(--s4);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-muted);
+  color: var(--ink-soft);
 }
 
-.line-dot {
+.call-status .dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -78,42 +73,178 @@
   transition: background var(--fast) var(--ease);
 }
 
-.line-state[data-state='live'] .line-dot,
-.line-state[data-state='listening'] .line-dot {
+.call-status[data-state='live'] .dot,
+.call-status[data-state='listening'] .dot {
   background: var(--live);
 }
-.line-state[data-state='listening'] .line-dot {
-  animation: pulse 1.3s var(--ease) infinite;
+.call-status[data-state='listening'] .dot,
+.call-status[data-state='ringing'] .dot,
+.call-status[data-state='hold'] .dot,
+.call-status[data-state='thinking'] .dot {
+  animation: pulse 1.5s var(--ease) infinite;
 }
-.line-state[data-state='ringing'] .line-dot,
-.line-state[data-state='hold'] .line-dot,
-.line-state[data-state='thinking'] .line-dot {
+.call-status[data-state='ringing'] .dot,
+.call-status[data-state='hold'] .dot,
+.call-status[data-state='thinking'] .dot {
   background: var(--accent);
-  animation: pulse 1.6s var(--ease) infinite;
 }
-.line-state[data-state='ended'] .line-dot {
+.call-status[data-state='ended'] .dot {
   background: var(--alert);
+}
+
+.call-timer {
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
+  50% { opacity: 0.2; }
 }
 
-/* ── Лента ── */
+/* ── Индикатор присутствия ──
+   Круг, который дышит в тишине, пульсирует, когда брокер говорит, и
+   раскрывается кольцами на твой голос. Это единственная «картинка» на экране,
+   и её задача одна: показать, что на том конце кто-то есть. */
+
+.orb {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.orb-core {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18), transparent 55%),
+    linear-gradient(150deg, rgba(217, 164, 65, 0.85), rgba(217, 164, 65, 0.35));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 12px 40px rgba(217, 164, 65, 0.18);
+  transition: transform 120ms var(--ease), filter var(--normal) var(--ease);
+  animation: breathe 5s var(--ease) infinite;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.orb[data-state='thinking'] .orb-core,
+.orb[data-state='hold'] .orb-core {
+  animation: breathe 1.6s var(--ease) infinite;
+}
+
+.orb[data-state='listening'] .orb-core {
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.2), transparent 55%),
+    linear-gradient(150deg, rgba(91, 189, 139, 0.85), rgba(91, 189, 139, 0.3));
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 12px 40px rgba(91, 189, 139, 0.2);
+  animation: none;
+}
+
+.orb[data-state='ended'] .orb-core {
+  filter: grayscale(1) brightness(0.6);
+  animation: none;
+}
+
+/* Кольца расходятся от круга — их радиус задаёт громкость твоего голоса */
+.orb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(91, 189, 139, 0.35);
+  opacity: 0;
+  transition: transform 140ms var(--ease), opacity 200ms var(--ease);
+}
+
+.orb[data-state='listening'] .orb-ring {
+  opacity: 1;
+}
+
+/* ── Что уже выяснено по грузу ──
+   Не украшение: пока брокер вытягивает из тебя MC и оборудование, здесь видно,
+   что он уже записал. Это то же, что видит перед собой настоящий брокер. */
+
+.call-facts {
+  width: 100%;
+  display: grid;
+  gap: var(--s2);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.call-fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: var(--text-sm);
+}
+
+.call-fact-key {
+  color: var(--ink-muted);
+}
+
+.call-fact-val {
+  color: var(--ink);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.call-fact-val[data-tone='good'] {
+  color: var(--live);
+}
+.call-fact-val[data-tone='bad'] {
+  color: var(--alert);
+}
+
+.call-side-spacer {
+  flex: 1;
+}
+
+.call-end {
+  width: 100%;
+  padding: var(--s3) var(--s5);
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-soft);
+  transition: all var(--fast) var(--ease);
+}
+
+.call-end:hover {
+  border-color: rgba(217, 119, 87, 0.5);
+  color: var(--alert);
+  background: rgba(217, 119, 87, 0.06);
+}
+
+/* ── Правая зона: разговор ── */
+
+.call-main {
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  min-height: 0;
+}
 
 .feed {
-  padding: var(--s6) var(--s5) var(--s7);
+  padding: var(--s7) var(--s6) var(--s6);
   display: flex;
   flex-direction: column;
   gap: var(--s5);
-  max-width: 720px;
+  max-width: 760px;
   width: 100%;
   margin: 0 auto;
 }
 
-/* Реплики — стенограмма, а не пузыри мессенджера. Роль различается
-   типографикой и отступом, а не цветной плашкой. */
 .turn {
   animation: rise var(--normal) var(--ease) both;
 }
@@ -133,15 +264,19 @@
 
 .turn-broker .turn-text {
   font-size: var(--text-lg);
-  line-height: 1.45;
+  line-height: 1.5;
   letter-spacing: -0.011em;
   color: var(--ink);
-  font-weight: 400;
 }
 
+/* Твои реплики — с отбивкой и тише: на экране главный тот, кого слушаешь */
 .turn-dispatcher {
-  padding-left: var(--s5);
-  border-left: 1px solid var(--line-strong);
+  padding: var(--s3) var(--s5);
+  border-left: 2px solid var(--accent-line);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: rgba(255, 255, 255, 0.02);
+  align-self: flex-end;
+  max-width: 88%;
 }
 
 .turn-dispatcher .turn-text {
@@ -150,7 +285,6 @@
   line-height: 1.55;
 }
 
-/* Прошедшие реплики отступают на второй план, текущая — в фокусе */
 .turn:not(.turn-active) .turn-text {
   color: var(--ink-muted);
 }
@@ -160,14 +294,13 @@
 
 /* Слово появляется ровно тогда, когда его произносят */
 .word {
-  opacity: 0.12;
+  opacity: 0.14;
   transition: opacity 260ms var(--ease);
 }
 .word-shown {
   opacity: 1;
 }
 
-/* Черновик от Web Speech: виден мгновенно, но помечен как неточный */
 .turn-draft .turn-text {
   color: var(--ink-muted);
 }
@@ -195,15 +328,15 @@
   margin-top: var(--s2);
 }
 
-/* ── Карточка инструмента ──
-   Вклинивается прямо в ленту: брокер лезет в систему на глазах у студента. */
+/* ── Карточка инструмента ── */
 
 .tool {
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--radius-lg);
   background: var(--bg-raised);
   overflow: hidden;
   animation: rise var(--normal) var(--ease) both;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
 }
 
 .tool-head {
@@ -226,7 +359,6 @@
   flex: 1;
 }
 
-/* Бегущая полоска, пока инструмент работает — на линии в это время hold */
 .tool-progress {
   height: 1px;
   background: var(--accent-dim);
@@ -284,24 +416,50 @@
   margin-bottom: var(--s1);
 }
 
-/* ── Подвал: волна голоса и незаметный выход ── */
+/* ── Полоса ошибки ──
+   Своя строка на всю ширину. В прошлой вёрстке она лежала внутри flex-подвала
+   и схлопывалась до нечитаемой — из-за этого причину поломки приходилось
+   выяснять чтением исходников вместо чтения экрана. */
+
+.call-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s2) var(--s3);
+  padding: var(--s3) var(--s6);
+  border-top: 1px solid rgba(217, 119, 87, 0.3);
+  background: rgba(217, 119, 87, 0.08);
+  font-size: var(--text-sm);
+  animation: rise var(--fast) var(--ease) both;
+}
+
+.call-error-text {
+  color: var(--alert);
+}
+
+.call-error-detail {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+/* ── Подвал: твой голос ── */
 
 .call-foot {
   display: flex;
   align-items: center;
   gap: var(--s4);
-  padding: var(--s3) var(--s5);
-  padding-bottom: max(var(--s3), env(safe-area-inset-bottom));
+  padding: var(--s4) var(--s6);
+  padding-bottom: max(var(--s4), env(safe-area-inset-bottom));
   border-top: 1px solid var(--line);
 }
 
-/* Индикатор, а не орган управления: нажимать здесь нечего */
 .wave {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 3px;
-  height: 22px;
+  height: 24px;
 }
 
 .wave-bar {
@@ -320,61 +478,89 @@
 
 .call-hint {
   font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--ink-faint);
   white-space: nowrap;
 }
 
-.call-end {
-  font-size: var(--text-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-faint);
-  padding: var(--s2) var(--s3);
-  border-radius: var(--radius);
-  transition: color var(--fast) var(--ease);
-}
-.call-end:hover {
-  color: var(--alert);
-}
+/* ── Узкий экран: одна колонка ── */
 
-/* ── Полоса ошибки ── */
+@media (max-width: 900px) {
+  .call {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
 
-/* Своя строка над подвалом, на всю ширину. Внутри flex-подвала эта полоса
-   схлопывалась между волной и кнопкой до нечитаемой ширины. */
-.call-error {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--s2) var(--s3);
-  padding: var(--s3) var(--s5);
-  border-top: 1px solid rgba(217, 119, 87, 0.3);
-  background: rgba(217, 119, 87, 0.08);
-  font-size: var(--text-sm);
-  animation: rise var(--fast) var(--ease) both;
-}
+  .call-side {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--s4);
+    padding: var(--s3) var(--s4);
+    padding-top: max(var(--s3), env(safe-area-inset-top));
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+    overflow: visible;
+  }
 
-.call-error-text {
-  color: var(--alert);
-}
+  /* На телефоне индикатор сжимается до значка: место нужнее разговору */
+  .orb {
+    width: 44px;
+    height: 44px;
+  }
+  .orb-core {
+    width: 34px;
+    height: 34px;
+  }
 
-/* Техническая подробность — для разбора, не для студента: тише и мельче. */
-.call-error-detail {
-  color: var(--ink-muted);
-  font-size: var(--text-xs);
-  overflow-wrap: anywhere;
-}
+  .call-id {
+    text-align: left;
+    min-width: 0;
+    flex: 1;
+  }
+  .call-name {
+    font-size: var(--text-md);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .call-company {
+    display: none;
+  }
 
-@media (max-width: 560px) {
+  .call-status {
+    padding: var(--s1) var(--s3);
+    border: none;
+    background: none;
+  }
+  .call-status .label-text {
+    display: none;
+  }
+
+  /* Факты и кнопка отбоя переезжают вниз, чтобы шапка осталась тонкой */
+  .call-facts,
+  .call-side-spacer {
+    display: none;
+  }
+
+  .call-end {
+    width: auto;
+    padding: var(--s2) var(--s3);
+    border: none;
+    font-size: var(--text-xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
   .feed {
     padding: var(--s5) var(--s4) var(--s6);
     gap: var(--s4);
   }
-  .call-head,
-  .call-foot {
+
+  .call-foot,
+  .call-error {
     padding-left: var(--s4);
     padding-right: var(--s4);
-  }
-  .call-company {
-    display: none;
   }
 }
