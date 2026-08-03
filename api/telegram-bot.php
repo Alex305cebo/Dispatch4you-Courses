@@ -112,6 +112,21 @@ if (isset($_GET['diag'])) {
   exit;
 }
 
+// ── Живой ли ключ Gemini (разбор скриншотов). Ключ наружу не отдаём ──
+if (isset($_GET['geminicheck'])) {
+  header('Content-Type: text/plain; charset=utf-8');
+  require_once __DIR__ . '/lib/load-photo.php';
+  if (geminiKey() === null) { echo "gemini.key: НЕТ ФАЙЛА\n"; exit; }
+  // 1x1 白 PNG — минимальная картинка, чтобы проверить именно vision-путь
+  $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+  list($data, $err) = photoExtractLoad($png, 'image/png');
+  echo "gemini.key: есть\n";
+  echo "модель: " . GEMINI_MODEL . "\n";
+  // Пустая картинка — не груз, значит 'notload' и есть признак рабочего ключа
+  echo "ответ: " . ($err === '' || $err === 'notload' ? 'РАБОТАЕТ' : $err) . "\n";
+  exit;
+}
+
 // ── Что Telegram думает о нашем вебхуке (ошибки доставки, очередь) ──
 if (isset($_GET['webhookinfo'])) {
   header('Content-Type: application/json');
