@@ -309,7 +309,15 @@ if (!isset($msg['document'])) {
         . "/dot 2100420 — по DOT\n"
         . "/broker 115789 — сначала MC, потом DOT");
     } else {
-      reply($token, $chatId, brokerReport($kind, $numArg));
+      $lang = curLang($introState);
+      list($rec, $err) = fetchBrokerRecord($kind, $numArg);
+      if ($rec === null) {
+        reply($token, $chatId, brokerReport($kind, $numArg, $lang));
+      } else {
+        $introState['fmcsa'] = array('rec' => $rec, 'kind' => $kind, 'number' => $numArg);
+        stateSet($chatId, $introState);
+        reply($token, $chatId, formatBrokerReport($rec, $kind, $numArg, $lang), fmcsaKeyboard($lang));
+      }
     }
   } elseif (stripos($text, '/language') === 0 || stripos($text, '/lang') === 0) {
     reply($token, $chatId, "🌐 Выберите язык / Choose your language", langKeyboard());
@@ -507,19 +515,17 @@ if (empty($load['stops'])) {
 }
 
 // Разбор кладём в состояние чата: кнопки под сообщением берут данные отсюда,
-// документ второй раз не разбирается.
+// документ второй раз не разбирается. $missing — структурные метки, не текст:
+// кнопка перевода строит из них список заново на нужном языке.
 $st = stateGet($chatId);
 $st['rc'] = $load;
+$st['rc_missing'] = $missing;
 stateSet($chatId, $st);
+$lang = curLang($st);
 
 // Сводка + кнопки «что дальше». Полотно для водителя больше не вываливается
 // сразу: его отдаём по кнопке, когда оно действительно нужно.
-$summary = rcSummary($load);
-if ($missing) {
-  $summary .= "\n\n⚠️ Не найдено в документе: " . implode(', ', $missing) . "."
-    . "\nПроверьте вручную — в рейт-коне этих данных нет или они записаны нестандартно.";
-}
-reply($token, $chatId, $summary . "\n\n👇 Что сделать с этим грузом:", rcKeyboard($load));
+reply($token, $chatId, rcSummaryFull($load, $missing, $lang), rcKeyboard($load, $lang));
 echo 'ok';
 exit;
 
@@ -528,6 +534,23 @@ exit;
 // и вся текущая аудитория — русскоязычные диспетчеры.
 function helpStart(array $state) {
   return (isset($state['lang']) && $state['lang'] === 'en') ? HELP_START_EN : HELP_START_RU;
+}
+
+// Единая точка правды о том, на каком языке сейчас говорить с этим диспетчером —
+// используется и для готовых сообщений, и для кнопки переключения под каждым из них.
+function curLang(array $state) {
+  return (isset($state['lang']) && $state['lang'] === 'en') ? 'en' : 'ru';
+}
+
+function langToggleButton($lang, $msgtype) {
+  $target = $lang === 'en' ? 'ru' : 'en';
+  return array('text' => ($target === 'en' ? '🌐 English' : '🌐 Русский'), 'callback_data' => 'tr:' . $msgtype . ':' . $target);
+}
+
+function editMessage($token, $chatId, $messageId, $text, array $keyboard = null) {
+  $p = array('chat_id' => $chatId, 'message_id' => $messageId, 'text' => $text, 'disable_web_page_preview' => true);
+  if ($keyboard !== null) $p['reply_markup'] = json_encode(array('inline_keyboard' => $keyboard));
+  return tgApi($token, 'editMessageText', $p);
 }
 
 // Разделы «по-человечески»: у Telegram нет заголовков-секций в самом меню команд
@@ -584,10 +607,19 @@ function handleLanguage($token, $chatId, $lang) {
 }
 
 // ────────────────────────────────────────────────────────────────────
-function driverCard(array $d) {
+// $lang меняет только подписи полей (LOAD ID, Pick up Address, Time, Ref...) —
+// сами данные (адреса, суммы, номера) не переводятся, это факты, а не текст.
+// ⚠️ Карточка по умолчанию — для американского водителя, который читает по-английски;
+// русская версия существует по прямому запросу и отправлять её водителю не стоит.
+function driverCard(array $d, $lang = 'en') {
+  $t = $lang === 'ru'
+    ? array('load' => 'НОМЕР ЗАГРУЗКИ', 'pickup' => 'Адрес погрузки', 'delivery' => 'Адрес доставки',
+            'time' => 'Время', 'ref' => 'Реф', 'rate' => 'Ставка', 'commodity' => 'Груз', 'weight' => 'Вес')
+    : array('load' => 'LOAD ID', 'pickup' => 'Pick up Address', 'delivery' => 'Delivery Address',
+            'time' => 'Time', 'ref' => 'Ref', 'rate' => 'Rate', 'commodity' => 'Commodity', 'weight' => 'Weight');
   $hr = '__________________________';
   $L = array();
-  if (!empty($d['load_id'])) { $L[] = '* LOAD ID: #' . ltrim($d['load_id'], '#'); $L[] = ''; }
+  if (!empty($d['load_id'])) { $L[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#'); $L[] = ''; }
 
   $counts = array('pickup' => 0, 'delivery' => 0);
   foreach ($d['stops'] as $s) {
@@ -598,7 +630,7 @@ function driverCard(array $d) {
   foreach ($d['stops'] as $s) {
     $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
     $seen[$type]++;
-    $label = ($type === 'delivery') ? 'Delivery Address' : 'Pick up Address';
+    $label = ($type === 'delivery') ? $t['delivery'] : $t['pickup'];
     if ($counts[$type] > 1) $label .= ' ' . $seen[$type];
     $L[] = $label . ':';
     $L[] = '';
@@ -607,19 +639,19 @@ function driverCard(array $d) {
     if (!empty($s['name'])) { $L[] = $s['name']; $L[] = ''; }
     foreach ((array)(isset($s['address_lines']) ? $s['address_lines'] : array()) as $a) if ($a !== '') $L[] = $a;
     $L[] = '';
-    if (!empty($s['time'])) { $L[] = $hr; $L[] = 'Time: ' . $s['time']; }
+    if (!empty($s['time'])) { $L[] = $hr; $L[] = $t['time'] . ': ' . $s['time']; }
     $refs = array_filter((array)(isset($s['refs']) ? $s['refs'] : array()));
     if ($refs) {
       $L[] = $hr;
       $first = true;
-      foreach ($refs as $r) { $L[] = ($first ? 'Ref: ' : '') . $r; $first = false; }
+      foreach ($refs as $r) { $L[] = ($first ? $t['ref'] . ': ' : '') . $r; $first = false; }
     }
     $L[] = $hr;
     $L[] = '';
   }
-  if (!empty($d['rate']))      $L[] = 'Rate: ' . $d['rate'];
-  if (!empty($d['commodity'])) $L[] = 'Commodity: ' . $d['commodity'];
-  if (!empty($d['weight']))    $L[] = 'Weight: ' . $d['weight'];
+  if (!empty($d['rate']))      $L[] = $t['rate'] . ': ' . $d['rate'];
+  if (!empty($d['commodity'])) $L[] = $t['commodity'] . ': ' . $d['commodity'];
+  if (!empty($d['weight']))    $L[] = $t['weight'] . ': ' . $d['weight'];
   $card = implode("\n", $L);
   return mb_strlen($card) > 4000 ? mb_substr($card, 0, 4000) : $card;
 }
@@ -659,26 +691,46 @@ function normalizeLoad(array $d) {
 }
 
 // Список того, чего в разборе не хватает — по-человечески, с указанием стопа.
+// Возвращает структурные метки (не текст), чтобы список можно было отрисовать
+// на любом языке позже, без повторного разбора документа — см. missingFieldsText().
 function missingFields(array $d) {
   $miss = array();
-  if (empty($d['load_id']))   $miss[] = 'номер загрузки';
-  if (empty($d['rate']))      $miss[] = 'ставка';
-  if (empty($d['weight']))    $miss[] = 'вес';
-  if (empty($d['commodity'])) $miss[] = 'груз';
+  if (empty($d['load_id']))   $miss[] = array('field' => 'load_id');
+  if (empty($d['rate']))      $miss[] = array('field' => 'rate');
+  if (empty($d['weight']))    $miss[] = array('field' => 'weight');
+  if (empty($d['commodity'])) $miss[] = array('field' => 'commodity');
   $i = 0;
   foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
     $i++;
-    $who = ((isset($s['type']) && $s['type'] === 'delivery') ? 'доставка' : 'погрузка') . " #$i";
+    $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
     if (empty($s['name']) && empty($s['address_lines'])) {
-      $miss[] = "адрес ($who)";
+      $miss[] = array('field' => 'address', 'type' => $type, 'n' => $i);
     } elseif (!preg_match('/\b[A-Z]{2}\b[ ,]+\d{5}/', implode(' ', (array)(isset($s['address_lines']) ? $s['address_lines'] : array())))) {
       // без «CITY ST ZIP» водителю адрес бесполезен — предупреждаем явно
-      $miss[] = "город и индекс ($who)";
+      $miss[] = array('field' => 'citystate', 'type' => $type, 'n' => $i);
     }
-    if (empty($s['time'])) $miss[] = "время ($who)";
-    if (empty($s['refs'])) $miss[] = "реф-номера ($who)";
+    if (empty($s['time'])) $miss[] = array('field' => 'time', 'type' => $type, 'n' => $i);
+    if (empty($s['refs'])) $miss[] = array('field' => 'refs', 'type' => $type, 'n' => $i);
   }
   return $miss;
+}
+
+// Превращает структурные метки missingFields() в читаемый список на нужном языке.
+function missingFieldsText(array $miss, $lang = 'ru') {
+  $labels = $lang === 'en'
+    ? array('load_id' => 'load number', 'rate' => 'rate', 'weight' => 'weight', 'commodity' => 'commodity',
+            'address' => 'address', 'citystate' => 'city and zip', 'time' => 'time', 'refs' => 'reference numbers')
+    : array('load_id' => 'номер загрузки', 'rate' => 'ставка', 'weight' => 'вес', 'commodity' => 'груз',
+            'address' => 'адрес', 'citystate' => 'город и индекс', 'time' => 'время', 'refs' => 'реф-номера');
+  $stopWord = $lang === 'en'
+    ? array('pickup' => 'pickup', 'delivery' => 'delivery')
+    : array('pickup' => 'погрузка', 'delivery' => 'доставка');
+  $out = array();
+  foreach ($miss as $m) {
+    $label = isset($labels[$m['field']]) ? $labels[$m['field']] : $m['field'];
+    $out[] = isset($m['type']) ? $label . ' (' . $stopWord[$m['type']] . ' #' . $m['n'] . ')' : $label;
+  }
+  return $out;
 }
 
 // ── Проверка брокера через FMCSA QCMobile ───────────────────────────
@@ -705,7 +757,13 @@ function unwrapCarrier($data) {
   return null;
 }
 
-function authWord($code) {
+function authWord($code, $lang = 'ru') {
+  if ($lang === 'en') {
+    if ($code === 'A') return 'active';
+    if ($code === 'I') return 'inactive';
+    if ($code === 'N') return 'no';
+    return 'unknown';
+  }
   if ($code === 'A') return 'активно';
   if ($code === 'I') return 'неактивно';
   if ($code === 'N') return 'нет';
@@ -714,14 +772,10 @@ function authWord($code) {
 
 // $kind: mc | dot | broker (broker = сперва MC, затем DOT — диспетчер обычно
 // не знает, какой номер ему прислали).
-function brokerReport($kind, $number) {
+// @return array{0:?array,1:string} [сырая запись FMCSA|null, код ошибки '' | 'nokey' | 'notfound']
+function fetchBrokerRecord($kind, $number) {
   $key = @trim(file_get_contents(__DIR__ . '/../../fmcsa.key'));
-  if ($key === '' || $key === false) {
-    return "Проверка брокера выключена — нужен бесплатный ключ FMCSA.\n\n"
-      . "Заведите его на mobile.fmcsa.dot.gov/QCDevsite (вход через Login.gov) "
-      . "и положите на сервер в файл fmcsa.key рядом с остальными ключами. "
-      . "После этого проверка заработает сразу.";
-  }
+  if ($key === '' || $key === false) return array(null, 'nokey');
 
   $rec = null;
   if ($kind === 'mc' || $kind === 'broker') {
@@ -730,37 +784,45 @@ function brokerReport($kind, $number) {
   if ($rec === null && ($kind === 'dot' || $kind === 'broker')) {
     $rec = unwrapCarrier(fmcsaGet('carriers/' . $number, $key));
   }
-  if ($rec === null) {
-    return "Не нашёл перевозчика по номеру " . $number . ".\n"
-      . "Проверьте номер: MC и DOT — разные, у брокера обычно есть оба.";
-  }
+  return array($rec, $rec === null ? 'notfound' : '');
+}
 
+// Только форматирование — данные уже получены fetchBrokerRecord(). Разделено,
+// чтобы переключение языка не дёргало FMCSA повторно: карточка та же, слова другие.
+function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   $name = isset($rec['legalName']) ? $rec['legalName'] : '—';
   $dba  = !empty($rec['dbaName']) ? $rec['dbaName'] : null;
   $dot  = isset($rec['dotNumber']) ? $rec['dotNumber'] : '—';
   $L = array();
   // Первым делом — что это НЕ проверяет. FMCSA не знает, платит ли брокер вовремя;
   // это отдельная база у каждой факторинговой компании, и её нужно смотреть отдельно.
-  $L[] = '⚠️ Это проверка юридического статуса по FMCSA — она НЕ проверяет '
-       . 'платёжеспособность и НЕ заменяет факторинг. Обязательно проверьте этот '
-       . 'MC/DOT ещё и в личном кабинете вашей факторинговой компании перед тем как брать груз.';
+  $L[] = $lang === 'en'
+    ? '⚠️ This is an FMCSA legal-status check — it does NOT verify creditworthiness '
+      . 'and does NOT replace factoring. Be sure to also check this MC/DOT in your '
+      . 'factoring company\'s own portal before taking the load.'
+    : '⚠️ Это проверка юридического статуса по FMCSA — она НЕ проверяет '
+      . 'платёжеспособность и НЕ заменяет факторинг. Обязательно проверьте этот '
+      . 'MC/DOT ещё и в личном кабинете вашей факторинговой компании перед тем как брать груз.';
   $L[] = '';
   $L[] = '🔎 FMCSA';
   $L[] = '';
   $L[] = $name . ($dba !== null ? ' (DBA ' . $dba . ')' : '');
   $L[] = 'DOT ' . $dot . ($kind !== 'dot' ? ' · MC ' . $number : '');
   $L[] = '';
-  $L[] = 'Критерии проверки:';
+  $L[] = $lang === 'en' ? 'Criteria checked:' : 'Критерии проверки:';
 
   // Каждая строка ниже — конкретный официальный критерий: галочка стоит, только
   // если по нему всё чисто. Пропускаем поле целиком, если FMCSA его не вернул
   // (например, у чистого перевозчика без брокерской авторити просто нет этого статуса).
   $allowed = isset($rec['allowedToOperate']) ? $rec['allowedToOperate'] : null;
-  $L[] = mark($allowed === 'Y') . ' Право работать: ' . ($allowed === 'Y' ? 'ДА' : ($allowed === 'N' ? 'НЕТ' : 'неизвестно'));
+  $allowedWord = $lang === 'en'
+    ? ($allowed === 'Y' ? 'YES' : ($allowed === 'N' ? 'NO' : 'unknown'))
+    : ($allowed === 'Y' ? 'ДА' : ($allowed === 'N' ? 'НЕТ' : 'неизвестно'));
+  $L[] = mark($allowed === 'Y') . ' ' . ($lang === 'en' ? 'Allowed to operate' : 'Право работать') . ': ' . $allowedWord;
 
   if (isset($rec['brokerAuthorityStatus'])) {
     $ba = $rec['brokerAuthorityStatus'];
-    $L[] = mark($ba === 'A') . ' Брокерская авторити: ' . authWord($ba);
+    $L[] = mark($ba === 'A') . ' ' . ($lang === 'en' ? 'Broker authority' : 'Брокерская авторити') . ': ' . authWord($ba, $lang);
   }
 
   // bondInsuranceOnFile — сумма в ТЫСЯЧАХ долларов, а не флаг Y/N: «75» = бонд
@@ -768,20 +830,44 @@ function brokerReport($kind, $number) {
   if (isset($rec['bondInsuranceOnFile']) && $rec['bondInsuranceOnFile'] !== '') {
     $bond = preg_replace('/\D/', '', (string)$rec['bondInsuranceOnFile']);
     $hasBond = $bond !== '' && $bond !== '0';
-    $L[] = mark($hasBond) . ' Бонд BMC-84: ' . ($hasBond ? '$' . number_format((float)$bond * 1000, 0, '.', ',') : 'нет');
+    $noWord = $lang === 'en' ? 'no' : 'нет';
+    $L[] = mark($hasBond) . ' BMC-84 ' . ($lang === 'en' ? 'bond' : 'бонд') . ': ' . ($hasBond ? '$' . number_format((float)$bond * 1000, 0, '.', ',') : $noWord);
   }
 
   // Common/Contract authority — статус перевозчика, не брокера; красным флагом не
   // считаем, показываем справочно, без галочки.
-  if (isset($rec['commonAuthorityStatus']))   $L[] = 'Common authority: ' . authWord($rec['commonAuthorityStatus']);
-  if (isset($rec['contractAuthorityStatus'])) $L[] = 'Contract authority: ' . authWord($rec['contractAuthorityStatus']);
+  if (isset($rec['commonAuthorityStatus']))   $L[] = 'Common authority: ' . authWord($rec['commonAuthorityStatus'], $lang);
+  if (isset($rec['contractAuthorityStatus'])) $L[] = 'Contract authority: ' . authWord($rec['contractAuthorityStatus'], $lang);
   if (!empty($rec['safetyRating'])) $L[] = 'Safety rating: ' . $rec['safetyRating'];
   $city = isset($rec['phyCity']) ? $rec['phyCity'] : '';
   $st   = isset($rec['phyState']) ? $rec['phyState'] : '';
-  if ($city !== '' || $st !== '') $L[] = 'Адрес: ' . trim($city . ', ' . $st, ' ,');
+  if ($city !== '' || $st !== '') $L[] = ($lang === 'en' ? 'Address' : 'Адрес') . ': ' . trim($city . ', ' . $st, ' ,');
   $L[] = '';
-  $L[] = 'Источник: FMCSA QCMobile, данные официальные.';
+  $L[] = $lang === 'en' ? 'Source: FMCSA QCMobile, official data.' : 'Источник: FMCSA QCMobile, данные официальные.';
   return implode("\n", $L);
+}
+
+// Точка входа для /mc, /dot, /broker — тянет данные и сразу форматирует.
+// Используется там, где переключение языка потом не нужно (первый ответ).
+function brokerReport($kind, $number, $lang = 'ru') {
+  list($rec, $err) = fetchBrokerRecord($kind, $number);
+  if ($err === 'nokey') {
+    return $lang === 'en'
+      ? "Broker check is off — needs a free FMCSA key.\n\n"
+        . "Get one at mobile.fmcsa.dot.gov/QCDevsite (sign in via Login.gov) "
+        . "and put it on the server as fmcsa.key next to the other keys. "
+        . "The check will work right away after that."
+      : "Проверка брокера выключена — нужен бесплатный ключ FMCSA.\n\n"
+        . "Заведите его на mobile.fmcsa.dot.gov/QCDevsite (вход через Login.gov) "
+        . "и положите на сервер в файл fmcsa.key рядом с остальными ключами. "
+        . "После этого проверка заработает сразу.";
+  }
+  if ($err === 'notfound') {
+    return $lang === 'en'
+      ? "Couldn't find a carrier under number " . $number . ".\nCheck the number — MC and DOT are different, a broker usually has both."
+      : "Не нашёл перевозчика по номеру " . $number . ".\nПроверьте номер: MC и DOT — разные, у брокера обычно есть оба.";
+  }
+  return formatBrokerReport($rec, $kind, $number, $lang);
 }
 
 function mark($ok) { return $ok ? '✅' : '⚠️'; }
@@ -977,10 +1063,12 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   $st = stateGet($chatId);
   $st['load'] = $load;
   stateSet($chatId, $st);
+  $lang = curLang($st);
 
   // Карточка + кнопки. Аналитика и письмо приходят по нажатию, а не сразу
   // тремя простынями подряд: обычно нужна одна из них.
-  reply($token, $chatId, photoLoadCard($load) . "\n\n👇 Что сделать с этим грузом:", photoKeyboard($load));
+  $tail = $lang === 'en' ? "\n\n👇 What to do with this load:" : "\n\n👇 Что сделать с этим грузом:";
+  reply($token, $chatId, photoLoadCard($load, $lang) . $tail, photoKeyboard($load, $lang));
 }
 
 function handleCarrier($token, $chatId, $sig) {
@@ -1018,7 +1106,8 @@ function handleEdit($token, $chatId, $newBody) {
     $st['draft']['body'] = $newBody;
   }
   stateSet($chatId, $st);
-  reply($token, $chatId, draftMeta($st['draft'], "📤 Готово к отправке: /send"));
+  $lang = curLang($st);
+  reply($token, $chatId, draftMeta($st['draft'], $lang, $lang === 'en' ? '📤 Ready to send: /send' : '📤 Готово к отправке: /send'));
   reply($token, $chatId, draftAsText($st['draft']));
 }
 
