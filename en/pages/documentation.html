@@ -1321,7 +1321,7 @@
     <!-- Role Guard -->
     <script src="/role-guard.en.js"></script>
     <div id="nav-placeholder"></div>
-    <script src="/nav-loader.js?v=12.5"></script>
+    <script src="/nav-loader.js?v=12.6"></script>
     <div class="container">
         <!-- Header -->
         <div class="page-header">
@@ -1346,8 +1346,421 @@
             </div>
         </div>
 
-        <!-- Motivational block -->
-        <div class="doc-section"
+        
+<style>
+/* ── Программа курса: один список вместо разбросанных карточек ── */
+.cp{max-width:900px;margin:0 auto 28px;padding:0 4px}
+.cp-head{margin:0 0 18px;padding:16px 18px;
+  background:rgba(10,15,26,.92);backdrop-filter:blur(10px);
+  border:1px solid rgba(6,182,212,.22);border-radius:16px}
+.cp-head-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.cp-h1{margin:0;font-size:20px;font-weight:800;color:#fff}
+.cp-sub{margin:4px 0 0;font-size:13px;color:#94a3b8;line-height:1.5}
+.cp-count{font-size:13px;font-weight:700;color:#06b6d4;white-space:nowrap}
+.cp-bar{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin:12px 0 0}
+.cp-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#06b6d4,#0ea5e9);
+  width:0;transition:width .4s ease}
+.cp-cta{display:inline-flex;align-items:center;gap:8px;margin-top:12px;padding:10px 18px;
+  border-radius:99px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);color:#fff;
+  font-size:14px;font-weight:700;text-decoration:none;transition:.2s}
+.cp-cta:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(6,182,212,.35)}
+.cp-filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.cp-fb{padding:7px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);color:#cbd5e1;font-size:13px;font-weight:600;
+  cursor:pointer;font-family:inherit;transition:.2s}
+.cp-fb:hover{border-color:rgba(6,182,212,.35);color:#fff}
+.cp-fb.on{background:rgba(6,182,212,.16);border-color:rgba(6,182,212,.45);color:#67e8f9}
+.cp-group{margin:0 0 10px}
+.cp-group-h{display:flex;align-items:baseline;gap:10px;margin:22px 0 10px;padding:0 2px}
+.cp-group-n{font-size:15px;font-weight:800;color:#fff}
+.cp-group-m{font-size:12px;color:#64748b}
+.cp-item{display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px;
+  border:1px solid rgba(255,255,255,.07);border-radius:14px;background:rgba(255,255,255,.025);
+  color:inherit;text-decoration:none;transition:.18s;cursor:pointer}
+.cp-item:hover{border-color:rgba(6,182,212,.35);background:rgba(6,182,212,.06);transform:translateX(3px)}
+.cp-item.is-done{border-color:rgba(16,185,129,.28);background:rgba(16,185,129,.05)}
+.cp-item.is-next{border-color:rgba(6,182,212,.5);box-shadow:0 0 0 1px rgba(6,182,212,.25)}
+.cp-item.is-here{opacity:.75;cursor:default}
+.cp-item.is-here:hover{transform:none;border-color:rgba(255,255,255,.07);background:rgba(255,255,255,.025)}
+.cp-num{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:14px;font-weight:800;background:rgba(255,255,255,.06);color:#94a3b8}
+.cp-item.is-done .cp-num{background:rgba(16,185,129,.18);color:#34d399}
+.cp-item.is-next .cp-num{background:rgba(6,182,212,.2);color:#67e8f9}
+.cp-body{flex:1;min-width:0}
+.cp-name{font-size:15px;font-weight:700;color:#f1f5f9;line-height:1.3}
+.cp-desc{font-size:13px;color:#94a3b8;margin-top:3px;line-height:1.45}
+.cp-meta{display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap}
+.cp-chip{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.cp-chip.new{background:rgba(255,255,255,.06);color:#94a3b8}
+.cp-chip.seen{background:rgba(245,158,11,.16);color:#fbbf24}
+.cp-chip.done{background:rgba(16,185,129,.16);color:#34d399}
+.cp-chip.here{background:rgba(6,182,212,.16);color:#67e8f9}
+.cp-sec{font-size:11px;color:#64748b}
+.cp-check{flex-shrink:0;width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+  background:transparent;color:#64748b;font-size:15px;cursor:pointer;transition:.18s;
+  display:flex;align-items:center;justify-content:center}
+.cp-check:hover{border-color:rgba(16,185,129,.5);color:#34d399}
+.cp-check.on{background:rgba(16,185,129,.18);border-color:rgba(16,185,129,.45);color:#34d399}
+.cp-empty{padding:28px;text-align:center;color:#64748b;font-size:14px}
+@media(max-width:640px){
+  .cp{padding:0}
+  .cp-head{padding:14px;border-radius:14px;margin-bottom:14px}
+  .cp-h1{font-size:18px}
+  .cp-sub{font-size:12px}
+  .cp-cta{width:100%;justify-content:center;margin-top:10px}
+  .cp-item{padding:12px;gap:10px;border-radius:12px}
+  .cp-item:hover{transform:none}
+  .cp-num{width:30px;height:30px;font-size:13px}
+  .cp-name{font-size:14px}
+  .cp-desc{font-size:12px}
+  .cp-check{width:38px;height:38px}
+  .cp-group-h{margin:18px 0 8px}
+}
+
+/* Шапка страницы на мобильном: до программы должно быть рукой подать,
+   а не три экрана заголовка и плеера */
+@media(max-width:640px){
+  .page-header{padding:10px 0 4px !important;margin-bottom:0 !important}
+  .page-title{font-size:21px !important;line-height:1.25 !important;margin:0 0 6px !important}
+  .page-subtitle{font-size:13px !important;line-height:1.45 !important;margin:0 !important}
+  .section-audio-wrap{margin-top:8px !important;gap:8px !important}
+  .section-audio-wrap h2{font-size:14px !important}
+  .scroll-indicator{display:none !important}
+}
+</style>
+
+    <div class="cp" id="course-program">
+      <div class="cp-head">
+        <div class="cp-head-top">
+          <div>
+            <h2 class="cp-h1">Course program</h2>
+            <p class="cp-sub">15 lessons in order. Tick off what you finish — progress is saved in your browser.</p>
+          </div>
+          <div class="cp-count"><span id="cp-done">0</span> of 15</div>
+        </div>
+        <div class="cp-bar"><div class="cp-bar-fill" id="cp-fill"></div></div>
+        <a class="cp-cta" id="cp-cta" href="#">Start learning</a>
+      </div>
+
+      <div class="cp-filters">
+        <button class="cp-fb on" type="button" data-filter="all">All</button>
+        <button class="cp-fb" type="button" data-filter="left">Remaining</button>
+        <button class="cp-fb" type="button" data-filter="done">Completed</button>
+      </div>
+
+      <div class="cp-group">
+        <div class="cp-group-h">
+          <span class="cp-group-n">Basics</span>
+          <span class="cp-group-m">5 lessons · 4–6 hours</span>
+        </div>
+        <div class="cp-list" data-group="0">
+          <div class="cp-item" data-slug="documentation" data-n="1" data-href="/en/pages/documentation.html">
+            <div class="cp-num">1</div>
+            <div class="cp-body">
+              <div class="cp-name">📚 Course program</div>
+              <div class="cp-desc">You are here: an overview of all 15 lessons</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">7 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="intro" data-n="2" data-href="/en/pages/intro.html">
+            <div class="cp-num">2</div>
+            <div class="cp-body">
+              <div class="cp-name">🎯 Intro to the Profession</div>
+              <div class="cp-desc">An overview of the US freight industry</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">3 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="role" data-n="3" data-href="/en/pages/role.html">
+            <div class="cp-num">3</div>
+            <div class="cp-body">
+              <div class="cp-name">👤 The Dispatcher’s Role</div>
+              <div class="cp-desc">Duties and the day-to-day job</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">7 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="equipment" data-n="4" data-href="/en/pages/equipment.html">
+            <div class="cp-num">4</div>
+            <div class="cp-body">
+              <div class="cp-name">🚛 Truck Types</div>
+              <div class="cp-desc">Dry van, reefer, flatbed, and more</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">5 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="routes" data-n="5" data-href="/en/pages/routes.html">
+            <div class="cp-num">5</div>
+            <div class="cp-body">
+              <div class="cp-name">🗺️ Routes & Geography</div>
+              <div class="cp-desc">Lanes, corridors, deadhead and backhaul</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">11 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+        </div>
+      </div>
+      <div class="cp-group">
+        <div class="cp-group-h">
+          <span class="cp-group-n">Practice</span>
+          <span class="cp-group-m">5 lessons · 6–8 hours</span>
+        </div>
+        <div class="cp-list" data-group="1">
+          <div class="cp-item" data-slug="loadboards" data-n="6" data-href="/en/pages/loadboards.html">
+            <div class="cp-num">6</div>
+            <div class="cp-body">
+              <div class="cp-name">💻 Load Boards</div>
+              <div class="cp-desc">DAT, Truckstop, 123Loadboard: finding freight</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">7 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="negotiation" data-n="7" data-href="/en/pages/negotiation.html">
+            <div class="cp-num">7</div>
+            <div class="cp-body">
+              <div class="cp-name">💬 Negotiation</div>
+              <div class="cp-desc">How to negotiate the best rates</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">7 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="brokers" data-n="8" data-href="/en/pages/brokers.html">
+            <div class="cp-num">8</div>
+            <div class="cp-body">
+              <div class="cp-name">🤝 Brokers</div>
+              <div class="cp-desc">Vetting, factoring, building relationships</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">9 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="docs" data-n="9" data-href="/en/pages/docs.html">
+            <div class="cp-num">9</div>
+            <div class="cp-body">
+              <div class="cp-name">📋 Documents</div>
+              <div class="cp-desc">Rate Confirmation, BOL, POD, invoice</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">6 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="regulations" data-n="10" data-href="/en/pages/regulations.html">
+            <div class="cp-num">10</div>
+            <div class="cp-body">
+              <div class="cp-name">⚖️ Regulations & Compliance</div>
+              <div class="cp-desc">FMCSA, DOT, HOS, ELD</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">9 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+        </div>
+      </div>
+      <div class="cp-group">
+        <div class="cp-group-h">
+          <span class="cp-group-n">Pro level</span>
+          <span class="cp-group-m">5 lessons · 8–10 hours</span>
+        </div>
+        <div class="cp-list" data-group="2">
+          <div class="cp-item" data-slug="technology" data-n="11" data-href="/en/pages/technology.html">
+            <div class="cp-num">11</div>
+            <div class="cp-body">
+              <div class="cp-name">🖥️ Technology</div>
+              <div class="cp-desc">TMS, ELD, GPS tracking</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">8 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="communication" data-n="12" data-href="/en/pages/communication.html">
+            <div class="cp-num">12</div>
+            <div class="cp-body">
+              <div class="cp-name">📞 Communication</div>
+              <div class="cp-desc">Talking to drivers, brokers and warehouses</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">6 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="problems" data-n="13" data-href="/en/pages/problems.html">
+            <div class="cp-num">13</div>
+            <div class="cp-body">
+              <div class="cp-name">🔧 Problem Situations</div>
+              <div class="cp-desc">Common failures and how to handle them</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">7 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="finances" data-n="14" data-href="/en/pages/finances.html">
+            <div class="cp-num">14</div>
+            <div class="cp-body">
+              <div class="cp-name">💰 Finances</div>
+              <div class="cp-desc">Calculations, profit, taxes</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">9 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+          <div class="cp-item" data-slug="career" data-n="15" data-href="/en/pages/career.html">
+            <div class="cp-num">15</div>
+            <div class="cp-body">
+              <div class="cp-name">🚀 Career & Growth</div>
+              <div class="cp-desc">Getting hired and growing your income</div>
+              <div class="cp-meta">
+                <span class="cp-chip new">Not started</span>
+                <span class="cp-sec">8 sections</span>
+              </div>
+            </div>
+            <button class="cp-check" type="button" title="Mark as completed" aria-label="Mark as completed">✓</button>
+          </div>
+        </div>
+      </div>
+      <div class="cp-empty" id="cp-empty" style="display:none">Nothing in this filter</div>
+    </div>
+
+<script>
+(function () {
+  var KEY = 'd4y_course';
+  var L = { done: 'Done', seen: 'In progress', neu: 'Not started', here: 'You are here',
+             cont: 'Continue', start: 'Start learning', allDone: 'The whole course is complete. Congratulations!',
+             mark: 'Mark as completed', unmark: 'Remove mark' };
+  var HERE = 'documentation';
+
+  function load() {
+    try { var d = JSON.parse(localStorage.getItem(KEY) || '{}');
+      return { seen: d.seen || [], done: d.done || [] }; }
+    catch (e) { return { seen: [], done: [] }; }
+  }
+  function save(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch (e) {} }
+
+  var items = [].slice.call(document.querySelectorAll('.cp-item'));
+  var filter = 'all';
+
+  function render() {
+    var st = load();
+    var doneCount = 0, next = null;
+    items.forEach(function (el) {
+      var slug = el.dataset.slug;
+      var isHere = slug === HERE;
+      var isDone = st.done.indexOf(slug) !== -1;
+      var isSeen = st.seen.indexOf(slug) !== -1;
+      if (isDone) doneCount++;
+      if (!isDone && !isHere && !next) next = el;
+
+      el.classList.toggle('is-done', isDone);
+      el.classList.toggle('is-here', isHere);
+      el.classList.remove('is-next');
+
+      var chip = el.querySelector('.cp-chip');
+      var num = el.querySelector('.cp-num');
+      var btn = el.querySelector('.cp-check');
+      if (isHere) { chip.className = 'cp-chip here'; chip.textContent = L.here; }
+      else if (isDone) { chip.className = 'cp-chip done'; chip.textContent = L.done; }
+      else if (isSeen) { chip.className = 'cp-chip seen'; chip.textContent = L.seen; }
+      else { chip.className = 'cp-chip new'; chip.textContent = L.neu; }
+      num.textContent = isDone ? '✓' : el.dataset.n;
+      btn.classList.toggle('on', isDone);
+      btn.title = isDone ? L.unmark : L.mark;
+    });
+    if (next) next.classList.add('is-next');
+
+    document.getElementById('cp-done').textContent = doneCount;
+    document.getElementById('cp-fill').style.width = Math.round(doneCount / 15 * 100) + '%';
+
+    var cta = document.getElementById('cp-cta');
+    if (next) {
+      cta.href = next.dataset.href;
+      cta.textContent = (doneCount ? L.cont : L.start) + ': ' + next.dataset.n + '. ' +
+        next.querySelector('.cp-name').textContent.replace(/^\S+\s/, '');
+      cta.style.display = '';
+    } else { cta.textContent = L.allDone; cta.href = '#course-program'; }
+
+    applyFilter();
+  }
+
+  function applyFilter() {
+    var st = load(), shown = 0;
+    items.forEach(function (el) {
+      var isDone = st.done.indexOf(el.dataset.slug) !== -1;
+      var ok = filter === 'all' || (filter === 'done' && isDone) || (filter === 'left' && !isDone);
+      el.style.display = ok ? '' : 'none';
+      if (ok) shown++;
+    });
+    document.querySelectorAll('.cp-group').forEach(function (g) {
+      var any = [].slice.call(g.querySelectorAll('.cp-item')).some(function (i) { return i.style.display !== 'none'; });
+      g.style.display = any ? '' : 'none';
+    });
+    document.getElementById('cp-empty').style.display = shown ? 'none' : '';
+  }
+
+  items.forEach(function (el) {
+    el.addEventListener('click', function (e) {
+      if (e.target.closest('.cp-check')) return;
+      if (el.dataset.slug === HERE) return;
+      window.location.href = el.dataset.href;
+    });
+    el.querySelector('.cp-check').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var st = load(), slug = el.dataset.slug, i = st.done.indexOf(slug);
+      if (i === -1) { st.done.push(slug); if (st.seen.indexOf(slug) === -1) st.seen.push(slug); }
+      else st.done.splice(i, 1);
+      save(st); render();
+    });
+  });
+
+  document.querySelectorAll('.cp-fb').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.querySelectorAll('.cp-fb').forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      filter = b.dataset.filter;
+      applyFilter();
+    });
+  });
+
+  render();
+})();
+</script>
+
+
+    <!-- Мотивационный блок (перенесён под программу) -->
+    <div class="doc-section"
             style="text-align: center; background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(249, 115, 22, 0.05)); border: 2px solid rgba(6, 182, 212, 0.2);">
             <h2>🚀 Become a professional dispatcher</h2>
             <p style="font-size: 18px; color: #ffffff; max-width: 800px; margin: 0 auto 30px;">
@@ -1378,284 +1791,7 @@
             </div>
         </div>
 
-        <!-- Scroll Indicator -->
-        <div class="scroll-indicator">
-            <div class="scroll-arrow"></div>
-        </div>
-
-        <!-- UPDATED: 2026-03-22 23:45 - NEW NAVIGATION SECTOR 00 WITH JAVASCRIPT -->
-        <!-- SECTOR 00: Course navigation -->
-        <div class="sector-wrapper sector-navigation">
-            <div class="navigation-block">
-                <button class="navigation-toggle" id="navigationToggle">
-                    <span class="nav-icon">📚</span>
-                    <span class="nav-title">Course navigation</span>
-                    <span class="nav-arrow">▼</span>
-                </button>
-
-                <div class="navigation-content" id="navigationContent">
-                    <div class="navigation-grid">
-                        <div class="nav-section">
-                            <h4 class="section-header">▪ SECTIONS<span class="section-arrow">▼</span></h4>
-                            <div class="section-items">
-                                <a href="/en/pages/documentation.html" class="active">📚 Course</a>
-                                <a href="/en/pages/intro.html">📋 Introduction</a>
-                                <a href="/en/pages/role.html">👤 Role</a>
-                                <a href="/en/pages/equipment.html">🚛 Truck Types</a>
-                                <a href="/en/pages/routes.html">🗺 Routes</a>
-                                <a href="/en/pages/loadboards.html">📡 Load Boards</a>
-                                <a href="/en/pages/negotiation.html">🤝 Negotiation</a>
-                                <a href="/en/pages/brokers.html">💼 Brokers</a>
-                                <a href="/en/pages/docs.html">📄 Documents</a>
-                                <a href="/en/pages/regulations.html">⚖️ Regulations</a>
-                                <a href="/en/pages/technology.html">🖥 Technology</a>
-                                <a href="/en/pages/communication.html">📞 Communication</a>
-                                <a href="/en/pages/problems.html">⚠️ Problems</a>
-                                <a href="/en/pages/finances.html">💰 Finances</a>
-                                <a href="/en/pages/career.html">📈 Career</a>
-                            </div>
-                        </div>
-
-                        <div class="nav-section">
-                            <h4 class="section-header">▪ MODULES<span class="section-arrow">▼</span></h4>
-                            <div class="section-items">
-                                <a href="/en/pages/doc-module-1-complete.html">🏭 Introduction</a>
-                                <a href="/en/pages/doc-module-2-complete.html">⚖️ Regulations</a>
-                                <a href="/en/pages/doc-module-3-complete.html">🚛 Equipment</a>
-                                <a href="/en/pages/doc-module-4-complete.html">📡 Load Boards</a>
-                                <a href="/en/pages/doc-module-5-complete.html">🤝 Negotiation</a>
-                                <a href="/en/pages/doc-module-6-complete.html">🗺 Routes</a>
-                                <a href="/en/pages/doc-module-7-complete.html">📄 Documents</a>
-                                <a href="/en/pages/doc-module-8-complete.html">👥 Drivers</a>
-                                <a href="/en/pages/doc-module-9-complete.html">📊 CSA Scores</a>
-                                <a href="/en/pages/doc-module-10-complete.html">💰 Finances</a>
-                                <a href="/en/pages/doc-module-11-complete.html">🚨 Crises</a>
-                                <a href="/en/pages/doc-module-12-complete.html">📈 Career</a>
-                            </div>
-                        </div>
-
-                        <div class="nav-section">
-                            <h4 class="section-header">▪ TOOLS<span class="section-arrow">▼</span></h4>
-                            <div class="section-items">
-                                <a href="/en/pages/simulator.html">🎮 Simulator</a>
-                                <a href="/en/pages/testing.html">📝 Tests</a>
-                                <a href="/en/pages/cases.html">🗂 Cases</a>
-                                <!-- Load Finder hidden -->
-                                <a href="/en/pages/dispatcher-cards.html">🃏 Flashcards</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Course modules -->
-        <div class="doc-section">
-            <h2>📚 Training program</h2>
-            <p style="text-align: center; color: #ffffff; margin-bottom: 40px;">A step-by-step path from the fundamentals to
-                a professional level</p>
-
-            <!-- Beginner Level -->
-            <div class="level-section">
-                <div class="level-header">
-                    <span class="level-badge beginner">Beginner</span>
-                    <h3>Profession fundamentals</h3>
-                    <div class="level-meta">⏱️ 4-6 hours &nbsp;•&nbsp; 📊 Beginner level &nbsp;•&nbsp; 5 modules
-                    </div>
-                    <div class="level-outcomes">
-                        <span class="outcome-label">After this block you'll be able to:</span>
-                        <ul>
-                            <li>✓ Explain how the US freight industry works</li>
-                            <li>✓ Understand the professional slang and abbreviations</li>
-                            <li>✓ Know a dispatcher's duties and the types of trucks</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modules-grid">
-                    <div class="module-card" data-module="1"><div class="module-number">01</div>
-                        <div class="module-icon">📚</div>
-                        <h4>US Freight Dispatcher Course</h4>
-                        <p>The full program: 15 lessons from basics to practice</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="2"><div class="module-number">02</div>
-                        <div class="module-icon">🎯</div>
-                        <h4>Intro to the Profession</h4>
-                        <p>An overview of the US freight industry</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="3"><div class="module-number">03</div>
-                        <div class="module-icon">👤</div>
-                        <h4>The dispatcher's role</h4>
-                        <p>Duties and the day-to-day job</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="4"><div class="module-number">04</div>
-                        <div class="module-icon">🚛</div>
-                        <h4>Truck types</h4>
-                        <p>Dry van, reefer, flatbed, and more</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="5"><div class="module-number">05</div>
-                        <div class="module-icon">🗺️</div>
-                        <h4>Routes</h4>
-                        <p>Geography, corridors, lanes</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Intermediate Level -->
-            <div class="level-section">
-                <div class="level-header">
-                    <span class="level-badge intermediate">Intermediate</span>
-                    <h3>Practical skills</h3>
-                    <div class="level-meta">⏱️ 6-8 hours &nbsp;•&nbsp; 📊 Intermediate level &nbsp;•&nbsp; 5 modules</div>
-                    <div class="level-outcomes">
-                        <span class="outcome-label">After this block you'll be able to:</span>
-                        <ul>
-                            <li>✓ Work with DAT, Truckstop, and other Load Boards</li>
-                            <li>✓ Negotiate with brokers and get better rates</li>
-                            <li>✓ Vet brokers and handle documents (BOL, POD)</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modules-grid">
-                    <div class="module-card" data-module="6"><div class="module-number">06</div>
-                        <div class="module-icon">💻</div>
-                        <h4>Load Boards</h4>
-                        <p>DAT, Truckstop, 123Loadboard</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="7"><div class="module-number">07</div>
-                        <div class="module-icon">💬</div>
-                        <h4>Negotiation</h4>
-                        <p>How to negotiate the best rates</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="8"><div class="module-number">08</div>
-                        <div class="module-icon">🤝</div>
-                        <h4>Brokers</h4>
-                        <p>Verification, factoring, relationships</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="9"><div class="module-number">09</div>
-                        <div class="module-icon">📋</div>
-                        <h4>Documents</h4>
-                        <p>Rate confirmation, BOL, POD</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="10"><div class="module-number">10</div>
-                        <div class="module-icon">⚠️</div>
-                        <h4>Regulations & Compliance</h4>
-                        <p>HOS, DOT requirements</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Advanced Level -->
-            <div class="level-section">
-                <div class="level-header">
-                    <span class="level-badge advanced">Advanced</span>
-                    <h3>Professional level</h3>
-                    <div class="level-meta">⏱️ 8-10 hours &nbsp;•&nbsp; 📊 Advanced level &nbsp;•&nbsp; 5 modules
-                    </div>
-                    <div class="level-outcomes">
-                        <span class="outcome-label">After this block you'll be able to:</span>
-                        <ul>
-                            <li>✓ Work with TMS, ELD, and GPS systems</li>
-                            <li>✓ Resolve conflicts with drivers and brokers</li>
-                            <li>✓ Calculate profit and taxes and build a career</li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="modules-grid">
-                    <div class="module-card" data-module="11"><div class="module-number">11</div>
-                        <div class="module-icon">💻</div>
-                        <h4>Technology</h4>
-                        <p>TMS, ELD, GPS tracking</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="12"><div class="module-number">12</div>
-                        <div class="module-icon">📞</div>
-                        <h4>Communication</h4>
-                        <p>Communicating with drivers, brokers, shippers</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="13"><div class="module-number">13</div>
-                        <div class="module-icon">🔧</div>
-                        <h4>Problem Situations</h4>
-                        <p>Common situations and how to solve them</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="14"><div class="module-number">14</div>
-                        <div class="module-icon">💰</div>
-                        <h4>Finances</h4>
-                        <p>Calculations, profit, taxes</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                    <div class="module-card" data-module="15"><div class="module-number">15</div>
-                        <div class="module-icon">🚀</div>
-                        <h4>Career</h4>
-                        <p>Getting hired and growing</p>
-                        <div class="module-progress">
-                            <div class="progress-bar" style="width: 0%"></div>
-                        </div>
-                        <div class="module-status available">Available</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Scroll Indicator -->
-        <div class="scroll-indicator">
-            <div class="scroll-arrow"></div>
-        </div>
-
-        <!-- What the profession is -->
+    <!-- What the profession is -->
         <div class="doc-section prose-section">
             <h2>🚛 Who is a freight dispatcher?</h2>
             <p>A dispatcher is the person who connects two worlds: <strong>shippers</strong>, who
@@ -2206,26 +2342,6 @@
         console.log('📚 Total modules: 15');
         console.log('🖱️ All cards are clickable!');
 
-    </script>
-
-    <script>
-        // Sector 00: Navigation
-        document.addEventListener('DOMContentLoaded', function () {
-            const navigationToggle = document.getElementById('navigationToggle');
-            const navigationContent = document.getElementById('navigationContent');
-
-            console.log('Navigation elements:', navigationToggle, navigationContent);
-
-            if (navigationToggle && navigationContent) {
-                navigationToggle.addEventListener('click', function () {
-                    console.log('Navigation clicked!');
-                    this.classList.toggle('active');
-                    navigationContent.classList.toggle('active');
-                });
-            } else {
-                console.error('Navigation elements not found!');
-            }
-        });
     </script>
 
 <script type="module">

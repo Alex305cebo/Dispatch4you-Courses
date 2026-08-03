@@ -196,6 +196,25 @@
         document.body.removeChild(wrap);
     }
 
+    // ── Отметка «урок открывали» ───────────────────────────────────
+    // Страница программы показывает статус каждого урока. Пишем сюда, а не в
+    // 15 страниц по отдельности: nav-loader и так грузится на каждой из них.
+    (function () {
+        var LESSONS = ['intro', 'role', 'equipment', 'routes', 'loadboards', 'negotiation',
+            'brokers', 'docs', 'regulations', 'technology', 'communication', 'problems',
+            'finances', 'career'];
+        var m = _path.match(/\/pages\/([a-z-]+)\.html$/i);
+        if (!m || LESSONS.indexOf(m[1].toLowerCase()) === -1) return;
+        try {
+            var d = JSON.parse(localStorage.getItem('d4y_course') || '{}');
+            d.seen = d.seen || [];
+            if (d.seen.indexOf(m[1].toLowerCase()) === -1) {
+                d.seen.push(m[1].toLowerCase());
+                localStorage.setItem('d4y_course', JSON.stringify(d));
+            }
+        } catch (e) {}
+    })();
+
     // ── Видимость по роли ──────────────────────────────────────────
     // Мини-игры показываем только оплатившим студентам и админам. Роль
     // приходит от role-guard асинхронно, поэтому пересчитываем и по событию.
@@ -215,7 +234,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.5';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.6';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
