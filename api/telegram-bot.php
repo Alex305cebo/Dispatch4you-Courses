@@ -92,6 +92,9 @@ const HELP_PHOTO =
 . "— — —\n"
 . "Photos are not supported — please send the PDF file itself (📎 → File).";
 
+// Сводки, кнопки под разбором и обработка нажатий
+require_once __DIR__ . '/lib/tg-actions.php';
+
 $token = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
 if ($token === '' || $token === false) { http_response_code(500); echo 'tg-bot.key missing'; exit; }
 $secret = hash('sha256', $token);
@@ -143,7 +146,9 @@ if (isset($_GET['setup'])) {
   $out['webhook'] = json_decode(tgApi($token, 'setWebhook', array(
     'url' => SELF_URL,
     'secret_token' => $secret,
-    'allowed_updates' => json_encode(array('message')),
+    // callback_query обязателен: без него нажатия на кнопки под разбором
+    // до нас просто не доедут, и бот будет молчать в ответ на них.
+    'allowed_updates' => json_encode(array('message', 'callback_query')),
     'drop_pending_updates' => true,
   )), true);
   // Короткое описание — в профиле бота; полное — на пустом экране чата
@@ -176,6 +181,14 @@ $hdr = isset($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN']) ? $_SERVER['HTTP_
 if (!hash_equals($secret, $hdr)) { http_response_code(403); echo 'forbidden'; exit; }
 
 $update = json_decode(file_get_contents('php://input'), true);
+
+// Нажатие кнопки под разбором: показываем то, что попросили, из сохранённого
+// состояния — заново документ не разбираем.
+if (isset($update['callback_query'])) {
+  handleCallback($token, $update['callback_query']);
+  exit;
+}
+
 $msg = isset($update['message']) ? $update['message'] : null;
 if (!$msg || !isset($msg['chat']['id'])) { echo 'ok'; exit; }
 $chatId = $msg['chat']['id'];
@@ -411,27 +424,20 @@ if (empty($load['stops'])) {
   echo 'ok'; exit;
 }
 
-// Карточка уходит отдельным сообщением, без единого лишнего символа —
-// её копируют целиком и пересылают водителю.
-reply($token, $chatId, driverCard($load));
+// Разбор кладём в состояние чата: кнопки под сообщением берут данные отсюда,
+// документ второй раз не разбирается.
+$st = stateGet($chatId);
+$st['rc'] = $load;
+stateSet($chatId, $st);
 
-// Чего в документе не нашлось — отдельным сообщением, чтобы не пачкать карточку.
+// Сводка + кнопки «что дальше». Полотно для водителя больше не вываливается
+// сразу: его отдаём по кнопке, когда оно действительно нужно.
+$summary = rcSummary($load);
 if ($missing) {
-  reply($token, $chatId,
-    "⚠️ Не найдено в документе: " . implode(', ', $missing) . ".\n"
-    . "Проверьте вручную — в рейт-коне этих данных нет или они записаны нестандартно.");
+  $summary .= "\n\n⚠️ Не найдено в документе: " . implode(', ', $missing) . "."
+    . "\nПроверьте вручную — в рейт-коне этих данных нет или они записаны нестандартно.";
 }
-
-// Кнопка идёт ОТДЕЛЬНЫМ сообщением, а не на карточке: карточку копируют целиком и
-// пересылают водителю, и кнопка уехала бы вместе с ней. Последней — чтобы в чате
-// оказаться внизу, под глазами.
-$appUrl = appLink($load);
-if ($appUrl !== null) {
-  replyWithButton($token, $chatId,
-    "Посчитать этот груз: маржа, ставка за милю, порожний пробег.\n"
-    . "Откроется демо — смотреть можно всё, сохранять только в своём аккаунте.",
-    '📊 Открыть в приложении', $appUrl);
-}
+reply($token, $chatId, $summary . "\n\n👇 Что сделать с этим грузом:", rcKeyboard($load));
 echo 'ok';
 exit;
 
@@ -695,9 +701,10 @@ function tgApi($token, $method, array $params) {
     http_build_query($params), array('Content-Type: application/x-www-form-urlencoded'));
 }
 
-function reply($token, $chatId, $text) {
-  return tgApi($token, 'sendMessage', array(
-    'chat_id' => $chatId, 'text' => $text, 'disable_web_page_preview' => true));
+function reply($token, $chatId, $text, $keyboard = null) {
+  $p = array('chat_id' => $chatId, 'text' => $text, 'disable_web_page_preview' => true);
+  if ($keyboard !== null) $p['reply_markup'] = json_encode(array('inline_keyboard' => $keyboard));
+  return tgApi($token, 'sendMessage', $p);
 }
 
 // Закрывает HTTP-ответ, не прерывая скрипт: LiteSpeed (Hostinger) и PHP-FPM
@@ -802,18 +809,12 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   if ($err !== '') { fail($token, $chatId, 'photo vision: ' . $err, 'сервис распознавания не справился с картинкой'); return; }
 
   $st = stateGet($chatId);
-  $draft = brokerEmailDraft($load, isset($st['carrier']) ? $st['carrier'] : '');
   $st['load'] = $load;
-  $st['draft'] = $draft;
   stateSet($chatId, $st);
 
-  reply($token, $chatId, photoLoadCard($load));
-  reply($token, $chatId, photoLoadAnalytics($load));
-  reply($token, $chatId, draftAsText($draft) . "\n\n"
-    . "— — —\n"
-    . "✏️ Изменить: /edit и новый текст письма\n"
-    . "📤 Готово к отправке: /send — открою письмо в вашей почте"
-    . "\n🖊 Подпись: /carrier и данные вашей компании");
+  // Карточка + кнопки. Аналитика и письмо приходят по нажатию, а не сразу
+  // тремя простынями подряд: обычно нужна одна из них.
+  reply($token, $chatId, photoLoadCard($load) . "\n\n👇 Что сделать с этим грузом:", photoKeyboard($load));
 }
 
 function handleCarrier($token, $chatId, $sig) {
