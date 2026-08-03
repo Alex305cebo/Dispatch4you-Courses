@@ -169,11 +169,23 @@ if (isset($_GET['gemprobe'])) {
     echo str_pad($id, 44) . (isset($m['inputTokenLimit']) ? 'вход ' . number_format($m['inputTokenLimit']) : '') . "\n";
   }
 
-  // 2. Живая проверка нашей цепочки — отвечает ли каждая модель на самом деле
-  echo "\n=== ПРОВЕРКА ЦЕПОЧКИ ===\n";
-  foreach (GEMINI_CHAIN as $model) {
-    list($d, $e) = geminiStructure('Return ONLY {"ok":true}', 'ping', array($model));
-    echo str_pad($model, 30) . ($d !== null ? 'РАБОТАЕТ' : 'нет: ' . substr($e, 0, 110)) . "\n";
+  // 2. Живая проверка кандидатов. Gemini 3.x отвергает thinkingBudget=0
+  // («invalid argument»), поэтому пробуем оба варианта и смотрим, что реально
+  // работает — гадать по документации дороже, чем спросить API.
+  echo "\n=== ПРОВЕРКА КАНДИДАТОВ (с thinkingBudget / без) ===\n";
+  $cands = array(
+    'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview',
+    'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite',
+    'gemini-flash-latest', 'gemini-flash-lite-latest',
+  );
+  foreach ($cands as $model) {
+    $line = str_pad($model, 26);
+    foreach (array(true, false) as $think) {
+      list($d, $e) = geminiStructure('Return ONLY {"ok":true}', 'ping', array($model), $think);
+      $line .= str_pad($d !== null ? ($think ? 'с:OK' : 'без:OK') : ($think ? 'с:—' : 'без:—'), 10);
+      if ($d === null && stripos($e, 'invalid argument') === false) $line .= '(' . substr(preg_replace('/\s+/', ' ', $e), 0, 60) . ')';
+    }
+    echo $line . "\n";
   }
   exit;
 }

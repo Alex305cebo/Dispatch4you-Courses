@@ -53,22 +53,25 @@ function geminiQuotaError($msg) {
  *
  * @return array{0:?array,1:string,2:string} [данные, код ошибки, сработавшая модель]
  */
-function geminiStructure($sys, $text, $models = null) {
+function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true) {
   $key = geminiKey();
   if ($key === null) return array(null, 'nokey', '');
   if ($models === null) $models = GEMINI_CHAIN;
 
+  $cfg = array(
+    'temperature' => 0,
+    // С отключёнными «размышлениями» хватает 4096; если модель их не даёт
+    // отключить, лимит поднимается ниже — иначе thinking съест весь вывод
+    // и придёт пустой ответ вообще без ошибки (уже наступали на это).
+    'maxOutputTokens' => $useThinkingConfig ? 4096 : 16384,
+    'responseMimeType' => 'application/json',
+  );
+  if ($useThinkingConfig) $cfg['thinkingConfig'] = array('thinkingBudget' => 0);
+
   $body = json_encode(array(
     'contents' => array(array('parts' => array(array('text' => $text)))),
     'systemInstruction' => array('parts' => array(array('text' => $sys))),
-    'generationConfig' => array(
-      'temperature' => 0,
-      'maxOutputTokens' => 4096,
-      // Без этого «размышления» съедают весь лимит вывода и приходит пустой
-      // ответ вообще без ошибки — грабля, на которую уже наступали.
-      'thinkingConfig' => array('thinkingBudget' => 0),
-      'responseMimeType' => 'application/json',
-    ),
+    'generationConfig' => $cfg,
   ));
 
   $lastErr = '';
@@ -87,6 +90,15 @@ function geminiStructure($sys, $text, $models = null) {
     if (is_array($resp) && isset($resp['error'])) {
       $msg = isset($resp['error']['message']) ? $resp['error']['message'] : '';
       $lastErr = 'api[' . $model . ']:' . substr($msg, 0, 160);
+      // Gemini 3.x не принимает thinkingBudget=0 и отвечает «invalid argument».
+      // Пробуем ту же модель без него — с запасом по maxOutputTokens, чтобы
+      // «размышления» не съели весь вывод.
+      if ($useThinkingConfig && stripos($msg, 'invalid argument') !== false) {
+        list($d2, $e2, $m2) = geminiStructure($sys, $text, array($model), false);
+        if ($d2 !== null) return array($d2, '', $m2);
+        $lastErr = $e2;
+        continue;
+      }
       // 429/квота/перегруз — пробуем следующую модель. Прочие ошибки (неверный
       // ключ, кривой запрос) на другой модели повторятся, поэтому выходим сразу.
       if ($code == 429 || geminiQuotaError($msg)) continue;
