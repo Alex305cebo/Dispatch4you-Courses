@@ -20,7 +20,7 @@ const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // по стандарту не отправляется на сервер — ставка брокера остаётся в браузере
 // диспетчера и в наши логи не попадает. Контракт параметров — lib/qr-load.ts в
 // репозитории приложения (Alex305cebo/dispatch-app), страница-приёмник /load.
-const APP_DEMO_URL = 'https://dispatch4you.pro/demo?next=/load';
+const APP_DEMO_URL = 'https://dispatch4you.pro/demo?next=/load/card';
 const MAX_PDF_BYTES = 15728640; // 15 MB (лимит Telegram getFile — 20 MB)
 // llama-3.3-70b на реальных рейт-конах выдумывала адреса и уходила в цикл
 // (13/14 против 0/14 на проверочном документе) — не возвращать.
@@ -647,6 +647,30 @@ function appLink(array $d) {
   if ($delivery) { $c = cityState($delivery); if ($c !== null) $p['dest']   = $c; }
   if (!empty($d['broker']))  $p['bn']  = $d['broker'];
   if (!empty($d['load_id'])) $p['ref'] = ltrim($d['load_id'], '#');
+
+  // Подробности стопов — их знает только рейт-кон, и без них страница не соберёт
+  // ни текст водителю, ни письмо брокеру.
+  $street = function ($s) {
+    $lines = array_values(array_filter((array)(isset($s['address_lines']) ? $s['address_lines'] : array())));
+    return count($lines) > 1 ? $lines[0] : ''; // последняя строка — это CITY ST ZIP, она уже в origin/dest
+  };
+  if ($pickup) {
+    if (!empty($pickup['name'])) $p['pn'] = $pickup['name'];
+    if ($street($pickup) !== '')  $p['pa'] = $street($pickup);
+    if (!empty($pickup['time'])) $p['pt'] = $pickup['time'];
+    $refs = array_filter((array)(isset($pickup['refs']) ? $pickup['refs'] : array()));
+    if ($refs) $p['pr'] = implode('|', $refs);
+  }
+  if ($delivery) {
+    if (!empty($delivery['name'])) $p['dn'] = $delivery['name'];
+    if ($street($delivery) !== '')  $p['da'] = $street($delivery);
+    if (!empty($delivery['time'])) $p['dt'] = $delivery['time'];
+    $refs = array_filter((array)(isset($delivery['refs']) ? $delivery['refs'] : array()));
+    if ($refs) $p['dr'] = implode('|', $refs);
+  }
+  if (!empty($d['weight']))    $p['wt'] = $d['weight'];
+  if (!empty($d['commodity'])) $p['cm'] = $d['commodity'];
+  if (!empty($d['equipment'])) $p['eq'] = $d['equipment'];
   if (!$p) return null;
   // http_build_query кодирует пробел как «+», а URLSearchParams на той стороне
   // читает «+» как пробел — форматы совпадают, ничего конвертировать не нужно.
