@@ -154,30 +154,33 @@ if (isset($_GET['gemprobe'])) {
   $key = geminiKey();
   if ($key === null) { echo "gemini.key нет\n"; exit; }
 
-  // 1. Официальный список моделей аккаунта
-  $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200');
-  curl_setopt_array($ch, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 60,
-    CURLOPT_HTTPHEADER => array('x-goog-api-key: ' . $key)));
-  $list = json_decode((string)curl_exec($ch), true);
-  curl_close($ch);
-  echo "=== ДОСТУПНЫЕ МОДЕЛИ (generateContent) ===\n";
-  foreach ((array)(isset($list['models']) ? $list['models'] : array()) as $m) {
-    $methods = (array)(isset($m['supportedGenerationMethods']) ? $m['supportedGenerationMethods'] : array());
-    if (!in_array('generateContent', $methods, true)) continue;
-    $id = str_replace('models/', '', $m['name']);
-    if (stripos($id, 'flash') === false && stripos($id, 'pro') === false) continue;
-    echo str_pad($id, 44) . (isset($m['inputTokenLimit']) ? 'вход ' . number_format($m['inputTokenLimit']) : '') . "\n";
+  // 1. Официальный список моделей аккаунта — только по ?list=1, чтобы обычный
+  // прогон не тратил время впустую (список мы уже знаем).
+  if (isset($_GET['list'])) {
+    $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200');
+    curl_setopt_array($ch, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 60,
+      CURLOPT_HTTPHEADER => array('x-goog-api-key: ' . $key)));
+    $list = json_decode((string)curl_exec($ch), true);
+    curl_close($ch);
+    echo "=== ДОСТУПНЫЕ МОДЕЛИ (generateContent) ===\n";
+    foreach ((array)(isset($list['models']) ? $list['models'] : array()) as $m) {
+      $methods = (array)(isset($m['supportedGenerationMethods']) ? $m['supportedGenerationMethods'] : array());
+      if (!in_array('generateContent', $methods, true)) continue;
+      $id = str_replace('models/', '', $m['name']);
+      if (stripos($id, 'flash') === false && stripos($id, 'pro') === false) continue;
+      echo str_pad($id, 44) . (isset($m['inputTokenLimit']) ? 'вход ' . number_format($m['inputTokenLimit']) : '') . "\n";
+    }
+    exit;
   }
 
   // 2. Живая проверка кандидатов. Gemini 3.x отвергает thinkingBudget=0
   // («invalid argument»), поэтому пробуем оба варианта и смотрим, что реально
   // работает — гадать по документации дороже, чем спросить API.
   echo "\n=== ПРОВЕРКА КАНДИДАТОВ (с thinkingBudget / без) ===\n";
-  $cands = array(
-    'gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview',
-    'gemini-3.1-flash-lite', 'gemini-3.5-flash-lite', 'gemini-2.0-flash', 'gemini-2.0-flash-lite',
-    'gemini-flash-latest', 'gemini-flash-lite-latest',
-  );
+  // Партиями через ?m=a,b — 20 запросов подряд не укладываются в таймаут nginx.
+  $cands = isset($_GET['m']) && $_GET['m'] !== ''
+    ? array_filter(array_map('trim', explode(',', $_GET['m'])))
+    : array('gemini-2.5-flash', 'gemini-3.6-flash');
   foreach ($cands as $model) {
     $line = str_pad($model, 26);
     foreach (array(true, false) as $think) {
