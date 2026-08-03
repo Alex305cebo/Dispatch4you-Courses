@@ -181,10 +181,13 @@ if (isset($_GET['gemprobe'])) {
   $cands = isset($_GET['m']) && $_GET['m'] !== ''
     ? array_filter(array_map('trim', explode(',', $_GET['m'])))
     : array('gemini-2.5-flash', 'gemini-3.6-flash');
+  // Короткий таймаут: у шлюза Hostinger ~60 с, а модель с включёнными
+  // «размышлениями» думает дольше. Боевому боту это не мешает (он отвечает
+  // Telegram сразу и дорабатывает в фоне), а проверке нужен быстрый ответ.
   foreach ($cands as $model) {
     $line = str_pad($model, 26);
     foreach (array(true, false) as $think) {
-      list($d, $e) = geminiStructure('Return ONLY {"ok":true}', 'ping', array($model), $think);
+      list($d, $e) = geminiStructure('Return ONLY {"ok":true}', 'ping', array($model), $think, 18);
       $line .= str_pad($d !== null ? ($think ? 'с:OK' : 'без:OK') : ($think ? 'с:—' : 'без:—'), 10);
       if ($d === null && stripos($e, 'invalid argument') === false) $line .= '(' . substr(preg_replace('/\s+/', ' ', $e), 0, 60) . ')';
     }

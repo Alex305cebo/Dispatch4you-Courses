@@ -53,7 +53,7 @@ function geminiQuotaError($msg) {
  *
  * @return array{0:?array,1:string,2:string} [данные, код ошибки, сработавшая модель]
  */
-function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true) {
+function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true, $timeout = 120) {
   $key = geminiKey();
   if ($key === null) return array(null, 'nokey', '');
   if ($models === null) $models = GEMINI_CHAIN;
@@ -78,7 +78,7 @@ function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true)
   foreach ($models as $model) {
     $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models/' . $model . ':generateContent');
     curl_setopt_array($ch, array(
-      CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 120,
+      CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => $timeout,
       CURLOPT_POSTFIELDS => $body,
       CURLOPT_HTTPHEADER => array('Content-Type: application/json', 'x-goog-api-key: ' . $key),
     ));
@@ -94,7 +94,7 @@ function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true)
       // Пробуем ту же модель без него — с запасом по maxOutputTokens, чтобы
       // «размышления» не съели весь вывод.
       if ($useThinkingConfig && stripos($msg, 'invalid argument') !== false) {
-        list($d2, $e2, $m2) = geminiStructure($sys, $text, array($model), false);
+        list($d2, $e2, $m2) = geminiStructure($sys, $text, array($model), false, $timeout);
         if ($d2 !== null) return array($d2, '', $m2);
         $lastErr = $e2;
         continue;
