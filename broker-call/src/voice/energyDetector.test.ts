@@ -68,6 +68,19 @@ describe('EnergyDetector', () => {
     expect(all).toEqual(['start', 'end', 'start', 'end', 'start', 'end'])
   })
 
+  it('укладывается в бюджет паузы — это самое медленное звено звонка', () => {
+    // Пауза платится на каждой реплике. Если её тихо поднять «на всякий
+    // случай», разговор снова станет похож на автоответчик, и заметить это
+    // будет некому — поэтому граница закреплена тестом.
+    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeLessThanOrEqual(500)
+
+    const d = new EnergyDetector()
+    settle(d)
+    feed(d, 0.05, 700)
+    // Речь обязана закончиться в пределах бюджета, а не когда-нибудь.
+    expect(feed(d, 0.004, DEFAULT_ENERGY_OPTIONS.hangoverMs + FRAME * 2)).toEqual(['end'])
+  })
+
   it('reset обрывает текущую речь', () => {
     const d = new EnergyDetector()
     settle(d)

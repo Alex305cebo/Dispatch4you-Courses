@@ -13,6 +13,11 @@ export interface VoiceTransport {
   interrupt(): void
   /** Поток микрофона для визуализации волны. */
   getMicStream(): MediaStream | null
+  /**
+   * Средняя пауза между «студент договорил» и «брокер заговорил», в мс.
+   * Уходит в разбор звонка: без числа «стало живее» остаётся ощущением.
+   */
+  getAverageLatencyMs?(): number
 }
 
 export type VoiceEvent =
@@ -44,12 +49,16 @@ export type VoiceEvent =
 
 export type VoiceListener = (event: VoiceEvent) => void
 
+import type { BrokerStyle } from '../types'
+
 export interface TransportDeps {
   scenarioId: string
   /** Голос брокера у провайдера озвучки. */
   voice: string
   /** Вокальная ремарка Orpheus под характер брокера: cheerful, serious… */
   direction?: string
+  /** Характер брокера — от него зависят короткие отклики в паузах. */
+  style: BrokerStyle
   /** Первая реплика — брокер снимает трубку и говорит первым. */
   opening: string
   /** Выполнить инструмент и вернуть результат для модели. */

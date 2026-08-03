@@ -50,6 +50,8 @@ interface CallStore {
   micLevel: number
   error: string | null
   startedAt: number | null
+  /** Средняя пауза брокера за звонок — показывается в разборе. */
+  avgLatencyMs: number
 
   openIncoming(scenarioId: string): void
   answer(): Promise<void>
@@ -70,6 +72,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
   micLevel: 0,
   error: null,
   startedAt: null,
+  avgLatencyMs: 0,
 
   openIncoming(scenarioId) {
     const scenario = getScenario(scenarioId)
@@ -92,6 +95,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       scenarioId: scenario.id,
       voice: voiceForBroker(broker.id),
       direction: directionForStyle(broker.style),
+      style: broker.style,
       opening: scenario.opening,
       runTool: (name, args) => {
         const result = machine.execute(name, args)
@@ -132,8 +136,10 @@ export const useCallStore = create<CallStore>((set, get) => ({
   endCall() {
     const { transport, phase } = get()
     if (phase === 'debrief') return
+    // Замер снимаем ДО disconnect: после него транспорт уже разобран.
+    const avgLatencyMs = transport?.getAverageLatencyMs?.() ?? 0
     transport?.disconnect()
-    set({ phase: 'debrief', line: 'ended' })
+    set({ phase: 'debrief', line: 'ended', avgLatencyMs })
   },
 
   backToLobby() {
@@ -147,6 +153,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       micLevel: 0,
       error: null,
       startedAt: null,
+      avgLatencyMs: 0,
     })
   },
 }))

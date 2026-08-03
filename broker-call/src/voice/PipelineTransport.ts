@@ -5,6 +5,8 @@ import { encodeWav, durationSeconds } from './audio'
 import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript } from '../data/terms'
 import { endpoint } from '../api'
 import { estimateDurationMs, speakInBrowser, type BrowserSpeech } from './browserVoice'
+import { Backchannel } from './backchannel'
+import { synthesize } from './tts'
 
 /**
  * Бесплатный транспорт: VAD → Whisper → LLM → Orpheus.
@@ -24,6 +26,9 @@ export class PipelineTransport implements VoiceTransport {
   private browserSpeech: BrowserSpeech | null = null
   /** Об отказе озвучки сообщаем один раз за звонок, а не на каждой реплике. */
   private ttsReported = false
+  private backchannel: Backchannel | null = null
+  /** Замеры пауз — уходят в разбор звонка. */
+  private readonly turnLatencies: number[] = []
   private currentUtterance: { id: string; startedAt: number; durationMs: number } | null = null
   private preview: SpeechRecognitionLike | null = null
   private abort: AbortController | null = null
@@ -43,11 +48,17 @@ export class PipelineTransport implements VoiceTransport {
   }
 
   async connect(): Promise<void> {
-    await this.telephony.ensureContext()
+    const ctx = await this.telephony.ensureContext()
 
     // Микрофон запрашиваем ДО гудков: если студент откажет, лучше узнать это
     // сразу, а не после десяти секунд ожидания ответа.
     await this.vad.start()
+
+    // Отклики синтезируются во время гудков — три секунды простоя как раз на
+    // это и уходят. БЕЗ await: не успели или провайдер молчит — звонок идёт
+    // без них, задерживать разговор ради «угу» бессмысленно.
+    this.backchannel = new Backchannel(ctx, this.deps.voice, this.deps.style, this.deps.direction)
+    void this.backchannel.prepare()
 
     const stopRing = await this.telephony.ring()
     await wait(3200)
@@ -98,6 +109,12 @@ export class PipelineTransport implements VoiceTransport {
       return
     }
 
+    // Отклик уходит в линию ПЕРВЫМ делом, до распознавания. Пока он звучит,
+    // успевают отработать и Whisper, и модель — паузы студент не слышит.
+    const line = this.telephony.getLineInput()
+    if (line) this.backchannel?.ack(line)
+
+    const startedAt = performance.now()
     this.vad.setPaused(true)
     try {
       const text = await this.transcribe(audio)
@@ -114,6 +131,9 @@ export class PipelineTransport implements VoiceTransport {
       this.deps.emit({ type: 'user_final', text: clean })
       this.messages.push({ role: 'user', content: clean })
       await this.runTurn()
+      // Реальная пауза между «договорил» и «брокер заговорил» — в разбор
+      // звонка. Без числа «стало живее» остаётся ощущением.
+      this.turnLatencies.push(performance.now() - startedAt)
     } catch (e) {
       this.deps.emit({
         type: 'error',
@@ -209,7 +229,18 @@ export class PipelineTransport implements VoiceTransport {
    */
   private scheduleHold(): void {
     if (this.holdTimer !== null) return
-    this.holdTimer = window.setTimeout(() => void this.telephony.startHold(), 900)
+
+    // Сначала брокер говорит вслух, что смотрит — так делает живой человек.
+    // Музыка ожидания включается только если он копается дольше отклика:
+    // включать её сразу значит превращать полусекундную задержку в «вас
+    // поставили на удержание».
+    const line = this.telephony.getLineInput()
+    const spokenMs = line ? (this.backchannel?.filler(line) ?? 0) : 0
+
+    this.holdTimer = window.setTimeout(
+      () => void this.telephony.startHold(),
+      Math.max(900, spokenMs + 600),
+    )
   }
 
   private cancelHold(): void {
@@ -234,16 +265,10 @@ export class PipelineTransport implements VoiceTransport {
 
     let buffer: AudioBuffer | null = null
     try {
-      const r = await fetch(endpoint('tts'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // В провайдер уходит текст с вокальной ремаркой, на экран — чистый.
-        body: JSON.stringify({ text: this.withDirection(text), voice: this.deps.voice }),
-      })
-      if (!r.ok) {
-        throw new Error(`${r.status} ${(await r.text()).slice(0, 160)}`)
-      }
-      buffer = await ctx.decodeAudioData(await r.arrayBuffer())
+      // В провайдер уходит текст с вокальной ремаркой, на экран — чистый.
+      buffer = await ctx.decodeAudioData(
+        await synthesize(text, this.deps.voice, this.deps.direction),
+      )
     } catch (e) {
       // Причину показываем: раньше она уходила в консоль, и «почему молчит»
       // приходилось выяснять чтением исходников. Но один раз за звонок —
@@ -308,14 +333,11 @@ export class PipelineTransport implements VoiceTransport {
     this.finishUtterance(false)
   }
 
-  /**
-   * Orpheus понимает ремарки в квадратных скобках. Дэйв на бегу и Нина, у
-   * которой горит груз, должны звучать по-разному — характер задан данными,
-   * а не только словами в промпте.
-   */
-  private withDirection(text: string): string {
-    const direction = this.deps.direction
-    return direction ? `[${direction}] ${text}` : text
+  /** Средняя пауза между «студент договорил» и «брокер заговорил», в мс. */
+  getAverageLatencyMs(): number {
+    if (this.turnLatencies.length === 0) return 0
+    const sum = this.turnLatencies.reduce((a, b) => a + b, 0)
+    return Math.round(sum / this.turnLatencies.length)
   }
 
   private stopPlayback(interrupted: boolean): void {

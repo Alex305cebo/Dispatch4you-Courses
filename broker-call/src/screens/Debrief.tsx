@@ -23,7 +23,7 @@ interface Analysis {
  */
 export function Debrief() {
   const t = useT()
-  const { scenario, machine, feed, backToLobby, openIncoming } = useCallStore()
+  const { scenario, machine, feed, avgLatencyMs, backToLobby, openIncoming } = useCallStore()
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [failed, setFailed] = useState(false)
 
@@ -97,6 +97,15 @@ export function Debrief() {
               value={metrics.leftOnTable > 0 ? `$${metrics.leftOnTable.toLocaleString('en-US')}` : '$0'}
               tone={metrics.leftOnTable > 0 ? 'bad' : undefined}
             />
+            {/* Пауза брокера — это про технику, а не про студента. Показываем,
+                чтобы «стало живее» перестало быть ощущением. */}
+            {avgLatencyMs > 0 ? (
+              <Stat
+                label={t('debrief.latency')}
+                value={`${(avgLatencyMs / 1000).toFixed(1)} с`}
+                tone={avgLatencyMs > 1500 ? 'bad' : undefined}
+              />
+            ) : null}
           </div>
 
           <div>
