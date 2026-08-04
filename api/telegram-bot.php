@@ -130,9 +130,34 @@ register_shutdown_function(function () {
   $e = error_get_last();
   if ($e === null) return;
   if (!in_array($e['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR), true)) return;
+  $where = $e['file'] . ':' . $e['line'];
   @file_put_contents(__DIR__ . '/../../tg-bot.log',
-    date('c') . " [FATAL] " . $e['message'] . ' @ ' . $e['file'] . ':' . $e['line'] . "\n", FILE_APPEND);
+    date('c') . " [FATAL] " . $e['message'] . ' @ ' . $where . "\n", FILE_APPEND);
   if (!headers_sent()) http_response_code(200);
+
+  // Тревога админу. В tg-bot.log никто не заглядывает — про поломку /send
+  // владелец узнал по 648 одинаковым сообщениям в своём чате спустя часы.
+  // Не чаще раза в 15 минут на одну и ту же поломку: падает обычно на каждом
+  // сообщении подряд, и сам алерт превратился бы в тот же спам.
+  $admin = @trim(file_get_contents(__DIR__ . '/../../tg-admin.txt'));
+  $tok   = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
+  if ($admin === '' || $admin === false || $tok === '' || $tok === false) return;
+  $dir = __DIR__ . '/../../tg-state';
+  if (!is_dir($dir)) @mkdir($dir, 0700, true);
+  $stamp = $dir . '/alert-' . md5($e['message'] . $where) . '.stamp';
+  if (@filemtime($stamp) > time() - 900) return;
+  @touch($stamp);
+  $ch = curl_init('https://api.telegram.org/bot' . $tok . '/sendMessage');
+  curl_setopt_array($ch, array(
+    CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10,
+    CURLOPT_POSTFIELDS => http_build_query(array(
+      'chat_id' => $admin,
+      'text' => "🔥 Бот упал на обработке сообщения\n\n" . $e['message'] . "\n\n" . $where
+        . "\n\nTelegram получил 200, так что повторной доставки и спама не будет — "
+        . "но команда до конца не отработала.",
+    )),
+  ));
+  @curl_exec($ch); @curl_close($ch);
 });
 
 // Сводки, кнопки под разбором и обработка нажатий
@@ -1023,18 +1048,10 @@ function photoAppLink(array $d) {
   return APP_DEMO_URL . '#' . http_build_query($p);
 }
 
-// URL-кнопка, а не callback: подписка вебхука — только на "message", и callback_query
-// до нас бы просто не дошёл. Ссылка открывается сразу, без ответа от бота.
-function replyWithButton($token, $chatId, $text, $btnText, $url) {
-  return tgApi($token, 'sendMessage', array(
-    'chat_id' => $chatId,
-    'text' => $text,
-    'disable_web_page_preview' => true,
-    'reply_markup' => json_encode(array('inline_keyboard' => array(array(
-      array('text' => $btnText, 'url' => $url),
-    )))),
-  ));
-}
+// Здесь жила replyWithButton() — не вызывалась ниоткуда, а её комментарий
+// («подписка вебхука — только на message») уже устарел и успел навести на
+// ошибку: ровно из-за него сторож восстанавливал вебхук без callback_query.
+// Кнопки давно работают через reply($token, $chatId, $text, $keyboard).
 
 function tgApi($token, $method, array $params) {
   return httpPost('https://api.telegram.org/bot' . $token . '/' . $method,
