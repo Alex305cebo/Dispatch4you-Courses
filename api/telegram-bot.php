@@ -142,6 +142,13 @@ if (isset($_GET['fmcsacheck'])) {
   // ветка отчёта не проверялась вообще.
   $mc = isset($_GET['fmcsacheck']) ? preg_replace('/\D/', '', (string)$_GET['fmcsacheck']) : '';
   if ($mc === '') $mc = '115789';
+  // ?keys=1 — какие поля вообще приходят от QCMobile. Пригодилось, когда телефон
+  // не показывался: гадать о названиях полей по документации дороже, чем спросить.
+  if (!empty($_GET['keys'])) {
+    list($rec, ) = fetchBrokerRecord('broker', $mc);
+    echo is_array($rec) ? implode("\n", array_keys($rec)) . "\n" : "запись не найдена\n";
+    exit;
+  }
   echo "ответ: " . brokerReport('broker', $mc) . "\n";
   exit;
 }
