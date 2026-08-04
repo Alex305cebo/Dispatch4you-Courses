@@ -121,6 +121,16 @@ const HELP_PHOTO =
 . "— — —\n"
 . "Photos are not supported — please send the PDF file itself (📎 → File).";
 
+// Письмо брокеру временно выключено целиком (кнопки, /edit, /send) по просьбе
+// владельца: на нём поймали цикл повторной доставки, и пока идёт разбирательство
+// функция не должна быть доступна. Включить обратно — поставить true.
+const MAIL_ENABLED = false;
+
+// Предохранитель на исходящие сообщения: больше стольких в минуту в один чат
+// бот не отправит НИ ПРИ КАКИХ обстоятельствах. Обычный сценарий — 2–3
+// сообщения на документ, так что запас десятикратный.
+const MAX_OUT_PER_MIN = 20;
+
 // Фатальная ошибка в обработчике = HTTP 500 = Telegram считает доставку
 // неудачной и присылает ТОТ ЖЕ апдейт снова, по кругу. Один такой случай
 // (/send вызывал draftAsText() из load-photo.php, который в текстовой ветке
@@ -256,18 +266,23 @@ if (isset($_GET['setup'])) {
   // Плоский список — так его и показывает Telegram, разделов внутри самого
   // меню нет технически. Порядок группирует пункты по смыслу: сначала общее,
   // потом работа с письмом брокеру, потом проверка брокера, потом настройки.
+  $cmds = array(
+    array('command' => 'start',    'description' => '👋 Что умеет бот'),
+    array('command' => 'menu',     'description' => '📋 Все разделы одним списком'),
+    array('command' => 'help',     'description' => 'ℹ️ Подробная инструкция'),
+  );
+  // Пока письмо выключено, его команды из меню убираем: показывать пункт,
+  // который отвечает «временно отключено», хуже, чем не показывать вовсе.
+  if (MAIL_ENABLED) {
+    $cmds[] = array('command' => 'carrier', 'description' => '🖊 Подпись компании для писем');
+    $cmds[] = array('command' => 'edit',    'description' => '✏️ Поправить текст письма');
+    $cmds[] = array('command' => 'send',    'description' => '📤 Подготовить письмо к отправке');
+  }
+  $cmds[] = array('command' => 'mc',       'description' => '🔎 Проверить брокера по MC');
+  $cmds[] = array('command' => 'dot',      'description' => '🔎 Проверить брокера по DOT');
+  $cmds[] = array('command' => 'language', 'description' => '🌐 Сменить язык / Change language');
   $out['commands'] = json_decode(tgApi($token, 'setMyCommands', array(
-    'commands' => json_encode(array(
-      array('command' => 'start',    'description' => '👋 Что умеет бот'),
-      array('command' => 'menu',     'description' => '📋 Все разделы одним списком'),
-      array('command' => 'help',     'description' => 'ℹ️ Подробная инструкция'),
-      array('command' => 'carrier',  'description' => '🖊 Подпись компании для писем'),
-      array('command' => 'edit',     'description' => '✏️ Поправить текст письма'),
-      array('command' => 'send',     'description' => '📤 Подготовить письмо к отправке'),
-      array('command' => 'mc',       'description' => '🔎 Проверить брокера по MC'),
-      array('command' => 'dot',      'description' => '🔎 Проверить брокера по DOT'),
-      array('command' => 'language', 'description' => '🌐 Сменить язык / Change language'),
-    )),
+    'commands' => json_encode($cmds),
   )), true);
   header('Content-Type: application/json');
   echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
@@ -280,6 +295,17 @@ $hdr = isset($_SERVER['HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN']) ? $_SERVER['HTTP_
 if (!hash_equals($secret, $hdr)) { http_response_code(403); echo 'forbidden'; exit; }
 
 $update = json_decode(file_get_contents('php://input'), true);
+
+// ── Повторная доставка: обрабатываем каждый апдейт ровно один раз ────
+// Telegram гарантирует уникальность update_id и переприсылает апдейт при любой
+// неудачной доставке — 500, таймаут, обрыв, а после простоя ещё и выгружает
+// всю накопленную очередь разом. Без этой проверки каждая повторная доставка
+// заново отрабатывает команду и заново шлёт все сообщения: именно так и
+// набежали сотни одинаковых сообщений подряд. Убрать причину падения мало —
+// сам механизм повтора надо обезвредить, потому что причина в следующий раз
+// будет другая.
+$updateId = isset($update['update_id']) ? (int)$update['update_id'] : 0;
+if ($updateId > 0 && updateAlreadySeen($updateId)) { echo 'ok (dup)'; exit; }
 
 // Нажатие кнопки под разбором: показываем то, что попросили, из сохранённого
 // состояния — заново документ не разбираем.
@@ -342,9 +368,11 @@ if (!isset($msg['document'])) {
   } elseif (preg_match('~^/carrier\b\s*(.*)$~is', $text, $cm)) {
     handleCarrier($token, $chatId, trim($cm[1]));
   } elseif (preg_match('~^/edit\b\s*(.*)$~is', $text, $em)) {
-    handleEdit($token, $chatId, trim($em[1]));
+    if (MAIL_ENABLED) handleEdit($token, $chatId, trim($em[1]));
+    else reply($token, $chatId, mailOffText(curLang($introState)));
   } elseif (preg_match('~^/send\b\s*(.*)$~i', $text, $sm)) {
-    handleSend($token, $chatId, trim($sm[1]));
+    if (MAIL_ENABLED) handleSend($token, $chatId, trim($sm[1]));
+    else reply($token, $chatId, mailOffText(curLang($introState)));
   } elseif (preg_match('~^/(broker|mc|dot)\b\s*(.*)$~i', $text, $bm)) {
     $kind = strtolower($bm[1]);
     $numArg = preg_replace('/\D/', '', $bm[2]);
@@ -559,7 +587,12 @@ exit;
 // По умолчанию русский: до этой правки бот отвечал только на русском,
 // и вся текущая аудитория — русскоязычные диспетчеры.
 function helpStart(array $state) {
-  return (isset($state['lang']) && $state['lang'] === 'en') ? HELP_START_EN : HELP_START_RU;
+  $lang = (isset($state['lang']) && $state['lang'] === 'en') ? 'en' : 'ru';
+  $t = $lang === 'en' ? HELP_START_EN : HELP_START_RU;
+  // Справка перечисляет письмо брокеру среди возможностей — пока оно выключено,
+  // обещать его нельзя, иначе человек будет искать несуществующую кнопку.
+  if (!MAIL_ENABLED) $t .= "\n\n— — —\n" . mailOffText($lang);
+  return $t;
 }
 
 // Единая точка правды о том, на каком языке сейчас говорить с этим диспетчером —
@@ -585,6 +618,9 @@ function editMessage($token, $chatId, $messageId, $text, ?array $keyboard = null
 // (кнопка «Menu» показывает строго плоский список) — здесь то же самое разложено
 // по группам текстом, /menu ссылается и в /start, и в описании бота.
 function menuText(array $state) {
+  // Раздел «письмо брокеру» остаётся в списке, но с пометкой в конце — иначе
+  // человек ищет кнопку, которой сейчас нет.
+  $off = MAIL_ENABLED ? '' : "\n\n— — —\n" . mailOffText(curLang($state));
   if (isset($state['lang']) && $state['lang'] === 'en') {
     return "📋 SECTIONS\n\n"
     . "📄 Rate Confirmation\n"
@@ -600,7 +636,7 @@ function menuText(array $state) {
     . "/dot 2100420 — by DOT number\n\n"
     . "🌐 Language\n"
     . "/language — switch RU/EN\n\n"
-    . "/help — full instructions";
+    . "/help — full instructions" . $off;
   }
   return "📋 РАЗДЕЛЫ\n\n"
   . "📄 Rate Confirmation\n"
@@ -616,7 +652,7 @@ function menuText(array $state) {
   . "/dot 2100420 — по номеру DOT\n\n"
   . "🌐 Язык\n"
   . "/language — сменить RU/EN\n\n"
-  . "/help — подробная инструкция";
+  . "/help — подробная инструкция" . $off;
 }
 
 function langKeyboard() {
@@ -949,6 +985,15 @@ function brokerReport($kind, $number, $lang = 'ru') {
 
 function mark($ok) { return $ok ? '✅' : '⚠️'; }
 
+// Единый ответ на всё, что связано с письмом брокеру, пока MAIL_ENABLED = false.
+function mailOffText($lang = 'ru') {
+  return $lang === 'en'
+    ? "✉️ The broker email is temporarily switched off — we are sorting out a fault in it. "
+      . "Everything else works: rate confirmations, load screenshots, driver text and FMCSA checks."
+    : "✉️ Письмо брокеру временно отключено — разбираемся со сбоем в нём.\n\n"
+      . "Остальное работает: разбор рейт-конов и скриншотов, текст водителю, проверка брокера по FMCSA.";
+}
+
 // «Pine Hall, NC 27042» → «Pine Hall, NC». Приложению нужен город со штатом: по ним
 // оно считает мили и ставит точки на карте, индекс только мешает совпадению.
 // Идём с конца адреса — «City, ST ZIP» печатают последней строкой.
@@ -1059,9 +1104,60 @@ function tgApi($token, $method, array $params) {
 }
 
 function reply($token, $chatId, $text, $keyboard = null) {
+  if (!outboundAllowed($chatId)) return '';
   $p = array('chat_id' => $chatId, 'text' => $text, 'disable_web_page_preview' => true);
   if ($keyboard !== null) $p['reply_markup'] = json_encode(array('inline_keyboard' => $keyboard));
   return tgApi($token, 'sendMessage', $p);
+}
+
+// true — этот апдейт уже обрабатывали, второй раз не надо.
+// Маркер создаётся атомарно: fopen в режиме 'x' падает, если файл уже есть,
+// поэтому две одновременные доставки одного апдейта не проскочат обе (Telegram
+// умеет доставлять параллельно, обычная проверка «прочитал-записал» тут гонку
+// проигрывает).
+// Если каталог завести не удалось — НЕ блокируем: лучше ответить дважды, чем
+// замолчать совсем.
+function updateAlreadySeen($id) {
+  $dir = __DIR__ . '/../../tg-seen';
+  if (!is_dir($dir)) { @mkdir($dir, 0700, true); if (!is_dir($dir)) return false; }
+  $file = $dir . '/' . $id;
+  $h = @fopen($file, 'x');
+  if ($h === false) return file_exists($file);
+  fclose($h);
+  // Раз в сотню апдейтов подчищаем маркеры старше суток: дольше Telegram
+  // недоставленные апдейты всё равно не хранит.
+  if ($id % 100 === 0) {
+    foreach ((array)@glob($dir . '/*') as $old) {
+      if (@filemtime($old) < time() - 86400) @unlink($old);
+    }
+  }
+  return false;
+}
+
+// Предохранитель. Что бы ни сломалось выше по течению — повторная доставка,
+// цикл в новом коде, шторм апдейтов после простоя — в один чат уйдёт не больше
+// MAX_OUT_PER_MIN сообщений в минуту. Сотни одинаковых сообщений подряд
+// становятся невозможны механически, а не «потому что мы починили причину».
+function outboundAllowed($chatId) {
+  $dir = __DIR__ . '/../../tg-state';
+  if (!is_dir($dir)) { @mkdir($dir, 0700, true); if (!is_dir($dir)) return true; }
+  $file = $dir . '/rate-' . preg_replace('/\D/', '', $chatId) . '.json';
+  $now = time();
+  $r = json_decode((string)@file_get_contents($file), true);
+  if (!is_array($r) || !isset($r['start'], $r['n']) || (int)$r['start'] < $now - 60) {
+    $r = array('start' => $now, 'n' => 0);
+  }
+  $r['n'] = (int)$r['n'] + 1;
+  @file_put_contents($file, json_encode($r), LOCK_EX);
+  if ($r['n'] <= MAX_OUT_PER_MIN) return true;
+  // Сообщаем о срабатывании один раз за окно, иначе лог распухнет так же,
+  // как распух чат.
+  if ($r['n'] === MAX_OUT_PER_MIN + 1) {
+    @file_put_contents(__DIR__ . '/../../tg-bot.log',
+      date('c') . " [BRAKE] chat " . $chatId . ": превышен лимит "
+      . MAX_OUT_PER_MIN . " сообщений в минуту, остальные подавлены\n", FILE_APPEND);
+  }
+  return false;
 }
 
 // Закрывает HTTP-ответ, не прерывая скрипт: LiteSpeed (Hostinger) и PHP-FPM
@@ -1178,6 +1274,9 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
 function handleCarrier($token, $chatId, $sig) {
   $st = stateGet($chatId);
   $lang = curLang($st);
+  // Подпись существует только ради письма брокеру — пока письмо выключено,
+  // хранить её незачем, а обещать «черновик пересобран» тем более.
+  if (!MAIL_ENABLED) { reply($token, $chatId, mailOffText($lang)); return; }
   $example = "/carrier ABC Trucking LLC\nMC 123456\nJohn, (555) 111-2233\njohn@abctrucking.com";
   if ($sig === '') {
     $cur = isset($st['carrier']) ? $st['carrier'] : '';

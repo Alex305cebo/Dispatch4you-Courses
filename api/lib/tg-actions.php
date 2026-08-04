@@ -84,8 +84,8 @@ function rcEnds(array $d) {
 function rcKeyboard(array $d, $lang = 'ru') {
   $rows = array(
     array(array('text' => $lang === 'en' ? '🚚 Driver text' : '🚚 Текст водителю', 'callback_data' => 'rc:driver')),
-    array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'rc:mail')),
   );
+  if (MAIL_ENABLED) $rows[] = array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'rc:mail'));
   $url = appLink($d);
   if ($url !== null) $rows[] = array(array('text' => $lang === 'en' ? '📊 Full breakdown with map' : '📊 Полный разбор с картой', 'url' => $url));
   $rows[] = array(langToggleButton($lang, 'rc'));
@@ -93,10 +93,10 @@ function rcKeyboard(array $d, $lang = 'ru') {
 }
 
 function driverKeyboard($lang = 'ru') {
-  return array(
-    array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'rc:mail')),
-    array(langToggleButton($lang, 'driver')),
-  );
+  $rows = array();
+  if (MAIL_ENABLED) $rows[] = array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'rc:mail'));
+  $rows[] = array(langToggleButton($lang, 'driver'));
+  return $rows;
 }
 
 function mailKeyboard($lang = 'ru') {
@@ -114,8 +114,8 @@ function fmcsaKeyboard($lang = 'ru') {
 function photoKeyboard(array $d, $lang = 'ru') {
   $rows = array(
     array(array('text' => $lang === 'en' ? '📊 Load analytics' : '📊 Аналитика по грузу', 'callback_data' => 'ph:an')),
-    array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'ph:mail')),
   );
+  if (MAIL_ENABLED) $rows[] = array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'ph:mail'));
   if (!empty($d['mc'])) $rows[] = array(array('text' => $lang === 'en' ? '🔎 Check broker' : '🔎 Проверить брокера', 'callback_data' => 'ph:mc'));
   // Та же кнопка на полный разбор, что у рейт-кона — раньше её тут не было
   // вообще, разбор со скриншота не вёл на сайт.
@@ -167,6 +167,9 @@ function handleCallback($token, array $cq) {
     return;
   }
   if ($data === 'rc:mail' || $data === 'ph:mail') {
+    // Кнопка живёт в уже отправленных сообщениях и после выключения функции —
+    // нажать её можно в любой момент, значит закрывать надо и здесь.
+    if (!MAIL_ENABLED) { reply($token, $chatId, mailOffText($lang)); return; }
     $src = $data === 'rc:mail'
       ? (empty($st['rc']) ? null : rcToLoad($st['rc']))
       : (empty($st['load']) ? null : $st['load']);
@@ -223,6 +226,7 @@ function handleTranslate($token, $chatId, $messageId, array $st, $msgtype, $lang
       editMessage($token, $chatId, $messageId, driverCard($st['rc'], $lang), driverKeyboard($lang));
       return;
     case 'mail':
+      if (!MAIL_ENABLED) return;
       if (empty($st['draft'])) return;
       // /edit заменяет черновик свободным текстом — перегенерировать шаблон
       // после этого нечем, правку молча не затираем.
