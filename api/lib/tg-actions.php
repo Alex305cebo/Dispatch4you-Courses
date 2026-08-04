@@ -141,20 +141,21 @@ function handleCallback($token, array $cq) {
   }
 
   $st = stateGet($chatId);
-  require_once __DIR__ . '/load-photo.php';
-  $stale = 'Этот разбор устарел — пришлите документ ещё раз.';
+  $lang = curLang($st);
+  $stale = $lang === 'en'
+    ? 'This breakdown has expired — please send the document again.'
+    : 'Этот разбор устарел — пришлите документ ещё раз.';
 
   // tr:<msgtype>:<lang> — перевести КОНКРЕТНОЕ сообщение на месте (editMessageText),
-  // не трогая остальную переписку и не запрашивая источник заново.
+  // не трогая остальную переписку и не запрашивая источник заново. $target — язык
+  // ЭТОГО сообщения, он живёт отдельно от языка интерфейса ($lang).
   if (strpos($data, 'tr:') === 0 && $messageId !== null) {
     $parts = explode(':', $data); // tr, msgtype, lang
     $msgtype = isset($parts[1]) ? $parts[1] : '';
-    $lang = (isset($parts[2]) && $parts[2] === 'en') ? 'en' : 'ru';
-    handleTranslate($token, $chatId, $messageId, $st, $msgtype, $lang);
+    $target = (isset($parts[2]) && $parts[2] === 'en') ? 'en' : 'ru';
+    handleTranslate($token, $chatId, $messageId, $st, $msgtype, $target);
     return;
   }
-
-  $lang = curLang($st);
 
   if ($data === 'rc:driver') {
     if (empty($st['rc'])) { reply($token, $chatId, $stale); return; }
@@ -173,6 +174,10 @@ function handleCallback($token, array $cq) {
     $draft = brokerEmailDraft($src, isset($st['carrier']) ? $st['carrier'] : '', 'en');
     $st['draft'] = $draft;
     $st['mail_src'] = $src;
+    // Язык письма и «правили ли его руками» — то, на что смотрят кнопка перевода,
+    // /carrier и /edit. Кнопка выдаёт письмо на английском, правок ещё нет.
+    $st['draft_lang'] = 'en';
+    $st['draft_edited'] = false;
     stateSet($chatId, $st);
     // Два отдельных сообщения: сначала «что это и куда», потом ЧИСТЫЙ текст
     // письма — его и копируют целиком, без единой лишней строки.
@@ -213,16 +218,23 @@ function handleTranslate($token, $chatId, $messageId, array $st, $msgtype, $lang
       return;
     case 'driver':
       if (empty($st['rc'])) return;
-      editMessage($token, $chatId, $messageId, driverCard($st['rc'], 'en'), driverKeyboard($lang));
+      // Собирали карточку жёстко на 'en', а $lang уходил только в подпись кнопки:
+      // нажатие меняло надпись, текст оставался английским в обе стороны.
+      editMessage($token, $chatId, $messageId, driverCard($st['rc'], $lang), driverKeyboard($lang));
       return;
     case 'mail':
       if (empty($st['draft'])) return;
-      require_once __DIR__ . '/load-photo.php';
-      $src = !empty($st['mail_src']) ? $st['mail_src'] : null;
       // /edit заменяет черновик свободным текстом — перегенерировать шаблон
-      // после этого нечем, просто оставляем как есть (кнопка молча не сработает).
+      // после этого нечем, правку молча не затираем.
+      if (!empty($st['draft_edited'])) return;
+      $src = !empty($st['mail_src']) ? $st['mail_src'] : null;
       if ($src === null) return;
-      $draft = brokerEmailDraft($src, isset($st['carrier']) ? $st['carrier'] : '', 'en');
+      $draft = brokerEmailDraft($src, isset($st['carrier']) ? $st['carrier'] : '', $lang);
+      // Черновик в состоянии — ровно тот, что человек видит на экране: иначе
+      // /send и /edit продолжали бы работать с английским письмом.
+      $st['draft'] = $draft;
+      $st['draft_lang'] = $lang;
+      stateSet($chatId, $st);
       editMessage($token, $chatId, $messageId, draftAsText($draft), mailKeyboard($lang));
       return;
     case 'photo':
@@ -239,6 +251,19 @@ function handleTranslate($token, $chatId, $messageId, array $st, $msgtype, $lang
       editMessage($token, $chatId, $messageId, formatBrokerReport($f['rec'], $f['kind'], $f['number'], $lang), fmcsaKeyboard($lang));
       return;
   }
+}
+
+// Из чего собирать письмо брокеру, если кнопку «Письмо брокеру» ещё не нажимали
+// (например, человек сразу задал /carrier после разбора). $st['last'] помнит, что
+// разбирали последним, — иначе после рейт-кона письмо ушло бы по позавчерашнему
+// скриншоту, который всё ещё лежит в $st['load'].
+function mailSource(array $st) {
+  $order = (isset($st['last']) && $st['last'] === 'rc') ? array('rc', 'load') : array('load', 'rc');
+  foreach ($order as $k) {
+    if ($k === 'rc'   && !empty($st['rc']))   return rcToLoad($st['rc']);
+    if ($k === 'load' && !empty($st['load'])) return $st['load'];
+  }
+  return !empty($st['mail_src']) ? $st['mail_src'] : null;
 }
 
 // Рейт-кон → форма груза со скриншота: письмо брокеру собирает один и тот же

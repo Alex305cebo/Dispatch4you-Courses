@@ -121,8 +121,27 @@ const HELP_PHOTO =
 . "— — —\n"
 . "Photos are not supported — please send the PDF file itself (📎 → File).";
 
+// Фатальная ошибка в обработчике = HTTP 500 = Telegram считает доставку
+// неудачной и присылает ТОТ ЖЕ апдейт снова, по кругу. Один такой случай
+// (/send вызывал draftAsText() из load-photo.php, который в текстовой ветке
+// не подключался) дал 648 одинаковых сообщений подряд. Поэтому: причину — в
+// лог, наружу — 200, чтобы повторной доставки не было ни при каком сбое.
+register_shutdown_function(function () {
+  $e = error_get_last();
+  if ($e === null) return;
+  if (!in_array($e['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR), true)) return;
+  @file_put_contents(__DIR__ . '/../../tg-bot.log',
+    date('c') . " [FATAL] " . $e['message'] . ' @ ' . $e['file'] . ':' . $e['line'] . "\n", FILE_APPEND);
+  if (!headers_sent()) http_response_code(200);
+});
+
 // Сводки, кнопки под разбором и обработка нажатий
 require_once __DIR__ . '/lib/tg-actions.php';
+// Черновик письма, карточка и аналитика по скриншоту. Подключаем ОДИН РАЗ здесь,
+// а не по месту вызова: ленивые require разъехались с вызовами (/send и /edit
+// звали draftAsText/draftMeta без подключённого файла) — это и был тот самый
+// цикл повторной доставки. Файл дешёвый, грузить его всегда безопаснее.
+require_once __DIR__ . '/lib/load-photo.php';
 
 $token = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
 if ($token === '' || $token === false) { http_response_code(500); echo 'tg-bot.key missing'; exit; }
@@ -159,7 +178,6 @@ if (isset($_GET['fmcsacheck'])) {
 // ── Живой ли ключ Gemini (разбор скриншотов). Ключ наружу не отдаём ──
 if (isset($_GET['geminicheck'])) {
   header('Content-Type: text/plain; charset=utf-8');
-  require_once __DIR__ . '/lib/load-photo.php';
   // Путь печатаем: перепутанный уровень вложенности уже подводил
   $kp = realpath(__DIR__ . '/../..') . '/gemini.key';
   if (geminiKey() === null) { echo "gemini.key: не найден или пуст\nискали тут: $kp\n"; exit; }
@@ -288,6 +306,10 @@ if (isset($msg['photo']) || (isset($msg['document']['mime_type']) && strpos($msg
 
 // /help, /id, /start и любой текст без файла
 if (!isset($msg['document'])) {
+  // Отвечаем Telegram «ок» ДО обработки: /mc ходит в FMCSA, /send собирает
+  // письмо — если что-то из этого упадёт или затянется, Telegram не должен
+  // считать доставку неудачной и присылать ту же команду по кругу.
+  finishRequest();
   $text = isset($msg['text']) ? trim($msg['text']) : '';
   if (stripos($text, '/id') === 0) {
     // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
@@ -423,7 +445,6 @@ $sys = rcPrompt();
 
 // Основной разборщик — Gemini: документ уходит целиком, лимиты позволяют
 // пользоваться ботом больше чем одному человеку в минуту.
-require_once __DIR__ . '/lib/load-photo.php';
 list($load, $gemErr) = geminiStructure($sys, $text);
 
 // Страховка: если Gemini недоступен (нет ключа, квота, сбой) — добираем через
@@ -499,6 +520,7 @@ if (empty($load['stops'])) {
 $st = stateGet($chatId);
 $st['rc'] = $load;
 $st['rc_missing'] = $missing;
+$st['last'] = 'rc'; // из чего собирать письмо, если /carrier придёт до кнопки
 stateSet($chatId, $st);
 $lang = curLang($st);
 
@@ -526,7 +548,9 @@ function langToggleButton($lang, $msgtype) {
   return array('text' => ($target === 'en' ? '🌐 English' : '🌐 Русский'), 'callback_data' => 'tr:' . $msgtype . ':' . $target);
 }
 
-function editMessage($token, $chatId, $messageId, $text, array $keyboard = null) {
+// ?array, а не array: на PHP 8.4 неявно nullable-параметр — Deprecated в лог
+// на каждое нажатие кнопки перевода.
+function editMessage($token, $chatId, $messageId, $text, ?array $keyboard = null) {
   $p = array('chat_id' => $chatId, 'message_id' => $messageId, 'text' => $text, 'disable_web_page_preview' => true);
   if ($keyboard !== null) $p['reply_markup'] = json_encode(array('inline_keyboard' => $keyboard));
   return tgApi($token, 'editMessageText', $p);
@@ -1098,8 +1122,6 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
   finishRequest();
 
-  require_once __DIR__ . '/lib/load-photo.php';
-
   $info = json_decode(tgApi($token, 'getFile', array('file_id' => $fileId)), true);
   if (empty($info['result']['file_path'])) { fail($token, $chatId, 'photo getFile: ' . json_encode($info), 'Telegram не отдал картинку'); return; }
   $bytes = httpGet('https://api.telegram.org/file/bot' . $token . '/' . $info['result']['file_path']);
@@ -1126,6 +1148,7 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
 
   $st = stateGet($chatId);
   $st['load'] = $load;
+  $st['last'] = 'load';
   stateSet($chatId, $st);
   $lang = curLang($st);
 
@@ -1137,29 +1160,61 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
 
 function handleCarrier($token, $chatId, $sig) {
   $st = stateGet($chatId);
+  $lang = curLang($st);
+  $example = "/carrier ABC Trucking LLC\nMC 123456\nJohn, (555) 111-2233\njohn@abctrucking.com";
   if ($sig === '') {
     $cur = isset($st['carrier']) ? $st['carrier'] : '';
-    reply($token, $chatId, $cur === ''
-      ? "Подпись пока не задана.\n\nПришлите её так:\n/carrier ABC Trucking LLC\nMC 123456\nJohn, (555) 111-2233\njohn@abctrucking.com\n\nОна будет подставляться в письма брокерам, а email из неё — в поле «ответить»."
-      : "Ваша подпись:\n\n" . $cur . "\n\nЗаменить — пришлите /carrier с новым текстом.");
+    if ($cur === '') {
+      reply($token, $chatId, $lang === 'en'
+        ? "No signature set yet.\n\nSend it like this:\n" . $example
+          . "\n\nIt goes into every broker email, and the address from it becomes the reply-to."
+        : "Подпись пока не задана.\n\nПришлите её так:\n" . $example
+          . "\n\nОна будет подставляться в письма брокерам, а email из неё — в поле «ответить».");
+    } else {
+      reply($token, $chatId, $lang === 'en'
+        ? "Your signature:\n\n" . $cur . "\n\nTo replace it, send /carrier with the new text."
+        : "Ваша подпись:\n\n" . $cur . "\n\nЗаменить — пришлите /carrier с новым текстом.");
+    }
     return;
   }
   $st['carrier'] = $sig;
-  if (!empty($st['load'])) { // пересобираем черновик с новой подписью
-    require_once __DIR__ . '/lib/load-photo.php';
-    $st['draft'] = brokerEmailDraft($st['load'], $sig);
+  // Черновик пересобираем из того же источника, что и кнопка «Письмо брокеру».
+  // Раньше смотрели только на $st['load'] — груз со скриншота, — и после разбора
+  // рейт-кона подпись сохранялась, но в письмо не попадала.
+  $rebuilt = false;
+  if (empty($st['draft_edited'])) { // правку руками подписью не затираем
+    $src = mailSource($st);
+    if ($src !== null) {
+      $st['mail_src'] = $src;
+      $st['draft'] = brokerEmailDraft($src, $sig, isset($st['draft_lang']) ? $st['draft_lang'] : 'en');
+      $rebuilt = true;
+    }
   }
   stateSet($chatId, $st);
-  reply($token, $chatId, "Подпись сохранена:\n\n" . $sig);
+  $tail = $rebuilt
+    ? ($lang === 'en' ? "\n\nThe draft has been rebuilt with it — /send when you're ready."
+                      : "\n\nЧерновик письма пересобран с ней — /send, когда будете готовы.")
+    : '';
+  reply($token, $chatId, ($lang === 'en' ? "Signature saved:\n\n" : "Подпись сохранена:\n\n") . $sig . $tail);
 }
 
 function handleEdit($token, $chatId, $newBody) {
   $st = stateGet($chatId);
-  if (empty($st['draft'])) { reply($token, $chatId, "Нечего редактировать — сначала пришлите скриншот груза."); return; }
+  $lang = curLang($st);
+  // Черновик рождается и от рейт-кона, и от скриншота — про скриншот тут
+  // говорили как про единственный путь, и после разбора PDF это сбивало с толку.
+  if (empty($st['draft'])) {
+    reply($token, $chatId, $lang === 'en'
+      ? "Nothing to edit yet — send a rate confirmation PDF or a load screenshot first, then tap \"Broker email\"."
+      : "Пока нечего править — пришлите рейт-кон в PDF или скриншот груза, а потом нажмите «Письмо брокеру».");
+    return;
+  }
   if ($newBody === '') {
-    reply($token, $chatId,
-      "Пришлите письмо целиком после команды:\n\n/edit Hello John,\n\nWe can cover this load at $2,400 all-in...\n\n"
-      . "Можно менять и тему — первой строкой «Subject: ...»");
+    reply($token, $chatId, $lang === 'en'
+      ? "Send the whole email after the command:\n\n/edit Hello John,\n\nWe can cover this load at $2,400 all-in...\n\n"
+        . "You can change the subject too — put \"Subject: ...\" on the first line."
+      : "Пришлите письмо целиком после команды:\n\n/edit Hello John,\n\nWe can cover this load at $2,400 all-in...\n\n"
+        . "Можно менять и тему — первой строкой «Subject: ...»");
     return;
   }
   // Первая строка «Subject: ...» меняет тему, остальное — тело
@@ -1169,8 +1224,10 @@ function handleEdit($token, $chatId, $newBody) {
   } else {
     $st['draft']['body'] = $newBody;
   }
+  // Метка правки: после неё письмо не пересобирается ни кнопкой перевода,
+  // ни /carrier — иначе ручной текст молча заменялся бы шаблоном.
+  $st['draft_edited'] = true;
   stateSet($chatId, $st);
-  $lang = curLang($st);
   reply($token, $chatId, draftMeta($st['draft'], $lang, $lang === 'en' ? '📤 Ready to send: /send' : '📤 Готово к отправке: /send'));
   reply($token, $chatId, draftAsText($st['draft']));
 }
@@ -1181,8 +1238,15 @@ function handleEdit($token, $chatId, $newBody) {
 // Здесь мы только готовим письмо — отправляет человек из своей почты.
 function handleSend($token, $chatId, $toArg) {
   $st = stateGet($chatId);
-  if (empty($st['draft'])) { reply($token, $chatId, "Нечего отправлять — сначала пришлите скриншот груза."); return; }
+  $lang = curLang($st);
+  if (empty($st['draft'])) {
+    reply($token, $chatId, $lang === 'en'
+      ? "Nothing to send yet — send a rate confirmation PDF or a load screenshot first, then tap \"Broker email\"."
+      : "Пока нечего отправлять — пришлите рейт-кон в PDF или скриншот груза, а потом нажмите «Письмо брокеру».");
+    return;
+  }
   $draft = $st['draft'];
+  foreach (array('to', 'subject', 'body') as $k) if (!isset($draft[$k])) $draft[$k] = '';
   $to = $toArg !== '' ? $toArg : $draft['to'];
   $hasTo = filter_var($to, FILTER_VALIDATE_EMAIL) !== false;
 
@@ -1192,13 +1256,18 @@ function handleSend($token, $chatId, $toArg) {
 
   // Три отдельных сообщения: инструкция, ЧИСТЫЙ текст письма для копирования,
   // ссылка на открытие в почте — ничего не перемешано в одном сообщении.
-  reply($token, $chatId,
-    "📤 Письмо готово к отправке — отправляете вы, из своей почты.\n\n"
-    . "Кому: " . ($hasTo ? $to : '(адрес брокера не найден — впишите вручную)') . "\n\n"
-    . "Следующим сообщением — готовый текст, скопируйте его целиком. Либо нажмите ссылку ниже — "
-    . "письмо откроется в вашей почте уже заполненным.\n\n"
-    . "Так брокер видит адрес вашей компании, а не наш, и ответ придёт прямо вам.");
+  reply($token, $chatId, $lang === 'en'
+    ? "📤 The email is ready — you send it yourself, from your own mailbox.\n\n"
+      . "To: " . ($hasTo ? $to : "(broker's address not found — type it in manually)") . "\n\n"
+      . "The next message is the full text, copy all of it. Or tap the link below — the email "
+      . "opens in your mail app already filled in.\n\n"
+      . "That way the broker sees your company's address, not ours, and the reply comes straight to you."
+    : "📤 Письмо готово к отправке — отправляете вы, из своей почты.\n\n"
+      . "Кому: " . ($hasTo ? $to : '(адрес брокера не найден — впишите вручную)') . "\n\n"
+      . "Следующим сообщением — готовый текст, скопируйте его целиком. Либо нажмите ссылку ниже — "
+      . "письмо откроется в вашей почте уже заполненным.\n\n"
+      . "Так брокер видит адрес вашей компании, а не наш, и ответ придёт прямо вам.");
   reply($token, $chatId, draftAsText($draft));
   // mailto в inline-кнопке Telegram не пропускает — отдаём ссылкой в тексте
-  reply($token, $chatId, "Открыть в почте:\n" . $mailto);
+  reply($token, $chatId, ($lang === 'en' ? "Open in your mail app:\n" : "Открыть в почте:\n") . $mailto);
 }
