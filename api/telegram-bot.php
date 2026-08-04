@@ -979,15 +979,23 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
     $checks[] = array($ok, $lang === 'en' ? 'Allowed to operate' : 'Право работать',
       $lang === 'en' ? ($ok ? 'YES' : 'NO') : ($ok ? 'ДА' : 'НЕТ'));
   }
-  if (isset($rec['brokerAuthorityStatus'])) {
-    $ok = $rec['brokerAuthorityStatus'] === 'A';
-    if (!$ok) $blocker = true;
-    $checks[] = array($ok, $lang === 'en' ? 'Broker authority' : 'Брокерская авторити',
+  // По номеру приходит и перевозчик, и брокер. У перевозчика брокерской авторити
+  // и бонда BMC-84 нет по определению — если валить его за это, честная фура
+  // получает красный «не работать». Значит, требуем брокерские пункты только
+  // когда перед нами действительно брокер.
+  $isBroker  = isset($rec['brokerAuthorityStatus']) && $rec['brokerAuthorityStatus'] === 'A';
+  $isCarrier = (isset($rec['commonAuthorityStatus']) && $rec['commonAuthorityStatus'] === 'A')
+            || (isset($rec['contractAuthorityStatus']) && $rec['contractAuthorityStatus'] === 'A');
+  $carrierOnly = !$isBroker && $isCarrier;
+
+  if (isset($rec['brokerAuthorityStatus']) && !$carrierOnly) {
+    if (!$isBroker) $blocker = true;
+    $checks[] = array($isBroker, $lang === 'en' ? 'Broker authority' : 'Брокерская авторити',
       authWord($rec['brokerAuthorityStatus'], $lang));
   }
   // bondInsuranceOnFile — сумма в ТЫСЯЧАХ долларов, а не флаг Y/N: «75» = бонд
   // BMC-84 на $75 000. В приложении на этом уже обжигались.
-  if (isset($rec['bondInsuranceOnFile']) && $rec['bondInsuranceOnFile'] !== '') {
+  if (!$carrierOnly && isset($rec['bondInsuranceOnFile']) && $rec['bondInsuranceOnFile'] !== '') {
     $bond = preg_replace('/\D/', '', (string)$rec['bondInsuranceOnFile']);
     $ok = $bond !== '' && $bond !== '0';
     if (!$ok) $blocker = true;
@@ -1027,6 +1035,12 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
     $L[] = sprintf('%s %d%% (%d/%d) — %s', $icon, $pct, $passed, $total, $verdict);
   }
 
+  if ($carrierOnly) {
+    $L[] = $lang === 'en'
+      ? 'ℹ️ This MC/DOT is a motor carrier, not a broker — broker authority and a BMC-84 bond are not required of it, so they are not checked.'
+      : 'ℹ️ Этот MC/DOT — перевозчик, а не брокер: брокерская авторити и бонд BMC-84 с него не требуются, поэтому не проверяются.';
+  }
+
   $L[] = '';
   $L[] = $lang === 'en' ? 'Criteria checked:' : 'Критерии проверки:';
   foreach ($checks as $c) $L[] = mark($c[0]) . ' ' . $c[1] . ': ' . $c[2];
@@ -1052,7 +1066,12 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   // поэтому каждое показываем только если FMCSA его реально вернул.
   $extra = array();
   if (!empty($rec['safetyRating'])) {
-    $extra[] = 'Safety rating: ' . $rec['safetyRating']
+    // FMCSA отдаёт односимвольный код; голая «S» диспетчеру ничего не говорит.
+    $sr = strtoupper((string)$rec['safetyRating']);
+    $srWords = $lang === 'en'
+      ? array('S' => 'Satisfactory', 'C' => 'Conditional', 'U' => 'Unsatisfactory')
+      : array('S' => 'удовлетворительный', 'C' => 'условный', 'U' => 'неудовлетворительный');
+    $extra[] = 'Safety rating: ' . (isset($srWords[$sr]) ? $srWords[$sr] : $sr)
       . (!empty($rec['safetyRatingDate']) ? ' (' . $rec['safetyRatingDate'] . ')' : '');
   }
   if (isset($rec['totalPowerUnits']) && $rec['totalPowerUnits'] !== '') {
