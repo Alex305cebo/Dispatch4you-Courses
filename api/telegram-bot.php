@@ -946,6 +946,17 @@ function fetchBrokerRecord($kind, $number) {
   if ($rec === null && ($kind === 'dot' || $kind === 'broker')) {
     $rec = unwrapCarrier(fmcsaGet('carriers/' . $number, $key));
   }
+  // Поиск по docket-номеру отдаёт запись без контактов — телефона там нет
+  // никогда. Он лежит в записи по DOT, поэтому дотягиваем её вторым запросом,
+  // но только если телефона действительно не хватает.
+  if ($rec !== null && empty($rec['telephone']) && !empty($rec['dotNumber'])) {
+    $full = unwrapCarrier(fmcsaGet('carriers/' . $rec['dotNumber'], $key));
+    if (is_array($full)) {
+      // Запись по docket главнее: в ней актуальные статусы авторити.
+      foreach ($rec as $k => $v) if ($v !== null && $v !== '') $full[$k] = $v;
+      $rec = $full;
+    }
+  }
   return array($rec, $rec === null ? 'notfound' : '');
 }
 
@@ -1079,10 +1090,12 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
     $extra[] = 'Safety rating: ' . (isset($srWords[$sr]) ? $srWords[$sr] : $sr)
       . (!empty($rec['safetyRatingDate']) ? ' (' . $rec['safetyRatingDate'] . ')' : '');
   }
-  if (isset($rec['totalPowerUnits']) && $rec['totalPowerUnits'] !== '') {
+  // Нули не показываем: у брокера своего парка нет, и строка «Тягачей: 0»
+  // выглядит как сбой, а не как факт.
+  if (!empty($rec['totalPowerUnits'])) {
     $extra[] = ($lang === 'en' ? 'Power units: ' : 'Тягачей: ') . $rec['totalPowerUnits'];
   }
-  if (isset($rec['totalDrivers']) && $rec['totalDrivers'] !== '') {
+  if (!empty($rec['totalDrivers'])) {
     $extra[] = ($lang === 'en' ? 'Drivers: ' : 'Водителей: ') . $rec['totalDrivers'];
   }
   if (isset($rec['crashTotal']) && $rec['crashTotal'] !== '' && (int)$rec['crashTotal'] > 0) {
