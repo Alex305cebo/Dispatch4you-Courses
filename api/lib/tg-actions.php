@@ -141,7 +141,6 @@ function handleCallback($token, array $cq) {
   }
 
   $st = stateGet($chatId);
-  require_once __DIR__ . '/load-photo.php';
   $stale = 'Этот разбор устарел — пришлите документ ещё раз.';
 
   // tr:<msgtype>:<lang> — перевести КОНКРЕТНОЕ сообщение на месте (editMessageText),
@@ -217,7 +216,6 @@ function handleTranslate($token, $chatId, $messageId, array $st, $msgtype, $lang
       return;
     case 'mail':
       if (empty($st['draft'])) return;
-      require_once __DIR__ . '/load-photo.php';
       $src = !empty($st['mail_src']) ? $st['mail_src'] : null;
       // /edit заменяет черновик свободным текстом — перегенерировать шаблон
       // после этого нечем, просто оставляем как есть (кнопка молча не сработает).

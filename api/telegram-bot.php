@@ -121,8 +121,27 @@ const HELP_PHOTO =
 . "— — —\n"
 . "Photos are not supported — please send the PDF file itself (📎 → File).";
 
+// Фатальная ошибка в обработчике = HTTP 500 = Telegram считает доставку
+// неудачной и присылает ТОТ ЖЕ апдейт снова, по кругу. Один такой случай
+// (/send вызывал draftAsText() из load-photo.php, который в текстовой ветке
+// не подключался) дал 648 одинаковых сообщений подряд. Поэтому: причину — в
+// лог, наружу — 200, чтобы повторной доставки не было ни при каком сбое.
+register_shutdown_function(function () {
+  $e = error_get_last();
+  if ($e === null) return;
+  if (!in_array($e['type'], array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR), true)) return;
+  @file_put_contents(__DIR__ . '/../../tg-bot.log',
+    date('c') . " [FATAL] " . $e['message'] . ' @ ' . $e['file'] . ':' . $e['line'] . "\n", FILE_APPEND);
+  if (!headers_sent()) http_response_code(200);
+});
+
 // Сводки, кнопки под разбором и обработка нажатий
 require_once __DIR__ . '/lib/tg-actions.php';
+// Черновик письма, карточка и аналитика по скриншоту. Подключаем ОДИН РАЗ здесь,
+// а не по месту вызова: ленивые require разъехались с вызовами (/send и /edit
+// звали draftAsText/draftMeta без подключённого файла) — это и был тот самый
+// цикл повторной доставки. Файл дешёвый, грузить его всегда безопаснее.
+require_once __DIR__ . '/lib/load-photo.php';
 
 $token = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
 if ($token === '' || $token === false) { http_response_code(500); echo 'tg-bot.key missing'; exit; }
@@ -159,7 +178,6 @@ if (isset($_GET['fmcsacheck'])) {
 // ── Живой ли ключ Gemini (разбор скриншотов). Ключ наружу не отдаём ──
 if (isset($_GET['geminicheck'])) {
   header('Content-Type: text/plain; charset=utf-8');
-  require_once __DIR__ . '/lib/load-photo.php';
   // Путь печатаем: перепутанный уровень вложенности уже подводил
   $kp = realpath(__DIR__ . '/../..') . '/gemini.key';
   if (geminiKey() === null) { echo "gemini.key: не найден или пуст\nискали тут: $kp\n"; exit; }
@@ -288,6 +306,10 @@ if (isset($msg['photo']) || (isset($msg['document']['mime_type']) && strpos($msg
 
 // /help, /id, /start и любой текст без файла
 if (!isset($msg['document'])) {
+  // Отвечаем Telegram «ок» ДО обработки: /mc ходит в FMCSA, /send собирает
+  // письмо — если что-то из этого упадёт или затянется, Telegram не должен
+  // считать доставку неудачной и присылать ту же команду по кругу.
+  finishRequest();
   $text = isset($msg['text']) ? trim($msg['text']) : '';
   if (stripos($text, '/id') === 0) {
     // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
@@ -423,7 +445,6 @@ $sys = rcPrompt();
 
 // Основной разборщик — Gemini: документ уходит целиком, лимиты позволяют
 // пользоваться ботом больше чем одному человеку в минуту.
-require_once __DIR__ . '/lib/load-photo.php';
 list($load, $gemErr) = geminiStructure($sys, $text);
 
 // Страховка: если Gemini недоступен (нет ключа, квота, сбой) — добираем через
@@ -1098,8 +1119,6 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
   finishRequest();
 
-  require_once __DIR__ . '/lib/load-photo.php';
-
   $info = json_decode(tgApi($token, 'getFile', array('file_id' => $fileId)), true);
   if (empty($info['result']['file_path'])) { fail($token, $chatId, 'photo getFile: ' . json_encode($info), 'Telegram не отдал картинку'); return; }
   $bytes = httpGet('https://api.telegram.org/file/bot' . $token . '/' . $info['result']['file_path']);
@@ -1146,7 +1165,6 @@ function handleCarrier($token, $chatId, $sig) {
   }
   $st['carrier'] = $sig;
   if (!empty($st['load'])) { // пересобираем черновик с новой подписью
-    require_once __DIR__ . '/lib/load-photo.php';
     $st['draft'] = brokerEmailDraft($st['load'], $sig);
   }
   stateSet($chatId, $st);
