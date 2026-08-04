@@ -26,87 +26,10 @@ const MAX_PDF_BYTES = 15728640; // 15 MB (лимит Telegram getFile — 20 MB)
 // (13/14 против 0/14 на проверочном документе) — не возвращать.
 const GROQ_MODEL = 'openai/gpt-oss-120b';
 
-// Тексты держим здесь, а не размазываем по коду: их правят чаще всего.
-// Раздельные RU/EN версии — выбор языка (см. langKeyboard/handleLanguage) должен
-// реально менять то, что видит человек, а не просто переключать флаг в состоянии.
-const HELP_START_RU =
-  "Dispatch4You — рабочий инструмент диспетчера.\n"
-. "Разбираю документы по грузу и готовлю всё, что нужно отправить дальше.\n\n"
-. "📄 Rate Confirmation (PDF)\n"
-. "Пришлите файл от брокера — верну сводку по грузу, а по кнопкам:\n"
-. "• текст для водителя — адреса, окна времени, все реф-номера\n"
-. "• письмо брокеру — готовое, с возможностью правки\n"
-. "• полный разбор с картой маршрута и расчётом\n\n"
-. "📷 Скриншот груза с лоуборда (DAT, Truckstop)\n"
-. "Пришлите картинку — разберу и посчитаю:\n"
-. "• ставку за милю и остаток после топлива\n"
-. "• на что смотреть: перевес, тенты, hazmat, отсутствие контактов\n"
-. "• письмо брокеру по этому грузу\n\n"
-. "🔎 Проверка брокера по FMCSA\n"
-. "/mc 115789 — по номеру MC · /dot 2100420 — по DOT\n"
-. "Право работать, авторити, бонд BMC-84, адрес — из официального источника.\n\n"
-. "Требования: PDF с текстовым слоем до 15 МБ. Документ на сервере не хранится — "
-. "только данные загрузки.\n\n"
-. "/menu — все разделы одним списком\n"
-. "/help — подробная инструкция\n"
-. "/language — сменить язык бота";
-
-const HELP_START_EN =
-  "Dispatch4You — a dispatcher's working tool.\n"
-. "I read your load documents and prepare everything you need to send next.\n\n"
-. "📄 Rate Confirmation (PDF)\n"
-. "Send the file from the broker — I'll return a load summary, then buttons for:\n"
-. "• driver info text — addresses, time windows, every reference number\n"
-. "• broker email — ready to send, editable\n"
-. "• full breakdown with a route map and the numbers\n\n"
-. "📷 Load board screenshot (DAT, Truckstop)\n"
-. "Send a picture — I'll read it and calculate:\n"
-. "• rate per mile and what's left after fuel\n"
-. "• what to watch for: overweight, tarps, hazmat, missing contacts\n"
-. "• a broker email for this load\n\n"
-. "🔎 Broker check via FMCSA\n"
-. "/mc 115789 — by MC number · /dot 2100420 — by DOT number\n"
-. "Authority status, bond on file (BMC-84), address — straight from the official source.\n\n"
-. "Requirements: a text-based PDF, up to 15 MB. The document itself is never stored — "
-. "only the extracted load data.\n\n"
-. "/menu — every section in one list\n"
-. "/help — full instructions\n"
-. "/language — change the bot's language";
-
-const HELP_FULL =
-  "📄 Что бот достаёт из рейт-кона:\n"
-. "• номер загрузки (Load ID / PRO#)\n"
-. "• адрес погрузки и адрес доставки полностью\n"
-. "• дату и окно времени по каждому стопу\n"
-. "• все реф-номера (PU, PO, BOL, Ref#)\n"
-. "• ставку, груз, вес\n\n"
-. "Несколько пикапов или доставок — каждый стоп отдельным блоком, по порядку.\n\n"
-. "📷 Скриншот груза с лоуборда:\n"
-. "Пришлите картинку карточки груза (DAT, Truckstop) или письма брокера — верну:\n"
-. "• карточку груза: маршрут, даты, трейлер, вес, контакты\n"
-. "• аналитику: ставка за милю, сравнение с ориентиром, топливо, на что смотреть\n"
-. "• черновик письма брокеру\n\n"
-. "Работа с письмом:\n"
-. "/carrier — задать подпись (компания, MC, телефон, ваш email)\n"
-. "/edit — прислать исправленный текст письма\n"
-. "/send — подготовить письмо к отправке (бот сам НЕ отправляет)\n\n"
-. "🔎 Проверка брокера по FMCSA:\n"
-. "/mc 115789 — по номеру MC\n"
-. "/dot 2100420 — по номеру DOT\n"
-. "/broker 115789 — если не знаете, какой это номер\n"
-. "Покажу название, право работать, авторити, бонд BMC-84 и адрес.\n\n"
-. "⚠️ Требования к файлу:\n"
-. "• PDF с текстовым слоем — тот, что брокер прислал на почту\n"
-. "• не фото документа и не скан (там нет текста, бот его не прочитает)\n"
-. "• размер до 15 МБ\n\n"
-. "❓ Если бот не смог разобрать:\n"
-. "1. Проверьте, что это PDF, а не фото\n"
-. "2. Попробуйте переслать оригинал письма от брокера\n"
-. "3. Напишите нам — разберёмся: dispatch4you.com\n\n"
-. "🔒 Сам файл на сервере не хранится — только извлечённые данные загрузки.\n\n"
-. "— — —\n"
-. "Requirements: text-based PDF (not a photo or scan), up to 15 MB. "
-. "The file itself is not stored, only the extracted load data.";
+// Тексты для человека собираются функциями helpStart()/helpFull()/menuText()
+// ниже, а не лежат готовыми константами: пункты про письмо брокеру должны
+// исчезать вместе с самой функцией (MAIL_ENABLED), иначе справка обещает
+// кнопки, которых в боте нет.
 
 const HELP_SCAN =
   "📷 В этом PDF нет текста — похоже, это скан или фото, вставленное в PDF.\n\n"
@@ -125,6 +48,12 @@ const HELP_PHOTO =
 // владельца: на нём поймали цикл повторной доставки, и пока идёт разбирательство
 // функция не должна быть доступна. Включить обратно — поставить true.
 const MAIL_ENABLED = false;
+
+// Версия списка команд в меню Telegram. Меню живёт на серверах Telegram и само
+// не обновляется — раньше его применял только ?setup=1, поэтому в боте месяцами
+// висели команды, которых в коде уже не было. Теперь бот сверяет версию сам:
+// поменял список — увеличь число, и меню обновится у всех при первом сообщении.
+const COMMANDS_VERSION = 4;
 
 // Предохранитель на исходящие сообщения: больше стольких в минуту в один чат
 // бот не отправит НИ ПРИ КАКИХ обстоятельствах. Обычный сценарий — 2–3
@@ -266,24 +195,7 @@ if (isset($_GET['setup'])) {
   // Плоский список — так его и показывает Telegram, разделов внутри самого
   // меню нет технически. Порядок группирует пункты по смыслу: сначала общее,
   // потом работа с письмом брокеру, потом проверка брокера, потом настройки.
-  $cmds = array(
-    array('command' => 'start',    'description' => '👋 Что умеет бот'),
-    array('command' => 'menu',     'description' => '📋 Все разделы одним списком'),
-    array('command' => 'help',     'description' => 'ℹ️ Подробная инструкция'),
-  );
-  // Пока письмо выключено, его команды из меню убираем: показывать пункт,
-  // который отвечает «временно отключено», хуже, чем не показывать вовсе.
-  if (MAIL_ENABLED) {
-    $cmds[] = array('command' => 'carrier', 'description' => '🖊 Подпись компании для писем');
-    $cmds[] = array('command' => 'edit',    'description' => '✏️ Поправить текст письма');
-    $cmds[] = array('command' => 'send',    'description' => '📤 Подготовить письмо к отправке');
-  }
-  $cmds[] = array('command' => 'mc',       'description' => '🔎 Проверить брокера по MC');
-  $cmds[] = array('command' => 'dot',      'description' => '🔎 Проверить брокера по DOT');
-  $cmds[] = array('command' => 'language', 'description' => '🌐 Сменить язык / Change language');
-  $out['commands'] = json_decode(tgApi($token, 'setMyCommands', array(
-    'commands' => json_encode($cmds),
-  )), true);
+  $out['commands'] = json_decode(applyCommands($token), true);
   header('Content-Type: application/json');
   echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
   exit;
@@ -361,6 +273,7 @@ if (!isset($msg['document'])) {
   // письмо — если что-то из этого упадёт или затянется, Telegram не должен
   // считать доставку неудачной и присылать ту же команду по кругу.
   finishRequest();
+  ensureCommands($token); // меню Telegram подтянет новый список само
   $text = isset($msg['text']) ? trim($msg['text']) : '';
   if (stripos($text, '/id') === 0) {
     // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
@@ -399,7 +312,7 @@ if (!isset($msg['document'])) {
   } elseif (stripos($text, '/menu') === 0) {
     reply($token, $chatId, menuText($introState));
   } else {
-    reply($token, $chatId, stripos($text, '/help') === 0 ? HELP_FULL : helpStart($introState));
+    reply($token, $chatId, stripos($text, '/help') === 0 ? helpFull() : helpStart($introState));
   }
   echo 'ok'; exit;
 }
@@ -586,11 +499,116 @@ exit;
 // ── Язык интерфейса ──────────────────────────────────────────────────
 // По умолчанию русский: до этой правки бот отвечал только на русском,
 // и вся текущая аудитория — русскоязычные диспетчеры.
+// Подробная инструкция. Раздел «работа с письмом» уходит целиком вместе с
+// выключенным письмом — вместе со ссылками на /carrier, /edit и /send.
+function helpFull() {
+  $L = array(
+    '📄 Что бот достаёт из рейт-кона:',
+    '• номер загрузки (Load ID / PRO#)',
+    '• адрес погрузки и адрес доставки полностью',
+    '• дату и окно времени по каждому стопу',
+    '• все реф-номера (PU, PO, BOL, Ref#)',
+    '• ставку, груз, вес', '',
+    'Несколько пикапов или доставок — каждый стоп отдельным блоком, по порядку.', '',
+    '📷 Скриншот груза с лоуборда:',
+    'Пришлите картинку карточки груза (DAT, Truckstop) или письма брокера — верну:',
+    '• карточку груза: маршрут, даты, трейлер, вес, контакты',
+    '• аналитику: ставка за милю, сравнение с ориентиром, топливо, на что смотреть',
+  );
+  if (MAIL_ENABLED) {
+    $L[] = '• черновик письма брокеру';
+    $L[] = '';
+    $L[] = '✉️ Работа с письмом:';
+    $L[] = '/carrier — задать подпись (компания, MC, телефон, ваш email)';
+    $L[] = '/edit — прислать исправленный текст письма';
+    $L[] = '/send — подготовить письмо к отправке (бот сам НЕ отправляет)';
+  }
+  $L[] = '';
+  $L[] = '🔎 Проверка брокера по FMCSA:';
+  $L[] = '/mc 115789 — по номеру MC';
+  $L[] = '/dot 2100420 — по номеру DOT';
+  $L[] = '/broker 115789 — если не знаете, какой это номер';
+  $L[] = 'Покажу название, право работать, авторити, бонд BMC-84 и адрес.';
+  $L[] = '';
+  $L[] = '⚠️ Требования к файлу:';
+  $L[] = '• PDF с текстовым слоем — тот, что брокер прислал на почту';
+  $L[] = '• не фото документа и не скан (там нет текста, бот его не прочитает)';
+  $L[] = '• размер до 15 МБ';
+  $L[] = '';
+  $L[] = '❓ Если бот не смог разобрать:';
+  $L[] = '1. Проверьте, что это PDF, а не фото';
+  $L[] = '2. Попробуйте переслать оригинал письма от брокера';
+  $L[] = '3. Напишите нам — разберёмся: dispatch4you.com';
+  $L[] = '';
+  $L[] = '🔒 Сам файл на сервере не хранится — только извлечённые данные загрузки.';
+  $L[] = '';
+  $L[] = '— — —';
+  $L[] = 'Requirements: text-based PDF (not a photo or scan), up to 15 MB. '
+       . 'The file itself is not stored, only the extracted load data.';
+  $t = implode("\n", $L);
+  if (!MAIL_ENABLED) $t .= "\n\n— — —\n" . mailOffText('ru');
+  return $t;
+}
+
+// Собирается по кускам, а не берётся готовой строкой: пункты про письмо брокеру
+// должны исчезать вместе с самой функцией. Раньше текст был константой, обещал
+// «письмо брокеру — готовое, с возможностью правки», а внизу стояла пометка, что
+// письмо отключено — человек читал два противоречащих утверждения подряд.
 function helpStart(array $state) {
   $lang = (isset($state['lang']) && $state['lang'] === 'en') ? 'en' : 'ru';
-  $t = $lang === 'en' ? HELP_START_EN : HELP_START_RU;
-  // Справка перечисляет письмо брокеру среди возможностей — пока оно выключено,
-  // обещать его нельзя, иначе человек будет искать несуществующую кнопку.
+  $L = array();
+  if ($lang === 'en') {
+    $L[] = "Dispatch4You — a dispatcher's working tool.";
+    $L[] = "I read your load documents and prepare what you need to send next.";
+    $L[] = '';
+    $L[] = '📄 RATE CONFIRMATION (PDF)';
+    $L[] = "Send the broker's file — you get a load summary, then buttons for:";
+    $L[] = '• driver text — addresses, time windows, every reference number';
+    if (MAIL_ENABLED) $L[] = '• broker email — ready to send, editable';
+    $L[] = '• full breakdown with a route map and the numbers';
+    $L[] = '';
+    $L[] = '📷 LOAD BOARD SCREENSHOT (DAT, Truckstop)';
+    $L[] = "Send a picture — I'll read it and calculate:";
+    $L[] = '• rate per mile and what is left after fuel';
+    $L[] = '• what to watch for: overweight, tarps, hazmat, missing contacts';
+    if (MAIL_ENABLED) $L[] = '• a broker email for this load';
+    $L[] = '';
+    $L[] = '🔎 BROKER CHECK (FMCSA)';
+    $L[] = '/mc 115789 — by MC · /dot 2100420 — by DOT';
+    $L[] = 'Authority status, bond on file (BMC-84), address — from the official source.';
+    $L[] = '';
+    $L[] = 'Requirements: a text-based PDF, up to 15 MB. The document is never stored — only the extracted load data.';
+    $L[] = '';
+    $L[] = '/menu — every section in one list';
+    $L[] = '/help — full instructions';
+    $L[] = '/language — change the language';
+  } else {
+    $L[] = 'Dispatch4You — рабочий инструмент диспетчера.';
+    $L[] = 'Разбираю документы по грузу и готовлю всё, что нужно отправить дальше.';
+    $L[] = '';
+    $L[] = '📄 RATE CONFIRMATION (PDF)';
+    $L[] = 'Пришлите файл от брокера — верну сводку по грузу, а по кнопкам:';
+    $L[] = '• текст для водителя — адреса, окна времени, все реф-номера';
+    if (MAIL_ENABLED) $L[] = '• письмо брокеру — готовое, с возможностью правки';
+    $L[] = '• полный разбор с картой маршрута и расчётом';
+    $L[] = '';
+    $L[] = '📷 СКРИНШОТ ГРУЗА С ЛОУБОРДА (DAT, Truckstop)';
+    $L[] = 'Пришлите картинку — разберу и посчитаю:';
+    $L[] = '• ставку за милю и остаток после топлива';
+    $L[] = '• на что смотреть: перевес, тенты, hazmat, отсутствие контактов';
+    if (MAIL_ENABLED) $L[] = '• письмо брокеру по этому грузу';
+    $L[] = '';
+    $L[] = '🔎 ПРОВЕРКА БРОКЕРА (FMCSA)';
+    $L[] = '/mc 115789 — по номеру MC · /dot 2100420 — по DOT';
+    $L[] = 'Право работать, авторити, бонд BMC-84, адрес — из официального источника.';
+    $L[] = '';
+    $L[] = 'Требования: PDF с текстовым слоем до 15 МБ. Документ на сервере не хранится — только данные загрузки.';
+    $L[] = '';
+    $L[] = '/menu — все разделы одним списком';
+    $L[] = '/help — подробная инструкция';
+    $L[] = '/language — сменить язык бота';
+  }
+  $t = implode("\n", $L);
   if (!MAIL_ENABLED) $t .= "\n\n— — —\n" . mailOffText($lang);
   return $t;
 }
@@ -617,42 +635,62 @@ function editMessage($token, $chatId, $messageId, $text, ?array $keyboard = null
 // Разделы «по-человечески»: у Telegram нет заголовков-секций в самом меню команд
 // (кнопка «Menu» показывает строго плоский список) — здесь то же самое разложено
 // по группам текстом, /menu ссылается и в /start, и в описании бота.
+// Два блока вместо пяти равнозначных разделов: бот управляется тем, что человек
+// ПРИСЫЛАЕТ, а команды — вспомогательные. Раньше всё лежало одним плоским
+// списком, где «пришлите PDF» и «/language» выглядели одинаково важными.
+// Выключенное письмо не показываем разделом вовсе — только пометкой в конце:
+// раздел, который не работает, путает сильнее, чем его отсутствие.
 function menuText(array $state) {
-  // Раздел «письмо брокеру» остаётся в списке, но с пометкой в конце — иначе
-  // человек ищет кнопку, которой сейчас нет.
+  $en = isset($state['lang']) && $state['lang'] === 'en';
   $off = MAIL_ENABLED ? '' : "\n\n— — —\n" . mailOffText(curLang($state));
-  if (isset($state['lang']) && $state['lang'] === 'en') {
-    return "📋 SECTIONS\n\n"
-    . "📄 Rate Confirmation\n"
-    . "Send the PDF — a summary and action buttons come back.\n\n"
-    . "📷 Load screenshot\n"
-    . "Send a photo from DAT/Truckstop — analysis and action buttons come back.\n\n"
-    . "✉️ Broker email\n"
-    . "/carrier — set your company's signature\n"
-    . "/edit — replace the draft text\n"
-    . "/send — get the ready-to-send email + mail link\n\n"
-    . "🔎 Broker check (FMCSA)\n"
-    . "/mc 115789 — by MC number\n"
-    . "/dot 2100420 — by DOT number\n\n"
-    . "🌐 Language\n"
-    . "/language — switch RU/EN\n\n"
-    . "/help — full instructions" . $off;
+  if ($en) {
+    $L = array(
+      '📋 SECTIONS', '',
+      'WHAT TO SEND ME', '',
+      '📄 Rate Confirmation (PDF)',
+      '     → load summary and action buttons', '',
+      '📷 Load board screenshot',
+      '     → rate per mile, fuel, what to watch for', '',
+    );
+    if (MAIL_ENABLED) {
+      $L[] = 'BROKER EMAIL';
+      $L[] = '';
+      $L[] = '🖊 /carrier — your company signature';
+      $L[] = '✏️ /edit — replace the draft text';
+      $L[] = '📤 /send — prepare it for sending';
+      $L[] = '';
+    }
+    $L[] = 'COMMANDS';
+    $L[] = '';
+    $L[] = '🔎 /mc 115789 — check a broker by MC';
+    $L[] = '🔎 /dot 2100420 — by DOT number';
+    $L[] = '🌐 /language — switch RU / EN';
+    $L[] = 'ℹ️ /help — instructions and limits';
+    return implode("\n", $L) . $off;
   }
-  return "📋 РАЗДЕЛЫ\n\n"
-  . "📄 Rate Confirmation\n"
-  . "Пришлите PDF — придёт сводка и кнопки действий.\n\n"
-  . "📷 Скриншот груза\n"
-  . "Пришлите фото с DAT/Truckstop — придёт разбор и кнопки действий.\n\n"
-  . "✉️ Письмо брокеру\n"
-  . "/carrier — задать подпись компании\n"
-  . "/edit — заменить текст черновика\n"
-  . "/send — получить готовое письмо и ссылку на отправку\n\n"
-  . "🔎 Проверка брокера (FMCSA)\n"
-  . "/mc 115789 — по номеру MC\n"
-  . "/dot 2100420 — по номеру DOT\n\n"
-  . "🌐 Язык\n"
-  . "/language — сменить RU/EN\n\n"
-  . "/help — подробная инструкция" . $off;
+  $L = array(
+    '📋 РАЗДЕЛЫ', '',
+    'ЧТО МНЕ ПРИСЛАТЬ', '',
+    '📄 Rate Confirmation в PDF',
+    '     → сводка по грузу и кнопки действий', '',
+    '📷 Скриншот груза с лоуборда',
+    '     → ставка за милю, топливо, на что смотреть', '',
+  );
+  if (MAIL_ENABLED) {
+    $L[] = 'ПИСЬМО БРОКЕРУ';
+    $L[] = '';
+    $L[] = '🖊 /carrier — подпись вашей компании';
+    $L[] = '✏️ /edit — заменить текст черновика';
+    $L[] = '📤 /send — подготовить к отправке';
+    $L[] = '';
+  }
+  $L[] = 'КОМАНДЫ';
+  $L[] = '';
+  $L[] = '🔎 /mc 115789 — проверить брокера по MC';
+  $L[] = '🔎 /dot 2100420 — по номеру DOT';
+  $L[] = '🌐 /language — сменить язык';
+  $L[] = 'ℹ️ /help — инструкция и требования';
+  return implode("\n", $L) . $off;
 }
 
 function langKeyboard() {
@@ -984,6 +1022,51 @@ function brokerReport($kind, $number, $lang = 'ru') {
 }
 
 function mark($ok) { return $ok ? '✅' : '⚠️'; }
+
+// Меню команд Telegram. Правила, по которым оно собрано:
+//  • одна строка на пункт — в меню бота было «Подпись перевозчика для писем
+//    брокерам» в две строки, и список превращался в стену текста;
+//  • никаких «RU / EN» в каждом пункте — двойной текст удлинял строку вдвое,
+//    язык переключается отдельной командой;
+//  • ни одного дубля по смыслу — раньше /start, /menu и /help стояли рядом и
+//    означали примерно одно и то же, отсюда «непонятно и запутанно»;
+//  • порядок по частоте: что делают каждый день — сверху.
+// /menu продолжает работать, если его набрать, но в списке не показывается:
+// его роль полностью закрывает /help.
+function botCommands() {
+  $c = array(
+    array('command' => 'start', 'description' => '👋 Что умеет бот'),
+    array('command' => 'help',  'description' => 'ℹ️ Инструкция'),
+  );
+  if (MAIL_ENABLED) {
+    $c[] = array('command' => 'carrier', 'description' => '🖊 Подпись компании');
+    $c[] = array('command' => 'edit',    'description' => '✏️ Поправить письмо');
+    $c[] = array('command' => 'send',    'description' => '📤 Письмо к отправке');
+  }
+  $c[] = array('command' => 'mc',       'description' => '🔎 Брокер по MC');
+  $c[] = array('command' => 'dot',      'description' => '🔎 Брокер по DOT');
+  $c[] = array('command' => 'language', 'description' => '🌐 Язык / Language');
+  return $c;
+}
+
+function applyCommands($token) {
+  return tgApi($token, 'setMyCommands', array('commands' => json_encode(botCommands())));
+}
+
+// Сверяет версию меню и обновляет его, если список поменялся. Вызывается на
+// обычных сообщениях, поэтому в норме это чтение одного маленького файла и
+// ничего больше — запрос в Telegram уходит только когда версия разошлась.
+function ensureCommands($token) {
+  $dir = __DIR__ . '/../../tg-state';
+  if (!is_dir($dir)) { @mkdir($dir, 0700, true); if (!is_dir($dir)) return; }
+  $file = $dir . '/commands.ver';
+  if ((int)@file_get_contents($file) === COMMANDS_VERSION) return;
+  // Версию пишем ДО запроса: если Telegram ответит ошибкой, лучше не повторять
+  // её на каждом сообщении подряд — это ровно тот способ, которым бот уже
+  // однажды устроил шторм.
+  @file_put_contents($file, (string)COMMANDS_VERSION);
+  applyCommands($token);
+}
 
 // Единый ответ на всё, что связано с письмом брокеру, пока MAIL_ENABLED = false.
 function mailOffText($lang = 'ru') {
