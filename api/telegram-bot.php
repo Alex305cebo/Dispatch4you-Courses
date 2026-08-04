@@ -1120,10 +1120,13 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   // Процент проверок, после которых машину или водителя сняли с рейса, против
   // национального среднего. Это то, чем реально меряют перевозчика на дороге.
   foreach (array(
-    array('driverOosRate',  'driverOosRateNationalAverage',  'Driver out-of-service', 'Снятия водителей с рейса'),
-    array('vehicleOosRate', 'vehicleOosRateNationalAverage', 'Vehicle out-of-service', 'Снятия машин с рейса'),
+    array('driverOosRate',  'driverOosRateNationalAverage',  'Driver out-of-service', 'Снятия водителей с рейса', 'driverInsp'),
+    array('vehicleOosRate', 'vehicleOosRateNationalAverage', 'Vehicle out-of-service', 'Снятия машин с рейса', 'vehicleInsp'),
   ) as $o) {
     if (!isset($rec[$o[0]]) || $rec[$o[0]] === '' || $rec[$o[0]] === null) continue;
+    // Без инспекций процент всегда 0 — у брокера своих машин нет вовсе. Строка
+    // «0% ✅» читалась бы как безупречная история вместо «проверок не было».
+    if (empty($rec[$o[4]])) continue;
     $line = ($lang === 'en' ? $o[2] : $o[3]) . ': ' . round((float)$rec[$o[0]], 1) . '%';
     if (!empty($rec[$o[1]])) {
       $nat = round((float)$rec[$o[1]], 1);
