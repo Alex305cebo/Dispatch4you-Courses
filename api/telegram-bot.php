@@ -53,7 +53,7 @@ const MAIL_ENABLED = false;
 // не обновляется — раньше его применял только ?setup=1, поэтому в боте месяцами
 // висели команды, которых в коде уже не было. Теперь бот сверяет версию сам:
 // поменял список — увеличь число, и меню обновится у всех при первом сообщении.
-const COMMANDS_VERSION = 4;
+const COMMANDS_VERSION = 5;
 
 // Предохранитель на исходящие сообщения: больше стольких в минуту в один чат
 // бот не отправит НИ ПРИ КАКИХ обстоятельствах. Обычный сценарий — 2–3
@@ -174,28 +174,7 @@ if (isset($_GET['setup'])) {
     'allowed_updates' => json_encode(array('message', 'callback_query')),
     'drop_pending_updates' => true,
   )), true);
-  // Короткое описание — в профиле бота; полное — на пустом экране чата
-  // (именно его человек читает до того, как нажать «Начать»).
-  $out['short_description'] = json_decode(tgApi($token, 'setMyShortDescription', array(
-    'short_description' => 'Рейт-коны и скриншоты грузов: текст водителю, расчёт, письмо брокеру, проверка по FMCSA.',
-  )), true);
-  // Лимит Telegram — 512 символов, поэтому здесь только суть; подробности в /start.
-  $out['description'] = json_decode(tgApi($token, 'setMyDescription', array(
-    'description' =>
-        "Рабочий инструмент диспетчера.\n\n"
-      . "Пришлите Rate Confirmation в PDF или скриншот груза с лоуборда — получите:\n"
-      . "• текст для водителя: адреса, окна времени, реф-номера\n"
-      . "• расчёт: ставка за милю, топливо, на что смотреть\n"
-      . "• готовое письмо брокеру\n"
-      . "• проверку брокера по FMCSA\n\n"
-      . "— — —\n"
-      . "Rate confirmations and load screenshots in — driver text, per-mile math, "
-      . "broker email and FMCSA checks out.",
-  )), true);
-  // Плоский список — так его и показывает Telegram, разделов внутри самого
-  // меню нет технически. Порядок группирует пункты по смыслу: сначала общее,
-  // потом работа с письмом брокеру, потом проверка брокера, потом настройки.
-  $out['commands'] = json_decode(applyCommands($token), true);
+  $out['profile'] = applyProfile($token, true);
   header('Content-Type: application/json');
   echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
   exit;
@@ -273,7 +252,7 @@ if (!isset($msg['document'])) {
   // письмо — если что-то из этого упадёт или затянется, Telegram не должен
   // считать доставку неудачной и присылать ту же команду по кругу.
   finishRequest();
-  ensureCommands($token); // меню Telegram подтянет новый список само
+  ensureProfile($token); // меню и описания Telegram подтянет само
   $text = isset($msg['text']) ? trim($msg['text']) : '';
   if (stripos($text, '/id') === 0) {
     // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
@@ -290,12 +269,25 @@ if (!isset($msg['document'])) {
     $kind = strtolower($bm[1]);
     $numArg = preg_replace('/\D/', '', $bm[2]);
     if ($numArg === '') {
-      reply($token, $chatId,
-        "Проверка брокера по FMCSA.\n\n"
-        . "Пришлите номер:\n"
-        . "/mc 115789 — по MC\n"
-        . "/dot 2100420 — по DOT\n"
-        . "/broker 115789 — сначала MC, потом DOT");
+      // Сюда попадают из меню — значит это и есть экран «как проверить брокера».
+      // Про отмену MC говорим прямо: иначе человек ищет номер, которого у
+      // брокера физически нет, и решает, что бот не работает.
+      $lang = curLang($introState);
+      reply($token, $chatId, $lang === 'en'
+        ? "🔎 Broker check via FMCSA\n\n"
+          . "Send the number right after the command — either MC or DOT works:\n"
+          . "/broker 115789\n\n"
+          . "You get the legal name, authority status, BMC-84 bond and address, "
+          . "straight from the official source.\n\n"
+          . "⚠️ FMCSA stopped issuing MC numbers on 1 October 2025 — brokers registered "
+          . "after that have a DOT number only."
+        : "🔎 Проверка брокера по FMCSA\n\n"
+          . "Пришлите номер сразу после команды — подойдёт любой, MC или DOT:\n"
+          . "/broker 115789\n\n"
+          . "Покажу название, право работать, авторити, бонд BMC-84 и адрес — "
+          . "из официального источника.\n\n"
+          . "⚠️ MC-номера FMCSA не выдаёт с 1 октября 2025 — у брокеров, "
+          . "зарегистрированных позже, есть только DOT.");
     } else {
       $lang = curLang($introState);
       list($rec, $err) = fetchBrokerRecord($kind, $numArg);
@@ -525,10 +517,10 @@ function helpFull() {
   }
   $L[] = '';
   $L[] = '🔎 Проверка брокера по FMCSA:';
-  $L[] = '/mc 115789 — по номеру MC';
-  $L[] = '/dot 2100420 — по номеру DOT';
-  $L[] = '/broker 115789 — если не знаете, какой это номер';
+  $L[] = '/broker 115789 — подойдёт любой номер, MC или DOT';
   $L[] = 'Покажу название, право работать, авторити, бонд BMC-84 и адрес.';
+  $L[] = 'MC-номера FMCSA не выдаёт с 01.10.2025 — у новых брокеров только DOT.';
+  $L[] = 'Если точно знаете тип номера: /mc 115789 или /dot 2100420.';
   $L[] = '';
   $L[] = '⚠️ Требования к файлу:';
   $L[] = '• PDF с текстовым слоем — тот, что брокер прислал на почту';
@@ -574,7 +566,7 @@ function helpStart(array $state) {
     if (MAIL_ENABLED) $L[] = '• a broker email for this load';
     $L[] = '';
     $L[] = '🔎 BROKER CHECK (FMCSA)';
-    $L[] = '/mc 115789 — by MC · /dot 2100420 — by DOT';
+    $L[] = '/broker 115789 — either number works, MC or DOT';
     $L[] = 'Authority status, bond on file (BMC-84), address — from the official source.';
     $L[] = '';
     $L[] = 'Requirements: a text-based PDF, up to 15 MB. The document is never stored — only the extracted load data.';
@@ -599,7 +591,7 @@ function helpStart(array $state) {
     if (MAIL_ENABLED) $L[] = '• письмо брокеру по этому грузу';
     $L[] = '';
     $L[] = '🔎 ПРОВЕРКА БРОКЕРА (FMCSA)';
-    $L[] = '/mc 115789 — по номеру MC · /dot 2100420 — по DOT';
+    $L[] = '/broker 115789 — подойдёт любой номер, MC или DOT';
     $L[] = 'Право работать, авторити, бонд BMC-84, адрес — из официального источника.';
     $L[] = '';
     $L[] = 'Требования: PDF с текстовым слоем до 15 МБ. Документ на сервере не хранится — только данные загрузки.';
@@ -662,8 +654,7 @@ function menuText(array $state) {
     }
     $L[] = 'COMMANDS';
     $L[] = '';
-    $L[] = '🔎 /mc 115789 — check a broker by MC';
-    $L[] = '🔎 /dot 2100420 — by DOT number';
+    $L[] = '🔎 /broker 115789 — check a broker (MC or DOT)';
     $L[] = '🌐 /language — switch RU / EN';
     $L[] = 'ℹ️ /help — instructions and limits';
     return implode("\n", $L) . $off;
@@ -686,8 +677,7 @@ function menuText(array $state) {
   }
   $L[] = 'КОМАНДЫ';
   $L[] = '';
-  $L[] = '🔎 /mc 115789 — проверить брокера по MC';
-  $L[] = '🔎 /dot 2100420 — по номеру DOT';
+  $L[] = '🔎 /broker 115789 — проверить брокера (MC или DOT)';
   $L[] = '🌐 /language — сменить язык';
   $L[] = 'ℹ️ /help — инструкция и требования';
   return implode("\n", $L) . $off;
@@ -1024,48 +1014,82 @@ function brokerReport($kind, $number, $lang = 'ru') {
 function mark($ok) { return $ok ? '✅' : '⚠️'; }
 
 // Меню команд Telegram. Правила, по которым оно собрано:
-//  • одна строка на пункт — в меню бота было «Подпись перевозчика для писем
-//    брокерам» в две строки, и список превращался в стену текста;
+//  • одна строка на пункт — было «Подпись перевозчика для писем брокерам» в две
+//    строки, и список читался как стена текста;
 //  • никаких «RU / EN» в каждом пункте — двойной текст удлинял строку вдвое,
 //    язык переключается отдельной командой;
-//  • ни одного дубля по смыслу — раньше /start, /menu и /help стояли рядом и
-//    означали примерно одно и то же, отсюда «непонятно и запутанно»;
-//  • порядок по частоте: что делают каждый день — сверху.
-// /menu продолжает работать, если его набрать, но в списке не показывается:
-// его роль полностью закрывает /help.
+//  • ни одного дубля по смыслу. /start, /menu и /help значили примерно одно —
+//    осталась одна запись. /mc и /dot — тоже одно действие «проверить брокера»,
+//    и разделение вредное: MC-номера FMCSA не выдаёт с 01.10.2025, у свежих
+//    брокеров их нет вообще. /broker принимает любой номер: пробует сначала как
+//    MC, потом как DOT — диспетчеру не нужно знать, какой ему прислали.
+// /help, /menu, /mc, /dot продолжают работать, если их набрать, — просто не
+// занимают место в списке.
 function botCommands() {
   $c = array(
     array('command' => 'start', 'description' => '👋 Что умеет бот'),
-    array('command' => 'help',  'description' => 'ℹ️ Инструкция'),
   );
   if (MAIL_ENABLED) {
     $c[] = array('command' => 'carrier', 'description' => '🖊 Подпись компании');
-    $c[] = array('command' => 'edit',    'description' => '✏️ Поправить письмо');
-    $c[] = array('command' => 'send',    'description' => '📤 Письмо к отправке');
+    $c[] = array('command' => 'send',    'description' => '📤 Письмо брокеру');
   }
-  $c[] = array('command' => 'mc',       'description' => '🔎 Брокер по MC');
-  $c[] = array('command' => 'dot',      'description' => '🔎 Брокер по DOT');
+  $c[] = array('command' => 'broker',   'description' => '🔎 Проверить брокера');
   $c[] = array('command' => 'language', 'description' => '🌐 Язык / Language');
   return $c;
 }
 
-function applyCommands($token) {
-  return tgApi($token, 'setMyCommands', array('commands' => json_encode(botCommands())));
+// Короткое описание — под именем бота в профиле и в списке чатов.
+function botShortDescription() {
+  return MAIL_ENABLED
+    ? 'Рейт-коны и скриншоты грузов: текст водителю, расчёт, письмо брокеру, проверка по FMCSA.'
+    : 'Рейт-коны и скриншоты грузов: текст водителю, расчёт за милю, проверка брокера по FMCSA.';
 }
 
-// Сверяет версию меню и обновляет его, если список поменялся. Вызывается на
-// обычных сообщениях, поэтому в норме это чтение одного маленького файла и
-// ничего больше — запрос в Telegram уходит только когда версия разошлась.
-function ensureCommands($token) {
+// Полное описание — то, что человек читает на пустом экране чата ДО кнопки
+// «Начать». Витрина бота: обещать здесь выключенную функцию нельзя.
+// Лимит Telegram — 512 символов, поэтому только суть, подробности в /start.
+function botDescription() {
+  $L = array(
+    'Рабочий инструмент диспетчера.', '',
+    'Пришлите Rate Confirmation в PDF или скриншот груза с лоуборда — получите:',
+    '• текст для водителя: адреса, окна времени, реф-номера',
+    '• расчёт: ставка за милю, топливо, на что смотреть',
+  );
+  if (MAIL_ENABLED) $L[] = '• готовое письмо брокеру';
+  $L[] = '• проверку брокера по FMCSA';
+  $L[] = '';
+  $L[] = '— — —';
+  $L[] = MAIL_ENABLED
+    ? 'Rate confirmations and load screenshots in — driver text, per-mile math, broker email and FMCSA checks out.'
+    : 'Rate confirmations and load screenshots in — driver text, per-mile math and FMCSA broker checks out.';
+  return implode("\n", $L);
+}
+
+// Меню команд + описания разом: всё, что живёт на серверах Telegram и само не
+// обновляется. $verbose — вернуть ответы Telegram (нужно для ?setup=1).
+function applyProfile($token, $verbose = false) {
+  $r = array();
+  $r['commands'] = tgApi($token, 'setMyCommands', array('commands' => json_encode(botCommands())));
+  $r['short_description'] = tgApi($token, 'setMyShortDescription', array('short_description' => botShortDescription()));
+  $r['description'] = tgApi($token, 'setMyDescription', array('description' => botDescription()));
+  if (!$verbose) return null;
+  foreach ($r as $k => $v) $r[$k] = json_decode($v, true);
+  return $r;
+}
+
+// Сверяет версию и обновляет меню с описаниями, если они поменялись.
+// Вызывается на обычных сообщениях, поэтому в норме это чтение одного
+// маленького файла и ничего больше — запросы уходят только при расхождении.
+function ensureProfile($token) {
   $dir = __DIR__ . '/../../tg-state';
   if (!is_dir($dir)) { @mkdir($dir, 0700, true); if (!is_dir($dir)) return; }
   $file = $dir . '/commands.ver';
   if ((int)@file_get_contents($file) === COMMANDS_VERSION) return;
-  // Версию пишем ДО запроса: если Telegram ответит ошибкой, лучше не повторять
-  // её на каждом сообщении подряд — это ровно тот способ, которым бот уже
+  // Версию пишем ДО запросов: если Telegram ответит ошибкой, повторять их на
+  // каждом сообщении подряд нельзя — это ровно тот способ, которым бот уже
   // однажды устроил шторм.
   @file_put_contents($file, (string)COMMANDS_VERSION);
-  applyCommands($token);
+  applyProfile($token);
 }
 
 // Единый ответ на всё, что связано с письмом брокеру, пока MAIL_ENABLED = false.
