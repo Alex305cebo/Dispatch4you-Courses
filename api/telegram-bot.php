@@ -136,8 +136,13 @@ if (isset($_GET['fmcsacheck'])) {
   $key = @trim(file_get_contents(__DIR__ . '/../../fmcsa.key'));
   if ($key === '' || $key === false) { echo "fmcsa.key: не найден или пуст\nискали тут: $kp\n"; exit; }
   echo "fmcsa.key: есть\n";
-  // MC 115789 — реальный действующий брокер (TQL), используем как проверочный
-  echo "ответ: " . brokerReport('mc', '115789') . "\n";
+  // Номер можно передать: ?fmcsacheck=249072. Без него — дефолтный, лишь бы
+  // убедиться, что ключ жив. Раньше тут стоял 115789 с подписью «брокер TQL»,
+  // а FMCSA отдаёт по нему перевозчика 1983 года — на такой заглушке брокерская
+  // ветка отчёта не проверялась вообще.
+  $mc = isset($_GET['fmcsacheck']) ? preg_replace('/\D/', '', (string)$_GET['fmcsacheck']) : '';
+  if ($mc === '') $mc = '115789';
+  echo "ответ: " . brokerReport('broker', $mc) . "\n";
   exit;
 }
 
