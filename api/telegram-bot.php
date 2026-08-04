@@ -995,14 +995,16 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
       $ok ? '$' . number_format((float)$bond * 1000, 0, '.', ',') : ($lang === 'en' ? 'none' : 'нет'));
   }
   // Out of service — прямой запрет работать, важнее почти всего остального.
-  if (isset($rec['oosDate'])) {
+  // array_key_exists, а не isset: у чистого перевозчика тут null, и isset его
+  // отбросил бы — зелёная галочка «не out of service» не показалась бы никогда.
+  if (array_key_exists('oosDate', $rec)) {
     $oos = !empty($rec['oosDate']);
     if ($oos) $blocker = true;
     $checks[] = array(!$oos, $lang === 'en' ? 'Out of service' : 'Out of service',
       $oos ? (string)$rec['oosDate'] : ($lang === 'en' ? 'no' : 'нет'));
   }
   // MCS-150: не блокирует, но просроченная анкета — признак заброшенной конторы.
-  if (isset($rec['mcs150Outdated'])) {
+  if (!empty($rec['mcs150Outdated'])) {
     $ok = $rec['mcs150Outdated'] === 'N';
     $checks[] = array($ok, $lang === 'en' ? 'MCS-150 up to date' : 'Анкета MCS-150 свежая',
       $lang === 'en' ? ($ok ? 'yes' : 'outdated') : ($ok ? 'да' : 'просрочена'));
