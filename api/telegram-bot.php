@@ -953,17 +953,10 @@ function fetchBrokerRecord($kind, $number) {
   if ($rec === null && ($kind === 'dot' || $kind === 'broker')) {
     $rec = unwrapCarrier(fmcsaGet('carriers/' . $number, $key));
   }
-  // Поиск по docket-номеру отдаёт запись без контактов — телефона там нет
-  // никогда. Он лежит в записи по DOT, поэтому дотягиваем её вторым запросом,
-  // но только если телефона действительно не хватает.
-  if ($rec !== null && empty($rec['telephone']) && !empty($rec['dotNumber'])) {
-    $full = unwrapCarrier(fmcsaGet('carriers/' . $rec['dotNumber'], $key));
-    if (is_array($full)) {
-      // Запись по docket главнее: в ней актуальные статусы авторити.
-      foreach ($rec as $k => $v) if ($v !== null && $v !== '') $full[$k] = $v;
-      $rec = $full;
-    }
-  }
+  // Телефона и e-mail в QCMobile нет ни в одном эндпоинте — проверено списком
+  // полей живой записи (?fmcsacheck=<MC>&keys=1). Не искать их повторным
+  // запросом: это удваивало вызовы API и всё равно возвращало пустоту.
+  // Контакты живут в карточке SAFER, ссылку на неё даём в отчёте.
   return array($rec, $rec === null ? 'notfound' : '');
 }
 
@@ -1068,10 +1061,9 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   $L[] = $lang === 'en' ? 'Criteria checked:' : 'Критерии проверки:';
   foreach ($checks as $c) $L[] = mark($c[0]) . ' ' . $c[1] . ': ' . $c[2];
 
-  // ── Контакты: то, ради чего диспетчер часто и открывает проверку.
+  // ── Контакты. Телефона и почты в API нет — вместо выдуманных данных даём
+  // адрес и прямую ссылку на карточку SAFER, где телефон брокера и есть.
   $contacts = array();
-  if (!empty($rec['telephone']))    $contacts[] = ($lang === 'en' ? 'Phone: ' : 'Телефон: ') . $rec['telephone'];
-  if (!empty($rec['emailAddress'])) $contacts[] = 'Email: ' . $rec['emailAddress'];
   $addr = array_filter(array(
     isset($rec['phyStreet']) ? $rec['phyStreet'] : '',
     isset($rec['phyCity']) ? $rec['phyCity'] : '',
@@ -1079,9 +1071,14 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
     isset($rec['phyZipcode']) ? $rec['phyZipcode'] : '',
   ));
   if ($addr) $contacts[] = ($lang === 'en' ? 'Address: ' : 'Адрес: ') . implode(', ', $addr);
+  if (!empty($rec['dotNumber'])) {
+    $contacts[] = ($lang === 'en' ? 'Phone and full profile — SAFER card:' : 'Телефон и полная карточка — SAFER:')
+      . "\nhttps://safer.fmcsa.dot.gov/query.asp?searchtype=ANY&query_type=queryCarrierSnapshot"
+      . '&query_param=USDOT&query_string=' . $rec['dotNumber'];
+  }
   if ($contacts) {
     $L[] = '';
-    $L[] = $lang === 'en' ? '📞 Contacts (per FMCSA):' : '📞 Контакты (по данным FMCSA):';
+    $L[] = $lang === 'en' ? '📞 Contacts:' : '📞 Контакты:';
     foreach ($contacts as $c) $L[] = $c;
   }
 
@@ -1105,8 +1102,35 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   if (!empty($rec['totalDrivers'])) {
     $extra[] = ($lang === 'en' ? 'Drivers: ' : 'Водителей: ') . $rec['totalDrivers'];
   }
-  if (isset($rec['crashTotal']) && $rec['crashTotal'] !== '' && (int)$rec['crashTotal'] > 0) {
-    $extra[] = ($lang === 'en' ? 'Crashes (24 mo): ' : 'ДТП за 24 мес: ') . $rec['crashTotal'];
+  // Страховки: суммы FMCSA отдаёт только по бонду, остальное — флаги наличия.
+  // Придумывать долларовые суммы по флагу нельзя, поэтому пишем как есть.
+  $ins = array();
+  if (!empty($rec['cargoInsuranceOnFile'])) $ins[] = $lang === 'en' ? 'cargo' : 'карго';
+  if (!empty($rec['bipdInsuranceOnFile']))  $ins[] = 'BIPD';
+  if ($ins) $extra[] = ($lang === 'en' ? 'Insurance on file: ' : 'Страховки на файле: ') . implode(', ', $ins);
+
+  if (!empty($rec['crashTotal'])) {
+    $line = ($lang === 'en' ? 'Crashes (24 mo): ' : 'ДТП за 24 мес: ') . $rec['crashTotal'];
+    $det = array();
+    if (!empty($rec['fatalCrash'])) $det[] = ($lang === 'en' ? 'fatal ' : 'со смертью ') . $rec['fatalCrash'];
+    if (!empty($rec['injCrash']))   $det[] = ($lang === 'en' ? 'injury ' : 'с травмами ') . $rec['injCrash'];
+    if ($det) $line .= ' (' . implode(', ', $det) . ')';
+    $extra[] = $line;
+  }
+  // Процент проверок, после которых машину или водителя сняли с рейса, против
+  // национального среднего. Это то, чем реально меряют перевозчика на дороге.
+  foreach (array(
+    array('driverOosRate',  'driverOosRateNationalAverage',  'Driver out-of-service', 'Снятия водителей с рейса'),
+    array('vehicleOosRate', 'vehicleOosRateNationalAverage', 'Vehicle out-of-service', 'Снятия машин с рейса'),
+  ) as $o) {
+    if (!isset($rec[$o[0]]) || $rec[$o[0]] === '' || $rec[$o[0]] === null) continue;
+    $line = ($lang === 'en' ? $o[2] : $o[3]) . ': ' . round((float)$rec[$o[0]], 1) . '%';
+    if (!empty($rec[$o[1]])) {
+      $nat = round((float)$rec[$o[1]], 1);
+      $line .= ($lang === 'en' ? ' (national average ' : ' (в среднем по стране ') . $nat . '%)';
+      $line .= (float)$rec[$o[0]] > (float)$rec[$o[1]] ? ' ⚠️' : ' ✅';
+    }
+    $extra[] = $line;
   }
   if (!empty($rec['carrierOperation']['carrierOperationDesc'])) {
     $extra[] = ($lang === 'en' ? 'Operation: ' : 'Тип работы: ') . $rec['carrierOperation']['carrierOperationDesc'];
