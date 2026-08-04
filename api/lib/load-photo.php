@@ -40,13 +40,18 @@ const GEMINI_CHAIN = array(
   'gemini-3.5-flash',       // только с thinkingConfig; последний рубеж перед Groq
 );
 
-/** Похоже ли на «квота/лимит», то есть стоит ли пробовать следующую модель. */
+/**
+ * Стоит ли пробовать следующую модель. Сюда попадает всё «временное»: квота,
+ * перегрузка, недоступность. Формулировки взяты из живых ответов API —
+ * «high demand» изначально не был учтён, и цепочка на нём останавливалась
+ * вместо перехода к следующей модели.
+ */
 function geminiQuotaError($msg) {
-  return stripos($msg, 'quota') !== false
-      || stripos($msg, 'rate limit') !== false
-      || stripos($msg, 'RESOURCE_EXHAUSTED') !== false
-      || stripos($msg, 'overloaded') !== false
-      || stripos($msg, 'UNAVAILABLE') !== false;
+  foreach (array('quota', 'rate limit', 'RESOURCE_EXHAUSTED', 'overloaded', 'UNAVAILABLE',
+                 'high demand', 'try again later', 'currently experiencing') as $needle) {
+    if (stripos($msg, $needle) !== false) return true;
+  }
+  return false;
 }
 
 /**
@@ -104,9 +109,9 @@ function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true,
         $lastErr = $e2;
         continue;
       }
-      // 429/квота/перегруз — пробуем следующую модель. Прочие ошибки (неверный
+      // Временные сбои — пробуем следующую модель. Прочие ошибки (неверный
       // ключ, кривой запрос) на другой модели повторятся, поэтому выходим сразу.
-      if ($code == 429 || geminiQuotaError($msg)) continue;
+      if ($code == 429 || $code == 503 || $code == 500 || geminiQuotaError($msg)) continue;
       if ($code == 404) continue; // модели нет на этом аккаунте — просто идём дальше
       return array(null, $lastErr, $model);
     }
