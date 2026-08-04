@@ -63,7 +63,7 @@ function geminiQuotaError($msg) {
  *
  * @return array{0:?array,1:string,2:string} [данные, код ошибки, сработавшая модель]
  */
-function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true, $timeout = 120) {
+function geminiCall($sys, array $parts, $models = null, $useThinkingConfig = true, $timeout = 120) {
   $key = geminiKey();
   if ($key === null) return array(null, 'nokey', '');
   if ($models === null) $models = GEMINI_CHAIN;
@@ -79,7 +79,7 @@ function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true,
   if ($useThinkingConfig) $cfg['thinkingConfig'] = array('thinkingBudget' => 0);
 
   $body = json_encode(array(
-    'contents' => array(array('parts' => array(array('text' => $text)))),
+    'contents' => array(array('parts' => $parts)),
     'systemInstruction' => array('parts' => array(array('text' => $sys))),
     'generationConfig' => $cfg,
   ));
@@ -104,7 +104,7 @@ function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true,
       // Пробуем ту же модель без него — с запасом по maxOutputTokens, чтобы
       // «размышления» не съели весь вывод.
       if ($useThinkingConfig && stripos($msg, 'invalid argument') !== false) {
-        list($d2, $e2, $m2) = geminiStructure($sys, $text, array($model), false, $timeout);
+        list($d2, $e2, $m2) = geminiCall($sys, $parts, array($model), false, $timeout);
         if ($d2 !== null) return array($d2, '', $m2);
         $lastErr = $e2;
         continue;
@@ -125,73 +125,91 @@ function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true,
   return array(null, $lastErr === '' ? 'no models available' : $lastErr, '');
 }
 
+/** Текст -> JSON. Обёртка над geminiCall для обычного разбора рейт-кона. */
+function geminiStructure($sys, $text, $models = null, $useThinkingConfig = true, $timeout = 120) {
+  return geminiCall($sys, array(array('text' => $text)), $models, $useThinkingConfig, $timeout);
+}
+
 /**
- * Картинка -> структура груза.
+ * Файл целиком -> JSON. Для сканов без текстового слоя: Gemini умеет читать
+ * PDF как изображение сам, поэтому рендерить страницы в картинки не нужно —
+ * на хостинге всё равно нет ни Imagick, ни ghostscript (shell_exec отключён).
+ */
+function geminiFile($sys, $bytes, $mime, $models = null, $timeout = 120) {
+  return geminiCall($sys, array(
+    array('inline_data' => array('mime_type' => $mime, 'data' => base64_encode($bytes))),
+  ), $models, true, $timeout);
+}
+
+/**
+ * Промпт для картинок и сканов. Одним запросом определяем ТИП документа и
+ * достаём поля обоих видов: карточка с лоуборда и рейт-кон устроены по-разному,
+ * а раньше любая картинка разбиралась схемой лоуборда — фото рейт-кона молча
+ * теряло адреса складов, окна времени и реф-номера, и это не бросалось в глаза.
+ * Один вызов вместо двух: у Flash-моделей всего 20 запросов в сутки.
+ */
+function visionPrompt() {
+  return "You read freight documents from images: load board screenshots "
+    . "(DAT One, Truckstop, 123Loadboard), broker emails, and scanned/photographed "
+    . "Rate Confirmations. First decide WHICH kind it is, then extract accordingly.\n\n"
+    . "Return ONLY a JSON object:\n"
+    . '{"is_load":true,"doc_type":"load_board or rate_con","source":"",'
+    . '"origin":"","destination":"","pickup":"","delivery":"","equipment":"",'
+    . '"rate":"","miles":"","weight":"","length":"","commodity":"","broker":"","mc":"","contact_name":"",'
+    . '"email":"","phone":"","reference":"","notes":"",'
+    . '"spot_rate":"","posted_age":"","trip_type":"","deadhead":"","broker_rating":"","days_to_pay":"",'
+    . '"load_id":"","stops":[{"type":"pickup or delivery","name":"","address_lines":[],"time":"","refs":[]}]}' . "\n\n"
+    . "RULES:\n"
+    . "- Copy values VERBATIM from the image. NEVER invent anything. Unknown -> empty string (or empty array).\n"
+    . "- is_load: false if the image is not freight-related at all.\n"
+    . "- doc_type: 'rate_con' for a Rate/Load Confirmation issued to a carrier (has full pickup and "
+    . "delivery ADDRESSES, appointment windows, reference/PU/PO numbers, a signature line). "
+    . "'load_board' for a posting/search result on a load board, or a broker's offer email.\n\n"
+    . "IF doc_type IS 'rate_con', ALSO fill these — they are what a driver actually needs:\n"
+    . "- load_id: the load/order/PRO number.\n"
+    . "- stops: every pickup and delivery IN DOCUMENT ORDER.\n"
+    . "- stop.name: facility name. stop.address_lines: street line(s) AND then the 'CITY ST ZIP' line — "
+    . "never omit the city line, an address without it is useless for a driver.\n"
+    . "- stop.time: appointment date and window as printed.\n"
+    . "- stop.refs: EVERY reference number for that stop (PU, PO, BOL, Order#), each as printed.\n"
+    . "- broker: the company issuing the confirmation (not the carrier).\n\n"
+    . "IF doc_type IS 'load_board', leave stops empty and fill these instead:\n"
+    . "- origin/destination: 'CITY, ST' as shown.\n"
+    . "- rate: the posted or offered rate. If only rate-per-mile is shown, put it in rate as printed.\n"
+    . "- miles: trip distance. weight: in pounds. length: feet.\n"
+    . "- equipment: VAN, REEFER, FLATBED, POWER ONLY, STEP DECK etc.\n"
+    . "- mc: broker's MC/DOT if visible. email/phone/contact_name: broker contact details shown.\n"
+    . "- notes: special requirements (tarps, hazmat, team, appointment, TONU terms).\n"
+    . "- spot_rate: the load board's OWN displayed market/average rate for this lane if shown "
+    . "(e.g. a 'DAT Rate', 'Market avg $X/mi' figure next to the posted rate) — NOT the posted rate itself.\n"
+    . "- posted_age: how long ago it was posted, as printed (e.g. '2 hrs ago', '13 min ago').\n"
+    . "- trip_type: 'Full' or 'Partial' if shown.\n"
+    . "- deadhead: deadhead/empty miles to the pickup if the board shows them.\n"
+    . "- broker_rating: any broker trust/credit badge shown next to their name (e.g. 'Blue', 'Gold', stars).\n"
+    . "- days_to_pay: broker's average days-to-pay if shown (e.g. 'Avg 32 days').\n"
+    . "Output JSON only.";
+}
+
+/**
+ * Картинка (или PDF-скан) -> структура груза. Идёт по той же цепочке моделей,
+ * что и текстовый разбор: раньше картинки были прибиты к одной модели и при
+ * исчерпании её дневной квоты просто переставали работать.
  * @return array{0:?array,1:string} [данные, код ошибки: ''|'nokey'|'api'|'nojson'|'notload']
  */
 function photoExtractLoad($bytes, $mime) {
-  $key = geminiKey();
-  if ($key === null) return array(null, 'nokey');
-
-  $prompt = "You read screenshots of freight load boards (DAT One, Truckstop, 123Loadboard) "
-    . "and broker emails, and extract the load.\n\n"
-    . "Return ONLY a JSON object:\n"
-    . '{"is_load":true,"source":"","origin":"","destination":"","pickup":"","delivery":"","equipment":"",'
-    . '"rate":"","miles":"","weight":"","length":"","commodity":"","broker":"","mc":"","contact_name":"",'
-    . '"email":"","phone":"","reference":"","notes":"",'
-    . '"spot_rate":"","posted_age":"","trip_type":"","deadhead":"","broker_rating":"","days_to_pay":""}' . "\n\n"
-    . "RULES:\n"
-    . "- Copy values VERBATIM from the image. NEVER invent anything. Unknown -> empty string.\n"
-    . "- is_load: false if the image is not a freight load listing or load-related email.\n"
-    . "- origin/destination: 'CITY, ST' as shown.\n"
-    . "- rate: the posted or offered rate in dollars. If only rate-per-mile is shown, put it in rate as printed.\n"
-    . "- miles: trip distance if shown. weight: in pounds. length: feet.\n"
-    . "- equipment: VAN, REEFER, FLATBED, POWER ONLY, STEP DECK etc.\n"
-    . "- broker: the posting company. mc: their MC/DOT number if visible.\n"
-    . "- email/phone/contact_name: the broker contact details shown.\n"
-    . "- notes: special requirements (tarps, hazmat, team, appointment, TONU terms).\n"
-    . "- spot_rate: the load board's OWN displayed market/average rate for this lane if shown "
-    . "(e.g. a 'DAT Rate', 'Market avg $X/mi' or trend figure next to the posted rate) — NOT the posted rate itself.\n"
-    . "- posted_age: how long ago it was posted, as printed (e.g. '2 hrs ago', '13 min ago').\n"
-    . "- trip_type: 'Full' or 'Partial' if shown.\n"
-    . "- deadhead: deadhead/empty miles to the pickup if the board shows them (only appears when searched from a truck location).\n"
-    . "- broker_rating: any broker trust/credit badge or tier shown next to their name (e.g. 'Blue', 'Gold', a star rating).\n"
-    . "- days_to_pay: broker's average days-to-pay if shown (e.g. 'Avg 32 days').\n"
-    . "Output JSON only.";
-
-  $body = json_encode(array(
-    'contents' => array(array('parts' => array(
-      array('text' => $prompt),
-      array('inline_data' => array('mime_type' => $mime, 'data' => base64_encode($bytes))),
-    ))),
-    'generationConfig' => array(
-      'temperature' => 0,
-      'maxOutputTokens' => 4096,
-      // Без этого «размышления» съедают весь лимит вывода и приходит пустой
-      // ответ вообще без ошибки — грабля, на которую уже наступали.
-      'thinkingConfig' => array('thinkingBudget' => 0),
-      'responseMimeType' => 'application/json',
-    ),
+  list($data, $err) = geminiCall(visionPrompt(), array(
+    array('inline_data' => array('mime_type' => $mime, 'data' => base64_encode($bytes))),
   ));
-
-  $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . GEMINI_MODEL . ':generateContent';
-  $ch = curl_init($url);
-  curl_setopt_array($ch, array(
-    CURLOPT_POST => true, CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 90,
-    CURLOPT_POSTFIELDS => $body,
-    CURLOPT_HTTPHEADER => array('Content-Type: application/json', 'x-goog-api-key: ' . $key),
-  ));
-  $raw = curl_exec($ch);
-  curl_close($ch);
-  $resp = json_decode((string)$raw, true);
-  if (!is_array($resp) || isset($resp['error'])) {
-    return array(null, 'api:' . substr(isset($resp['error']['message']) ? $resp['error']['message'] : (string)$raw, 0, 200));
-  }
-  $text = isset($resp['candidates'][0]['content']['parts'][0]['text']) ? $resp['candidates'][0]['content']['parts'][0]['text'] : '';
-  $data = json_decode($text, true);
-  if (!is_array($data)) return array(null, 'nojson:' . substr($text, 0, 200));
+  if (!is_array($data)) return array(null, $err === '' ? 'nojson' : $err);
   if (isset($data['is_load']) && $data['is_load'] === false) return array(null, 'notload');
   return array($data, '');
+}
+
+/** Разобранная картинка оказалась рейт-коном, а не карточкой с лоуборда? */
+function isRateCon($d) {
+  return is_array($d)
+    && ((isset($d['doc_type']) && $d['doc_type'] === 'rate_con')
+        || !empty($d['stops']));
 }
 
 // ── Карточка груза со скриншота ─────────────────────────────────────

@@ -385,10 +385,23 @@ try {
 }
 $text = trim(preg_replace('/[ \t]+/', ' ', $text));
 $text = fixGluedUnits($text);
+// Текста нет — это скан или фото, вставленное в PDF. Не сдаёмся: отправляем
+// файл целиком в Gemini, он читает PDF как картинку. Рендерить страницы в
+// изображения самим нечем — на хостинге нет ни Imagick, ни ghostscript,
+// а shell_exec отключён.
+$scanned = false;
 if (mb_strlen($text) < 100) {
-  clearProgress($token, $chatId);
-  reply($token, $chatId, HELP_SCAN);
-  echo 'ok'; exit;
+  require_once __DIR__ . '/lib/load-photo.php';
+  list($scanLoad, $scanErr) = geminiFile(rcPrompt(), $pdf, 'application/pdf');
+  if (!is_array($scanLoad) || empty($scanLoad['stops'])) {
+    clearProgress($token, $chatId);
+    reply($token, $chatId, HELP_SCAN);
+    @file_put_contents(__DIR__ . '/../../tg-bot.log',
+      date('c') . ' scanned pdf failed: ' . mb_substr((string)$scanErr, 0, 200) . "\n", FILE_APPEND);
+    echo 'ok'; exit;
+  }
+  $scanned = true;
+  $load = $scanLoad;
 }
 // Разбирает Gemini, а у него контекст на порядки больше — режем только для
 // защиты от аномалий (200-страничный скан вместо рейт-кона), а не потому,
@@ -397,13 +410,14 @@ if (mb_strlen($text) < 100) {
 if (mb_strlen($text) > 200000) $text = mb_substr($text, 0, 200000);
 
 // ── Текст → структурированный JSON ─────────────────────────────────
-$groqKey = @trim(file_get_contents(__DIR__ . '/../../groq.key'));
-
 $sys = rcPrompt();
+$gemErr = '';
 
+// Скан уже разобран по картинке выше — второй раз не гоняем: это лишний
+// запрос из дневной квоты и риск затереть удачный результат.
 // Основной разборщик — Gemini: документ уходит целиком, лимиты позволяют
 // пользоваться ботом больше чем одному человеку в минуту.
-list($load, $gemErr) = geminiStructure($sys, $text);
+if (!$scanned) list($load, $gemErr) = geminiStructure($sys, $text);
 
 // Страховка: если Gemini недоступен (нет ключа, квота, сбой) — добираем через
 // Groq, он уже настроен для расширения DAT и голосового тренажёра. У Groq
@@ -949,40 +963,112 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   $L[] = '';
   $L[] = $name . ($dba !== null ? ' (DBA ' . $dba . ')' : '');
   $L[] = 'DOT ' . $dot . ($kind !== 'dot' ? ' · MC ' . $number : '');
-  $L[] = '';
-  $L[] = $lang === 'en' ? 'Criteria checked:' : 'Критерии проверки:';
+  // ── Ключевые проверки. Считаем пройденные, чтобы дать процент и вердикт.
+  // Common/Contract authority сюда НЕ входят: это статус перевозчика, а не
+  // брокера, и у нормального брокера они законно «неактивны» — показывать их
+  // рядом с галочками значит пугать диспетчера без причины.
+  $checks = array();   // [пройдена?, подпись, значение]
+  $blocker = false;    // хоть одна провалена — работать с таким брокером опасно
 
-  // Каждая строка ниже — конкретный официальный критерий: галочка стоит, только
-  // если по нему всё чисто. Пропускаем поле целиком, если FMCSA его не вернул
-  // (например, у чистого перевозчика без брокерской авторити просто нет этого статуса).
   $allowed = isset($rec['allowedToOperate']) ? $rec['allowedToOperate'] : null;
-  $allowedWord = $lang === 'en'
-    ? ($allowed === 'Y' ? 'YES' : ($allowed === 'N' ? 'NO' : 'unknown'))
-    : ($allowed === 'Y' ? 'ДА' : ($allowed === 'N' ? 'НЕТ' : 'неизвестно'));
-  $L[] = mark($allowed === 'Y') . ' ' . ($lang === 'en' ? 'Allowed to operate' : 'Право работать') . ': ' . $allowedWord;
-
-  if (isset($rec['brokerAuthorityStatus'])) {
-    $ba = $rec['brokerAuthorityStatus'];
-    $L[] = mark($ba === 'A') . ' ' . ($lang === 'en' ? 'Broker authority' : 'Брокерская авторити') . ': ' . authWord($ba, $lang);
+  if ($allowed !== null) {
+    $ok = $allowed === 'Y';
+    if (!$ok) $blocker = true;
+    $checks[] = array($ok, $lang === 'en' ? 'Allowed to operate' : 'Право работать',
+      $lang === 'en' ? ($ok ? 'YES' : 'NO') : ($ok ? 'ДА' : 'НЕТ'));
   }
-
+  if (isset($rec['brokerAuthorityStatus'])) {
+    $ok = $rec['brokerAuthorityStatus'] === 'A';
+    if (!$ok) $blocker = true;
+    $checks[] = array($ok, $lang === 'en' ? 'Broker authority' : 'Брокерская авторити',
+      authWord($rec['brokerAuthorityStatus'], $lang));
+  }
   // bondInsuranceOnFile — сумма в ТЫСЯЧАХ долларов, а не флаг Y/N: «75» = бонд
   // BMC-84 на $75 000. В приложении на этом уже обжигались.
   if (isset($rec['bondInsuranceOnFile']) && $rec['bondInsuranceOnFile'] !== '') {
     $bond = preg_replace('/\D/', '', (string)$rec['bondInsuranceOnFile']);
-    $hasBond = $bond !== '' && $bond !== '0';
-    $noWord = $lang === 'en' ? 'no' : 'нет';
-    $L[] = mark($hasBond) . ' BMC-84 ' . ($lang === 'en' ? 'bond' : 'бонд') . ': ' . ($hasBond ? '$' . number_format((float)$bond * 1000, 0, '.', ',') : $noWord);
+    $ok = $bond !== '' && $bond !== '0';
+    if (!$ok) $blocker = true;
+    $checks[] = array($ok, ($lang === 'en' ? 'BMC-84 bond' : 'Бонд BMC-84'),
+      $ok ? '$' . number_format((float)$bond * 1000, 0, '.', ',') : ($lang === 'en' ? 'none' : 'нет'));
+  }
+  // Out of service — прямой запрет работать, важнее почти всего остального.
+  if (isset($rec['oosDate'])) {
+    $oos = !empty($rec['oosDate']);
+    if ($oos) $blocker = true;
+    $checks[] = array(!$oos, $lang === 'en' ? 'Out of service' : 'Out of service',
+      $oos ? (string)$rec['oosDate'] : ($lang === 'en' ? 'no' : 'нет'));
+  }
+  // MCS-150: не блокирует, но просроченная анкета — признак заброшенной конторы.
+  if (isset($rec['mcs150Outdated'])) {
+    $ok = $rec['mcs150Outdated'] === 'N';
+    $checks[] = array($ok, $lang === 'en' ? 'MCS-150 up to date' : 'Анкета MCS-150 свежая',
+      $lang === 'en' ? ($ok ? 'yes' : 'outdated') : ($ok ? 'да' : 'просрочена'));
   }
 
-  // Common/Contract authority — статус перевозчика, не брокера; красным флагом не
-  // считаем, показываем справочно, без галочки.
-  if (isset($rec['commonAuthorityStatus']))   $L[] = 'Common authority: ' . authWord($rec['commonAuthorityStatus'], $lang);
-  if (isset($rec['contractAuthorityStatus'])) $L[] = 'Contract authority: ' . authWord($rec['contractAuthorityStatus'], $lang);
-  if (!empty($rec['safetyRating'])) $L[] = 'Safety rating: ' . $rec['safetyRating'];
-  $city = isset($rec['phyCity']) ? $rec['phyCity'] : '';
-  $st   = isset($rec['phyState']) ? $rec['phyState'] : '';
-  if ($city !== '' || $st !== '') $L[] = ($lang === 'en' ? 'Address' : 'Адрес') . ': ' . trim($city . ', ' . $st, ' ,');
+  $passed = 0;
+  foreach ($checks as $c) if ($c[0]) $passed++;
+  $total = count($checks);
+  $pct = $total > 0 ? (int)round($passed / $total * 100) : 0;
+
+  // Вердикт строкой: провал любой ключевой проверки — красный, независимо от %.
+  $L[] = '';
+  if ($total > 0) {
+    $icon = $blocker ? '🔴' : ($pct === 100 ? '🟢' : '🟡');
+    $verdict = $blocker
+      ? ($lang === 'en' ? 'key checks failed — do not work without clarifying' : 'ключевые проверки провалены — не работать без выяснения')
+      : ($pct === 100
+          ? ($lang === 'en' ? 'all checks passed' : 'все проверки пройдены')
+          : ($lang === 'en' ? 'passed with remarks' : 'пройдено с замечаниями'));
+    $L[] = sprintf('%s %d%% (%d/%d) — %s', $icon, $pct, $passed, $total, $verdict);
+  }
+
+  $L[] = '';
+  $L[] = $lang === 'en' ? 'Criteria checked:' : 'Критерии проверки:';
+  foreach ($checks as $c) $L[] = mark($c[0]) . ' ' . $c[1] . ': ' . $c[2];
+
+  // ── Контакты: то, ради чего диспетчер часто и открывает проверку.
+  $contacts = array();
+  if (!empty($rec['telephone']))    $contacts[] = ($lang === 'en' ? 'Phone: ' : 'Телефон: ') . $rec['telephone'];
+  if (!empty($rec['emailAddress'])) $contacts[] = 'Email: ' . $rec['emailAddress'];
+  $addr = array_filter(array(
+    isset($rec['phyStreet']) ? $rec['phyStreet'] : '',
+    isset($rec['phyCity']) ? $rec['phyCity'] : '',
+    isset($rec['phyState']) ? $rec['phyState'] : '',
+    isset($rec['phyZipcode']) ? $rec['phyZipcode'] : '',
+  ));
+  if ($addr) $contacts[] = ($lang === 'en' ? 'Address: ' : 'Адрес: ') . implode(', ', $addr);
+  if ($contacts) {
+    $L[] = '';
+    $L[] = $lang === 'en' ? '📞 Contacts (per FMCSA):' : '📞 Контакты (по данным FMCSA):';
+    foreach ($contacts as $c) $L[] = $c;
+  }
+
+  // ── Досье: размер парка и безопасность. Поля бывают не у всех записей,
+  // поэтому каждое показываем только если FMCSA его реально вернул.
+  $extra = array();
+  if (!empty($rec['safetyRating'])) {
+    $extra[] = 'Safety rating: ' . $rec['safetyRating']
+      . (!empty($rec['safetyRatingDate']) ? ' (' . $rec['safetyRatingDate'] . ')' : '');
+  }
+  if (isset($rec['totalPowerUnits']) && $rec['totalPowerUnits'] !== '') {
+    $extra[] = ($lang === 'en' ? 'Power units: ' : 'Тягачей: ') . $rec['totalPowerUnits'];
+  }
+  if (isset($rec['totalDrivers']) && $rec['totalDrivers'] !== '') {
+    $extra[] = ($lang === 'en' ? 'Drivers: ' : 'Водителей: ') . $rec['totalDrivers'];
+  }
+  if (isset($rec['crashTotal']) && $rec['crashTotal'] !== '' && (int)$rec['crashTotal'] > 0) {
+    $extra[] = ($lang === 'en' ? 'Crashes (24 mo): ' : 'ДТП за 24 мес: ') . $rec['crashTotal'];
+  }
+  if (!empty($rec['carrierOperation']['carrierOperationDesc'])) {
+    $extra[] = ($lang === 'en' ? 'Operation: ' : 'Тип работы: ') . $rec['carrierOperation']['carrierOperationDesc'];
+  }
+  if ($extra) {
+    $L[] = '';
+    $L[] = $lang === 'en' ? 'ℹ️ Company profile:' : 'ℹ️ О компании:';
+    foreach ($extra as $e) $L[] = $e;
+  }
+
   $L[] = '';
   $L[] = $lang === 'en' ? 'Source: FMCSA QCMobile, official data.' : 'Источник: FMCSA QCMobile, данные официальные.';
   return implode("\n", $L);
@@ -1367,10 +1453,25 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   if ($err !== '') { fail($token, $chatId, 'photo vision: ' . $err, 'сервис распознавания не справился с картинкой'); return; }
 
   $st = stateGet($chatId);
+  $lang = curLang($st);
+
+  // Фото/скан РЕЙТ-КОНА ведём по ветке рейт-кона, а не «груза с лоуборда»:
+  // у него есть адреса складов, окна времени и реф-номера, и человеку нужен
+  // текст водителю. Раньше любая картинка разбиралась схемой лоуборда, и эти
+  // поля молча терялись — ответ выглядел нормальным, но был неполным.
+  if (isRateCon($load)) {
+    $load = normalizeLoad($load);
+    $st['rc'] = $load;
+    $st['rc_missing'] = missingFields($load);
+    $st['last'] = 'rc';
+    stateSet($chatId, $st);
+    reply($token, $chatId, rcSummaryFull($load, $st['rc_missing'], $lang), rcKeyboard($load, $lang));
+    return;
+  }
+
   $st['load'] = $load;
   $st['last'] = 'load';
   stateSet($chatId, $st);
-  $lang = curLang($st);
 
   // Карточка + кнопки. Аналитика и письмо приходят по нажатию, а не сразу
   // тремя простынями подряд: обычно нужна одна из них.
