@@ -144,95 +144,6 @@ if (isset($_GET['diag'])) {
   exit;
 }
 
-// ── ВРЕМЕННО: какие модели Gemini реально доступны нашему ключу ──────
-// Названия в консоли AI Studio — витринные, у API свои идентификаторы.
-// Спрашиваем сам API, а не гадаем. Удалить после настройки цепочки.
-if (isset($_GET['gemprobe'])) {
-  header('Content-Type: text/plain; charset=utf-8');
-  if ($_GET['gemprobe'] !== 'b41f7ac9e2d5') { http_response_code(403); echo 'bad token'; exit; }
-  require_once __DIR__ . '/lib/load-photo.php';
-  $key = geminiKey();
-  if ($key === null) { echo "gemini.key нет\n"; exit; }
-
-  // 1. Официальный список моделей аккаунта — только по ?list=1, чтобы обычный
-  // прогон не тратил время впустую (список мы уже знаем).
-  if (isset($_GET['list'])) {
-    $ch = curl_init('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200');
-    curl_setopt_array($ch, array(CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 60,
-      CURLOPT_HTTPHEADER => array('x-goog-api-key: ' . $key)));
-    $list = json_decode((string)curl_exec($ch), true);
-    curl_close($ch);
-    echo "=== ДОСТУПНЫЕ МОДЕЛИ (generateContent) ===\n";
-    foreach ((array)(isset($list['models']) ? $list['models'] : array()) as $m) {
-      $methods = (array)(isset($m['supportedGenerationMethods']) ? $m['supportedGenerationMethods'] : array());
-      if (!in_array('generateContent', $methods, true)) continue;
-      $id = str_replace('models/', '', $m['name']);
-      if (stripos($id, 'flash') === false && stripos($id, 'pro') === false) continue;
-      echo str_pad($id, 44) . (isset($m['inputTokenLimit']) ? 'вход ' . number_format($m['inputTokenLimit']) : '') . "\n";
-    }
-    exit;
-  }
-
-  // 2. Живая проверка кандидатов. Gemini 3.x отвергает thinkingBudget=0
-  // («invalid argument»), поэтому пробуем оба варианта и смотрим, что реально
-  // работает — гадать по документации дороже, чем спросить API.
-  echo "\n=== ПРОВЕРКА КАНДИДАТОВ (с thinkingBudget / без) ===\n";
-  // Партиями через ?m=a,b — 20 запросов подряд не укладываются в таймаут nginx.
-  $cands = isset($_GET['m']) && $_GET['m'] !== ''
-    ? array_filter(array_map('trim', explode(',', $_GET['m'])))
-    : array('gemini-2.5-flash', 'gemini-3.6-flash');
-  // Короткий таймаут: у шлюза Hostinger ~60 с, а модель с включёнными
-  // «размышлениями» думает дольше. Боевому боту это не мешает (он отвечает
-  // Telegram сразу и дорабатывает в фоне), а проверке нужен быстрый ответ.
-  foreach ($cands as $model) {
-    $line = str_pad($model, 26);
-    foreach (array(true, false) as $think) {
-      list($d, $e) = geminiStructure('Return ONLY {"ok":true}', 'ping', array($model), $think, 18);
-      $line .= str_pad($d !== null ? ($think ? 'с:OK' : 'без:OK') : ($think ? 'с:—' : 'без:—'), 10);
-      if ($d === null && stripos($e, 'invalid argument') === false) $line .= '(' . substr(preg_replace('/\s+/', ' ', $e), 0, 60) . ')';
-    }
-    echo $line . "\n";
-  }
-  exit;
-}
-
-// ── ВРЕМЕННО: сравнение Gemini vs Groq на реальном тексте рейт-кона ──
-// Нужно ровно на время переезда с Groq на Gemini, чтобы решение о смене
-// движка стояло на цифрах. Закрыто одноразовым токеном; удалить после проверки.
-if (isset($_GET['rctest'])) {
-  header('Content-Type: application/json; charset=utf-8');
-  if ($_GET['rctest'] !== 'b41f7ac9e2d5') { http_response_code(403); echo '{"error":"bad token"}'; exit; }
-  // Текст рейт-кона в теле запроса режет WAF хостинга (403 Forbidden),
-  // поэтому принимаем его ещё и в base64 — тогда до PHP доходит целиком.
-  $t = file_get_contents('php://input');
-  if (strncmp($t, 'b64:', 4) === 0) $t = (string)base64_decode(substr($t, 4));
-  if (trim($t) === '') { echo '{"error":"post the extracted text as the body"}'; exit; }
-  require_once __DIR__ . '/lib/load-photo.php';
-  $sysT = rcPrompt();
-
-  $t0 = microtime(true);
-  list($gem, $gemErr) = geminiStructure($sysT, $t);
-  $gemSec = round(microtime(true) - $t0, 1);
-
-  $groqKey = @trim(file_get_contents(__DIR__ . '/../../groq.key'));
-  $t1 = microtime(true);
-  $body = json_encode(array('model' => GROQ_MODEL, 'temperature' => 0, 'max_tokens' => 2000,
-    'response_format' => array('type' => 'json_object'),
-    'messages' => array(array('role' => 'system', 'content' => $sysT),
-                        array('role' => 'user', 'content' => mb_substr($t, 0, 14000)))));
-  $gr = json_decode(httpPost('https://api.groq.com/openai/v1/chat/completions', $body,
-    array('Authorization: Bearer ' . $groqKey, 'Content-Type: application/json')), true);
-  $groqSec = round(microtime(true) - $t1, 1);
-  $groqJson = isset($gr['choices'][0]['message']['content']) ? json_decode($gr['choices'][0]['message']['content'], true) : null;
-
-  echo json_encode(array(
-    'chars' => mb_strlen($t),
-    'gemini' => array('sec' => $gemSec, 'err' => $gemErr, 'data' => $gem),
-    'groq' => array('sec' => $groqSec, 'err' => isset($gr['error']['code']) ? $gr['error']['code'] : '', 'data' => $groqJson),
-  ), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
-  exit;
-}
-
 // ── Живой ли ключ FMCSA (проверка брокера). Ключ наружу не отдаём ──
 if (isset($_GET['fmcsacheck'])) {
   header('Content-Type: text/plain; charset=utf-8');
@@ -725,7 +636,7 @@ function driverCard(array $d, $lang = 'en') {
 }
 
 // Промпт разбора рейт-кона — один на всех потребителей (Gemini, запасной Groq,
-// диагностика ?rctest). Проверен на живых документах: без запрета «придумывать»
+// запасной Groq). Проверен на живых документах: без запрета «придумывать»
 // модель подставляет адрес офиса брокера и выдуманные реф-номера.
 function rcPrompt() {
   return "You extract data from freight Rate Confirmation documents.\n"
