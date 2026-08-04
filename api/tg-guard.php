@@ -45,7 +45,12 @@ if ($url !== EXPECTED_URL) {
   $set = json_decode(tg($token, 'setWebhook', array(
     'url' => EXPECTED_URL,
     'secret_token' => hash('sha256', $token),
-    'allowed_updates' => json_encode(array('message')),
+    // 'callback_query' здесь ОБЯЗАТЕЛЕН и должен совпадать с ?setup=1. Без него
+    // после восстановления вебхука у бота молча умирают ВСЕ кнопки под
+    // сообщениями: текст водителю, письмо брокеру, перевод, проверка брокера.
+    // Заметить это трудно — обычные сообщения продолжают ходить как ни в чём
+    // не бывало, а сторож рапортует «вебхук восстановлен».
+    'allowed_updates' => json_encode(array('message', 'callback_query')),
   )), true);
   $restored = !empty($set['ok']);
   $problems[] = $restored ? 'наш вебхук восстановлен' : 'ВОССТАНОВИТЬ НЕ УДАЛОСЬ: ' . substr(json_encode($set), 0, 200);
