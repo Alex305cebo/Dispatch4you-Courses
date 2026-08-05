@@ -19,7 +19,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-05-1';
+const BUILD = '2026-08-05-2';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -806,7 +806,8 @@ function rcPrompt() {
   return "You extract data from freight Rate Confirmation documents.\n"
   . "The text is extracted from a PDF, so table columns may be interleaved and spacing is irregular. Read carefully.\n\n"
   . "Return ONLY a JSON object:\n"
-  . "{\"load_id\":\"\",\"broker\":\"\",\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
+  . "{\"load_id\":\"\",\"broker\":\"\",\"mc\":\"\",\"broker_phone\":\"\",\"broker_email\":\"\","
+  . "\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
   . "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
   . "CRITICAL RULES:\n"
   . "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
@@ -814,7 +815,14 @@ function rcPrompt() {
   . "- Strip label words glued to a value: 'Appointment', 'Time', 'Ref', 'Weight', '#'. Keep only the value.\n"
   . "- load_id: the load/order/PRO number of this shipment.\n"
   . "- broker: the company issuing the rate confirmation (not the carrier).\n"
+  . "- mc: the BROKER's MC/MC# number, digits only. It is usually in the header or footer next to the broker's "
+  . "name and address, printed as 'MC 123456', 'MC# 123456' or 'MC-123456'. NEVER take the carrier's MC — the "
+  . "carrier is the company the document is addressed TO. If only a DOT number is printed, leave mc empty.\n"
+  . "- broker_phone / broker_email: the booking contact for THIS load (the broker's rep), not the carrier's.\n"
   . "- stops: pickups (PICK, PICKUP, SHIPPER) and deliveries (STOP, DROP, CONSIGNEE, DELIVERY), in document order.\n"
+  . "- EVERY rate confirmation has at least one pickup AND at least one delivery. If your stops list has no pickup, "
+  . "you have missed it — re-read the whole document, including pages after the first, before answering. "
+  . "The pickup is often on a separate page or in a section titled only with the shipper's name.\n"
   . "- name: facility name. address_lines: the street line(s) AND then the 'CITY ST ZIP' line.\n"
   . "- address_lines MUST contain the CITY ST ZIP line whenever it appears in the document (e.g. 'EASTABOGA AL 36260'). "
   . "An address without its city line is unusable for a driver — never omit it.\n"
@@ -891,6 +899,17 @@ function missingFields(array $d) {
   if (empty($d['rate']))      $miss[] = array('field' => 'rate');
   if (empty($d['weight']))    $miss[] = array('field' => 'weight');
   if (empty($d['commodity'])) $miss[] = array('field' => 'commodity');
+  if (empty($d['mc'])) $miss[] = array('field' => 'mc');
+  // Целиком пропавший стоп раньше не считался пропажей: в сводке просто
+  // появлялось «Маршрут: ? → …», а карта в приложении не строилась вообще,
+  // и понять, что бот не дочитал документ, было невозможно.
+  $kinds = array();
+  foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
+    $kinds[(isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup'] = true;
+  }
+  if (empty($kinds['pickup']))   $miss[] = array('field' => 'nopickup');
+  if (empty($kinds['delivery'])) $miss[] = array('field' => 'nodelivery');
+
   $i = 0;
   foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
     $i++;
@@ -911,9 +930,15 @@ function missingFields(array $d) {
 function missingFieldsText(array $miss, $lang = 'ru') {
   $labels = $lang === 'en'
     ? array('load_id' => 'load number', 'rate' => 'rate', 'weight' => 'weight', 'commodity' => 'commodity',
-            'address' => 'address', 'citystate' => 'city and zip', 'time' => 'time', 'refs' => 'reference numbers')
+            'address' => 'address', 'citystate' => 'city and zip', 'time' => 'time', 'refs' => 'reference numbers',
+            'mc' => "broker's MC — the app cannot run the FMCSA check without it",
+            'nopickup' => 'the PICKUP stop — no map without it',
+            'nodelivery' => 'the DELIVERY stop — no map without it')
     : array('load_id' => 'номер загрузки', 'rate' => 'ставка', 'weight' => 'вес', 'commodity' => 'груз',
-            'address' => 'адрес', 'citystate' => 'город и индекс', 'time' => 'время', 'refs' => 'реф-номера');
+            'address' => 'адрес', 'citystate' => 'город и индекс', 'time' => 'время', 'refs' => 'реф-номера',
+            'mc' => 'MC брокера — без него приложение не проверит его по FMCSA',
+            'nopickup' => 'ПОГРУЗКА — без неё не построится карта',
+            'nodelivery' => 'ДОСТАВКА — без неё не построится карта');
   $stopWord = $lang === 'en'
     ? array('pickup' => 'pickup', 'delivery' => 'delivery')
     : array('pickup' => 'погрузка', 'delivery' => 'доставка');
@@ -1317,6 +1342,12 @@ function appLink(array $d) {
   if ($pickup)   { $c = cityState($pickup);   if ($c !== null) $p['origin'] = $c; }
   if ($delivery) { $c = cityState($delivery); if ($c !== null) $p['dest']   = $c; }
   if (!empty($d['broker']))  $p['bn']  = $d['broker'];
+  // Без MC приложение не может проверить брокера и пишет «MC не передан» —
+  // именно этого номера в извлечении раньше не было вовсе.
+  $mc = $num(isset($d['mc']) ? $d['mc'] : '');
+  if ($mc !== null) $p['mc'] = $mc;
+  if (!empty($d['broker_email'])) $p['email'] = $d['broker_email'];
+  if (!empty($d['broker_phone'])) $p['phone'] = $d['broker_phone'];
   if (!empty($d['load_id'])) $p['ref'] = ltrim($d['load_id'], '#');
 
   // Подробности стопов — их знает только рейт-кон, и без них страница не соберёт
