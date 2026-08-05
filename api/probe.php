@@ -14,7 +14,15 @@ foreach (array(
   'lib/PdfParser/Parser.php',
 ) as $f) {
   $p = __DIR__ . '/' . $f;
-  echo str_pad($f, 26) . (is_file($p)
-    ? filesize($p) . ' b  md5=' . md5_file($p)
-    : 'НЕТ ФАЙЛА') . "\n";
+  if (!is_file($p)) { echo str_pad($f, 26) . "НЕТ ФАЙЛА\n"; continue; }
+  // token_get_all с TOKEN_PARSE разбирает файл, НЕ выполняя его, и на кривом
+  // синтаксисе бросает ParseError с номером строки — это и есть php -l,
+  // которого на хостинге нет. Выполнять файл нельзя: это боевой вебхук.
+  $verdict = 'синтаксис ок';
+  try {
+    token_get_all(file_get_contents($p), TOKEN_PARSE);
+  } catch (\Throwable $e) {
+    $verdict = 'ОШИБКА: ' . $e->getMessage() . ' @ строка ' . $e->getLine();
+  }
+  echo str_pad($f, 26) . filesize($p) . ' b  ' . $verdict . "\n";
 }
