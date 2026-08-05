@@ -22,6 +22,25 @@ $base = __DIR__ . '/../../';
 $token = @trim(file_get_contents($base . 'tg-bot.key'));
 if ($token === '' || $token === false) { guardLog('tg-bot.key missing'); exit(1); }
 
+// Сначала — жив ли сам обработчик. 05.08.2026 он молча умер: хостинг обновил
+// PHP до 8.3, а opcache остался с байткодом от 8.2, и бот отдавал 200 с нулём
+// байт на ЛЮБОЙ запрос. Вебхук при этом был идеален, очередь пустая, Telegram
+// доволен — сторож рапортовал «всё в порядке», пока владелец не заметил сам.
+// ?diag печатает текст всегда, так что пустой ответ = обработчик не запускается.
+$body = @file_get_contents(EXPECTED_URL . '?diag', false, stream_context_create(
+  array('http' => array('timeout' => 20, 'ignore_errors' => true))
+));
+if (trim((string)$body) === '') {
+  $msg = "🚨 Сторож бота\n\nОбработчик не отвечает: " . EXPECTED_URL . "?diag вернул пусто.\n\n"
+       . "Обычно это opcache с устаревшим байткодом (бывает после смены версии PHP). "
+       . "Лечение: любое изменение содержимого api/telegram-bot.php и деплой — "
+       . "проще всего поменять строку BUILD в начале файла.";
+  guardLog(str_replace("\n", ' | ', $msg));
+  $admin = @trim(file_get_contents($base . 'tg-admin.txt'));
+  if ($admin !== '' && $admin !== false) tg($token, 'sendMessage', array('chat_id' => $admin, 'text' => $msg));
+  exit(1);
+}
+
 $info = json_decode(tg($token, 'getWebhookInfo', array()), true);
 if (empty($info['ok'])) {
   // Токен отозван или Telegram недоступен — молча не оставляем
