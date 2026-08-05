@@ -101,6 +101,23 @@ register_shutdown_function(function () {
   @curl_exec($ch); @curl_close($ch);
 });
 
+// ── Последние падения из tg-bot.log ─────────────────────────────────
+// Стоит ДО require и намеренно: когда библиотека не подключается, фатал
+// случается прямо на этой строке, и ВСЕ остальные диагностики (?diag,
+// ?geminicheck) умирают вместе с ней — снаружи это выглядит как пустой
+// ответ 200 на любой запрос, без единой подсказки о причине.
+// Наружу отдаём только строки [FATAL]: обычные записи лога содержат имена
+// присланных файлов, а это уже чужие данные.
+if (isset($_GET['lasterr'])) {
+  header('Content-Type: text/plain; charset=utf-8');
+  $lp = realpath(__DIR__ . '/../..') . '/tg-bot.log';
+  $txt = @file_get_contents(__DIR__ . '/../../tg-bot.log');
+  if ($txt === false) { echo "tg-bot.log не читается\nискали тут: $lp\n"; exit; }
+  $fatal = array_filter(explode("\n", $txt), function ($l) { return strpos($l, '[FATAL]') !== false; });
+  echo $fatal ? implode("\n", array_slice($fatal, -10)) . "\n" : "записей [FATAL] нет\n";
+  exit;
+}
+
 // Сводки, кнопки под разбором и обработка нажатий
 require_once __DIR__ . '/lib/tg-actions.php';
 // Черновик письма, карточка и аналитика по скриншоту. Подключаем ОДИН РАЗ здесь,
