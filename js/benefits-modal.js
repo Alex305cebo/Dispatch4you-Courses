@@ -205,7 +205,7 @@ const benefitData = {
       }
     ],
     ctaText: 'Смотреть обновления',
-    ctaLink: 'course.html'
+    ctaLink: 'pages/documentation.html'
   }
 };
 

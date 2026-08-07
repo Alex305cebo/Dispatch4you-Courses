@@ -205,7 +205,7 @@ const benefitData = {
       }
     ],
     ctaText: 'View Updates',
-    ctaLink: 'course.html'
+    ctaLink: 'pages/documentation.html'
   }
 };
 

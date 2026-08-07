@@ -6,11 +6,15 @@
  * на скролл убивала слабые машины; обычное воспроизведение декодируется
  * аппаратно). Секция ушла с экрана и вернулась — проигрывается заново.
  *
- * По скроллу остаются дешёвые эффекты (transform/opacity):
- *   - яркость по положению секции: плато со smoothstep-краями —
- *     входит снизу → проявляется, по центру → светло, уходит вверх → гаснет;
- *   - видео закреплено к вьюпорту (translateY = -stageTop) + мягкий
- *     параллакс-дрейф в пределах запаса высоты 120svh.
+ * Позиция статична: видео на position:fixed (см. section-video.css) — точно
+ * так же, как слой с траком. Раньше оно было absolute, а JS каждый кадр писал
+ * transform, заново «прибивая» его к вьюпорту и добавляя параллакс-дрейф;
+ * пересчёт отставал от прокрутки на кадр — картинка дрожала и ползла.
+ *
+ * По скроллу остался один дешёвый эффект — яркость по положению секции:
+ * плато со smoothstep-краями (входит снизу → проявляется, по центру → светло,
+ * уходит вверх → гаснет). Плюс гейт диапазона: fixed-видео иначе было бы
+ * видно на всей странице.
  * Источник (моб/десктоп) подставляет JS из data-mobile/data-desktop:
  * media= у <source> внутри <video> игнорирует Firefox.
  * Отказ автоплея → повтор по первому жесту; не вышло — остаётся постер.
@@ -31,8 +35,8 @@
 
   var PEAK  = narrow.matches ? 0.90 : 0.70;   // пик яркости (светло) — как у hero
   var EDGE  = 0.22;                           // доля прохода на осветление/затемнение по краям
-  var SPEED = 0.30;                           // мягкий параллакс как у героя: видео на 0.7× скорости контента (не рвётся)
-  var CENTER = 0.10;                          // видео 120svh: (1.2−1)/2 → центр вьюпорта в середине прохода
+  // Констант параллакса (SPEED/CENTER) больше нет: видео на position:fixed
+  // стоит неподвижно, JS пишет только opacity.
 
   // Под конец ролик тускнеет/полупрозрачен (как через стекло) и застывает так.
   var ENDDIM_SEC = 2.5;                       // за сколько секунд до конца начать гасить
@@ -53,7 +57,16 @@
     stage.style.height = (section.offsetHeight + vh) + 'px';
   }
 
+  // Видео на position:fixed видно потенциально на всей странице — гейтим
+  // диапазоном секции, как это делает слой с траком.
+  var inRange = false;
+  function setInRange(v) {
+    inRange = v;
+    if (!v) video.style.opacity = '0';
+  }
+
   function paint() {
+    if (!inRange) { video.style.opacity = '0'; return; }
     var vh = window.innerHeight || document.documentElement.clientHeight;
     var r = section.getBoundingClientRect();
 
@@ -67,27 +80,24 @@
     curE = e;
     video.style.opacity = (PEAK * e * endFade).toFixed(3);
 
-    // Видео ПРИКРЕПЛЕНО к вьюпорту (центрируем на нём) + мягкий параллакс-дрейф,
-    // ОГРАНИЧЕННЫЙ фактическим запасом высоты (vidH − vh). Запас меряем по реальной
-    // высоте видео (устойчиво к расхождению svh/vh на мобильных), а НЕ от высоты
-    // секции — поэтому на высоких вертикальных секциях край видео не оголяется.
-    var sr = stage.getBoundingClientRect();
-    var vidH = video.getBoundingClientRect().height || vh * 1.35;
-    var spare = Math.max(0, vidH - vh);
-    var prog = (vh - sr.top) / (vh + sr.height);
-    prog = prog < 0 ? 0 : (prog > 1 ? 1 : prog);
-    var y = -sr.top - spare / 2 + (prog - 0.5) * spare * 0.8;
-    video.style.transform = 'translate3d(0,' + y.toFixed(1) + 'px,0)';
+    // Позицию НЕ трогаем: видео на position:fixed и так стоит в одной точке
+    // экрана. Раньше здесь каждый кадр писался transform (пересчёт «прибивки»
+    // к вьюпорту плюс параллакс-дрейф) — он отставал от прокрутки на кадр,
+    // из-за чего картинка дрожала и постоянно ползла.
   }
 
   if (calm.matches) {                    // reduced-motion — статичный кадр
     layout();
-    paint();
-    // Строго ПОСЛЕ paint(): он сам пишет opacity по положению секции (см. выше),
-    // и затирал это значение. На старте секция ниже вьюпорта → e = 0 → постер
-    // оставался невидимым НАВСЕГДА: обработчика скролла в этой ветке нет,
-    // пересчитать opacity больше некому.
-    video.style.opacity = (PEAK * 0.5).toFixed(3);
+    // Обработчика скролла в этой ветке нет, поэтому яркость ставим один раз.
+    // Но видео теперь fixed — без гейта постер висел бы поверх всей страницы,
+    // так что показываем/прячем его по пересечению слоя с экраном.
+    if (window.IntersectionObserver) {
+      new IntersectionObserver(function (entries) {
+        var on = entries[0].isIntersecting;
+        setInRange(on);
+        if (on) video.style.opacity = (PEAK * 0.5).toFixed(3);
+      }, { threshold: 0 }).observe(stage);
+    }
     return;
   }
 
@@ -110,11 +120,14 @@
   if (window.IntersectionObserver) {
     // rootMargin 300px — начинаем грузить/играть чуть раньше входа, без вспышки постера.
     new IntersectionObserver(function (entries) {
-      if (entries[0].isIntersecting) tryPlay();   // вернулась на экран — доиграть/заново
+      var on = entries[0].isIntersecting;
+      setInRange(on);
+      if (on) { tryPlay(); paint(); }   // вернулась на экран — доиграть/заново
       else video.pause();
     }, { threshold: 0, rootMargin: '300px 0px' }).observe(stage);
   } else {
     if (src) video.src = src;
+    setInRange(true);
     tryPlay();
   }
 

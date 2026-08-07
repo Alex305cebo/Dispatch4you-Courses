@@ -45,87 +45,91 @@
   letter-spacing: -0.2px;
 }
 
-/* Benefits Grid */
+/* Benefits — бенто-сетка.
+   Четыре колонки: карточка-герой занимает 2×2, пять обычных по 2 или 1.
+   Внутри карточки один вертикальный поток (иконка → заголовок → текст →
+   показатель), ничего абсолютного — резать нечего. Акцентный цвет каждой
+   карточки приходит инлайном как --acc / --acc-s, поэтому одинаково серыми
+   они больше не выглядят. */
+
 .benefits-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
-  max-width: 1060px;
+  max-width: 1120px;
   margin: 0 auto;
 }
 
-.benefit-card {
+.bn-card {
+  --acc: #22d3ee;
+  --acc-s: 34, 211, 238;
+  grid-column: span 1;
+  min-width: 0;
   position: relative;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 22px 20px 18px;
+  gap: 12px;
+  padding: 24px 22px;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 20px;
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.018) 62%);
-  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background:
+    radial-gradient(130% 100% at 100% 0%, rgba(var(--acc-s), 0.13), transparent 62%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.028));
+  /* матовое стекло: за секцией идёт видео-фон, он размывается сквозь карточку */
+  backdrop-filter: blur(10px) saturate(1.15);
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.07);
   cursor: pointer;
-  overflow: visible;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  text-align: left;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.benefit-card:hover {
+/* Крупные — на две колонки. Ряд закрывается ровно: 2+1+1 и 1+1+2 */
+.bn-hero,
+.bn-card:last-child { grid-column: span 2; }
+
+.bn-card:hover,
+.bn-card:focus-visible {
   transform: translateY(-4px);
-  border-color: rgba(6, 182, 212, 0.42);
-  background: linear-gradient(160deg, rgba(6, 182, 212, 0.10) 0%, rgba(255, 255, 255, 0.02) 62%);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(6, 182, 212, 0.16),
+  border-color: rgba(var(--acc-s), 0.45);
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(var(--acc-s), 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  outline: none;
 }
 
-/* Иконка — обычная плитка в потоке, а не абсолютный водяной знак поверх текста */
-.benefit-img {
-  width: 52px;
-  height: 52px;
-  padding: 10px;
-  border-radius: 15px;
-  object-fit: contain;
-  opacity: 1;
-  background: linear-gradient(145deg, rgba(6, 182, 212, 0.18), rgba(14, 165, 233, 0.07));
-  border: 1px solid rgba(6, 182, 212, 0.22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  transition: transform 0.2s ease, border-color 0.2s ease;
-}
+.bn-card:active { transform: translateY(-1px) scale(0.995); }
 
-.benefit-card:hover .benefit-img {
-  transform: scale(1.06);
-  border-color: rgba(6, 182, 212, 0.45);
-}
-
-/* Тег — пилюля по ширине текста. Раньше подложка растягивалась во всю карточку */
-.benefit-tag {
+/* Иконка контурная и в цвете карточки — на тёмном фоне её видно,
+   в отличие от прежней тёмной картинки. */
+.bn-ico {
   display: inline-flex;
   align-items: center;
-  align-self: flex-start;
-  width: auto;
-  max-width: 100%;
-  padding: 4px 11px;
-  border-radius: 99px;
-  background: rgba(6, 182, 212, 0.14);
-  border: 1px solid rgba(6, 182, 212, 0.24);
-  color: #67e8f9;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  white-space: nowrap;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 14px;
+  color: var(--acc);
+  background: rgba(var(--acc-s), 0.13);
+  border: 1px solid rgba(var(--acc-s), 0.28);
 }
 
-.benefit-card h3 {
-  margin: 2px 0 0;
+.bn-ico svg { width: 24px; height: 24px; display: block; }
+.bn-hero .bn-ico { width: 56px; height: 56px; border-radius: 16px; }
+.bn-hero .bn-ico svg { width: 28px; height: 28px; }
+
+.bn-title {
+  margin: 0;
   font-size: 17px;
   font-weight: 800;
   line-height: 1.25;
-  color: #ffffff;
   letter-spacing: -0.2px;
+  color: #ffffff;
 }
 
-.benefit-card p {
+.bn-hero .bn-title { font-size: 24px; }
+
+.bn-text {
   margin: 0;
   font-size: 14px !important;
   line-height: 1.55 !important;
@@ -133,30 +137,123 @@
   font-weight: 500;
 }
 
-/* Цифра прижата к низу — карточки в ряду выравниваются по ней */
-.benefit-stat {
-  margin-top: auto;
-  padding-top: 12px;
-  width: 100%;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
-  font-size: 13px;
-  font-weight: 700;
-  color: #22d3ee;
+.bn-hero .bn-text { font-size: 15px !important; }
+
+/* Три числа — только у карточки-героя */
+.bn-nums {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 26px;
 }
 
-@media (max-width: 900px) {
-  .benefits-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.bn-nums b {
+  display: block;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+.bn-nums i {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94a3b8;
+  margin-top: 3px;
+}
+
+/* Показатель прижат к низу — низ всех карточек ряда встаёт на одну линию */
+.bn-foot {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Подпись держим в одну строку: в узкой колонке она рвалась на три и
+   налезала на ссылку. Не влезло — обрежется многоточием, а не поедет. */
+.bn-stat {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+  color: var(--acc);
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bn-stat span { color: #94a3b8; font-weight: 600; }
+
+/* Вместо надписи «Подробнее» — круглая стрелка: занимает 28px вместо ~90px */
+.bn-more {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.bn-card:hover .bn-more {
+  color: var(--acc);
+  background: rgba(var(--acc-s), 0.14);
+  border-color: rgba(var(--acc-s), 0.4);
+  transform: translateX(3px);
+}
+
+.bn-more svg { width: 14px; height: 14px; }
+
+/* Появление при прокрутке. Класс bn-reveal ставит JS — без него карточки
+   видны сразу. Сдвиг делаем свойством translate, чтобы не конфликтовать
+   с transform у :hover. */
+.benefits-grid.bn-reveal .bn-card { opacity: 0; translate: 0 16px; }
+
+.benefits-grid.bn-reveal .bn-card.in {
+  opacity: 1;
+  translate: 0 0;
+  transition: opacity 0.55s ease var(--d, 0s), translate 0.55s ease var(--d, 0s);
+}
+
+@media (max-width: 980px) {
+  .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .bn-hero .bn-title { font-size: 21px; }
 }
 
 @media (max-width: 640px) {
   .why-section { padding: 40px 0; }
   .benefits-grid { grid-template-columns: 1fr; gap: 12px; }
-  .benefit-card { padding: 18px 16px 15px; border-radius: 18px; gap: 9px; }
-  .benefit-card:hover { transform: none; }
-  .benefit-img { width: 46px; height: 46px; padding: 9px; border-radius: 13px; }
-  .benefit-card h3 { font-size: 16px; }
-  .benefit-card p { font-size: 13.5px !important; line-height: 1.5 !important; }
-  .benefit-stat { font-size: 12.5px; padding-top: 10px; }
+  /* одна колонка: span 2 из планшетного правила создал бы вторую — гасим */
+  .bn-card, .bn-hero, .bn-card:last-child { grid-column: span 1; }
+  .bn-card { padding: 18px 16px; border-radius: 18px; gap: 10px; }
+  .bn-card:hover { transform: none; }
+  .bn-ico, .bn-hero .bn-ico { width: 44px; height: 44px; border-radius: 13px; }
+  .bn-ico svg, .bn-hero .bn-ico svg { width: 22px; height: 22px; }
+  .bn-title, .bn-hero .bn-title { font-size: 16.5px; }
+  .bn-text, .bn-hero .bn-text { font-size: 13.5px !important; line-height: 1.5 !important; }
+  .bn-nums { gap: 10px 18px; }
+  .bn-nums b { font-size: 19px; }
+  .bn-foot { padding-top: 11px; }
+  .bn-stat { font-size: 12.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .benefits-grid.bn-reveal .bn-card { opacity: 1; translate: none; }
+  .bn-card, .bn-more { transition: none; }
 }
 
 .benefit-modal {
