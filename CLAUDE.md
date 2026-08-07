@@ -1,41 +1,31 @@
-# Dispatch Academy — Project Context
+# Repo Map — C:\DispatcherTraining (read this first)
 
-## Stack
-- React 18 + Vite + TypeScript + TailwindCSS
-- Zustand + persist (localStorage key: `dispatch-academy-progress`)
-- framer-motion, react-router-dom v6
-- Firebase Auth (eager) + Firestore (lazy via `getDb()`)
-- Vitest for tests
+This repo = the **dispatch4you.com** static site (RU + EN) + browser extensions + several games.
+It is NOT primarily the React academy app — that's ONE subfolder (`games/dispatch-academy-app/`).
+Main-site deploy: `main` → GitHub Actions → Hostinger (rsync). See memory `static-site-deploy`.
 
-## Key files
-- `src/store/useProgressStore.ts` — XP, level, streak, achievements, dayStatuses
-- `src/store/useUIStore.ts` — toasts, achievementModal
-- `src/components/layout/AppLayout.tsx` — header, bottom nav, all panels
-- `src/services/firebase.ts` — Firebase init, lazy `getDb()`
-- `src/services/firestore-progress.ts` — save/load/leaderboard (Firestore)
-- `src/hooks/useAuth.ts` — Google sign-in, AcademyUser type
-- `src/hooks/useFirestoreSync.ts` — debounced save + cloud restore on sign-in
-- `src/logic/achievements.ts` — 14 achievements, deriveStats, evaluateUnlocked
-- `src/pages/LeaderboardPage.tsx` — reads `academy-leaderboard` Firestore collection
-- `src/pages/SettingsPage.tsx` — daily goal, notifications, achievements grid
-- `public/sw.js` — service worker (network-first)
-- `public/manifest.webmanifest` — PWA manifest
+## Main site (RU) — repo root
+- i18n: EN mirror in `en/` (+ `en/pages/`); paired files use `.en.` suffix (`nav.en.html`, `course-navigation.en.js`). Edit a RU page → update its `en/` twin AND bump `?v=` in both. See memory `i18n-multilang-architecture`.
 
-## Routes (basename: /dispatch-academy-app)
-/, /map, /day/:dayId, /day/:dayId/task/:n, /exam/mini/:weekId, /exam/final,
-/flashcards, /glossary, /certificate, /settings, /leaderboard, /login
+## Games (each self-contained, own build/deploy)
+- `games/dispatch-academy-app/` — React+Vite academy app (стек, файлы и роуты читаются из самой папки)
+- `games/Survivors/` — HTML5 canvas game (cloud gh-pages flow) → **section below** + memory `survivors-game-deploy`
+- `adventure/` — "Office 4 Dispatch" game (main game project; memory `game-office4dispatch`)
+- `map-trainer/` + `maps/` + `build_map.js`/`fetch_routes_osrm.js` — US map/route trainer (OSM/OSRM data)
+- also: `games/Tetris`, `games/dispatch-office-v2`, `games/game2`, `game/`, `quiz/`
 
-## Deploy
-- Branch `main` → GitHub Actions → Hostinger (auto)
-- Dev branch: `claude/session-context-qcmlai`
-- Build: `cd games/dispatch-academy-app && npm run build`
-- Test: `cd games/dispatch-academy-app && npm test`
+## Extensions
+- `DispatchPro extension/` — Chrome ext for DAT (Groq key on server; memory `dispatch4you-extension-deploy`)
+- `voice-to-chat-extension/`, `ext/`, `3.14.4_0/`
 
-## Rules
+## Don't read these when searching (archives/backups — wasted tokens)
+`Old Modules/`, `_archive/`, `pages/_archive/`, `games/_archive_old_games/`, `*-BACKUP*`, `*.OLD.html`, `*-old.html`, `node_modules/`, `dist/`, `build/`
+
+## Rules (весь репозиторий)
 - NEVER run dev server, browser, or screenshots without explicit user request
 - NEVER push to main without explicit user request
 - ALWAYS ask before any action outside direct coding task
-- Commit only to `claude/session-context-qcmlai`, merge to main only when user says
+- Dispatch Academy: dev-ветка `claude/session-context-qcmlai`; коммитить только туда, мержить в main только по просьбе
 
 ---
 
@@ -88,3 +78,7 @@
 - Тестирование в браузере (Playwright) в облаке заблокировано, запуск скриптов из `/tmp` запрещён → проверка = синтаксис-чек + разбор кода + пользователь тестит вживую и даёт фидбэк.
 - Всё новое прятать за null-проверками (напр. режимы Акта 2 — за `act2Def`/`act2BaseWalls`), чтобы правки не ломали остальную игру.
 - Изредка наружу «протекает» служебный код вызова инструмента как непонятный текст — на результат не влияет, просто переотправить команду.
+
+## graphify (граф кодовой базы, только локально)
+- Вопрос про код → сперва `graphify query "<вопрос>"`, если есть `graphify-out/graph.json`; связи — `graphify path "<A>" "<B>"`, концепт — `graphify explain "<...>"`. Это дешевле, чем grep или `GRAPH_REPORT.md`.
+- После правок кода — `graphify update .` (только AST, без затрат на API).
