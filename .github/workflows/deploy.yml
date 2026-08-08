@@ -99,6 +99,15 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
+      # ВНИМАНИЕ: внутри команды ниже строки склеиваются по '\' — комментарий '#'
+      # там превратится в аргумент rsync. Любые пояснения писать только здесь.
+      #
+      # Про регистр в --exclude: rsync сверяет шаблоны с учётом регистра, поэтому
+      # '*.bak' и '*.old' НЕ ловили ни 'Trainer-Quiz.BACKUP-2026-03-28.html', ни
+      # 'simulator.OLD.html' — а это копии платных страниц, и они уезжали в
+      # открытый доступ. Отсюда шаблоны '*BACKUP*' и '*.OLD.html'.
+      # '_archive' — внутренние методички; 'deploy' — забытый прототип игры,
+      # к сайту не относится и ни одна страница на него не ссылается.
       - name: Deploy via rsync (with retry)
         run: |
           for i in 1 2 3 4 5 6; do
@@ -111,6 +120,8 @@ jobs:
               --exclude='node_modules' --exclude='*.md' --exclude='*.backup' \
               --exclude='*.bak' --exclude='*.old' --exclude='*.albers-backup' \
               --exclude='*.fixed-projection' --exclude='*.v2-debug' \
+              --exclude='*BACKUP*' --exclude='*.OLD.html' --exclude='*-backup.html' \
+              --exclude='_archive' --exclude='deploy' \
               --exclude='Old Modules' --exclude='server.py' \
               --exclude='installer' --exclude='build' \
               --exclude='DispatchPro extension' \
