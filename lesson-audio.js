@@ -20,6 +20,13 @@
 
     // Обновить прогресс
     function updateProgress(id, t, d) {
+        // Единственная точка, через которую проходит время трека: сюда ведут и реальное
+        // воспроизведение, и перемотка, и simulatePlayback. Событие шлём до проверки _box,
+        // чтобы визуалы урока (lesson-visuals.js) не зависели от состояния плеера в DOM.
+        document.dispatchEvent(new CustomEvent('la:progress', {
+            detail: { id: id, t: t, d: d, p: d > 0 ? t / d : 0 }
+        }));
+
         var au = document.getElementById(id);
         if (!au || !au._box) return;
         var box = au._box;

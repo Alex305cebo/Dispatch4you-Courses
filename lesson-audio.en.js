@@ -20,6 +20,13 @@
 
     // Update progress
     function updateProgress(id, t, d) {
+        // The single point every track time goes through: real playback, seeking and
+        // simulatePlayback all lead here. Dispatched before the _box check so lesson
+        // visuals (lesson-visuals.js) do not depend on the player's DOM state.
+        document.dispatchEvent(new CustomEvent('la:progress', {
+            detail: { id: id, t: t, d: d, p: d > 0 ? t / d : 0 }
+        }));
+
         var au = document.getElementById(id);
         if (!au || !au._box) return;
         var box = au._box;

@@ -1,0 +1,368 @@
+/* ===== LESSON VISUALS =====
+   Схемы и инфографика уроков. Работает в паре с lesson-visuals.js, но не зависит от него:
+   без JS блок отрисован в конечном виде (полосы шириной var(--w), числа настоящие).
+   Класс .lv-armed ставит JS — только он «сбрасывает» блок в ноль перед проигрыванием,
+   поэтому при выключенном JS ничего не схлопывается. */
+
+.lv {
+    --lv-acc: var(--primary, #06b6d4);
+    --lv-acc-2: var(--accent, #f97316);
+    position: relative;
+    margin: 8px 0 28px;
+    padding: 24px 24px 20px;
+    border: 1px solid var(--border, rgba(255, 255, 255, .15));
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .03);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+    overflow: hidden;
+}
+
+.lv-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.lv-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    color: var(--text-primary, #fff);
+}
+
+.lv-note {
+    font-size: 13px;
+    color: var(--text-muted, #94a3b8);
+}
+
+.lv-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-muted, #94a3b8);
+}
+
+.lv-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lv-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--lv-acc);
+    display: inline-block;
+}
+
+/* ---------- шаг: единица подсветки под озвучку ---------- */
+
+.lv-step {
+    transition: opacity .35s ease, transform .35s ease;
+}
+
+/* Пока секция звучит, неозвученные шаги приглушаются — но остаются читаемыми.
+   Ничего не прячем: урок можно читать глазами, не включая звук. */
+.lv.lv-sync .lv-step {
+    opacity: .34;
+}
+
+.lv.lv-sync .lv-step.is-passed {
+    opacity: .68;
+}
+
+.lv.lv-sync .lv-step.is-active {
+    opacity: 1;
+}
+
+.lv.lv-sync .lv-step.is-active .lv-row-label,
+.lv.lv-sync .lv-step.is-active .lv-cell-label {
+    color: var(--lv-acc);
+}
+
+/* ---------- полосы сравнения ---------- */
+
+.lv-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lv-row {
+    display: grid;
+    grid-template-columns: minmax(96px, 132px) 1fr auto;
+    align-items: center;
+    gap: 12px;
+}
+
+.lv-row-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary, #e2e8f0);
+    transition: color .3s ease;
+}
+
+.lv-track {
+    position: relative;
+    height: 14px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .06);
+    overflow: hidden;
+}
+
+.lv-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--x, 0%);
+    width: var(--w, 0%);
+    border-radius: 8px;
+    background: linear-gradient(90deg, var(--lv-acc), var(--lv-acc-2));
+    transition: width .9s cubic-bezier(.16, 1, .3, 1), left .9s cubic-bezier(.16, 1, .3, 1);
+}
+
+/* Взведено скриптом — полоса ждёт появления блока в кадре */
+.lv.lv-armed .lv-fill {
+    width: 0;
+}
+
+.lv.lv-armed.lv-in .lv-fill {
+    width: var(--w, 0%);
+}
+
+.lv-row-value {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-primary, #fff);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- составная полоса (вес: трак + груз) ---------- */
+
+.lv-stack {
+    display: flex;
+    height: 44px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .1);
+}
+
+.lv-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--w, 50%);
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 8px;
+    transition: width .9s cubic-bezier(.16, 1, .3, 1);
+}
+
+.lv-seg-truck {
+    background: linear-gradient(135deg, #334155, #475569);
+}
+
+.lv-seg-cargo {
+    background: linear-gradient(135deg, var(--lv-acc), var(--lv-acc-2));
+}
+
+.lv.lv-armed .lv-seg {
+    width: 0;
+}
+
+.lv.lv-armed.lv-in .lv-seg {
+    width: var(--w, 50%);
+}
+
+.lv-stack-caption {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted, #94a3b8);
+}
+
+.lv-big {
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--lv-acc), var(--lv-acc-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-variant-numeric: tabular-nums;
+}
+
+.lv-big-label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted, #94a3b8);
+    font-weight: 700;
+}
+
+.lv-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* ---------- схема габаритов ---------- */
+
+.lv-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 620px;
+    margin: 4px auto 0;
+    overflow: visible;
+}
+
+.lv-svg .lv-body {
+    fill: rgba(255, 255, 255, .05);
+    stroke: var(--lv-acc);
+    stroke-width: 2;
+}
+
+.lv-svg .lv-cab {
+    fill: rgba(255, 255, 255, .08);
+    stroke: rgba(255, 255, 255, .35);
+    stroke-width: 2;
+}
+
+.lv-svg .lv-wheel {
+    fill: #1e293b;
+    stroke: rgba(255, 255, 255, .35);
+    stroke-width: 2;
+}
+
+.lv-svg .lv-dim {
+    stroke: var(--lv-acc-2);
+    stroke-width: 1.5;
+}
+
+.lv-svg .lv-dim-text {
+    fill: var(--text-secondary, #e2e8f0);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ---------- сезонная сетка ---------- */
+
+.lv-season {
+    display: grid;
+    grid-template-columns: minmax(84px, 118px) repeat(12, 1fr);
+    gap: 4px;
+    align-items: center;
+}
+
+.lv-season-head {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    text-align: center;
+}
+
+.lv-cell-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary, #e2e8f0);
+    transition: color .3s ease;
+}
+
+.lv-cell {
+    height: 26px;
+    border-radius: 6px;
+    /* --lvl: 0 — не сезон, 1 — рабочий, 2 — пик */
+    background: rgba(255, 255, 255, .05);
+    transition: opacity .4s ease, transform .4s ease;
+}
+
+.lv-cell[data-lvl="1"] {
+    background: rgba(6, 182, 212, .38);
+}
+
+.lv-cell[data-lvl="2"] {
+    background: linear-gradient(135deg, var(--lv-acc), var(--lv-acc-2));
+}
+
+.lv.lv-armed .lv-cell {
+    opacity: 0;
+    transform: scale(.86);
+}
+
+.lv.lv-armed.lv-in .lv-cell {
+    opacity: 1;
+    transform: none;
+    /* лёгкая волна слева направо, --i задаётся в разметке */
+    transition-delay: calc(var(--i, 0) * 22ms);
+}
+
+/* ---------- мобильные ---------- */
+
+@media (max-width: 700px) {
+    .lv {
+        padding: 18px 14px 16px;
+    }
+
+    .lv-row {
+        grid-template-columns: minmax(76px, 96px) 1fr auto;
+        gap: 8px;
+    }
+
+    .lv-row-label,
+    .lv-row-value {
+        font-size: 12px;
+    }
+
+    /* 12 колонок в телефон не влезают — сезонная сетка листается вбок */
+    .lv-season-wrap {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .lv-season {
+        min-width: 520px;
+    }
+}
+
+/* ---------- уважение к системной настройке ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .lv-step,
+    .lv-fill,
+    .lv-seg,
+    .lv-cell {
+        transition: none !important;
+        transition-delay: 0ms !important;
+    }
+
+    .lv.lv-armed .lv-cell {
+        opacity: 1;
+        transform: none;
+    }
+
+    .lv.lv-armed .lv-fill {
+        width: var(--w, 0%);
+    }
+
+    .lv.lv-armed .lv-seg {
+        width: var(--w, 50%);
+    }
+}
