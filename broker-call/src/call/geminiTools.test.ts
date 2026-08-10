@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { TOOL_SCHEMAS, TOOL_NAMES } from './toolSchemas'
-import { toGeminiTools, toGeminiFunctionDeclarations } from './geminiTools'
+import {
+  toGeminiTools,
+  toGeminiFunctionDeclarations,
+  type GeminiFunctionDeclaration,
+} from './geminiTools'
+
+/** В тестах ниже конвертеру всегда даётся один инструмент — вот он. */
+function only(tools: readonly unknown[]): GeminiFunctionDeclaration {
+  const [decl] = toGeminiFunctionDeclarations(tools)
+  if (!decl) throw new Error('конвертер не вернул ни одного объявления')
+  return decl
+}
 
 /**
  * Тесты написаны ДО конвертера намеренно.
@@ -23,7 +34,7 @@ describe('конвертер инструментов в формат Gemini', (
 
   it('отдаёт ровно один tool-объект со списком объявлений', () => {
     expect(tools).toHaveLength(1)
-    expect(tools[0].functionDeclarations).toHaveLength(TOOL_SCHEMAS.length)
+    expect(tools[0]?.functionDeclarations).toHaveLength(TOOL_SCHEMAS.length)
   })
 
   it('сохраняет все имена инструментов один в один', () => {
@@ -32,7 +43,7 @@ describe('конвертер инструментов в формат Gemini', (
 
   it('сохраняет описания — по ним модель решает, когда звать инструмент', () => {
     for (const [i, decl] of decls.entries()) {
-      expect(decl.description).toBe(TOOL_SCHEMAS[i].function.description)
+      expect(decl.description).toBe(TOOL_SCHEMAS[i]?.function.description)
     }
   })
 
@@ -85,7 +96,7 @@ describe('конвертер инструментов в формат Gemini', (
   })
 
   it('у функции без параметров parameters отсутствует, а не пустой объект', () => {
-    const [decl] = toGeminiFunctionDeclarations([
+    const decl = only([
       {
         type: 'function',
         function: {
@@ -100,7 +111,7 @@ describe('конвертер инструментов в формат Gemini', (
   })
 
   it('выбрасывает ключи, которых нет в схеме Gemini', () => {
-    const [decl] = toGeminiFunctionDeclarations([
+    const decl = only([
       {
         type: 'function',
         function: {
@@ -123,13 +134,13 @@ describe('конвертер инструментов в формат Gemini', (
         },
       },
     ])
-    const x = decl.parameters?.properties?.x as Record<string, unknown>
+    const x = decl.parameters?.properties?.x as unknown as Record<string, unknown>
     expect(Object.keys(x).sort()).toEqual(['description', 'type'])
     expect(decl.parameters).not.toHaveProperty('additionalProperties')
   })
 
   it('разбирает вложенные объекты и массивы рекурсивно', () => {
-    const [decl] = toGeminiFunctionDeclarations([
+    const decl = only([
       {
         type: 'function',
         function: {
@@ -159,14 +170,14 @@ describe('конвертер инструментов в формат Gemini', (
     const stops = decl.parameters?.properties?.stops
     expect(stops?.type).toBe('ARRAY')
     expect(stops?.items?.type).toBe('OBJECT')
-    expect(stops?.items?.properties?.city.type).toBe('STRING')
-    expect(stops?.items?.properties?.appointment.type).toBe('BOOLEAN')
+    expect(stops?.items?.properties?.city?.type).toBe('STRING')
+    expect(stops?.items?.properties?.appointment?.type).toBe('BOOLEAN')
     expect(stops?.items?.required).toEqual(['city'])
   })
 
   it('неизвестный тип не проглатывается молча — падаем на сборке, а не в звонке', () => {
     expect(() =>
-      toGeminiFunctionDeclarations([
+      only([
         {
           type: 'function',
           function: {

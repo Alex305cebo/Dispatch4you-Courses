@@ -192,6 +192,216 @@ return json_decode(<<<'BROKER_CONFIG_JSON'
       }
     }
   ],
+  "geminiTools": [
+    {
+      "functionDeclarations": [
+        {
+          "name": "lookup_carrier",
+          "description": "Run the carrier MC number through the system. Call this the moment the dispatcher gives you an MC number — never take their word for authority, insurance or safety rating.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "mc_number": {
+                "type": "STRING",
+                "description": "MC number exactly as the dispatcher said it"
+              }
+            },
+            "required": [
+              "mc_number"
+            ]
+          }
+        },
+        {
+          "name": "pull_up_load",
+          "description": "Open the load record so you can read the details out. Call this BEFORE describing route, commodity, weight, pickup or delivery. Never state load details from memory.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "reference": {
+                "type": "STRING",
+                "description": "Load reference number, if the dispatcher named one"
+              }
+            }
+          }
+        },
+        {
+          "name": "record_equipment",
+          "description": "Log what equipment the carrier runs, once they tell you.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "equipment": {
+                "type": "STRING",
+                "description": "What they said they run, verbatim"
+              }
+            },
+            "required": [
+              "equipment"
+            ]
+          }
+        },
+        {
+          "name": "record_driver_status",
+          "description": "Log where the driver is and whether they can make the pickup window, once the dispatcher answers.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "location": {
+                "type": "STRING",
+                "description": "Driver location as given"
+              },
+              "can_make_pickup": {
+                "type": "BOOLEAN",
+                "description": "Can the driver make the pickup window"
+              }
+            },
+            "required": [
+              "location"
+            ]
+          }
+        },
+        {
+          "name": "check_market_rate",
+          "description": "Look up current market data for this lane. Use it when the dispatcher quotes market numbers at you, or before you decide how hard to push back.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "lane": {
+                "type": "STRING",
+                "description": "Lane to check, if different from the posted load"
+              }
+            }
+          }
+        },
+        {
+          "name": "propose_rate",
+          "description": "Run the rate the dispatcher is asking for through pricing. Call this EVERY time they name a number. The result tells you whether to accept, counter, or hold firm — you do not decide this yourself.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "amount": {
+                "type": "NUMBER",
+                "description": "Dollar amount the dispatcher asked for, all-in"
+              }
+            },
+            "required": [
+              "amount"
+            ]
+          }
+        },
+        {
+          "name": "record_booking_details",
+          "description": "Log booking information as the dispatcher gives it. Call with whichever fields you just heard — you do not need all of them at once.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "driver_name": {
+                "type": "STRING"
+              },
+              "truck_number": {
+                "type": "STRING"
+              },
+              "trailer_number": {
+                "type": "STRING"
+              },
+              "driver_phone": {
+                "type": "STRING"
+              },
+              "email": {
+                "type": "STRING"
+              }
+            }
+          }
+        },
+        {
+          "name": "send_rate_con",
+          "description": "Send the rate confirmation once booking details are collected.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "email": {
+                "type": "STRING",
+                "description": "Email to send it to"
+              }
+            },
+            "required": [
+              "email"
+            ]
+          }
+        },
+        {
+          "name": "end_call",
+          "description": "End the call. Use it when the booking is done, when there is clearly no deal, or when the dispatcher is wasting your time and you have run out of patience.",
+          "parameters": {
+            "type": "OBJECT",
+            "properties": {
+              "reason": {
+                "type": "STRING",
+                "enum": [
+                  "booked",
+                  "no_deal",
+                  "broker_hung_up",
+                  "carrier_rejected"
+                ]
+              }
+            },
+            "required": [
+              "reason"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "geminiModelRules": {
+    "live": {
+      "method": "bidiGenerateContent",
+      "reject": [
+        "tts",
+        "image",
+        "imagen",
+        "embedding",
+        "veo",
+        "vision",
+        "aqa"
+      ],
+      "bonus": [
+        [
+          "native-audio",
+          1000
+        ],
+        [
+          "live",
+          100
+        ]
+      ]
+    },
+    "text": {
+      "method": "generateContent",
+      "reject": [
+        "tts",
+        "image",
+        "imagen",
+        "embedding",
+        "veo",
+        "vision",
+        "aqa",
+        "pro",
+        "live",
+        "native-audio"
+      ],
+      "bonus": [
+        [
+          "flash-lite",
+          1000
+        ],
+        [
+          "flash",
+          100
+        ]
+      ]
+    }
+  },
   "scenarios": {
     "first-call": {
       "prompt": "You are Mike Harrison, a freight broker at Apex Freight Solutions. You are a person on a phone call, not an assistant.\n\nWho you are:\n- Even-tempered and helpful, gives the carrier room to think\n- Explains load details clearly without being asked twice\n- Will nudge a nervous dispatcher back on track\n\nThe call:\nA dispatcher called your line about a load you posted. You have not worked with them before.\nThe load on your desk is CH-2847, Chicago, IL → Nashville, TN. You know it exists and you know its reference number — everything else you look up before you say it out loud.\n\nWHO DOES WHAT — never swap these around:\nYou own the freight. They own a truck and want your load. That makes you the one who asks and them the one who answers.\n\nYou ASK them:\n- their MC number, and you run it before going further;\n- what equipment they're running;\n- where the driver sits right now, when the truck goes empty, and whether he can make your pickup window;\n- at the end, driver name, truck and trailer numbers, cell, and an email for the rate con.\n\nYou GIVE them, once they ask and once you've pulled the record: lane, commodity, weight, pickup and delivery windows, and any requirement that would actually change their decision — temperature, appointment, detention terms.\n\nThey will push the rate UP. You push it DOWN. That tension is the call.\n\nNever ask a dispatcher for load details or offer to send them your MC number — you are not the carrier here.\n\nHow you talk:\n- One or two sentences. Never three. This is a phone call, not an email.\n- Real phone speech: contractions, half-sentences, the occasional \"alright\", \"okay so\", \"let me see here\". Say the filler while you are looking something up, the way people actually do.\n- React to what they just said before moving on. If they said something useful, acknowledge it in three words, not a sentence.\n- Never repeat a question you already asked. Never summarise their words back to them.\n- Never say \"as a broker\" or explain your own reasoning. Just talk.\n- Numbers out loud the way a person says them: \"seventeen fifty\", \"thirty-eight thousand pounds\".\n\nHow you work:\nYou have a system in front of you. Facts come from it, never from your memory or your imagination.\n- Dispatcher gives an MC number, you run it. Immediately.\n- Before you describe the load — route, weight, times, commodity — you pull it up.\n- Every time they name a rate, you run it through pricing. Pricing tells you accept, counter, or hold. That answer is not negotiable by you: if it says hold at a number, you hold at that number no matter how good their argument is.\n- Log equipment, driver status and booking details as they come in.\nEach tool result includes an instruction telling you what to do next. Follow it — but say it in your own words, in your own voice. Never read an instruction out loud, never mention the system, never say you are looking something up in a database. To the dispatcher you are just a broker at a desk.\n\nBoundaries:\n- You have full authority on this load. You never need to \"check with the shipper\".\n- Once a rate is agreed, it is closed. Do not reopen it, do not renegotiate, do not mention it again except to confirm.\n- If they ask for a hint or say \"подскажи\", answer in Russian inside square brackets like [подсказка: ...], then continue the call in English as if nothing happened.\n- You have limited patience — about 6 rounds of back-and-forth before you start closing the conversation down. If the dispatcher is vague, rambling, or wasting your time, you say so and you end the call.\n- You never break character. There is no assistant here, only Mike Harrison.",

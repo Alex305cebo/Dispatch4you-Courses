@@ -54,8 +54,10 @@ const TYPES: Record<string, GeminiType> = {
   object: 'OBJECT',
 }
 
-/** Ключи, которые Gemini понимает. Всё остальное отбрасывается. */
-const KEPT = ['description', 'format', 'nullable', 'minItems', 'maxItems'] as const
+// Ключи, которые Gemini понимает: type, description, format, nullable, enum,
+// items, properties, required, minItems, maxItems. Всё прочее — default,
+// pattern, additionalProperties, $schema — переносится белым списком ниже, то
+// есть не переносится вовсе.
 
 /**
  * Готовый блок tools для запроса к Gemini.
@@ -111,10 +113,11 @@ function convertSchema(input: unknown, path: string): GeminiSchema | undefined {
 
   const out: GeminiSchema = { type }
 
-  for (const key of KEPT) {
-    const value = src[key]
-    if (value !== undefined) (out as Record<string, unknown>)[key] = value
-  }
+  if (typeof src.description === 'string') out.description = src.description
+  if (typeof src.format === 'string') out.format = src.format
+  if (typeof src.nullable === 'boolean') out.nullable = src.nullable
+  if (typeof src.minItems === 'number') out.minItems = src.minItems
+  if (typeof src.maxItems === 'number') out.maxItems = src.maxItems
 
   if (src.enum !== undefined) {
     if (!Array.isArray(src.enum)) {

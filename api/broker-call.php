@@ -56,6 +56,10 @@ function bc_key($name) {
 $groqKey     = bc_key('groq.key');
 $cerebrasKey = bc_key('cerebras.key');
 $openaiKey   = bc_key('openai.key');
+// Пока файла gemini.key нет, ветка Gemini не включается ничем: config отдаёт
+// false, фронт даже не пробует и идёт прежним пайплайном. Появление файла —
+// единственный переключатель.
+$geminiKey   = bc_key('gemini.key');
 
 // Списки, а не одиночные имена: провайдеры снимают модели с бесплатного тарифа
 // без предупреждения. Groq объявил llama-3.3-70b-versatile устаревшей
@@ -146,16 +150,149 @@ function bc_silent_wav() {
     . 'data' . pack('V', strlen($data)) . $data;
 }
 
+// ── Gemini Live ──────────────────────────────────────────────────────────────
+// Браузер получает ОДНОРАЗОВЫЙ токен, а не ключ: вебсокет открыт со страницы,
+// а страница открыта у студента. Настройки сессии запираются здесь же, поэтому
+// подменить системный промпт или список инструментов со стороны браузера
+// нельзя — он присылает пустой setup.
+
+define('BC_GEMINI_API', 'https://generativelanguage.googleapis.com');
+define('BC_GEMINI_WS', 'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent');
+
+/** Каталог моделей ключа. Кэш на десять минут: он меняется реже, чем звонят. */
+function bc_gemini_models($key) {
+  $cache = sys_get_temp_dir() . '/bc-gemini-models-' . substr(sha1($key), 0, 12) . '.json';
+  if (is_readable($cache) && (time() - filemtime($cache)) < 600) {
+    $cached = json_decode((string) @file_get_contents($cache), true);
+    if (is_array($cached)) { return [200, $cached]; }
+  }
+
+  $ch = curl_init(BC_GEMINI_API . '/v1beta/models?pageSize=1000&key=' . rawurlencode($key));
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+  $body = curl_exec($ch);
+  if ($body === false) { $err = curl_error($ch); curl_close($ch); return [502, 'models.list: ' . $err]; }
+  $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+  curl_close($ch);
+  if ($code < 200 || $code >= 300) { return [$code, substr((string) $body, 0, 200)]; }
+
+  $data = json_decode((string) $body, true);
+  $models = (is_array($data) && isset($data['models']) && is_array($data['models'])) ? $data['models'] : [];
+  @file_put_contents($cache, json_encode($models));
+  return [200, $models];
+}
+
+/**
+ * Выбор модели по политике из broker-config.php.
+ *
+ * Имён моделей здесь нет намеренно: вписанное в код имя — то, на чём тренажёр
+ * замолкал трижды. Политика («умеет вебсокет», «не pro, потому что суточный
+ * лимит меньше группы») лежит в src/call/geminiModels.ts и покрыта тестами,
+ * сюда она приезжает готовой таблицей. Здесь повторяется только подсчёт.
+ */
+function bc_gemini_pick($models, $kind) {
+  $config = bc_config();
+  if (!isset($config['geminiModelRules'][$kind])) { return null; }
+  $rule = $config['geminiModelRules'][$kind];
+
+  $best = null;
+  $bestScore = -1;
+  foreach ($models as $model) {
+    if (!is_array($model) || !isset($model['name'])) { continue; }
+    $id = strtolower(trim(preg_replace('#^models/#', '', (string) $model['name'])));
+    if ($id === '') { continue; }
+
+    $methods = (isset($model['supportedGenerationMethods']) && is_array($model['supportedGenerationMethods']))
+      ? $model['supportedGenerationMethods'] : [];
+    if (!in_array($rule['method'], $methods, true)) { continue; }
+
+    $rejected = false;
+    foreach ($rule['reject'] as $bad) {
+      if (strpos($id, $bad) !== false) { $rejected = true; break; }
+    }
+    if ($rejected) { continue; }
+
+    $version = 0.0;
+    if (preg_match('/gemini-(\d+(?:\.\d+)?)/', $id, $m)) { $version = (float) $m[1]; }
+    $score = $version * 10;
+    foreach ($rule['bonus'] as $bonus) {
+      if (strpos($id, (string) $bonus[0]) !== false) { $score += (float) $bonus[1]; }
+    }
+
+    // При равных очках берём имя «больше» — у Google в хвосте имени дата.
+    if ($score > $bestScore || ($score == $bestScore && $best !== null && strcmp($id, $best) > 0)) {
+      $bestScore = $score;
+      $best = $id;
+    }
+  }
+  return $best;
+}
+
+/** Настройки сессии. Уходят вместе с токеном и после этого заперты. */
+function bc_gemini_setup($model, $prompt, $voice) {
+  $config = bc_config();
+  return [
+    'model'             => 'models/' . $model,
+    'generationConfig'  => [
+      'responseModalities' => ['AUDIO'],
+      'temperature'        => 0.85,
+      'speechConfig'       => [
+        'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => bc_gemini_voice($voice)]],
+      ],
+    ],
+    'systemInstruction' => ['parts' => [['text' => $prompt]]],
+    'tools'             => isset($config['geminiTools']) ? $config['geminiTools'] : [],
+    // Текст обеих сторон нужен экрану: слова на экране — это весь тренажёр.
+    'inputAudioTranscription'  => new stdClass(),
+    'outputAudioTranscription' => new stdClass(),
+    // Паузы режет провайдер по самому аудио, а не по громкости, — в шумной
+    // комнате это работает лучше нашего детектора.
+    'realtimeInputConfig' => ['automaticActivityDetection' => new stdClass()],
+  ];
+}
+
+// Голоса Gemini. С набором Groq не пересекаются ни одним именем — ровно на
+// перепутанных наборах тренажёр однажды онемел.
+$GEMINI_VOICES = ['Puck', 'Charon', 'Fenrir', 'Orus', 'Kore', 'Aoede', 'Leda', 'Zephyr'];
+$GEMINI_DEFAULT_VOICE = 'Puck';
+
+function bc_gemini_voice($raw) {
+  global $GEMINI_VOICES, $GEMINI_DEFAULT_VOICE;
+  $v = strtolower(trim((string) $raw));
+  foreach ($GEMINI_VOICES as $name) {
+    if (strtolower($name) === $v) { return $name; }
+  }
+  return $GEMINI_DEFAULT_VOICE;
+}
+
+/** Одноразовый токен на одну сессию. Возвращает [код, тело]. */
+function bc_gemini_token($key, $setup) {
+  return bc_post_json(
+    BC_GEMINI_API . '/v1alpha/auth_tokens?key=' . rawurlencode($key),
+    '',
+    [
+      'uses'                     => 1,
+      // Полчаса на сам звонок и две минуты на то, чтобы его начать.
+      'expireTime'               => gmdate('Y-m-d\TH:i:s\Z', time() + 1800),
+      'newSessionExpireTime'     => gmdate('Y-m-d\TH:i:s\Z', time() + 120),
+      'bidiGenerateContentSetup' => $setup,
+    ]
+  );
+}
+
 /** POST JSON к OpenAI-совместимому провайдеру. Возвращает [код, тело]. */
 function bc_post_json($url, $key, $payload) {
   $ch = curl_init($url);
   curl_setopt($ch, CURLOPT_POST, true);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
   curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-  curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json',
-    'Authorization: Bearer ' . $key,
-  ]);
+  // Пустой ключ — значит авторизация уже в адресе (?key=…, так ходит Google).
+  // Отправлять при этом «Authorization: Bearer » нельзя: заголовок пустой, а
+  // отказ получается тот же, что при неверном ключе, и искать его пришлось бы
+  // среди настоящих проблем с ключами.
+  $headers = ['Content-Type: application/json'];
+  if ($key !== '') { $headers[] = 'Authorization: Bearer ' . $key; }
+  curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
   curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload, JSON_UNESCAPED_UNICODE));
   $body = curl_exec($ch);
   if ($body === false) {
@@ -182,6 +319,8 @@ switch ($action) {
         'stt'      => ($groqKey !== ''),
         'tts'      => ($groqKey !== ''),
         'realtime' => ($openaiKey !== ''),
+        // Ключа нет — фронт не пробует Gemini и работает как работал.
+        'gemini'   => ($geminiKey !== ''),
       ],
     ]);
   }
@@ -195,6 +334,7 @@ switch ($action) {
         'groq'     => $groqKey !== '',
         'cerebras' => $cerebrasKey !== '',
         'openai'   => $openaiKey !== '',
+        'gemini'   => $geminiKey !== '',
       ],
       'config' => [
         'scenarios' => count(bc_config()['scenarios']),
@@ -303,6 +443,51 @@ switch ($action) {
     } else {
       $result['probe']['tts'] = ['ok' => false, 'error' => 'no groq.key'];
       $result['probe']['stt'] = ['ok' => false, 'error' => 'no groq.key'];
+    }
+
+    // Gemini: проба идёт тем же путём, что и звонок, — каталог, выбор модели,
+    // выпуск токена. Проверять надо то, что ломается, а не то, что удобно
+    // проверить: прежняя проба чата слала голый ping и светилась зелёным,
+    // пока настоящий разговор падал.
+    if ($geminiKey !== '') {
+      $t0 = microtime(true);
+      list($code, $models) = bc_gemini_models($geminiKey);
+      if ($code < 200 || $code >= 300) {
+        $result['probe']['gemini'] = ['ok' => false, 'stage' => 'models.list', 'status' => $code, 'error' => substr((string) $models, 0, 200)];
+      } else {
+        $live = bc_gemini_pick($models, 'live');
+        $text = bc_gemini_pick($models, 'text');
+        if ($live === null) {
+          $result['probe']['gemini'] = [
+            'ok'     => false,
+            'stage'  => 'pick',
+            'error'  => 'на этом ключе нет модели с bidiGenerateContent',
+            'models' => count($models),
+          ];
+        } else {
+          // Первый попавшийся сценарий: пробе важно, что токен выпускается с
+          // настоящим промптом и настоящими инструментами, а не какой именно.
+          $scenarios = bc_config()['scenarios'];
+          $first = is_array($scenarios) ? reset($scenarios) : null;
+          $prompt = (is_array($first) && isset($first['prompt'])) ? $first['prompt'] : 'You are a freight broker.';
+          list($tc, $tb) = bc_gemini_token($geminiKey, bc_gemini_setup($live, $prompt, ''));
+          $probe = [
+            'ok'         => ($tc >= 200 && $tc < 300),
+            'live_model' => $live,
+            'text_model' => $text,
+            'models'     => count($models),
+            'ms'         => (int) round((microtime(true) - $t0) * 1000),
+          ];
+          if (!$probe['ok']) {
+            $probe['stage']  = 'auth_tokens';
+            $probe['status'] = $tc;
+            $probe['error']  = substr((string) $tb, 0, 200);
+          }
+          $result['probe']['gemini'] = $probe;
+        }
+      }
+    } else {
+      $result['probe']['gemini'] = ['ok' => false, 'error' => 'no gemini.key'];
     }
 
     bc_json($result);
@@ -545,6 +730,40 @@ switch ($action) {
     header('Cache-Control: no-store');
     echo $body;
     exit;
+  }
+
+  // ── Сессия Gemini Live ─────────────────────────────────────────────────────
+  // Отдаём одноразовый токен и имя модели, которое узнали у провайдера прямо
+  // сейчас. Ключ в браузер не уезжает ни на минуту.
+  case 'gemini-session': {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') { bc_fail(405, 'POST only'); }
+    if ($geminiKey === '') { bc_fail(503, 'gemini.key is not set'); }
+    $in = bc_body();
+    $scenario = bc_scenario(isset($in['scenarioId']) ? (string) $in['scenarioId'] : '');
+    if ($scenario === null) { bc_fail(400, 'unknown scenario'); }
+
+    list($code, $models) = bc_gemini_models($geminiKey);
+    if ($code < 200 || $code >= 300) { bc_fail(502, 'models.list: ' . substr((string) $models, 0, 200)); }
+
+    $model = bc_gemini_pick($models, 'live');
+    if ($model === null) { bc_fail(503, 'на этом ключе нет модели с bidiGenerateContent'); }
+
+    list($tc, $tb) = bc_gemini_token(
+      $geminiKey,
+      bc_gemini_setup($model, $scenario['prompt'], isset($in['voice']) ? $in['voice'] : '')
+    );
+    if ($tc < 200 || $tc >= 300) { bc_fail($tc, 'auth_tokens: ' . substr((string) $tb, 0, 300)); }
+
+    $token = json_decode((string) $tb, true);
+    if (!is_array($token) || !isset($token['name'])) { bc_fail(502, 'auth_tokens ответил без токена'); }
+
+    bc_json([
+      'token' => $token['name'],
+      'model' => $model,
+      'wsUrl' => BC_GEMINI_WS,
+      // Настройки заперты на стороне сервера: клиент шлёт пустой setup.
+      'setup' => ['locked' => true],
+    ]);
   }
 
   default:

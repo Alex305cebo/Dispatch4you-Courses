@@ -3,7 +3,10 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { buildSystemPrompt } from '../src/call/prompt'
 import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
 import { buildDebriefPrompt } from '../src/call/debriefPrompt'
+import { toGeminiTools } from '../src/call/geminiTools'
+import { pickLiveModel, type ModelInfo } from '../src/call/geminiModels'
 import { normalizeVoice } from '../src/voice/voices'
+import { normalizeGeminiVoice } from '../src/voice/geminiVoices'
 
 /**
  * Дев-сервер, который держит ключи у себя.
@@ -19,6 +22,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
   const groqKey = env.GROQ_API_KEY ?? ''
   const cerebrasKey = env.CEREBRAS_API_KEY ?? ''
   const openaiKey = env.OPENAI_API_KEY ?? ''
+  const geminiKey = env.GEMINI_API_KEY ?? ''
   const transport = env.BROKER_CALL_TRANSPORT === 'realtime' ? 'realtime' : 'pipeline'
 
   // Списки, а не одиночные имена: провайдеры снимают модели с бесплатного
@@ -42,8 +46,34 @@ export function brokerApi(env: Record<string, string>): Plugin {
           stt: Boolean(groqKey),
           tts: Boolean(groqKey),
           realtime: Boolean(openaiKey),
+          // Ключа нет — фронт даже не пробует Gemini и работает как работал.
+          gemini: Boolean(geminiKey),
         },
       })))
+
+      // ── Сессия Gemini Live ────────────────────────────────────────────────
+      // Отдаём браузеру ОДНОРАЗОВЫЙ токен, а не ключ. Ключ не должен уезжать
+      // в браузер ни на минуту: вебсокет открыт со страницы, а страница
+      // открыта у студента.
+      //
+      // Имя модели спрашиваем у провайдера в момент запуска. Вписанное в код
+      // имя — то, на чём мы горели трижды: оно перестаёт существовать, и всё
+      // замолкает разом.
+      server.middlewares.use('/api/gemini-session', json(async (req) => {
+        if (!geminiKey) throw new HttpError(503, 'GEMINI_API_KEY is not set')
+        const body = await readJson<{ scenarioId: string; voice?: string }>(req)
+        const models = await geminiModels(geminiKey)
+        const model = pickLiveModel(models)
+        if (!model) {
+          throw new HttpError(
+            503,
+            'no Gemini model with bidiGenerateContent is available on this key',
+          )
+        }
+        const setup = geminiSetup(model, body.scenarioId, body.voice)
+        const token = await geminiToken(geminiKey, setup)
+        return { token, model, wsUrl: GEMINI_WS, setup: { locked: true } }
+      }))
 
       // ── Ход разговора ─────────────────────────────────────────────────────
       // Клиент шлёт только историю: системный промпт и инструменты
@@ -261,6 +291,75 @@ function shapePayload(payload: Record<string, unknown>, model: string): Record<s
     shaped.reasoning_effort = 'low'
   }
   return shaped
+}
+
+// ── Gemini Live ─────────────────────────────────────────────────────────────
+
+const GEMINI_API = 'https://generativelanguage.googleapis.com'
+const GEMINI_WS =
+  'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent'
+
+let modelCache: { at: number; models: ModelInfo[] } | null = null
+
+/** Каталог моделей ключа. Держим десять минут: он меняется реже, чем звонят. */
+async function geminiModels(key: string): Promise<ModelInfo[]> {
+  const now = Date.now()
+  if (modelCache && now - modelCache.at < 10 * 60_000) return modelCache.models
+  const r = await fetch(`${GEMINI_API}/v1beta/models?pageSize=1000&key=${encodeURIComponent(key)}`)
+  if (!r.ok) {
+    throw new HttpError(r.status, `models.list ${r.status}: ${(await r.text()).slice(0, 300)}`)
+  }
+  const data = (await r.json()) as { models?: ModelInfo[] }
+  const models = data.models ?? []
+  modelCache = { at: now, models }
+  return models
+}
+
+/**
+ * Настройки сессии. Уходят вместе с токеном и после этого ЗАПЕРТЫ: браузер
+ * не может ни подменить системный промпт, ни расширить список инструментов —
+ * он присылает пустой setup и работает с тем, что решил сервер.
+ */
+function geminiSetup(model: string, scenarioId: string, voice?: string) {
+  return {
+    model: `models/${model}`,
+    generationConfig: {
+      responseModalities: ['AUDIO'],
+      temperature: 0.85,
+      speechConfig: {
+        voiceConfig: { prebuiltVoiceConfig: { voiceName: normalizeGeminiVoice(voice) } },
+      },
+    },
+    systemInstruction: { parts: [{ text: buildSystemPrompt(scenarioId) }] },
+    tools: toGeminiTools(TOOL_SCHEMAS),
+    // Текст обеих сторон нужен экрану: слова на экране — это весь тренажёр.
+    inputAudioTranscription: {},
+    outputAudioTranscription: {},
+    // Паузы режет провайдер: у него это делается по самому аудио, а не по
+    // громкости, поэтому в шумной комнате работает лучше нашего детектора.
+    realtimeInputConfig: { automaticActivityDetection: {} },
+  }
+}
+
+async function geminiToken(key: string, setup: unknown): Promise<string> {
+  const now = Date.now()
+  const r = await fetch(`${GEMINI_API}/v1alpha/auth_tokens?key=${encodeURIComponent(key)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      uses: 1,
+      // Полчаса на сам звонок и две минуты на то, чтобы его начать.
+      expireTime: new Date(now + 30 * 60_000).toISOString(),
+      newSessionExpireTime: new Date(now + 2 * 60_000).toISOString(),
+      bidiGenerateContentSetup: setup,
+    }),
+  })
+  if (!r.ok) {
+    throw new HttpError(r.status, `auth_tokens ${r.status}: ${(await r.text()).slice(0, 300)}`)
+  }
+  const data = (await r.json()) as { name?: string }
+  if (!data.name) throw new HttpError(502, 'auth_tokens ответил без токена')
+  return data.name
 }
 
 /** "a, b" → ["a","b"]; пусто → undefined, чтобы сработал дефолт. */
