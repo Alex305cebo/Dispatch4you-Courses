@@ -14,6 +14,14 @@ export interface VadCallbacks {
   onSpeechEnd(audio: Float32Array): void
   /** Текущая громкость 0..1 — для живой волны на экране. */
   onLevel(level: number): void
+  /**
+   * Каждый кадр 16 кГц по мере поступления — для транспортов, которые гонят
+   * звук потоком и режут паузы на своей стороне. Пайплайну не нужен, поэтому
+   * необязателен.
+   */
+  onFrame?(frame: Float32Array): void
+  /** Фраза кончилась по нашему детектору — момент отсчёта паузы. */
+  onSilence?(): void
 }
 
 // Кадр 512 отсчётов при 16 кГц ≈ 32 мс — совпадает с frameMs детектора.
@@ -139,8 +147,10 @@ export class MicVad {
   private handleFrame(frame: Float32Array): void {
     const level = rms(frame)
     this.callbacks.onLevel(Math.min(1, level * 8))
+    this.callbacks.onFrame?.(frame)
 
     const signal = this.detector.push(level)
+    if (signal === 'end') this.callbacks.onSilence?.()
 
     if (this.collecting) this.speech.push(new Float32Array(frame))
     else this.pushPreroll(frame)
