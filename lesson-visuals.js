@@ -143,6 +143,44 @@
         applyProgress(block, d.p);
     }
 
+    // ---------- раскрывашки ----------
+
+    // Каждая строка блока — кнопка: нажатие раскрывает пояснение под ней.
+    // Соседи в том же блоке закрываются, чтобы схема не разъезжалась на пол-экрана.
+    // Панель ищем по aria-controls: кнопка и пояснение могут лежать в разных
+    // местах разметки (строка таблицы, карточка, сегмент полосы).
+    function panelFor(btn) {
+        var id = btn.getAttribute('aria-controls');
+        if (id) {
+            var byId = document.getElementById(id);
+            if (byId) return byId;
+        }
+        return btn.parentNode ? btn.parentNode.querySelector('.lv-explain') : null;
+    }
+
+    function initToggles(block) {
+        var btns = block.el.querySelectorAll('[aria-expanded]');
+
+        function closeAll() {
+            for (var j = 0; j < btns.length; j++) {
+                btns[j].setAttribute('aria-expanded', 'false');
+                var p = panelFor(btns[j]);
+                if (p) p.classList.remove('is-open');
+            }
+        }
+
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].addEventListener('click', function () {
+                var wasOpen = this.getAttribute('aria-expanded') === 'true';
+                closeAll();
+                if (wasOpen) return;
+                this.setAttribute('aria-expanded', 'true');
+                var mine = panelFor(this);
+                if (mine) mine.classList.add('is-open');
+            });
+        }
+    }
+
     // ---------- сборка ----------
 
     function collect() {
@@ -168,6 +206,7 @@
 
             el.classList.add('lv-armed');
             armCounters(el);
+            initToggles(block);
         }
     }
 
