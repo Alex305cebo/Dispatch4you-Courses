@@ -141,6 +141,15 @@
     }
 
     function initContentProtection() {
+        // Локально защита только мешает: размытие срабатывает на любую потерю
+        // фокуса окна, поэтому страницу нельзя ни заскриншотить, ни показать.
+        // На проде хост никогда не localhost, так что защита там не слабеет.
+        var h = location.hostname;
+        if (!h || h === 'localhost' || h === '127.0.0.1' || h === '::1' ||
+            h === '[::1]' || /\.localhost$/.test(h)) {
+            return;
+        }
+
         // CSS: disable selection/drag site-wide, but keep form fields usable
         var st = document.createElement('style');
         st.textContent = 'body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}' +
