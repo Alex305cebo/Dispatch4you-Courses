@@ -113,6 +113,26 @@ export class GeminiLiveTransport implements VoiceTransport {
     window.setTimeout(() => this.telephony.dispose(), 1200)
   }
 
+  /**
+   * Тихий уход при откате: отпускаем микрофон и сокет, но не играем отбой и
+   * не трогаем аудиоконтекст. Сигнал «занято» перед гудками запасного
+   * транспорта студент прочитал бы как сломанный звонок.
+   */
+  abandon(): void {
+    this.closed = true
+    this.streaming = false
+    this.stopQueued(false)
+    this.vad.stop()
+    try {
+      this.ws?.close()
+    } catch {
+      /* уже закрыт */
+    }
+    this.ws = null
+    this.telephony.stopAmbience()
+    this.telephony.dispose()
+  }
+
   getMicStream(): MediaStream | null {
     return this.vad.getStream()
   }
