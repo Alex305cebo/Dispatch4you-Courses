@@ -1,9 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" style="background:#070b14">
+<html lang="en" style="background:var(--surface-base)">
 <head>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <script src="/site-protection.js"></script>
     <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <!-- Тема: выставляем ДО первой отрисовки, иначе моргнёт чужая. Внешним
+       файлом нельзя — он выполнится уже после отрисовки. -->
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');if(s!=='light'&&s!=='dark')s='dark';document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <link rel="stylesheet" href="../../css/tokens.css?v=4">
     <script type="module" src="/firebase-auth-init.js?v=4.0"></script>
     <script src="/role-guard.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,41 +33,41 @@
         .app{display:flex;flex:1;max-width:1400px;margin:0 auto;width:100%;min-height:0;overflow:hidden}
 
         /* ═══ THREAD LIST ═══ */
-        .thread-list-container{width:360px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.08);background:rgba(10,14,26,.6)}
-        .header{padding:16px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(10,14,26,.95)}
+        .thread-list-container{width:360px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid var(--edge-08);background:rgba(10,14,26,.6)}
+        .header{padding:16px;border-bottom:1px solid var(--edge-08);background:rgba(10,14,26,.95)}
         .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
         .header-title{font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.5px}
         .unread-badge{background:#ef4444;border-radius:12px;padding:2px 10px;font-size:13px;font-weight:700;color:#fff}
-        .search-box{display:flex;align-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px 14px;gap:8px}
+        .search-box{display:flex;align-items:center;background:var(--glass-06);border:1px solid var(--edge-08);border-radius:12px;padding:10px 14px;gap:8px}
         .search-box input{flex:1;background:none;border:none;color:#fff;font-size:15px;font-family:inherit;outline:none}
-        .search-box input::placeholder{color:#94a3b8}
+        .search-box input::placeholder{color:var(--text-muted)}
         .thread-list{flex:1;overflow-y:auto}
         .thread-list::-webkit-scrollbar{width:4px}
-        .thread-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
-        .thread-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer;transition:all .2s;gap:12px}
-        .thread-item:hover{background:rgba(255,255,255,.04)}
+        .thread-list::-webkit-scrollbar-thumb{background:var(--glass-10);border-radius:4px}
+        .thread-item{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--glass-04);cursor:pointer;transition:all .2s;gap:12px}
+        .thread-item:hover{background:var(--glass-04)}
         .thread-item.active{background:rgba(6,182,212,.08);border-left:3px solid var(--primary)}
         .thread-item.unread{background:rgba(6,182,212,.04)}
 
         /* Thread avatar — маленький, для списка */
         .thread-avatar-wrap{position:relative;flex-shrink:0;width:52px;height:52px}
-        .thread-avatar-svg{width:52px;height:52px;border-radius:50%;overflow:hidden;background:transparent;border:2px solid rgba(255,255,255,.08)}
+        .thread-avatar-svg{width:52px;height:52px;border-radius:50%;overflow:hidden;background:transparent;border:2px solid var(--edge-08)}
         .thread-avatar-wrap.unread .thread-avatar-svg{border-color:rgba(6,182,212,.4);background:transparent}
-        .thread-avatar-dot{position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:50%;background:#ef4444;border:2px solid #070b14}
+        .thread-avatar-dot{position:absolute;top:1px;right:1px;width:13px;height:13px;border-radius:50%;background:#ef4444;border:2px solid var(--surface-base)}
 
         .thread-content{flex:1;min-width:0}
         .thread-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
-        .thread-name{font-size:15px;font-weight:600;color:#e2e8f0}
+        .thread-name{font-size:15px;font-weight:600;color:var(--text-secondary)}
         .thread-name.unread{font-weight:700;color:#fff}
-        .thread-time{font-size:12px;color:#94a3b8}
+        .thread-time{font-size:12px;color:var(--text-muted)}
         .thread-company{font-size:12px;color:var(--primary);margin-bottom:3px}
-        .thread-preview{font-size:13px;color:#94a3b8;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-        .thread-preview.unread{font-weight:500;color:#cbd5e1}
+        .thread-preview{font-size:13px;color:var(--text-muted);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .thread-preview.unread{font-weight:500;color:var(--text-soft)}
         .thread-unread-count{background:var(--primary);border-radius:12px;padding:2px 8px;font-size:12px;font-weight:700;color:#fff;margin-left:4px;flex-shrink:0}
 
         /* ═══ CHAT ═══ */
         .chat-container{flex:1;display:flex;flex-direction:column;background:var(--bg);min-width:0}
-        .chat-header{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(10,14,26,.95);display:flex;align-items:center;gap:12px;flex-shrink:0}
+        .chat-header{padding:14px 20px;border-bottom:1px solid var(--edge-08);background:rgba(10,14,26,.95);display:flex;align-items:center;gap:12px;flex-shrink:0}
         .chat-header-avatar{width:44px;height:44px;border-radius:50%;overflow:hidden;flex-shrink:0}
         .chat-info{flex:1}
         .chat-name{font-size:17px;font-weight:700;color:#fff}
@@ -71,7 +76,7 @@
         /* ═══ MESSAGE LIST ═══ */
         .message-list{flex:1;overflow-y:auto;padding:24px 20px;display:flex;flex-direction:column;gap:20px}
         .message-list::-webkit-scrollbar{width:4px}
-        .message-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:4px}
+        .message-list::-webkit-scrollbar-thumb{background:var(--glass-08);border-radius:4px}
 
         /* Duolingo-style row */
         .msg-row{display:flex;align-items:flex-end;gap:14px}
@@ -93,7 +98,7 @@
 
         .msg-bubble{
             background:#1e293b;
-            border:2px solid rgba(255,255,255,.1);
+            border:2px solid var(--edge-10);
             border-radius:20px;
             padding:14px 18px;
             position:relative;
@@ -109,7 +114,7 @@
         .msg-bubble.left::before{
             content:'';position:absolute;bottom:13px;left:-13px;
             border:7px solid transparent;
-            border-right-color:rgba(255,255,255,.1);
+            border-right-color:var(--edge-10);
             border-left:none;
         }
         /* tail right */
@@ -128,10 +133,10 @@
         }
 
         .msg-subject{font-size:13px;font-weight:700;color:var(--primary);margin-bottom:6px}
-        .msg-text{font-size:15px;color:#e2e8f0;line-height:1.55}
+        .msg-text{font-size:15px;color:var(--text-secondary);line-height:1.55}
         .msg-row.own .msg-text{color:#fff}
         .msg-meta{font-size:12px;color:#64748b;margin-top:4px}
-        .msg-row.own .msg-meta{text-align:right;color:#94a3b8}
+        .msg-row.own .msg-meta{text-align:right;color:var(--text-muted)}
 
         /* ═══ MESSAGE DIVIDER ═══ */
         .msg-divider{
@@ -144,10 +149,10 @@
         .msg-avatar-spacer{width:72px;flex-shrink:0}
 
         /* ═══ INPUT ═══ */
-        .input-container{padding:14px 20px;border-top:1px solid rgba(255,255,255,.08);background:rgba(10,14,26,.95);display:flex;align-items:flex-end;gap:10px;flex-shrink:0}
-        .message-input{flex:1;min-height:44px;max-height:120px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:10px 16px;font-size:15px;color:#fff;font-family:inherit;resize:none;outline:none;transition:border-color .2s}
+        .input-container{padding:14px 20px;border-top:1px solid var(--edge-08);background:rgba(10,14,26,.95);display:flex;align-items:flex-end;gap:10px;flex-shrink:0}
+        .message-input{flex:1;min-height:44px;max-height:120px;background:var(--glass-06);border:1px solid var(--edge-08);border-radius:22px;padding:10px 16px;font-size:15px;color:#fff;font-family:inherit;resize:none;outline:none;transition:border-color .2s}
         .message-input:focus{border-color:rgba(6,182,212,.4)}
-        .message-input::placeholder{color:#94a3b8}
+        .message-input::placeholder{color:var(--text-muted)}
         .send-btn{width:44px;height:44px;border-radius:22px;background:var(--primary);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
         .send-btn:hover{transform:scale(1.08);box-shadow:0 4px 16px rgba(6,182,212,.4)}
         .send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
@@ -155,16 +160,16 @@
         /* ═══ EMPTY STATE ═══ */
         .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px;gap:12px}
         .empty-icon{font-size:64px}
-        .empty-title{font-size:20px;font-weight:700;color:#e2e8f0}
-        .empty-text{font-size:15px;color:#94a3b8;text-align:center;max-width:320px}
+        .empty-title{font-size:20px;font-weight:700;color:var(--text-secondary)}
+        .empty-text{font-size:15px;color:var(--text-muted);text-align:center;max-width:320px}
 
         /* ═══ MOBILE ═══ */
         @media(max-width:768px){
             .app{flex-direction:column}
-            .thread-list-container{width:100%;border-right:none;border-bottom:1px solid rgba(255,255,255,.08)}
+            .thread-list-container{width:100%;border-right:none;border-bottom:1px solid var(--edge-08)}
             .thread-list-container.hidden{display:none}
             .chat-container.hidden{display:none}
-            .back-btn{width:36px;height:36px;border-radius:18px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--primary);cursor:pointer;margin-right:4px}
+            .back-btn{width:36px;height:36px;border-radius:18px;background:var(--glass-08);display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--primary);cursor:pointer;margin-right:4px}
             .msg-avatar{width:56px;height:56px}
             .msg-avatar svg{width:56px;height:56px}
             .msg-avatar-spacer{width:56px}

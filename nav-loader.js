@@ -39,7 +39,7 @@
             colLearn: '📚 Обучение', colTools: '🛠️ Инструменты', colInfo: 'ℹ️ Информация',
             lCourse: '📚 Курс — 15 уроков', lModules: '✍️ Модули — 12 тестов', lGlossary: '📖 Глоссарий', lCases: '🗂 Кейсы',
             lTesting: '🎯 Тестирование', lTrainer: '💡 Тренажёр',
-            lGame: '🕹️ Мини-игры', lMap: '🗺️ USA Map Trainer', lAiChat: '🎙️ AI-симулятор',
+            lMap: '🗺️ USA Map Trainer', lCareer: '🚀 Career Path', lAiChat: '🎙️ AI-симулятор',
             lRating: '🎖️ Рейтинг', lAnalytics: '📊 Статистика рынка',
             lAbout: 'ℹ️ О нас', lPricing: '💎 Планы и цены', lFaq: '❓ Частые вопросы', lCareer: '🚀 Карьера', lContacts: '📩 Написать нам',
             copyright: '© {YEAR} Dispatch4You. Все права защищены.', status: 'Все системы работают',
@@ -52,7 +52,7 @@
             colLearn: '📚 Learning', colTools: '🛠️ Tools', colInfo: 'ℹ️ Information',
             lCourse: '📚 Course — 15 lessons', lModules: '✍️ Modules — 12 tests', lGlossary: '📖 Glossary', lCases: '🗂 Cases',
             lTesting: '🎯 Testing', lTrainer: '💡 Trainer',
-            lGame: '🕹️ Mini-Games', lMap: '🗺️ USA Map Trainer', lAiChat: '🎙️ AI Simulator',
+            lMap: '🗺️ USA Map Trainer', lCareer: '🚀 Career Path', lAiChat: '🎙️ AI Simulator',
             lRating: '🎖️ Ranking', lAnalytics: '📊 Market Data',
             lAbout: 'ℹ️ About Us', lPricing: '💎 Plans & Pricing', lFaq: '❓ FAQ', lCareer: '🚀 Careers', lContacts: '📩 Contact Us',
             copyright: '© {YEAR} Dispatch4You. All rights reserved.', status: 'All systems operational',
@@ -274,7 +274,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.7';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.8';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
@@ -285,7 +285,7 @@
 <a href="{{BASE}}index.html" class="logo"><span class="logo-text-wrapper"><span class="logo-text">Dispatch4You</span></span></a>
 <div class="nav-links">
   <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Курс обучения <span class="arrow">▾</span></button><div class="dropdown mega-dropdown"><div class="dropdown-expandable"><a href="{{BASE}}pages/documentation.html" class="dropdown-main">📚 Курс — 15 уроков</a><span class="dropdown-arrow">▼</span></div><div class="dropdown-nested"><div class="dropdown-nested-title">Разделы курса:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/documentation.html" class="dropdown-nested-item">1. Программа курса</a><a href="{{BASE}}pages/intro.html" class="dropdown-nested-item">2. Введение</a><a href="{{BASE}}pages/role.html" class="dropdown-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="dropdown-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="dropdown-nested-item">5. Маршруты</a><a href="{{BASE}}pages/loadboards.html" class="dropdown-nested-item">6. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="dropdown-nested-item">7. Переговоры</a><a href="{{BASE}}pages/brokers.html" class="dropdown-nested-item">8. Брокеры</a><a href="{{BASE}}pages/docs.html" class="dropdown-nested-item">9. Документы</a><a href="{{BASE}}pages/regulations.html" class="dropdown-nested-item">10. Законы</a><a href="{{BASE}}pages/technology.html" class="dropdown-nested-item">11. Технологии</a><a href="{{BASE}}pages/communication.html" class="dropdown-nested-item">12. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="dropdown-nested-item">13. Проблемы</a><a href="{{BASE}}pages/finances.html" class="dropdown-nested-item">14. Финансы</a><a href="{{BASE}}pages/career.html" class="dropdown-nested-item">15. Карьера</a></div></div><div class="dropdown-expandable"><a href="{{BASE}}pages/modules-index.html" class="dropdown-main">✍️ Модули — 12 тестов</a><span class="dropdown-arrow">▼</span></div><div class="dropdown-nested"><div class="dropdown-nested-title">Модули тестирования:</div><div class="dropdown-nested-grid"><a href="{{BASE}}pages/modules-index.html" class="dropdown-nested-item">📋 Все модули</a><a href="{{BASE}}pages/doc-module-1-complete.html" class="dropdown-nested-item">1. Введение</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="dropdown-nested-item">2. Законы</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="dropdown-nested-item">3. Оборудование</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="dropdown-nested-item">4. Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="dropdown-nested-item">5. Переговоры</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="dropdown-nested-item">6. Маршруты</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="dropdown-nested-item">7. Документы</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="dropdown-nested-item">8. Водители</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="dropdown-nested-item">9. CSA Scores</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="dropdown-nested-item">10. Финансы</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="dropdown-nested-item">11. Кризисы</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="dropdown-nested-item">12. Карьера</a></div></div><a href="{{BASE}}pages/glossary.html">📖 Глоссарий</a><a href="{{BASE}}pages/cases.html">🗂 Кейсы</a><a href="{{BASE}}pages/testing.html">🎯 Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html">💡 Тренажёр</a></div></div>
-  <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="/map-trainer/">🗺️ USA Map Trainer</a><a href="{{BASE}}pages/ai-broker-chat.html">🎙️ AI-симулятор</a><a href="/games/" data-role="student">🕹️ Мини-игры</a><a href="{{BASE}}pages/users-stats.html">🎖️ Рейтинг</a><a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a></div></div>
+  <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Инструменты <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}pages/ai-broker-chat.html">🎙️ AI-симулятор</a><a href="{{BASE}}pages/users-stats.html">🎖️ Рейтинг</a><a href="{{BASE}}pages/analytics.html">📊 Статистика рынка</a><a href="/map-trainer/">🗺️ USA Map Trainer</a><a href="/games/dispatch-academy-app/">🚀 Career Path</a></div></div>
   <div class="nav-item"><button class="nav-btn" aria-haspopup="true" aria-expanded="false">Информация <span class="arrow">▾</span></button><div class="dropdown"><a href="{{BASE}}about.html">ℹ️ О нас</a><a href="{{BASE}}pricing.html">💎 Планы и цены</a><a href="{{BASE}}faq.html">❓ Частые вопросы</a><a href="{{BASE}}career.html">🚀 Карьера</a><a href="{{BASE}}contacts.html">📩 Написать нам</a></div></div>
   <a href="{{BASE}}pages/users-stats.html" class="nav-btn" style="text-decoration:none;display:none;">📊 Стат</a>
 </div>
@@ -315,7 +315,7 @@
     </div>
     <div class="mob-actions" id="mob-actions"><a href="{{BASE}}login.html" class="btn-login">Войти</a><a href="{{BASE}}register.html" class="btn-signup">Регистрация</a></div>
     <div class="mob-acc" data-section="course"><div class="mob-acc-title">📚 Курс обучения <span class="mob-arr">▼</span></div><div class="mob-acc-body"><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/documentation.html" class="mob-sub mob-sub-main">📚 Курс — 15 уроков</a><span class="mob-sub-arrow expanded">▼</span></div><div class="mob-sub-nested show"><div class="mob-sub-nested-title">Разделы курса:</div><a href="{{BASE}}pages/documentation.html" class="mob-sub-nested-item">1. Программа курса</a><a href="{{BASE}}pages/intro.html" class="mob-sub-nested-item">2. Введение</a><a href="{{BASE}}pages/role.html" class="mob-sub-nested-item">3. Роль диспетчера</a><a href="{{BASE}}pages/equipment.html" class="mob-sub-nested-item">4. Типы траков</a><a href="{{BASE}}pages/routes.html" class="mob-sub-nested-item">5. Маршруты</a><a href="{{BASE}}pages/loadboards.html" class="mob-sub-nested-item">6. Load Boards</a><a href="{{BASE}}pages/negotiation.html" class="mob-sub-nested-item">7. Переговоры</a><a href="{{BASE}}pages/brokers.html" class="mob-sub-nested-item">8. Брокеры</a><a href="{{BASE}}pages/docs.html" class="mob-sub-nested-item">9. Документы</a><a href="{{BASE}}pages/regulations.html" class="mob-sub-nested-item">10. Законы</a><a href="{{BASE}}pages/technology.html" class="mob-sub-nested-item">11. Технологии</a><a href="{{BASE}}pages/communication.html" class="mob-sub-nested-item">12. Коммуникация</a><a href="{{BASE}}pages/problems.html" class="mob-sub-nested-item">13. Проблемы</a><a href="{{BASE}}pages/finances.html" class="mob-sub-nested-item">14. Финансы</a><a href="{{BASE}}pages/career.html" class="mob-sub-nested-item">15. Карьера</a></div><div class="mob-sub-main-wrapper"><a href="{{BASE}}pages/modules-index.html" class="mob-sub mob-sub-main">✍️ Модули — 12 тестов</a><span class="mob-sub-arrow">▼</span></div><div class="mob-sub-nested"><div class="mob-sub-nested-title">Модули тестирования:</div><a href="{{BASE}}pages/modules-index.html" class="mob-sub-nested-item">📋 Все модули</a><a href="{{BASE}}pages/doc-module-1-complete.html" class="mob-sub-nested-item">1. Введение</a><a href="{{BASE}}pages/doc-module-2-complete.html" class="mob-sub-nested-item">2. Законы</a><a href="{{BASE}}pages/doc-module-3-complete.html" class="mob-sub-nested-item">3. Оборудование</a><a href="{{BASE}}pages/doc-module-4-complete.html" class="mob-sub-nested-item">4. Load Boards</a><a href="{{BASE}}pages/doc-module-5-complete.html" class="mob-sub-nested-item">5. Переговоры</a><a href="{{BASE}}pages/doc-module-6-complete.html" class="mob-sub-nested-item">6. Маршруты</a><a href="{{BASE}}pages/doc-module-7-complete.html" class="mob-sub-nested-item">7. Документы</a><a href="{{BASE}}pages/doc-module-8-complete.html" class="mob-sub-nested-item">8. Водители</a><a href="{{BASE}}pages/doc-module-9-complete.html" class="mob-sub-nested-item">9. CSA Scores</a><a href="{{BASE}}pages/doc-module-10-complete.html" class="mob-sub-nested-item">10. Финансы</a><a href="{{BASE}}pages/doc-module-11-complete.html" class="mob-sub-nested-item">11. Кризисы</a><a href="{{BASE}}pages/doc-module-12-complete.html" class="mob-sub-nested-item">12. Карьера</a></div></div><a href="{{BASE}}pages/glossary.html" class="mob-sub">📖 Глоссарий</a><a href="{{BASE}}pages/cases.html" class="mob-sub">🗂 Кейсы</a><a href="{{BASE}}pages/testing.html" class="mob-sub">🎯 Тестирование</a><a href="{{BASE}}pages/Trainer-Quiz.html" class="mob-sub">💡 Тренажёр</a></div></div>
-    <div class="mob-acc" data-section="tools"><div class="mob-acc-title">🛠️ Инструменты <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="/map-trainer/" class="mob-sub" style="color:#06b6d4;font-weight:700;">🗺️ USA Map Trainer</a><a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🎙️ AI-симулятор</a><a href="/games/" class="mob-sub" data-role="student">🕹️ Мини-игры</a><a href="{{BASE}}pages/users-stats.html" class="mob-sub">🎖️ Рейтинг</a><a href="{{BASE}}pages/analytics.html" class="mob-sub">📊 Статистика рынка</a></div></div>
+    <div class="mob-acc" data-section="tools"><div class="mob-acc-title">🛠️ Инструменты <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}pages/ai-broker-chat.html" class="mob-sub">🎙️ AI-симулятор</a><a href="{{BASE}}pages/users-stats.html" class="mob-sub">🎖️ Рейтинг</a><a href="{{BASE}}pages/analytics.html" class="mob-sub">📊 Статистика рынка</a><a href="/map-trainer/" class="mob-sub" style="color:#06b6d4;font-weight:700;">🗺️ USA Map Trainer</a><a href="/games/dispatch-academy-app/" class="mob-sub">🚀 Career Path</a></div></div>
     <div class="mob-acc" data-section="info"><div class="mob-acc-title">ℹ️ Информация <span class="mob-arr">▼</span></div><div class="mob-acc-body"><a href="{{BASE}}about.html" class="mob-sub">ℹ️ О нас</a><a href="{{BASE}}pricing.html" class="mob-sub">💎 Планы и цены</a><a href="{{BASE}}faq.html" class="mob-sub">❓ Частые вопросы</a><a href="{{BASE}}career.html" class="mob-sub">🚀 Карьера</a><a href="{{BASE}}contacts.html" class="mob-sub">📩 Написать нам</a></div></div>
   </div>
 </div>`;
@@ -566,16 +566,16 @@
 .site-footer .footer-gradient-line{height:1px;background:linear-gradient(90deg,transparent,rgba(6,182,212,.6) 30%,rgba(249,115,22,.5) 70%,transparent)}
 .site-footer .footer-body{padding:72px 0 0}
 .site-footer .footer-inner{max-width:1000px;margin:0 auto;padding:0 40px}
-.site-footer .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:56px;padding-bottom:56px;border-bottom:1px solid rgba(255,255,255,.05)}
-.site-footer .footer-brand-desc{font-size:14px;color:#e2e8f0;line-height:1.75;margin-bottom:28px;max-width:240px}
-.site-footer .footer-col-title{font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.14em;margin-bottom:20px}
-.site-footer .footer-link{display:flex;align-items:center;gap:9px;font-size:13px;color:#cbd5e1;text-decoration:none;margin-bottom:10px;transition:all .22s;white-space:nowrap}
-.site-footer .footer-link:hover{color:#ffffff;padding-left:5px}
+.site-footer .footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:56px;padding-bottom:56px;border-bottom:1px solid var(--glass-05)}
+.site-footer .footer-brand-desc{font-size:14px;color:var(--text-secondary);line-height:1.75;margin-bottom:28px;max-width:240px}
+.site-footer .footer-col-title{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.14em;margin-bottom:20px}
+.site-footer .footer-link{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-soft);text-decoration:none;margin-bottom:10px;transition:all .22s;white-space:nowrap}
+.site-footer .footer-link:hover{color:var(--text-primary);padding-left:5px}
 .site-footer .footer-bottom{display:flex;justify-content:space-between;align-items:center;padding:22px 0;flex-wrap:wrap;gap:14px}
-.site-footer .footer-copy{font-size:13px;color:#e2e8f0}
+.site-footer .footer-copy{font-size:13px;color:var(--text-secondary)}
 .site-footer .footer-status{display:flex;align-items:center;gap:7px}
-.site-footer .footer-status-dot{width:7px;height:7px;background:#10b981;border-radius:50%;animation:fpulse 2.5s ease infinite}
-.site-footer .footer-status-text{font-size:12px;color:#cbd5e1}
+.site-footer .footer-status-dot{width:7px;height:7px;background:var(--status-success);border-radius:50%;animation:fpulse 2.5s ease infinite}
+.site-footer .footer-status-text{font-size:12px;color:var(--text-soft)}
 @keyframes fpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
 /* Заголовок колонки — на десктопе просто ярлык (не кнопка): раньше был спрятан
    внутри display:none-кнопки и не показывался вовсе. Раскрывающийся вид — только моб. */
@@ -587,15 +587,15 @@
   .site-footer .footer-body{padding:40px 0 0}
   .site-footer .footer-inner{padding:0 20px}
   .site-footer .footer-grid{grid-template-columns:1fr;gap:0;padding-bottom:0;border-bottom:none}
-  .site-footer .footer-brand-block{padding-bottom:28px;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:8px}
-  .site-footer .footer-acc-col{border-bottom:1px solid rgba(255,255,255,.06)}
-  .site-footer .footer-acc-toggle{justify-content:space-between;margin-bottom:0;padding:16px 0;cursor:pointer;color:#fff}
-  .site-footer .footer-acc-toggle .footer-col-title{font-size:12px;color:#e2e8f0}
+  .site-footer .footer-brand-block{padding-bottom:28px;border-bottom:1px solid var(--glass-06);margin-bottom:8px}
+  .site-footer .footer-acc-col{border-bottom:1px solid var(--glass-06)}
+  .site-footer .footer-acc-toggle{justify-content:space-between;margin-bottom:0;padding:16px 0;cursor:pointer;color:var(--text-primary)}
+  .site-footer .footer-acc-toggle .footer-col-title{font-size:12px;color:var(--text-secondary)}
   .site-footer .footer-acc-toggle .acc-arrow{display:block;font-size:10px;color:#475569;transition:transform .25s}
   .site-footer .footer-acc-toggle.open .acc-arrow{transform:rotate(180deg)}
   .site-footer .footer-acc-body{max-height:0;overflow:hidden;transition:max-height .3s}
   .site-footer .footer-acc-body.open{max-height:300px}
-  .site-footer .footer-bottom{padding:20px 0;border-top:1px solid rgba(255,255,255,.06);margin-top:8px}
+  .site-footer .footer-bottom{padding:20px 0;border-top:1px solid var(--glass-06);margin-top:8px}
 }
 </style>
 <footer class="site-footer" id="site-footer-injected">
@@ -622,11 +622,11 @@
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">${T.colTools}</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="/map-trainer/" class="footer-link">${T.lMap}</a>
             <a href="BASE_pages/ai-broker-chat.html" class="footer-link">${T.lAiChat}</a>
-            <a href="/games/" class="footer-link" data-role="student">${T.lGame}</a>
             <a href="BASE_pages/users-stats.html" class="footer-link">${T.lRating}</a>
             <a href="BASE_pages/analytics.html" class="footer-link">${T.lAnalytics}</a>
+            <a href="/map-trainer/" class="footer-link">${T.lMap}</a>
+            <a href="/games/dispatch-academy-app/" class="footer-link">${T.lCareer}</a>
           </div>
         </div>
         <div class="footer-acc-col">
@@ -708,6 +708,40 @@
         if (desk && !document.querySelector('.desk-lang')) desk.insertAdjacentHTML('beforebegin', langSwitchHTML('desk-lang'));
         var topbar = document.getElementById('topbar-lang-anchor');
         if (topbar && !document.querySelector('.topbar-lang')) topbar.insertAdjacentHTML('beforeend', langSwitchHTML('topbar-lang'));
+        injectThemeToggle();
+    }
+
+    // ── Переключатель темы ────────────────────────────────────────
+    // Саму тему на <html> ставит блокирующий инлайн-скрипт в <head>
+    // КАЖДОЙ страницы — до первой отрисовки, иначе моргает чужая тема.
+    // Здесь только кнопка: nav-loader грузится с defer, то есть уже
+    // после отрисовки, и для выставления темы он опоздал бы.
+    function injectThemeToggle() {
+        if (document.querySelector('.d4y-theme-btn')) return;
+        var label = LANG === 'ru' ? 'Переключить тему' : 'Switch theme';
+        var html = '<button class="d4y-theme-btn" type="button" aria-label="' + label +
+            '" title="' + label + '">' +
+            '<span class="d4y-ico-sun" aria-hidden="true">☀</span>' +
+            '<span class="d4y-ico-moon" aria-hidden="true">☾</span></button>';
+
+        var topbar = document.getElementById('topbar-lang-anchor');
+        var desk = document.getElementById('nav-actions-desktop');
+        if (topbar) topbar.insertAdjacentHTML('beforeend', html);
+        else if (desk) desk.insertAdjacentHTML('beforebegin', html);
+        else return;
+
+        var btn = document.querySelector('.d4y-theme-btn');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            var root = document.documentElement;
+            var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            root.setAttribute('data-theme', next);
+            try { localStorage.setItem('d4y-theme', next); } catch (e) {}
+        });
+
+        // Слушатель системной темы намеренно выключен: пока светлая тема не
+        // доведена, уводить в неё автоматически нельзя. Вернуть, когда будет готова.
+        /* системная тема — позже */
     }
 
     // ── SEO: hreflang alternates for this page ────────────────────

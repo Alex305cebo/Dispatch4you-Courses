@@ -6,40 +6,45 @@
   
   
 <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <!-- Тема: выставляем ДО первой отрисовки, иначе моргнёт чужая. Внешним
+       файлом нельзя — он выполнится уже после отрисовки. -->
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');if(s!=='light'&&s!=='dark')s='dark';document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <link rel="stylesheet" href="../css/tokens.css?v=4">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Трекер уроков | Курсы Диспетчера</title>
   <link rel="stylesheet" href="../shared-nav.css?v=8.5">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, sans-serif; background: #070b14; color: #ffffff; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background:var(--surface-base); color: #ffffff; min-height: 100vh; -webkit-font-smoothing: antialiased; }
     .page-wrap { max-width: 1100px; margin: 0 auto; padding: 40px 24px 80px; overflow-x: hidden; }
-    .page-header { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .page-header { margin-bottom: 40px; padding-bottom: 32px; border-bottom:1px solid var(--edge-06); }
     .page-header h1 { font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: -0.03em; margin-bottom: 8px; }
-    .page-header p { font-size: 15px; color: #94a3b8; }
+    .page-header p { font-size: 15px; color:var(--text-muted); }
     .header-meta { display: flex; gap: 12px; margin-top: 20px; flex-wrap: wrap; }
-    .meta-stat { display: flex; align-items: center; gap: 10px; padding: 10px 18px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; font-size: 13px; color: #94a3b8; transition: border-color 0.2s; }
+    .meta-stat { display: flex; align-items: center; gap: 10px; padding: 10px 18px; background:var(--glass-04); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; font-size: 13px; color:var(--text-muted); transition: border-color 0.2s; }
     .meta-stat:hover { border-color: rgba(255,255,255,0.12); }
     .meta-stat strong { color: #ffffff; font-size: 20px; font-weight: 800; line-height: 1; }
     .meta-stat.stat-done { border-color: rgba(16,185,129,0.2); }
-    .meta-stat.stat-done strong { color: #10b981; }
+    .meta-stat.stat-done strong { color:var(--status-success); }
     .meta-stat.stat-progress { border-color: rgba(245,158,11,0.2); }
-    .meta-stat.stat-progress strong { color: #f59e0b; }
+    .meta-stat.stat-progress strong { color:var(--status-warning); }
     .progress-wrap { margin-bottom: 40px; }
-    .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: #94a3b8; margin-bottom: 10px; }
-    .progress-label span:last-child { font-weight: 700; color: #06b6d4; }
-    .progress-bar { height: 8px; background: rgba(255,255,255,0.06); border-radius: 8px; overflow: hidden; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; color:var(--text-muted); margin-bottom: 10px; }
+    .progress-label span:last-child { font-weight: 700; color:var(--brand-ink); }
+    .progress-bar { height: 8px; background:var(--glass-06); border-radius: 8px; overflow: hidden; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, #06b6d4, #0ea5e9); border-radius: 8px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
     .block { margin-bottom: 48px; }
-    .block-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding: 14px 18px; background: linear-gradient(135deg, rgba(6,182,212,0.07), rgba(14,165,233,0.04)); border: 1px solid rgba(6,182,212,0.15); border-radius: 12px; }
+    .block-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding: 14px 18px; background: linear-gradient(135deg, rgba(6,182,212,0.07), rgba(14,165,233,0.04)); border:1px solid var(--tint-brand-2); border-radius: 12px; }
     .block-num { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #06b6d4, #0ea5e9); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; flex-shrink: 0; box-shadow: 0 2px 8px rgba(6,182,212,0.35); }
-    .block-title-text { font-size: 13px; font-weight: 700; color: #06b6d4; text-transform: uppercase; letter-spacing: 1.5px; flex: 1; }
-    .block-count { font-size: 11px; font-weight: 600; color: #475569; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; padding: 3px 8px; }
+    .block-title-text { font-size: 13px; font-weight: 700; color:var(--brand-ink); text-transform: uppercase; letter-spacing: 1.5px; flex: 1; }
+    .block-count { font-size: 11px; font-weight: 600; color: #475569; background:var(--glass-04); border:1px solid var(--edge-06); border-radius: 6px; padding: 3px 8px; }
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-    .lesson-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 20px; cursor: pointer; transition: all 0.25s ease; position: relative; opacity: 0; transform: translateY(20px); overflow: hidden; }
+    .lesson-card { background:var(--glass-03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 20px; cursor: pointer; transition: all 0.25s ease; position: relative; opacity: 0; transform: translateY(20px); overflow: hidden; }
     .lesson-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, rgba(6,182,212,0.4), transparent); opacity: 0; transition: opacity 0.25s; }
     .lesson-card:hover::before { opacity: 1; }
     .lesson-card.visible { opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease, background 0.25s, border-color 0.25s, box-shadow 0.25s; }
-    .lesson-card:hover { background: rgba(255,255,255,0.055); border-color: rgba(6,182,212,0.2); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .lesson-card:hover { background: rgba(255,255,255,0.055); border-color:var(--tint-brand-3); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
     .lesson-card.done { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.25); }
     .lesson-card.done:hover { border-color: rgba(16,185,129,0.4); box-shadow: 0 8px 32px rgba(16,185,129,0.1); }
     .lesson-card.in-progress { background: rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.25); }
@@ -47,74 +52,74 @@
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
     .card-num { font-size: 11px; font-weight: 700; color: #475569; letter-spacing: 0.5px; }
     .card-status { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-    .status-pending { background: rgba(255,255,255,0.05); color: #64748b; border: 1px solid rgba(255,255,255,0.08); }
-    .status-progress { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
-    .status-done { background: rgba(16,185,129,0.12); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+    .status-pending { background:var(--glass-05); color: #64748b; border:1px solid var(--edge-08); }
+    .status-progress { background: rgba(245,158,11,0.12); color:var(--status-warning); border: 1px solid rgba(245,158,11,0.3); }
+    .status-done { background: rgba(16,185,129,0.12); color:var(--status-success); border: 1px solid rgba(16,185,129,0.3); }
     .card-icon-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
     .card-icon { font-size: 30px; display: block; line-height: 1; }
     .card-steps-mini { flex: 1; }
     .card-steps-mini-label { font-size: 10px; color: #475569; margin-bottom: 4px; font-weight: 600; }
-    .card-steps-mini-bar { height: 4px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+    .card-steps-mini-bar { height: 4px; background:var(--glass-06); border-radius: 4px; overflow: hidden; }
     .card-steps-mini-fill { height: 100%; background: linear-gradient(90deg, #06b6d4, #0ea5e9); border-radius: 4px; transition: width 0.4s ease; }
     .lesson-card.done .card-steps-mini-fill { background: linear-gradient(90deg, #10b981, #059669); }
     .lesson-card.in-progress .card-steps-mini-fill { background: linear-gradient(90deg, #f59e0b, #d97706); }
-    .card-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; line-height: 1.4; }
-    .card-desc { font-size: 12.5px; color: #94a3b8; line-height: 1.6; margin-bottom: 14px; }
+    .card-title { font-size: 15px; font-weight: 700; color:var(--text-secondary); margin-bottom: 6px; line-height: 1.4; }
+    .card-desc { font-size: 12.5px; color:var(--text-muted); line-height: 1.6; margin-bottom: 14px; }
     .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
-    .tag { padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 600; background: rgba(255,255,255,0.04); color: #64748b; border: 1px solid rgba(255,255,255,0.06); }
-    .card-footer { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 8px; }
-    .btn-status { flex: 1; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.03); color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
-    .btn-status:hover { background: rgba(255,255,255,0.07); color: #e2e8f0; border-color: rgba(255,255,255,0.15); }
-    .btn-status.active-progress { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color: #f59e0b; }
-    .btn-status.active-done { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color: #10b981; }
+    .tag { padding: 3px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 600; background:var(--glass-04); color: #64748b; border:1px solid var(--edge-06); }
+    .card-footer { margin-top: 16px; padding-top: 14px; border-top:1px solid var(--glass-05); display: flex; gap: 8px; }
+    .btn-status { flex: 1; padding: 8px 10px; border-radius: 10px; border:1px solid var(--edge-08); background:var(--glass-03); color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .btn-status:hover { background: rgba(255,255,255,0.07); color:var(--text-secondary); border-color: rgba(255,255,255,0.15); }
+    .btn-status.active-progress { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.35); color:var(--status-warning); }
+    .btn-status.active-done { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.35); color:var(--status-success); }
     .card-note-wrap { margin-top: 10px; }
-    .card-note { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 10px; color: #94a3b8; font-size: 12px; resize: none; font-family: inherit; outline: none; transition: border-color 0.2s, color 0.2s; }
-    .card-note:focus { border-color: rgba(6,182,212,0.3); color: #e2e8f0; }
+    .card-note { width: 100%; background: rgba(0,0,0,0.2); border:1px solid var(--edge-06); border-radius: 8px; padding: 8px 10px; color:var(--text-muted); font-size: 12px; resize: none; font-family: inherit; outline: none; transition: border-color 0.2s, color 0.2s; }
+    .card-note:focus { border-color:var(--tint-brand-4); color:var(--text-secondary); }
     .card-note::placeholder { color: #2d3748; }
-    .student-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; padding: 16px 20px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; flex-wrap: wrap; }
-    .student-select { flex: 1; min-width: 200px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 9px 14px; color: #ffffff; font-size: 14px; font-weight: 600; outline: none; cursor: pointer; transition: border-color 0.2s; }
+    .student-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; padding: 16px 20px; background:var(--glass-03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; flex-wrap: wrap; }
+    .student-select { flex: 1; min-width: 200px; background: rgba(0,0,0,0.3); border:1px solid var(--edge-10); border-radius: 10px; padding: 9px 14px; color: #ffffff; font-size: 14px; font-weight: 600; outline: none; cursor: pointer; transition: border-color 0.2s; }
     .student-select:focus { border-color: rgba(6,182,212,0.4); }
     .student-select option { background: #0d1424; }
-    .student-badge { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: rgba(6,182,212,0.1); border: 1px solid rgba(6,182,212,0.25); border-radius: 10px; font-size: 13px; font-weight: 700; color: #38bdf8; }
+    .student-badge { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background:var(--tint-brand-1); border: 1px solid rgba(6,182,212,0.25); border-radius: 10px; font-size: 13px; font-weight: 700; color: #38bdf8; }
     .student-badge.hidden { display: none; }
     .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 99999; align-items: center; justify-content: center; padding: 20px; }
     .modal-backdrop.open { display: flex; }
-    .modal { background: #0d1424; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; width: 100%; max-width: 700px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 32px 100px rgba(0,0,0,0.7); }
-    .modal-head { padding: 24px 28px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; background: linear-gradient(135deg, rgba(6,182,212,0.05), transparent); }
+    .modal { background: #0d1424; border:1px solid var(--edge-08); border-radius: 20px; width: 100%; max-width: 700px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 32px 100px rgba(0,0,0,0.7); }
+    .modal-head { padding: 24px 28px 20px; border-bottom:1px solid var(--edge-06); display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; background: linear-gradient(135deg, rgba(6,182,212,0.05), transparent); }
     .modal-head-left { flex: 1; }
-    .modal-lesson-num { font-size: 11px; font-weight: 700; color: #06b6d4; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .modal-lesson-num { font-size: 11px; font-weight: 700; color:var(--brand-ink); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 8px; }
     .modal-title { font-size: 22px; font-weight: 900; color: #ffffff; line-height: 1.2; letter-spacing: -0.02em; }
-    .modal-close { width: 36px; height: 36px; border-radius: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: #64748b; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; margin-left: 16px; }
-    .modal-close:hover { background: rgba(239,68,68,0.15); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+    .modal-close { width: 36px; height: 36px; border-radius: 10px; background:var(--glass-05); border:1px solid var(--edge-08); color: #64748b; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; margin-left: 16px; }
+    .modal-close:hover { background: rgba(239,68,68,0.15); color:var(--status-danger); border-color: rgba(239,68,68,0.3); }
     .modal-body { overflow-y: auto; padding: 24px 28px; flex: 1; }
     .modal-body::-webkit-scrollbar { width: 4px; }
-    .modal-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .modal-body::-webkit-scrollbar-thumb { background:var(--glass-10); border-radius: 4px; }
     /* ── MODAL PROGRESS ── */
-    .modal-prog-wrap { margin-bottom: 20px; padding: 12px 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; display:flex; align-items:center; gap:14px; }
+    .modal-prog-wrap { margin-bottom: 20px; padding: 12px 16px; background: rgba(255,255,255,0.02); border:1px solid var(--glass-05); border-radius: 12px; display:flex; align-items:center; gap:14px; }
     .modal-prog-label { font-size: 12px; color: #64748b; white-space:nowrap; }
-    .modal-prog-label span { font-weight: 700; color: #06b6d4; }
-    .modal-prog-bar { flex:1; height: 6px; background: rgba(255,255,255,0.06); border-radius: 6px; overflow: hidden; }
+    .modal-prog-label span { font-weight: 700; color:var(--brand-ink); }
+    .modal-prog-bar { flex:1; height: 6px; background:var(--glass-06); border-radius: 6px; overflow: hidden; }
     .modal-prog-fill { height: 100%; background: linear-gradient(90deg, #10b981, #06b6d4); border-radius: 6px; transition: width 0.4s cubic-bezier(0.4,0,0.2,1); }
-    .modal-prog-pct { font-size:13px; font-weight:800; color:#06b6d4; white-space:nowrap; }
+    .modal-prog-pct { font-size:13px; font-weight:800; color:var(--brand-ink); white-space:nowrap; }
 
     /* ── LESSON META BAR ── */
     .lesson-meta-bar { display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
     .lesson-meta-pill { display:flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:11px; font-weight:700; }
-    .pill-time { background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.25); color:#06b6d4; }
+    .pill-time { background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.25); color:var(--brand-ink); }
     .pill-topics { background:rgba(129,140,248,0.12); border:1px solid rgba(129,140,248,0.25); color:#818cf8; }
     .pill-practice { background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.25); color:#34d399; }
 
     /* ── TOPIC BLOCK ── */
     .topic-block { margin-bottom:16px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); background:rgba(255,255,255,0.02); }
     .topic-header { display:flex; align-items:center; gap:12px; padding:14px 18px; cursor:pointer; user-select:none; transition:background 0.2s; }
-    .topic-header:hover { background:rgba(255,255,255,0.04); }
-    .topic-header.open { background:rgba(6,182,212,0.06); border-bottom:1px solid rgba(6,182,212,0.15); }
+    .topic-header:hover { background:var(--glass-04); }
+    .topic-header.open { background:rgba(6,182,212,0.06); border-bottom:1px solid var(--tint-brand-2); }
     .topic-num { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#06b6d4,#0ea5e9); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:800; color:#fff; flex-shrink:0; }
     .topic-num.done-num { background:linear-gradient(135deg,#10b981,#059669); }
     .topic-title-wrap { flex:1; }
-    .topic-title { font-size:15px; font-weight:700; color:#f1f5f9; line-height:1.4; }
+    .topic-title { font-size:15px; font-weight:700; color:var(--text-bright); line-height:1.4; }
     .topic-subtitle { font-size:12px; color:#64748b; margin-top:3px; }
-    .topic-time-badge { font-size:10px; font-weight:700; color:#475569; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:3px 8px; white-space:nowrap; }
+    .topic-time-badge { font-size:10px; font-weight:700; color:#475569; background:var(--glass-04); border:1px solid var(--edge-06); border-radius:6px; padding:3px 8px; white-space:nowrap; }
     .topic-check { width:22px; height:22px; border-radius:6px; border:2px solid rgba(255,255,255,0.15); display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff; flex-shrink:0; transition:all 0.2s; }
     .topic-check.checked { background:#10b981; border-color:#10b981; }
     .topic-arrow { font-size:10px; color:#475569; transition:transform 0.25s; flex-shrink:0; }
@@ -129,19 +134,19 @@
     .lecture-section-title { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.5px; color:#64748b; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
     .lecture-section-title .lsec-text { flex:1; }
     .lecture-section-title::after { display:none; }
-    .lecture-section-title .lsec-line { flex:1; height:1px; background:rgba(255,255,255,0.06); }
+    .lecture-section-title .lsec-line { flex:1; height:1px; background:var(--glass-06); }
 
     /* ── ГОВОРИТЬ БЛОК ── */
-    .say-block { background:rgba(6,182,212,0.07); border:1px solid rgba(6,182,212,0.2); border-left:3px solid #06b6d4; border-radius:0 10px 10px 0; padding:14px 16px; margin-bottom:10px; }
+    .say-block { background:rgba(6,182,212,0.07); border:1px solid var(--tint-brand-3); border-left:3px solid #06b6d4; border-radius:0 10px 10px 0; padding:14px 16px; margin-bottom:10px; }
     .say-label { font-size:11px; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
     .say-label-text { flex:1; }
 
     /* ── БЛОК ЧЕК ── */
     .block-check { width:22px; height:22px; border-radius:6px; border:2px solid rgba(255,255,255,0.2); background:transparent; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all 0.2s; font-size:12px; color:#fff; user-select:none; }
-    .block-check:hover { border-color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.06); }
+    .block-check:hover { border-color:rgba(255,255,255,0.5); background:var(--glass-06); }
     .block-check.checked { background:#10b981; border-color:#10b981; }
     .say-block .block-check { border-color:rgba(6,182,212,0.4); }
-    .say-block .block-check:hover { border-color:#06b6d4; background:rgba(6,182,212,0.1); }
+    .say-block .block-check:hover { border-color:#06b6d4; background:var(--tint-brand-1); }
     .say-block .block-check.checked { background:#06b6d4; border-color:#06b6d4; }
     .tip-block .block-check { border-color:rgba(245,158,11,0.4); }
     .tip-block .block-check:hover { border-color:#f59e0b; background:rgba(245,158,11,0.1); }
@@ -153,7 +158,7 @@
     .say-block.block-done { opacity:0.7; border-left-color:rgba(6,182,212,0.4); }
     .tip-block.block-done { opacity:0.7; }
     .practice-block.block-done { opacity:0.7; }
-    .say-text { font-size:14.5px; color:#f1f5f9; line-height:1.85; }
+    .say-text { font-size:14.5px; color:var(--text-bright); line-height:1.85; }
     .say-text em { color:#38bdf8; font-style:normal; font-weight:700; }
 
     /* ── ДИАЛОГ ── */
@@ -162,9 +167,9 @@
     .dialog-role { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; padding:3px 9px; border-radius:6px; margin-top:3px; flex-shrink:0; min-width:64px; text-align:center; }
     .role-teacher { background:rgba(129,140,248,0.15); color:#a5b4fc; }
     .role-student { background:rgba(52,211,153,0.15); color:#6ee7b7; }
-    .dialog-text { font-size:14px; color:#e2e8f0; line-height:1.8; }
+    .dialog-text { font-size:14px; color:var(--text-secondary); line-height:1.8; }
     .dialog-text strong { color:#ffffff; }
-    .dialog-text em { color:#94a3b8; font-style:italic; }
+    .dialog-text em { color:var(--text-muted); font-style:italic; }
 
     /* ── ВАЖНО БЛОК ── */
     .tip-block { background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.25); border-radius:10px; padding:12px 16px; margin-bottom:10px; display:flex; gap:10px; align-items:flex-start; }
@@ -182,7 +187,7 @@
     .practice-check-box { width:20px; height:20px; border-radius:5px; border:2px solid rgba(52,211,153,0.4); display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; flex-shrink:0; transition:all 0.2s; }
     .practice-check-box.checked { background:#10b981; border-color:#10b981; }
     .practice-check-label { font-size:12px; font-weight:600; color:#64748b; }
-    .practice-check-row:hover .practice-check-label { color:#94a3b8; }
+    .practice-check-row:hover .practice-check-label { color:var(--text-muted); }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
     @media (max-width: 768px) { .cards-grid { grid-template-columns: 1fr; } .page-header h1 { font-size: 24px; } }
@@ -207,7 +212,7 @@
 <body>
 
 <div id="nav-placeholder"></div>
-<script src="../nav-loader.js?v=12.7"></script>
+<script src="../nav-loader.js?v=13.2"></script>
 <script>
 (function() {
   const ADMIN_EMAILS = ['dersire.der@gmail.com','mihail.ce89@gmail.com','cebotarigg@gmail.com'];
@@ -218,7 +223,7 @@
       const email = (user.email || '').toLowerCase();
       const role = parseInt(user.role) || 0;
       if (!ADMIN_EMAILS.includes(email) && role < 9) {
-        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:#070b14;"><div style="font-size:48px">🔒</div><p style="color:#e2e8f0;font-size:16px">Доступ только для администраторов</p><a href="../index.html" style="color:#06b6d4;font-size:14px">← На главную</a></div>';
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:16px;background:var(--surface-base);"><div style="font-size:48px">🔒</div><p style="color:var(--text-secondary);font-size:16px">Доступ только для администраторов</p><a href="../index.html" style="color:var(--brand-ink);font-size:14px">← На главную</a></div>';
       }
     } catch(e) {}
   }
@@ -246,20 +251,20 @@
     <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
       <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px rgba(6,182,212,.35);">👤</div>
       <div>
-        <div style="font-size:11px;font-weight:700;color:#06b6d4;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Выберите студента</div>
-        <div style="font-size:12px;color:#94a3b8;">для просмотра и редактирования прогресса</div>
+        <div style="font-size:11px;font-weight:700;color:var(--brand-ink);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Выберите студента</div>
+        <div style="font-size:12px;color:var(--text-muted);">для просмотра и редактирования прогресса</div>
       </div>
     </div>
     <select class="student-select" id="studentSelect">
       <option value="">— Выбери студента —</option>
     </select>
     <span class="student-badge hidden" id="studentBadge"></span>
-    <span id="studentLoading" style="font-size:13px;color:#94a3b8;">Загрузка студентов...</span>
+    <span id="studentLoading" style="font-size:13px;color:var(--text-muted);">Загрузка студентов...</span>
   </div>
 
-  <div id="no-student-placeholder" style="text-align:center;padding:80px 20px;background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.1);border-radius:20px;margin-bottom:32px;">
+  <div id="no-student-placeholder" style="text-align:center;padding:80px 20px;background:rgba(255,255,255,.02);border:1px dashed var(--edge-10);border-radius:20px;margin-bottom:32px;">
     <div style="font-size:56px;margin-bottom:16px;">👆</div>
-    <div style="font-size:20px;font-weight:700;color:#e2e8f0;margin-bottom:8px;">Выберите студента выше</div>
+    <div style="font-size:20px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">Выберите студента выше</div>
     <div style="font-size:14px;color:#64748b;max-width:400px;margin:0 auto;">После выбора студента появятся карточки уроков с его прогрессом</div>
   </div>
 
@@ -486,11 +491,11 @@
   <!-- ═══════════════════════════════════════════════════════════
        📚 БАНК ВОПРОСОВ И ИНСТРУМЕНТОВ ДЛЯ ПРЕПОДАВАТЕЛЯ
   ═══════════════════════════════════════════════════════════ -->
-  <div id="teacher-bank" style="margin-top:48px;padding-top:40px;border-top:2px solid rgba(6,182,212,0.15);">
+  <div id="teacher-bank" style="margin-top:48px;padding-top:40px;border-top:2px solid var(--tint-brand-2);">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
       <div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#818cf8,#6366f1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📚</div>
       <div>
-        <div style="font-size:22px;font-weight:900;color:#f1f5f9;letter-spacing:-0.02em;">Банк вопросов и инструментов</div>
+        <div style="font-size:22px;font-weight:900;color:var(--text-bright);letter-spacing:-0.02em;">Банк вопросов и инструментов</div>
         <div style="font-size:14px;color:#64748b;margin-top:2px;">Для преподавателя — дополнительные материалы, вопросы, приёмы</div>
       </div>
     </div>
@@ -500,7 +505,7 @@
       <!-- Карточка 1: Вопросы для проверки понимания -->
       <div style="background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.2);border-radius:14px;padding:20px;">
         <div style="font-size:13px;font-weight:800;color:#818cf8;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🎯 Вопросы для проверки понимания</div>
-        <div style="font-size:15.5px;color:#e2e8f0;line-height:1.9;">
+        <div style="font-size:15.5px;color:var(--text-secondary);line-height:1.9;">
           • Объясни мне профессию диспетчера так, как будто я — твой друг который ничего не знает о грузоперевозках<br>
           • Чем диспетчер отличается от брокера — назови 3 конкретных отличия<br>
           • Если carrier зарабатывает $2,000 за рейс — сколько получает диспетчер при 4%?<br>
@@ -515,7 +520,7 @@
       <!-- Карточка 1B: Продвинутые вопросы — на суждение, не на память -->
       <div style="background:rgba(232,121,249,0.06);border:1px solid rgba(232,121,249,0.2);border-radius:14px;padding:20px;">
         <div style="font-size:13px;font-weight:800;color:#e879f9;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🧠 Вопросы для продвинутых — не для новичков</div>
-        <div style="font-size:15.5px;color:#e2e8f0;line-height:1.9;">
+        <div style="font-size:15.5px;color:var(--text-secondary);line-height:1.9;">
           • У тебя два груза на выбор: $1,850 за 750 миль с deadhead 50 миль, или $2,100 за 900 миль с deadhead 180 миль. Какой выгоднее по RPM — и почему бо́льшая ставка может обмануть?<br>
           • Брокер согласовал ставку по телефону, но в Rate Con пришла цифра на $100 меньше — а ты уже подписал не читая. Какие варианты остались и почему спорить теперь поздно?<br>
           • Carrier'у прямо сейчас нужны деньги на топливо, инвойс закрыт 3 дня назад. Quick Pay за 2.5% или Factoring за 4%? От чего зависит правильный выбор?<br>
@@ -531,9 +536,9 @@
       </div>
 
       <!-- Карточка 2: Аналогии и объяснения -->
-      <div style="background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.2);border-radius:14px;padding:20px;">
-        <div style="font-size:13px;font-weight:800;color:#06b6d4;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">💡 Аналогии для объяснения</div>
-        <div style="font-size:15.5px;color:#e2e8f0;line-height:1.9;">
+      <div style="background:rgba(6,182,212,0.06);border:1px solid var(--tint-brand-3);border-radius:14px;padding:20px;">
+        <div style="font-size:13px;font-weight:800;color:var(--brand-ink);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">💡 Аналогии для объяснения</div>
+        <div style="font-size:15.5px;color:var(--text-secondary);line-height:1.9;">
           <strong style="color:#38bdf8;">Диспетчер = Риелтор:</strong> не владеет квартирой, но помогает продать и берёт комиссию<br><br>
           <strong style="color:#38bdf8;">Broker = Агент по найму:</strong> берёт заказ от компании (shipper) и находит исполнителя (carrier)<br><br>
           <strong style="color:#38bdf8;">Rate Con = Договор аренды:</strong> юридически обязывающий документ, нельзя нарушить без последствий<br><br>
@@ -545,7 +550,7 @@
       <!-- Карточка 3: Типичные ошибки студентов -->
       <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:14px;padding:20px;">
         <div style="font-size:13px;font-weight:800;color:#f87171;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">⚠️ Типичные ошибки студентов</div>
-        <div style="font-size:15.5px;color:#e2e8f0;line-height:1.9;">
+        <div style="font-size:15.5px;color:var(--text-secondary);line-height:1.9;">
           <strong style="color:#fca5a5;">Путают диспетчера с брокером</strong> — напомни: брокер имеет лицензию MC и работает между shipper и carrier. Диспетчер — агент carrier без лицензии<br><br>
           <strong style="color:#fca5a5;">Думают что нужна лицензия</strong> — нет. Диспетчер = independent contractor по договору<br><br>
           <strong style="color:#fca5a5;">Завышают ожидания по доходу</strong> — первый месяц $300–800, не $5,000<br><br>
@@ -557,7 +562,7 @@
       <!-- Карточка 4: Интересные факты для мотивации -->
       <div style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2);border-radius:14px;padding:20px;">
         <div style="font-size:13px;font-weight:800;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🚀 Факты для мотивации студента</div>
-        <div style="font-size:15.5px;color:#e2e8f0;line-height:1.9;">
+        <div style="font-size:15.5px;color:var(--text-secondary);line-height:1.9;">
           • В США не хватает 80,000 водителей грузовиков — рынок диспетчеров растёт<br>
           • Средний диспетчер в США зарабатывает $45,000–$65,000 в год<br>
           • Топовые диспетчеры с 5–10 траками зарабатывают $100,000+ в год<br>
@@ -572,7 +577,7 @@
       <!-- Карточка 5: Приёмы обучения -->
       <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2);border-radius:14px;padding:20px;">
         <div style="font-size:13px;font-weight:800;color:#34d399;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🎓 Приёмы эффективного обучения</div>
-        <div style="font-size:15.5px;color:#e2e8f0;line-height:1.9;">
+        <div style="font-size:15.5px;color:var(--text-secondary);line-height:1.9;">
           <strong style="color:#6ee7b7;">Метод Сократа:</strong> не давай ответ сразу — задавай наводящие вопросы пока студент сам не придёт к выводу<br><br>
           <strong style="color:#6ee7b7;">Калькулятор мечты:</strong> спроси желаемый доход → посчитайте вместе сколько траков нужно<br><br>
           <strong style="color:#6ee7b7;">Ролевая игра:</strong> ты — брокер, студент — диспетчер. Практикуй звонок на каждом уроке<br><br>
@@ -582,9 +587,9 @@
       </div>
 
       <!-- Карточка 6: Полезные ресурсы -->
-      <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:20px;">
-        <div style="font-size:13px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🔗 Полезные ресурсы</div>
-        <div style="font-size:15.5px;color:#e2e8f0;line-height:1.9;">
+      <div style="background:var(--glass-03);border:1px solid var(--edge-08);border-radius:14px;padding:20px;">
+        <div style="font-size:13px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">🔗 Полезные ресурсы</div>
+        <div style="font-size:15.5px;color:var(--text-secondary);line-height:1.9;">
           <strong style="color:#38bdf8;">FMCSA Safer System:</strong> safer.fmcsa.dot.gov — проверка MC номеров<br><br>
           <strong style="color:#38bdf8;">DAT Load Board:</strong> dat.com — крупнейшая биржа грузов<br><br>
           <strong style="color:#38bdf8;">FreightWaves:</strong> freightwaves.com — новости рынка, аналитика ставок<br><br>
@@ -1344,7 +1349,7 @@ function openModal(id) {
       const item = document.createElement('div');
       item.className = 'step-item' + (checked ? ' checked' : '');
       item.style.cssText = 'display:flex;gap:14px;align-items:flex-start;padding:12px 14px;border-radius:10px;border:1px solid rgba(129,140,248,0.1);background:rgba(255,255,255,0.02);margin-bottom:8px;cursor:pointer;';
-      item.innerHTML = `<div class="topic-check ${checked?'checked':''}" style="flex-shrink:0">${checked?'✓':''}</div><div><div style="font-size:13px;font-weight:600;color:#e2e8f0">${step.label}</div>${step.hint?`<div style="font-size:12px;color:#64748b;margin-top:4px;line-height:1.5">${step.hint}</div>`:''}</div>`;
+      item.innerHTML = `<div class="topic-check ${checked?'checked':''}" style="flex-shrink:0">${checked?'✓':''}</div><div><div style="font-size:13px;font-weight:600;color:var(--text-secondary)">${step.label}</div>${step.hint?`<div style="font-size:12px;color:#64748b;margin-top:4px;line-height:1.5">${step.hint}</div>`:''}</div>`;
       item.addEventListener('click', async function() {
         if (!lessonData[currentLessonId]) lessonData[currentLessonId] = {};
         if (!lessonData[currentLessonId].steps) lessonData[currentLessonId].steps = {};
