@@ -945,15 +945,38 @@
         if (subRaf !== null) { cancelAnimationFrame(subRaf); subRaf = null; }
     }
 
-    // Показать/спрятать строку субтитра во всех трёх местах
+    // Показать строку субтитра во всех местах.
+    // Фраза НЕ заменяет предыдущую, а дописывается справа — строка над
+    // плеером наполняется, старое уезжает влево. Так текст не «моргает»
+    // подменой и видно, что было сказано только что.
+    var SUB_KEEP = 14;   // сколько фраз держим; дальше самые старые выкидываем
+    function appendCue(box, txt) {
+        if (!txt) { box.textContent = ''; box.classList.remove('has-text'); return; }
+        var last = box.lastElementChild;
+        if (last && last.dataset.cue === txt) return;   // та же фраза — не дублируем
+        var sp = document.createElement('span');
+        sp.className = 'la-cue';
+        sp.dataset.cue = txt;
+        sp.textContent = txt;
+        box.appendChild(sp);
+        while (box.children.length > SUB_KEEP) box.removeChild(box.firstElementChild);
+        // подсвечиваем только последнюю
+        for (var k = 0; k < box.children.length; k++) {
+            box.children[k].classList.toggle('now', k === box.children.length - 1);
+        }
+        box.classList.add('has-text');
+        // держим свежую фразу в поле зрения
+        if (box.scrollTo) box.scrollTo({ left: box.scrollWidth, behavior: 'smooth' });
+        else box.scrollLeft = box.scrollWidth;
+    }
+
     function setBarText(txt) {
         var boxes = [], i;
         if (fixedBar) boxes.push(fixedBar.querySelector('.la-fixed-sub'));
         if (mobileBar) boxes.push(mobileBar.querySelector('.la-mob-sub'));
         for (i = 0; i < boxes.length; i++) {
             if (!boxes[i]) continue;
-            boxes[i].textContent = txt;
-            boxes[i].classList.toggle('has-text', !!txt);
+            appendCue(boxes[i], txt);
         }
     }
 
