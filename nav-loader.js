@@ -739,9 +739,19 @@
             try { localStorage.setItem('d4y-theme', next); } catch (e) {}
         });
 
-        // Слушатель системной темы намеренно выключен: пока светлая тема не
-        // доведена, уводить в неё автоматически нельзя. Вернуть, когда будет готова.
-        /* системная тема — позже */
+        // Пользователь сменил тему в системе — подхватываем, но только если
+        // он не выбирал тему на сайте вручную.
+        try {
+            var mq = window.matchMedia('(prefers-color-scheme: light)');
+            var onSys = function (e) {
+                var saved = null;
+                try { saved = localStorage.getItem('d4y-theme'); } catch (err) {}
+                if (saved === 'light' || saved === 'dark') return;
+                document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
+            };
+            if (mq.addEventListener) mq.addEventListener('change', onSys);
+            else if (mq.addListener) mq.addListener(onSys);
+        } catch (e) {}
     }
 
     // ── SEO: hreflang alternates for this page ────────────────────
