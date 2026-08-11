@@ -28,7 +28,9 @@ export default defineConfig(({ mode }) => {
     test: {
       globals: true,
       environment: 'jsdom',
-      include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+      // server/ тоже под тестами: там живут ключи и контракт ручек, который на
+      // боевом сайте повторяет PHP. Ломается он в местах, невидимых глазами.
+      include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'server/**/*.test.ts'],
     },
   }
 })

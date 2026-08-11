@@ -4,9 +4,32 @@ import { buildSystemPrompt } from '../src/call/prompt'
 import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
 import { buildDebriefPrompt } from '../src/call/debriefPrompt'
 import { toGeminiTools } from '../src/call/geminiTools'
-import { pickLiveModel, type ModelInfo } from '../src/call/geminiModels'
-import { normalizeVoice } from '../src/voice/voices'
+import { pickLiveModel, pickTextModel, type ModelInfo } from '../src/call/geminiModels'
+import { normalizeVoice, DEFAULT_VOICE, ORPHEUS_VOICES } from '../src/voice/voices'
 import { normalizeGeminiVoice } from '../src/voice/geminiVoices'
+import { encodeWav, TARGET_SAMPLE_RATE } from '../src/voice/audio'
+import { SCENARIOS } from '../src/data/scenarios'
+
+/** Любой сценарий: пробе важно, что токен выпускается, а не какой именно звонок. */
+const FIRST_SCENARIO_ID = SCENARIOS[0]?.id ?? ''
+
+const SCENARIO_IDS = new Set(SCENARIOS.map((s) => s.id))
+
+/**
+ * Проверка сценария до всякой работы.
+ *
+ * Без неё getScenario бросает обычную ошибку, и наружу уходит 500 — «сервер
+ * сломался» вместо «запрос кривой». Искать такое начинают на сервере, а лежит
+ * оно в запросе. Боевой PHP на это отвечает 400; контракт обязан совпадать,
+ * иначе фронт ведёт себя локально и на сайте по-разному.
+ */
+function requireScenario(id: unknown): string {
+  const scenarioId = typeof id === 'string' ? id : ''
+  if (!SCENARIO_IDS.has(scenarioId)) {
+    throw new HttpError(400, `unknown scenario: ${scenarioId}`)
+  }
+  return scenarioId
+}
 
 /**
  * Дев-сервер, который держит ключи у себя.
@@ -36,6 +59,40 @@ export function brokerApi(env: Record<string, string>): Plugin {
   ]
   const TTS_MODEL = env.GROQ_TTS_MODEL ?? 'canopylabs/orpheus-v1-english'
 
+  /**
+   * Кого и в каком порядке спрашивать. Один список на разговор и на
+   * диагностику: разойдись они — и health показывал бы зелёное там, где
+   * звонок падает. Ровно это и случилось на боевом сервере.
+   *
+   * Cerebras первым: щедрый бесплатный лимит. Имена моделей у провайдеров
+   * РАЗНЫЕ — старый ai-broker-chat.html слал груповское имя в Cerebras, тот
+   * отвечал ошибкой, и каждый вызов молча уходил на запасного.
+   */
+  function buildAttempts(): Attempt[] {
+    const attempts: Attempt[] = []
+    if (cerebrasKey) {
+      for (const model of CEREBRAS_MODELS) {
+        attempts.push({
+          name: 'cerebras',
+          url: 'https://api.cerebras.ai/v1/chat/completions',
+          key: cerebrasKey,
+          model,
+        })
+      }
+    }
+    if (groqKey) {
+      for (const model of GROQ_MODELS) {
+        attempts.push({
+          name: 'groq',
+          url: 'https://api.groq.com/openai/v1/chat/completions',
+          key: groqKey,
+          model,
+        })
+      }
+    }
+    return attempts
+  }
+
   return {
     name: 'broker-call-api',
     configureServer(server: ViteDevServer) {
@@ -51,6 +108,71 @@ export function brokerApi(env: Record<string, string>): Plugin {
         },
       })))
 
+      // ── Диагностика ───────────────────────────────────────────────────────
+      // Живые пробы, а не догадки: короткий запрос к каждому сервису и текст
+      // ошибки провайдера как есть. Открывается по /api/health.
+      //
+      // Проба обязана идти ТЕМ ЖЕ путём, что и звонок. На боевом сервере
+      // прежняя версия слала голый ping без инструментов и светилась зелёным,
+      // пока настоящий разговор падал с 502. Поэтому здесь тот же список
+      // моделей, та же подгонка тела и те же схемы инструментов.
+      server.middlewares.use('/api/health', json(async () => {
+        const probe: Record<string, unknown> = {}
+
+        // Диалог.
+        const attempts = buildAttempts()
+        if (attempts.length === 0) {
+          probe.chat = { ok: false, error: 'no LLM key' }
+        } else {
+          for (const attempt of attempts) {
+            const started = Date.now()
+            const result = await tryChat(attempt)
+            probe.chat = result.ok
+              ? { ok: true, provider: attempt.name, model: attempt.model, ms: Date.now() - started }
+              : {
+                  ok: false,
+                  provider: attempt.name,
+                  model: attempt.model,
+                  status: result.status,
+                  error: result.error,
+                }
+            if (result.ok) break
+          }
+        }
+
+        // Озвучка и распознавание.
+        if (groqKey) {
+          probe.tts = await probeTts(groqKey, TTS_MODEL)
+          probe.stt = await probeStt(groqKey)
+        } else {
+          probe.tts = { ok: false, error: 'no GROQ_API_KEY' }
+          probe.stt = { ok: false, error: 'no GROQ_API_KEY' }
+        }
+
+        // Gemini: каталог, выбор модели, выпуск токена — весь путь целиком.
+        probe.gemini = geminiKey ? await probeGemini(geminiKey) : { ok: false, error: 'no GEMINI_API_KEY' }
+
+        return {
+          keys: {
+            groq: Boolean(groqKey),
+            cerebras: Boolean(cerebrasKey),
+            openai: Boolean(openaiKey),
+            gemini: Boolean(geminiKey),
+          },
+          // Форма ответа один в один как у api/broker-call.php?action=health.
+          // Открывают то одну, то другую; разные названия полей в одинаковых
+          // отчётах заставляют переводить одно в другое ровно тогда, когда
+          // некогда.
+          config: {
+            scenarios: SCENARIOS.length,
+            tools: TOOL_SCHEMAS.length,
+            tts_model: TTS_MODEL,
+            voices: ORPHEUS_VOICES,
+          },
+          probe,
+        }
+      }))
+
       // ── Сессия Gemini Live ────────────────────────────────────────────────
       // Отдаём браузеру ОДНОРАЗОВЫЙ токен, а не ключ. Ключ не должен уезжать
       // в браузер ни на минуту: вебсокет открыт со страницы, а страница
@@ -62,6 +184,9 @@ export function brokerApi(env: Record<string, string>): Plugin {
       server.middlewares.use('/api/gemini-session', json(async (req) => {
         if (!geminiKey) throw new HttpError(503, 'GEMINI_API_KEY is not set')
         const body = await readJson<{ scenarioId: string; voice?: string }>(req)
+        // Сценарий проверяем ДО похода к провайдеру: ходить за каталогом
+        // моделей ради заведомо кривого запроса незачем.
+        const scenarioId = requireScenario(body.scenarioId)
         const models = await geminiModels(geminiKey)
         const model = pickLiveModel(models)
         if (!model) {
@@ -70,7 +195,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
             'no Gemini model with bidiGenerateContent is available on this key',
           )
         }
-        const setup = geminiSetup(model, body.scenarioId, body.voice)
+        const setup = geminiSetup(model, scenarioId, body.voice)
         const token = await geminiToken(geminiKey, setup)
         return { token, model, wsUrl: GEMINI_WS, setup: { locked: true } }
       }))
@@ -81,9 +206,10 @@ export function brokerApi(env: Record<string, string>): Plugin {
       // ставки со стороны браузера нельзя.
       server.middlewares.use('/api/turn', json(async (req) => {
         const body = await readJson<TurnRequest>(req)
+        const scenarioId = requireScenario(body.scenarioId)
         const messages = [
-          { role: 'system', content: buildSystemPrompt(body.scenarioId) },
-          ...body.messages,
+          { role: 'system', content: buildSystemPrompt(scenarioId) },
+          ...(body.messages ?? []),
         ]
         const payload = {
           messages,
@@ -93,30 +219,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
           max_tokens: 220,
         }
 
-        // Cerebras первым: щедрый бесплатный лимит. Имя модели у провайдеров
-        // РАЗНОЕ — старый код слал груповское имя в Cerebras и молча падал на
-        // фолбэк при каждом вызове.
-        const attempts: Attempt[] = []
-        if (cerebrasKey) {
-          for (const model of CEREBRAS_MODELS) {
-            attempts.push({
-              name: 'cerebras',
-              url: 'https://api.cerebras.ai/v1/chat/completions',
-              key: cerebrasKey,
-              model,
-            })
-          }
-        }
-        if (groqKey) {
-          for (const model of GROQ_MODELS) {
-            attempts.push({
-              name: 'groq',
-              url: 'https://api.groq.com/openai/v1/chat/completions',
-              key: groqKey,
-              model,
-            })
-          }
-        }
+        const attempts = buildAttempts()
         if (attempts.length === 0) throw new HttpError(503, 'no LLM key configured')
 
         let lastError = ''
@@ -207,6 +310,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
       // ── Разбор звонка ─────────────────────────────────────────────────────
       server.middlewares.use('/api/debrief', json(async (req) => {
         const body = await readJson<DebriefRequest>(req)
+        requireScenario(body.scenarioId)
         const key = cerebrasKey || groqKey
         if (!key) throw new HttpError(503, 'no LLM key configured')
         const useCerebras = Boolean(cerebrasKey)
@@ -236,6 +340,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
       server.middlewares.use('/api/realtime-session', json(async (req) => {
         if (!openaiKey) throw new HttpError(503, 'OPENAI_API_KEY is not set')
         const body = await readJson<{ scenarioId: string; voice?: string }>(req)
+        const scenarioId = requireScenario(body.scenarioId)
         const r = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
@@ -243,7 +348,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
             session: {
               type: 'realtime',
               model: env.OPENAI_REALTIME_MODEL ?? 'gpt-realtime-mini',
-              instructions: buildSystemPrompt(body.scenarioId),
+              instructions: buildSystemPrompt(scenarioId),
               audio: {
                 input: { turn_detection: { type: 'semantic_vad', interrupt_response: true } },
                 output: { voice: body.voice ?? 'ash' },
@@ -291,6 +396,130 @@ function shapePayload(payload: Record<string, unknown>, model: string): Record<s
     shaped.reasoning_effort = 'low'
   }
   return shaped
+}
+
+// ── Пробы для /api/health ───────────────────────────────────────────────────
+// Каждая ходит тем же путём, что и настоящая работа, и возвращает текст отказа
+// провайдера как есть. Обрезанная до кода ошибка не объясняет ничего — это
+// выяснилось на «LLM 502», за которым скрывалось «max_tokens не поддержан».
+
+interface ProbeResult {
+  ok: boolean
+  status?: number
+  error?: string
+}
+
+async function tryChat(attempt: Attempt): Promise<ProbeResult> {
+  try {
+    const r = await fetch(attempt.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${attempt.key}` },
+      body: JSON.stringify(
+        shapePayload(
+          {
+            messages: [{ role: 'user', content: 'ping' }],
+            // Инструменты обязательны в пробе: кривая схема роняет ЗАПРОС
+            // ЦЕЛИКОМ, и без них проба этого не увидит.
+            tools: TOOL_SCHEMAS,
+            tool_choice: 'auto',
+            temperature: 0.85,
+            max_tokens: 32,
+          },
+          attempt.model,
+        ),
+      ),
+    })
+    if (r.ok) return { ok: true }
+    return { ok: false, status: r.status, error: (await r.text()).slice(0, 200) }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+async function probeTts(key: string, model: string): Promise<Record<string, unknown>> {
+  const started = Date.now()
+  try {
+    const r = await fetch('https://api.groq.com/openai/v1/audio/speech', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model,
+        voice: DEFAULT_VOICE,
+        input: 'Apex Freight, this is Mike.',
+        response_format: 'wav',
+      }),
+    })
+    if (r.ok) {
+      const bytes = (await r.arrayBuffer()).byteLength
+      return { ok: true, voice: DEFAULT_VOICE, bytes, ms: Date.now() - started }
+    }
+    const body = (await r.text()).slice(0, 200)
+    const result: Record<string, unknown> = {
+      ok: false,
+      voice: DEFAULT_VOICE,
+      status: r.status,
+      error: body,
+    }
+    // Самый частый отказ — не поломка, а непринятые условия модели. Ответ
+    // провайдера обрезан на середине адреса, поэтому ссылку собираем сами.
+    if (/terms acceptance/i.test(body)) {
+      result.hint = `Модель требует однократного принятия условий: https://console.groq.com/playground?model=${encodeURIComponent(model)}`
+    }
+    return result
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+async function probeStt(key: string): Promise<Record<string, unknown>> {
+  const started = Date.now()
+  try {
+    // Полсекунды тишины: нам важен факт приёма файла, а не текст.
+    const form = new FormData()
+    form.append('file', encodeWav(new Float32Array(TARGET_SAMPLE_RATE / 2)), 'probe.wav')
+    form.append('model', 'whisper-large-v3-turbo')
+    form.append('response_format', 'text')
+
+    const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${key}` },
+      body: form,
+    })
+    if (r.ok) return { ok: true, ms: Date.now() - started }
+    return { ok: false, status: r.status, error: (await r.text()).slice(0, 200) }
+  } catch (e) {
+    return { ok: false, error: (e as Error).message }
+  }
+}
+
+async function probeGemini(key: string): Promise<Record<string, unknown>> {
+  const started = Date.now()
+  try {
+    const models = await geminiModels(key)
+    const live = pickLiveModel(models)
+    const text = pickTextModel(models)
+    if (!live) {
+      return {
+        ok: false,
+        stage: 'pick',
+        error: 'на этом ключе нет модели с bidiGenerateContent',
+        models: models.length,
+      }
+    }
+    // Токен выпускаем настоящий, с настоящим промптом и инструментами: отказ
+    // на этом шаге и есть самый частый способ не начать разговор.
+    const setup = geminiSetup(live, FIRST_SCENARIO_ID)
+    await geminiToken(key, setup)
+    return {
+      ok: true,
+      live_model: live,
+      text_model: text,
+      models: models.length,
+      ms: Date.now() - started,
+    }
+  } catch (e) {
+    return { ok: false, stage: 'token', error: (e as Error).message }
+  }
 }
 
 // ── Gemini Live ─────────────────────────────────────────────────────────────
