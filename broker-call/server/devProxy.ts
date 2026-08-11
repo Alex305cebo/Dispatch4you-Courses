@@ -311,6 +311,23 @@ export function brokerApi(env: Record<string, string>): Plugin {
       server.middlewares.use('/api/debrief', json(async (req) => {
         const body = await readJson<DebriefRequest>(req)
         requireScenario(body.scenarioId)
+
+        // Gemini первым, когда есть ключ: flash-lite даёт 500 разборов в
+        // сутки против двадцати у моделей уровня pro, а разбор — это ровно
+        // один запрос на звонок. Имя модели снова не наше: спрашиваем
+        // каталог и выбираем по той же политике, что и для разговора.
+        //
+        // Любой отказ — молча вниз, на прежний путь. Разбор студент видит
+        // один раз в конце звонка; уронить его ради нового провайдера
+        // означало бы отобрать единственное, ради чего он звонил.
+        if (geminiKey) {
+          try {
+            return await debriefViaGemini(geminiKey, buildDebriefPrompt(body))
+          } catch (e) {
+            console.warn('[broker-api] разбор через Gemini не вышел, откат:', (e as Error).message)
+          }
+        }
+
         const key = cerebrasKey || groqKey
         if (!key) throw new HttpError(503, 'no LLM key configured')
         const useCerebras = Boolean(cerebrasKey)
@@ -568,6 +585,53 @@ function geminiSetup(model: string, scenarioId: string, voice?: string) {
     // громкости, поэтому в шумной комнате работает лучше нашего детектора.
     realtimeInputConfig: { automaticActivityDetection: {} },
   }
+}
+
+/**
+ * Разбор звонка через Gemini.
+ *
+ * Формат у него свой: системная часть отдельным полем, а не первым сообщением,
+ * и ответ лежит в candidates[0].content.parts. Просить JSON надо через
+ * responseMimeType — без него модель заворачивает его в ```json, и разбор
+ * приходится выковыривать регулярками.
+ */
+async function debriefViaGemini(
+  key: string,
+  messages: { role: string; content: string }[],
+): Promise<Record<string, unknown>> {
+  const model = pickTextModel(await geminiModels(key))
+  if (!model) throw new Error('нет подходящей текстовой модели на этом ключе')
+
+  const system = messages.find((m) => m.role === 'system')?.content ?? ''
+  const user = messages.find((m) => m.role === 'user')?.content ?? ''
+
+  const r = await fetch(
+    `${GEMINI_API}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: 'user', parts: [{ text: user }] }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 900,
+          responseMimeType: 'application/json',
+        },
+      }),
+    },
+  )
+  if (!r.ok) throw new Error(`${model} ${r.status}: ${(await r.text()).slice(0, 200)}`)
+
+  const data = (await r.json()) as {
+    candidates?: { content?: { parts?: { text?: string }[] } }[]
+  }
+  const text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('') ?? ''
+  const parsed = safeParse(text)
+  // Пустой объект означает, что разобрать не удалось. Отдавать студенту
+  // пустой разбор хуже, чем сходить к прежнему провайдеру.
+  if (Object.keys(parsed).length === 0) throw new Error(`${model} вернул неразбираемый ответ`)
+  return parsed
 }
 
 async function geminiToken(key: string, setup: unknown): Promise<string> {

@@ -115,6 +115,20 @@ function bc_config() {
   return $config;
 }
 
+/** Кодовые имена целей → фразы, в которых видно, кто что делает. */
+function bc_goal_words($goals) {
+  if (!is_array($goals)) { return []; }
+  $config = bc_config();
+  $wording = isset($config['goalWording']) && is_array($config['goalWording'])
+    ? $config['goalWording'] : [];
+  $out = [];
+  foreach ($goals as $goal) {
+    $key = (string) $goal;
+    $out[] = isset($wording[$key]) ? $wording[$key] : $key;
+  }
+  return $out;
+}
+
 function bc_scenario($id) {
   $config = bc_config();
   return isset($config['scenarios'][$id]) ? $config['scenarios'][$id] : null;
@@ -263,6 +277,53 @@ function bc_gemini_voice($raw) {
     if (strtolower($name) === $v) { return $name; }
   }
   return $GEMINI_DEFAULT_VOICE;
+}
+
+/**
+ * Разбор звонка через Gemini. Возвращает массив или null, если не вышло.
+ *
+ * Формат у Gemini свой: системная часть отдельным полем, а не первым
+ * сообщением, ответ лежит в candidates[0].content.parts, а JSON надо просить
+ * через responseMimeType — иначе модель заворачивает его в ```json и разбор
+ * приходится выковыривать регулярками.
+ *
+ * Любой отказ означает null и молчаливый откат на прежнего провайдера: разбор
+ * студент видит один раз в конце звонка, и уронить его ради нового провайдера
+ * значит отобрать то единственное, ради чего он звонил.
+ */
+function bc_gemini_debrief($key, $system, $user) {
+  list($code, $models) = bc_gemini_models($key);
+  if ($code < 200 || $code >= 300) { return null; }
+
+  $model = bc_gemini_pick($models, 'text');
+  if ($model === null) { return null; }
+
+  list($rc, $body) = bc_post_json(
+    BC_GEMINI_API . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key),
+    '',
+    [
+      'systemInstruction' => ['parts' => [['text' => $system]]],
+      'contents'          => [['role' => 'user', 'parts' => [['text' => $user]]]],
+      'generationConfig'  => [
+        'temperature'      => 0.3,
+        'maxOutputTokens'  => 900,
+        'responseMimeType' => 'application/json',
+      ],
+    ]
+  );
+  if ($rc < 200 || $rc >= 300) { return null; }
+
+  $data = json_decode((string) $body, true);
+  if (!is_array($data) || !isset($data['candidates'][0]['content']['parts'])) { return null; }
+
+  $text = '';
+  foreach ($data['candidates'][0]['content']['parts'] as $part) {
+    if (isset($part['text'])) { $text .= $part['text']; }
+  }
+
+  $parsed = json_decode($text, true);
+  // Пустой разбор хуже, чем сходить к прежнему провайдеру.
+  return (is_array($parsed) && $parsed) ? $parsed : null;
 }
 
 /** Одноразовый токен на одну сессию. Возвращает [код, тело]. */
@@ -650,11 +711,31 @@ switch ($action) {
       }
     }
 
+    // Цели человеческими словами, а не кодовыми именами. `give_mc` модель
+    // читает как «спросить MC» и советует студенту делать работу брокера —
+    // ровно наоборот тому, чему учим. Таблица приезжает из TypeScript вместе
+    // с промптами, чтобы формулировка была одна на оба пути.
+    $metrics = (isset($in['metrics']) && is_array($in['metrics'])) ? $in['metrics'] : [];
+    $did    = bc_goal_words(isset($metrics['goalsMet']) ? $metrics['goalsMet'] : []);
+    $didNot = bc_goal_words(isset($metrics['goalsMissed']) ? $metrics['goalsMissed'] : []);
+
     $user = "Scores already calculated:\n"
       . json_encode(isset($in['metrics']) ? $in['metrics'] : new stdClass(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+      . "\n\nWhat the dispatcher DID do:\n"
+      . ($did ? "- " . implode("\n- ", $did) : '- nothing from the checklist')
+      . "\n\nWhat the dispatcher did NOT do:\n"
+      . ($didNot ? "- " . implode("\n- ", $didNot) : '- nothing missing')
       . "\n\nFacts recorded during the call:\n"
       . json_encode(isset($in['facts']) ? $in['facts'] : new stdClass(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
       . "\n\nTranscript:\n" . implode("\n", $lines);
+
+    // Gemini первым, когда есть ключ: flash-lite даёт 500 разборов в сутки
+    // против двадцати у моделей уровня pro, а разбор — ровно один запрос на
+    // звонок. Не вышло — молча вниз, на прежний путь.
+    if ($geminiKey !== '') {
+      $viaGemini = bc_gemini_debrief($geminiKey, $scenario['debrief'], $user);
+      if ($viaGemini !== null) { bc_json($viaGemini); }
+    }
 
     $useCerebras = ($cerebrasKey !== '');
     $key = $useCerebras ? $cerebrasKey : $groqKey;
