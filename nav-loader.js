@@ -274,7 +274,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=12.8';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=13.5';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
