@@ -1,11 +1,16 @@
 <!DOCTYPE html>
-<html lang="en" style="background:#070b14">
+<html lang="en" style="background:var(--surface-base)">
 <head>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <!-- Favicon -->
 
 
 <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <!-- Тема: выставляем ДО первой отрисовки, иначе моргнёт чужая. Внешним
+       файлом нельзя — он выполнится уже после отрисовки. -->
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');if(s!=='light'&&s!=='dark')s=window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <link rel="stylesheet" href="../css/tokens.css?v=15">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up | Dispatcher Courses</title>
   <link rel="canonical" href="https://dispatch4you.com/en/register.html">
@@ -15,21 +20,21 @@
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{--primary:#06b6d4;--accent:#f97316;--bg:#070b14;--border:rgba(255,255,255,.1)}
-    body{font-family:'Inter',sans-serif;background:var(--bg);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow-x:hidden}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow-x:hidden}
     body::before{content:'';position:fixed;inset:0;pointer-events:none;
       background:radial-gradient(circle at 25% 40%,rgba(6,182,212,.12),transparent 55%),
                 radial-gradient(circle at 75% 70%,rgba(249,115,22,.1),transparent 55%)}
 
     .wrap{position:relative;z-index:1;width:100%;max-width:420px}
 
-    .card{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:28px;padding:44px 40px;backdrop-filter:blur(20px)}
+    .card{background:var(--glass-04);border:1px solid var(--border);border-radius:28px;padding:44px 40px;backdrop-filter:blur(20px)}
 
     .logo{text-align:center;margin-bottom:32px}
     .logo-icon{font-size:52px;display:block;margin-bottom:10px}
     .logo-name{font-size:22px;font-weight:800;background:linear-gradient(135deg,#06b6d4,#0ea5e9,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
     .title{font-size:26px;font-weight:800;text-align:center;margin-bottom:6px}
-    .sub{text-align:center;color:#94a3b8;font-size:14px;margin-bottom:32px}
+    .sub{text-align:center;color:var(--text-muted);font-size:14px;margin-bottom:32px}
 
     /* GOOGLE BTN */
     .btn-google{
@@ -48,7 +53,7 @@
 
     /* DIVIDER */
     .divider{display:flex;align-items:center;gap:12px;margin:24px 0}
-    .divider::before,.divider::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.08)}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--glass-08)}
     .divider span{font-size:12px;color:#475569;white-space:nowrap}
 
     /* EMAIL SECTION */
@@ -57,18 +62,18 @@
 
     .form-group{margin-bottom:14px}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-    label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#e2e8f0}
+    label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text-secondary)}
     input[type=text],input[type=email],input[type=password]{
-      width:100%;padding:13px 14px;background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.1);border-radius:12px;
-      color:#fff;font-family:'Inter',sans-serif;font-size:14px;transition:all .2s
+      width:100%;padding:13px 14px;background:var(--glass-06);
+      border:1px solid var(--edge-10);border-radius:12px;
+      color:var(--text-primary);font-family:'Inter',sans-serif;font-size:14px;transition:all .2s
     }
     input:focus{outline:none;border-color:var(--primary);background:rgba(6,182,212,.08);box-shadow:0 0 0 3px rgba(6,182,212,.12)}
     input::placeholder{color:#475569}
 
     .pw-wrap{position:relative}
     .pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#475569;font-size:18px;padding:4px;transition:color .2s}
-    .pw-toggle:hover{color:#94a3b8}
+    .pw-toggle:hover{color:var(--text-muted)}
 
     .btn-email{
       width:100%;padding:14px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);
@@ -81,24 +86,24 @@
     /* TOGGLE */
     .toggle-email{
       width:100%;padding:12px;background:transparent;
-      border:1px solid rgba(255,255,255,.1);border-radius:12px;
-      color:#94a3b8;font-size:13px;font-weight:600;cursor:pointer;
+      border:1px solid var(--edge-10);border-radius:12px;
+      color:var(--text-muted);font-size:13px;font-weight:600;cursor:pointer;
       transition:all .2s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px
     }
-    .toggle-email:hover{border-color:rgba(255,255,255,.2);color:#e2e8f0;background:rgba(255,255,255,.04)}
+    .toggle-email:hover{border-color:rgba(255,255,255,.2);color:var(--text-secondary);background:var(--glass-04)}
 
     /* MESSAGES */
     .msg{border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:16px;display:none;line-height:1.5}
-    .msg.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#fca5a5}
-    .msg.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#6ee7b7}
+    .msg.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--ink-danger)}
+    .msg.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:var(--ink-success)}
 
     /* BOTTOM */
-    .bottom{text-align:center;margin-top:24px;color:#64748b;font-size:14px}
+    .bottom{text-align:center;margin-top:24px;color:var(--text-faint);font-size:14px}
     .bottom a{color:var(--primary);font-weight:700;text-decoration:none}
     .bottom a:hover{text-decoration:underline}
     .back{text-align:center;margin-top:12px}
     .back a{color:#475569;font-size:13px;text-decoration:none;transition:color .2s}
-    .back a:hover{color:#94a3b8}
+    .back a:hover{color:var(--text-muted)}
 
     @media(max-width:480px){
       .card{padding:32px 24px;border-radius:24px}
@@ -136,7 +141,7 @@
 
       <div style="margin-top:14px;padding:10px 14px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);border-radius:12px;display:flex;align-items:center;gap:10px;">
         <span style="font-size:14px;flex-shrink:0;">🔒</span>
-        <p style="font-size:12px;color:#6ee7b7;line-height:1.5;margin:0;">
+        <p style="font-size:12px;color:var(--ink-success);line-height:1.5;margin:0;">
           Passwords are never stored. Signing in with Google is safe and requires no registration.
         </p>
       </div>

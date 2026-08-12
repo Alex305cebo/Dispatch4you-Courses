@@ -1,0 +1,564 @@
+/* ============================================================
+   ТОКЕНЫ ТЕМЫ — единственный источник цвета для всего сайта.
+   ------------------------------------------------------------
+   Зачем файл появился: цвет на сайте был объявлен в трёх местах
+   сразу (css/main.css, shared-styles.css, dark-theme.css), причём
+   одни и те же имена значили разное — --bg-dark был и #050810,
+   и #0a0e1a; --text-secondary и #ffffff, и #e2e8f0. Пока источник
+   не один, переключать тему нечего.
+
+   Как устроено:
+     :root                     — тёмная тема (по умолчанию)
+     :root[data-theme="light"] — светлая
+
+   Почему светлая объявлена через атрибут, а не отдельным файлом:
+   селектор :root[data-theme="light"] имеет специфичность выше
+   голого :root, поэтому он перекрывает старые объявления в любом
+   из трёх файлов НЕЗАВИСИМО от порядка загрузки. Это единственный
+   способ не переписывать их все разом.
+
+   ВАЖНО: в тёмной ветке здесь объявлены ТОЛЬКО новые
+   семантические имена. Старые имена в тёмной теме не трогаются
+   вообще — поэтому подключение файла не меняет вид сайта ни на
+   один пиксель. Старым именам задаются значения только в светлой.
+
+   Имена — по РОЛИ, а не по цвету: --surface-raised, а не --white.
+   Роль не врёт при смене темы, название цвета врёт.
+   ============================================================ */
+
+:root {
+  color-scheme: dark;
+
+  /* — поверхности, по возрастанию «высоты» — */
+  --surface-sunken:  #04060c;                    /* провалы, подвал */
+  --surface-base:    #070b14;                    /* фон страницы */
+  --surface-raised:  rgba(255, 255, 255, 0.03);  /* карточка на фоне */
+  --surface-overlay: #0d1424;                    /* модалка, выпадающее меню */
+
+  /* — текст — */
+  --text-primary:   #ffffff;
+  --text-secondary: #e2e8f0;
+  --text-muted:     #94a3b8;
+  --text-inverse:   #050810;   /* текст на заливке акцентом */
+
+  /* — границы — */
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* — акцент. --accent для заливок и рамок, --brand-ink для ТЕКСТА:
+       на светлом фоне яркая бирюза не добирает контраст, поэтому
+       текстовый вариант всегда темнее заливочного. — */
+  --brand:       #06b6d4;
+  --brand-rgb:   6, 182, 212;
+  --brand-hover: #0ea5e9;
+  --brand-contrast: #ffffff;  /* что писать поверх заливки акцентом */
+
+  /* — статусы — */
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-danger:  #ef4444;
+  --status-info:    #6366f1;
+
+  /* — стекло — */
+  --glass-surface: rgba(255, 255, 255, 0.04);
+  --glass-edge:    rgba(255, 255, 255, 0.09);
+
+  /* — тени. В тёмной теме глубину даёт свет, а не тень, поэтому они мягкие — */
+  --shadow-card: 0 6px 22px rgba(0, 0, 0, 0.34);
+  --shadow-lift: 0 18px 38px rgba(0, 0, 0, 0.45);
+
+  /* ---- Миграционный слой (фазы 3–5) ----------------------------------
+     Цвет на 133 страницах вшит прямо в разметку — 18 000 значений. Эти
+     токены нужны, чтобы переводить его пачками БЕЗ риска: значение в
+     тёмной ветке здесь буквально равно исходному цвету, который оно
+     заменяет. Значит тёмная тема измениться не может в принципе —
+     подставляется тот же цвет. Меняется только светлая ветка ниже.
+
+     Имя содержит прозрачность НАМЕРЕННО. Сначала я свёл близкие значения
+     в «ступени» (0.04 → та же ступень, что 0.03), и сплошная сверка это
+     поймала: тёмная тема сдвигалась. Здесь важнее точность, чем красота
+     имён — один токен на одно исходное значение, ноль сдвига. Свести их
+     в ступени можно позже, уже осознанно и с проверкой глазами. */
+
+  --glass-03: rgba(255, 255, 255, 0.03);
+  --glass-04: rgba(255, 255, 255, 0.04);
+  --glass-05: rgba(255, 255, 255, 0.05);
+  --glass-06: rgba(255, 255, 255, 0.06);
+  --glass-08: rgba(255, 255, 255, 0.08);
+  --glass-10: rgba(255, 255, 255, 0.10);
+  --edge-06:  rgba(255, 255, 255, 0.06);
+  --edge-08:  rgba(255, 255, 255, 0.08);
+  --edge-10:  rgba(255, 255, 255, 0.10);
+
+  /* подложки/рамки в фирменном цвете */
+  --tint-brand-1: rgba(6, 182, 212, 0.10);
+  --tint-brand-2: rgba(6, 182, 212, 0.15);
+  --tint-brand-3: rgba(6, 182, 212, 0.20);
+  --tint-brand-4: rgba(6, 182, 212, 0.30);
+
+  /* ступени текста: bright — заголовки, soft/faint — подписи */
+  --text-bright: #f1f5f9;
+  --text-soft:   #cbd5e1;
+  --text-faint:  #64748b;
+
+  /* Три оттенка бирюзы, которые встречаются в разметке как ЦВЕТ ТЕКСТА.
+     Каждому свой токен: свести их в один означало бы поменять тёмную тему. */
+  --brand-ink:   #06b6d4;
+  --brand-ink-2: #22d3ee;
+  --brand-ink-3: #67e8f9;
+
+  /* Тёмные фоны в разметке тоже разные — #070b14, #050810, #0a0e1a.
+     Отдельные токены по той же причине. */
+  --surface-deep: #050810;
+  --surface-alt:  #0a0e1a;
+
+  /* ---- Субтитры плеера ----------------------------------------------
+     Здесь важна РОЛЬ, а не цвет: прочитанное слово должно быть заметнее
+     непрочитанного в ОБЕИХ темах. В тёмной это значит «светлее», в
+     светлой — «темнее». Прямая подстановка цвета такую логику
+     переворачивает: прочитанное #cbd5e1 на светлом фоне почти исчезает,
+     и строка читается как два наложенных слоя текста. */
+  --cue-panel:  rgba(15, 23, 42, 0.45);
+  --cue-edge:   rgba(6, 182, 212, 0.18);
+  --cue-unread: #64748b;
+  --cue-read:   #cbd5e1;
+  --cue-shadow: none;
+
+  /* Панель плеера: следует теме вместе со своим содержимым, иначе
+     значки и подписи темнеют, а фон остаётся тёмным. */
+  --player-bg:   rgba(15, 23, 42, 0.96);
+  --player-edge: rgba(6, 182, 212, 0.25);
+
+  /* Пастельные оттенки статусов: на тёмном читаются, на светлой
+     плашке того же тона исчезают. Светлые значения — насыщенные тёмные. */
+  --ink-success: #6ee7b7;
+  --ink-warning: #fdba74;
+  --ink-gold: #fcd34d;
+  --ink-amber: #fbbf24;   /* НЕ то же, что gold: свести их значило сдвинуть тёмную тему */
+  --ink-danger: #fca5a5;
+  --ink-info: #a5b4fc;
+}
+
+/* ============================================================
+   СВЕТЛАЯ ТЕМА — «мягкий свет».
+   Фон намеренно НЕ белый (#f5f7fa): чистый белый под тёмный
+   контент даёт резь в глазах и убивает полупрозрачные плитки.
+   Карточки, наоборот, белые — и отделяются от фона настоящей
+   тенью, а не прозрачностью, как в тёмной теме.
+   ============================================================ */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-sunken:  #e8edf5;
+  --surface-base:    #f5f7fa;
+  --surface-raised:  #ffffff;
+  --surface-overlay: #ffffff;
+
+  --text-primary:   #0f172a;
+  --text-secondary: #334155;
+  --text-muted:     #5a6675;   /* #64748b давал 4.36:1 — чуть ниже нормы */
+  --text-inverse:   #ffffff;
+
+  --border-subtle: rgba(15, 23, 42, 0.10);
+  --border-strong: rgba(15, 23, 42, 0.18);
+
+  --brand:       #0891b2;   /* заливки/рамки */
+  --brand-rgb:   8, 145, 178;
+  --brand-ink:   #0e7490;   /* текст и ссылки — темнее, чтобы пройти по контрасту */
+  --brand-hover: #0e7490;
+  --brand-contrast: #ffffff;
+
+  /* Статусы на светлом фоне надо затемнять: исходные рассчитаны на тёмный
+     и на белом дают меньше 4.5:1 для обычного текста. */
+  --status-success: #047857;
+  --status-warning: #b45309;
+  --status-danger:  #b91c1c;   /* #dc2626 давал 4.29:1 */
+  --status-info:    #4338ca;
+
+  --glass-surface: rgba(255, 255, 255, 0.72);
+  --glass-edge:    rgba(15, 23, 42, 0.10);
+
+  /* В светлой теме глубину даёт именно тень — она короткая и плотная. */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06), 0 2px 8px rgba(15, 23, 42, 0.08);
+  --shadow-lift: 0 4px 10px rgba(15, 23, 42, 0.08), 0 12px 28px rgba(15, 23, 42, 0.14);
+
+  /* ---- Старые имена из трёх исторических наборов. Перекрываем их здесь,
+       чтобы светлая тема заработала до того, как файлы будут переписаны
+       на семантические токены (это фазы 3–5). ---- */
+
+  /* css/main.css + shared-styles.css */
+  --primary:        #0e7490;
+  --primary-dark:   #155e75;
+  --primary-rgb:    8, 145, 178;
+  --secondary:      #0369a1;
+  /* Историческое --accent — это ОРАНЖЕВЫЙ, а не бирюза (бирюза — --brand).
+     На светлом фоне исходный #f97316 даёт около 2.6:1 и для текста не годится,
+     поэтому затемняем. */
+  --accent:         #c2410c;
+  --success:        #047857;
+  --warning:        #b45309;
+  --danger:         #dc2626;
+  --bg-dark:        #f5f7fa;
+  --bg-darker:      #e8edf5;
+  --glass-bg:       rgba(255, 255, 255, 0.72);
+  --glass-border:   rgba(15, 23, 42, 0.10);
+  --glass-blur:     blur(18px) saturate(140%);
+
+  /* dark-theme.css */
+  --bg:     #f5f7fa;
+  --card:   #ffffff;
+  --border: rgba(15, 23, 42, 0.10);
+  --text:   #0f172a;
+  --text-2: #334155;
+  --text-3: #475569;
+
+  /* ---- Миграционный слой в светлой теме ----
+     Полупрозрачное белое на светлом фоне невидимо, поэтому «стекло»
+     переворачивается в полупрозрачное тёмное. Ступени сохраняются:
+     чем выше номер, тем заметнее поверхность. */
+  --glass-03: rgba(15, 23, 42, 0.03);
+  --glass-04: rgba(15, 23, 42, 0.04);
+  --glass-05: rgba(15, 23, 42, 0.05);
+  --glass-06: rgba(15, 23, 42, 0.06);
+  --glass-08: rgba(15, 23, 42, 0.07);
+  --glass-10: rgba(15, 23, 42, 0.09);
+  /* Рамки на светлом требуют больше плотности, чем заливки, — иначе
+     карточка «плывёт» без видимого края. */
+  --edge-06:  rgba(15, 23, 42, 0.09);
+  --edge-08:  rgba(15, 23, 42, 0.11);
+  --edge-10:  rgba(15, 23, 42, 0.14);
+
+  --tint-brand-1: rgba(8, 145, 178, 0.08);
+  --tint-brand-2: rgba(8, 145, 178, 0.12);
+  --tint-brand-3: rgba(8, 145, 178, 0.16);
+  --tint-brand-4: rgba(8, 145, 178, 0.24);
+
+  --text-bright: #0f172a;
+  --text-soft:   #475569;
+  --text-faint:  #5a6675;   /* на светлом даёт ~4.8:1 — проходит, не меняем */
+
+  /* Субтитры: роль сохраняется, направление контраста переворачивается.
+     Панель становится белой карточкой с настоящей тенью — на светлом
+     фоне полупрозрачная тёмная плашка выглядела грязным пятном. */
+  --cue-panel:  #ffffff;
+  --cue-edge:   rgba(8, 145, 178, 0.28);
+  --cue-unread: #64748b;    /* ещё не прочитано: 4.8:1 на белом — проходит.
+                               #94a3b8 давал 2.56:1 и был нечитаем */
+  --cue-read:   #0f172a;    /* прочитано — самое контрастное */
+  --cue-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 14px rgba(15, 23, 42, 0.10);
+  --player-bg:   rgba(255, 255, 255, 0.97);
+  --player-edge: rgba(15, 23, 42, 0.12);
+  --ink-danger: #b91c1c;
+  --ink-gold: #a16207;
+  --ink-amber: #a16207;
+  --ink-info: #4338ca;
+  --ink-success: #047857;
+  --ink-warning: #c2410c;
+
+
+  --brand-ink-2: #0891b2;
+  --brand-ink-3: #0891b2;
+
+  --surface-deep: #eef2f8;
+  --surface-alt:  #eef2f8;
+
+  /* css/pricing-section.css */
+  --p2-cyan:   #0e7490;
+  --p2-purple: #6d28d9;
+  --p2-orange: #c2410c;
+  --p2-blue:   #1d4ed8;
+  --p2-glass:  rgba(255, 255, 255, 0.8);
+  --p2-border: rgba(15, 23, 42, 0.10);
+  --p2-txt:    #0f172a;
+  --p2-mut:    rgba(15, 23, 42, 0.66);
+  --p2-dim:    rgba(15, 23, 42, 0.42);
+}
+
+
+/* ============================================================
+   Базовый переворот страницы. Специфичность :root[data-theme] +
+   тег выше, чем у голого `body {}` в инлайновых <style> страниц,
+   поэтому фон переключается даже там, где он вшит в разметку.
+   Остальное содержимое страниц переводится на токены в фазах 3–5.
+   ============================================================ */
+/* На 109 страницах фон вшит прямо в тег: <html style="background:#070b14">.
+   Он там не случайно — гасит белую вспышку до загрузки стилей. Инлайновый
+   стиль не перебить ничем, кроме !important, поэтому здесь он оправдан:
+   иначе в светлой теме из-под контента торчит тёмная подложка (видно при
+   оттягивании страницы и там, где body не закрашивает всю высоту).
+   Правка 109 файлов ради этого того не стоит — правило одно. */
+:root[data-theme="light"] {
+  background: var(--surface-base) !important;
+}
+
+:root[data-theme="light"] body {
+  background: var(--surface-base);
+  color: var(--text-primary);
+}
+
+/* Плавный переход темы — но только для фона и текста: перекрашивать
+   переходом вообще всё означает лаг на слабых машинах. */
+:root[data-theme="light"] body,
+:root:not([data-theme="light"]) body {
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="light"] body,
+  :root:not([data-theme="light"]) body { transition: none; }
+}
+
+/* ============================================================
+   ФАЗА 2 — ОБЩАЯ ОБВЯЗКА В СВЕТЛОЙ ТЕМЕ
+   ------------------------------------------------------------
+   Шапка, выпадающие меню, мобильное меню и подвал. Живёт в этом
+   же файле намеренно: он уже подключён на всех 116 страницах,
+   а отдельный файл означал бы ещё один проход по всем страницам
+   ради одного тега <link>.
+
+   Содержимое самих страниц (фазы 3–5) сюда не входит — там цвет
+   вшит в разметку и переводится на токены отдельно.
+   ============================================================ */
+
+/* — шапка — */
+:root[data-theme="light"] .navbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.74));
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+:root[data-theme="light"] .nav-btn {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.14);
+  color: #334155;
+}
+
+:root[data-theme="light"] .nav-btn:hover { background: rgba(15, 23, 42, 0.08); color: #0f172a; }
+:root[data-theme="light"] .logo-text { color: #0f172a; }
+
+/* — выпадающие меню: в светлой теме отделяются тенью, а не свечением — */
+:root[data-theme="light"] .dropdown {
+  background: #ffffff;
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-lift);
+}
+
+:root[data-theme="light"] .dropdown a { color: #334155; }
+:root[data-theme="light"] .dropdown a:hover { background: rgba(8, 145, 178, 0.10); color: #0f172a; }
+:root[data-theme="light"] .dropdown-nested-title { color: #64748b; }
+:root[data-theme="light"] .dropdown-main { color: #0f172a; }
+
+/* — кнопки входа — */
+:root[data-theme="light"] .btn-login {
+  background: rgba(15, 23, 42, 0.04);
+  border-color: rgba(15, 23, 42, 0.14);
+  color: #334155;
+}
+
+:root[data-theme="light"] .btn-login:hover { background: rgba(15, 23, 42, 0.09); color: #0f172a; }
+:root[data-theme="light"] .btn-signup { background: linear-gradient(135deg, #0891b2, #0369a1); color: #ffffff; }
+
+/* — бургер и мобильное меню — */
+:root[data-theme="light"] .burger {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+}
+
+:root[data-theme="light"] .burger span { background: #475569; }
+:root[data-theme="light"] .burger:hover span { background: #0f172a; }
+
+:root[data-theme="light"] .mob-menu {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.95));
+  border-left-color: var(--border-subtle);
+}
+
+:root[data-theme="light"] .mob-header {
+  background: rgba(255, 255, 255, 0.95);
+  color: #0f172a;
+  border-bottom-color: var(--border-subtle);
+}
+
+:root[data-theme="light"] .mob-header button {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+
+:root[data-theme="light"] .mob-acc-title { color: #0f172a; }
+:root[data-theme="light"] .mob-sub,
+:root[data-theme="light"] .mob-sub-nested-item { color: #334155; }
+:root[data-theme="light"] .mob-sub:hover { background: rgba(8, 145, 178, 0.10); }
+:root[data-theme="light"] .mob-sub-nested-title { color: #64748b; }
+
+/* — подвал — */
+:root[data-theme="light"] .site-footer {
+  background: #eef2f8;
+  border-top-color: var(--border-subtle);
+}
+
+:root[data-theme="light"] .footer-title { color: #0f172a; }
+:root[data-theme="light"] .footer-description,
+:root[data-theme="light"] .footer-links a,
+:root[data-theme="light"] .footer-copyright,
+:root[data-theme="light"] .footer-bottom-links a { color: #475569; }
+:root[data-theme="light"] .footer-links a:hover,
+:root[data-theme="light"] .footer-bottom-links a:hover { color: var(--brand-ink); }
+:root[data-theme="light"] .footer-bottom,
+:root[data-theme="light"] .footer-divider { border-top-color: var(--border-subtle); }
+
+:root[data-theme="light"] .social-link {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.12);
+  color: #475569;
+}
+
+/* — кнопка переключения темы (разметку вставляет nav-loader.js) — */
+.d4y-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.d4y-theme-btn:hover { background: rgba(255, 255, 255, 0.12); color: #ffffff; }
+
+:root[data-theme="light"] .d4y-theme-btn {
+  border-color: rgba(15, 23, 42, 0.14);
+  background: rgba(15, 23, 42, 0.04);
+  color: #475569;
+}
+
+:root[data-theme="light"] .d4y-theme-btn:hover { background: rgba(15, 23, 42, 0.09); color: #0f172a; }
+
+/* Показываем только тот значок, который соответствует ТЕКУЩЕЙ теме:
+   в тёмной — солнце (куда переключишься), в светлой — луну. */
+.d4y-theme-btn .d4y-ico-sun { display: inline; }
+.d4y-theme-btn .d4y-ico-moon { display: none; }
+:root[data-theme="light"] .d4y-theme-btn .d4y-ico-sun { display: none; }
+:root[data-theme="light"] .d4y-theme-btn .d4y-ico-moon { display: inline; }
+
+/* ============================================================
+   СВЕТЛЫЕ ПЕРЕКРЫТИЯ ДЛЯ ПРАВИЛ С !important
+   ------------------------------------------------------------
+   Сгенерировано из файлов сайта. В них 65 объявлений цвета/фона
+   помечены !important и прибивают белый текст и белое «стекло» —
+   обычное правило темы их не перебивает, !important бьёт
+   специфичность. Здесь тот же !important, но селектор строго
+   специфичнее (добавлен :root[data-theme="light"]), поэтому
+   выигрывает. Тёмной темы не касается — блок работает только
+   в светлой.
+   ============================================================ */
+
+:root[data-theme="light"] h1,
+:root[data-theme="light"] h2,
+:root[data-theme="light"] h3 { color: var(--text-primary) !important; }
+/* Голый p — вторичным цветом: исходное правило делало все абзацы чисто
+   белыми, но дословный эквивалент (почти чёрный) на светлом читается
+   жёстко. Заголовки остаются максимально контрастными. */
+:root[data-theme="light"] p { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .hero-description p { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .section-description { color: var(--text-primary) !important; }
+:root[data-theme="light"] .bn-text { color: var(--text-muted) !important; }
+:root[data-theme="light"] .modal-feature-content p { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .how-it-works-section .node-content h3 { color: var(--text-primary) !important; }
+:root[data-theme="light"] .how-it-works-section .node-time { color: var(--text-primary) !important; }
+:root[data-theme="light"] .how-it-works-section .node-details { color: var(--text-primary) !important; }
+:root[data-theme="light"] .how-it-works-section .node-details p { color: var(--text-primary) !important; }
+:root[data-theme="light"] .how-it-works-section .node-details strong { color: var(--brand-ink) !important; }
+:root[data-theme="light"] .profession-section .section-description { color: var(--text-primary) !important; }
+:root[data-theme="light"] .profession-text { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .stats-source p { color: var(--text-muted) !important; }
+:root[data-theme="light"] .features-section .section-description { color: var(--text-primary) !important; }
+:root[data-theme="light"] .feature-content p { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .carousel-btn,
+:root[data-theme="light"] button.carousel-btn { background: var(--glass-04) !important; color: var(--text-secondary) !important; }
+:root[data-theme="light"] .carousel-btn:hover { background: var(--glass-10) !important; border-color: var(--edge-10) !important; color: var(--text-primary) !important; }
+:root[data-theme="light"] .final-cta-title { color: var(--text-primary) !important; }
+:root[data-theme="light"] .final-cta-description { color: var(--text-primary) !important; }
+:root[data-theme="light"] .mob-sub-nested-item { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .mob-sub-nested-item:hover { color: var(--brand-ink) !important; }
+:root[data-theme="light"] .close-btn-light { background: var(--glass-10) !important; border-color: var(--edge-10) !important; color: var(--text-secondary) !important; }
+:root[data-theme="light"] .close-btn-light:hover { background: var(--surface-raised) !important; border-color: var(--edge-10) !important; }
+:root[data-theme="light"] .close-btn-light:active { background: var(--surface-raised) !important; }
+:root[data-theme="light"] .close-btn-neon { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-gradient { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-glass { background: var(--glass-10) !important; color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-glass:hover { background: var(--surface-raised) !important; border-color: var(--edge-10) !important; }
+:root[data-theme="light"] .close-btn-3d { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-minimal { color: var(--text-muted) !important; }
+:root[data-theme="light"] .close-btn-minimal:hover { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .close-btn-outlined:hover { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-soft { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-mega { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-rainbow { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-retro { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-fire { color: var(--text-primary) !important; }
+:root[data-theme="light"] .close-btn-dark { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .close-btn-cartoon { color: var(--text-primary) !important; }
+:root[data-theme="light"] [role="tab"]:hover,
+:root[data-theme="light"] .tab:hover { background: var(--glass-05) !important; }
+:root[data-theme="light"] [role="tab"]:active,
+:root[data-theme="light"] .tab:active { background: var(--glass-08) !important; }
+
+/* ============================================================
+   КНОПКА «НАВЕРХ» ОТКЛЮЧЕНА — по просьбе, временно.
+   ------------------------------------------------------------
+   Появлялась двумя путями: scroll-to-top.js создаёт её скриптом
+   (23 страницы) и ещё на 33 страницах она вшита в разметку.
+   Вырезать из 56 файлов ради временного отключения — лишний
+   риск, поэтому просто скрываем. Вернуть = удалить этот блок.
+   ============================================================ */
+#scrollToTop,
+.scroll-to-top,
+.scroll-top-btn {
+  display: none !important;
+}
+
+/* ============================================================
+   АДРЕСНЫЕ СЛУЧАИ (шаг 3)
+   ============================================================ */
+
+/* Блок цен объявляет свои переменные на .p2-root, а не на :root, поэтому
+   светлые значения из блока выше до него не доходили — в каскаде выигрывает
+   ближайший предок. Перекрываем в той же области. */
+:root[data-theme="light"] .p2-root {
+  --p2-cyan: #0e7490;
+  --p2-purple: #6d28d9;
+  --p2-orange: #c2410c;
+  --p2-blue: #1d4ed8;
+  --p2-glass: rgba(15, 23, 42, 0.04);
+  --p2-border: rgba(15, 23, 42, 0.12);
+  --p2-txt: #0f172a;
+  --p2-mut: rgba(15, 23, 42, 0.68);
+  --p2-dim: rgba(15, 23, 42, 0.48);
+}
+
+/* Разделители в шапке героя — белые с прозрачностью 0.2; на светлом фоне
+   не видны. Механика их пропускает: такой белый считается декором. */
+:root[data-theme="light"] .divider { color: rgba(15, 23, 42, 0.28); }
+
+/* Переключатель языка: стили приходят инлайном из nav-loader.js */
+:root[data-theme="light"] .d4y-lang { color: #64748b; }
+:root[data-theme="light"] .d4y-lang.active { color: var(--brand-ink); }
+:root[data-theme="light"] .d4y-lang-sep { color: rgba(15, 23, 42, 0.32); }
+
+/* Стрелка выпадающего меню в шапке — белая, на светлой шапке не видна */
+:root[data-theme="light"] .nav-btn .arrow,
+:root[data-theme="light"] .dropdown-arrow,
+:root[data-theme="light"] .mob-arr,
+:root[data-theme="light"] .mob-sub-arrow { color: #64748b; }
+
+/* Счётчик опыта: янтарный на светлом даёт около 1.6:1 */
+:root[data-theme="light"] .mob-xp-val,
+:root[data-theme="light"] #mob-profile-xp { color: #a16207; }

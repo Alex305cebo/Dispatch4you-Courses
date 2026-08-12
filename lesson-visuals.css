@@ -1,0 +1,654 @@
+/* ===== LESSON VISUALS =====
+   Схемы и инфографика уроков. Работает в паре с lesson-visuals.js, но не зависит от него:
+   без JS блок отрисован в конечном виде (полосы шириной var(--w), числа настоящие).
+   Класс .lv-armed ставит JS — только он «сбрасывает» блок в ноль перед проигрыванием,
+   поэтому при выключенном JS ничего не схлопывается. */
+
+.lv {
+    --lv-acc: var(--primary, #06b6d4);
+    --lv-acc-2: var(--accent, #f97316);
+
+    /* Шкала «насколько выгодно»: холодное и тусклое — платят мало,
+       тёплое и яркое — много. Цвет привязан к значению, а не к длине полосы,
+       поэтому одинаковый уровень всегда одного цвета в любом блоке. */
+    --lv-c1: #2a6379;
+    --lv-c2: #1f97ae;
+    --lv-c3: #35b8a0;
+    --lv-c4: #eaa63c;
+    --lv-c5: #f97316;
+    --lv-c0: rgba(255, 255, 255, .07);
+
+    /* Поверхности и линии — отдельными токенами, потому что на светлой теме
+       белая полупрозрачность на белом фоне просто исчезает. */
+    --lv-surface: rgba(255, 255, 255, .03);
+    --lv-surface-hi: rgba(255, 255, 255, .06);
+    --lv-line: rgba(255, 255, 255, .10);
+    --lv-line-strong: rgba(255, 255, 255, .16);
+    position: relative;
+    margin: 8px 0 28px;
+    padding: 24px 24px 20px;
+    border: 1px solid var(--border, rgba(255, 255, 255, .15));
+    border-radius: 20px;
+    background: var(--lv-surface);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .2);
+    overflow: hidden;
+}
+
+.lv-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.lv-title {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .4px;
+    text-transform: uppercase;
+    color: var(--text-primary, #fff);
+}
+
+.lv-note {
+    font-size: 13px;
+    color: var(--text-muted, #94a3b8);
+}
+
+.lv-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-muted, #94a3b8);
+}
+
+.lv-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lv-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background: var(--lv-acc);
+    display: inline-block;
+}
+
+:root[data-theme="light"] .lv {
+    --lv-c0: rgba(15, 23, 42, .08);
+    --lv-surface: rgba(15, 23, 42, .035);
+    --lv-surface-hi: rgba(15, 23, 42, .07);
+    --lv-line: rgba(15, 23, 42, .14);
+    --lv-line-strong: rgba(15, 23, 42, .22);
+}
+
+/* ---------- шаг: единица подсветки под озвучку ---------- */
+
+.lv-step {
+    transition: opacity .35s ease, transform .35s ease;
+}
+
+/* Пока секция звучит, неозвученные шаги приглушаются — но остаются читаемыми.
+   Ничего не прячем: урок можно читать глазами, не включая звук. */
+.lv.lv-sync .lv-step {
+    opacity: .34;
+}
+
+.lv.lv-sync .lv-step.is-passed {
+    opacity: .68;
+}
+
+.lv.lv-sync .lv-step.is-active {
+    opacity: 1;
+}
+
+.lv.lv-sync .lv-step.is-active .lv-row-label {
+    color: var(--lv-acc);
+}
+
+/* ---------- полосы сравнения ---------- */
+
+.lv-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Строка-раскрывашка: сама строка — кнопка, пояснение живёт под ней.
+   Обёртка нужна потому, что .lv-row — сетка, и пояснение внутри неё стало бы
+   четвёртой колонкой вместо новой строки. */
+.lv-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.lv-row {
+    display: grid;
+    grid-template-columns: minmax(96px, 132px) 1fr auto 16px;
+    align-items: center;
+    gap: 12px;
+    /* сброс кнопочных умолчаний — строка остаётся строкой, но кликабельной */
+    width: 100%;
+    margin: 0;
+    padding: 7px 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.lv-row:hover {
+    background: var(--lv-surface-hi);
+    border-color: var(--lv-line);
+}
+
+.lv-row:focus-visible {
+    outline: 2px solid var(--lv-acc);
+    outline-offset: 2px;
+}
+
+.lv-chev {
+    font-size: 11px;
+    color: var(--text-muted, #94a3b8);
+    transition: transform .25s ease, color .2s ease;
+}
+
+.lv-row[aria-expanded="true"] {
+    background: var(--lv-surface-hi);
+    border-color: var(--lv-line);
+}
+
+.lv-row[aria-expanded="true"] .lv-chev {
+    transform: rotate(180deg);
+    color: var(--lv-acc);
+}
+
+/* ---------- пояснение под строкой ---------- */
+
+.lv-explain {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows .3s ease;
+}
+
+.lv-explain.is-open {
+    grid-template-rows: 1fr;
+}
+
+.lv-explain > div {
+    overflow: hidden;
+}
+
+.lv-explain p {
+    margin: 0;
+    padding: 10px 14px 14px 16px;
+    border-left: 2px solid var(--lv-acc);
+    margin-left: 8px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary, #e2e8f0);
+}
+
+.lv-explain strong {
+    color: var(--text-primary, #fff);
+}
+
+/* Без JS раскрывашки не схлопнуты — пояснения просто видны как текст.
+   lv-armed ставит скрипт, он же и управляет открытием. */
+.lv:not(.lv-armed) .lv-explain {
+    grid-template-rows: 1fr;
+}
+
+.lv:not(.lv-armed) .lv-chev {
+    display: none;
+}
+
+.lv-row-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-secondary, #e2e8f0);
+    transition: color .3s ease;
+}
+
+.lv-track {
+    position: relative;
+    height: 14px;
+    border-radius: 8px;
+    background: var(--lv-surface-hi);
+    overflow: hidden;
+}
+
+/* Сетка делений прямо в дорожке — так линии заведомо совпадают с полосой,
+   без отдельного слоя и риска разъехаться. --div = число промежутков. */
+.lv-track[style*="--div"],
+.lv-rows[data-div] .lv-track {
+    background-image: repeating-linear-gradient(90deg,
+            var(--lv-line-strong) 0 1px,
+            transparent 1px calc(100% / var(--div, 4)));
+}
+
+.lv-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--x, 0%);
+    width: var(--w, 0%);
+    border-radius: 8px;
+    /* Цвет берётся с уровневой шкалы по значению строки (--lvl на .lv-row).
+       Градиента внутри полосы нет намеренно: он читался бы как «значение
+       меняется по длине», хотя полоса — это диапазон одного показателя. */
+    background: var(--lv-c3);
+    transition: width .9s cubic-bezier(.16, 1, .3, 1), left .9s cubic-bezier(.16, 1, .3, 1);
+}
+
+/* уровень выгоды: 1 — платят мало, 5 — платят много */
+.lv-item[data-lvl="1"] .lv-fill { background: var(--lv-c1); }
+.lv-item[data-lvl="2"] .lv-fill { background: var(--lv-c2); }
+.lv-item[data-lvl="3"] .lv-fill { background: var(--lv-c3); }
+.lv-item[data-lvl="4"] .lv-fill { background: var(--lv-c4); }
+.lv-item[data-lvl="5"] .lv-fill { background: var(--lv-c5); }
+
+/* ---------- лента месяцев ---------- */
+
+.lv-heat {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2px;
+    height: 15px;
+}
+
+.lv-heat span {
+    border-radius: 3px;
+    background: var(--lv-c0);
+    transition: opacity .4s ease, transform .4s ease;
+}
+
+/* 1 — рабочий сезон, 2 — пик; без атрибута — затишье */
+.lv-heat span[data-lvl="1"] { background: var(--lv-c2); }
+.lv-heat span[data-lvl="2"] { background: var(--lv-c5); }
+
+.lv.lv-armed .lv-heat span {
+    opacity: 0;
+    transform: scaleY(.4);
+}
+
+.lv.lv-armed.lv-in .lv-heat span {
+    opacity: 1;
+    transform: none;
+    transition-delay: calc(var(--i, 0) * 26ms);
+}
+
+/* ---------- легенда-градуировка ---------- */
+
+.lv-ramp {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: var(--text-muted, #94a3b8);
+}
+
+.lv-ramp-bar {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    gap: 2px;
+    flex: 0 1 190px;
+    height: 8px;
+}
+
+.lv-ramp-bar i { border-radius: 2px; }
+
+/* ---------- ось шкалы ---------- */
+
+/* Повторяет колонки и горизонтальные отступы .lv-row — иначе подписи
+   не встанут под делениями дорожки. */
+.lv-axis {
+    display: grid;
+    grid-template-columns: minmax(96px, 132px) 1fr auto 16px;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+    padding: 0 9px;
+}
+
+.lv-axis-scale {
+    position: relative;
+    height: 15px;
+}
+
+.lv-axis-scale span {
+    position: absolute;
+    top: 0;
+    left: var(--at, 0%);
+    transform: translateX(-50%);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted, #94a3b8);
+    white-space: nowrap;
+}
+
+/* крайние подписи прижимаем внутрь, иначе вылезают за дорожку */
+.lv-axis-scale span:first-child {
+    transform: none;
+}
+
+.lv-axis-scale span:last-child {
+    transform: translateX(-100%);
+}
+
+.lv-axis-value {
+    font-size: 11px;
+    color: transparent;
+    white-space: nowrap;
+}
+
+/* Взведено скриптом — полоса ждёт появления блока в кадре */
+.lv.lv-armed .lv-fill {
+    width: 0;
+}
+
+.lv.lv-armed.lv-in .lv-fill {
+    width: var(--w, 0%);
+}
+
+.lv-row-value {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text-primary, #fff);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- составная полоса (вес: трак + груз) ---------- */
+
+.lv-stack {
+    display: flex;
+    height: 44px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--lv-line);
+}
+
+.lv-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--w, 50%);
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0 8px;
+    transition: width .9s cubic-bezier(.16, 1, .3, 1);
+}
+
+.lv-seg-truck {
+    background: linear-gradient(135deg, #334155, #475569);
+}
+
+.lv-seg-cargo {
+    background: linear-gradient(135deg, var(--lv-acc), var(--lv-acc-2));
+}
+
+.lv.lv-armed .lv-seg {
+    width: 0;
+}
+
+.lv.lv-armed.lv-in .lv-seg {
+    width: var(--w, 50%);
+}
+
+.lv-stack-caption {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted, #94a3b8);
+}
+
+.lv-big {
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 900;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--lv-acc), var(--lv-acc-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-variant-numeric: tabular-nums;
+}
+
+.lv-big-label {
+    display: block;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted, #94a3b8);
+    font-weight: 700;
+}
+
+.lv-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+/* ---------- кликабельная карточка ---------- */
+
+.lv-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+}
+
+.lv-card {
+    display: grid;
+    grid-template-columns: 1fr 16px;
+    align-items: start;
+    gap: 4px 10px;
+    width: 100%;
+    padding: 14px 14px 13px;
+    border: 1px solid var(--lv-line);
+    border-radius: 14px;
+    background: var(--lv-surface);
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.lv-card > .lv-big-label,
+.lv-card > .lv-note {
+    grid-column: 1;
+}
+
+.lv-card > .lv-chev {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.lv-card:hover {
+    background: var(--lv-surface-hi);
+    border-color: var(--lv-line-strong);
+}
+
+.lv-card:focus-visible {
+    outline: 2px solid var(--lv-acc);
+    outline-offset: 2px;
+}
+
+.lv-card[aria-expanded="true"] {
+    border-color: var(--lv-acc);
+    background: rgba(6, 182, 212, .08);
+}
+
+.lv-card[aria-expanded="true"] .lv-chev {
+    transform: rotate(180deg);
+    color: var(--lv-acc);
+}
+
+/* сегмент составной полосы тоже кликабельный */
+button.lv-seg {
+    border: none;
+    font-family: inherit;
+    cursor: pointer;
+    transition: width .9s cubic-bezier(.16, 1, .3, 1), filter .2s ease;
+}
+
+button.lv-seg:hover {
+    filter: brightness(1.18);
+}
+
+button.lv-seg:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -3px;
+}
+
+/* Кликабельность сегмента обозначаем значком, а не подписью:
+   инструкции к интерфейсу посреди учебного текста — лишний шум. */
+button.lv-seg::after {
+    content: '▾';
+    margin-left: 7px;
+    font-size: 10px;
+    opacity: .75;
+    transition: transform .25s ease;
+    display: inline-block;
+}
+
+button.lv-seg[aria-expanded="true"]::after {
+    transform: rotate(180deg);
+    opacity: 1;
+}
+
+/* ---------- схема габаритов ---------- */
+
+.lv-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-width: 620px;
+    margin: 4px auto 0;
+    overflow: visible;
+}
+
+.lv-svg .lv-body {
+    fill: var(--lv-surface);
+    stroke: var(--lv-acc);
+    stroke-width: 2;
+}
+
+.lv-svg .lv-cab {
+    fill: var(--lv-surface-hi);
+    stroke: var(--lv-line-strong);
+    stroke-width: 2;
+}
+
+.lv-svg .lv-wheel {
+    fill: #1e293b;
+    stroke: var(--lv-line-strong);
+    stroke-width: 2;
+}
+
+.lv-svg .lv-dim {
+    stroke: var(--lv-acc-2);
+    stroke-width: 1.5;
+}
+
+.lv-svg .lv-dim-text {
+    fill: var(--text-secondary, #e2e8f0);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+/* ---------- полоса года ----------
+   Заменила сетку 12×4: матрица кодировала сезон цветом клетки и требовала
+   сверки с легендой на каждый квадрат. Полоса с подписанными месяцами
+   читается сразу — «пик с марта по август» видно, а не вычисляется. */
+
+.lv-year {
+    background-image: repeating-linear-gradient(90deg,
+            var(--lv-line-strong) 0 1px,
+            transparent 1px calc(100% / 12));
+}
+
+.lv-months {
+    position: relative;
+    height: 15px;
+}
+
+.lv-months span {
+    position: absolute;
+    top: 0;
+    /* центр месяца: (i + 0.5) / 12 */
+    left: calc((var(--m) + .5) * (100% / 12));
+    transform: translateX(-50%);
+    font-size: 10.5px;
+    color: var(--text-muted, #94a3b8);
+}
+
+/* ---------- мобильные ---------- */
+
+@media (max-width: 700px) {
+    .lv {
+        padding: 18px 14px 16px;
+    }
+
+    .lv-row,
+    .lv-axis {
+        grid-template-columns: minmax(72px, 92px) 1fr auto 14px;
+        gap: 8px;
+    }
+
+    .lv-row-label,
+    .lv-row-value {
+        font-size: 12px;
+    }
+
+    .lv-explain p {
+        font-size: 13px;
+        padding: 8px 10px 12px 12px;
+    }
+
+    /* на узком экране влезает каждый второй месяц */
+    .lv-months span:nth-child(even) {
+        display: none;
+    }
+}
+
+/* ---------- уважение к системной настройке ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .lv-step,
+    .lv-fill,
+    .lv-seg,
+    .lv-row,
+    .lv-chev,
+    .lv-explain {
+        transition: none !important;
+        transition-delay: 0ms !important;
+    }
+
+    .lv.lv-armed .lv-fill {
+        width: var(--w, 0%);
+    }
+
+    .lv.lv-armed .lv-seg {
+        width: var(--w, 50%);
+    }
+}

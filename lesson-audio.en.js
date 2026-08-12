@@ -20,6 +20,13 @@
 
     // Update progress
     function updateProgress(id, t, d) {
+        // The single point every track time goes through: real playback, seeking and
+        // simulatePlayback all lead here. Dispatched before the _box check so lesson
+        // visuals (lesson-visuals.js) do not depend on the player's DOM state.
+        document.dispatchEvent(new CustomEvent('la:progress', {
+            detail: { id: id, t: t, d: d, p: d > 0 ? t / d : 0 }
+        }));
+
         var au = document.getElementById(id);
         if (!au || !au._box) return;
         var box = au._box;
@@ -850,4 +857,280 @@
             window.addEventListener('scroll', onScroll, { passive: true });
         }
     });
+    // ═══ Subtitles and transcript ══════════════════════════════════
+    // The VTT sits next to the mp3 under the same name. No file — nothing
+    // shows up and the player behaves exactly as before.
+
+    var subCur = null;   // { au, words: [{t, el}], k }
+    var subRaf = null;
+    var subHold = 0;     // no panel autoscroll until this moment
+
+    function vttSec(s) {
+        var p = s.split(':');
+        return (+p[0]) * 3600 + (+p[1]) * 60 + parseFloat(p[2]);
+    }
+
+    // "one <00:00:01.200>two" -> [{t:null,w:'one'}, {t:1.2,w:'two'}]
+    function parseCue(text) {
+        var out = [], re = /<(\d\d:\d\d:\d\d\.\d\d\d)>/g, last = 0, pending = null, m;
+        while ((m = re.exec(text)) !== null) {
+            var chunk = text.slice(last, m.index).trim();
+            if (chunk) out.push({ t: pending, w: chunk });
+            pending = vttSec(m[1]);
+            last = re.lastIndex;
+        }
+        var tail = text.slice(last).trim();
+        if (tail) out.push({ t: pending, w: tail });
+        return out;
+    }
+
+    function plainCue(text) {
+        return text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Lay the cue out word by word, return the word->time map
+    function renderWords(box, parts, start) {
+        var frag = document.createDocumentFragment(), words = [], i;
+        for (i = 0; i < parts.length; i++) {
+            var sp = document.createElement('span');
+            sp.className = 'la-w';
+            sp.textContent = parts[i].w;
+            frag.appendChild(sp);
+            if (i < parts.length - 1) frag.appendChild(document.createTextNode(' '));
+            words.push({ t: parts[i].t === null ? start : parts[i].t, el: sp });
+        }
+        box.textContent = '';
+        box.appendChild(frag);
+        return words;
+    }
+
+    // The same word lives in two places — the subtitle line and the panel
+    // row. They share one timestamp but may have several elements.
+    function mergeWords(lists) {
+        var out = [], i, j;
+        for (i = 0; i < lists[0].length; i++) {
+            var els = [];
+            for (j = 0; j < lists.length; j++) els.push(lists[j][i].el);
+            out.push({ t: lists[0][i].t, els: els });
+        }
+        return out;
+    }
+
+    function paintWords(k) {
+        if (!subCur) return;
+        var ws = subCur.words, i, j;
+        for (i = 0; i < ws.length; i++) {
+            var cls = 'la-w' + (i < k ? ' said' : (i === k ? ' now' : ''));
+            for (j = 0; j < ws[i].els.length; j++) ws[i].els[j].className = cls;
+        }
+    }
+
+    function subTick() {
+        subRaf = null;
+        if (!subCur) return;
+        var au = subCur.au, t = au.currentTime, ws = subCur.words, k = -1;
+        for (var i = 0; i < ws.length; i++) {
+            if (ws[i].t <= t) k = i; else break;
+        }
+        if (k !== subCur.k) { subCur.k = k; paintWords(k); }
+        if (!au.paused) subRaf = requestAnimationFrame(subTick);
+    }
+
+    function subStart() {
+        if (subRaf === null && subCur) subRaf = requestAnimationFrame(subTick);
+    }
+
+    function subStop() {
+        if (subRaf !== null) { cancelAnimationFrame(subRaf); subRaf = null; }
+    }
+
+    // Show/hide the subtitle line in all three places
+    function setBarText(txt) {
+        var boxes = [], i;
+        if (fixedBar) boxes.push(fixedBar.querySelector('.la-fixed-sub'));
+        if (mobileBar) boxes.push(mobileBar.querySelector('.la-mob-sub'));
+        for (i = 0; i < boxes.length; i++) {
+            if (!boxes[i]) continue;
+            boxes[i].textContent = txt;
+            boxes[i].classList.toggle('has-text', !!txt);
+        }
+    }
+
+    function scrollPanelTo(panel, row) {
+        if (!panel.classList.contains('open') || Date.now() < subHold) return;
+        var top = row.offsetTop - panel.clientHeight / 2 + row.offsetHeight / 2;
+        if (panel.scrollTo) panel.scrollTo({ top: top, behavior: 'smooth' });
+        else panel.scrollTop = top;
+    }
+
+    function seekTo(au, t) {
+        var go = function() {
+            try { au.currentTime = t; } catch (e) { return; }
+            if (au.paused && !au._simPlaying) {
+                var btn = document.querySelector('[onclick*="laToggle"][onclick*="' + au.id + '"]');
+                if (btn) laToggle(btn, au.id);
+            }
+        };
+        if (au.readyState >= 1) go();
+        else { au.load(); au.addEventListener('loadedmetadata', go, { once: true }); }
+    }
+
+    function buildTranscript(au, track, ui) {
+        var cues = track.cues, frag = document.createDocumentFragment(), i;
+        if (!cues || !cues.length) return false;
+        for (i = 0; i < cues.length; i++) {
+            var row = document.createElement('div');
+            row.className = 'la-tr-row';
+            row.setAttribute('data-t', cues[i].startTime);
+            row.innerHTML = '<span class="la-tr-time"></span><span class="la-tr-text"></span>';
+            row.firstChild.textContent = fmt(cues[i].startTime);
+            row.lastChild.textContent = plainCue(cues[i].text);
+            frag.appendChild(row);
+        }
+        ui.panel.appendChild(frag);
+        ui.rows = ui.panel.querySelectorAll('.la-tr-row');
+
+        ui.panel.addEventListener('click', function(e) {
+            var row = e.target.closest ? e.target.closest('.la-tr-row') : null;
+            if (row) seekTo(au, parseFloat(row.getAttribute('data-t')));
+        });
+        ui.panel.addEventListener('scroll', function() { subHold = Date.now() + 4000; }, { passive: true });
+        return true;
+    }
+
+    function onCueChange(au, track, ui) {
+        var cue = track.activeCues && track.activeCues.length ? track.activeCues[0] : null;
+        if (!cue) {
+            // An empty cue from another track must not wipe the current one's text
+            ui.line.classList.remove('has-text');
+            ui.line.textContent = '';
+            if (ui.active) { ui.active.classList.remove('now'); ui.active.lastChild.textContent = ui.activeText; ui.active = null; }
+            if (!subCur || subCur.au === au) { subStop(); subCur = null; setBarText(''); }
+            return;
+        }
+
+        var parts = parseCue(cue.text), plain = plainCue(cue.text);
+        ui.line.classList.add('has-text');
+        var lists = [renderWords(ui.line, parts, cue.startTime)];
+
+        // the active panel row gets the same words so it highlights too
+        if (ui.rows) {
+            if (ui.active) { ui.active.classList.remove('now'); ui.active.lastChild.textContent = ui.activeText; }
+            var idx = Array.prototype.indexOf.call(track.cues, cue);
+            var row = ui.rows[idx];
+            if (row) {
+                ui.active = row;
+                ui.activeText = plain;
+                row.classList.add('now');
+                lists.push(renderWords(row.lastChild, parts, cue.startTime));
+                scrollPanelTo(ui.panel, row);
+            }
+        }
+
+        setBarText(plain);
+        subCur = { au: au, words: mergeWords(lists), k: -1 };
+        paintWords(-1);
+        if (!au.paused) subStart(); else subTick();
+    }
+
+    function attachSubs(au) {
+        var src = au.getAttribute('src') || '';
+        if (!/\.mp3(\?|$)/i.test(src)) return;
+        var wrap = document.querySelector('.section-audio-wrap[data-audio-id="' + au.id + '"]');
+        if (!wrap) return;
+
+        var track = document.createElement('track');
+        track.kind = 'captions';
+        track.srclang = 'en';
+        track.label = 'Text';
+        track.src = src.replace(/\.mp3(\?.*)?$/i, '.vtt');
+        au.appendChild(track);
+        try { track.track.mode = 'hidden'; } catch (e) { return; }
+
+        track.addEventListener('error', function() {
+            try { au.removeChild(track); } catch (e) {}
+        });
+
+        var mounted = false;
+        function mount() {
+            if (mounted) return;
+            mounted = true;
+            var ui = document.createElement('div');
+            ui.className = 'la-subs';
+            ui.innerHTML =
+                '<div class="la-sub-line"></div>' +
+                '<button type="button" class="la-sub-btn" aria-expanded="false">' +
+                    '<span class="la-sub-btn-icon">▤</span> Text' +
+                '</button>' +
+                '<div class="la-transcript"></div>';
+            wrap.appendChild(ui);
+
+            var state = {
+                line: ui.querySelector('.la-sub-line'),
+                panel: ui.querySelector('.la-transcript'),
+                rows: null, active: null, activeText: ''
+            };
+            if (!buildTranscript(au, track.track, state)) { wrap.removeChild(ui); mounted = false; return; }
+
+            ui.querySelector('.la-sub-btn').addEventListener('click', function() {
+                var open = state.panel.classList.toggle('open');
+                this.classList.toggle('open', open);
+                this.setAttribute('aria-expanded', open ? 'true' : 'false');
+                if (open && state.active) { subHold = 0; scrollPanelTo(state.panel, state.active); }
+            });
+
+            track.track.addEventListener('cuechange', function() {
+                onCueChange(au, track.track, state);
+            });
+            au.addEventListener('playing', function() {
+                if (subCur && subCur.au === au) subStart();
+            });
+            au.addEventListener('pause', function() {
+                if (subCur && subCur.au === au) subStop();
+            });
+            au.addEventListener('ended', function() {
+                if (subCur && subCur.au !== au) return;
+                subStop(); subCur = null;
+                state.line.classList.remove('has-text');
+                state.line.textContent = '';
+                if (state.active) { state.active.classList.remove('now'); state.active.lastChild.textContent = state.activeText; state.active = null; }
+                setBarText('');
+            });
+        }
+
+        // Safari/iOS does not always fire load on a <track> inside <audio> —
+        // poll for cues, otherwise the feature never shows up there
+        track.addEventListener('load', mount);
+        var tries = 0;
+        var poll = setInterval(function() {
+            var t = track.track;
+            if (t && t.cues && t.cues.length) { clearInterval(poll); mount(); }
+            else if (++tries > 20) clearInterval(poll);
+        }, 300);
+    }
+
+    function initSubs() {
+        if (fixedBar && !fixedBar.querySelector('.la-fixed-sub')) {
+            var fs = document.createElement('div');
+            fs.className = 'la-fixed-sub';
+            var ft = fixedBar.querySelector('.la-fixed-title');
+            if (ft && ft.nextSibling) fixedBar.insertBefore(fs, ft.nextSibling);
+            else fixedBar.appendChild(fs);
+        }
+        if (mobileBar && !mobileBar.querySelector('.la-mob-sub')) {
+            var ms = document.createElement('div');
+            ms.className = 'la-mob-sub';
+            var mr = mobileBar.querySelector('.la-mob-row');
+            if (mr) mobileBar.insertBefore(ms, mr);
+            else mobileBar.appendChild(ms);
+        }
+        var els = document.querySelectorAll('audio[data-duration]');
+        for (var i = 0; i < els.length; i++) attachSubs(els[i]);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSubs);
+    } else {
+        initSubs();
+    }
 })();
