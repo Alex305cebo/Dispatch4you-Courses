@@ -595,3 +595,77 @@
 :root[data-theme="light"] .section-bg-scrim {
   opacity: 0 !important;
 }
+
+/* ============================================================
+   СВЕТЛАЯ ТЕМА ВРЕМЕННО СКРЫТА
+   ------------------------------------------------------------
+   Механический перевод цветов дал проходные цифры по контрасту,
+   но вид получился плохой: тема была спроектирована под тёмный
+   фон, и подмена значений её не переносит. Кнопку убираем, пока
+   светлая не будет сделана как отдельный дизайн, а не инверсия.
+   Вся работа остаётся в git — вернуть = удалить этот блок.
+   ============================================================ */
+.d4y-theme-btn { display: none !important; }
+
+/* ============================================================
+   СВЕТЛАЯ ТЕМА — ПРОВЕРЕНО ГЛАЗАМИ В БРАУЗЕРЕ
+   ------------------------------------------------------------
+   Всё ниже найдено на живой странице и подтверждено скриншотом.
+   Замер контраста эти вещи не ловил: он смотрит цвет текста
+   против фона предка, а здесь мешали декоративные слои поверх.
+   ============================================================ */
+
+/* 1. Тёмная виньетка героя. Она затемняет видео под заголовком, но в
+      светлой теме видео выключено — остаётся огромное тёмное пятно
+      в центре экрана. Это выглядело хуже всего. */
+:root[data-theme="light"] section.hero::before { background: none !important; }
+
+/* 2. Холст с частицами (#neuralCanvas, position:fixed) рисует тёмный
+      «космос» со звёздами. Из-за него целая секция была чёрной, а весь
+      контент в ней невидим. */
+:root[data-theme="light"] #neuralCanvas { display: none !important; }
+
+/* 3. Шапка была полупрозрачной, и сквозь неё просвечивал градиент героя —
+      читалась серой полосой. Делаем плотной. */
+:root[data-theme="light"] .navbar {
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.08) !important;
+}
+
+/* 4. Главная кнопка: заливка 15% прозрачности с белым текстом — на светлом
+      фоне текста не видно. Главному действию нужна плотная заливка. */
+:root[data-theme="light"] .btn-chat,
+:root[data-theme="light"] .btn.btn-large {
+  background: linear-gradient(135deg, #0891b2, #0369a1) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 14px rgba(8, 145, 178, 0.28) !important;
+}
+
+/* 5. Вторичная кнопка — белая карточка с рамкой и тёмно-бирюзовым текстом */
+:root[data-theme="light"] .program-link {
+  background: #ffffff !important;
+  color: var(--brand-ink) !important;
+  border: 1px solid rgba(8, 145, 178, 0.35) !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* 6. Блок профиля и выход: цвета рассчитаны на тёмную шапку */
+:root[data-theme="light"] .nav-profile-link {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.10), rgba(139, 92, 246, 0.10)) !important;
+  border-color: rgba(79, 70, 229, 0.28) !important;
+}
+:root[data-theme="light"] .nav-profile-link,
+:root[data-theme="light"] .nav-profile-link * { color: #0f172a !important; }
+:root[data-theme="light"] .nav-profile-link .mob-xp-val { color: #a16207 !important; }
+:root[data-theme="light"] .nav-logout-btn {
+  color: #b91c1c !important;
+  background: rgba(185, 28, 28, 0.08) !important;
+  border-color: rgba(185, 28, 28, 0.28) !important;
+}
+
+/* 7. Активная вкладка графика — белый текст на светлой заливке */
+:root[data-theme="light"] .chart-tab.active {
+  background: var(--brand-ink) !important;
+  color: #ffffff !important;
+}
