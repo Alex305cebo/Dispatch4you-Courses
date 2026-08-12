@@ -6,7 +6,7 @@ set -uo pipefail
 
 cd "$(dirname "$0")" || exit 1
 
-BRANCH="claude/ai-broker-chat-investigation-tfm3gf"
+BRANCH="claude/broker-call-first-live"
 URL="http://localhost:5180/broker-call/"
 
 echo

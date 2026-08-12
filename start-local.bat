@@ -18,7 +18,7 @@ rem  На боевой сайт этот запуск не влияет: dispatc
 rem  ветки main, а работаем мы в дев-ветке.
 rem ============================================================================
 
-set "BRANCH=claude/ai-broker-chat-investigation-tfm3gf"
+set "BRANCH=claude/broker-call-first-live"
 set "URL=http://localhost:5180/broker-call/"
 
 echo.
