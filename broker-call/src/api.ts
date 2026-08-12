@@ -9,7 +9,14 @@
  *
  * Разница живёт здесь и больше нигде.
  */
-export type ApiAction = 'config' | 'turn' | 'stt' | 'tts' | 'debrief' | 'realtime-session'
+export type ApiAction =
+  | 'config'
+  | 'turn'
+  | 'stt'
+  | 'tts'
+  | 'debrief'
+  | 'realtime-session'
+  | 'gemini-session'
 
 export function endpoint(action: ApiAction): string {
   return import.meta.env.DEV ? `/api/${action}` : `/api/broker-call.php?action=${action}`

@@ -82,7 +82,7 @@ Respond with JSON only:
  * оборудование» — и советовала студенту делать работу брокера. Имена в коде
  * писались для программиста; тренеру нужно, кто именно и что делает.
  */
-const GOAL_WORDING: Record<string, string> = {
+export const GOAL_WORDING: Record<string, string> = {
   give_mc: 'dispatcher gave their MC number when the broker asked for it',
   confirm_equipment: 'dispatcher stated what equipment they run',
   get_load_details: 'dispatcher got the load details out of the broker',

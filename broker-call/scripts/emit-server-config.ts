@@ -2,8 +2,10 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildSystemPrompt } from '../src/call/prompt'
-import { buildDebriefSystemPrompt } from '../src/call/debriefPrompt'
+import { buildDebriefSystemPrompt, GOAL_WORDING } from '../src/call/debriefPrompt'
 import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
+import { toGeminiTools } from '../src/call/geminiTools'
+import { MODEL_RULES } from '../src/call/geminiModels'
 import { SCENARIOS } from '../src/data/scenarios'
 import { getBroker } from '../src/data/brokers'
 
@@ -25,6 +27,21 @@ const target = resolve(here, '../../api/broker-config.php')
 
 const config = {
   tools: TOOL_SCHEMAS,
+  // Тот же список инструментов в формате Gemini. Конвертер лежит в TS и
+  // покрыт тестами — переписывать его на PHP значило бы завести вторую
+  // реализацию, которая разъедется с первой ровно там, где это заметят
+  // студенты, а не мы.
+  geminiTools: toGeminiTools(TOOL_SCHEMAS),
+  // Политика выбора модели: какие свойства нужны и какие суточные лимиты
+  // приемлемы. Имён моделей здесь нет — их приносит models.list в момент
+  // запуска. PHP повторяет только цикл подсчёта очков.
+  geminiModelRules: MODEL_RULES,
+  // Цели звонка человеческими словами. Имена в коде (`give_mc`,
+  // `confirm_equipment`) модель читала как «спросить MC» и «уточнить
+  // оборудование» и советовала студенту делать работу брокера. Без этой
+  // таблицы боевой PHP слал бы в разбор именно кодовые имена — то есть
+  // починка перепутанных ролей работала бы только локально.
+  goalWording: GOAL_WORDING,
   scenarios: Object.fromEntries(
     SCENARIOS.map((scenario) => {
       const broker = getBroker(scenario.brokerId)

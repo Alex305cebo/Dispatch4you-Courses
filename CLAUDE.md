@@ -14,6 +14,10 @@ Main-site deploy: `main` → GitHub Actions → Hostinger (rsync). See memory `s
 - `map-trainer/` + `maps/` + `build_map.js`/`fetch_routes_osrm.js` — US map/route trainer (OSM/OSRM data)
 - also: `games/Tetris`, `games/dispatch-office-v2`, `games/game2`, `game/`, `quiz/`
 
+## Broker Call — голосовой тренажёр звонка брокеру
+- `broker-call/` (React+Vite) → <https://dispatch4you.com/broker-call/>; сервер — `api/broker-call.php`
+- **Начинать с `broker-call/HANDOFF.md`**: состояние, что не проверено, грабли, порядок действий
+
 ## Extensions
 - `DispatchPro extension/` — Chrome ext for DAT (Groq key on server; memory `dispatch4you-extension-deploy`)
 - `voice-to-chat-extension/`, `ext/`, `3.14.4_0/`
@@ -26,6 +30,40 @@ Main-site deploy: `main` → GitHub Actions → Hostinger (rsync). See memory `s
 - NEVER push to main without explicit user request
 - ALWAYS ask before any action outside direct coding task
 - Dispatch Academy: dev-ветка `claude/session-context-qcmlai`; коммитить только туда, мержить в main только по просьбе
+
+## Два места работы: облако и своя машина
+
+Работа идёт то в облачном контейнере (claude.ai/code с телефона), то локально в
+`C:\DispatcherTraining`. Общего диска между ними нет и быть не может: контейнер
+одноразовый и поднимается с чистой копией репозитория. **Единственный мост —
+GitHub.** Всё, что не запушено, для второй стороны не существует.
+
+Из-за этого расхождение случается беззвучно: правишь на машине поверх кода
+недельной давности, потому что облако успело уйти вперёд, и узнаёшь об этом
+на конфликте, когда половина работы уже сделана.
+
+Чтобы этого не было:
+
+- **Хук старта сессии** (`.claude/hooks/session-start.sh`) в начале КАЖДОЙ
+  сессии — и в облаке, и локально — ставит зависимости `broker-call` и печатает:
+  ветку, число незакоммиченных файлов, расхождение с GitHub и разошёлся ли
+  сгенерированный `api/broker-config.php` со сборкой. Если он сказал «на GitHub
+  есть N коммитов, которых тут нет» — сначала `git pull --rebase`, только потом
+  правки.
+- **Локальный запуск** — двойной клик по `start-local.bat` в корне (на mac и в
+  WSL — `./start-local.sh`). Скрипт сам подтягивает рабочую ветку, ставит
+  зависимости, заводит `broker-call/.env.local` при первом запуске и поднимает
+  дев-сервер на <http://localhost:5180/broker-call/>. Второй адрес, который
+  печатает Vite (`http://192.168.x.x:5180/broker-call/`), открывается с телефона
+  в той же Wi-Fi — так проверяется микрофон и звук, чего в облаке сделать нельзя.
+- **Заканчивая работу в любом из мест — `git push`.** Не «когда закончу задачу»,
+  а перед тем, как закрыть окно. Контейнер умирает вместе с несохранённым.
+- Ключи (`.env.local`) живут ТОЛЬКО на машине пользователя и на боевом сервере.
+  В репозиторий они не попадают, в облачном контейнере их нет — поэтому живой
+  разговор в облаке не проверить, там доступны сборка, типы и тесты.
+
+`start-local.bat`, `start-local.sh` и `.claude/` исключены из выкладки на сайт
+(rsync в `deploy.yml`) — иначе они стали бы публично доступны по адресу домена.
 
 ---
 

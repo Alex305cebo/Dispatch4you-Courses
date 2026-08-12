@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { CallMachine } from '../call/CallMachine'
 import { PipelineTransport } from '../voice/PipelineTransport'
 import { RealtimeTransport } from '../voice/RealtimeTransport'
+import { GeminiLiveTransport } from '../voice/GeminiLiveTransport'
 import type { TransportDeps, VoiceEvent, VoiceTransport } from '../voice/types'
 import { getScenario } from '../data/scenarios'
 import { getBroker } from '../data/brokers'
@@ -109,27 +110,57 @@ export const useCallStore = create<CallStore>((set, get) => ({
       emit: (event) => applyEvent(set, get, event),
     }
 
-    const useRealtime = config.transport === 'realtime' && config.ready.realtime
-    const transport = useRealtime ? new RealtimeTransport(deps) : new PipelineTransport(deps)
-    transport.onLevel = (level) => set({ micLevel: level })
-
     set({
       phase: 'call',
       machine,
-      transport,
       callState: machine.getState(),
       startedAt: Date.now(),
       line: 'ringing',
     })
 
-    try {
-      await transport.connect()
-    } catch (e) {
-      const message =
-        (e as Error).name === 'NotAllowedError'
-          ? 'error.micDenied'
-          : `error.generic:${(e as Error).message}`
-      set({ error: message })
+    // Список, а не один транспорт: если предпочтительный не поднялся, звонок
+    // всё равно состоится. Ровно ради этого и заводился VoiceTransport.
+    const candidates = buildCandidates(config, deps)
+
+    for (let i = 0; i < candidates.length; i++) {
+      const candidate = candidates[i]
+      if (!candidate) continue
+
+      const transport = candidate.make()
+      transport.onLevel = (level) => set({ micLevel: level })
+      set({ transport })
+
+      try {
+        await transport.connect()
+        return
+      } catch (e) {
+        const error = e as Error
+
+        // Отказ в микрофоне запасной транспорт не починит — он спросит второй
+        // раз и получит тот же отказ. Тут откат только раздражает.
+        if (error.name === 'NotAllowedError') {
+          standDown(transport)
+          set({ error: 'error.micDenied', transport: null })
+          return
+        }
+
+        const last = i === candidates.length - 1
+        if (last) {
+          set({ error: `error.generic:${error.message}` })
+          return
+        }
+
+        // Тихо сворачиваемся и пробуем следующий: студент услышит гудки один
+        // раз, а не отбой и гудки заново.
+        standDown(transport)
+        // Причина не пропадает: без неё «почему опять пайплайн» выясняется
+        // чтением исходников. Красную полосу не показываем — звонок сейчас
+        // пойдёт, и пугать ею нечестно. Живое состояние провайдера всегда
+        // видно в ?action=health.
+        console.warn(
+          `[broker-call] транспорт ${candidate.name} не поднялся, откат: ${error.message}`,
+        )
+      }
     }
   },
 
@@ -163,7 +194,7 @@ type Get = () => CallStore
 
 interface ServerConfig {
   transport: 'pipeline' | 'realtime'
-  ready: { llm: boolean; stt: boolean; tts: boolean; realtime: boolean }
+  ready: { llm: boolean; stt: boolean; tts: boolean; realtime: boolean; gemini?: boolean }
 }
 
 async function fetchConfig(): Promise<ServerConfig> {
@@ -174,6 +205,48 @@ async function fetchConfig(): Promise<ServerConfig> {
     // Сервер молчит — идём бесплатным путём и покажем ошибку на первом запросе.
   }
   return { transport: 'pipeline', ready: { llm: false, stt: false, tts: false, realtime: false } }
+}
+
+interface Candidate {
+  name: string
+  make(): VoiceTransport
+}
+
+/**
+ * Свернуть транспорт, который не поднялся.
+ *
+ * Именно `if`, а не `transport.abandon?.() ?? transport.disconnect()`: тихий
+ * уход возвращает undefined, и `??` следом позвал бы ещё и disconnect — то
+ * есть отбой в трубку ровно там, где мы его и убирали.
+ */
+function standDown(transport: VoiceTransport): void {
+  if (transport.abandon) transport.abandon()
+  else transport.disconnect()
+}
+
+/**
+ * Кого пробовать и в каком порядке.
+ *
+ * Решает сервер: из браузера платный или новый режим не включить, даже
+ * подменив запрос. Gemini появляется в списке только когда на сервере лежит
+ * ключ — до тех пор всё идёт ровно так, как шло, и ни одна строка прежнего
+ * пути не меняется.
+ *
+ * Пайплайн стоит последним всегда: он работает на ключах, которые у проекта
+ * уже есть, и его задача — чтобы звонок состоялся даже когда всё новое легло.
+ */
+function buildCandidates(config: ServerConfig, deps: TransportDeps): Candidate[] {
+  const candidates: Candidate[] = []
+
+  if (config.ready.gemini) {
+    candidates.push({ name: 'gemini-live', make: () => new GeminiLiveTransport(deps) })
+  }
+  if (config.transport === 'realtime' && config.ready.realtime) {
+    candidates.push({ name: 'realtime', make: () => new RealtimeTransport(deps) })
+  }
+  candidates.push({ name: 'pipeline', make: () => new PipelineTransport(deps) })
+
+  return candidates
 }
 
 function applyEvent(set: Set, get: Get, event: VoiceEvent): void {
