@@ -14,6 +14,10 @@ Main-site deploy: `main` → GitHub Actions → Hostinger (rsync). See memory `s
 - `map-trainer/` + `maps/` + `build_map.js`/`fetch_routes_osrm.js` — US map/route trainer (OSM/OSRM data)
 - also: `games/Tetris`, `games/dispatch-office-v2`, `games/game2`, `game/`, `quiz/`
 
+## Broker Call — голосовой тренажёр звонка брокеру
+- `broker-call/` (React+Vite) → <https://dispatch4you.com/broker-call/>; сервер — `api/broker-call.php`
+- **Начинать с `broker-call/HANDOFF.md`**: состояние, что не проверено, грабли, порядок действий
+
 ## Extensions
 - `DispatchPro extension/` — Chrome ext for DAT (Groq key on server; memory `dispatch4you-extension-deploy`)
 - `voice-to-chat-extension/`, `ext/`, `3.14.4_0/`
