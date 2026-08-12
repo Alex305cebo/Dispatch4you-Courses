@@ -739,19 +739,9 @@
             try { localStorage.setItem('d4y-theme', next); } catch (e) {}
         });
 
-        // Пользователь сменил тему в системе — подхватываем, но только если
-        // он не выбирал тему на сайте вручную.
-        try {
-            var mq = window.matchMedia('(prefers-color-scheme: light)');
-            var onSys = function (e) {
-                var saved = null;
-                try { saved = localStorage.getItem('d4y-theme'); } catch (err) {}
-                if (saved === 'light' || saved === 'dark') return;
-                document.documentElement.setAttribute('data-theme', e.matches ? 'light' : 'dark');
-            };
-            if (mq.addEventListener) mq.addEventListener('change', onSys);
-            else if (mq.addListener) mq.addListener(onSys);
-        } catch (e) {}
+        // Слушатель системной темы отключён: тёмная — тема по умолчанию,
+        // светлая включается только кнопкой.
+        /* системная тема не учитывается */
     }
 
     // ── SEO: hreflang alternates for this page ────────────────────
