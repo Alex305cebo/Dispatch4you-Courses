@@ -254,8 +254,51 @@
 }
 
 .career-stat { text-align: center; }
-.career-stat b { font-size: 26px; display: block; line-height: 1.1; }
-.career-stat span { font-size: 12px; }
+/* Цвет задан явно, а не унаследован: в светлой теме body остаётся с белым
+   текстом, и цифры без своего цвета становились белыми на белой карточке. */
+.career-stat b {
+  font-size: 26px;
+  display: block;
+  line-height: 1.1;
+  color: var(--text-primary);
+}
+.career-stat span { font-size: 12px; color: var(--text-muted); }
+
+/* Список возможностей — вместо чипов-тегов.
+   Чипы говорили одним словом («Столицы», «Границы») и места занимали столько
+   же. Строка объясняет, что именно внутри, — карточка стала содержательной,
+   не разъехавшись по высоте. Галочка нарисована псевдоэлементом: настоящий
+   маркер списка не выровнять по базовой линии многострочного пункта. */
+.map-trainer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.map-trainer-list li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.map-trainer-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 800;
+  color: var(--brand-ink);
+}
+
+/* Цифры отделены от списка тонкой линией — иначе три числа читались как
+   продолжение перечисления. */
+.career-stats {
+  padding-top: 12px;
+  border-top: 1px solid var(--edge-08);
+}
 
 /* Типографика под узкую карточку */
 .map-trainer-title { font-size: clamp(20px, 2vw, 26px); line-height: 1.15; margin: 0; }
@@ -270,4 +313,5 @@
   .map-trainer-visual, .map-trainer-visual img { max-height: 118px; }
   .career-stats { gap: 16px; }
   .career-stat b { font-size: 22px; }
+  .map-trainer-list li { font-size: 13px; padding-left: 20px; }
 }

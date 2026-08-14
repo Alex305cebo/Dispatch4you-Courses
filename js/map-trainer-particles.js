@@ -7,7 +7,15 @@
 (function () {
   'use strict';
 
-  var canvas = document.querySelector('.map-trainer-particles');
+  // Раньше здесь был querySelector — канву получала ТОЛЬКО первая карточка,
+  // и вторая визуально отличалась от неё. Карточек в секции две и они должны
+  // выглядеть одинаково, поэтому вся механика вынесена в функцию, а запускаем
+  // её на каждой найденной канве: у каждой свои размеры, свой набор частиц и
+  // свой наблюдатель видимости.
+  var canvases = document.querySelectorAll('.map-trainer-particles');
+  for (var c = 0; c < canvases.length; c++) init(canvases[c]);
+
+function init(canvas) {
   if (!canvas || !canvas.getContext) return;
 
   var ctx = canvas.getContext('2d');
@@ -102,12 +110,16 @@
     requestAnimationFrame(function () { tick = false; resize(); });
   });
 
-  var section = canvas.closest('.map-trainer-section') || canvas;
+  // Наблюдаем за СВОЕЙ карточкой, а не за секцией: карточек две, и каждая
+  // должна гаснуть и оживать по своей видимости.
+  var host = canvas.closest('.map-trainer-card') ||
+             canvas.closest('.map-trainer-section') || canvas;
   if (window.IntersectionObserver) {
     new IntersectionObserver(function (e) {
       if (e[0].isIntersecting) start(); else stop();
-    }, { threshold: 0 }).observe(section);
+    }, { threshold: 0 }).observe(host);
   } else {
     start();
   }
+}
 })();
