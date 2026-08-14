@@ -1,4 +1,4 @@
-import type { TransportDeps, VoiceTransport } from './types'
+import { PICKUP_CUE, type TransportDeps, type VoiceTransport } from './types'
 import { TelephonyAudio } from './TelephonyAudio'
 import { endpoint } from '../api'
 
@@ -75,11 +75,8 @@ export class RealtimeTransport implements VoiceTransport {
     await this.telephony.pickupClick()
     void this.telephony.startAmbience()
 
-    // Брокер снимает трубку и говорит первым.
-    this.send({
-      type: 'response.create',
-      response: { instructions: `Open the call with exactly this line: "${this.deps.opening}"` },
-    })
+    // Брокер снимает трубку и говорит первым — своими словами.
+    this.send({ type: 'response.create', response: { instructions: PICKUP_CUE } })
   }
 
   disconnect(): void {

@@ -16,7 +16,11 @@ export interface RateDecision {
   amount: number
   /** Дальше двигаться некуда — следующий отказ закрывает торг. */
   isFinal: boolean
-  /** Что модель должна донести словами. Не дословная реплика — смысл. */
+  /**
+   * Позиция брокера и её границы. Не реплика и не следующий шаг: раньше здесь
+   * стояло «согласись и переходи к букингу», и одинаковые цифры давали
+   * одинаковые слова в каждом звонке. Формулирует модель, решает — код.
+   */
   reason: string
 }
 
@@ -42,7 +46,7 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
       outcome: 'accept',
       amount: ask,
       isFinal: true,
-      reason: `Carrier asked for ${money(ask)}, which is at or below what you already offered. Accept immediately and move to booking.`,
+      reason: `They asked for ${money(ask)} — at or below what you already offered. This is a yes.`,
     }
   }
 
@@ -58,14 +62,14 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
         outcome: 'walk_away',
         amount: offer,
         isFinal: true,
-        reason: `You have repeated ${money(offer)} enough times and they are still asking for more. Tell them you will keep the load posted and end the call politely.`,
+        reason: `You have repeated ${money(offer)} enough times and they are still asking for more. You are done with this one — the load stays posted.`,
       }
     }
     return {
       outcome: 'final',
       amount: offer,
       isFinal: true,
-      reason: `${money(offer)} is all this load carries — there is no room left. Say it plainly and let the carrier decide.`,
+      reason: `${money(offer)} is all this load carries. There is no room left, whatever they say.`,
     }
   }
 
@@ -78,7 +82,7 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
         outcome: 'accept',
         amount: ask,
         isFinal: true,
-        reason: `${money(ask)} works. Agree and move straight to booking details — do not reopen the rate.`,
+        reason: `${money(ask)} works. The rate is settled — it does not get reopened.`,
       }
     }
     if (patienceSpent) {
@@ -86,7 +90,7 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
         outcome: 'final',
         amount: ask,
         isFinal: true,
-        reason: `You have gone back and forth enough. Meet them at ${money(ask)} and close it.`,
+        reason: `You have gone back and forth enough. ${money(ask)} is where this ends.`,
       }
     }
     const counter = Math.min(load.maxRate, offer + step)
@@ -94,7 +98,7 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
       outcome: 'counter',
       amount: counter,
       isFinal: false,
-      reason: `Counter at ${money(counter)}. Make them justify anything above it — deadhead, market data, fuel.`,
+      reason: `Your position is ${money(counter)}. Anything above it they have to justify.`,
     }
   }
 
@@ -104,7 +108,7 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
       outcome: 'walk_away',
       amount: load.maxRate,
       isFinal: true,
-      reason: `${money(ask)} is out of range and the carrier will not come down. Tell them you will keep the load posted, and end the call politely.`,
+      reason: `${money(ask)} is out of range and they will not come down. You are done with this one — the load stays posted.`,
     }
   }
 
@@ -113,7 +117,7 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
       outcome: 'final',
       amount: load.maxRate,
       isFinal: true,
-      reason: `${money(load.maxRate)} is the most this load carries. State it as your final number — you cannot go higher no matter what they say.`,
+      reason: `${money(load.maxRate)} is the most this load carries. You cannot go higher, no matter what they say.`,
     }
   }
 
@@ -122,7 +126,7 @@ export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
     outcome: 'counter',
     amount: counter,
     isFinal: false,
-    reason: `${money(ask)} is above what this load can carry. Push back and counter at ${money(counter)}.`,
+    reason: `${money(ask)} is above what this load carries. Your position is ${money(counter)}.`,
   }
 }
 

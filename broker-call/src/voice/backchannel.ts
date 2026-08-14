@@ -39,8 +39,10 @@ const FILLERS: Record<BrokerStyle, string[]> = {
 export class Backchannel {
   private acks: AudioBuffer[] = []
   private fillers: AudioBuffer[] = []
-  private ackIndex = 0
-  private fillerIndex = 0
+  // Перебор круговой, но начинается с произвольного места: с нуля «Mm-hmm →
+  // Okay, sure → Right» звучало в одном и том же порядке в каждом звонке.
+  private ackIndex = Math.floor(Math.random() * 3)
+  private fillerIndex = Math.floor(Math.random() * 2)
   /** Отклик через раз: на каждой реплике он превратился бы в тик робота. */
   private turnsSinceAck = 99
   private ready = false

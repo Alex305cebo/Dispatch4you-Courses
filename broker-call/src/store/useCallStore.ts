@@ -98,7 +98,6 @@ export const useCallStore = create<CallStore>((set, get) => ({
       voice: voiceForBroker(broker.id),
       direction: directionForStyle(broker.style),
       style: broker.style,
-      opening: scenario.opening,
       runTool: (name, args) => {
         const result = machine.execute(name, args)
         set({ callState: machine.getState() })

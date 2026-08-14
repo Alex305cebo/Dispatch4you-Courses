@@ -1,4 +1,4 @@
-import type { TransportDeps, VoiceTransport } from './types'
+import { PICKUP_CUE, type TransportDeps, type VoiceTransport } from './types'
 import { MicVad } from './vad'
 import { TelephonyAudio } from './TelephonyAudio'
 import { endpoint } from '../api'
@@ -89,13 +89,10 @@ export class GeminiLiveTransport implements VoiceTransport {
     // Теперь линия открыта в обе стороны.
     this.streaming = true
 
-    // Брокер снимает трубку и говорит первым — как в жизни. Реплику задаём
-    // дословно: это визитная карточка компании, её не сочиняют заново.
-    this.send(
-      textTurnMessage(
-        `[The call just connected. Answer the phone with exactly this line and nothing else: "${this.deps.opening}"]`,
-      ),
-    )
+    // Брокер снимает трубку и говорит первым — как в жизни. Что именно он
+    // скажет, решает он сам: раньше здесь навязывалась дословная строка, и все
+    // звонки начинались одной и той же фразой.
+    this.send(textTurnMessage(PICKUP_CUE))
   }
 
   disconnect(): void {

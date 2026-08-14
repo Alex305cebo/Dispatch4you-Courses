@@ -113,8 +113,7 @@ export class CallMachine {
       return {
         ok: false,
         error: 'invalid_mc',
-        instruction:
-          'That MC number did not come back as a valid number. Ask them to repeat it digit by digit.',
+        instruction: 'That MC number did not come back as a valid number.',
       }
     }
 
@@ -134,7 +133,8 @@ export class CallMachine {
         ok: true,
         data: carrierSummary(carrier),
         approved: false,
-        instruction: `This carrier cannot take the load. Reason: ${verdict.reason} Tell them plainly, do not offer the load, and wrap the call up politely.`,
+        // Единственное, что здесь остаётся приказом: отказ не обсуждается.
+        instruction: `This carrier cannot take the load. Reason: ${verdict.reason} Do not offer them the load.`,
       }
     }
 
@@ -143,8 +143,8 @@ export class CallMachine {
       data: carrierSummary(carrier),
       approved: true,
       instruction: verdict.concerns.length
-        ? `Carrier checks out, but note: ${verdict.concerns.join('; ')}. You may ask one question about it, then move on.`
-        : 'Carrier checks out. Move on to what equipment they are running.',
+        ? `Carrier checks out. Worth noting: ${verdict.concerns.join('; ')}.`
+        : 'Carrier checks out.',
     }
   }
 
@@ -169,8 +169,7 @@ export class CallMachine {
         payment_terms: load.paymentTerms,
         notes: load.notes,
       },
-      instruction:
-        'Give the route, commodity, weight, pickup and delivery in ONE reply. Do not read the notes as a list — mention only what matters to this carrier.',
+      instruction: 'This is what the load record says. Never read it out as a list.',
     }
   }
 
@@ -180,7 +179,7 @@ export class CallMachine {
       return {
         ok: false,
         error: 'unclear_equipment',
-        instruction: 'You did not catch what they run. Ask once more, specifically.',
+        instruction: 'You did not catch what they run.',
       }
     }
 
@@ -191,14 +190,14 @@ export class CallMachine {
       return {
         ok: true,
         data: { equipment, matches_load: false, load_requires: this.load.equipment },
-        instruction: `They run ${equipment.replace('_', ' ')}, but this load needs ${this.load.equipment.replace('_', ' ')}. Say so and ask whether they have the right trailer available.`,
+        instruction: `They run ${equipment.replace('_', ' ')}, but this load needs ${this.load.equipment.replace('_', ' ')}. It will not go on the wrong trailer.`,
       }
     }
 
     return {
       ok: true,
       data: { equipment, matches_load: true },
-      instruction: 'Equipment fits. Next, give them the load details.',
+      instruction: 'Equipment fits.',
     }
   }
 
@@ -215,8 +214,8 @@ export class CallMachine {
         data: { location, can_make_pickup: false },
         instruction: `Their driver cannot make ${this.load.pickup.label}. ${
           this.load.pickup.strict
-            ? 'This pickup window is hard — the load will not wait. Tell them it will not work.'
-            : 'Ask what the earliest realistic time is before you decide.'
+            ? 'This pickup window is hard — the load will not wait, and you cannot move it.'
+            : 'This pickup window has some give in it.'
         }`,
       }
     }
@@ -224,7 +223,7 @@ export class CallMachine {
     return {
       ok: true,
       data: { location, can_make_pickup: canMakePickup },
-      instruction: 'Driver is covered. Ask what rate they need on this load.',
+      instruction: 'Driver is covered.',
     }
   }
 
@@ -244,7 +243,7 @@ export class CallMachine {
       return {
         ok: false,
         error: 'no_amount',
-        instruction: 'They did not name a clear number. Ask what rate they need.',
+        instruction: 'They did not name a clear number.',
       }
     }
 
@@ -305,17 +304,16 @@ export class CallMachine {
       return {
         ok: true,
         data: { complete: true },
-        instruction:
-          'You have everything. Confirm the rate con goes out within 30 minutes and start wrapping the call up.',
+        instruction: 'You have every detail you need. The rate con goes out within 30 minutes.',
       }
     }
 
     return {
       ok: true,
       data: { complete: false, still_missing: missing.map((m) => m.label) },
-      // По одному вопросу за раз — так работают настоящие диспетчерские
-      // разговоры, и так студент успевает отвечать.
-      instruction: `Still missing: ${missing.map((m) => m.label).join(', ')}. Ask for ${missing[0]!.label} — one item at a time, never a list.`,
+      // Порядок выбирает модель — раньше здесь стояло «спроси сейчас вот это»,
+      // и все звонки собирали данные водителя в одной и той же последовательности.
+      instruction: `Still missing: ${missing.map((m) => m.label).join(', ')}. Never ask for them as a list.`,
     }
   }
 
@@ -325,7 +323,7 @@ export class CallMachine {
       return {
         ok: false,
         error: 'no_email',
-        instruction: 'You need an email address before you can send the rate con. Ask for it.',
+        instruction: 'The rate con cannot go anywhere without an email address.',
       }
     }
 
@@ -340,8 +338,7 @@ export class CallMachine {
         rate: this.state.facts.agreedRate ?? this.state.facts.currentBrokerOffer,
         lane: laneLabel(this.load),
       },
-      instruction:
-        'Confirm it is on its way within 30 minutes, then close the call the way you would with any carrier.',
+      instruction: 'It is on its way and lands within 30 minutes.',
     }
   }
 
@@ -359,13 +356,19 @@ export class CallMachine {
     return {
       ok: true,
       data: { ended: true, reason: endReason },
-      instruction: 'Say goodbye in one short line and stop talking.',
+      // Единственный шаг, который обязан быть коротким: после прощания говорить
+      // уже не с кем — линия закрыта.
+      instruction: 'The call is over. Say goodbye in one short line and stop talking.',
     }
   }
 
   // ── Внутреннее ────────────────────────────────────────────────────────────
 
-  /** Стадия только растёт: назад по сценарию звонок не откатывается. */
+  /**
+   * Стадия только растёт. Это отметка о том, что уже случилось, — её читают
+   * экран и оценка. Порядок вопросов она не диктует: разговор может вернуться
+   * к ставке после данных водителя, и это нормально.
+   */
   private advance(stage: CallStage): void {
     if (STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf(this.state.stage)) {
       this.patch({ stage })

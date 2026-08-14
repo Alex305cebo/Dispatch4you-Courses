@@ -1,4 +1,4 @@
-import type { TransportDeps, VoiceTransport } from './types'
+import { PICKUP_CUE, type TransportDeps, type VoiceTransport } from './types'
 import { MicVad } from './vad'
 import { TelephonyAudio } from './TelephonyAudio'
 import { encodeWav, durationSeconds } from './audio'
@@ -69,9 +69,11 @@ export class PipelineTransport implements VoiceTransport {
 
     this.startPreview()
 
-    // Брокер снимает трубку и говорит первым — как в жизни.
-    this.messages = [{ role: 'assistant', content: this.deps.opening }]
-    await this.speak(this.deps.opening)
+    // Брокер снимает трубку и говорит первым — как в жизни, но своими словами.
+    // Раньше здесь лежала дословная строка сценария, и каждый звонок начинался
+    // одинаково, слово в слово.
+    this.messages = [{ role: 'user', content: PICKUP_CUE }]
+    await this.runTurn()
   }
 
   disconnect(): void {

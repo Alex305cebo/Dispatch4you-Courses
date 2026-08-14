@@ -62,6 +62,17 @@ export type VoiceListener = (event: VoiceEvent) => void
 
 import type { BrokerStyle } from '../types'
 
+/**
+ * Чем толкают брокера снять трубку.
+ *
+ * Это повод заговорить, а не текст реплики: звонит диспетчер, на том конце
+ * берут трубку и представляются так, как этот человек делает это всегда.
+ * Дословную строку отсюда убрали намеренно — она делала начало всех звонков
+ * одинаковым.
+ */
+export const PICKUP_CUE =
+  '[Your desk phone just rang and you picked up. A dispatcher is on the line — you do not know yet what they want. Answer the phone the way you always do, in your own words, and keep it short.]'
+
 export interface TransportDeps {
   scenarioId: string
   /** Голос брокера у провайдера озвучки. */
@@ -70,8 +81,6 @@ export interface TransportDeps {
   direction?: string
   /** Характер брокера — от него зависят короткие отклики в паузах. */
   style: BrokerStyle
-  /** Первая реплика — брокер снимает трубку и говорит первым. */
-  opening: string
   /** Выполнить инструмент и вернуть результат для модели. */
   runTool(name: string, args: unknown): unknown
   emit: VoiceListener

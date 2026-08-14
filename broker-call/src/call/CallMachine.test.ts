@@ -60,7 +60,9 @@ describe('CallMachine — факты только через инструмен�
   it('предупреждает, когда водитель не успевает в жёсткое окно', () => {
     const m = machine()
     const r = m.execute('record_driver_status', { location: 'Fort Worth', can_make_pickup: false })
-    expect(r.instruction).toContain('will not work')
+    // Проверяем факт, а не формулировку: как об этом сказать, решает модель.
+    expect(r.instruction).toContain('will not wait')
+    expect(r.instruction).toContain('cannot move it')
   })
 })
 
