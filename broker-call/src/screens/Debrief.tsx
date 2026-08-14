@@ -23,7 +23,7 @@ interface Analysis {
  */
 export function Debrief() {
   const t = useT()
-  const { scenario, machine, feed, avgLatencyMs, backToLobby, openIncoming } = useCallStore()
+  const { scenario, machine, feed, avgLatencyMs, backToLobby, openDial } = useCallStore()
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [failed, setFailed] = useState(false)
 
@@ -162,7 +162,7 @@ export function Debrief() {
           className="btn btn-primary"
           onClick={() => {
             backToLobby()
-            openIncoming(scenario.id)
+            openDial(scenario.id)
           }}
         >
           {t('debrief.again')}

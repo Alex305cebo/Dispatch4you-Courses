@@ -11,7 +11,7 @@ import { useMemo } from 'react'
 export function Lobby() {
   const t = useT()
   const localized = useLocalized()
-  const openIncoming = useCallStore((s) => s.openIncoming)
+  const openDial = useCallStore((s) => s.openDial)
   // Читаем при входе в список: пока идёт звонок, прогресс всё равно не меняется.
   const progress = useMemo(() => loadProgress(), [])
 
@@ -37,7 +37,7 @@ export function Lobby() {
               <button
                 key={scenario.id}
                 className="call-card"
-                onClick={() => openIncoming(scenario.id)}
+                onClick={() => openDial(scenario.id)}
               >
                 <span className="call-card-index mono">{String(index + 1).padStart(2, '0')}</span>
                 <span>

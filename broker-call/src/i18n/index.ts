@@ -14,10 +14,11 @@ const RU = {
   'lobby.best': 'Лучший результат',
   'lobby.attempts': 'Попыток',
 
-  'incoming.incoming': 'Входящий вызов',
-  'incoming.answer': 'Ответить',
-  'incoming.hint': 'Дальше ни одной кнопки — просто говорите',
-  'incoming.mic': 'Понадобится доступ к микрофону',
+  // Звоним мы. Входящих в сторону диспетчера в тренажёре не бывает.
+  'dial.label': 'Исходящий звонок',
+  'dial.call': 'Позвонить',
+  'dial.hint': 'Дальше ни одной кнопки — просто говорите',
+  'dial.mic': 'Понадобится доступ к микрофону',
 
   'call.connecting': 'Соединение',
   'call.ringing': 'Идёт вызов',
@@ -83,10 +84,10 @@ const EN: Record<Key, string> = {
   'lobby.best': 'Best score',
   'lobby.attempts': 'Attempts',
 
-  'incoming.incoming': 'Incoming call',
-  'incoming.answer': 'Answer',
-  'incoming.hint': 'No buttons after this — just talk',
-  'incoming.mic': 'Microphone access required',
+  'dial.label': 'Outgoing call',
+  'dial.call': 'Call',
+  'dial.hint': 'No buttons after this — just talk',
+  'dial.mic': 'Microphone access required',
 
   'call.connecting': 'Connecting',
   'call.ringing': 'Ringing',

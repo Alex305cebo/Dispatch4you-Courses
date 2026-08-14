@@ -10,7 +10,7 @@ import type { CallState, Scenario } from '../types'
 import { endpoint } from '../api'
 import { directionForStyle, voiceForBroker } from '../voice/voices'
 
-export type Phase = 'lobby' | 'incoming' | 'call' | 'debrief'
+export type Phase = 'lobby' | 'dialing' | 'call' | 'debrief'
 
 /** Что показывает индикатор линии. Не то же самое, что стадия звонка. */
 export type LineState = 'ringing' | 'live' | 'listening' | 'thinking' | 'hold' | 'ended'
@@ -54,8 +54,9 @@ interface CallStore {
   /** Средняя пауза брокера за звонок — показывается в разборе. */
   avgLatencyMs: number
 
-  openIncoming(scenarioId: string): void
-  answer(): Promise<void>
+  openDial(scenarioId: string): void
+  /** Набрать номер. Звонит диспетчер — брокер снимает трубку на той стороне. */
+  placeCall(): Promise<void>
   endCall(): void
   backToLobby(): void
 }
@@ -75,12 +76,12 @@ export const useCallStore = create<CallStore>((set, get) => ({
   startedAt: null,
   avgLatencyMs: 0,
 
-  openIncoming(scenarioId) {
+  openDial(scenarioId) {
     const scenario = getScenario(scenarioId)
-    set({ phase: 'incoming', scenario, feed: [], error: null, line: 'ringing' })
+    set({ phase: 'dialing', scenario, feed: [], error: null, line: 'ringing' })
   },
 
-  async answer() {
+  async placeCall() {
     const scenario = get().scenario
     if (!scenario) return
 
