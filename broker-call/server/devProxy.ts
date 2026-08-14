@@ -1,5 +1,7 @@
 import type { Connect, Plugin, ViteDevServer } from 'vite'
 import type { IncomingMessage, ServerResponse } from 'node:http'
+import { randomUUID } from 'node:crypto'
+import { WebSocketServer, WebSocket as UpstreamSocket, type RawData } from 'ws'
 import { buildSystemPrompt } from '../src/call/prompt'
 import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
 import { buildDebriefPrompt } from '../src/call/debriefPrompt'
@@ -174,9 +176,17 @@ export function brokerApi(env: Record<string, string>): Plugin {
       }))
 
       // ── Сессия Gemini Live ────────────────────────────────────────────────
-      // Отдаём браузеру ОДНОРАЗОВЫЙ токен, а не ключ. Ключ не должен уезжать
-      // в браузер ни на минуту: вебсокет открыт со страницы, а страница
-      // открыта у студента.
+      // Браузер получает ОДНОРАЗОВЫЙ номер сессии и адрес нашего же сокета.
+      // Ключ и настройки остаются здесь: вебсокет открыт со страницы, а
+      // страница открыта у студента.
+      //
+      // Раньше здесь выпускался эфемерный токен Google (`v1alpha/auth_tokens`)
+      // и браузер шёл с ним прямо к Google. Токен выпускается, но вебсокет его
+      // не принимает: `?access_token=` он не распознаёт вовсе («unregistered
+      // callers»), а как `?key=` считает невалидным. Проверено на живом ключе,
+      // оба варианта, с префиксом `auth_tokens/` и без. Прямой ключ при этом
+      // работает на обеих версиях API — значит дело не в адресе и не в модели,
+      // а в самих токенах. Поэтому сокет проксируется через сервер.
       //
       // Имя модели спрашиваем у провайдера в момент запуска. Вписанное в код
       // имя — то, на чём мы горели трижды: оно перестаёт существовать, и всё
@@ -196,9 +206,30 @@ export function brokerApi(env: Record<string, string>): Plugin {
           )
         }
         const setup = geminiSetup(model, scenarioId, body.voice)
-        const token = await geminiToken(geminiKey, setup)
-        return { token, model, wsUrl: GEMINI_WS, setup: { locked: true } }
+        const token = randomUUID()
+        sessions.set(token, { setup, expiresAt: Date.now() + SESSION_TTL_MS })
+        // Адрес берём из запроса, а не из константы: с телефона тренажёр
+        // открывают по 192.168.x.x, и localhost туда не ведёт.
+        const host = req.headers.host ?? `localhost:${server.config.server.port ?? 5180}`
+        return { token, model, wsUrl: `ws://${host}${GEMINI_WS_PATH}`, setup: { locked: true } }
       }))
+
+      // Сам проксируемый сокет. Наверх уходит ключ и запертый setup, вниз —
+      // всё, что ответил Google, байт в байт.
+      const wss = new WebSocketServer({ noServer: true })
+      server.httpServer?.on('upgrade', (req, socket, head) => {
+        const url = new URL(req.url ?? '', 'http://localhost')
+        // Чужие апгрейды не трогаем: по этому же серверу живёт HMR самого Vite.
+        if (url.pathname !== GEMINI_WS_PATH) return
+        const session = takeSession(url.searchParams.get('access_token') ?? '')
+        if (!session || !geminiKey) {
+          socket.destroy()
+          return
+        }
+        wss.handleUpgrade(req, socket, head, (client) => {
+          pipeToGemini(client, session.setup, geminiKey)
+        })
+      })
 
       // ── Ход разговора ─────────────────────────────────────────────────────
       // Клиент шлёт только историю: системный промпт и инструменты
@@ -523,10 +554,12 @@ async function probeGemini(key: string): Promise<Record<string, unknown>> {
         models: models.length,
       }
     }
-    // Токен выпускаем настоящий, с настоящим промптом и инструментами: отказ
-    // на этом шаге и есть самый частый способ не начать разговор.
+    // Поднимаем настоящий сокет с настоящим промптом и инструментами и ждём
+    // setupComplete. Проба обязана идти тем же путём, что и звонок: прежняя
+    // проверяла выпуск токена, светилась зелёным — а разговор не начинался,
+    // потому что ломалось на шаг позже, при подключении к сокету.
     const setup = geminiSetup(live, FIRST_SCENARIO_ID)
-    await geminiToken(key, setup)
+    await probeGeminiSocket(key, setup)
     return {
       ok: true,
       live_model: live,
@@ -544,6 +577,92 @@ async function probeGemini(key: string): Promise<Record<string, unknown>> {
 const GEMINI_API = 'https://generativelanguage.googleapis.com'
 const GEMINI_WS =
   'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent'
+
+/** Путь нашего сокета. Браузер ходит сюда, а не к Google. */
+const GEMINI_WS_PATH = '/api/gemini-ws'
+
+/** Столько живёт номер сессии до подключения. Звонок начинают сразу или никогда. */
+const SESSION_TTL_MS = 2 * 60_000
+
+/**
+ * Выданные, но ещё не использованные сессии. Здесь лежит запертый setup —
+ * системный промпт, голос и список инструментов. Браузер знает только номер,
+ * поэтому подменить характер брокера или потолок ставки со своей стороны не
+ * может, как и раньше.
+ */
+const sessions = new Map<string, { setup: unknown; expiresAt: number }>()
+
+/** Сессия одноразовая: взяли — забыли. Заодно подчищаем просроченные. */
+function takeSession(token: string): { setup: unknown; expiresAt: number } | null {
+  const now = Date.now()
+  for (const [key, value] of sessions) {
+    if (value.expiresAt < now) sessions.delete(key)
+  }
+  const session = sessions.get(token)
+  if (!session) return null
+  sessions.delete(token)
+  return session.expiresAt < now ? null : session
+}
+
+/**
+ * Мост браузер ↔ Google.
+ *
+ * Наверх сервер сам шлёт настоящий setup, поэтому пустой `{setup:{}}` от
+ * браузера сюда не пересылается — иначе Google получил бы вторую настройку и
+ * закрыл бы сессию. Всё остальное идёт как есть, в обе стороны.
+ */
+function pipeToGemini(client: import('ws').WebSocket, setup: unknown, key: string): void {
+  const upstream = new UpstreamSocket(`${GEMINI_WS}?key=${encodeURIComponent(key)}`)
+  // Кадры микрофона могут прийти раньше, чем откроется верхний сокет. Без
+  // очереди первая фраза студента потерялась бы молча.
+  const pending: RawData[] = []
+
+  upstream.on('open', () => {
+    upstream.send(JSON.stringify({ setup }))
+    for (const frame of pending) upstream.send(frame as Buffer)
+    pending.length = 0
+  })
+  upstream.on('message', (data: RawData) => {
+    if (client.readyState === client.OPEN) client.send(data as Buffer)
+  })
+  upstream.on('error', (e: Error) => closeClient(client, 1011, e.message))
+  upstream.on('close', (code: number, reason: Buffer) => {
+    closeClient(client, code, reason.toString())
+  })
+
+  client.on('message', (data: RawData) => {
+    if (isEmptySetup(data)) return
+    if (upstream.readyState === UpstreamSocket.OPEN) upstream.send(data as Buffer)
+    else pending.push(data)
+  })
+  client.on('close', () => {
+    try {
+      upstream.close()
+    } catch {
+      /* уже закрыт */
+    }
+  })
+}
+
+/** Пустая настройка от браузера — та самая, что заменяется серверной. */
+function isEmptySetup(data: RawData): boolean {
+  try {
+    const parsed = JSON.parse(data.toString()) as { setup?: Record<string, unknown> }
+    return Boolean(parsed.setup) && Object.keys(parsed.setup ?? {}).length === 0
+  } catch {
+    return false
+  }
+}
+
+/** Коды 1005/1006 и служебные закрытием не передаются — подменяем на 1011. */
+function closeClient(client: import('ws').WebSocket, code: number, reason: string): void {
+  const safe = code >= 1000 && code <= 4999 && code !== 1005 && code !== 1006 ? code : 1011
+  try {
+    client.close(safe, reason.slice(0, 120))
+  } catch {
+    /* уже закрыт */
+  }
+}
 
 let modelCache: { at: number; models: ModelInfo[] } | null = null
 
@@ -634,25 +753,30 @@ async function debriefViaGemini(
   return parsed
 }
 
-async function geminiToken(key: string, setup: unknown): Promise<string> {
-  const now = Date.now()
-  const r = await fetch(`${GEMINI_API}/v1alpha/auth_tokens?key=${encodeURIComponent(key)}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      uses: 1,
-      // Полчаса на сам звонок и две минуты на то, чтобы его начать.
-      expireTime: new Date(now + 30 * 60_000).toISOString(),
-      newSessionExpireTime: new Date(now + 2 * 60_000).toISOString(),
-      bidiGenerateContentSetup: setup,
-    }),
+/** Живая проба сокета: дошли ли до setupComplete. Всё, что до него, — догадки. */
+function probeGeminiSocket(key: string, setup: unknown): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const ws = new UpstreamSocket(`${GEMINI_WS}?key=${encodeURIComponent(key)}`)
+    const done = (error?: Error) => {
+      clearTimeout(timer)
+      try {
+        ws.close()
+      } catch {
+        /* уже закрыт */
+      }
+      if (error) reject(error)
+      else resolve()
+    }
+    const timer = setTimeout(() => done(new Error('setupComplete не пришёл за 10 секунд')), 10_000)
+    ws.on('open', () => ws.send(JSON.stringify({ setup })))
+    ws.on('message', (data: RawData) => {
+      if (data.toString().includes('setupComplete')) done()
+    })
+    ws.on('error', (e: Error) => done(e))
+    ws.on('close', (code: number, reason: Buffer) => {
+      done(new Error(`сокет закрыт ${code} ${reason.toString().slice(0, 160)}`.trim()))
+    })
   })
-  if (!r.ok) {
-    throw new HttpError(r.status, `auth_tokens ${r.status}: ${(await r.text()).slice(0, 300)}`)
-  }
-  const data = (await r.json()) as { name?: string }
-  if (!data.name) throw new HttpError(502, 'auth_tokens ответил без токена')
-  return data.name
 }
 
 /** "a, b" → ["a","b"]; пусто → undefined, чтобы сработал дефолт. */
