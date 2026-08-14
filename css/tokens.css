@@ -657,3 +657,108 @@
   background: var(--brand-ink) !important;
   color: #ffffff !important;
 }
+
+/* ============================================================
+   8. СВЕТЛАЯ ТЕМА: секции, которые остались тёмными
+   ------------------------------------------------------------
+   Замер контраста на главной в светлой теме дал 54 провала.
+   Причина большинства — две секции не были переведены на светлую
+   тему вообще: подложки карточек остались жёстко тёмными
+   (rgba(18,24,40,.85) и rgba(20,27,45,.92)), а текст на них
+   переключился в тёмный вместе с токенами. Контраст выходил
+   1.01:1 — текст физически не виден.
+
+   Ниже каждый цвет подобран под порог WCAG AA (4.5:1 для
+   обычного текста, 3:1 для крупного), а не «на глаз».
+   ============================================================ */
+
+/* ── tools-section: карточки тренажёров ── */
+:root[data-theme="light"] .map-trainer-card {
+  background:
+    radial-gradient(ellipse 65% 120% at 86% 42%, rgba(6, 182, 212, 0.10), transparent 60%),
+    linear-gradient(160deg, #ffffff, #eef3f8) !important;
+  border-color: rgba(8, 145, 178, 0.22) !important;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
+}
+/* Диагональные лучи света рассчитаны на тёмный фон — на светлом это грязь */
+:root[data-theme="light"] .map-trainer-card::before { background: none !important; }
+/* Канва с белыми пылинками на белом не видна, только жрёт кадры */
+:root[data-theme="light"] .map-trainer-particles { display: none !important; }
+/* #0891b2 на светло-бирюзовой плашке давал 3.2:1 */
+:root[data-theme="light"] .map-trainer-badge {
+  color: #0e7490 !important;
+  background: rgba(8, 145, 178, 0.10) !important;
+  border-color: rgba(8, 145, 178, 0.35) !important;
+}
+
+/* ── explore-section: карточки с роликами ── */
+:root[data-theme="light"] .explore-item {
+  background: linear-gradient(150deg, #ffffff, #eef3f8) !important;
+  border-color: rgba(15, 23, 42, 0.10) !important;
+}
+/* Вуаль под текстом была почти чёрной — переворачиваем в белую, чтобы
+   тёмный текст читался поверх ролика так же, как раньше читался белый. */
+:root[data-theme="light"] .explore-item-scrim {
+  background: linear-gradient(120deg,
+              rgba(255, 255, 255, 0.94) 0%,
+              rgba(255, 255, 255, 0.78) 30%,
+              rgba(255, 255, 255, 0.26) 58%,
+              rgba(255, 255, 255, 0) 78%) !important;
+}
+:root[data-theme="light"] .explore-item:hover,
+:root[data-theme="light"] .explore-item:focus-visible {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14) !important;
+}
+
+/* ── why-section: цифры карточек ──
+   Цвет приходит инлайном через --acc и у каждой карточки свой (янтарь,
+   бирюза, изумруд, синий, розовый, фиолетовый). Подменять его нельзя —
+   тем же токеном покрашены иконки. Поэтому не заменяем, а затемняем:
+   оттенок карточки сохраняется, светлота уходит под порог. */
+:root[data-theme="light"] .bn-stat {
+  color: color-mix(in srgb, var(--acc) 45%, #0f172a) !important;
+}
+
+/* ── profession-section: плашка роста ── */
+:root[data-theme="light"] .chart-change {
+  color: #047857 !important;
+  background: rgba(4, 120, 87, 0.10) !important;
+  border-color: rgba(4, 120, 87, 0.30) !important;
+}
+
+/* ── pricing-section ── */
+:root[data-theme="light"] .p2-spots-lbl { color: #b45309 !important; }
+:root[data-theme="light"] .p2-old { color: rgba(15, 23, 42, 0.62) !important; }
+:root[data-theme="light"] .p2-tag--prem { color: #9a3412 !important; }
+
+/* ── мелочь, которая тоже не проходила порог ── */
+:root[data-theme="light"] .divider { color: rgba(15, 23, 42, 0.68) !important; }
+:root[data-theme="light"] .final-cta-badge { color: #0b5f74 !important; }
+:root[data-theme="light"] .mob-arr,
+:root[data-theme="light"] .mob-sub-arrow { color: #475569 !important; }
+/* Правило цвета для .mob-acc-title выше перебивалось стилями меню */
+:root[data-theme="light"] .mob-acc-title { color: #0f172a !important; }
+
+/* ── белый текст на бирюзовых кнопках: #06b6d4 даёт 2.4:1, #0891b2 — 3.7:1 ── */
+:root[data-theme="light"] .btn-chat,
+:root[data-theme="light"] .btn.btn-large {
+  background: linear-gradient(135deg, #0e7490, #075985) !important;
+}
+:root[data-theme="light"] .btn-signup,
+:root[data-theme="light"] .final-cta-btn-primary,
+:root[data-theme="light"] .hlt-opt.active {
+  background: linear-gradient(135deg, #0e7490, #075985) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* ── добор до порога: пять мест, которые после правок выше остались
+      в диапазоне 2.3–4.45 при норме 4.5 ── */
+:root[data-theme="light"] .p2-spots-lbl { color: #92400e !important; }
+:root[data-theme="light"] .map-trainer-badge { color: #0b5f74 !important; }
+:root[data-theme="light"] .chart-change {
+  color: #065f46 !important;
+  border-color: rgba(6, 95, 70, 0.30) !important;
+}
+/* Подпись под логотипом в мобильном меню — цвет приходит инлайном из nav.html */
+:root[data-theme="light"] .mob-header span { color: #64748b !important; }
