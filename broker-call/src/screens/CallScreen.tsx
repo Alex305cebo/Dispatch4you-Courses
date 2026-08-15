@@ -10,6 +10,7 @@ import { laneLabel } from '../data/loads'
 import { useT } from '../i18n/useT'
 import type { TranslationKey } from '../i18n'
 import { ToolCard } from '../components/ToolCard'
+import { callHints, currentHint } from '../call/hints'
 
 /**
  * Экран звонка.
@@ -58,6 +59,8 @@ export function CallScreen() {
           <CallTimer startedAt={startedAt} />
         </div>
 
+        <CallHints />
+
         <CallFacts />
 
         <div className="call-side-spacer" />
@@ -89,6 +92,49 @@ export function CallScreen() {
       </main>
     </div>
   )
+
+  /**
+   * Что сказать прямо сейчас. Крупно — текущий шаг с готовой английской фразой,
+   * ниже — остальные одной строкой, выполненные с галочкой.
+   *
+   * Это не сценарий: брокер ведёт разговор куда захочет, порядок шагов свободный,
+   * а панель лишь отвечает на вопрос «что от меня сейчас нужно». Без неё первый
+   * звонок начинался с растерянного молчания — человек снял трубку, а диспетчер
+   * не знает даже, что представиться и назвать MC надо первой же фразой.
+   */
+  function CallHints() {
+    const hints = callHints(setup!, callState ?? null)
+    const now = currentHint(hints)
+    if (line === 'ringing' || line === 'ended') return null
+
+    return (
+      <div className="call-hints">
+        <div className="call-hints-head">{t('hints.title')}</div>
+
+        {now ? (
+          <div className="call-hint-now">
+            <div className="call-hint-title">{now.title}</div>
+            <p className="call-hint-say">{now.say}</p>
+          </div>
+        ) : (
+          <div className="call-hint-now call-hint-done">
+            <div className="call-hint-title">{t('hints.allDone')}</div>
+          </div>
+        )}
+
+        <ul className="call-hint-list">
+          {hints
+            .filter((h) => h.id !== now?.id)
+            .map((h) => (
+              <li key={h.id} className={h.done ? 'is-done' : ''}>
+                <span className="call-hint-mark">{h.done ? '✓' : '·'}</span>
+                {h.title}
+              </li>
+            ))}
+        </ul>
+      </div>
+    )
+  }
 
   /** Факты, которые брокер уже записал. Пусто — пока ничего не выяснено. */
   function CallFacts() {

@@ -108,7 +108,20 @@ const TRAITS: Record<BrokerStyle, readonly string[]> = {
   ],
 }
 
-const STYLES: readonly BrokerStyle[] = ['friendly', 'tough', 'rushed', 'bureaucratic', 'stressed']
+/**
+ * Пул характеров, а не список: раньше пять стилей брались поровну, и в трёх
+ * звонках из пяти студенту доставался человек, который обрывает на полуслове.
+ * Для первого в жизни звонка это не тренировка, а отбивание охоты — учиться
+ * надо на брокере, который даёт договорить. Тяжёлые характеры остаются, но
+ * редкими: `tough` и `rushed` — по одному шансу из десяти.
+ */
+const STYLES: readonly BrokerStyle[] = [
+  'friendly', 'friendly', 'friendly',
+  'bureaucratic', 'bureaucratic', 'bureaucratic',
+  'stressed', 'stressed',
+  'rushed',
+  'tough',
+]
 
 /** Насколько тяжело с этим стилем и как он торгуется. Внутри — разброс. */
 const STYLE_SHAPE: Record<

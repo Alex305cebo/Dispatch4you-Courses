@@ -35,6 +35,8 @@ const RU = {
   'call.speaking': 'Брокер говорит',
   'call.end': 'Завершить',
   'call.interrupted': 'перебито',
+  'hints.title': 'Что сказать сейчас',
+  'hints.allDone': 'Всё названо — дожимайте ставку и закрывайте',
   'call.notEnglish': 'Говорите по-английски',
   'call.tooShort': 'Не расслышал',
 
@@ -108,6 +110,8 @@ const EN: Record<Key, string> = {
   'call.speaking': 'Broker is speaking',
   'call.end': 'End call',
   'call.interrupted': 'cut off',
+  'hints.title': 'What to say now',
+  'hints.allDone': 'Everything is on the table — close the rate',
   'call.notEnglish': 'Speak English',
   'call.tooShort': "Didn't catch that",
 

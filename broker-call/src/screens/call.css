@@ -173,7 +173,84 @@
    Не украшение: пока брокер вытягивает из тебя MC и оборудование, здесь видно,
    что он уже записал. Это то же, что видит перед собой настоящий брокер. */
 
+/* ── Подсказки: что сказать прямо сейчас ─────────────────────────────────── */
+/* Панель существует потому, что тренажёр молчал о самом первом вопросе
+   студента — «а что вообще говорить брокеру». Текущий шаг подан крупно и с
+   готовой английской фразой; остальные строкой, выполненные с галочкой. */
+.call-hints {
+  width: 100%;
+  display: grid;
+  gap: var(--s3);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.call-hints-head {
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.call-hint-now {
+  padding: var(--s3);
+  border: 1px solid var(--accent-line);
+  border-radius: 12px;
+  background: var(--accent-dim);
+}
+
+.call-hint-done {
+  border-color: var(--line);
+  background: none;
+}
+
+.call-hint-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* Фраза — то, что можно прочитать вслух как есть. Кавычки рисуем сами:
+   без них она читается как подпись, а не как реплика. */
+.call-hint-say {
+  margin-top: var(--s2);
+  font-size: var(--text-sm);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+.call-hint-say::before { content: 'C'; }
+.call-hint-say::after { content: 'D'; }
+
+.call-hint-list {
+  display: grid;
+  gap: var(--s1);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  list-style: none;
+}
+
+.call-hint-list li {
+  display: flex;
+  gap: var(--s2);
+}
+
+.call-hint-list li.is-done {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+}
+
+.call-hint-mark {
+  width: 0.9em;
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+.call-hint-list li.is-done .call-hint-mark {
+  color: var(--live);
+  text-decoration: none;
+}
+
 .call-facts {
+
   width: 100%;
   display: grid;
   gap: var(--s2);
@@ -501,6 +578,7 @@
     border-right: none;
     border-bottom: 1px solid var(--line);
     overflow: visible;
+    flex-wrap: wrap;
   }
 
   /* На телефоне индикатор сжимается до значка: место нужнее разговору */
@@ -537,10 +615,26 @@
     display: none;
   }
 
-  /* Факты и кнопка отбоя переезжают вниз, чтобы шапка осталась тонкой */
+  /* Факты и кнопка отбоя переезжают вниз, чтобы шапка осталась тонкой.
+     Подсказки — НЕТ: ради них панель и появилась, и на телефоне они нужнее
+     всего. Остаётся текущий шаг отдельной строкой под шапкой. */
   .call-facts,
   .call-side-spacer {
     display: none;
+  }
+
+  .call-hints {
+    order: 10;
+    flex-basis: 100%;
+    padding-top: var(--s3);
+    gap: var(--s2);
+  }
+  .call-hints-head,
+  .call-hint-list {
+    display: none;
+  }
+  .call-hint-now {
+    padding: var(--s2) var(--s3);
   }
 
   .call-end {
