@@ -693,6 +693,12 @@ function geminiSetup(model: string, seed: string, voice?: string) {
       responseModalities: ['AUDIO'],
       temperature: 0.85,
       speechConfig: {
+        // Язык прибит гвоздями. Без него провайдер определяет его заново на
+        // каждой фразе и на акценте срывается: в живом звонке расшифровка
+        // выдала «ヒューズ と» и «5000 Oh. Добре. Доллар» вместо английского.
+        // Разговор при этом шёл нормально — ломался только текст на экране,
+        // то есть ровно то, ради чего тренажёр и нужен.
+        languageCode: 'en-US',
         voiceConfig: { prebuiltVoiceConfig: { voiceName: normalizeGeminiVoice(voice) } },
       },
     },

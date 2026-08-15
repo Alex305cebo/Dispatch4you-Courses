@@ -40,8 +40,20 @@ const CATALOG: ModelInfo[] = [
 ]
 
 describe('выбор модели для разговора', () => {
-  it('берёт native audio: у неё безлимит по запросам, а разговор — самое дорогое место', () => {
-    expect(pickLiveModel(CATALOG)).toBe('gemini-2.5-flash-native-audio-preview-09-2025')
+  it('берёт поколение новее, а не модальность: 3.x обыгрывает native audio 2.5', () => {
+    // Прежние веса давали native-audio +1000 против 10 за поколение, поэтому
+    // всегда выигрывала 2.5 — самая слабая из доступных.
+    expect(pickLiveModel(CATALOG)).toBe('gemini-3-flash-live-preview')
+  })
+
+  it('при равном поколении предпочитает native audio — у неё нет суточного лимита', () => {
+    const same = [m('gemini-3-flash-live-preview', BIDI), m('gemini-3-flash-native-audio', BIDI)]
+    expect(pickLiveModel(same)).toBe('gemini-3-flash-native-audio')
+  })
+
+  it('не пускает в разговор переводчик и робототехнику, хотя они умеют вебсокет', () => {
+    const junk = [m('gemini-3.5-live-translate-preview', BIDI), m('gemini-robotics-er-2-streaming-preview', BIDI), m('gemini-2.5-flash-native-audio-preview-09-2025', BIDI)]
+    expect(pickLiveModel(junk)).toBe('gemini-2.5-flash-native-audio-preview-09-2025')
   })
 
   it('без native audio откатывается на flash live', () => {
@@ -112,7 +124,7 @@ describe('выбор модели для разбора звонка', () => {
 describe('rankModels', () => {
   it('отдаёт кандидатов по убыванию — это уходит в health, чтобы выбор был видно', () => {
     const ranked = rankModels(CATALOG, 'live')
-    expect(ranked[0]?.id).toBe('gemini-2.5-flash-native-audio-preview-09-2025')
+    expect(ranked[0]?.id).toBe('gemini-3-flash-live-preview')
     for (let i = 1; i < ranked.length; i++) {
       expect(ranked[i - 1]?.score ?? 0).toBeGreaterThanOrEqual(ranked[i]?.score ?? 0)
     }

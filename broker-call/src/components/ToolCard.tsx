@@ -82,7 +82,8 @@ function render(item: ToolItem): React.ReactNode {
           {rows([
             { key: 'Reference', value: text(data.reference) },
             { key: 'Miles', value: text(data.miles) },
-            { key: 'Equipment', value: text(data.equipment) },
+            // Кодовое имя наружу не показываем: на экране был «dry_van».
+            { key: 'Equipment', value: String(text(data.equipment)).replace('_', ' ') },
             { key: 'Commodity', value: text(data.commodity) },
             { key: 'Weight', value: `${Number(data.weight_lbs).toLocaleString('en-US')} lbs` },
             ...(data.value_usd ? [{ key: 'Cargo value', value: money(data.value_usd) }] : []),

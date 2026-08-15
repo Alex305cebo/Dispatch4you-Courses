@@ -31,8 +31,25 @@ export interface RankedModel {
   score: number
 }
 
-/** Модальности, которые нам не нужны ни в одной роли. */
-const NEVER = ['tts', 'image', 'imagen', 'embedding', 'veo', 'vision', 'aqa']
+/**
+ * Модальности, которые нам не нужны ни в одной роли.
+ *
+ * `translate` и `robotics` отвергаются, хотя формально умеют вебсокет:
+ * live-translate переводит речь вместо того, чтобы вести разговор, а robotics
+ * обучена под управление механикой. Обе прошли бы по методу и по номеру
+ * поколения — и обе сломали бы звонок.
+ */
+const NEVER = [
+  'tts',
+  'image',
+  'imagen',
+  'embedding',
+  'veo',
+  'vision',
+  'aqa',
+  'translate',
+  'robotics',
+]
 
 export interface ModelRule {
   /** Метод, без которого модель нам не подходит вообще. */
@@ -53,10 +70,13 @@ export const MODEL_RULES: Record<ModelKind, ModelRule> = {
   live: {
     method: 'bidiGenerateContent',
     reject: NEVER,
+    // Поколение важнее модальности. Прежние веса (native-audio +1000 против
+    // 10 за поколение) означали, что 2.5 всегда обыгрывает 3.1: на живом
+    // звонке брокер отвечал односложно и путал, кто кому предлагает груз.
+    // Теперь решает номер поколения, а native-audio — только при равенстве.
     bonus: [
-      // Безлимит по запросам в сутки — ради этого всё и затевалось.
-      ['native-audio', 1000],
-      ['live', 100],
+      ['native-audio', 30],
+      ['live', 20],
     ],
   },
   text: {
@@ -87,7 +107,9 @@ export function rankModels(models: readonly ModelInfo[], kind: ModelKind): Ranke
     if (!methods.includes(rule.method)) continue
     if (rule.reject.some((bad) => id.includes(bad))) continue
 
-    let score = version(id) * 10
+    // Поколение — старший разряд: 3.1 обязана обыгрывать 2.5 при любых
+    // бонусах. Бонусы разводят модели одного поколения между собой.
+    let score = version(id) * 100
     for (const [needle, points] of rule.bonus) {
       if (id.includes(needle)) score += points
     }
