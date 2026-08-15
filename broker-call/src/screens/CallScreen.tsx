@@ -6,7 +6,7 @@ import {
   type SpeechItem,
   type ToolItem,
 } from '../store/useCallStore'
-import { laneLabel } from '../data/loads'
+import { laneLabel, equipmentLabel } from '../data/loads'
 import { useT } from '../i18n/useT'
 import type { TranslationKey } from '../i18n'
 import { ToolCard } from '../components/ToolCard'
@@ -156,7 +156,9 @@ export function CallScreen() {
       { key: t('board.miles'), value: `${load.miles.toLocaleString('en-US')} mi` },
       {
         key: t('board.equipment'),
-        value: load.equipment.replace('_', ' ') + (load.equipmentNote ? ` · ${load.equipmentNote}` : ''),
+        // Пометка уже начинается с типа трейлера («reefer, continuous -10°F»),
+        // и приклеенный спереди тип давал «reefer · reefer, continuous -10°F».
+        value: equipmentLabel(load),
       },
       { key: t('board.weight'), value: `${load.weightLbs.toLocaleString('en-US')} lbs` },
       { key: t('board.pickup'), value: load.pickup.label },
@@ -379,3 +381,4 @@ function CallTimer({ startedAt }: { startedAt: number | null }) {
   const ss = String(seconds % 60).padStart(2, '0')
   return <span className="call-timer mono">{`${mm}:${ss}`}</span>
 }
+

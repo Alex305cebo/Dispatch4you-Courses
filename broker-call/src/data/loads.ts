@@ -183,3 +183,16 @@ export function laneLabel(load: Load): string {
 export function ratePerMile(amount: number, load: Load): number {
   return Math.round((amount / load.miles) * 100) / 100
 }
+
+/**
+ * Трейлер одной строкой для карточки борда.
+ *
+ * Пометка груза уже начинается с типа («reefer, continuous -10°F»), поэтому
+ * приклеенный спереди тип давал на экране «reefer · reefer, continuous -10°F».
+ */
+export function equipmentLabel(load: Load): string {
+  const kind = load.equipment.replace('_', ' ')
+  const note = load.equipmentNote?.trim()
+  if (!note) return kind
+  return note.toLowerCase().startsWith(kind.toLowerCase()) ? note : `${kind} · ${note}`
+}
