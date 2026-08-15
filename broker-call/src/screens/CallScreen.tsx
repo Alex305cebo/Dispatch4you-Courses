@@ -61,6 +61,8 @@ export function CallScreen() {
 
         <CallHints />
 
+        <LoadBoard />
+
         <CallFacts />
 
         <div className="call-side-spacer" />
@@ -105,7 +107,6 @@ export function CallScreen() {
   function CallHints() {
     const hints = callHints(setup!, callState ?? null)
     const now = currentHint(hints)
-    if (line === 'ringing' || line === 'ended') return null
 
     return (
       <div className="call-hints">
@@ -132,6 +133,51 @@ export function CallScreen() {
               </li>
             ))}
         </ul>
+      </div>
+    )
+  }
+
+  /**
+   * Груз, как он выглядит на борде DAT.
+   *
+   * Диспетчер звонит не вслепую: перед ним объявление, где уже написаны лейн,
+   * мили, тип трейлера, вес, дата погрузки и ставка, а рынок по лейну он смотрит
+   * там же. Без этой карточки студенту нечем ни отвечать на вопросы брокера
+   * («какой трейлер», «успеет ли водитель»), ни спорить о цифре: единственным
+   * источником оставался экран набора, который к этому моменту уже закрыт.
+   *
+   * Здесь ровно то, что на борде видно ДО звонка. Товар, точные окна и условия
+   * оплаты сюда не попадают намеренно — это то, что вытягивают из брокера, и в
+   * левой панели они появляются только после того, как он их назвал (CallFacts).
+   */
+  function LoadBoard() {
+    const rows: { key: string; value: string; tone?: 'accent' }[] = [
+      { key: t('board.lane'), value: laneLabel(load) },
+      { key: t('board.miles'), value: `${load.miles.toLocaleString('en-US')} mi` },
+      {
+        key: t('board.equipment'),
+        value: load.equipment.replace('_', ' ') + (load.equipmentNote ? ` · ${load.equipmentNote}` : ''),
+      },
+      { key: t('board.weight'), value: `${load.weightLbs.toLocaleString('en-US')} lbs` },
+      { key: t('board.pickup'), value: load.pickup.label },
+      { key: t('board.posted'), value: `$${load.postedRate.toLocaleString('en-US')}`, tone: 'accent' },
+      { key: t('board.market'), value: `$${load.marketRatePerMile.toFixed(2)}/mi` },
+    ]
+
+    return (
+      <div className="call-board">
+        <div className="call-board-head">
+          <span>{t('board.title')}</span>
+          <span className="mono">{load.ref}</span>
+        </div>
+        {rows.map((row) => (
+          <div className="call-board-row" key={row.key}>
+            <span className="call-board-key">{row.key}</span>
+            <span className="call-board-val" data-tone={row.tone}>
+              {row.value}
+            </span>
+          </div>
+        ))}
       </div>
     )
   }

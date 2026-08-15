@@ -189,14 +189,19 @@
   font-size: var(--text-xs);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ink-muted);
+  color: var(--accent);
 }
 
+/* Текущий шаг должен читаться с другого конца комнаты: это единственное на
+   экране, что говорит студенту, что делать. Отсюда сплошная янтарная рамка,
+   заливка и подсветка — «выделено», а не «намёк». */
 .call-hint-now {
   padding: var(--s3);
-  border: 1px solid var(--accent-line);
+  border: 1px solid var(--accent);
+  border-left-width: 3px;
   border-radius: 12px;
-  background: var(--accent-dim);
+  background: rgba(217, 164, 65, 0.13);
+  box-shadow: 0 0 0 1px rgba(217, 164, 65, 0.08), 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .call-hint-done {
@@ -205,27 +210,30 @@
 }
 
 .call-hint-title {
-  font-size: var(--text-sm);
+  font-size: var(--text-md);
   font-weight: 600;
-  color: var(--ink);
+  line-height: 1.3;
+  color: #f6e3bd;
 }
 
 /* Фраза — то, что можно прочитать вслух как есть. Кавычки рисуем сами:
    без них она читается как подпись, а не как реплика. */
+/* Фраза — то, что можно прочитать вслух как есть, поэтому она крупнее
+   служебных подписей и белее их. */
 .call-hint-say {
   margin-top: var(--s2);
   font-size: var(--text-sm);
-  line-height: 1.45;
-  color: var(--ink-soft);
+  line-height: 1.5;
+  color: var(--ink);
 }
-.call-hint-say::before { content: 'C'; }
-.call-hint-say::after { content: 'D'; }
+.call-hint-say::before { content: '“'; }
+.call-hint-say::after { content: '”'; }
 
 .call-hint-list {
   display: grid;
-  gap: var(--s1);
-  font-size: var(--text-xs);
-  color: var(--ink-muted);
+  gap: var(--s2);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
   list-style: none;
 }
 
@@ -234,22 +242,71 @@
   gap: var(--s2);
 }
 
+/* Сделанное гасим цветом, но НЕ зачёркиванием: зачёркнутый мелкий текст на
+   тёмном превращается в серую кашу, а список должен оставаться читаемым до
+   конца звонка — по нему видно, что уже сказано. */
 .call-hint-list li.is-done {
-  color: var(--ink-faint);
-  text-decoration: line-through;
+  color: var(--ink-muted);
 }
 
 .call-hint-mark {
   width: 0.9em;
   flex-shrink: 0;
-  color: var(--ink-faint);
+  color: var(--ink-muted);
 }
 .call-hint-list li.is-done .call-hint-mark {
   color: var(--live);
   text-decoration: none;
 }
 
+/* ── Карточка груза с борда ──────────────────────────────────────────────── */
+/* То же, что диспетчер видит в DAT перед тем, как набрать номер: лейн, мили,
+   трейлер, вес, окно погрузки, ставка на борде и рынок по лейну. Без неё
+   студенту нечем ни отвечать на вопросы брокера, ни спорить о цифре — он
+   помнил бы только то, что успел прочитать на экране набора. */
+.call-board {
+  width: 100%;
+  display: grid;
+  gap: var(--s2);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--line);
+}
+
+.call-board-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.call-board-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  font-size: var(--text-sm);
+}
+
+.call-board-key {
+  color: var(--ink-muted);
+}
+
+.call-board-val {
+  color: var(--ink-soft);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.call-board-val[data-tone='accent'] {
+  color: var(--accent);
+}
+
 .call-facts {
+
 
   width: 100%;
   display: grid;
@@ -619,6 +676,7 @@
      Подсказки — НЕТ: ради них панель и появилась, и на телефоне они нужнее
      всего. Остаётся текущий шаг отдельной строкой под шапкой. */
   .call-facts,
+  .call-board,
   .call-side-spacer {
     display: none;
   }

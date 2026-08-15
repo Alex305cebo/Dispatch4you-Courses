@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { callHints, currentHint, openingAsk, TRAINEE_MC } from './hints'
 import { makeCallSetup } from './makeCall'
-import { CallMachine } from './CallMachine'
+import { CallMachine, parseEquipment } from './CallMachine'
 import { lookupCarrier } from '../data/carriers'
 
 const setup = makeCallSetup('hints-fixed-seed')
@@ -37,5 +37,22 @@ describe('подсказки диспетчеру', () => {
     const ask = openingAsk(setup.load)
     expect(ask).toBeGreaterThan(setup.load.postedRate)
     expect(ask).toBeGreaterThan(setup.load.marketRatePerMile * setup.load.miles)
+  })
+})
+
+describe('слух брокера на отраслевые слова', () => {
+  it.each([
+    ['53 feet drive and', 'dry_van'],
+    ['we run a driving', 'dry_van'],
+    ['reaper', 'reefer'],
+    ['refer unit', 'reefer'],
+    ['step tech', 'step_deck'],
+    ['flat', 'flatbed'],
+  ])('«%s» распознаётся как %s', (said, expected) => {
+    expect(parseEquipment(said)).toBe(expected)
+  })
+
+  it('невнятное по-прежнему остаётся невнятным', () => {
+    expect(parseEquipment('uhh, the usual')).toBeNull()
   })
 })

@@ -483,13 +483,22 @@ function carrierSummary(carrier: CarrierRecord) {
   }
 }
 
-/** Модель называет оборудование как услышала — приводим к нашему словарю. */
+/**
+ * Модель называет оборудование как услышала — приводим к нашему словарю.
+ *
+ * Половина строк здесь — не синонимы, а то, во что распознавание речи
+ * превращает термин, сказанный вслух: «dry van» становится «drive and», reefer
+ * — «reaper», step deck — «step tech». Раньше такая реплика уходила в
+ * `unclear_equipment`, и брокер переспрашивал одно и то же по третьему кругу,
+ * хотя студент отвечал правильно. Слушать надо то, что человек сказал, а не то,
+ * что записал распознаватель.
+ */
 export function parseEquipment(raw: string): Equipment | null {
   const t = raw.toLowerCase()
-  if (/reefer|refrigerat|temp\w*[\s-]*control/.test(t)) return 'reefer'
-  if (/step\s*deck|stepdeck|drop\s*deck/.test(t)) return 'step_deck'
-  if (/flat\s*bed|flatbed/.test(t)) return 'flatbed'
-  if (/dry\s*van|van|53/.test(t)) return 'dry_van'
+  if (/reefer|reaper|refer\b|reef\b|refrigerat|temp\w*[\s-]*control/.test(t)) return 'reefer'
+  if (/step\s*(deck|tech)|stepdeck|drop\s*deck/.test(t)) return 'step_deck'
+  if (/flat\s*bed|flatbed|flat\b/.test(t)) return 'flatbed'
+  if (/dry\s*van|dryvan|drive\s*and|dry\s*and|driving|van\b|53/.test(t)) return 'dry_van'
   return null
 }
 
