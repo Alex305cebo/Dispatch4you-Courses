@@ -150,7 +150,7 @@ export class GeminiLiveTransport implements VoiceTransport {
     const r = await fetch(endpoint('gemini-session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenarioId: this.deps.scenarioId, voice: this.deps.voice }),
+      body: JSON.stringify({ seed: this.deps.seed, voice: this.deps.voice }),
     })
     if (!r.ok) {
       // Тело несёт причину отказа провайдера. Без него остаётся голый код,

@@ -221,7 +221,7 @@ export class PipelineTransport implements VoiceTransport {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: this.abort.signal,
-      body: JSON.stringify({ scenarioId: this.deps.scenarioId, messages: this.messages }),
+      body: JSON.stringify({ seed: this.deps.seed, messages: this.messages }),
     })
     if (!r.ok) {
       // Сервер кладёт сюда дословный ответ провайдера — единственное, что

@@ -104,7 +104,7 @@ export class RealtimeTransport implements VoiceTransport {
     const r = await fetch(endpoint('realtime-session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scenarioId: this.deps.scenarioId, voice: this.deps.voice }),
+      body: JSON.stringify({ seed: this.deps.seed, voice: this.deps.voice }),
     })
     if (!r.ok) throw new Error(`realtime-session ${r.status}`)
     const data = (await r.json()) as { value?: string; client_secret?: { value?: string } }

@@ -1,5 +1,5 @@
-import { getLoad, laneLabel } from '../data/loads'
-import { getScenario } from '../data/scenarios'
+import { laneLabel } from '../data/loads'
+import { makeCallSetup } from './makeCall'
 import { getMarketQuote } from '../data/market'
 
 // Промпт разбора. Тоже живёт на сервере.
@@ -10,7 +10,7 @@ import { getMarketQuote } from '../data/market'
 // человеку, что именно он сделал и как это исправить.
 
 export interface DebriefInput {
-  scenarioId: string
+  seed: string
   transcript: { role: string; text: string }[]
   facts: unknown
   metrics: unknown
@@ -18,7 +18,7 @@ export interface DebriefInput {
 
 export function buildDebriefPrompt(input: DebriefInput) {
   return [
-    { role: 'system', content: buildDebriefSystemPrompt(input.scenarioId) },
+    { role: 'system', content: buildDebriefSystemPrompt(input.seed) },
     { role: 'user', content: buildDebriefUserMessage(input) },
   ]
 }
@@ -27,9 +27,8 @@ export function buildDebriefPrompt(input: DebriefInput) {
  * Статическая часть: зависит только от сценария, поэтому выгружается в
  * серверный конфиг при сборке и на боевом сервере не собирается заново.
  */
-export function buildDebriefSystemPrompt(scenarioId: string): string {
-  const scenario = getScenario(scenarioId)
-  const load = getLoad(scenario.loadId)
+export function buildDebriefSystemPrompt(seed: string): string {
+  const { load } = makeCallSetup(seed)
   const market = getMarketQuote(load)
 
   return `WHO DOES WHAT ON THIS CALL. Read this first and never mix the two sides up.

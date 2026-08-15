@@ -1,6 +1,29 @@
-import type { CallState, Scenario, ScenarioGoal } from '../types'
-import { getLoad } from '../data/loads'
+import type { CallState, Load } from '../types'
 import { getMarketQuote, rateVsMarket } from '../data/market'
+
+/**
+ * Что диспетчер обязан сделать на любом звонке. Раньше это был список целей в
+ * каждом сценарии; сценариев больше нет, а работа диспетчера от звонка к
+ * звонку не меняется — меняются брокер, груз и цифры.
+ */
+export type CallGoal =
+  | 'give_mc'
+  | 'confirm_equipment'
+  | 'get_load_details'
+  | 'confirm_driver'
+  | 'negotiate_rate'
+  | 'book_load'
+  | 'get_rate_con'
+
+const ALL_GOALS: readonly CallGoal[] = [
+  'give_mc',
+  'confirm_equipment',
+  'get_load_details',
+  'confirm_driver',
+  'negotiate_rate',
+  'book_load',
+  'get_rate_con',
+]
 
 /**
  * Оценка звонка.
@@ -25,27 +48,25 @@ export interface CallMetrics {
   marketTotal: number
   durationSec: number
   dispatcherTurns: number
-  goalsMet: ScenarioGoal[]
-  goalsMissed: ScenarioGoal[]
+  goalsMet: CallGoal[]
+  goalsMissed: CallGoal[]
   termsUsed: string[]
 }
 
 export interface ScoreInput {
-  scenario: Scenario
+  load: Load
   state: CallState
   /** Только реплики диспетчера — по ним считается терминология. */
   dispatcherText: string
 }
 
-export function scoreCall({ scenario, state, dispatcherText }: ScoreInput): CallMetrics {
-  const load = getLoad(scenario.loadId)
+export function scoreCall({ load, state, dispatcherText }: ScoreInput): CallMetrics {
   const facts = state.facts
-  const goals = new Set(scenario.goals)
 
   const scores: Partial<Record<MetricKey, number>> = {}
 
   // ── Открытие: назвал ли MC и как быстро ──
-  if (goals.has('give_mc')) {
+  {
     let s = 0
     if (facts.mcNumber) {
       s += 5
@@ -60,9 +81,7 @@ export function scoreCall({ scenario, state, dispatcherText }: ScoreInput): Call
   }
 
   // ── Квалификация: собрал ли брокер картину, и без повторов ──
-  const qualifyingGoals =
-    goals.has('confirm_equipment') || goals.has('get_load_details') || goals.has('confirm_driver')
-  if (qualifyingGoals) {
+  {
     let s = 0
     if (facts.equipment) s += 3
     if (facts.equipment === load.equipment) s += 1
@@ -73,12 +92,10 @@ export function scoreCall({ scenario, state, dispatcherText }: ScoreInput): Call
   }
 
   // ── Торг: сколько из доступного запаса забрал ──
-  if (goals.has('negotiate_rate')) {
-    scores.negotiation = clamp(negotiationScore(state, load.postedRate, load.maxRate))
-  }
+  scores.negotiation = clamp(negotiationScore(state, load.postedRate, load.maxRate))
 
   // ── Закрытие: данные для букинга и rate con ──
-  if (goals.has('book_load') || goals.has('get_rate_con')) {
+  {
     const fields = ['driverName', 'truckNumber', 'trailerNumber', 'driverPhone', 'email'] as const
     const filled = fields.filter((f) => facts.booking[f]).length
     let s = filled * 1.5
@@ -107,8 +124,8 @@ export function scoreCall({ scenario, state, dispatcherText }: ScoreInput): Call
     durationSec:
       state.startedAt && state.endedAt ? Math.round((state.endedAt - state.startedAt) / 1000) : 0,
     dispatcherTurns: state.turn,
-    goalsMet: scenario.goals.filter((g) => isGoalMet(g, state)),
-    goalsMissed: scenario.goals.filter((g) => !isGoalMet(g, state)),
+    goalsMet: ALL_GOALS.filter((g) => isGoalMet(g, state)),
+    goalsMissed: ALL_GOALS.filter((g) => !isGoalMet(g, state)),
     termsUsed,
   }
 }
@@ -132,7 +149,7 @@ function negotiationScore(state: CallState, posted: number, max: number): number
   return 4 + clamp01(captured) * 6
 }
 
-function isGoalMet(goal: ScenarioGoal, state: CallState): boolean {
+function isGoalMet(goal: CallGoal, state: CallState): boolean {
   const f = state.facts
   switch (goal) {
     case 'give_mc':

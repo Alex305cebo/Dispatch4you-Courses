@@ -6,6 +6,12 @@
 
 const KEY = 'broker-call:progress'
 
+/**
+ * Прогресс общий, а не по сценарию: сценариев больше нет, каждый звонок —
+ * новый брокер и новый груз, и сравнивать их между собой не по чему.
+ */
+export const CALL_KEY = 'call'
+
 export interface ScenarioProgress {
   attempts: number
   bestScore: number

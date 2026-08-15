@@ -33,11 +33,18 @@ export interface RateContext {
   currentOffer: number | null
   /** Сколько раундов торга уже прошло. */
   rounds: number
+  /**
+   * Ходы диспетчера, ничего не сдвинувшие. Тратят то же терпение, что и раунд
+   * торга: до этого болтовня не стоила студенту ничего, и брокер выслушивал
+   * что угодно сколько угодно.
+   */
+  idleTurns?: number
   rng: Rng
 }
 
 export function evaluateCarrierAsk(ctx: RateContext): RateDecision {
-  const { load, persona, ask, rounds, rng } = ctx
+  const { load, persona, ask, rng } = ctx
+  const rounds = ctx.rounds + (ctx.idleTurns ?? 0)
   const offer = ctx.currentOffer ?? load.postedRate
 
   // Просит не больше, чем брокер уже даёт — соглашаемся мгновенно и не умничаем.

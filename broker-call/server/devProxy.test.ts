@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { ViteDevServer } from 'vite'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { brokerApi } from './devProxy'
-import { SCENARIOS } from '../src/data/scenarios'
+import { CALL_SEEDS } from '../src/call/seeds'
 
-const FIRST_SCENARIO = SCENARIOS[0]?.id ?? ''
+const FIRST_SEED = CALL_SEEDS[0] ?? ''
 
 /**
  * Дев-сервер держит ключи и контракт, который на боевом сайте один в один
@@ -134,9 +134,9 @@ describe('ручки дев-сервера', () => {
     const handler = routes().get('/api/health')
     const { body } = await call(handler!)
     const config = body.config as Record<string, unknown>
-    expect(Object.keys(config).sort()).toEqual(['scenarios', 'tools', 'tts_model', 'voices'])
+    expect(Object.keys(config).sort()).toEqual(['calls', 'tools', 'tts_model', 'voices'])
     expect(config.tools).toBeGreaterThan(0)
-    expect(config.scenarios).toBeGreaterThan(0)
+    expect(config.calls).toBeGreaterThan(0)
     expect(config.tts_model).toBeTruthy()
     expect(Array.isArray(config.voices)).toBe(true)
   })
@@ -151,11 +151,11 @@ describe('ручки дев-сервера', () => {
   /**
    * 400, а не 500. Разница не косметическая: 500 читается как «сломался
    * сервер», и чинить идут туда, хотя кривой был запрос. Боевой PHP на
-   * неизвестный сценарий отвечает 400 — контракт обязан совпадать, иначе
+   * кривой сид отвечает 400 — контракт обязан совпадать, иначе
    * фронт ведёт себя локально и на сайте по-разному.
    */
   it.each(['/api/turn', '/api/debrief', '/api/realtime-session', '/api/gemini-session'])(
-    '%s на неизвестный сценарий отвечает 400, а не 500',
+    '%s на кривой сид отвечает 400, а не 500',
     async (path) => {
       const handler = routes({
         // Ключи нужны, иначе ручка отвалится раньше на «нет ключа» и проверять
@@ -166,13 +166,13 @@ describe('ручки дев-сервера', () => {
       }).get(path)
       const { status, body } = await call(handler!, 'POST')
       expect(status).toBe(400)
-      expect(String(body.error)).toContain('unknown scenario')
+      expect(String(body.error)).toContain('bad seed')
     },
   )
 
-  it('turn с настоящим сценарием, но без ключей — 503 с внятной причиной', async () => {
+  it('turn с настоящим сидом, но без ключей — 503 с внятной причиной', async () => {
     const handler = routes().get('/api/turn')
-    const { status, body } = await call(handler!, 'POST', { scenarioId: FIRST_SCENARIO, messages: [] })
+    const { status, body } = await call(handler!, 'POST', { seed: FIRST_SEED, messages: [] })
     expect(status).toBe(503)
     expect(String(body.error)).toContain('no LLM key')
   })

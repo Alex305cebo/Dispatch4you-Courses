@@ -6,8 +6,8 @@ import { buildDebriefSystemPrompt, GOAL_WORDING } from '../src/call/debriefPromp
 import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
 import { toGeminiTools } from '../src/call/geminiTools'
 import { MODEL_RULES } from '../src/call/geminiModels'
-import { SCENARIOS } from '../src/data/scenarios'
-import { getBroker } from '../src/data/brokers'
+import { CALL_SEEDS } from '../src/call/seeds'
+import { makeCallSetup } from '../src/call/makeCall'
 
 /**
  * Готовит серверный конфиг для боевого PHP-эндпоинта.
@@ -42,16 +42,20 @@ const config = {
   // таблицы боевой PHP слал бы в разбор именно кодовые имена — то есть
   // починка перепутанных ролей работала бы только локально.
   goalWording: GOAL_WORDING,
-  scenarios: Object.fromEntries(
-    SCENARIOS.map((scenario) => {
-      const broker = getBroker(scenario.brokerId)
+  // Звонки по сидам вместо восьми сценариев, записанных руками. Генератор
+  // живёт в TS и здесь же исполняется при сборке: PHP получает готовые
+  // промпты и ничего не генерирует — второй реализации, которая разъедется
+  // с первой, не появляется.
+  calls: Object.fromEntries(
+    CALL_SEEDS.map((seed) => {
+      const { broker } = makeCallSetup(seed)
       return [
-        scenario.id,
+        seed,
         {
-          prompt: buildSystemPrompt(scenario.id),
-          debrief: buildDebriefSystemPrompt(scenario.id),
-          opening: scenario.opening,
+          prompt: buildSystemPrompt(seed),
+          debrief: buildDebriefSystemPrompt(seed),
           broker: broker.name,
+          company: broker.company,
         },
       ]
     }),
@@ -77,4 +81,4 @@ mkdirSync(dirname(target), { recursive: true })
 writeFileSync(target, php, 'utf8')
 
 const bytes = Buffer.byteLength(php, 'utf8')
-console.log(`broker-config.php: ${Object.keys(config.scenarios).length} сценариев, ${TOOL_SCHEMAS.length} инструментов, ${(bytes / 1024).toFixed(1)} КБ`)
+console.log(`broker-config.php: ${Object.keys(config.calls).length} звонков, ${TOOL_SCHEMAS.length} инструментов, ${(bytes / 1024).toFixed(1)} КБ`)

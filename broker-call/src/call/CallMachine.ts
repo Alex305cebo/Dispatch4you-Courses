@@ -7,10 +7,9 @@ import type {
   EndReason,
   Equipment,
   Load,
-  Scenario,
 } from '../types'
-import { getBroker } from '../data/brokers'
-import { getLoad, laneLabel, ratePerMile } from '../data/loads'
+import type { CallSetup } from './makeCall'
+import { laneLabel, ratePerMile } from '../data/loads'
 import { lookupCarrier, normalizeMc } from '../data/carriers'
 import { getMarketQuote } from '../data/market'
 import { evaluateCarrier, evaluateCarrierAsk } from './guards'
@@ -29,21 +28,25 @@ import { createRng, type Rng } from './rng'
  * а разбор звонка считается по нему же, а не по пересказу модели.
  */
 export class CallMachine {
-  readonly scenario: Scenario
+  readonly setup: CallSetup
   readonly load: Load
   readonly broker: BrokerPersona
 
   private state: CallState
   private readonly rng: Rng
   private readonly listeners = new Set<(state: CallState) => void>()
+  /** Ходы диспетчера, не сдвинувшие звонок. Съедают терпение брокера. */
+  private idleTurns = 0
   /** Повторные вопросы — материал для разбора, а не повод падать. */
   private readonly toolCounts = new Map<string, number>()
 
-  constructor(scenario: Scenario, seed: string = scenario.id) {
-    this.scenario = scenario
-    this.load = getLoad(scenario.loadId)
-    this.broker = getBroker(scenario.brokerId)
-    this.rng = createRng(seed)
+  constructor(setup: CallSetup) {
+    this.setup = setup
+    this.load = setup.load
+    this.broker = setup.broker
+    // Сид звонка, а не сценария: раньше он равнялся id сценария, и поток
+    // случайных чисел был одинаков во всех звонках у всех студентов.
+    this.rng = createRng(setup.id)
     this.state = initialState(this.broker)
   }
 
@@ -62,13 +65,17 @@ export class CallMachine {
 
   /** Диспетчер сказал реплику — счётчик ходов нужен рубрике оценки. */
   noteDispatcherTurn(): void {
+    // Ход, после которого брокер ничего не записал, — это разговор ни о чём.
+    // Раньше он не стоил студенту ничего: терпение тратилось только на раунды
+    // торга, и двадцать реплик про погоду проходили бесплатно.
+    this.idleTurns += 1
     this.patch({ turn: this.state.turn + 1 })
   }
 
   /**
    * Выполняет инструмент и возвращает результат, который уходит обратно в
    * модель как tool-сообщение. Результат всегда сериализуемый и всегда
-   * содержит `instruction` — что брокеру делать дальше.
+   * содержит `instruction` — факты и границы, но не следующий шаг.
    */
   execute(name: string, rawArgs: unknown): ToolResult {
     const args = (rawArgs ?? {}) as Record<string, unknown>
@@ -254,6 +261,9 @@ export class CallMachine {
       ask: amount,
       currentOffer: facts.currentBrokerOffer,
       rounds: this.state.negotiationRounds,
+      // Пустая болтовня тратит то же терпение, что и раунд торга: у брокера
+      // мигают ещё четыре линии, и ему всё равно, на что ушло время.
+      idleTurns: this.idleTurns,
       rng: this.rng,
     })
 
@@ -381,6 +391,10 @@ export class CallMachine {
   }
 
   private patchFacts(partial: Partial<CallFacts>): void {
+    // Записанный факт означает, что звонок сдвинулся: счёт пустых ходов
+    // начинается заново. Сброс именно здесь, а не в execute(): решение по
+    // ставке читает счётчик ДО того, как запишет результат.
+    this.idleTurns = 0
     this.state = { ...this.state, facts: { ...this.state.facts, ...partial } }
     this.emit()
   }

@@ -88,37 +88,6 @@ export interface CarrierRecord {
   blocker?: string
 }
 
-export type ScenarioKind =
-  | 'inbound_load'
-  | 'negotiate'
-  | 'book'
-  | 'problem'
-  | 'cold'
-  | 'followup'
-
-export interface Scenario {
-  id: string
-  kind: ScenarioKind
-  title: Localized
-  objective: Localized
-  brokerId: string
-  loadId: string
-  difficulty: 1 | 2 | 3 | 4
-  /** Что диспетчер обязан сделать, чтобы звонок считался успешным. */
-  goals: ScenarioGoal[]
-  /** Открывающая реплика брокера — он снимает трубку первым. */
-  opening: string
-}
-
-export type ScenarioGoal =
-  | 'give_mc'
-  | 'confirm_equipment'
-  | 'get_load_details'
-  | 'confirm_driver'
-  | 'negotiate_rate'
-  | 'book_load'
-  | 'get_rate_con'
-
 // ── Состояние звонка ────────────────────────────────────────────────────────
 
 export type CallStage =

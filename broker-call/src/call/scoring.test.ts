@@ -1,15 +1,24 @@
 import { describe, expect, it } from 'vitest'
 import { CallMachine } from './CallMachine'
 import { detectTerms, scoreCall } from './scoring'
-import { getScenario } from '../data/scenarios'
+import { makeCallSetup } from './makeCall'
+import { CALL_SEEDS } from './seeds'
 
-const scenario = getScenario('first-call') // груз chi-nsh: posted 1650, max 1900
+// Звонок собирается генератором, поэтому цифры не пишутся в тест руками —
+// берутся из самого набора. Сид фиксированный, значит и цифры фиксированные.
+const SETUP =
+  CALL_SEEDS.map((seed) => makeCallSetup(seed)).find(
+    (s) => s.load.maxRate > s.load.postedRate + 200,
+  ) ?? makeCallSetup(CALL_SEEDS[0]!)
+
+const POSTED = SETUP.load.postedRate
+const MAX = SETUP.load.maxRate
 
 function played(steps: (m: CallMachine) => void, text = '') {
-  const m = new CallMachine(scenario, 'seed')
+  const m = new CallMachine(SETUP)
   m.start()
   steps(m)
-  return scoreCall({ scenario, state: m.getState(), dispatcherText: text })
+  return scoreCall({ load: SETUP.load, state: m.getState(), dispatcherText: text })
 }
 
 describe('оценка звонка', () => {
@@ -35,40 +44,42 @@ describe('оценка звонка', () => {
     // С первой просьбы максимум не отдают — брокер контрит шагами, и до
     // потолка надо дойти. Это и проверяем: несколько раундов, затем согласие.
     const metrics = played((m) => {
-      for (let round = 0; round < 8 && !m.getState().facts.agreedRate; round++) {
-        m.execute('propose_rate', { amount: 1900 })
+      for (let round = 0; round < 12 && !m.getState().facts.agreedRate; round++) {
+        m.execute('propose_rate', { amount: MAX })
       }
     })
-    expect(metrics.agreedRate).toBe(1900)
+    expect(metrics.agreedRate).toBe(MAX)
     expect(metrics.scores.negotiation).toBe(10)
     expect(metrics.leftOnTable).toBe(0)
   })
 
   it('на первую же просьбу о потолке брокер контрит, а не соглашается', () => {
-    const m = new CallMachine(scenario, 'seed')
+    const m = new CallMachine(SETUP)
     m.start()
-    const result = m.execute('propose_rate', { amount: 1900 })
+    const result = m.execute('propose_rate', { amount: MAX })
     expect(m.getState().facts.agreedRate).toBeNull()
     expect((result.data as { outcome: string }).outcome).toBe('counter')
   })
 
   it('считает, сколько денег осталось на столе', () => {
     const metrics = played((m) => {
-      m.execute('propose_rate', { amount: 1650 }) // согласился на ставку с борда
+      m.execute('propose_rate', { amount: POSTED }) // согласился на ставку с борда
     })
-    expect(metrics.leftOnTable).toBe(250) // 1900 − 1650
+    expect(metrics.leftOnTable).toBe(MAX - POSTED)
     expect(metrics.scores.negotiation).toBe(4) // запас не тронут
   })
 
-  it('не считает метрики, которых в сценарии нет', () => {
-    // В сценарии «груз опаздывает» ни MC, ни торга — оценивать их нечестно.
-    const problem = getScenario('load-in-trouble')
-    const m = new CallMachine(problem, 'seed')
-    m.start()
-    const metrics = scoreCall({ scenario: problem, state: m.getState(), dispatcherText: '' })
-    expect(metrics.scores.opening).toBeUndefined()
-    expect(metrics.scores.negotiation).toBeUndefined()
-    expect(metrics.scores.qualifying).toBeDefined()
+  it('оценивает все пять сторон звонка, а не выборку под сценарий', () => {
+    // Раньше набор метрик зависел от целей сценария. Сценариев нет, работа
+    // диспетчера одна и та же — значит и спрос одинаковый.
+    const metrics = played(() => undefined)
+    expect(Object.keys(metrics.scores).sort()).toEqual([
+      'closing',
+      'negotiation',
+      'opening',
+      'qualifying',
+      'terminology',
+    ])
   })
 
   it('растёт по закрытию по мере сбора данных', () => {
@@ -89,7 +100,8 @@ describe('оценка звонка', () => {
 
   it('одинаковый звонок даёт одинаковые баллы', () => {
     // Прошлая версия просила у модели баллы и получала каждый раз разные.
-    const run = () => played((m) => m.execute('propose_rate', { amount: 1800 }), 'MC 445566 dry van')
+    const run = () =>
+      played((m) => m.execute('propose_rate', { amount: POSTED + 50 }), 'MC 445566 dry van')
     expect(run()).toEqual(run())
   })
 

@@ -74,7 +74,8 @@ export const PICKUP_CUE =
   '[Your desk phone just rang and you picked up. A dispatcher is on the line — you do not know yet what they want. Answer the phone the way you always do, in your own words, and keep it short.]'
 
 export interface TransportDeps {
-  scenarioId: string
+  /** Сид звонка. По нему сервер собирает того же брокера и тот же груз. */
+  seed: string
   /** Голос брокера у провайдера озвучки. */
   voice: string
   /** Вокальная ремарка Orpheus под характер брокера: cheerful, serious… */

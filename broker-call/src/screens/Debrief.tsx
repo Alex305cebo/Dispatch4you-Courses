@@ -4,7 +4,7 @@ import { useCallStore } from '../store/useCallStore'
 import { scoreCall, type CallMetrics, type MetricKey } from '../call/scoring'
 import { useT } from '../i18n/useT'
 import type { TranslationKey } from '../i18n'
-import { recordAttempt } from '../store/progress'
+import { recordAttempt, CALL_KEY } from '../store/progress'
 import { endpoint } from '../api'
 
 interface Analysis {
@@ -23,7 +23,7 @@ interface Analysis {
  */
 export function Debrief() {
   const t = useT()
-  const { scenario, machine, feed, avgLatencyMs, backToLobby, openDial } = useCallStore()
+  const { setup, machine, feed, avgLatencyMs, backToLobby, openDial } = useCallStore()
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [failed, setFailed] = useState(false)
 
@@ -36,24 +36,24 @@ export function Debrief() {
   )
 
   const metrics: CallMetrics | null = useMemo(() => {
-    if (!scenario || !machine) return null
+    if (!setup || !machine) return null
     const dispatcherText = transcript
       .filter((l) => l.role === 'dispatcher')
       .map((l) => l.text)
       .join(' ')
-    return scoreCall({ scenario, state: machine.getState(), dispatcherText })
-  }, [scenario, machine, transcript])
+    return scoreCall({ load: setup.load, state: machine.getState(), dispatcherText })
+  }, [setup, machine, transcript])
 
   useEffect(() => {
-    if (!scenario || !metrics || !machine) return
-    recordAttempt(scenario.id, metrics.overall)
+    if (!setup || !metrics || !machine) return
+    recordAttempt(CALL_KEY, metrics.overall)
 
     let cancelled = false
     fetch(endpoint('debrief'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        scenarioId: scenario.id,
+        seed: setup.id,
         transcript,
         facts: machine.getState().facts,
         metrics,
@@ -70,9 +70,9 @@ export function Debrief() {
     return () => {
       cancelled = true
     }
-  }, [scenario, metrics, machine, transcript])
+  }, [setup, metrics, machine, transcript])
 
-  if (!scenario || !metrics) return null
+  if (!setup || !metrics) return null
 
   return (
     <div className="debrief">
@@ -162,7 +162,7 @@ export function Debrief() {
           className="btn btn-primary"
           onClick={() => {
             backToLobby()
-            openDial(scenario.id)
+            openDial()
           }}
         >
           {t('debrief.again')}

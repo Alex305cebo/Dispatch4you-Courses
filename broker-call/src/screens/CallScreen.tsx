@@ -6,8 +6,7 @@ import {
   type SpeechItem,
   type ToolItem,
 } from '../store/useCallStore'
-import { getBroker } from '../data/brokers'
-import { getLoad, laneLabel } from '../data/loads'
+import { laneLabel } from '../data/loads'
 import { useT } from '../i18n/useT'
 import type { TranslationKey } from '../i18n'
 import { ToolCard } from '../components/ToolCard'
@@ -21,7 +20,7 @@ import { ToolCard } from '../components/ToolCard'
  */
 export function CallScreen() {
   const t = useT()
-  const { scenario, callState, feed, line, micLevel, error, startedAt, endCall } = useCallStore()
+  const { setup, callState, feed, line, micLevel, error, startedAt, endCall } = useCallStore()
   const feedRef = useRef<HTMLDivElement>(null)
 
   // Esc — единственная клавиша. Звонок и так закончится сам.
@@ -39,8 +38,8 @@ export function CallScreen() {
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
   }, [feed])
 
-  if (!scenario) return null
-  const broker = getBroker(scenario.brokerId)
+  if (!setup) return null
+  const { broker, load } = setup
   const lastSpeechId = [...feed].reverse().find((i) => i.kind === 'speech')?.id
 
   return (
@@ -59,7 +58,7 @@ export function CallScreen() {
           <CallTimer startedAt={startedAt} />
         </div>
 
-        <CallFacts scenarioLoadId={scenario.loadId} />
+        <CallFacts />
 
         <div className="call-side-spacer" />
 
@@ -92,11 +91,10 @@ export function CallScreen() {
   )
 
   /** Факты, которые брокер уже записал. Пусто — пока ничего не выяснено. */
-  function CallFacts({ scenarioLoadId }: { scenarioLoadId: string }) {
+  function CallFacts() {
     const facts = callState?.facts
     if (!facts) return null
 
-    const load = getLoad(scenarioLoadId)
     const rows: { key: string; value: string; tone?: 'good' | 'bad' }[] = []
 
     if (facts.carrier) {

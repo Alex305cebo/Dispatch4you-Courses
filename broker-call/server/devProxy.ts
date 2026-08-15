@@ -10,27 +10,26 @@ import { pickLiveModel, pickTextModel, type ModelInfo } from '../src/call/gemini
 import { normalizeVoice, DEFAULT_VOICE, ORPHEUS_VOICES } from '../src/voice/voices'
 import { normalizeGeminiVoice } from '../src/voice/geminiVoices'
 import { encodeWav, TARGET_SAMPLE_RATE } from '../src/voice/audio'
-import { SCENARIOS } from '../src/data/scenarios'
+import { CALL_SEEDS } from '../src/call/seeds'
 
-/** Любой сценарий: пробе важно, что токен выпускается, а не какой именно звонок. */
-const FIRST_SCENARIO_ID = SCENARIOS[0]?.id ?? ''
 
-const SCENARIO_IDS = new Set(SCENARIOS.map((s) => s.id))
+/** Любой звонок: пробе важно, что сокет поднимается, а не кому мы звоним. */
+const PROBE_SEED = 'health-probe'
 
 /**
- * Проверка сценария до всякой работы.
+ * Сид звонка. По нему и клиент, и сервер собирают одного и того же брокера с
+ * одним и тем же грузом — генератор общий и детерминированный.
  *
- * Без неё getScenario бросает обычную ошибку, и наружу уходит 500 — «сервер
- * сломался» вместо «запрос кривой». Искать такое начинают на сервере, а лежит
- * оно в запросе. Боевой PHP на это отвечает 400; контракт обязан совпадать,
- * иначе фронт ведёт себя локально и на сайте по-разному.
+ * Проверяем форму до всякой работы: без этого мусор в теле уходил бы вглубь и
+ * возвращался 500 «сервер сломался» вместо 400 «запрос кривой». Боевой PHP
+ * отвечает так же — контракт обязан совпадать.
  */
-function requireScenario(id: unknown): string {
-  const scenarioId = typeof id === 'string' ? id : ''
-  if (!SCENARIO_IDS.has(scenarioId)) {
-    throw new HttpError(400, `unknown scenario: ${scenarioId}`)
+function requireSeed(value: unknown): string {
+  const seed = typeof value === 'string' ? value.trim() : ''
+  if (!seed || seed.length > 64 || !/^[\w.-]+$/.test(seed)) {
+    throw new HttpError(400, `bad seed: ${String(value).slice(0, 40)}`)
   }
-  return scenarioId
+  return seed
 }
 
 /**
@@ -166,7 +165,9 @@ export function brokerApi(env: Record<string, string>): Plugin {
           // отчётах заставляют переводить одно в другое ровно тогда, когда
           // некогда.
           config: {
-            scenarios: SCENARIOS.length,
+            // Сколько разных звонков в наборе. Раньше здесь было число
+            // сценариев, записанных руками.
+            calls: CALL_SEEDS.length,
             tools: TOOL_SCHEMAS.length,
             tts_model: TTS_MODEL,
             voices: ORPHEUS_VOICES,
@@ -193,10 +194,10 @@ export function brokerApi(env: Record<string, string>): Plugin {
       // замолкает разом.
       server.middlewares.use('/api/gemini-session', json(async (req) => {
         if (!geminiKey) throw new HttpError(503, 'GEMINI_API_KEY is not set')
-        const body = await readJson<{ scenarioId: string; voice?: string }>(req)
+        const body = await readJson<{ seed: string; voice?: string }>(req)
         // Сценарий проверяем ДО похода к провайдеру: ходить за каталогом
         // моделей ради заведомо кривого запроса незачем.
-        const scenarioId = requireScenario(body.scenarioId)
+        const seed = requireSeed(body.seed)
         const models = await geminiModels(geminiKey)
         const model = pickLiveModel(models)
         if (!model) {
@@ -205,7 +206,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
             'no Gemini model with bidiGenerateContent is available on this key',
           )
         }
-        const setup = geminiSetup(model, scenarioId, body.voice)
+        const setup = geminiSetup(model, seed, body.voice)
         const token = randomUUID()
         sessions.set(token, { setup, expiresAt: Date.now() + SESSION_TTL_MS })
         // Адрес берём из запроса, а не из константы: с телефона тренажёр
@@ -237,9 +238,9 @@ export function brokerApi(env: Record<string, string>): Plugin {
       // ставки со стороны браузера нельзя.
       server.middlewares.use('/api/turn', json(async (req) => {
         const body = await readJson<TurnRequest>(req)
-        const scenarioId = requireScenario(body.scenarioId)
+        const seed = requireSeed(body.seed)
         const messages = [
-          { role: 'system', content: buildSystemPrompt(scenarioId) },
+          { role: 'system', content: buildSystemPrompt(seed) },
           ...(body.messages ?? []),
         ]
         const payload = {
@@ -341,7 +342,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
       // ── Разбор звонка ─────────────────────────────────────────────────────
       server.middlewares.use('/api/debrief', json(async (req) => {
         const body = await readJson<DebriefRequest>(req)
-        requireScenario(body.scenarioId)
+        requireSeed(body.seed)
 
         // Gemini первым, когда есть ключ: flash-lite даёт 500 разборов в
         // сутки против двадцати у моделей уровня pro, а разбор — это ровно
@@ -387,8 +388,8 @@ export function brokerApi(env: Record<string, string>): Plugin {
       // ── Эфемерный ключ Realtime (этап 5) ──────────────────────────────────
       server.middlewares.use('/api/realtime-session', json(async (req) => {
         if (!openaiKey) throw new HttpError(503, 'OPENAI_API_KEY is not set')
-        const body = await readJson<{ scenarioId: string; voice?: string }>(req)
-        const scenarioId = requireScenario(body.scenarioId)
+        const body = await readJson<{ seed: string; voice?: string }>(req)
+        const seed = requireSeed(body.seed)
         const r = await fetch('https://api.openai.com/v1/realtime/client_secrets', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
@@ -396,7 +397,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
             session: {
               type: 'realtime',
               model: env.OPENAI_REALTIME_MODEL ?? 'gpt-realtime-mini',
-              instructions: buildSystemPrompt(scenarioId),
+              instructions: buildSystemPrompt(seed),
               audio: {
                 input: { turn_detection: { type: 'semantic_vad', interrupt_response: true } },
                 output: { voice: body.voice ?? 'ash' },
@@ -558,7 +559,7 @@ async function probeGemini(key: string): Promise<Record<string, unknown>> {
     // setupComplete. Проба обязана идти тем же путём, что и звонок: прежняя
     // проверяла выпуск токена, светилась зелёным — а разговор не начинался,
     // потому что ломалось на шаг позже, при подключении к сокету.
-    const setup = geminiSetup(live, FIRST_SCENARIO_ID)
+    const setup = geminiSetup(live, PROBE_SEED)
     await probeGeminiSocket(key, setup)
     return {
       ok: true,
@@ -685,7 +686,7 @@ async function geminiModels(key: string): Promise<ModelInfo[]> {
  * не может ни подменить системный промпт, ни расширить список инструментов —
  * он присылает пустой setup и работает с тем, что решил сервер.
  */
-function geminiSetup(model: string, scenarioId: string, voice?: string) {
+function geminiSetup(model: string, seed: string, voice?: string) {
   return {
     model: `models/${model}`,
     generationConfig: {
@@ -695,7 +696,7 @@ function geminiSetup(model: string, scenarioId: string, voice?: string) {
         voiceConfig: { prebuiltVoiceConfig: { voiceName: normalizeGeminiVoice(voice) } },
       },
     },
-    systemInstruction: { parts: [{ text: buildSystemPrompt(scenarioId) }] },
+    systemInstruction: { parts: [{ text: buildSystemPrompt(seed) }] },
     tools: toGeminiTools(TOOL_SCHEMAS),
     // Текст обеих сторон нужен экрану: слова на экране — это весь тренажёр.
     inputAudioTranscription: {},
@@ -789,12 +790,12 @@ function split(value: string | undefined): string[] | undefined {
 }
 
 interface TurnRequest {
-  scenarioId: string
+  seed: string
   messages: { role: string; content: string; [k: string]: unknown }[]
 }
 
 export interface DebriefRequest {
-  scenarioId: string
+  seed: string
   transcript: { role: string; text: string }[]
   facts: unknown
   metrics: unknown

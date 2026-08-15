@@ -4,11 +4,10 @@ import { PipelineTransport } from '../voice/PipelineTransport'
 import { RealtimeTransport } from '../voice/RealtimeTransport'
 import { GeminiLiveTransport } from '../voice/GeminiLiveTransport'
 import type { TransportDeps, VoiceEvent, VoiceTransport } from '../voice/types'
-import { getScenario } from '../data/scenarios'
-import { getBroker } from '../data/brokers'
-import type { CallState, Scenario } from '../types'
+import { makeCallSetup, type CallSetup } from '../call/makeCall'
+import type { CallState } from '../types'
 import { endpoint } from '../api'
-import { directionForStyle, voiceForBroker } from '../voice/voices'
+import { directionForStyle } from '../voice/voices'
 
 export type Phase = 'lobby' | 'dialing' | 'call' | 'debrief'
 
@@ -42,7 +41,7 @@ export type FeedEntry = SpeechItem | ToolItem
 
 interface CallStore {
   phase: Phase
-  scenario: Scenario | null
+  setup: CallSetup | null
   machine: CallMachine | null
   transport: VoiceTransport | null
   callState: CallState | null
@@ -54,7 +53,7 @@ interface CallStore {
   /** Средняя пауза брокера за звонок — показывается в разборе. */
   avgLatencyMs: number
 
-  openDial(scenarioId: string): void
+  openDial(): void
   /** Набрать номер. Звонит диспетчер — брокер снимает трубку на той стороне. */
   placeCall(): Promise<void>
   endCall(): void
@@ -65,7 +64,7 @@ let draftId = 0
 
 export const useCallStore = create<CallStore>((set, get) => ({
   phase: 'lobby',
-  scenario: null,
+  setup: null,
   machine: null,
   transport: null,
   callState: null,
@@ -76,26 +75,27 @@ export const useCallStore = create<CallStore>((set, get) => ({
   startedAt: null,
   avgLatencyMs: 0,
 
-  openDial(scenarioId) {
-    const scenario = getScenario(scenarioId)
-    set({ phase: 'dialing', scenario, feed: [], error: null, line: 'ringing' })
+  openDial() {
+    // Новый набор на каждый заход: другой брокер, другая компания, другой
+    // груз и другие цифры. Одинаковых звонков больше нет.
+    set({ phase: 'dialing', setup: makeCallSetup(), feed: [], error: null, line: 'ringing' })
   },
 
   async placeCall() {
-    const scenario = get().scenario
-    if (!scenario) return
+    const setup = get().setup
+    if (!setup) return
 
-    const machine = new CallMachine(scenario)
+    const machine = new CallMachine(setup)
     machine.start()
-    const broker = getBroker(scenario.brokerId)
+    const broker = setup.broker
 
     // Какой транспорт использовать, решает сервер — из клиента платный режим
     // не включить, даже подменив запрос.
     const config = await fetchConfig()
 
     const deps: TransportDeps = {
-      scenarioId: scenario.id,
-      voice: voiceForBroker(broker.id),
+      seed: setup.id,
+      voice: setup.voice,
       direction: directionForStyle(broker.style),
       style: broker.style,
       runTool: (name, args) => {

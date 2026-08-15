@@ -110,7 +110,7 @@ function bc_config() {
   if ($config === null) {
     $path = __DIR__ . '/broker-config.php';
     $config = is_readable($path) ? require $path : null;
-    if (!is_array($config)) { $config = ['tools' => [], 'scenarios' => []]; }
+    if (!is_array($config)) { $config = ['tools' => [], 'calls' => []]; }
   }
   return $config;
 }
@@ -129,9 +129,9 @@ function bc_goal_words($goals) {
   return $out;
 }
 
-function bc_scenario($id) {
+function bc_call($seed) {
   $config = bc_config();
-  return isset($config['scenarios'][$id]) ? $config['scenarios'][$id] : null;
+  return isset($config['calls'][$seed]) ? $config['calls'][$seed] : null;
 }
 
 // ── Ответы ───────────────────────────────────────────────────────────────────
@@ -398,7 +398,7 @@ switch ($action) {
         'gemini'   => $geminiKey !== '',
       ],
       'config' => [
-        'scenarios' => count(bc_config()['scenarios']),
+        'calls'     => count(bc_config()['calls']),
         'tools'     => count(bc_config()['tools']),
         'tts_model' => $TTS_MODEL,
         'voices'    => $ORPHEUS_VOICES,
@@ -528,8 +528,8 @@ switch ($action) {
         } else {
           // Первый попавшийся сценарий: пробе важно, что токен выпускается с
           // настоящим промптом и настоящими инструментами, а не какой именно.
-          $scenarios = bc_config()['scenarios'];
-          $first = is_array($scenarios) ? reset($scenarios) : null;
+          $calls = bc_config()['calls'];
+          $first = is_array($calls) ? reset($calls) : null;
           $prompt = (is_array($first) && isset($first['prompt'])) ? $first['prompt'] : 'You are a freight broker.';
           list($tc, $tb) = bc_gemini_token($geminiKey, bc_gemini_setup($live, $prompt, ''));
           $probe = [
@@ -561,9 +561,9 @@ switch ($action) {
   case 'turn': {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') { bc_fail(405, 'POST only'); }
     $in = bc_body();
-    $scenarioId = isset($in['scenarioId']) ? (string) $in['scenarioId'] : '';
-    $scenario = bc_scenario($scenarioId);
-    if ($scenario === null) { bc_fail(400, 'unknown scenario: ' . $scenarioId); }
+    $seed = isset($in['seed']) ? (string) $in['seed'] : '';
+    $scenario = bc_call($seed);
+    if ($scenario === null) { bc_fail(400, 'bad seed: ' . $seed); }
 
     $messages = isset($in['messages']) && is_array($in['messages']) ? $in['messages'] : [];
     array_unshift($messages, ['role' => 'system', 'content' => $scenario['prompt']]);
@@ -700,7 +700,7 @@ switch ($action) {
   case 'debrief': {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') { bc_fail(405, 'POST only'); }
     $in = bc_body();
-    $scenario = bc_scenario(isset($in['scenarioId']) ? (string) $in['scenarioId'] : '');
+    $scenario = bc_call(isset($in['seed']) ? (string) $in['seed'] : '');
     if ($scenario === null) { bc_fail(400, 'unknown scenario'); }
 
     $lines = [];
@@ -774,7 +774,7 @@ switch ($action) {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') { bc_fail(405, 'POST only'); }
     if ($openaiKey === '') { bc_fail(503, 'openai.key is not set'); }
     $in = bc_body();
-    $scenario = bc_scenario(isset($in['scenarioId']) ? (string) $in['scenarioId'] : '');
+    $scenario = bc_call(isset($in['seed']) ? (string) $in['seed'] : '');
     if ($scenario === null) { bc_fail(400, 'unknown scenario'); }
 
     $config = bc_config();
@@ -820,7 +820,7 @@ switch ($action) {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') { bc_fail(405, 'POST only'); }
     if ($geminiKey === '') { bc_fail(503, 'gemini.key is not set'); }
     $in = bc_body();
-    $scenario = bc_scenario(isset($in['scenarioId']) ? (string) $in['scenarioId'] : '');
+    $scenario = bc_call(isset($in['seed']) ? (string) $in['seed'] : '');
     if ($scenario === null) { bc_fail(400, 'unknown scenario'); }
 
     list($code, $models) = bc_gemini_models($geminiKey);

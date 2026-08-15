@@ -8,15 +8,19 @@ const RU = {
   'app.title': 'Broker Call',
   'app.subtitle': 'Тренажёр звонка фрахт-брокеру',
 
-  'lobby.pick': 'Выберите звонок',
-  'lobby.difficulty': 'Сложность',
-  'lobby.locked': 'Откроется после предыдущего звонка',
+  'lobby.lead': 'Позвоните брокеру',
+  'lobby.about':
+    'На том конце каждый раз другой человек: другое имя, другая компания, другой характер и другой груз. Разговор идёт по-английски и нигде не записан заранее.',
+  'lobby.start': 'Позвонить брокеру',
+  'lobby.first': 'Первый звонок',
   'lobby.best': 'Лучший результат',
-  'lobby.attempts': 'Попыток',
+  'lobby.attempts': 'Звонков',
 
   // Звоним мы. Входящих в сторону диспетчера в тренажёре не бывает.
   'dial.label': 'Исходящий звонок',
   'dial.call': 'Позвонить',
+  'dial.objective':
+    'Представиться, назвать MC, забрать груз и договориться о ставке.',
   'dial.hint': 'Дальше ни одной кнопки — просто говорите',
   'dial.mic': 'Понадобится доступ к микрофону',
 
@@ -78,14 +82,18 @@ const EN: Record<Key, string> = {
   'app.title': 'Broker Call',
   'app.subtitle': 'Freight broker call trainer',
 
-  'lobby.pick': 'Pick a call',
-  'lobby.difficulty': 'Difficulty',
-  'lobby.locked': 'Unlocks after the previous call',
+  'lobby.lead': 'Call a broker',
+  'lobby.about':
+    'A different person every time: different name, different company, different temper, different load. The call runs in English and none of it is scripted.',
+  'lobby.start': 'Call a broker',
+  'lobby.first': 'First call',
   'lobby.best': 'Best score',
-  'lobby.attempts': 'Attempts',
+  'lobby.attempts': 'Calls',
 
   'dial.label': 'Outgoing call',
   'dial.call': 'Call',
+  'dial.objective':
+    'Introduce yourself, give your MC, take the load and agree on a rate.',
   'dial.hint': 'No buttons after this — just talk',
   'dial.mic': 'Microphone access required',
 

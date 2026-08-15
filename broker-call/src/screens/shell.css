@@ -59,75 +59,48 @@
   text-align: right;
 }
 
-/* ── Список звонков ── */
+/* ── Начало: один звонок вместо списка ──
+   Восемь карточек означали восемь заранее написанных разговоров. Их больше
+   нет — есть кнопка, и на том конце каждый раз другой человек. */
 
-.calls {
-  max-width: 720px;
-  width: 100%;
-  margin: 0 auto;
-  padding: var(--s6) var(--s5) var(--s7);
+.start {
+  flex: 1;
   display: grid;
-  gap: var(--s3);
+  place-items: center;
+  text-align: center;
+  padding: var(--s5);
 }
 
-.call-card {
+.start-inner {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: var(--s4);
-  width: 100%;
-  text-align: left;
-  padding: var(--s4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--bg-raised);
-  transition: border-color var(--fast) var(--ease), transform var(--fast) var(--ease);
+  gap: var(--s5);
+  justify-items: center;
+  max-width: 46ch;
+  animation: rise var(--slow) var(--ease) both;
 }
 
-.call-card:hover {
-  border-color: var(--accent-line);
-  transform: translateY(-1px);
+.start-lead {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
-.call-card-index {
-  font-size: var(--text-sm);
-  color: var(--ink-faint);
-  font-variant-numeric: tabular-nums;
-  width: 1.5em;
-}
-
-.call-card-title {
-  font-size: var(--text-md);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-.call-card-who {
+.start-about {
   font-size: var(--text-sm);
   color: var(--ink-muted);
-  margin-top: 2px;
+  line-height: 1.6;
 }
 
-/* Лучший результат — тем же кеглем, но акцентом: видно, не отвлекая */
-.call-card-best {
-  color: var(--accent);
+.start-stats {
+  display: flex;
+  gap: var(--s5);
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
 }
 
-/* Сложность точками: пять слов текста здесь были бы шумом */
-.difficulty {
-  display: inline-flex;
-  gap: 3px;
-}
-
-.difficulty span {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--ink-faint);
-}
-
-.difficulty span[data-on='true'] {
-  background: var(--accent);
+.start-stats b {
+  color: var(--ink);
+  font-weight: 500;
 }
 
 /* ── Набор номера ──
@@ -173,11 +146,19 @@
   margin-top: var(--s1);
 }
 
+/* Маршрут и груз — то, что диспетчер видит на борде перед набором номера */
+.dial-lane {
+  font-size: var(--text-sm);
+  color: var(--accent);
+  letter-spacing: 0.01em;
+}
+
 .dial-objective {
   max-width: 34ch;
   font-size: var(--text-sm);
   color: var(--ink-soft);
   line-height: 1.6;
+  margin-top: calc(var(--s5) * -1 + var(--s2));
 }
 
 .call-out {
@@ -214,7 +195,7 @@
 }
 
 @media (max-width: 560px) {
-  .calls {
+  .start {
     padding: var(--s5) var(--s4) var(--s6);
   }
   .shell-head {

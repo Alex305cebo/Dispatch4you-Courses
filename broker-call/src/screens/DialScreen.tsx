@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import './shell.css'
 import { useCallStore } from '../store/useCallStore'
-import { getBroker } from '../data/brokers'
-import { useLocalized, useT } from '../i18n/useT'
+import { laneLabel } from '../data/loads'
+import { useT } from '../i18n/useT'
 import { unlockAudio } from '../voice/audioUnlock'
 
 /**
@@ -17,12 +17,11 @@ import { unlockAudio } from '../voice/audioUnlock'
  */
 export function DialScreen() {
   const t = useT()
-  const localized = useLocalized()
-  const { scenario, placeCall } = useCallStore()
+  const { setup, placeCall } = useCallStore()
   const [dialing, setDialing] = useState(false)
 
-  if (!scenario) return null
-  const broker = getBroker(scenario.brokerId)
+  if (!setup) return null
+  const { broker, load } = setup
 
   return (
     <div className="dial">
@@ -34,7 +33,12 @@ export function DialScreen() {
           <div className="dial-company">{broker.company}</div>
         </div>
 
-        <p className="dial-objective">{localized(scenario.objective)}</p>
+        {/* Про что звонок: маршрут и груз с борда — то же, что диспетчер видит
+            перед тем, как набрать номер. */}
+        <p className="dial-lane mono">
+          {laneLabel(load)} · {load.commodity}
+        </p>
+        <p className="dial-objective">{t('dial.objective')}</p>
 
         <button
           className="call-out"

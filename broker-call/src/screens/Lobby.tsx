@@ -1,19 +1,22 @@
 import './shell.css'
-import { SCENARIOS } from '../data/scenarios'
-import { getBroker } from '../data/brokers'
 import { useCallStore } from '../store/useCallStore'
-import { useLangStore, useLocalized, useT } from '../i18n/useT'
-import { loadProgress } from '../store/progress'
+import { useLangStore, useT } from '../i18n/useT'
+import { loadProgress, CALL_KEY } from '../store/progress'
 import { BUILD_ID } from '../fatal'
 import type { Lang } from '../types'
 import { useMemo } from 'react'
 
+/**
+ * Начало. Раньше здесь лежал список из восьми сценариев, и каждый из них
+ * означал один и тот же разговор при каждом заходе. Сценариев больше нет:
+ * есть кнопка «позвонить», и на том конце каждый раз другой человек с другим
+ * грузом.
+ */
 export function Lobby() {
   const t = useT()
-  const localized = useLocalized()
   const openDial = useCallStore((s) => s.openDial)
-  // Читаем при входе в список: пока идёт звонок, прогресс всё равно не меняется.
-  const progress = useMemo(() => loadProgress(), [])
+  // Читаем при входе: пока идёт звонок, прогресс всё равно не меняется.
+  const progress = useMemo(() => loadProgress()[CALL_KEY], [])
 
   return (
     <div className="shell">
@@ -29,48 +32,30 @@ export function Lobby() {
           взглядом, а не перепиской. */}
       <div className="build-id mono">{BUILD_ID}</div>
 
-      <div className="scroll">
-        <div className="calls">
-          {SCENARIOS.map((scenario, index) => {
-            const broker = getBroker(scenario.brokerId)
-            return (
-              <button
-                key={scenario.id}
-                className="call-card"
-                onClick={() => openDial(scenario.id)}
-              >
-                <span className="call-card-index mono">{String(index + 1).padStart(2, '0')}</span>
-                <span>
-                  <span className="call-card-title">{localized(scenario.title)}</span>
-                  <span className="call-card-who">
-                    {broker.name} · {broker.company}
-                    {progress[scenario.id] ? (
-                      <>
-                        {' · '}
-                        <span className="call-card-best mono">
-                          {t('lobby.best')} {progress[scenario.id]!.bestScore}
-                        </span>
-                      </>
-                    ) : null}
-                  </span>
-                </span>
-                <Difficulty level={scenario.difficulty} />
-              </button>
-            )
-          })}
+      <div className="start">
+        <div className="start-inner">
+          <div className="start-lead">{t('lobby.lead')}</div>
+          <p className="start-about">{t('lobby.about')}</p>
+
+          <button className="call-out" onClick={openDial}>
+            {t('lobby.start')}
+          </button>
+
+          {progress ? (
+            <div className="start-stats">
+              <span>
+                {t('lobby.attempts')}: <b className="mono">{progress.attempts}</b>
+              </span>
+              <span>
+                {t('lobby.best')}: <b className="mono">{progress.bestScore}</b>
+              </span>
+            </div>
+          ) : (
+            <div className="start-stats">{t('lobby.first')}</div>
+          )}
         </div>
       </div>
     </div>
-  )
-}
-
-function Difficulty({ level }: { level: number }) {
-  return (
-    <span className="difficulty" aria-label={`difficulty ${level} of 4`}>
-      {[1, 2, 3, 4].map((n) => (
-        <span key={n} data-on={n <= level} />
-      ))}
-    </span>
   )
 }
 
