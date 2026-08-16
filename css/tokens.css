@@ -483,7 +483,6 @@
 :root[data-theme="light"] .profession-text { color: var(--text-secondary) !important; }
 :root[data-theme="light"] .stats-source p { color: var(--text-muted) !important; }
 :root[data-theme="light"] .features-section .section-description { color: var(--text-primary) !important; }
-:root[data-theme="light"] .feature-content p { color: var(--text-secondary) !important; }
 :root[data-theme="light"] .carousel-btn,
 :root[data-theme="light"] button.carousel-btn { background: var(--glass-04) !important; color: var(--text-secondary) !important; }
 :root[data-theme="light"] .carousel-btn:hover { background: var(--glass-10) !important; border-color: var(--edge-10) !important; color: var(--text-primary) !important; }
@@ -1018,4 +1017,31 @@
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.07)) !important;
   border-color: var(--border-subtle) !important;
   color: var(--text-primary) !important;
+}
+
+/* ── 7. Карточки секции «Что вы получите» ──
+   Текст карточки лежит ПОВЕРХ фотографии, которую затемняет вуаль
+   .feature-media::after — rgba(5,8,16,.35) сверху и .55 к низу. Карточка
+   остаётся тёмной в ЛЮБОЙ теме, потому что это фото, а не подложка.
+
+   В светлой теме заголовок брал --text-primary и становился тёмным на
+   тёмном фото: контраст около 1.5:1, читать невозможно. Здесь нужен не
+   «цвет по теме», а белый — как в тёмной.
+
+   Тень обязательна: фотографии разные, внизу вуаль слабее, и без неё
+   белый местами тонет в светлых участках кадра. */
+:root[data-theme="light"] .feature-content h3 {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+:root[data-theme="light"] .feature-content p {
+  color: rgba(255, 255, 255, 0.92) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55) !important;
+}
+/* Вуаль плотнее снизу, где лежит текст: 0.35→0.55 не хватало на светлых
+   кадрах даже белому. */
+:root[data-theme="light"] .feature-media::after {
+  background: linear-gradient(rgba(5, 8, 16, 0.30) 0%,
+                              rgba(5, 8, 16, 0.62) 55%,
+                              rgba(5, 8, 16, 0.86) 100%) !important;
 }
