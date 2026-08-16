@@ -27,14 +27,29 @@ if ($token === '' || $token === false) { guardLog('tg-bot.key missing'); exit(1)
 // байт на ЛЮБОЙ запрос. Вебхук при этом был идеален, очередь пустая, Telegram
 // доволен — сторож рапортовал «всё в порядке», пока владелец не заметил сам.
 // ?diag печатает текст всегда, так что пустой ответ = обработчик не запускается.
-$body = @file_get_contents(EXPECTED_URL . '?diag', false, stream_context_create(
+// Ключ к служебным ссылкам. Формула ОБЯЗАНА совпадать с diagKey() в
+// telegram-bot.php — включить тот файл нельзя, он тут же начнёт отрабатывать
+// вебхук. Разойдутся — сторож получит 403, решит, что бот умер, и начнёт слать
+// ложные тревоги.
+$dk = substr(hash('sha256', 'diag' . $token), 0, 24);
+
+$body = @file_get_contents(EXPECTED_URL . '?diag&k=' . $dk, false, stream_context_create(
   array('http' => array('timeout' => 20, 'ignore_errors' => true))
 ));
-if (trim((string)$body) === '') {
-  $msg = "🚨 Сторож бота\n\nОбработчик не отвечает: " . EXPECTED_URL . "?diag вернул пусто.\n\n"
-       . "Обычно это opcache с устаревшим байткодом (бывает после смены версии PHP). "
-       . "Лечение: любое изменение содержимого api/telegram-bot.php и деплой — "
-       . "проще всего поменять строку BUILD в начале файла.";
+$body = trim((string)$body);
+// Пусто = обработчик не запускается вовсе. «forbidden» = запустился, но не
+// признал наш ключ: значит формула выше разошлась с diagKey() в боте. Это
+// разные поломки, и лечатся они по-разному — не смешивать.
+if ($body === '' || stripos($body, 'forbidden') !== false) {
+  $msg = $body === ''
+    ? "🚨 Сторож бота\n\nОбработчик не отвечает: " . EXPECTED_URL . "?diag вернул пусто.\n\n"
+      . "Обычно это opcache с устаревшим байткодом (бывает после смены версии PHP). "
+      . "Лечение: любое изменение содержимого api/telegram-bot.php и деплой — "
+      . "проще всего поменять строку BUILD в начале файла."
+    : "🚨 Сторож бота\n\nОбработчик жив, но не принял ключ диагностики (403).\n\n"
+      . "Формула ключа в tg-guard.php разошлась с diagKey() в telegram-bot.php — "
+      . "либо один файл задеплоен, а второй нет. Сам бот при этом работает: "
+      . "сообщения и кнопки идут как обычно, не отвечает только диагностика.";
   guardLog(str_replace("\n", ' | ', $msg));
   $admin = @trim(file_get_contents($base . 'tg-admin.txt'));
   if ($admin !== '' && $admin !== false) tg($token, 'sendMessage', array('chat_id' => $admin, 'text' => $msg));
@@ -79,7 +94,8 @@ $msg = "🚨 Сторож бота\n\n" . implode("\n", $problems);
 if ($restored) {
   $msg .= "\n\nЕсли это повторится — токен скомпрометирован. Отзовите его: "
         . "@BotFather → /mybots → API Token → Revoke current token, "
-        . "затем впишите новый в tg-bot.key и откройте ?setup=1";
+        . "затем впишите новый в tg-bot.key. Вебхук я верну сам на следующем "
+        . "запуске, руками ?setup=1 открывать не нужно.";
 }
 guardLog(str_replace("\n", ' | ', $msg));
 

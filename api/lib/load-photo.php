@@ -161,6 +161,8 @@ function visionPrompt() {
     . '"load_id":"","stops":[{"type":"pickup or delivery","name":"","address_lines":[],"time":"","refs":[]}]}' . "\n\n"
     . "RULES:\n"
     . "- Copy values VERBATIM from the image. NEVER invent anything. Unknown -> empty string (or empty array).\n"
+    . "- Keep every value in the language printed on the image, which is English. NEVER translate or "
+    . "localise anything — dates and month names included. 'Aug 17' stays 'Aug 17'.\n"
     . "- is_load: false if the image is not freight-related at all.\n"
     . "- doc_type: 'rate_con' for a Rate/Load Confirmation issued to a carrier (has full pickup and "
     . "delivery ADDRESSES, appointment windows, reference/PU/PO numbers, a signature line). "
@@ -202,7 +204,39 @@ function photoExtractLoad($bytes, $mime) {
   ));
   if (!is_array($data)) return array(null, $err === '' ? 'nojson' : $err);
   if (isset($data['is_load']) && $data['is_load'] === false) return array(null, 'notload');
-  return array($data, '');
+  return array(enForce($data), '');
+}
+
+// ── Кириллица в данных ──────────────────────────────────────────────
+// Модель иногда ЛОКАЛИЗУЕТ прочитанное: на скриншоте «Aug 17», в ответе
+// «авг. 17». Дальше это уезжает в письмо брокеру и в текст водителю, а их
+// читают американцы — русских слов там быть не может ни при каких настройках
+// языка бота. Промпт «copy verbatim» есть с самого начала и всё равно не
+// держит, поэтому чиним данными.
+// ponytail: правим только месяцы — именно их модель и локализует. Полезут дни
+// недели или «до/после» — дописать в ту же карту, логика та же.
+// Прочие русские слова НЕ удаляем: пустое поле хуже криво написанного, а
+// «примечания по-русски» иногда пишет сам брокер в письме.
+function enForceValue($s) {
+  if (!preg_match('/[а-яё]/iu', $s)) return $s;
+  return preg_replace_callback('/[а-яё]+\.?/iu', function ($m) {
+    // Ключ — первые три буквы: покрывает и «авг», и «августа», и «авг.».
+    // «мар»/«май»/«мая» разводятся сами, потому что различаются в этих же трёх.
+    static $map = array(
+      'янв' => 'Jan', 'фев' => 'Feb', 'мар' => 'Mar', 'апр' => 'Apr',
+      'май' => 'May', 'мая' => 'May', 'июн' => 'Jun', 'июл' => 'Jul',
+      'авг' => 'Aug', 'сен' => 'Sep', 'окт' => 'Oct', 'ноя' => 'Nov', 'дек' => 'Dec',
+    );
+    $p = mb_substr(mb_strtolower(rtrim($m[0], '.')), 0, 3);
+    return isset($map[$p]) ? $map[$p] : $m[0];
+  }, $s);
+}
+
+/** То же по всей структуре разбора, включая стопы и списки реф-номеров. */
+function enForce($v) {
+  if (is_string($v)) return enForceValue($v);
+  if (is_array($v)) foreach ($v as $k => $x) $v[$k] = enForce($x);
+  return $v;
 }
 
 /** Разобранная картинка оказалась рейт-коном, а не карточкой с лоуборда? */

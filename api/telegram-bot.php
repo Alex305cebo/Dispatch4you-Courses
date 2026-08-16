@@ -7,8 +7,11 @@
 //   ~/domains/dispatch4you.com/groq.key     (уже существует — общий с api/groq.php)
 //
 // Первичная настройка (один раз, после появления tg-bot.key на сервере):
-//   открыть в браузере https://dispatch4you.com/api/telegram-bot.php?setup=1
-//   — скрипт сам вызовет setWebhook с секретом, выведет ответ Telegram.
+//   открыть в браузере ?setup=1&k=<ключ> — скрипт сам вызовет setWebhook с
+//   секретом и выведет ответ Telegram. Готовую ссылку с ключом даёт команда
+//   /diag в чате с ботом (только владельцу из tg-admin.txt).
+//   Если бот молчит и /diag не доходит — ничего делать не нужно: сторож
+//   tg-guard.php по крону вернёт вебхук сам в течение 10 минут.
 //
 // Подлинность запросов Telegram проверяется заголовком
 // X-Telegram-Bot-Api-Secret-Token = sha256(токен) — задаётся в setup.
@@ -19,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-05-2';
+const BUILD = '2026-08-16-1';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -106,6 +109,35 @@ register_shutdown_function(function () {
   ));
   @curl_exec($ch); @curl_close($ch);
 });
+
+// ── Служебные GET — только со своим ключом ──────────────────────────
+// Секрет Telegram проверяется НИЖЕ и только для POST, а диагностика — обычные
+// ссылки, которые открываются в браузере. Пока они были без пароля, посторонний
+// мог: снести очередь входящих (?setup переставляет вебхук с drop_pending_updates),
+// сжечь суточную квоту Gemini (?geminicheck — 20 запросов в сутки на модель) и
+// прочитать пути на сервере из текста падений (?lasterr). Адрес угадывается, а
+// список самих ссылок лежит в этом же файле в репозитории.
+// Ключ считается из токена бота: отдельный секрет заводить незачем, а при
+// отзыве токена старые ссылки протухают сами. Получить готовые — команда /diag
+// в чате с ботом (отвечает только владельцу из tg-admin.txt).
+// Стоит ДО require: если библиотека не подключится, фатал случится раньше, и
+// диагностика должна пережить это — ровно ради этого ?lasterr и стоит первым.
+function diagKey($token) { return substr(hash('sha256', 'diag' . $token), 0, 24); }
+
+// Токена нет — не пускаем никого: молчаливое «открыто всем» опаснее отказа.
+function diagGate() {
+  $t = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
+  if ($t !== '' && $t !== false && isset($_GET['k']) && hash_equals(diagKey($t), (string)$_GET['k'])) return;
+  http_response_code(403);
+  header('Content-Type: text/plain; charset=utf-8');
+  echo "forbidden\n";
+  exit;
+}
+
+// Один список на все служебные ветки — заводишь новую, дописываешь сюда.
+foreach (array('lasterr', 'diag', 'fmcsacheck', 'geminicheck', 'webhookinfo', 'setup') as $q) {
+  if (isset($_GET[$q])) { diagGate(); break; }
+}
 
 // ── Последние падения из tg-bot.log ─────────────────────────────────
 // Стоит ДО require и намеренно: когда библиотека не подключается, фатал
@@ -294,6 +326,25 @@ if (!isset($msg['document'])) {
   if (stripos($text, '/id') === 0) {
     // нужен, чтобы прописать получателя тревог сторожа в tg-admin.txt
     reply($token, $chatId, "Ваш chat id: " . $chatId);
+  } elseif (stripos($text, '/diag') === 0) {
+    // Служебные ссылки владельцу: сам он ключ не посчитает, а без ключа
+    // диагностика теперь не открывается. Чужим команду не показываем вовсе —
+    // отвечаем обычной справкой, как будто её нет.
+    $admin = @trim(file_get_contents(__DIR__ . '/../../tg-admin.txt'));
+    if ($admin === '' || $admin === false || (string)$chatId !== (string)$admin) {
+      reply($token, $chatId, helpStart($introState));
+    } else {
+      $k = diagKey($token);
+      reply($token, $chatId,
+        "🔧 Служебные ссылки. Ключ считается из токена бота — сменишь токен, "
+        . "ссылки станут другими, старые перестанут работать.\n\n"
+        . "Живы ли расширения и утилиты:\n" . SELF_URL . "?diag=1&k=" . $k . "\n\n"
+        . "Последние падения:\n" . SELF_URL . "?lasterr=1&k=" . $k . "\n\n"
+        . "Что Telegram думает о вебхуке:\n" . SELF_URL . "?webhookinfo=1&k=" . $k . "\n\n"
+        . "Жив ли ключ Gemini (тратит 1 запрос из 20 в сутки):\n" . SELF_URL . "?geminicheck=1&k=" . $k . "\n\n"
+        . "Жив ли ключ FMCSA:\n" . SELF_URL . "?fmcsacheck=115789&k=" . $k . "\n\n"
+        . "Переустановить вебхук (сотрёт необработанную очередь):\n" . SELF_URL . "?setup=1&k=" . $k);
+    }
   } elseif (preg_match('~^/carrier\b\s*(.*)$~is', $text, $cm)) {
     handleCarrier($token, $chatId, trim($cm[1]));
   } elseif (preg_match('~^/edit\b\s*(.*)$~is', $text, $em)) {
@@ -811,6 +862,8 @@ function rcPrompt() {
   . "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
   . "CRITICAL RULES:\n"
   . "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
+  . "- Every value must stay in the document's own language, which is English. NEVER translate or "
+  . "localise anything — dates and month names included. '08/17' or 'Aug 17' stays exactly as printed.\n"
   . "- If a value is not in the document, use an empty string (or empty array). An empty field is CORRECT; an invented field is a serious error.\n"
   . "- Strip label words glued to a value: 'Appointment', 'Time', 'Ref', 'Weight', '#'. Keep only the value.\n"
   . "- load_id: the load/order/PRO number of this shipment.\n"
@@ -862,6 +915,9 @@ function fixGluedUnits($text) {
 // ponytail: порог 3000 (пробег редко больше, вес редко меньше). Если пойдут
 // сборные LTL-грузы легче 3000 lbs — брать вес из подписи, а не из величины.
 function normalizeLoad(array $d) {
+  // Через эту функцию проходит КАЖДЫЙ разбор рейт-кона — и из PDF, и с фото,
+  // поэтому чистка кириллицы стоит тут: одно место вместо четырёх вызовов.
+  $d = enForce($d);
   $num = function ($v) {
     $v = preg_replace('/[^0-9.]/', '', (string)$v);
     return $v === '' ? null : (float)$v;
