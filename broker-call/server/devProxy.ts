@@ -274,10 +274,10 @@ export function brokerApi(env: Record<string, string>): Plugin {
             return {
               provider: attempt.name,
               model: attempt.model,
-              // Сырое сообщение уходит обратно клиенту, чтобы он дописал его в
-              // историю ровно в том виде, в каком его ждёт провайдер на
-              // следующем ходу — вместе с tool_calls и их id.
-              message: choice ?? { role: 'assistant', content: '' },
+              // Сообщение уходит обратно клиенту, чтобы он дописал его в
+              // историю вместе с tool_calls и их id — но очищенным от полей,
+              // которые придумал конкретный провайдер.
+              message: cleanAssistantMessage(choice),
               content: choice?.content ?? '',
               toolCalls: (choice?.tool_calls ?? []).map((c) => ({
                 id: c.id,
@@ -425,6 +425,29 @@ interface Attempt {
   url: string
   key: string
   model: string
+}
+
+/**
+ * Ответ модели, очищенный от полей конкретного провайдера.
+ *
+ * Рассуждающие модели Groq (`gpt-oss`) кладут в ответ поле `reasoning`. Оно
+ * уходило клиенту, тот дописывал сообщение в историю, а на следующем ходу
+ * история попадала к следующей модели цепочки — и `llama-3.3-70b-versatile`
+ * отвечал `400: "messages[2].reasoning": reasoning is not supported with this
+ * model`. Наружу это выглядело как «брокер не отвечает» ровно в тот момент,
+ * когда звонок дошёл до букинга.
+ *
+ * В историю нужно ровно то, что понимает любая OpenAI-совместимая модель:
+ * роль, текст и вызовы инструментов вместе с их id.
+ */
+function cleanAssistantMessage(choice: ChatCompletionMessage | undefined): Record<string, unknown> {
+  if (!choice) return { role: 'assistant', content: '' }
+  const clean: Record<string, unknown> = {
+    role: choice.role ?? 'assistant',
+    content: choice.content ?? '',
+  }
+  if (choice.tool_calls?.length) clean.tool_calls = choice.tool_calls
+  return clean
 }
 
 /**
@@ -807,13 +830,14 @@ export interface DebriefRequest {
   metrics: unknown
 }
 
+interface ChatCompletionMessage {
+  role?: string
+  content?: string
+  tool_calls?: { id: string; function: { name: string; arguments: string } }[]
+}
+
 interface ChatCompletion {
-  choices?: {
-    message?: {
-      content?: string
-      tool_calls?: { id: string; function: { name: string; arguments: string } }[]
-    }
-  }[]
+  choices?: { message?: ChatCompletionMessage }[]
 }
 
 class HttpError extends Error {

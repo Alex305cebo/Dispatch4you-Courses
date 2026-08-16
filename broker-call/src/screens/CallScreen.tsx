@@ -106,7 +106,7 @@ export function CallScreen() {
    */
   function CallHints() {
     const hints = callHints(setup!, callState ?? null)
-    const now = currentHint(hints)
+    const now = currentHint(hints, callState?.stage)
 
     return (
       <div className="call-hints">

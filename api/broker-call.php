@@ -129,6 +129,25 @@ function bc_goal_words($goals) {
   return $out;
 }
 
+/**
+ * Ответ модели без полей конкретного провайдера.
+ *
+ * В историю нужно ровно то, что понимает любая OpenAI-совместимая модель:
+ * роль, текст и вызовы инструментов вместе с id. Всё остальное (`reasoning`
+ * у gpt-oss) ломает следующую модель цепочки.
+ */
+function bc_clean_message($message) {
+  if (!is_array($message)) { return ['role' => 'assistant', 'content' => '']; }
+  $clean = [
+    'role'    => isset($message['role']) ? $message['role'] : 'assistant',
+    'content' => isset($message['content']) ? $message['content'] : '',
+  ];
+  if (isset($message['tool_calls']) && is_array($message['tool_calls']) && count($message['tool_calls']) > 0) {
+    $clean['tool_calls'] = $message['tool_calls'];
+  }
+  return $clean;
+}
+
 function bc_call($seed) {
   $config = bc_config();
   return isset($config['calls'][$seed]) ? $config['calls'][$seed] : null;
@@ -639,10 +658,11 @@ switch ($action) {
       bc_json([
         'provider'  => $name,
         'model'     => $model,
-        // Сырое сообщение уходит обратно клиенту, чтобы он дописал его в
-        // историю ровно в том виде, в каком его ждёт провайдер на следующем
-        // ходу — вместе с tool_calls и их id.
-        'message'   => $message,
+        // Сообщение уходит клиенту очищенным от полей конкретного провайдера.
+        // gpt-oss кладёт в ответ `reasoning`; оно попадало в историю, а
+        // следующая модель цепочки отвечала «400: reasoning is not supported
+        // with this model» — на экране это выглядело как «брокер не отвечает».
+        'message'   => bc_clean_message($message),
         'content'   => isset($message['content']) ? $message['content'] : '',
         'toolCalls' => $toolCalls,
       ]);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { callHints, currentHint, openingAsk, TRAINEE_MC } from './hints'
 import { makeCallSetup } from './makeCall'
+import { CALL_SEEDS } from './seeds'
 import { CallMachine, parseEquipment } from './CallMachine'
 import { lookupCarrier } from '../data/carriers'
 
@@ -54,5 +55,36 @@ describe('слух брокера на отраслевые слова', () => {
 
   it('невнятное по-прежнему остаётся невнятным', () => {
     expect(parseEquipment('uhh, the usual')).toBeNull()
+  })
+})
+
+describe('подсказка не отстаёт от разговора', () => {
+  it('показывает шаг по стадии, когда брокер перескочил вперёд', () => {
+    // Живой звонок: брокер уже просил данные водителя и почту под rate con,
+    // а на панели висело «торгуйтесь» — ставка формально не была записана.
+    const hints = callHints(makeCallSetup('call-003'), null)
+    expect(currentHint(hints)?.id).toBe('intro')
+    expect(currentHint(hints, 'booking')?.id).toBe('booking')
+    expect(currentHint(hints, 'capacity')?.id).toBe('driver')
+  })
+
+  it('без стадии ведёт себя как раньше — первый невыполненный', () => {
+    const hints = callHints(makeCallSetup('call-003'), null)
+    expect(currentHint(hints)?.id).toBe(hints[0]?.id)
+  })
+})
+
+describe('подсказки разные от звонка к звонку', () => {
+  it('приветствие не одно и то же во всех звонках', () => {
+    const openings = new Set(
+      CALL_SEEDS.map((seed) => callHints(makeCallSetup(seed), null)[0]?.say),
+    )
+    expect(openings.size).toBeGreaterThan(1)
+  })
+
+  it('внутри одного звонка формулировка не прыгает', () => {
+    const a = callHints(makeCallSetup('call-011'), null)
+    const b = callHints(makeCallSetup('call-011'), null)
+    expect(a.map((h) => h.say)).toEqual(b.map((h) => h.say))
   })
 })
