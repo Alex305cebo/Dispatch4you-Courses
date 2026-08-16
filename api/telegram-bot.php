@@ -163,6 +163,9 @@ require_once __DIR__ . '/lib/tg-actions.php';
 // звали draftAsText/draftMeta без подключённого файла) — это и был тот самый
 // цикл повторной доставки. Файл дешёвый, грузить его всегда безопаснее.
 require_once __DIR__ . '/lib/load-photo.php';
+// Антифрод по брокеру и проверка рейса по часам. Чистые функции, никуда не
+// ходят — подключаем рядом с остальными по той же причине.
+require_once __DIR__ . '/lib/load-checks.php';
 
 $token = @trim(file_get_contents(__DIR__ . '/../../tg-bot.key'));
 if ($token === '' || $token === false) { http_response_code(500); echo 'tg-bot.key missing'; exit; }
@@ -580,13 +583,14 @@ if (empty($load['stops'])) {
 $st = stateGet($chatId);
 $st['rc'] = $load;
 $st['rc_missing'] = $missing;
+$st['rc_fraud'] = rcFraud($load);
 $st['last'] = 'rc'; // из чего собирать письмо, если /carrier придёт до кнопки
 stateSet($chatId, $st);
 $lang = curLang($st);
 
 // Сводка + кнопки «что дальше». Полотно для водителя больше не вываливается
 // сразу: его отдаём по кнопке, когда оно действительно нужно.
-reply($token, $chatId, rcSummaryFull($load, $missing, $lang), rcKeyboard($load, $lang));
+reply($token, $chatId, rcSummaryFull($load, $missing, $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
 echo 'ok';
 exit;
 
@@ -1084,7 +1088,13 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   $L[] = '🔎 FMCSA';
   $L[] = '';
   $L[] = $name . ($dba !== null ? ' (DBA ' . $dba . ')' : '');
-  $L[] = 'DOT ' . $dot . ($kind !== 'dot' ? ' · MC ' . $number : '');
+  // MC печатаем, только если это действительно MC. /broker сначала ищет по
+  // docket-номеру, а не найдя — по DOT; на втором пути $number и есть DOT, и
+  // строка «DOT 2100420 · MC 2100420» выдавала одно за другое. Диспетчер
+  // записывал DOT как MC — особенно легко сейчас, когда у брокеров, открытых
+  // после 01.10.2025, MC не существует вовсе.
+  $numberIsDot = (string)$number === (string)$dot;
+  $L[] = 'DOT ' . $dot . ($kind !== 'dot' && !$numberIsDot ? ' · MC ' . $number : '');
   // ── Ключевые проверки. Считаем пройденные, чтобы дать процент и вердикт.
   // Common/Contract authority сюда НЕ входят: это статус перевозчика, а не
   // брокера, и у нормального брокера они законно «неактивны» — показывать их
@@ -1251,6 +1261,18 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
   $L[] = '';
   $L[] = $lang === 'en' ? 'Source: FMCSA QCMobile, official data.' : 'Источник: FMCSA QCMobile, данные официальные.';
   return implode("\n", $L);
+}
+
+// Сверка брокера сразу при разборе документа: MC из рейт-кона → запись FMCSA →
+// структурные метки. Один запрос к бесплатному API на документ, и только если
+// MC вообще нашёлся. Без ключа FMCSA молчим: пугать «MC не найден» там, где мы
+// просто не смотрели, — хуже, чем не проверять.
+function rcFraud(array $load) {
+  $mc = preg_replace('/\D/', '', (string)(isset($load['mc']) ? $load['mc'] : ''));
+  if ($mc === '') return array();
+  list($rec, $err) = fetchBrokerRecord('broker', $mc);
+  if ($err === 'nokey') return array();
+  return brokerFraudFlags($load, $rec);
 }
 
 // Точка входа для /mc, /dot, /broker — тянет данные и сразу форматирует.
@@ -1648,9 +1670,10 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
     $load = normalizeLoad($load);
     $st['rc'] = $load;
     $st['rc_missing'] = missingFields($load);
+    $st['rc_fraud'] = rcFraud($load);
     $st['last'] = 'rc';
     stateSet($chatId, $st);
-    reply($token, $chatId, rcSummaryFull($load, $st['rc_missing'], $lang), rcKeyboard($load, $lang));
+    reply($token, $chatId, rcSummaryFull($load, $st['rc_missing'], $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
     return;
   }
 
