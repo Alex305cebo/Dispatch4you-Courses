@@ -2,6 +2,7 @@ import { PICKUP_CUE, type TransportDeps, type VoiceTransport } from './types'
 import { MicVad } from './vad'
 import { TelephonyAudio } from './TelephonyAudio'
 import { endpoint } from '../api'
+import { normalizeTranscript } from '../data/terms'
 import { floatToPcm16Base64, base64ToPcm16Float } from './pcm'
 import {
   parseServerMessage,
@@ -235,8 +236,12 @@ export class GeminiLiveTransport implements VoiceTransport {
         case 'input_transcript':
           // Расшифровка своих слов приходит кусками; на экране это черновик,
           // который закрывается целой фразой, когда брокер начинает отвечать.
+          //
+          // Через отраслевой нормализатор — тот же, что в пайплайне. Без него
+          // «53 dry van» оставался на экране как «C-3 termin»: у пайплайна
+          // починка была, у Gemini нет, хотя калечит расшифровка одинаково.
           this.partial += event.text
-          this.deps.emit({ type: 'user_partial', text: this.partial.trim() })
+          this.deps.emit({ type: 'user_partial', text: normalizeTranscript(this.partial).trim() })
           break
 
         case 'output_transcript':
@@ -340,7 +345,7 @@ export class GeminiLiveTransport implements VoiceTransport {
       // Брокер заговорил — значит фраза студента закончена. Черновик на экране
       // заменяется целой строкой.
       if (this.partial.trim()) {
-        this.deps.emit({ type: 'user_final', text: this.partial.trim() })
+        this.deps.emit({ type: 'user_final', text: normalizeTranscript(this.partial).trim() })
       }
       this.partial = ''
     }

@@ -10,7 +10,9 @@ export const WHISPER_PROMPT =
   'reefer, flatbed, step deck, rate con, rate confirmation, BOL, POD, DAT, deadhead, detention, ' +
   'lumper, TONU, RPM, all-in, ETA, HOS, ELD, factoring, OTR Solutions, Triumph, RTS Financial, ' +
   'QuickPay, net 30, rate per mile, pickup, delivery, dock, appointment, shipper, receiver, ' +
-  'broker, carrier, dispatcher, power only, drop and hook, layover, accessorials.'
+  'broker, carrier, dispatcher, power only, drop and hook, layover, accessorials, ' +
+  // Длина трейлера цифрами: без этого «53» приезжало как «C-3».
+  '53-foot dry van, 48-foot, conestoga, hotshot, FCFS, hazmat, team, solo.'
 
 type Rule = readonly [RegExp, string]
 
@@ -20,12 +22,30 @@ const RULES: readonly Rule[] = [
   [/\bfifty[\s-]?three[\s-]?(foot|feet)\b/gi, '53-foot'],
   [/\b53\s*(foot|ft|feet)\b/gi, '53-foot'],
   [/\bdrive\s*van\b/gi, 'dry van'],
-  [/\bdry\s*(band|man)\b/gi, 'dry van'],
+  [/\bdry\s*(band|man|fan|vent|bin)\b/gi, 'dry van'],
+  [/\b(try|dr[ai])\s*van\b/gi, 'dry van'],
   [/\bdriv(e|ing)[\s-]?in\b/gi, 'dry van'],
   [/\brefrigerated\b/gi, 'reefer'],
   [/\breefer?\s*trailer\b/gi, 'reefer'],
+  // «refer» — настоящее английское слово, поэтому меняем только там, где оно
+  // не может быть глаголом: «refer to the rate con» ломать нельзя.
+  [/\breaper\b/gi, 'reefer'],
+  [/\brefer\b(?!\s+(to|me|him|her|them|us))/gi, 'reefer'],
   [/\bflat\s*bed\b/gi, 'flatbed'],
+  [/\bflat\s*(bad|back|bat|bet)\b/gi, 'flatbed'],
   [/\bstep\s*deck\b/gi, 'step deck'],
+  [/\bstep\s*(tech|tec|tack)\b/gi, 'step deck'],
+  [/\bdrop\s*deck\b/gi, 'step deck'],
+  [/\bcone\s*a\s*stoga\b/gi, 'conestoga'],
+  [/\bhot\s*shot\b/gi, 'hotshot'],
+
+  // Длина трейлера. «53» распознаётся то как «C-3», то как «see three»:
+  // цифра, названная вслух, регулярно приезжает буквой. В разговоре про
+  // трейлер другого смысла у «C-3» нет.
+  [/\b(c|see|sea|si)[\s.\-]*(3|three)\b/gi, '53'],
+  [/\b(five|5)[\s.\-]*(three|3)\b/gi, '53'],
+  [/\bfifty[\s-]?three\b/gi, '53'],
+  [/\bforty[\s-]?eight\b/gi, '48'],
 
   // MC / DOT
   [/\b(em|am)\s*[.\-]?\s*(see|sea|c)\s*(number|#)?\b/gi, 'MC number'],

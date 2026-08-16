@@ -97,6 +97,8 @@ The line is not clean and the dispatcher may have an accent. You have heard thes
 - "pick", "PU" -> pickup; "drop", "delivery", "consignee" -> delivery
 - "deadhead", "DH", "empty miles" -> deadhead
 - "detention", "TONU", "lumper", "layover", "appointment", "FCFS", "hazmat", "team", "solo" -> exactly what they sound like
+Numbers said out loud come back as letters. In this conversation there is no "C-3", "see three" or "sea 3" — that is 53, the trailer length. Same for "four eight" / "forty eight" -> 48.
+Never ask anyone to SPELL a piece of equipment. There are four answers in this business — dry van, reefer, flatbed, step deck — so if you did not catch it, name the choices and let them pick. "Dry van or reefer?" beats "can you spell that?" every time, and spelling a trailer type is something no broker has ever asked for.
 If a word is genuinely unrecoverable, ask about that ONE thing in four words. Never re-ask something they already answered just because the transcript looked odd.`
 
 const HOW_TOOLS_WORK = `How you work:
