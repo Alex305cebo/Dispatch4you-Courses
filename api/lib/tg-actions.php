@@ -95,7 +95,9 @@ function rcKeyboard(array $d, $lang = 'ru') {
   // MC из рейт-кона извлекается давно, а кнопки проверки тут не было — она
   // существовала только у груза со скриншота. Полный отчёт FMCSA в один тап
   // нужен как раз по рейт-кону: это документ, который собираются подписывать.
-  if (!empty($d['mc'])) $rows[] = array(array('text' => $lang === 'en' ? '🔎 Check broker' : '🔎 Проверить брокера', 'callback_data' => 'rc:mc'));
+  // dot появляется, когда MC в документе не напечатан, а брокера нашли в FMCSA
+  // по названию — проверить его от этого можно ровно так же.
+  if (!empty($d['mc']) || !empty($d['dot'])) $rows[] = array(array('text' => $lang === 'en' ? '🔎 Check broker' : '🔎 Проверить брокера', 'callback_data' => 'rc:mc'));
   $url = appLink($d);
   if ($url !== null) $rows[] = array(array('text' => $lang === 'en' ? '📊 Full breakdown with map' : '📊 Полный разбор с картой', 'url' => $url));
   $rows[] = array(langToggleButton($lang, 'rc'));
@@ -212,13 +214,16 @@ function handleCallback($token, array $cq) {
   // только тем, из какого разбора брать номер.
   if ($data === 'ph:mc' || $data === 'rc:mc') {
     $src = $data === 'ph:mc' ? (isset($st['load']) ? $st['load'] : array()) : (isset($st['rc']) ? $st['rc'] : array());
-    $mc = isset($src['mc']) ? preg_replace('/\D/', '', (string)$src['mc']) : '';
-    if ($mc === '') { reply($token, $chatId, $lang === 'en' ? 'Broker MC not recognized.' : 'MC брокера не распознан.'); return; }
-    list($rec, $err) = fetchBrokerRecord('broker', $mc);
-    if ($rec === null) { reply($token, $chatId, brokerReport('broker', $mc, $lang)); return; }
-    $st['fmcsa'] = array('rec' => $rec, 'kind' => 'broker', 'number' => $mc);
+    // MC из документа, а если его там не было — DOT, найденный по названию.
+    $num = isset($src['mc']) ? preg_replace('/\D/', '', (string)$src['mc']) : '';
+    $kind = 'broker';
+    if ($num === '' && !empty($src['dot'])) { $num = preg_replace('/\D/', '', (string)$src['dot']); $kind = 'dot'; }
+    if ($num === '') { reply($token, $chatId, $lang === 'en' ? 'Broker MC not recognized.' : 'MC брокера не распознан.'); return; }
+    list($rec, $err) = fetchBrokerRecord($kind, $num);
+    if ($rec === null) { reply($token, $chatId, brokerReport($kind, $num, $lang)); return; }
+    $st['fmcsa'] = array('rec' => $rec, 'kind' => $kind, 'number' => $num);
     stateSet($chatId, $st);
-    reply($token, $chatId, formatBrokerReport($rec, 'broker', $mc, $lang), fmcsaKeyboard($lang));
+    reply($token, $chatId, formatBrokerReport($rec, $kind, $num, $lang), fmcsaKeyboard($lang));
     return;
   }
   reply($token, $chatId, $stale);

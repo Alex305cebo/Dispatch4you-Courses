@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-16-1';
+const BUILD = '2026-08-16-2';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -135,7 +135,7 @@ function diagGate() {
 }
 
 // Один список на все служебные ветки — заводишь новую, дописываешь сюда.
-foreach (array('lasterr', 'diag', 'fmcsacheck', 'geminicheck', 'webhookinfo', 'setup') as $q) {
+foreach (array('lasterr', 'diag', 'fmcsacheck', 'fmcsaname', 'geminicheck', 'webhookinfo', 'setup') as $q) {
   if (isset($_GET[$q])) { diagGate(); break; }
 }
 
@@ -208,6 +208,26 @@ if (isset($_GET['fmcsacheck'])) {
     exit;
   }
   echo "ответ: " . brokerReport('broker', $mc) . "\n";
+  exit;
+}
+
+// ── Поиск брокера по названию: ?fmcsaname=Molo Solutions ────────────
+// Нужен потому, что MC в рейт-конах печатают не всегда, и вся сверка держится
+// на этом поиске. Проверять его вслепую нельзя: FMCSA отдаёт по имени всех
+// похожих, и важно видеть, находится ли КОНКРЕТНЫЙ брокер однозначно.
+if (isset($_GET['fmcsaname'])) {
+  header('Content-Type: text/plain; charset=utf-8');
+  $n = trim((string)$_GET['fmcsaname']);
+  $rec = $n === '' ? null : fetchBrokerByName($n);
+  if (!is_array($rec)) {
+    echo "«$n»: однозначного совпадения нет\n";
+    echo "(либо не найдено, либо тёзок несколько — в обоих случаях бот молчит)\n";
+    exit;
+  }
+  echo "«$n» → " . $rec['legalName'] . "\n";
+  echo "DOT " . (isset($rec['dotNumber']) ? $rec['dotNumber'] : '—') . "\n\n";
+  $fl = brokerFraudFlags(array('broker' => $n), $rec);
+  echo $fl ? fraudText($fl) . "\n" : "флагов нет\n";
   exit;
 }
 
@@ -346,6 +366,7 @@ if (!isset($msg['document'])) {
         . "Что Telegram думает о вебхуке:\n" . SELF_URL . "?webhookinfo=1&k=" . $k . "\n\n"
         . "Жив ли ключ Gemini (тратит 1 запрос из 20 в сутки):\n" . SELF_URL . "?geminicheck=1&k=" . $k . "\n\n"
         . "Жив ли ключ FMCSA:\n" . SELF_URL . "?fmcsacheck=115789&k=" . $k . "\n\n"
+        . "Найдётся ли брокер по названию (подставь своё):\n" . SELF_URL . "?fmcsaname=Molo+Solutions&k=" . $k . "\n\n"
         . "Переустановить вебхук (сотрёт необработанную очередь):\n" . SELF_URL . "?setup=1&k=" . $k);
     }
   } elseif (preg_match('~^/carrier\b\s*(.*)$~is', $text, $cm)) {
@@ -560,6 +581,9 @@ if (!is_dir($dir)) @mkdir($dir, 0755, true);
 clearProgress($token, $chatId);
 
 $load = normalizeLoad($load);
+// Сверка брокера идёт ДО списка недостающего: найдя его в FMCSA по имени, она
+// дописывает в разбор DOT — и жаловаться на пропавший MC уже не на что.
+$fraud = rcFraud($load);
 $missing = missingFields($load);
 
 if (empty($load['stops'])) {
@@ -583,7 +607,7 @@ if (empty($load['stops'])) {
 $st = stateGet($chatId);
 $st['rc'] = $load;
 $st['rc_missing'] = $missing;
-$st['rc_fraud'] = rcFraud($load);
+$st['rc_fraud'] = $fraud;
 $st['last'] = 'rc'; // из чего собирать письмо, если /carrier придёт до кнопки
 stateSet($chatId, $st);
 $lang = curLang($st);
@@ -959,7 +983,9 @@ function missingFields(array $d) {
   if (empty($d['rate']))      $miss[] = array('field' => 'rate');
   if (empty($d['weight']))    $miss[] = array('field' => 'weight');
   if (empty($d['commodity'])) $miss[] = array('field' => 'commodity');
-  if (empty($d['mc'])) $miss[] = array('field' => 'mc');
+  // Про MC жалуемся, только если брокера не удалось опознать вообще: когда его
+  // нашли в FMCSA по названию, номер у нас есть — просто не из документа.
+  if (empty($d['mc']) && empty($d['dot'])) $miss[] = array('field' => 'mc');
   // Целиком пропавший стоп раньше не считался пропажей: в сводке просто
   // появлялось «Маршрут: ? → …», а карта в приложении не строилась вообще,
   // и понять, что бот не дочитал документ, было невозможно.
@@ -1267,12 +1293,55 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
 // структурные метки. Один запрос к бесплатному API на документ, и только если
 // MC вообще нашёлся. Без ключа FMCSA молчим: пугать «MC не найден» там, где мы
 // просто не смотрели, — хуже, чем не проверять.
-function rcFraud(array $load) {
+// $load передаётся ПО ССЫЛКЕ: найдя брокера по имени, мы дописываем в разбор
+// его DOT — от этого зависит и кнопка проверки, и предупреждение о пропавшем MC.
+function rcFraud(array &$load) {
   $mc = preg_replace('/\D/', '', (string)(isset($load['mc']) ? $load['mc'] : ''));
-  if ($mc === '') return array();
-  list($rec, $err) = fetchBrokerRecord('broker', $mc);
-  if ($err === 'nokey') return array();
+  if ($mc !== '') {
+    list($rec, $err) = fetchBrokerRecord('broker', $mc);
+    if ($err === 'nokey') return array();
+    return brokerFraudFlags($load, $rec);
+  }
+  // MC в документе нет — на живых рейт-конах это обычное дело: номер печатают
+  // мелким шрифтом в подвале, и он теряется при извлечении текста. Раньше на
+  // этом проверка просто заканчивалась, то есть не работала ровно там, где
+  // нужнее всего. Ищем по названию компании.
+  $name = isset($load['broker']) ? trim((string)$load['broker']) : '';
+  if ($name === '') return array();
+  $rec = fetchBrokerByName($name);
+  // Не нашли или нашли неоднозначно — молчим. Отсутствие записи по имени не
+  // улика: FMCSA ищет по точному написанию, а брокер мог представиться иначе.
+  if (!is_array($rec)) return array();
+  if (!empty($rec['dotNumber'])) $load['dot'] = (string)$rec['dotNumber'];
   return brokerFraudFlags($load, $rec);
+}
+
+/**
+ * Брокер по названию компании. Отдаём запись, только если совпадение
+ * ОДНО и однозначное: у FMCSA поиск по имени возвращает всех похожих, и
+ * взять первого попавшегося — это выдать диспетчеру чужую контору за его.
+ */
+function fetchBrokerByName($name) {
+  $key = @trim(file_get_contents(__DIR__ . '/../../fmcsa.key'));
+  if ($key === '' || $key === false) return null;
+  // Запятые и точки в запросе только мешают: «Molo Solutions, LLC» не находится,
+  // «MOLO SOLUTIONS» находится.
+  $q = trim(preg_replace('/\s+/', ' ', preg_replace('/[^A-Za-z0-9 ]/', ' ', $name)));
+  if ($q === '') return null;
+  $data = fmcsaGet('carriers/name/' . rawurlencode($q), $key);
+  if (!is_array($data) || !isset($data['content']) || !is_array($data['content'])) return null;
+
+  $hits = array();
+  foreach ($data['content'] as $row) {
+    $c = isset($row['carrier']) ? $row['carrier'] : $row;
+    if (!is_array($c) || empty($c['legalName'])) continue;
+    $dba = isset($c['dbaName']) ? (string)$c['dbaName'] : '';
+    if (!sameCompany($name, $c['legalName']) && ($dba === '' || !sameCompany($name, $dba))) continue;
+    // Один и тот же DOT приходит несколько раз — считаем компании, не строки.
+    $hits[(string)(isset($c['dotNumber']) ? $c['dotNumber'] : count($hits))] = $c;
+    if (count($hits) > 1) return null;   // тёзки: молча выходим, гадать нельзя
+  }
+  return $hits ? reset($hits) : null;
 }
 
 // Точка входа для /mc, /dot, /broker — тянет данные и сразу форматирует.
@@ -1668,9 +1737,9 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   // поля молча терялись — ответ выглядел нормальным, но был неполным.
   if (isRateCon($load)) {
     $load = normalizeLoad($load);
+    $st['rc_fraud'] = rcFraud($load);   // до missingFields: может дописать DOT
     $st['rc'] = $load;
     $st['rc_missing'] = missingFields($load);
-    $st['rc_fraud'] = rcFraud($load);
     $st['last'] = 'rc';
     stateSet($chatId, $st);
     reply($token, $chatId, rcSummaryFull($load, $st['rc_missing'], $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
