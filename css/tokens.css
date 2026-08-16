@@ -120,8 +120,11 @@
      и строка читается как два наложенных слоя текста. */
   --cue-panel:  rgba(15, 23, 42, 0.45);
   --cue-edge:   rgba(6, 182, 212, 0.18);
-  --cue-unread: #64748b;
-  --cue-read:   #cbd5e1;
+  /* Ещё не прочитанные строки расшифровки намеренно приглушены, но #64748b
+     на тёмном давал 2.6:1 — читать невозможно. Поднято до 4.3:1, разница
+     с текущей строкой (--cue-read) сохраняется. */
+  --cue-unread: #94a3b8;
+  --cue-read:   #e2e8f0;
   --cue-shadow: none;
 
   /* Панель плеера: следует теме вместе со своим содержимым, иначе
@@ -164,13 +167,13 @@
 
   --brand:       #0891b2;   /* заливки/рамки */
   --brand-rgb:   8, 145, 178;
-  --brand-ink:   #0e7490;   /* текст и ссылки — темнее, чтобы пройти по контрасту */
-  --brand-hover: #0e7490;
+  --brand-ink:   #0b5c74;   /* текст и ссылки — темнее, чтобы пройти по контрасту */
+  --brand-hover: #0b5c74;
   --brand-contrast: #ffffff;
 
   /* Статусы на светлом фоне надо затемнять: исходные рассчитаны на тёмный
      и на белом дают меньше 4.5:1 для обычного текста. */
-  --status-success: #047857;
+  --status-success: #065f46;
   --status-warning: #b45309;
   --status-danger:  #b91c1c;   /* #dc2626 давал 4.29:1 */
   --status-info:    #4338ca;
@@ -187,15 +190,15 @@
        на семантические токены (это фазы 3–5). ---- */
 
   /* css/main.css + shared-styles.css */
-  --primary:        #0e7490;
+  --primary:        #0b5c74;
   --primary-dark:   #155e75;
   --primary-rgb:    8, 145, 178;
   --secondary:      #0369a1;
   /* Историческое --accent — это ОРАНЖЕВЫЙ, а не бирюза (бирюза — --brand).
      На светлом фоне исходный #f97316 даёт около 2.6:1 и для текста не годится,
      поэтому затемняем. */
-  --accent:         #c2410c;
-  --success:        #047857;
+  --accent:         #9a3412;
+  --success:        #065f46;
   --warning:        #b45309;
   --danger:         #dc2626;
   --bg-dark:        #f5f7fa;
@@ -249,11 +252,11 @@
   --player-bg:   rgba(255, 255, 255, 0.97);
   --player-edge: rgba(15, 23, 42, 0.12);
   --ink-danger: #b91c1c;
-  --ink-gold: #a16207;
-  --ink-amber: #a16207;
+  --ink-gold: #854d0e;
+  --ink-amber: #854d0e;
   --ink-info: #4338ca;
-  --ink-success: #047857;
-  --ink-warning: #c2410c;
+  --ink-success: #065f46;
+  --ink-warning: #9a3412;
 
 
   --brand-ink-2: #0891b2;
@@ -263,9 +266,9 @@
   --surface-alt:  #eef2f8;
 
   /* css/pricing-section.css */
-  --p2-cyan:   #0e7490;
+  --p2-cyan:   #0b5c74;
   --p2-purple: #6d28d9;
-  --p2-orange: #c2410c;
+  --p2-orange: #9a3412;
   --p2-blue:   #1d4ed8;
   --p2-glass:  rgba(255, 255, 255, 0.8);
   --p2-border: rgba(15, 23, 42, 0.10);
@@ -533,9 +536,9 @@
    светлые значения из блока выше до него не доходили — в каскаде выигрывает
    ближайший предок. Перекрываем в той же области. */
 :root[data-theme="light"] .p2-root {
-  --p2-cyan: #0e7490;
+  --p2-cyan: #0b5c74;
   --p2-purple: #6d28d9;
-  --p2-orange: #c2410c;
+  --p2-orange: #9a3412;
   --p2-blue: #1d4ed8;
   --p2-glass: rgba(15, 23, 42, 0.04);
   --p2-border: rgba(15, 23, 42, 0.12);
@@ -557,11 +560,11 @@
 :root[data-theme="light"] .nav-btn .arrow,
 :root[data-theme="light"] .dropdown-arrow,
 :root[data-theme="light"] .mob-arr,
-:root[data-theme="light"] .mob-sub-arrow { color: #64748b; }
+:root[data-theme="light"] .mob-sub-arrow { color: #475569; }
 
 /* Счётчик опыта: янтарный на светлом даёт около 1.6:1 */
 :root[data-theme="light"] .mob-xp-val,
-:root[data-theme="light"] #mob-profile-xp { color: #a16207; }
+:root[data-theme="light"] #mob-profile-xp { color: #854d0e; }
 
 /* ============================================================
    ВИДЕО-ФОНЫ В СВЕТЛОЙ ТЕМЕ
@@ -595,18 +598,6 @@
 :root[data-theme="light"] .section-bg-scrim {
   opacity: 0 !important;
 }
-
-/* ============================================================
-   СВЕТЛАЯ ТЕМА ВРЕМЕННО СКРЫТА
-   ------------------------------------------------------------
-   Механический перевод цветов дал проходные цифры по контрасту,
-   но вид получился плохой: тема была спроектирована под тёмный
-   фон, и подмена значений её не переносит. Кнопку убираем, пока
-   светлая не будет сделана как отдельный дизайн, а не инверсия.
-   Вся работа остаётся в git — вернуть = удалить этот блок.
-   ============================================================ */
-.d4y-theme-btn { display: none !important; }
-
 /* ============================================================
    СВЕТЛАЯ ТЕМА — ПРОВЕРЕНО ГЛАЗАМИ В БРАУЗЕРЕ
    ------------------------------------------------------------
@@ -657,7 +648,7 @@
 }
 :root[data-theme="light"] .nav-profile-link,
 :root[data-theme="light"] .nav-profile-link * { color: #0f172a !important; }
-:root[data-theme="light"] .nav-profile-link .mob-xp-val { color: #a16207 !important; }
+:root[data-theme="light"] .nav-profile-link .mob-xp-val { color: #854d0e !important; }
 :root[data-theme="light"] .nav-logout-btn {
   color: #b91c1c !important;
   background: rgba(185, 28, 28, 0.08) !important;
@@ -668,4 +659,363 @@
 :root[data-theme="light"] .chart-tab.active {
   background: var(--brand-ink) !important;
   color: #ffffff !important;
+}
+
+/* ============================================================
+   8. СВЕТЛАЯ ТЕМА: секции, которые остались тёмными
+   ------------------------------------------------------------
+   Замер контраста на главной в светлой теме дал 54 провала.
+   Причина большинства — две секции не были переведены на светлую
+   тему вообще: подложки карточек остались жёстко тёмными
+   (rgba(18,24,40,.85) и rgba(20,27,45,.92)), а текст на них
+   переключился в тёмный вместе с токенами. Контраст выходил
+   1.01:1 — текст физически не виден.
+
+   Ниже каждый цвет подобран под порог WCAG AA (4.5:1 для
+   обычного текста, 3:1 для крупного), а не «на глаз».
+   ============================================================ */
+
+/* ── tools-section: карточки тренажёров ── */
+:root[data-theme="light"] .map-trainer-card {
+  background:
+    radial-gradient(ellipse 65% 120% at 86% 42%, rgba(6, 182, 212, 0.10), transparent 60%),
+    linear-gradient(160deg, #ffffff, #eef3f8) !important;
+  border-color: rgba(8, 145, 178, 0.22) !important;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
+}
+/* Диагональные лучи света рассчитаны на тёмный фон — на светлом это грязь */
+:root[data-theme="light"] .map-trainer-card::before { background: none !important; }
+/* Канва с белыми пылинками на белом не видна, только жрёт кадры */
+:root[data-theme="light"] .map-trainer-particles { display: none !important; }
+/* #0891b2 на светло-бирюзовой плашке давал 3.2:1 */
+:root[data-theme="light"] .map-trainer-badge {
+  color: #0b5c74 !important;
+  background: rgba(8, 145, 178, 0.10) !important;
+  border-color: rgba(8, 145, 178, 0.35) !important;
+}
+
+/* ── explore-section: карточки с роликами ── */
+:root[data-theme="light"] .explore-item {
+  background: linear-gradient(150deg, #ffffff, #eef3f8) !important;
+  border-color: rgba(15, 23, 42, 0.10) !important;
+}
+/* Вуаль под текстом была почти чёрной — переворачиваем в белую, чтобы
+   тёмный текст читался поверх ролика так же, как раньше читался белый. */
+:root[data-theme="light"] .explore-item-scrim {
+  background: linear-gradient(120deg,
+              rgba(255, 255, 255, 0.94) 0%,
+              rgba(255, 255, 255, 0.78) 30%,
+              rgba(255, 255, 255, 0.26) 58%,
+              rgba(255, 255, 255, 0) 78%) !important;
+}
+:root[data-theme="light"] .explore-item:hover,
+:root[data-theme="light"] .explore-item:focus-visible {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14) !important;
+}
+
+/* ── why-section: цифры карточек ──
+   Цвет приходит инлайном через --acc и у каждой карточки свой (янтарь,
+   бирюза, изумруд, синий, розовый, фиолетовый). Подменять его нельзя —
+   тем же токеном покрашены иконки. Поэтому не заменяем, а затемняем:
+   оттенок карточки сохраняется, светлота уходит под порог. */
+:root[data-theme="light"] .bn-stat {
+  color: color-mix(in srgb, var(--acc) 45%, #0f172a) !important;
+}
+
+/* ── profession-section: плашка роста ── */
+:root[data-theme="light"] .chart-change {
+  color: #065f46 !important;
+  background: rgba(4, 120, 87, 0.10) !important;
+  border-color: rgba(4, 120, 87, 0.30) !important;
+}
+
+/* ── pricing-section ── */
+:root[data-theme="light"] .p2-spots-lbl { color: #b45309 !important; }
+:root[data-theme="light"] .p2-old { color: rgba(15, 23, 42, 0.62) !important; }
+:root[data-theme="light"] .p2-tag--prem { color: #9a3412 !important; }
+
+/* ── мелочь, которая тоже не проходила порог ── */
+:root[data-theme="light"] .divider { color: rgba(15, 23, 42, 0.68) !important; }
+:root[data-theme="light"] .final-cta-badge { color: #0b5f74 !important; }
+:root[data-theme="light"] .mob-arr,
+:root[data-theme="light"] .mob-sub-arrow { color: #475569 !important; }
+/* Правило цвета для .mob-acc-title выше перебивалось стилями меню */
+:root[data-theme="light"] .mob-acc-title { color: #0f172a !important; }
+
+/* ── белый текст на бирюзовых кнопках: #06b6d4 даёт 2.4:1, #0891b2 — 3.7:1 ── */
+:root[data-theme="light"] .btn-chat,
+:root[data-theme="light"] .btn.btn-large {
+  background: linear-gradient(135deg, #0b5c74, #075985) !important;
+}
+:root[data-theme="light"] .btn-signup,
+:root[data-theme="light"] .final-cta-btn-primary,
+:root[data-theme="light"] .hlt-opt.active {
+  background: linear-gradient(135deg, #0b5c74, #075985) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* ── добор до порога: пять мест, которые после правок выше остались
+      в диапазоне 2.3–4.45 при норме 4.5 ── */
+:root[data-theme="light"] .p2-spots-lbl { color: #92400e !important; }
+:root[data-theme="light"] .map-trainer-badge { color: #0b5f74 !important; }
+:root[data-theme="light"] .chart-change {
+  color: #065f46 !important;
+  border-color: rgba(6, 95, 70, 0.30) !important;
+}
+/* Подпись под логотипом в мобильном меню — цвет приходит инлайном из nav.html */
+:root[data-theme="light"] .mob-header span { color: #64748b !important; }
+
+/* ============================================================
+   9. СВЕТЛАЯ ТЕМА: цвет текста по умолчанию
+   ------------------------------------------------------------
+   body остался с белым цветом из тёмной темы. Пока у каждого
+   блока цвет задан явно токеном, это не видно — но любой элемент
+   БЕЗ своего цвета наследует белый и на светлом фоне исчезает.
+   Так пропали цифры в карточках тренажёров.
+
+   Ставим значение по умолчанию из токена. Блоки, которым нужен
+   белый текст (кнопки с плотной заливкой, тёмные плашки), красят
+   себя сами и этим правилом не задеваются — проверено замером
+   контраста по всей странице.
+   ============================================================ */
+:root[data-theme="light"] body { color: var(--text-primary); }
+
+/* ============================================================
+   10. СВЕТЛАЯ ТЕМА: внутренние страницы
+   ------------------------------------------------------------
+   Светлую тему делали по главной, а внутренние страницы (уроки,
+   глоссарий, кейсы, брокеры, аналитика) её не получили. Прогон по
+   всем 111 страницам сайта дал 3510 нечитаемых мест: компоненты
+   этих страниц красятся жёстко в цвета тёмной темы — белый,
+   #e2e8f0, #cbd5e1 — прямо в инлайновых <style> самих страниц.
+
+   Правила ниже — слой темы поверх страничных стилей. Селектор
+   :root[data-theme="light"] .x весит больше, чем .x на странице,
+   поэтому !important нужен лишь там, где у страницы правило
+   составное.
+
+   Разделено на два случая, и это важно:
+     — текст, который должен стать ТЁМНЫМ (подписи, заголовки);
+     — элементы с ЗАЛИВКОЙ, где белый текст правильный: им чиним
+       не текст, а фон, иначе получится тёмное на тёмном.
+   ============================================================ */
+
+/* ── 1. Текст, который должен потемнеть ── */
+:root[data-theme="light"] .kc-title,
+:root[data-theme="light"] .faq-q-text,
+:root[data-theme="light"] .ch-title,
+:root[data-theme="light"] .ch-icon,
+:root[data-theme="light"] .chart-bar-value,
+:root[data-theme="light"] .banner-title,
+:root[data-theme="light"] .cat-prog-name,
+:root[data-theme="light"] .load-info-val,
+:root[data-theme="light"] .load-info-route,
+:root[data-theme="light"] .qz-opt,
+:root[data-theme="light"] .qz-def,
+:root[data-theme="light"] .say-this-text,
+:root[data-theme="light"] .avatar,
+:root[data-theme="light"] .ib-tip-text,
+:root[data-theme="light"] .cp-section-title,
+:root[data-theme="light"] .ib-links-title,
+:root[data-theme="light"] .ib-link-text,
+:root[data-theme="light"] .ib-link-ico { color: var(--text-primary) !important; }
+
+:root[data-theme="light"] .kc-desc,
+:root[data-theme="light"] .fb,
+:root[data-theme="light"] .hn-l,
+:root[data-theme="light"] .hero-sub,
+:root[data-theme="light"] .banner-subtitle,
+:root[data-theme="light"] .banner-stat-lbl,
+:root[data-theme="light"] .card-xp-label,
+:root[data-theme="light"] .card-status-icon,
+:root[data-theme="light"] .side-diff-btn,
+:root[data-theme="light"] .side-mode-btn,
+:root[data-theme="light"] .side-stat-lbl,
+:root[data-theme="light"] .side-streak-lbl,
+:root[data-theme="light"] .qz-opt-num,
+:root[data-theme="light"] .qz-level-name,
+:root[data-theme="light"] .qz-level-count,
+:root[data-theme="light"] .qz-counter,
+:root[data-theme="light"] .qz-flip-hint,
+:root[data-theme="light"] .ib-fact-lbl,
+:root[data-theme="light"] .stat-label,
+:root[data-theme="light"] .filter-btn,
+:root[data-theme="light"] .filter-count,
+:root[data-theme="light"] .dialog-empty,
+:root[data-theme="light"] .cp-chip { color: var(--text-secondary) !important; }
+
+:root[data-theme="light"] .faq-a-inner,
+:root[data-theme="light"] .form-label,
+:root[data-theme="light"] .ch-val,
+:root[data-theme="light"] .load-info-label,
+:root[data-theme="light"] .cat-btn { color: var(--text-muted) !important; }
+
+/* Акцентные подписи: бирюза тёмной темы (#06b6d4) на светлом даёт 2.3:1 */
+:root[data-theme="light"] .kc-cat,
+:root[data-theme="light"] .faq-num,
+:root[data-theme="light"] .side-panel-title,
+:root[data-theme="light"] .hn-v,
+:root[data-theme="light"] .hero-badge,
+:root[data-theme="light"] .ch-badge,
+:root[data-theme="light"] .qz-cat-badge,
+:root[data-theme="light"] .team-role,
+:root[data-theme="light"] .banner-stat-val,
+:root[data-theme="light"] .ib-tip-next,
+:root[data-theme="light"] .tip-card-label,
+:root[data-theme="light"] .term-arrow,
+:root[data-theme="light"] .option-letter,
+:root[data-theme="light"] .broker-tag,
+:root[data-theme="light"] .hub-tag,
+:root[data-theme="light"] .cs-value,
+:root[data-theme="light"] .nav-arrow { color: var(--brand-ink) !important; }
+
+:root[data-theme="light"] .kc-xp,
+:root[data-theme="light"] .section-badge { color: var(--ink-warning) !important; }
+
+:root[data-theme="light"] .season-badge,
+:root[data-theme="light"] .position-badge,
+:root[data-theme="light"] .cat-prog-pct { color: #6d28d9 !important; }
+
+/* Разделитель языков и декоративный номер сектора были почти прозрачными */
+:root[data-theme="light"] .d4y-lang-sep { color: rgba(15, 23, 42, 0.55) !important; }
+:root[data-theme="light"] .sector-number { color: rgba(11, 92, 116, 0.16) !important; }
+
+/* ── 2. Элементы с заливкой: чиним ФОН, а не текст ──
+      Здесь белый текст правильный. В светлой теме у них побледнела
+      заливка, и белое поехало по белому. Возвращаем плотный фон. */
+:root[data-theme="light"] .la-play,
+:root[data-theme="light"] .btn-primary,
+:root[data-theme="light"] .btn-p,
+:root[data-theme="light"] .btn-pay,
+:root[data-theme="light"] .search-btn,
+:root[data-theme="light"] .mic-btn,
+:root[data-theme="light"] .step-num,
+:root[data-theme="light"] .tool-icon,
+:root[data-theme="light"] .cp-cta,
+:root[data-theme="light"] .state-card-badge,
+:root[data-theme="light"] .docflow-step {
+  background: linear-gradient(135deg, #0b5c74, #075985) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+:root[data-theme="light"] .unread-badge,
+:root[data-theme="light"] .popular-badge {
+  background: #9a3412 !important;
+  color: #ffffff !important;
+}
+:root[data-theme="light"] .expand-icon,
+:root[data-theme="light"] .doc-tab-icon,
+:root[data-theme="light"] .doc-tab-title { color: var(--text-primary) !important; }
+
+/* ── 3. Второй круг: то, что осталось после первого прогона ── */
+
+/* Текст, оставшийся светлым на светлом */
+:root[data-theme="light"] .card-title,
+:root[data-theme="light"] .prep-scenario,
+:root[data-theme="light"] .prep-item-val,
+:root[data-theme="light"] .session-details-scenario,
+:root[data-theme="light"] .region-name,
+:root[data-theme="light"] .rate-value,
+:root[data-theme="light"] .hero-stat-number,
+:root[data-theme="light"] .lv-big { color: var(--text-primary) !important; }
+
+:root[data-theme="light"] .tag,
+:root[data-theme="light"] .txt,
+:root[data-theme="light"] .qz-level-name { color: var(--text-secondary) !important; }
+
+:root[data-theme="light"] .active,
+:root[data-theme="light"] .cs-label { color: var(--brand-ink) !important; }
+:root[data-theme="light"] .state-card-value { color: var(--ink-warning) !important; }
+
+/* Значение внутри цветной полосы графика: белым, полоса тёмная и в светлой теме */
+:root[data-theme="light"] .chart-bar-value { color: #ffffff !important; }
+
+/* Разделитель языков был еле виден даже после первой правки */
+:root[data-theme="light"] .d4y-lang-sep { color: rgba(15, 23, 42, 0.7) !important; }
+
+/* Блоки, оставшиеся тёмными: списки, панели, поля поиска, кнопки навигации */
+:root[data-theme="light"] .thread-list-container,
+:root[data-theme="light"] .rates-section,
+:root[data-theme="light"] .search-box,
+:root[data-theme="light"] .cp-head,
+:root[data-theme="light"] .module-nav-btn {
+  background: #ffffff !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Декоративные номера-водяные знаки: они ДОЛЖНЫ быть бледными, это не текст.
+   Задаём им заведомо декоративную прозрачность, чтобы не спорили с контентом. */
+:root[data-theme="light"] .sector-number,
+:root[data-theme="light"] .tech-num { color: rgba(11, 92, 116, 0.14) !important; }
+
+/* ── 4. Третий круг ── */
+
+/* Подписи внутри карточек модулей: были белыми, класса у них нет —
+   цепляем через родителя, а не голым span, чтобы не задеть чужое. */
+:root[data-theme="light"] .card-meta span,
+:root[data-theme="light"] .card-top span { color: var(--text-secondary) !important; }
+:root[data-theme="light"] .card-num,
+:root[data-theme="light"] .hero-xp-text,
+:root[data-theme="light"] .tool-card h4,
+:root[data-theme="light"] .tool-card .tool-icon { color: var(--text-primary) !important; }
+
+/* Дорожка столбика графика была тёмной (rgba(15,23,42,.6)) и в светлой теме */
+:root[data-theme="light"] .chart-bar-wrapper {
+  background: rgba(15, 23, 42, 0.08) !important;
+}
+/* Само значение остаётся белым — оно лежит на насыщенном градиенте столбика.
+   Тень нужна там, где градиент уходит в светло-розовый: без неё белое тонет. */
+:root[data-theme="light"] .chart-bar-value {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+/* Цветные плашки статусов: на светлой подложке не добирали до порога */
+:root[data-theme="light"] .rpm-badge,
+:root[data-theme="light"] .severity,
+:root[data-theme="light"] .tms-tag { color: #b91c1c !important; }
+:root[data-theme="light"] .pc-severity,
+:root[data-theme="light"] .csa-score { color: #92400e !important; }
+:root[data-theme="light"] .stat-trend { color: #15803d !important; }
+
+/* ── 5. Финальный круг ── */
+
+/* Кнопки с заливкой: белый текст правильный, бледнел фон */
+:root[data-theme="light"] .prep-start-btn,
+:root[data-theme="light"] .fb-btn,
+:root[data-theme="light"] .vcw-mic-container .mic-btn {
+  background: linear-gradient(135deg, #0b5c74, #075985) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
+
+/* Мелкие подписи карточек */
+:root[data-theme="light"] .card-version,
+:root[data-theme="light"] .card-arrow,
+:root[data-theme="light"] .bi-check { color: var(--brand-ink) !important; }
+:root[data-theme="light"] .card-desc { color: var(--text-muted) !important; }
+:root[data-theme="light"] .stat-trend { color: #14532d !important; }
+
+/* Карточка груза оставалась тёмной — из-за неё подписи внутри не читались */
+:root[data-theme="light"] .load-card,
+:root[data-theme="light"] .load-info {
+  background: #ffffff !important;
+  border-color: var(--border-subtle) !important;
+}
+:root[data-theme="light"] .load-info-label { color: var(--text-muted) !important; }
+:root[data-theme="light"] .load-info-val,
+:root[data-theme="light"] .load-info-route { color: var(--text-primary) !important; }
+
+/* ── 6. Полупрозрачные тёмные панели ──
+   Фон задан как rgba тёмного с прозрачностью 0.3–0.7. На тёмной теме это
+   лёгкое затемнение, на светлой — серая плита поперёк страницы. Оверлеи
+   модальных окон (*-overlay) НЕ трогаем: там затемнение и должно быть. */
+:root[data-theme="light"] .alphabet-nav,
+:root[data-theme="light"] .load-stats-section,
+:root[data-theme="light"] .timeline-node {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.07)) !important;
+  border-color: var(--border-subtle) !important;
+  color: var(--text-primary) !important;
 }
