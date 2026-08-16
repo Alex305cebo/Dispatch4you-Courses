@@ -53,8 +53,14 @@ function rcSummary(array $d, $lang = 'ru') {
 
 // Сводка + предупреждение о ненайденных полях + призыв к действию — единым
 // текстом, чтобы кнопка перевода могла пересобрать ВСЁ сообщение целиком.
-function rcSummaryFull(array $d, array $missing, $lang = 'ru') {
+function rcSummaryFull(array $d, array $missing, $lang = 'ru', array $fraud = array()) {
   $text = rcSummary($d, $lang);
+  // Сверка брокера и проверка по часам идут ПЕРВЫМИ после цифр: если с грузом
+  // что-то не так, это надо увидеть до того, как рука потянется к кнопкам.
+  $fr = fraudText($fraud, $lang);
+  if ($fr !== '') $text .= "\n\n" . $fr;
+  $hos = hosText(hosFeasibility($d), $lang);
+  if ($hos !== '') $text .= "\n\n" . $hos;
   if ($missing) {
     $list = implode(', ', missingFieldsText($missing, $lang));
     $text .= $lang === 'en'
@@ -86,6 +92,10 @@ function rcKeyboard(array $d, $lang = 'ru') {
     array(array('text' => $lang === 'en' ? '🚚 Driver text' : '🚚 Текст водителю', 'callback_data' => 'rc:driver')),
   );
   if (MAIL_ENABLED) $rows[] = array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'rc:mail'));
+  // MC из рейт-кона извлекается давно, а кнопки проверки тут не было — она
+  // существовала только у груза со скриншота. Полный отчёт FMCSA в один тап
+  // нужен как раз по рейт-кону: это документ, который собираются подписывать.
+  if (!empty($d['mc'])) $rows[] = array(array('text' => $lang === 'en' ? '🔎 Check broker' : '🔎 Проверить брокера', 'callback_data' => 'rc:mc'));
   $url = appLink($d);
   if ($url !== null) $rows[] = array(array('text' => $lang === 'en' ? '📊 Full breakdown with map' : '📊 Полный разбор с картой', 'url' => $url));
   $rows[] = array(langToggleButton($lang, 'rc'));
@@ -198,8 +208,11 @@ function handleCallback($token, array $cq) {
     reply($token, $chatId, photoLoadAnalytics($st['load'], $lang), analyticsKeyboard($lang));
     return;
   }
-  if ($data === 'ph:mc') {
-    $mc = isset($st['load']['mc']) ? preg_replace('/\D/', '', (string)$st['load']['mc']) : '';
+  // Одна и та же проверка для груза со скриншота и для рейт-кона — отличается
+  // только тем, из какого разбора брать номер.
+  if ($data === 'ph:mc' || $data === 'rc:mc') {
+    $src = $data === 'ph:mc' ? (isset($st['load']) ? $st['load'] : array()) : (isset($st['rc']) ? $st['rc'] : array());
+    $mc = isset($src['mc']) ? preg_replace('/\D/', '', (string)$src['mc']) : '';
     if ($mc === '') { reply($token, $chatId, $lang === 'en' ? 'Broker MC not recognized.' : 'MC брокера не распознан.'); return; }
     list($rec, $err) = fetchBrokerRecord('broker', $mc);
     if ($rec === null) { reply($token, $chatId, brokerReport('broker', $mc, $lang)); return; }
@@ -217,7 +230,10 @@ function handleTranslate($token, $chatId, $messageId, array $st, $msgtype, $lang
   switch ($msgtype) {
     case 'rc':
       if (empty($st['rc'])) return;
-      editMessage($token, $chatId, $messageId, rcSummaryFull($st['rc'], isset($st['rc_missing']) ? $st['rc_missing'] : array(), $lang), rcKeyboard($st['rc'], $lang));
+      editMessage($token, $chatId, $messageId,
+        rcSummaryFull($st['rc'], isset($st['rc_missing']) ? $st['rc_missing'] : array(), $lang,
+          isset($st['rc_fraud']) ? $st['rc_fraud'] : array()),
+        rcKeyboard($st['rc'], $lang));
       return;
     case 'driver':
       if (empty($st['rc'])) return;
@@ -289,7 +305,14 @@ function rcToLoad(array $d) {
     'weight' => isset($d['weight']) ? $d['weight'] : '',
     'commodity' => isset($d['commodity']) ? $d['commodity'] : '',
     'broker' => isset($d['broker']) ? $d['broker'] : '',
-    'mc' => '', 'contact_name' => '', 'email' => '', 'phone' => '',
+    // Раньше тут стояли пустые строки, и письмо по рейт-кону ВСЕГДА уходило без
+    // адресата — хотя почта и телефон брокера извлекаются из документа с самого
+    // начала. Поля в разборе называются иначе, чем в грузе со скриншота, отсюда
+    // и потеря: broker_email → email, broker_phone → phone.
+    'mc' => isset($d['mc']) ? $d['mc'] : '',
+    'contact_name' => '',
+    'email' => isset($d['broker_email']) ? $d['broker_email'] : '',
+    'phone' => isset($d['broker_phone']) ? $d['broker_phone'] : '',
     'reference' => isset($d['load_id']) ? ltrim($d['load_id'], '#') : '',
     'notes' => $first ? $refs($first) : '',
   );

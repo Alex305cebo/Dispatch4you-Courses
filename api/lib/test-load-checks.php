@@ -1,0 +1,115 @@
+<?php
+// Проверки антифрода и расчёта по часам: php api/lib/test-load-checks.php
+// Молчит — значит сошлось. Тут арифметика и сравнение имён, то есть ровно то,
+// что ломается незаметно: ложный красный флаг на честном брокере хуже, чем его
+// отсутствие, поэтому «не обвиняем» проверяется наравне с «ловим».
+
+require __DIR__ . '/load-checks.php';
+
+// ── Одна ли это компания ────────────────────────────────────────────
+assert(sameCompany('ABC Logistics LLC', 'ABC LOGISTICS, INC.') === true);
+assert(sameCompany('Coyote Logistics', 'COYOTE LOGISTICS LLC') === true);
+// Аббревиатуры: в документе TQL, в FMCSA полное имя — самый частый повод для
+// ложной тревоги, если сравнивать в лоб.
+assert(sameCompany('TQL', 'TOTAL QUALITY LOGISTICS LLC') === true);
+assert(sameCompany('RXO Capacity Solutions', 'RXO CAPACITY SOLUTIONS LLC') === true);
+// А это уже другая контора
+assert(sameCompany('Coyote Logistics', 'Freight Xpress Inc') === false);
+
+// ── Метки антифрода ─────────────────────────────────────────────────
+$codes = function ($flags) { return array_map(function ($f) { return $f['code']; }, $flags); };
+
+$rec = array('legalName' => 'FREIGHT XPRESS INC', 'allowedToOperate' => 'Y',
+             'brokerAuthorityStatus' => 'A', 'bondInsuranceOnFile' => '75');
+$f = brokerFraudFlags(array('broker' => 'Coyote Logistics', 'mc' => '123456'), $rec);
+assert(in_array('name_mismatch', $codes($f), true));
+
+// Тот же брокер, что и в записи — ни одной метки
+$f = brokerFraudFlags(array('broker' => 'Freight Xpress', 'mc' => '123456',
+                            'broker_email' => 'john@freightxpress.com'), $rec);
+assert($f === array());
+
+// DBA: в документе торговое имя, в FMCSA юридическое — это норма
+$rec2 = array('legalName' => 'SOME HOLDINGS LLC', 'dbaName' => 'BLUE ARROW FREIGHT',
+              'allowedToOperate' => 'Y');
+$f = brokerFraudFlags(array('broker' => 'Blue Arrow Freight', 'mc' => '1'), $rec2);
+assert($f === array());
+
+// Запрет работать и отсутствие бонда — красные, каждый сам по себе
+$rec3 = array('legalName' => 'FREIGHT XPRESS INC', 'allowedToOperate' => 'N');
+$f = $codes(brokerFraudFlags(array('broker' => 'Freight Xpress', 'mc' => '1'), $rec3));
+assert(in_array('not_allowed', $f, true));
+
+$rec4 = array('legalName' => 'FREIGHT XPRESS INC', 'allowedToOperate' => 'Y',
+              'brokerAuthorityStatus' => 'A', 'bondInsuranceOnFile' => '');
+$f = $codes(brokerFraudFlags(array('broker' => 'Freight Xpress', 'mc' => '1'), $rec4));
+assert(in_array('no_bond', $f, true));
+
+// MC в документе есть, а в FMCSA такой записи нет
+$f = $codes(brokerFraudFlags(array('broker' => 'Freight Xpress', 'mc' => '999999'), null));
+assert(in_array('mc_notfound', $f, true));
+
+// Бесплатная почта у брокера
+$f = $codes(brokerFraudFlags(array('broker' => 'Freight Xpress', 'broker_email' => 'dispatch@gmail.com'), null));
+assert(in_array('free_email', $f, true));
+
+// Корпоративная почта того же брокера тревоги не поднимает
+$f = $codes(brokerFraudFlags(array('broker' => 'Freight Xpress', 'broker_email' => 'j@freightxpress.com'), null));
+assert(!in_array('domain_mismatch', $f, true) && !in_array('free_email', $f, true));
+
+// Пустой разбор ничего не ломает
+assert(brokerFraudFlags(array(), null) === array());
+assert(fraudText(array()) === '');
+
+// ── Окна времени ────────────────────────────────────────────────────
+$w = parseWindow('07/24/26 06:00 - 17:00');
+assert($w !== null);
+assert(($w['end'] - $w['start']) / 3600 === 11.0);
+assert(date('Y-m-d H:i', $w['start']) === '2026-07-24 06:00');
+
+$w = parseWindow('02/02/26 @ 12:30');           // одна точка времени, не окно
+assert($w !== null && $w['start'] === $w['end']);
+assert(parseWindow('') === null);
+assert(parseWindow('по договорённости') === null);
+
+$w = parseWindow('08/16/26 8:00 am - 3:00 pm'); // 12-часовой формат
+assert(date('H:i', $w['start']) === '08:00' && date('H:i', $w['end']) === '15:00');
+
+// ── Успевает ли водитель ────────────────────────────────────────────
+// 890 миль, окно от погрузки до доставки 15 часов — легально невозможно
+$tight = array(
+  'miles' => '890',
+  'stops' => array(
+    array('type' => 'pickup',   'time' => '08/16/26 15:00 - 15:00'),
+    array('type' => 'delivery', 'time' => '08/17/26 06:00 - 06:00'),
+  ),
+);
+$h = hosFeasibility($tight);
+assert($h !== null);
+assert(round($h['avail']) === 15.0);
+assert($h['days'] === 2);          // 16 часов за рулём в одну смену не влезают
+assert($h['need'] > $h['avail']);
+assert(strpos(hosText($h, 'ru'), '🔴') === 0);
+assert(strpos(hosText($h, 'en'), '🔴') === 0);
+
+// 500 миль и трое суток — вопросов нет, молчим
+$easy = array(
+  'miles' => '500',
+  'stops' => array(
+    array('type' => 'pickup',   'time' => '08/16/26 08:00 - 16:00'),
+    array('type' => 'delivery', 'time' => '08/19/26 08:00 - 16:00'),
+  ),
+);
+$h = hosFeasibility($easy);
+assert($h !== null && $h['need'] < $h['avail']);
+assert(hosText($h, 'ru') === '');
+
+// Считать не из чего — не выдумываем
+assert(hosFeasibility(array('stops' => array())) === null);
+assert(hosFeasibility(array('miles' => '500', 'stops' => array())) === null);
+assert(hosFeasibility(array('miles' => '', 'stops' => array(
+  array('type' => 'pickup', 'time' => '08/16/26 08:00'),
+  array('type' => 'delivery', 'time' => '08/19/26 08:00')))) === null);
+assert(hosText(null) === '');
+
+echo "ok\n";
