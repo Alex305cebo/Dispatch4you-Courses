@@ -228,7 +228,10 @@ function bc_gemini_pick($models, $kind) {
 
     $version = 0.0;
     if (preg_match('/gemini-(\d+(?:\.\d+)?)/', $id, $m)) { $version = (float) $m[1]; }
-    $score = $version * 10;
+    // Множитель обязан совпадать с src/call/geminiModels.ts: поколение —
+    // старший разряд, бонусы разводят модели одного поколения. С прежним
+    // множителем 10 боевой сервер выбирал 2.5, а локальный 3.1.
+    $score = $version * 100;
     foreach ($rule['bonus'] as $bonus) {
       if (strpos($id, (string) $bonus[0]) !== false) { $score += (float) $bonus[1]; }
     }
@@ -380,8 +383,17 @@ switch ($action) {
         'stt'      => ($groqKey !== ''),
         'tts'      => ($groqKey !== ''),
         'realtime' => ($openaiKey !== ''),
-        // Ключа нет — фронт не пробует Gemini и работает как работал.
-        'gemini'   => ($geminiKey !== ''),
+        // На боевом Gemini Live не работает, и ключ тут ни при чём.
+        //
+        // Разговор идёт по вебсокету. Эфемерные токены Google этот сокет не
+        // принимает (проверено: ?access_token= — 1008 unregistered callers,
+        // ?key= — 1007 invalid), поэтому локально сокет проксирует дев-сервер
+        // и держит ключ у себя. PHP так не умеет.
+        //
+        // Отдавать true означало бы: браузер десять секунд ждёт сокет, молча
+        // получает отказ и только потом идёт прежним путём. Студент всё это
+        // время слушает тишину. Честнее не начинать.
+        'gemini'   => false,
       ],
     ]);
   }
@@ -533,13 +545,19 @@ switch ($action) {
           $prompt = (is_array($first) && isset($first['prompt'])) ? $first['prompt'] : 'You are a freight broker.';
           list($tc, $tb) = bc_gemini_token($geminiKey, bc_gemini_setup($live, $prompt, ''));
           $probe = [
-            'ok'         => ($tc >= 200 && $tc < 300),
+            // Токен выпускается — но сокет его не принимает, а сокета тут и
+            // нет. Зелёная строка на этом месте однажды уже стоила разбора:
+            // проба светилась, разговор не начинался.
+            'ok'         => false,
+            'live'       => false,
+            'why'        => 'Gemini Live на боевом не работает: вебсокет нужно проксировать, PHP так не умеет. Разговор идёт прежним путём.',
+            'token'      => ($tc >= 200 && $tc < 300),
             'live_model' => $live,
             'text_model' => $text,
             'models'     => count($models),
             'ms'         => (int) round((microtime(true) - $t0) * 1000),
           ];
-          if (!$probe['ok']) {
+          if (!$probe['token']) {
             $probe['stage']  = 'auth_tokens';
             $probe['status'] = $tc;
             $probe['error']  = substr((string) $tb, 0, 200);
