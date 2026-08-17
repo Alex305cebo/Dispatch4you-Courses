@@ -1071,3 +1071,21 @@
           background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
 }
+
+/* ── Тёмные декоративные слои не должны существовать в светлой теме ──
+   Раньше они гасились через opacity:0. Этого мало: яркость этим слоям
+   пишет JS инлайном по прокрутке, и в переходных состояниях тёмная
+   вуаль успевала проступить поверх светлой страницы. Убираем их из
+   раскладки совсем и на всякий случай обесцвечиваем фон. */
+:root[data-theme="light"] .hero-bg-scrim,
+:root[data-theme="light"] .midfx-bg-scrim,
+:root[data-theme="light"] .section-bg-scrim {
+  display: none !important;
+  background: transparent !important;
+}
+/* Фон страницы — с приоритетом: в разметке страниц есть свои правила
+   body{background:var(--surface-deep)}, и при частичном применении темы
+   выигрывало не то. */
+:root[data-theme="light"] body {
+  background: var(--surface-base) !important;
+}

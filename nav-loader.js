@@ -735,8 +735,23 @@
         btn.addEventListener('click', function () {
             var root = document.documentElement;
             var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
-            root.setAttribute('data-theme', next);
             try { localStorage.setItem('d4y-theme', next); } catch (e) {}
+            // Перезагрузка, а не просто смена атрибута.
+            //
+            // Смена атрибута на лету оставляла страницу наполовину
+            // переключённой: карточки и текст брали новые токены сразу, а
+            // фоновые слои — нет. Их яркостью управляет JS (hero-parallax,
+            // midsection-video, section-video): он пишет opacity инлайном
+            // по прокрутке и пересчитывает диапазоны только при загрузке.
+            // Плюс body в dark-theme.css анимирует background-color 0.3s,
+            // и при смене темы посреди прокрутки переход не доигрывал.
+            // В итоге поверх светлой страницы оставалась тёмная полоса,
+            // разрезающая карточки по горизонтали.
+            //
+            // Перезагрузка стоит доли секунды и снимает весь этот класс
+            // ошибок разом: страница всегда рисуется одной темой.
+            root.setAttribute('data-theme', next);
+            location.reload();
         });
 
         // Слушатель системной темы отключён: тёмная — тема по умолчанию,
