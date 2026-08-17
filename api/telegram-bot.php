@@ -499,34 +499,72 @@ if ($encProblem === 'password') {
   echo 'ok'; exit;
 }
 
+// Текст достаём ПО СТРАНИЦАМ, а не одним куском. Рейт-кон часто на 4-6
+// страницах: погрузка на первой, доставка и реф-номера на третьей-пятой,
+// условия в конце. Без отметок о границах страниц модель склеивает конец одной
+// страницы с началом другой — так у стопа появлялось чужое время или чужой
+// реф-номер, и заметить это в готовой карточке нельзя.
+$pageTexts = array();
 try {
   $parser = new \Smalot\PdfParser\Parser();
-  $text = $parser->parseContent($pdf)->getText();
+  $parsed = $parser->parseContent($pdf);
+  try {
+    foreach ($parsed->getPages() as $pg) $pageTexts[] = (string)$pg->getText();
+  } catch (\Throwable $e) {
+    $pageTexts = array();   // дерево страниц не читается — возьмём документ целиком
+  }
+  if (!$pageTexts) $pageTexts = array((string)$parsed->getText());
 } catch (\Throwable $e) {
   $why = stripos($e->getMessage(), 'secured') !== false
     ? 'PDF защищён нестандартным способом'
     : 'файл повреждён или это не PDF';
   fail($token, $chatId, 'pdf parse: ' . $e->getMessage(), $why); exit;
 }
-$text = trim(preg_replace('/[ \t]+/', ' ', $text));
+
+// Страницы БЕЗ текстового слоя. Главная беда смешанного документа: первая
+// страница из TMS (текст), остальные — сканы подписанных листов. Общего текста
+// при этом набирается много, прежний порог «меньше 100 символов на документ»
+// не срабатывал, и страницы-картинки пропадали молча вместе со всеми стопами,
+// реф-номерами и условиями, которые на них были.
+$pagesTotal = count($pageTexts);
+$thinPages = array();
+foreach ($pageTexts as $i => $t) {
+  if (mb_strlen(trim(preg_replace('/\s+/u', ' ', $t))) < 80) $thinPages[] = $i + 1;
+}
+$marked = array();
+foreach ($pageTexts as $i => $t) {
+  $marked[] = ($pagesTotal > 1 ? '=== PAGE ' . ($i + 1) . ' OF ' . $pagesTotal . " ===\n" : '') . $t;
+}
+$text = trim(preg_replace('/[ \t]+/', ' ', implode("\n\n", $marked)));
 $text = fixGluedUnits($text);
-// Текста нет — это скан или фото, вставленное в PDF. Не сдаёмся: отправляем
-// файл целиком в Gemini, он читает PDF как картинку. Рендерить страницы в
-// изображения самим нечем — на хостинге нет ни Imagick, ни ghostscript,
-// а shell_exec отключён.
+
+// Читать нечего, или часть страниц — картинки: отправляем файл целиком в
+// Gemini, он видит PDF как изображение и читает ВСЕ страницы. Рендерить
+// страницы самим нечем — на хостинге нет ни Imagick, ни ghostscript, а
+// shell_exec отключён.
 $scanned = false;
-if (mb_strlen($text) < 100) {
-  require_once __DIR__ . '/lib/load-photo.php';
+$unreadPages = array();
+if (mb_strlen($text) < 100 || $thinPages) {
   list($scanLoad, $scanErr) = geminiFile(rcPrompt(), $pdf, 'application/pdf');
-  if (!is_array($scanLoad) || empty($scanLoad['stops'])) {
+  if (is_array($scanLoad) && !empty($scanLoad['stops'])) {
+    $scanned = true;
+    $load = $scanLoad;
+  } elseif (mb_strlen($text) < 100) {
+    // Текстового слоя нет вовсе, и картинкой прочитать не удалось — сдаёмся честно.
     clearProgress($token, $chatId);
     reply($token, $chatId, HELP_SCAN);
     @file_put_contents(__DIR__ . '/../../tg-bot.log',
       date('c') . ' scanned pdf failed: ' . mb_substr((string)$scanErr, 0, 200) . "\n", FILE_APPEND);
     echo 'ok'; exit;
+  } else {
+    // Текст есть, но часть страниц прочитать не вышло. Разбираем что есть и
+    // говорим прямо, каких страниц не хватает: молчаливая потеря страницы
+    // выглядит как полный разбор, а это хуже честного предупреждения.
+    $unreadPages = $thinPages;
+    @file_put_contents(__DIR__ . '/../../tg-bot.log',
+      date('c') . ' pages without text layer: ' . implode(',', $thinPages)
+      . ' of ' . $pagesTotal . '; vision failed: ' . mb_substr((string)$scanErr, 0, 120) . "\n", FILE_APPEND);
   }
-  $scanned = true;
-  $load = $scanLoad;
 }
 // Разбирает Gemini, а у него контекст на порядки больше — режем только для
 // защиты от аномалий (200-страничный скан вместо рейт-кона), а не потому,
@@ -627,7 +665,14 @@ $lang = curLang($st);
 
 // Сводка + кнопки «что дальше». Полотно для водителя больше не вываливается
 // сразу: его отдаём по кнопке, когда оно действительно нужно.
-reply($token, $chatId, rcSummaryFull($load, $missing, $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
+$warn = $unreadPages
+  ? ($lang === 'en'
+      ? "⚠️ No text layer on page(s) " . implode(', ', $unreadPages) . " of {$pagesTotal} — I could not read them. "
+        . "If stops or reference numbers were printed there, check them by hand.\n\n"
+      : "⚠️ Страницы без текстового слоя: " . implode(', ', $unreadPages) . " из {$pagesTotal} — прочитать их не удалось. "
+        . "Если на них были стопы или реф-номера, проверьте вручную.\n\n")
+  : '';
+reply($token, $chatId, $warn . rcSummaryFull($load, $missing, $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
 echo 'ok';
 exit;
 
@@ -846,29 +891,32 @@ function handleLanguage($token, $chatId, $lang) {
 // сами данные (адреса, суммы, номера) не переводятся, это факты, а не текст.
 // ⚠️ Карточка по умолчанию — для американского водителя, который читает по-английски;
 // русская версия существует по прямому запросу и отправлять её водителю не стоит.
-function driverCard(array $d, $lang = 'en') {
+// Блоки: шапка с номером загрузки, каждый стоп ОДНИМ блоком, итоговые строки.
+// Именно блоками, а не готовой строкой: из них собирается и целая карточка, и
+// разложенная по сообщениям (driverCardParts ниже) — так стоп не разрывается.
+function driverCardBlocks(array $d, $lang = 'en') {
   $t = $lang === 'ru'
     ? array('load' => 'НОМЕР ЗАГРУЗКИ', 'pickup' => 'Адрес погрузки', 'delivery' => 'Адрес доставки',
             'time' => 'Время', 'ref' => 'Реф', 'rate' => 'Ставка', 'commodity' => 'Груз', 'weight' => 'Вес')
     : array('load' => 'LOAD ID', 'pickup' => 'Pick up Address', 'delivery' => 'Delivery Address',
             'time' => 'Time', 'ref' => 'Ref', 'rate' => 'Rate', 'commodity' => 'Commodity', 'weight' => 'Weight');
   $hr = '__________________________';
-  $L = array();
-  if (!empty($d['load_id'])) { $L[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#'); $L[] = ''; }
+  $blocks = array();
+  if (!empty($d['load_id'])) $blocks[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#');
 
+  $stops = (array)(isset($d['stops']) ? $d['stops'] : array());
   $counts = array('pickup' => 0, 'delivery' => 0);
-  foreach ($d['stops'] as $s) {
+  foreach ($stops as $s) {
     $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
     $counts[$type]++;
   }
   $seen = array('pickup' => 0, 'delivery' => 0);
-  foreach ($d['stops'] as $s) {
+  foreach ($stops as $s) {
     $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
     $seen[$type]++;
     $label = ($type === 'delivery') ? $t['delivery'] : $t['pickup'];
     if ($counts[$type] > 1) $label .= ' ' . $seen[$type];
-    $L[] = $label . ':';
-    $L[] = '';
+    $L = array($label . ':', '');
     // Пустая строка после названия склада — иначе оно визуально слипается
     // с адресом на следующей строке.
     if (!empty($s['name'])) { $L[] = $s['name']; $L[] = ''; }
@@ -882,13 +930,25 @@ function driverCard(array $d, $lang = 'en') {
       foreach ($refs as $r) { $L[] = ($first ? $t['ref'] . ': ' : '') . $r; $first = false; }
     }
     $L[] = $hr;
-    $L[] = '';
+    $blocks[] = implode("\n", $L);
   }
-  if (!empty($d['rate']))      $L[] = $t['rate'] . ': ' . $d['rate'];
-  if (!empty($d['commodity'])) $L[] = $t['commodity'] . ': ' . $d['commodity'];
-  if (!empty($d['weight']))    $L[] = $t['weight'] . ': ' . $d['weight'];
-  $card = implode("\n", $L);
-  return mb_strlen($card) > 4000 ? mb_substr($card, 0, 4000) : $card;
+  $tail = array();
+  if (!empty($d['rate']))      $tail[] = $t['rate'] . ': ' . $d['rate'];
+  if (!empty($d['commodity'])) $tail[] = $t['commodity'] . ': ' . $d['commodity'];
+  if (!empty($d['weight']))    $tail[] = $t['weight'] . ': ' . $d['weight'];
+  if ($tail) $blocks[] = implode("\n", $tail);
+  return $blocks;
+}
+
+// Карточка водителю, разложенная по сообщениям под лимит Telegram (4096
+// символов). Раньше она просто обрезалась на 4000 — и на рейт-коне в 5-6
+// страниц последние стопы вместе со ставкой и весом ИСЧЕЗАЛИ из текста,
+// который диспетчер копирует и отправляет водителю. Ни в чате, ни в логе следа
+// не оставалось: сообщение выглядело законченным.
+// Упаковка — packBlocks() в lib/load-checks.php: она чистая и проверяется
+// тестом, а потерять здесь стоп дороже всего.
+function driverCardParts(array $d, $lang = 'en', $limit = 3800) {
+  return packBlocks(driverCardBlocks($d, $lang), $limit);
 }
 
 // Промпт разбора рейт-кона — один на всех потребителей (Gemini, запасной Groq,
@@ -902,6 +962,10 @@ function rcPrompt() {
   . "\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
   . "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
   . "CRITICAL RULES:\n"
+  . "- The text may contain '=== PAGE n OF m ===' markers. Read EVERY page through to the last one. "
+  . "On multi-page rate confirmations the pickup is often on page 1 while deliveries, reference numbers "
+  . "and appointment windows are printed on later pages. A value from one page belongs to a stop on "
+  . "another page only if the document clearly ties them together.\n"
   . "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
   . "- Every value must stay in the document's own language, which is English. NEVER translate or "
   . "localise anything — dates and month names included. '08/17' or 'Aug 17' stays exactly as printed.\n"

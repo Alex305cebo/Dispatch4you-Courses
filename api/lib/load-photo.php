@@ -70,10 +70,12 @@ function geminiCall($sys, array $parts, $models = null, $useThinkingConfig = tru
 
   $cfg = array(
     'temperature' => 0,
-    // С отключёнными «размышлениями» хватает 4096; если модель их не даёт
-    // отключить, лимит поднимается ниже — иначе thinking съест весь вывод
-    // и придёт пустой ответ вообще без ошибки (уже наступали на это).
-    'maxOutputTokens' => $useThinkingConfig ? 4096 : 16384,
+    // 8192 против прежних 4096: рейт-кон на 5-6 страниц с несколькими
+    // погрузками и выгрузками даёт крупный JSON, а обрыв на полуслове — это не
+    // ошибка от API, а невалидный JSON и «не смог разобрать» на ровном месте.
+    // Если модель не даёт отключить «размышления», лимит ещё выше — иначе
+    // thinking съедает весь вывод и приходит пустой ответ без ошибки.
+    'maxOutputTokens' => $useThinkingConfig ? 8192 : 16384,
     'responseMimeType' => 'application/json',
   );
   if ($useThinkingConfig) $cfg['thinkingConfig'] = array('thinkingBudget' => 0);
