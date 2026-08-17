@@ -24,7 +24,7 @@ export interface ModelInfo {
   supportedGenerationMethods?: string[]
 }
 
-export type ModelKind = 'live' | 'text'
+export type ModelKind = 'live' | 'text' | 'tts'
 
 export interface RankedModel {
   id: string
@@ -56,6 +56,8 @@ export interface ModelRule {
   method: string
   /** Подстроки в имени, при которых модель отвергается. */
   reject: string[]
+  /** Подстрока, без которой модель не подходит. Для озвучки это `tts`. */
+  require?: string
   /** Подстрока → прибавка к очкам. */
   bonus: [string, number][]
 }
@@ -78,6 +80,19 @@ export const MODEL_RULES: Record<ModelKind, ModelRule> = {
       ['native-audio', 30],
       ['live', 20],
     ],
+  },
+  /**
+   * Озвучка через Gemini. Нужна потому, что Orpheus у Groq требует однократного
+   * принятия условий в консоли, и до тех пор брокер на боевом сайте молчит —
+   * тренажёр голоса без голоса. Gemini TTS работает по обычному HTTP, поэтому
+   * доступен и боевому PHP, в отличие от Live-вебсокета.
+   */
+  tts: {
+    method: 'generateContent',
+    require: 'tts',
+    // pro — суточный лимит меньше, чем нам нужно: озвучка идёт на каждую реплику.
+    reject: [...NEVER.filter((n) => n !== 'tts'), 'pro'],
+    bonus: [['flash', 100]],
   },
   text: {
     method: 'generateContent',
@@ -105,6 +120,7 @@ export function rankModels(models: readonly ModelInfo[], kind: ModelKind): Ranke
     // Метод не заявлен — считаем, что модель не подходит. Проверить это
     // дешевле, чем ловить молчащий вебсокет.
     if (!methods.includes(rule.method)) continue
+    if (rule.require && !id.includes(rule.require)) continue
     if (rule.reject.some((bad) => id.includes(bad))) continue
 
     // Поколение — старший разряд: 3.1 обязана обыгрывать 2.5 при любых

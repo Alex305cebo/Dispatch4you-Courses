@@ -73,7 +73,6 @@ export class RealtimeTransport implements VoiceTransport {
     await new Promise((resolve) => window.setTimeout(resolve, 2400))
     stopRing()
     await this.telephony.pickupClick()
-    void this.telephony.startAmbience()
 
     // Брокер снимает трубку и говорит первым — своими словами.
     this.send({ type: 'response.create', response: { instructions: PICKUP_CUE } })

@@ -65,7 +65,6 @@ export class PipelineTransport implements VoiceTransport {
     if (this.closed) return
     stopRing()
     await this.telephony.pickupClick()
-    void this.telephony.startAmbience()
 
     this.startPreview()
 
@@ -221,7 +220,7 @@ export class PipelineTransport implements VoiceTransport {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: this.abort.signal,
-      body: JSON.stringify({ seed: this.deps.seed, messages: this.messages }),
+      body: JSON.stringify({ seed: this.deps.seed, messages: trimHistory(this.messages) }),
     })
     if (!r.ok) {
       // Сервер кладёт сюда дословный ответ провайдера — единственное, что
@@ -403,7 +402,10 @@ export class PipelineTransport implements VoiceTransport {
           const result = event.results[i]
           if (result && !result.isFinal) interim += result[0]?.transcript ?? ''
         }
-        if (interim.trim()) this.deps.emit({ type: 'user_partial', text: interim.trim() })
+        // Черновик тоже через нормализатор: без него на экране висело
+        // «drive van», пока Whisper не досчитает и не заменит фразу целиком.
+        const draft = normalizeTranscript(interim).trim()
+        if (draft) this.deps.emit({ type: 'user_partial', text: draft })
       }
       // Браузер сам останавливает распознавание — поднимаем обратно, пока идёт звонок.
       recognition.onend = () => {
@@ -491,4 +493,27 @@ interface SpeechRecognitionEventLike {
 interface WindowWithSpeech extends Window {
   SpeechRecognition?: new () => SpeechRecognitionLike
   webkitSpeechRecognition?: new () => SpeechRecognitionLike
+}
+
+/** Сколько последних сообщений уходит в модель. */
+const HISTORY_LIMIT = 14
+
+/**
+ * Обрезает историю разговора.
+ *
+ * Она росла без ограничения, а уходит в модель ЦЕЛИКОМ на каждом ходу — вместе
+ * с системным промптом и схемами инструментов. У Groq на бесплатном тарифе
+ * 8000 токенов в минуту, и к середине звонка один ход перестаёт в них влезать:
+ * провайдер отвечает 429, на экране это «брокер не отвечает».
+ *
+ * Обрезаем с начала, но так, чтобы история осталась валидной: сообщение роли
+ * `tool` обязано идти следом за вызвавшим его `assistant` с tool_calls. Начать
+ * обрезанную историю с осиротевшего `tool` — это 400 от провайдера.
+ */
+export function trimHistory(messages: ChatMessage[]): ChatMessage[] {
+  if (messages.length <= HISTORY_LIMIT) return messages
+
+  let start = messages.length - HISTORY_LIMIT
+  while (start < messages.length && messages[start]?.role === 'tool') start++
+  return messages.slice(start)
 }

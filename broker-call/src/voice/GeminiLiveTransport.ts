@@ -85,7 +85,6 @@ export class GeminiLiveTransport implements VoiceTransport {
     if (this.closed) return
     stopRing()
     await this.telephony.pickupClick()
-    void this.telephony.startAmbience()
 
     // Теперь линия открыта в обе стороны.
     this.streaming = true
