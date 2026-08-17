@@ -53,11 +53,21 @@ export function brokerApi(env: Record<string, string>): Plugin {
   // тарифа без предупреждения. Groq объявил llama-3.3-70b-versatile устаревшей
   // 17.06.2026 — с одним именем в коде это положило бы весь звонок.
   const CEREBRAS_MODELS = split(env.CEREBRAS_MODELS) ?? ['llama-3.3-70b']
-  const GROQ_MODELS = split(env.GROQ_MODELS) ?? [
-    'openai/gpt-oss-120b',
-    'openai/gpt-oss-20b',
-    'llama-3.3-70b-versatile',
-  ]
+  // llama-3.3-70b-versatile убрана 16.08.2026: Groq вернул на неё
+  // «404 model_not_found — does not exist or you do not have access». Она стояла
+  // последней в цепочке, поэтому падало ровно тогда, когда до неё доходило.
+  const GROQ_MODELS = split(env.GROQ_MODELS) ?? ['openai/gpt-oss-120b', 'openai/gpt-oss-20b']
+
+  /**
+   * Распознавание речи. Список, а не имя, и решает его СЕРВЕР.
+   *
+   * `large-v3` точнее, чем `turbo`, и разница слышна именно там, где она нам
+   * важна: акцент и отраслевые слова. Turbo быстрее, поэтому остаётся вторым.
+   * Раньше имя модели лежало в клиенте (`PipelineTransport`), то есть менялось
+   * только пересборкой фронта — при том что снимают модели с тарифа без
+   * предупреждения, и мы на этом горели уже трижды.
+   */
+  const STT_MODELS = split(env.GROQ_STT_MODELS) ?? ['whisper-large-v3', 'whisper-large-v3-turbo']
   const TTS_MODEL = env.GROQ_TTS_MODEL ?? 'canopylabs/orpheus-v1-english'
 
   /**
@@ -107,6 +117,9 @@ export function brokerApi(env: Record<string, string>): Plugin {
           // Ключа нет — фронт даже не пробует Gemini и работает как работал.
           gemini: Boolean(geminiKey),
         },
+        // Имя модели распознавания приходит с сервера, а не лежит в бандле:
+        // сменить его должно быть можно без пересборки фронта.
+        sttModel: STT_MODELS[0],
       })))
 
       // ── Диагностика ───────────────────────────────────────────────────────
@@ -144,7 +157,7 @@ export function brokerApi(env: Record<string, string>): Plugin {
         // Озвучка и распознавание.
         if (groqKey) {
           probe.tts = await probeTts(groqKey, TTS_MODEL)
-          probe.stt = await probeStt(groqKey)
+          probe.stt = await probeStt(groqKey, STT_MODELS[0] ?? 'whisper-large-v3')
         } else {
           probe.tts = { ok: false, error: 'no GROQ_API_KEY' }
           probe.stt = { ok: false, error: 'no GROQ_API_KEY' }
@@ -543,13 +556,13 @@ async function probeTts(key: string, model: string): Promise<Record<string, unkn
   }
 }
 
-async function probeStt(key: string): Promise<Record<string, unknown>> {
+async function probeStt(key: string, model: string): Promise<Record<string, unknown>> {
   const started = Date.now()
   try {
     // Полсекунды тишины: нам важен факт приёма файла, а не текст.
     const form = new FormData()
     form.append('file', encodeWav(new Float32Array(TARGET_SAMPLE_RATE / 2)), 'probe.wav')
-    form.append('model', 'whisper-large-v3-turbo')
+    form.append('model', model)
     form.append('response_format', 'text')
 
     const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {

@@ -150,7 +150,7 @@ export class PipelineTransport implements VoiceTransport {
   private async transcribe(audio: Float32Array): Promise<string> {
     const form = new FormData()
     form.append('file', encodeWav(audio), 'speech.wav')
-    form.append('model', 'whisper-large-v3-turbo')
+    form.append('model', this.deps.sttModel ?? 'whisper-large-v3')
     form.append('language', 'en')
     form.append('prompt', WHISPER_PROMPT)
     form.append('response_format', 'text')
