@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-17-1';
+const BUILD = '2026-08-17-2';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -182,6 +182,10 @@ $secret = hash('sha256', $token);
 // ── Диагностика окружения (какие утилиты доступны для PDF) ──────────
 if (isset($_GET['diag'])) {
   header('Content-Type: text/plain; charset=utf-8');
+  // Первой строкой — версия сборки: единственный способ убедиться, что деплой
+  // доехал и opcache перечитал файл. Без неё «задеплоено» приходилось принимать
+  // на веру, а именно на этом бот один раз молча стоял со старым байткодом.
+  echo "build: " . BUILD . "\n";
   $exec = function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', (string)ini_get('disable_functions'))), true);
   echo "shell_exec: " . ($exec ? 'yes' : 'NO') . "\n";
   if ($exec) {
