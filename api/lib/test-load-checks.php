@@ -52,6 +52,29 @@ assert(sameCompany('RXO Capacity Solutions', 'RXO CAPACITY SOLUTIONS LLC') === t
 // А это уже другая контора
 assert(sameCompany('Coyote Logistics', 'Freight Xpress Inc') === false);
 
+// ── Свой MC из подписи и «это перевозчик, а не брокер» ──────────────
+// Из-за этого бот однажды выдал диспетчеру отчёт о его собственной компании:
+// в шапке рейт-кона номер перевозчика стоит рядом с брокерским.
+assert(ownMcFromSignature("MAYA LOGISTICS INC\nMC 626911\nJohn, (555) 111-2233") === '626911');
+assert(ownMcFromSignature('MC# 626911') === '626911');
+assert(ownMcFromSignature('MC: 626911') === '626911');
+assert(ownMcFromSignature('MC-626911') === '626911');
+assert(ownMcFromSignature('ABC Trucking, (555) 111-2233') === '');
+assert(ownMcFromSignature('') === '');
+
+// Перевозчик: брокерской авторити нет, обычная есть
+assert(recIsCarrierOnly(array('commonAuthorityStatus' => 'A')) === true);
+assert(recIsCarrierOnly(array('contractAuthorityStatus' => 'A')) === true);
+// Брокер — не перевозчик, даже если обе авторити активны
+assert(recIsCarrierOnly(array('brokerAuthorityStatus' => 'A', 'commonAuthorityStatus' => 'A')) === false);
+assert(recIsCarrierOnly(array('brokerAuthorityStatus' => 'A')) === false);
+assert(recIsCarrierOnly(null) === false);
+
+// Совпадение записи с названием из документа
+assert(recMatchesName(array('legalName' => 'MAYA LOGISTICS INC'), 'Maya Logistics') === true);
+assert(recMatchesName(array('legalName' => 'SOME HOLDINGS LLC', 'dbaName' => 'BLUE ARROW'), 'Blue Arrow') === true);
+assert(recMatchesName(array('legalName' => 'MAYA LOGISTICS INC'), 'Molo Solutions') === false);
+
 // ── Метки антифрода ─────────────────────────────────────────────────
 $codes = function ($flags) { return array_map(function ($f) { return $f['code']; }, $flags); };
 

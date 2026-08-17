@@ -71,11 +71,13 @@ const COMMANDS_VERSION = 6;
 // сообщения на документ, так что запас десятикратный.
 const MAX_OUT_PER_MIN = 20;
 
-// Сколько страниц альбома берём в один разбор. Константы этого файла ОБЯЗАНЫ
-// стоять здесь, вверху: top-level const в PHP исполняется по достижении строки,
-// а ветка с фото завершается через exit задолго до середины файла — объявленная
-// там константа не существует к моменту вызова, и обработчик падает.
-const GROUP_MAX_PAGES = 6;
+// Сколько страниц альбома берём в один разбор. Рейт-коны бывают и длиннее
+// шести листов, а лишний запас тут ничего не стоит: снимки из Telegram мелкие,
+// а у Gemini на запрос 20 МБ. Константы этого файла ОБЯЗАНЫ стоять здесь,
+// вверху: top-level const в PHP исполняется по достижении строки, а ветка с
+// фото завершается через exit задолго до середины файла — объявленная там
+// константа не существует к моменту вызова, и обработчик падает.
+const GROUP_MAX_PAGES = 12;
 
 // Фатальная ошибка в обработчике = HTTP 500 = Telegram считает доставку
 // неудачной и присылает ТОТ ЖЕ апдейт снова, по кругу. Один такой случай
@@ -634,7 +636,10 @@ clearProgress($token, $chatId);
 $load = normalizeLoad($load);
 // Сверка брокера идёт ДО списка недостающего: найдя его в FMCSA по имени, она
 // дописывает в разбор DOT — и жаловаться на пропавший MC уже не на что.
-$fraud = rcFraud($load);
+// Свой MC берём из подписи /carrier, чтобы не выдать диспетчеру отчёт о его же
+// компании: в шапке рейт-кона его номер стоит рядом с брокерским.
+$stPre = stateGet($chatId);
+$fraud = rcFraud($load, ownMcFromSignature(isset($stPre['carrier']) ? $stPre['carrier'] : ''));
 $missing = missingFields($load);
 
 if (empty($load['stops'])) {
@@ -1372,18 +1377,41 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
 // просто не смотрели, — хуже, чем не проверять.
 // $load передаётся ПО ССЫЛКЕ: найдя брокера по имени, мы дописываем в разбор
 // его DOT — от этого зависит и кнопка проверки, и предупреждение о пропавшем MC.
-function rcFraud(array &$load) {
+function rcFraud(array &$load, $ownMc = '') {
+  $name = isset($load['broker']) ? trim((string)$load['broker']) : '';
   $mc = preg_replace('/\D/', '', (string)(isset($load['mc']) ? $load['mc'] : ''));
+
+  // Свой собственный MC (из подписи /carrier) — точно не брокерский. Рейт-кон
+  // адресован перевозчику, его номер напечатан в шапке рядом с брокерским, и
+  // модель регулярно берёт не тот. Отчёт о собственной компании диспетчеру не
+  // нужен: он и так про неё всё знает.
+  if ($mc !== '' && $ownMc !== '' && $mc === $ownMc) { $load['mc'] = ''; $mc = ''; }
+
   if ($mc !== '') {
     list($rec, $err) = fetchBrokerRecord('broker', $mc);
     if ($err === 'nokey') return array();
+    // Запись нашлась, но это НЕ та компания, что выдала документ. Два разных
+    // случая, и путать их нельзя:
+    //  • перед нами перевозчик — значит из шапки взяли его номер вместо
+    //    брокерского. Это ошибка извлечения, а не мошенничество: молча ищем
+    //    брокера по названию и проверяем уже его.
+    //  • перед нами БРОКЕР с другим именем — вот это тревога, её оставляем.
+    if (is_array($rec) && $name !== '' && !recMatchesName($rec, $name) && recIsCarrierOnly($rec)) {
+      $byName = fetchBrokerByName($name);
+      $load['mc'] = '';                       // чужой номер в разборе не держим
+      if (is_array($byName)) {
+        if (!empty($byName['dotNumber'])) $load['dot'] = (string)$byName['dotNumber'];
+        return brokerFraudFlags($load, $byName);
+      }
+      // Брокера по имени не нашли — говорим прямо, что проверять было нечего.
+      return array(array('code' => 'mc_is_carrier', 'mc' => $mc));
+    }
     return brokerFraudFlags($load, $rec);
   }
   // MC в документе нет — на живых рейт-конах это обычное дело: номер печатают
   // мелким шрифтом в подвале, и он теряется при извлечении текста. Раньше на
   // этом проверка просто заканчивалась, то есть не работала ровно там, где
   // нужнее всего. Ищем по названию компании.
-  $name = isset($load['broker']) ? trim((string)$load['broker']) : '';
   if ($name === '') return array();
   $rec = fetchBrokerByName($name);
   // Не нашли или нашли неоднозначно — молчим. Отсутствие записи по имени не
@@ -1843,7 +1871,7 @@ function handlePhotoGroup($token, $chatId, $groupId, $fileId, $mime) {
   // разберём то, что уже собрали, а не потеряем альбом целиком.
   $pages = $g['pages'];
   $stable = 0;
-  for ($i = 0; $i < 12; $i++) {
+  for ($i = 0; $i < 24; $i++) {   // до 12 с: десяток страниц доезжает дольше двух
     usleep(500000);
     $fresh = json_decode((string)@file_get_contents($file), true);
     if (!is_array($fresh) || !isset($fresh['pages'])) continue;
@@ -1899,7 +1927,8 @@ function photoRespond($token, $chatId, $load, $err, $pageCount = 1) {
   // поля молча терялись — ответ выглядел нормальным, но был неполным.
   if (isRateCon($load)) {
     $load = normalizeLoad($load);
-    $st['rc_fraud'] = rcFraud($load);   // до missingFields: может дописать DOT
+    // до missingFields: может дописать DOT. Свой MC — из подписи /carrier.
+    $st['rc_fraud'] = rcFraud($load, ownMcFromSignature(isset($st['carrier']) ? $st['carrier'] : ''));
     $st['rc'] = $load;
     $st['rc_missing'] = missingFields($load);
     $st['last'] = 'rc';
