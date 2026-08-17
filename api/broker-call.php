@@ -65,7 +65,10 @@ $geminiKey   = bc_key('gemini.key');
 // без предупреждения. Groq объявил llama-3.3-70b-versatile устаревшей
 // 17.06.2026 — с единственным именем в коде это положило бы весь звонок.
 $CEREBRAS_MODELS = ['llama-3.3-70b'];
-$GROQ_MODELS     = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.3-70b-versatile'];
+$GROQ_MODELS     = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+// Распознавание: large-v3 точнее turbo на акценте и отраслевых словах.
+// Имя приходит клиенту через ?action=config — в бандле фронта его нет.
+$STT_MODELS      = ['whisper-large-v3', 'whisper-large-v3-turbo'];
 $TTS_MODEL       = 'canopylabs/orpheus-v1-english';
 
 /**
@@ -397,6 +400,7 @@ switch ($action) {
     bc_json([
       'transport' => ($openaiKey !== '' && getenv('BROKER_CALL_TRANSPORT') === 'realtime')
         ? 'realtime' : 'pipeline',
+      'sttModel' => $STT_MODELS[0],
       'ready' => [
         'llm'      => ($cerebrasKey !== '' || $groqKey !== ''),
         'stt'      => ($groqKey !== ''),
@@ -521,7 +525,7 @@ switch ($action) {
       curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $groqKey]);
       curl_setopt($ch, CURLOPT_POSTFIELDS, [
         'file'            => new CURLFile($tmp, 'audio/wav', 'probe.wav'),
-        'model'           => 'whisper-large-v3-turbo',
+        'model'           => $STT_MODELS[0],
         'response_format' => 'text',
       ]);
       $t0 = microtime(true);

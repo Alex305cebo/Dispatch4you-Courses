@@ -96,6 +96,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
     const deps: TransportDeps = {
       seed: setup.id,
       voice: setup.voice,
+      sttModel: config.sttModel,
       direction: directionForStyle(broker.style),
       style: broker.style,
       runTool: (name, args) => {
@@ -195,6 +196,7 @@ type Get = () => CallStore
 interface ServerConfig {
   transport: 'pipeline' | 'realtime'
   ready: { llm: boolean; stt: boolean; tts: boolean; realtime: boolean; gemini?: boolean }
+  sttModel?: string
 }
 
 async function fetchConfig(): Promise<ServerConfig> {
