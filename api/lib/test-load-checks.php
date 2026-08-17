@@ -52,6 +52,18 @@ assert(sameCompany('RXO Capacity Solutions', 'RXO CAPACITY SOLUTIONS LLC') === t
 // А это уже другая контора
 assert(sameCompany('Coyote Logistics', 'Freight Xpress Inc') === false);
 
+// ── Когда стоит тратить запрос vision на повторное чтение PDF ────────
+// Не хватает того, без чего карточка водителю бессмысленна — стоит
+assert(rcIncomplete(array(array('field' => 'nopickup'))) === true);
+assert(rcIncomplete(array(array('field' => 'nodelivery'))) === true);
+assert(rcIncomplete(array(array('field' => 'address', 'type' => 'pickup', 'n' => 1))) === true);
+assert(rcIncomplete(array(array('field' => 'citystate', 'type' => 'delivery', 'n' => 2))) === true);
+// Мелкие пропуски картинкой не добираются — квоту на них не тратим
+assert(rcIncomplete(array(array('field' => 'rate'), array('field' => 'weight'),
+                          array('field' => 'refs', 'type' => 'pickup', 'n' => 1),
+                          array('field' => 'mc'), array('field' => 'time', 'type' => 'pickup', 'n' => 1))) === false);
+assert(rcIncomplete(array()) === false);
+
 // ── Свой MC из подписи и «это перевозчик, а не брокер» ──────────────
 // Из-за этого бот однажды выдал диспетчеру отчёт о его собственной компании:
 // в шапке рейт-кона номер перевозчика стоит рядом с брокерским.

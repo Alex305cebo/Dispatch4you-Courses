@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-17-2';
+const BUILD = '2026-08-17-3';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -544,32 +544,32 @@ foreach ($pageTexts as $i => $t) {
 $text = trim(preg_replace('/[ \t]+/', ' ', implode("\n\n", $marked)));
 $text = fixGluedUnits($text);
 
-// Читать нечего, или часть страниц — картинки: отправляем файл целиком в
-// Gemini, он видит PDF как изображение и читает ВСЕ страницы. Рендерить
-// страницы самим нечем — на хостинге нет ни Imagick, ни ghostscript, а
-// shell_exec отключён.
+// Текстового слоя нет вовсе — единственный случай, когда картинка нужна СРАЗУ:
+// разбирать нечего. Gemini видит PDF как изображение и читает все страницы.
+// Рендерить страницы самим нечем — на хостинге нет ни Imagick, ни ghostscript,
+// а shell_exec отключён.
+//
+// Наличие тонких страниц САМО ПО СЕБЕ поводом больше не является. Сначала так и
+// было — «есть страница без текста, значит гоним весь PDF в vision», — но у
+// vision-модели 20 запросов в СУТКИ, а тонкая страница в рейт-коне дело
+// обычное: лист с подписью, страница условий, пустой хвост. Такое правило
+// расходовало бы суточную квоту на документах, которые прекрасно читаются
+// текстом. Поэтому решение принимается ниже — по РЕЗУЛЬТАТУ разбора, а не по
+// статистике страниц: картинку добираем только если в разборе реально не
+// хватает погрузки, доставки или адреса.
 $scanned = false;
 $unreadPages = array();
-if (mb_strlen($text) < 100 || $thinPages) {
+if (mb_strlen($text) < 100) {
   list($scanLoad, $scanErr) = geminiFile(rcPrompt(), $pdf, 'application/pdf');
   if (is_array($scanLoad) && !empty($scanLoad['stops'])) {
     $scanned = true;
     $load = $scanLoad;
-  } elseif (mb_strlen($text) < 100) {
-    // Текстового слоя нет вовсе, и картинкой прочитать не удалось — сдаёмся честно.
+  } else {
     clearProgress($token, $chatId);
     reply($token, $chatId, HELP_SCAN);
     @file_put_contents(__DIR__ . '/../../tg-bot.log',
       date('c') . ' scanned pdf failed: ' . mb_substr((string)$scanErr, 0, 200) . "\n", FILE_APPEND);
     echo 'ok'; exit;
-  } else {
-    // Текст есть, но часть страниц прочитать не вышло. Разбираем что есть и
-    // говорим прямо, каких страниц не хватает: молчаливая потеря страницы
-    // выглядит как полный разбор, а это хуже честного предупреждения.
-    $unreadPages = $thinPages;
-    @file_put_contents(__DIR__ . '/../../tg-bot.log',
-      date('c') . ' pages without text layer: ' . implode(',', $thinPages)
-      . ' of ' . $pagesTotal . '; vision failed: ' . mb_substr((string)$scanErr, 0, 120) . "\n", FILE_APPEND);
   }
 }
 // Разбирает Gemini, а у него контекст на порядки больше — режем только для
@@ -634,17 +634,46 @@ if (!is_dir($dir)) @mkdir($dir, 0755, true);
   'parsed' => $load, 'chat_id' => $chatId, 'file_name' => isset($doc['file_name']) ? $doc['file_name'] : '',
 ), JSON_UNESCAPED_UNICODE));
 
+// ── Добор картинкой, если текстом получилось неполно ────────────────
+//
+// Решение по РЕЗУЛЬТАТУ, а не по статистике страниц. Текстовый путь бесплатен и
+// уже отработал; лезем в vision только когда в разборе не хватает того, без
+// чего карточка водителю бессмысленна: погрузки, доставки или адреса стопа. Так
+// суточная квота vision (20 запросов) уходит на документы, которым она реально
+// нужна, а не на каждый рейт-кон с листом подписи в конце.
+// Берём результат картинки, только если он ПОЛНЕЕ текстового: хуже сделать
+// нельзя, а Gemini на картинке иногда видит меньше, чем в тексте.
+$load = normalizeLoad($load);
+$missing = missingFields($load);
+if (!$scanned && $thinPages && rcIncomplete($missing)) {
+  list($visLoad, $visErr) = geminiFile(rcPrompt(), $pdf, 'application/pdf');
+  if (is_array($visLoad) && !empty($visLoad['stops'])) {
+    $visLoad = normalizeLoad($visLoad);
+    $visMissing = missingFields($visLoad);
+    if (count($visMissing) < count($missing)) {
+      $load = $visLoad; $missing = $visMissing; $scanned = true;
+    }
+  }
+  // Не помогло — разбираем что есть, но говорим прямо, каких страниц не хватило:
+  // молчаливая потеря страницы выглядит как полный разбор, а это хуже.
+  if (!$scanned) {
+    $unreadPages = $thinPages;
+    @file_put_contents(__DIR__ . '/../../tg-bot.log',
+      date('c') . ' pages without text layer: ' . implode(',', $thinPages) . ' of ' . $pagesTotal
+      . '; vision top-up did not help: ' . mb_substr((string)$visErr, 0, 120) . "\n", FILE_APPEND);
+  }
+}
+
 // ── Ответ ───────────────────────────────────────────────────────────
 clearProgress($token, $chatId);
 
-$load = normalizeLoad($load);
 // Сверка брокера идёт ДО списка недостающего: найдя его в FMCSA по имени, она
 // дописывает в разбор DOT — и жаловаться на пропавший MC уже не на что.
 // Свой MC берём из подписи /carrier, чтобы не выдать диспетчеру отчёт о его же
 // компании: в шапке рейт-кона его номер стоит рядом с брокерским.
 $stPre = stateGet($chatId);
 $fraud = rcFraud($load, ownMcFromSignature(isset($stPre['carrier']) ? $stPre['carrier'] : ''));
-$missing = missingFields($load);
+$missing = missingFields($load);   // пересобираем: rcFraud мог дописать DOT
 
 if (empty($load['stops'])) {
   // Адресов нет — карточка бессмысленна, но молчать нельзя: показываем
