@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-16-2';
+const BUILD = '2026-08-17-1';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -70,6 +70,12 @@ const COMMANDS_VERSION = 6;
 // бот не отправит НИ ПРИ КАКИХ обстоятельствах. Обычный сценарий — 2–3
 // сообщения на документ, так что запас десятикратный.
 const MAX_OUT_PER_MIN = 20;
+
+// Сколько страниц альбома берём в один разбор. Константы этого файла ОБЯЗАНЫ
+// стоять здесь, вверху: top-level const в PHP исполняется по достижении строки,
+// а ветка с фото завершается через exit задолго до середины файла — объявленная
+// там константа не существует к моменту вызова, и обработчик падает.
+const GROUP_MAX_PAGES = 6;
 
 // Фатальная ошибка в обработчике = HTTP 500 = Telegram считает доставку
 // неудачной и присылает ТОТ ЖЕ апдейт снова, по кругу. Один такой случай
@@ -333,6 +339,13 @@ if (isset($msg['photo']) || (isset($msg['document']['mime_type']) && strpos($msg
   } else {
     $fileId = $msg['document']['file_id'];
     $mime = $msg['document']['mime_type'];
+  }
+  // Альбом (несколько страниц одним отправлением) — собираем в ОДИН разбор.
+  // Без этого каждая страница разбиралась отдельно и последняя затирала
+  // предыдущие: текст водителю выходил по одной странице из двух.
+  if (!empty($msg['media_group_id'])) {
+    handlePhotoGroup($token, $chatId, (string)$msg['media_group_id'], $fileId, $mime);
+    exit;
   }
   handlePhotoLoad($token, $chatId, $fileId, $mime);
   exit;
@@ -1698,18 +1711,98 @@ function stateSet($chatId, array $s) {
   @file_put_contents(statePath($chatId), json_encode($s, JSON_UNESCAPED_UNICODE));
 }
 
+// Скачать одну картинку по file_id. null — не получилось, причина уже в логе.
+function photoBytes($token, $fileId) {
+  $info = json_decode(tgApi($token, 'getFile', array('file_id' => $fileId)), true);
+  if (empty($info['result']['file_path'])) return null;
+  $bytes = httpGet('https://api.telegram.org/file/bot' . $token . '/' . $info['result']['file_path']);
+  return ($bytes === false || $bytes === '') ? null : $bytes;
+}
+
 function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   global $progressId;
   $sent = json_decode(reply($token, $chatId, '⏳ Читаю скриншот… / Reading…'), true);
   if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
   finishRequest();
 
-  $info = json_decode(tgApi($token, 'getFile', array('file_id' => $fileId)), true);
-  if (empty($info['result']['file_path'])) { fail($token, $chatId, 'photo getFile: ' . json_encode($info), 'Telegram не отдал картинку'); return; }
-  $bytes = httpGet('https://api.telegram.org/file/bot' . $token . '/' . $info['result']['file_path']);
-  if ($bytes === false || $bytes === '') { fail($token, $chatId, 'photo download failed', 'не удалось скачать картинку'); return; }
+  $bytes = photoBytes($token, $fileId);
+  if ($bytes === null) { fail($token, $chatId, 'photo download failed: ' . $fileId, 'не удалось скачать картинку'); return; }
 
   list($load, $err) = photoExtractLoad($bytes, $mime);
+  photoRespond($token, $chatId, $load, $err);
+}
+
+// Альбом: две-три страницы одного документа, отправленные разом.
+//
+// Telegram присылает каждую страницу ОТДЕЛЬНЫМ апдейтом, объединённым только
+// полем media_group_id. Раньше его никто не смотрел: каждая страница
+// разбиралась сама по себе, вторая затирала первую в состоянии — и текст
+// водителю собирался по одной случайной странице, без половины стопов и
+// реф-номеров. Выглядело это как «бот разобрал», а не как ошибка.
+//
+// Поэтому: страницы копим в файле, а разбирает их ВСЕ разом та доставка,
+// которая пришла первой. Остальные молча дописывают свою страницу и уходят.
+// ponytail: сколько всего страниц в альбоме, Telegram не сообщает — ждём, пока
+// счётчик перестанет расти. Это единственный способ, других API нет.
+// Порядок страниц — порядок доставки апдейтов; Telegram присылает их по порядку.
+function handlePhotoGroup($token, $chatId, $groupId, $fileId, $mime) {
+  global $progressId;
+  $dir = __DIR__ . '/../../tg-state';
+  if (!is_dir($dir)) @mkdir($dir, 0700, true);
+  $file = $dir . '/group-' . preg_replace('/\W/', '', $groupId) . '.json';
+  // Недоеденные альбомы (первая доставка упала, собирать некому) не копим.
+  foreach ((array)@glob($dir . '/group-*.json') as $old) {
+    if (@filemtime($old) < time() - 3600) @unlink($old);
+  }
+
+  // Дописываем страницу под блокировкой: доставки идут параллельно, и без
+  // неё две одновременные записи затирают друг друга.
+  $h = @fopen($file, 'c+');
+  if ($h === false) { handlePhotoLoad($token, $chatId, $fileId, $mime); return; }  // хотя бы одну страницу разберём
+  flock($h, LOCK_EX);
+  $g = json_decode((string)stream_get_contents($h), true);
+  if (!is_array($g) || !isset($g['pages'])) $g = array('pages' => array());
+  $g['pages'][] = array('id' => $fileId, 'mime' => $mime);
+  $mine = count($g['pages']);
+  ftruncate($h, 0); rewind($h); fwrite($h, json_encode($g)); fflush($h);
+  flock($h, LOCK_UN); fclose($h);
+
+  if ($mine > 1) { echo 'ok'; return; }   // не первая страница — собирать будет первая
+
+  $sent = json_decode(reply($token, $chatId, '⏳ Собираю страницы… / Reading pages…'), true);
+  if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
+  finishRequest();
+
+  // Ждём остальные страницы: обычно они доезжают меньше чем за секунду.
+  // Выходим, когда счётчик не менялся две проверки подряд, но не ждём дольше 6 с.
+  // Список держим отдельной переменной: если очередное чтение файла не удастся,
+  // разберём то, что уже собрали, а не потеряем альбом целиком.
+  $pages = $g['pages'];
+  $stable = 0;
+  for ($i = 0; $i < 12; $i++) {
+    usleep(500000);
+    $fresh = json_decode((string)@file_get_contents($file), true);
+    if (!is_array($fresh) || !isset($fresh['pages'])) continue;
+    if (count($fresh['pages']) === count($pages)) { if (++$stable >= 2) break; }
+    else { $stable = 0; $pages = $fresh['pages']; }
+    if (count($pages) >= GROUP_MAX_PAGES) break;
+  }
+  @unlink($file);
+  $pages = array_slice($pages, 0, GROUP_MAX_PAGES);
+  $images = array();
+  foreach ($pages as $p) {
+    $b = photoBytes($token, $p['id']);
+    if ($b !== null) $images[] = array('bytes' => $b, 'mime' => $p['mime']);
+  }
+  if (!$images) { fail($token, $chatId, 'group download failed: ' . $groupId, 'не удалось скачать страницы'); return; }
+
+  list($load, $err) = photoExtractPages($images);
+  photoRespond($token, $chatId, $load, $err, count($images));
+}
+
+// Общий хвост для одной картинки и для альбома: ошибки, а дальше рейт-кон или
+// карточка груза. Был скопирован в обе ветки — теперь один.
+function photoRespond($token, $chatId, $load, $err, $pageCount = 1) {
   clearProgress($token, $chatId);
 
   if ($err === 'nokey') {
@@ -1730,6 +1823,11 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
 
   $st = stateGet($chatId);
   $lang = curLang($st);
+  // Сколько страниц реально попало в разбор — видно сразу. Иначе непонятно,
+  // прочитал бот вторую страницу или тихо обошёлся первой.
+  $pages = $pageCount > 1
+    ? ($lang === 'en' ? "📄 Merged from {$pageCount} pages\n\n" : "📄 Собрано из {$pageCount} страниц\n\n")
+    : '';
 
   // Фото/скан РЕЙТ-КОНА ведём по ветке рейт-кона, а не «груза с лоуборда»:
   // у него есть адреса складов, окна времени и реф-номера, и человеку нужен
@@ -1742,7 +1840,7 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
     $st['rc_missing'] = missingFields($load);
     $st['last'] = 'rc';
     stateSet($chatId, $st);
-    reply($token, $chatId, rcSummaryFull($load, $st['rc_missing'], $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
+    reply($token, $chatId, $pages . rcSummaryFull($load, $st['rc_missing'], $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
     return;
   }
 
@@ -1753,7 +1851,7 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   // Карточка + кнопки. Аналитика и письмо приходят по нажатию, а не сразу
   // тремя простынями подряд: обычно нужна одна из них.
   $tail = $lang === 'en' ? "\n\n👇 What to do with this load:" : "\n\n👇 Что сделать с этим грузом:";
-  reply($token, $chatId, photoLoadCard($load, $lang) . $tail, photoKeyboard($load, $lang));
+  reply($token, $chatId, $pages . photoLoadCard($load, $lang) . $tail, photoKeyboard($load, $lang));
 }
 
 function handleCarrier($token, $chatId, $sig) {
