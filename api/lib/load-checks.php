@@ -1,6 +1,7 @@
 <?php
-// Проверки поверх уже разобранного груза: не мошенничество ли это и успевает ли
-// водитель по часам. Ни одна функция тут никуда не ходит и ничего не печатает —
+// Чистые помощники поверх уже разобранного груза: не мошенничество ли это,
+// успевает ли водитель по часам и как разложить длинный текст по сообщениям
+// Telegram. Ни одна функция тут никуда не ходит и ничего не печатает —
 // на входе разбор (и, для антифрода, запись FMCSA), на выходе структурные метки.
 // Текст собирается отдельно, чтобы кнопка перевода перерисовывала сообщение,
 // не запрашивая FMCSA заново — так же, как это уже устроено у missingFields().
@@ -8,6 +9,52 @@
 // Отдельный файл, а не кусок tg-actions.php: тот опирается на функции из
 // telegram-bot.php и в одиночку не подключается, а этот — подключается и
 // проверяется тестом (api/lib/test-load-checks.php).
+
+// ── Длинный текст → сообщения Telegram ──────────────────────────────
+//
+// У Telegram жёсткий предел 4096 символов на сообщение. Карточку водителю
+// раньше просто обрезали на 4000 — и на рейт-коне в 5-6 страниц с несколькими
+// погрузками и выгрузками последние стопы вместе со ставкой и весом ИСЧЕЗАЛИ
+// из текста, который диспетчер копирует и отправляет водителю. Ни в чате, ни в
+// логе следа: сообщение выглядело законченным.
+//
+// На вход — ГОТОВЫЕ блоки (шапка, каждый стоп целиком, итоговые строки), а не
+// текст: внутри блока стопа пустые строки тоже есть, и резать по ним значит
+// разлучить адрес с его временем и реф-номерами. Блок не делится никогда —
+// кроме случая, когда он один длиннее лимита.
+function packBlocks(array $blocks, $limit = 3800) {
+  $out = array(); $cur = '';
+  foreach ($blocks as $block) {
+    $block = (string)$block;
+    if ($block === '') continue;
+    // Блок длиннее лимита — документ ненормальный, но слишком длинное сообщение
+    // Telegram не примет вообще, поэтому такой блок режем по символам.
+    while (mb_strlen($block) > $limit) {
+      if ($cur !== '') { $out[] = $cur; $cur = ''; }
+      $out[] = mb_substr($block, 0, $limit);
+      $block = mb_substr($block, $limit);
+    }
+    if ($cur === '') { $cur = $block; continue; }
+    if (mb_strlen($cur) + 2 + mb_strlen($block) > $limit) { $out[] = $cur; $cur = $block; }
+    else $cur .= "\n\n" . $block;
+  }
+  if ($cur !== '') $out[] = $cur;
+  return $out;
+}
+
+/**
+ * Разбор неполон настолько, что карточка водителю бессмысленна: нет погрузки,
+ * нет доставки или у стопа нет адреса. По этому признаку решается, стоит ли
+ * тратить запрос vision-модели на повторное чтение PDF картинкой — остальные
+ * пропуски (ставка, вес, реф-номера) картинкой обычно не добираются, а квота
+ * тратится.
+ */
+function rcIncomplete(array $missing) {
+  foreach ($missing as $m) {
+    if (in_array($m['field'], array('nopickup', 'nodelivery', 'address', 'citystate'), true)) return true;
+  }
+  return false;
+}
 
 // ── Антифрод: сходится ли брокер в документе с тем, чей MC в нём напечатан ──
 //
@@ -56,6 +103,37 @@ function sameCompany($docName, $fmcsaName) {
   $pct = 0.0;
   similar_text($a, $b, $pct);
   return $pct >= 60;
+}
+
+/** Совпадает ли запись FMCSA с названием компании из документа (с учётом DBA). */
+function recMatchesName($rec, $docName) {
+  if (!is_array($rec) || $docName === '') return true;
+  $legal = isset($rec['legalName']) ? (string)$rec['legalName'] : '';
+  $dba   = isset($rec['dbaName']) ? (string)$rec['dbaName'] : '';
+  if ($legal === '') return true;
+  return sameCompany($docName, $legal) || ($dba !== '' && sameCompany($docName, $dba));
+}
+
+/**
+ * Это перевозчик, а не брокер. Нужно, чтобы отличить кривое извлечение от
+ * мошенничества: в шапке рейт-кона номер перевозчика стоит рядом с номером
+ * брокера (документ адресован перевозчику), и модель регулярно берёт не тот.
+ */
+function recIsCarrierOnly($rec) {
+  if (!is_array($rec)) return false;
+  $isBroker = isset($rec['brokerAuthorityStatus']) && $rec['brokerAuthorityStatus'] === 'A';
+  $isCarrier = (isset($rec['commonAuthorityStatus']) && $rec['commonAuthorityStatus'] === 'A')
+            || (isset($rec['contractAuthorityStatus']) && $rec['contractAuthorityStatus'] === 'A');
+  return !$isBroker && $isCarrier;
+}
+
+/**
+ * MC собственной компании — из подписи, заданной через /carrier. Нужен, чтобы
+ * никогда не выдавать диспетчеру отчёт о нём самом: свой номер он знает.
+ */
+function ownMcFromSignature($sig) {
+  if (!preg_match('~\bMC\s*#?\s*[:\-]?\s*(\d{4,8})\b~i', (string)$sig, $m)) return '';
+  return $m[1];
 }
 
 const FREE_EMAIL_DOMAINS = array('gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
@@ -136,6 +214,15 @@ function fraudText(array $flags, $lang = 'ru') {
       case 'no_bond':
         $L[] = $en ? '🔴 No BMC-84 bond on file — nothing to claim against if they do not pay.'
                    : '🔴 Бонда BMC-84 нет — если не заплатят, взыскивать не с чего.';
+        break;
+      case 'mc_is_carrier':
+        $L[] = $en
+          ? "ℹ️ The MC printed in the document ({$f['mc']}) belongs to a MOTOR CARRIER, not to the broker — "
+            . "on a rate confirmation the carrier's own number sits right next to the broker's. "
+            . "I could not find the broker's own number, so nothing was checked. Ask the broker for their MC."
+          : "ℹ️ MC из документа ({$f['mc']}) принадлежит ПЕРЕВОЗЧИКУ, а не брокеру — в рейт-коне номер "
+            . "перевозчика стоит рядом с брокерским. Брокерского номера я не нашёл, поэтому проверка не "
+            . "проводилась. Спросите MC у брокера.";
         break;
       case 'mc_notfound':
         $L[] = $en ? "🔴 MC {$f['mc']} from the document is not in FMCSA at all."

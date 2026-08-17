@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-16-2';
+const BUILD = '2026-08-17-3';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -70,6 +70,14 @@ const COMMANDS_VERSION = 6;
 // бот не отправит НИ ПРИ КАКИХ обстоятельствах. Обычный сценарий — 2–3
 // сообщения на документ, так что запас десятикратный.
 const MAX_OUT_PER_MIN = 20;
+
+// Сколько страниц альбома берём в один разбор. Рейт-коны бывают и длиннее
+// шести листов, а лишний запас тут ничего не стоит: снимки из Telegram мелкие,
+// а у Gemini на запрос 20 МБ. Константы этого файла ОБЯЗАНЫ стоять здесь,
+// вверху: top-level const в PHP исполняется по достижении строки, а ветка с
+// фото завершается через exit задолго до середины файла — объявленная там
+// константа не существует к моменту вызова, и обработчик падает.
+const GROUP_MAX_PAGES = 12;
 
 // Фатальная ошибка в обработчике = HTTP 500 = Telegram считает доставку
 // неудачной и присылает ТОТ ЖЕ апдейт снова, по кругу. Один такой случай
@@ -174,6 +182,10 @@ $secret = hash('sha256', $token);
 // ── Диагностика окружения (какие утилиты доступны для PDF) ──────────
 if (isset($_GET['diag'])) {
   header('Content-Type: text/plain; charset=utf-8');
+  // Первой строкой — версия сборки: единственный способ убедиться, что деплой
+  // доехал и opcache перечитал файл. Без неё «задеплоено» приходилось принимать
+  // на веру, а именно на этом бот один раз молча стоял со старым байткодом.
+  echo "build: " . BUILD . "\n";
   $exec = function_exists('shell_exec') && !in_array('shell_exec', array_map('trim', explode(',', (string)ini_get('disable_functions'))), true);
   echo "shell_exec: " . ($exec ? 'yes' : 'NO') . "\n";
   if ($exec) {
@@ -334,6 +346,13 @@ if (isset($msg['photo']) || (isset($msg['document']['mime_type']) && strpos($msg
     $fileId = $msg['document']['file_id'];
     $mime = $msg['document']['mime_type'];
   }
+  // Альбом (несколько страниц одним отправлением) — собираем в ОДИН разбор.
+  // Без этого каждая страница разбиралась отдельно и последняя затирала
+  // предыдущие: текст водителю выходил по одной странице из двух.
+  if (!empty($msg['media_group_id'])) {
+    handlePhotoGroup($token, $chatId, (string)$msg['media_group_id'], $fileId, $mime);
+    exit;
+  }
   handlePhotoLoad($token, $chatId, $fileId, $mime);
   exit;
 }
@@ -486,34 +505,72 @@ if ($encProblem === 'password') {
   echo 'ok'; exit;
 }
 
+// Текст достаём ПО СТРАНИЦАМ, а не одним куском. Рейт-кон часто на 4-6
+// страницах: погрузка на первой, доставка и реф-номера на третьей-пятой,
+// условия в конце. Без отметок о границах страниц модель склеивает конец одной
+// страницы с началом другой — так у стопа появлялось чужое время или чужой
+// реф-номер, и заметить это в готовой карточке нельзя.
+$pageTexts = array();
 try {
   $parser = new \Smalot\PdfParser\Parser();
-  $text = $parser->parseContent($pdf)->getText();
+  $parsed = $parser->parseContent($pdf);
+  try {
+    foreach ($parsed->getPages() as $pg) $pageTexts[] = (string)$pg->getText();
+  } catch (\Throwable $e) {
+    $pageTexts = array();   // дерево страниц не читается — возьмём документ целиком
+  }
+  if (!$pageTexts) $pageTexts = array((string)$parsed->getText());
 } catch (\Throwable $e) {
   $why = stripos($e->getMessage(), 'secured') !== false
     ? 'PDF защищён нестандартным способом'
     : 'файл повреждён или это не PDF';
   fail($token, $chatId, 'pdf parse: ' . $e->getMessage(), $why); exit;
 }
-$text = trim(preg_replace('/[ \t]+/', ' ', $text));
+
+// Страницы БЕЗ текстового слоя. Главная беда смешанного документа: первая
+// страница из TMS (текст), остальные — сканы подписанных листов. Общего текста
+// при этом набирается много, прежний порог «меньше 100 символов на документ»
+// не срабатывал, и страницы-картинки пропадали молча вместе со всеми стопами,
+// реф-номерами и условиями, которые на них были.
+$pagesTotal = count($pageTexts);
+$thinPages = array();
+foreach ($pageTexts as $i => $t) {
+  if (mb_strlen(trim(preg_replace('/\s+/u', ' ', $t))) < 80) $thinPages[] = $i + 1;
+}
+$marked = array();
+foreach ($pageTexts as $i => $t) {
+  $marked[] = ($pagesTotal > 1 ? '=== PAGE ' . ($i + 1) . ' OF ' . $pagesTotal . " ===\n" : '') . $t;
+}
+$text = trim(preg_replace('/[ \t]+/', ' ', implode("\n\n", $marked)));
 $text = fixGluedUnits($text);
-// Текста нет — это скан или фото, вставленное в PDF. Не сдаёмся: отправляем
-// файл целиком в Gemini, он читает PDF как картинку. Рендерить страницы в
-// изображения самим нечем — на хостинге нет ни Imagick, ни ghostscript,
+
+// Текстового слоя нет вовсе — единственный случай, когда картинка нужна СРАЗУ:
+// разбирать нечего. Gemini видит PDF как изображение и читает все страницы.
+// Рендерить страницы самим нечем — на хостинге нет ни Imagick, ни ghostscript,
 // а shell_exec отключён.
+//
+// Наличие тонких страниц САМО ПО СЕБЕ поводом больше не является. Сначала так и
+// было — «есть страница без текста, значит гоним весь PDF в vision», — но у
+// vision-модели 20 запросов в СУТКИ, а тонкая страница в рейт-коне дело
+// обычное: лист с подписью, страница условий, пустой хвост. Такое правило
+// расходовало бы суточную квоту на документах, которые прекрасно читаются
+// текстом. Поэтому решение принимается ниже — по РЕЗУЛЬТАТУ разбора, а не по
+// статистике страниц: картинку добираем только если в разборе реально не
+// хватает погрузки, доставки или адреса.
 $scanned = false;
+$unreadPages = array();
 if (mb_strlen($text) < 100) {
-  require_once __DIR__ . '/lib/load-photo.php';
   list($scanLoad, $scanErr) = geminiFile(rcPrompt(), $pdf, 'application/pdf');
-  if (!is_array($scanLoad) || empty($scanLoad['stops'])) {
+  if (is_array($scanLoad) && !empty($scanLoad['stops'])) {
+    $scanned = true;
+    $load = $scanLoad;
+  } else {
     clearProgress($token, $chatId);
     reply($token, $chatId, HELP_SCAN);
     @file_put_contents(__DIR__ . '/../../tg-bot.log',
       date('c') . ' scanned pdf failed: ' . mb_substr((string)$scanErr, 0, 200) . "\n", FILE_APPEND);
     echo 'ok'; exit;
   }
-  $scanned = true;
-  $load = $scanLoad;
 }
 // Разбирает Gemini, а у него контекст на порядки больше — режем только для
 // защиты от аномалий (200-страничный скан вместо рейт-кона), а не потому,
@@ -577,14 +634,46 @@ if (!is_dir($dir)) @mkdir($dir, 0755, true);
   'parsed' => $load, 'chat_id' => $chatId, 'file_name' => isset($doc['file_name']) ? $doc['file_name'] : '',
 ), JSON_UNESCAPED_UNICODE));
 
+// ── Добор картинкой, если текстом получилось неполно ────────────────
+//
+// Решение по РЕЗУЛЬТАТУ, а не по статистике страниц. Текстовый путь бесплатен и
+// уже отработал; лезем в vision только когда в разборе не хватает того, без
+// чего карточка водителю бессмысленна: погрузки, доставки или адреса стопа. Так
+// суточная квота vision (20 запросов) уходит на документы, которым она реально
+// нужна, а не на каждый рейт-кон с листом подписи в конце.
+// Берём результат картинки, только если он ПОЛНЕЕ текстового: хуже сделать
+// нельзя, а Gemini на картинке иногда видит меньше, чем в тексте.
+$load = normalizeLoad($load);
+$missing = missingFields($load);
+if (!$scanned && $thinPages && rcIncomplete($missing)) {
+  list($visLoad, $visErr) = geminiFile(rcPrompt(), $pdf, 'application/pdf');
+  if (is_array($visLoad) && !empty($visLoad['stops'])) {
+    $visLoad = normalizeLoad($visLoad);
+    $visMissing = missingFields($visLoad);
+    if (count($visMissing) < count($missing)) {
+      $load = $visLoad; $missing = $visMissing; $scanned = true;
+    }
+  }
+  // Не помогло — разбираем что есть, но говорим прямо, каких страниц не хватило:
+  // молчаливая потеря страницы выглядит как полный разбор, а это хуже.
+  if (!$scanned) {
+    $unreadPages = $thinPages;
+    @file_put_contents(__DIR__ . '/../../tg-bot.log',
+      date('c') . ' pages without text layer: ' . implode(',', $thinPages) . ' of ' . $pagesTotal
+      . '; vision top-up did not help: ' . mb_substr((string)$visErr, 0, 120) . "\n", FILE_APPEND);
+  }
+}
+
 // ── Ответ ───────────────────────────────────────────────────────────
 clearProgress($token, $chatId);
 
-$load = normalizeLoad($load);
 // Сверка брокера идёт ДО списка недостающего: найдя его в FMCSA по имени, она
 // дописывает в разбор DOT — и жаловаться на пропавший MC уже не на что.
-$fraud = rcFraud($load);
-$missing = missingFields($load);
+// Свой MC берём из подписи /carrier, чтобы не выдать диспетчеру отчёт о его же
+// компании: в шапке рейт-кона его номер стоит рядом с брокерским.
+$stPre = stateGet($chatId);
+$fraud = rcFraud($load, ownMcFromSignature(isset($stPre['carrier']) ? $stPre['carrier'] : ''));
+$missing = missingFields($load);   // пересобираем: rcFraud мог дописать DOT
 
 if (empty($load['stops'])) {
   // Адресов нет — карточка бессмысленна, но молчать нельзя: показываем
@@ -614,7 +703,14 @@ $lang = curLang($st);
 
 // Сводка + кнопки «что дальше». Полотно для водителя больше не вываливается
 // сразу: его отдаём по кнопке, когда оно действительно нужно.
-reply($token, $chatId, rcSummaryFull($load, $missing, $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
+$warn = $unreadPages
+  ? ($lang === 'en'
+      ? "⚠️ No text layer on page(s) " . implode(', ', $unreadPages) . " of {$pagesTotal} — I could not read them. "
+        . "If stops or reference numbers were printed there, check them by hand.\n\n"
+      : "⚠️ Страницы без текстового слоя: " . implode(', ', $unreadPages) . " из {$pagesTotal} — прочитать их не удалось. "
+        . "Если на них были стопы или реф-номера, проверьте вручную.\n\n")
+  : '';
+reply($token, $chatId, $warn . rcSummaryFull($load, $missing, $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
 echo 'ok';
 exit;
 
@@ -833,29 +929,32 @@ function handleLanguage($token, $chatId, $lang) {
 // сами данные (адреса, суммы, номера) не переводятся, это факты, а не текст.
 // ⚠️ Карточка по умолчанию — для американского водителя, который читает по-английски;
 // русская версия существует по прямому запросу и отправлять её водителю не стоит.
-function driverCard(array $d, $lang = 'en') {
+// Блоки: шапка с номером загрузки, каждый стоп ОДНИМ блоком, итоговые строки.
+// Именно блоками, а не готовой строкой: из них собирается и целая карточка, и
+// разложенная по сообщениям (driverCardParts ниже) — так стоп не разрывается.
+function driverCardBlocks(array $d, $lang = 'en') {
   $t = $lang === 'ru'
     ? array('load' => 'НОМЕР ЗАГРУЗКИ', 'pickup' => 'Адрес погрузки', 'delivery' => 'Адрес доставки',
             'time' => 'Время', 'ref' => 'Реф', 'rate' => 'Ставка', 'commodity' => 'Груз', 'weight' => 'Вес')
     : array('load' => 'LOAD ID', 'pickup' => 'Pick up Address', 'delivery' => 'Delivery Address',
             'time' => 'Time', 'ref' => 'Ref', 'rate' => 'Rate', 'commodity' => 'Commodity', 'weight' => 'Weight');
   $hr = '__________________________';
-  $L = array();
-  if (!empty($d['load_id'])) { $L[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#'); $L[] = ''; }
+  $blocks = array();
+  if (!empty($d['load_id'])) $blocks[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#');
 
+  $stops = (array)(isset($d['stops']) ? $d['stops'] : array());
   $counts = array('pickup' => 0, 'delivery' => 0);
-  foreach ($d['stops'] as $s) {
+  foreach ($stops as $s) {
     $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
     $counts[$type]++;
   }
   $seen = array('pickup' => 0, 'delivery' => 0);
-  foreach ($d['stops'] as $s) {
+  foreach ($stops as $s) {
     $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
     $seen[$type]++;
     $label = ($type === 'delivery') ? $t['delivery'] : $t['pickup'];
     if ($counts[$type] > 1) $label .= ' ' . $seen[$type];
-    $L[] = $label . ':';
-    $L[] = '';
+    $L = array($label . ':', '');
     // Пустая строка после названия склада — иначе оно визуально слипается
     // с адресом на следующей строке.
     if (!empty($s['name'])) { $L[] = $s['name']; $L[] = ''; }
@@ -869,13 +968,25 @@ function driverCard(array $d, $lang = 'en') {
       foreach ($refs as $r) { $L[] = ($first ? $t['ref'] . ': ' : '') . $r; $first = false; }
     }
     $L[] = $hr;
-    $L[] = '';
+    $blocks[] = implode("\n", $L);
   }
-  if (!empty($d['rate']))      $L[] = $t['rate'] . ': ' . $d['rate'];
-  if (!empty($d['commodity'])) $L[] = $t['commodity'] . ': ' . $d['commodity'];
-  if (!empty($d['weight']))    $L[] = $t['weight'] . ': ' . $d['weight'];
-  $card = implode("\n", $L);
-  return mb_strlen($card) > 4000 ? mb_substr($card, 0, 4000) : $card;
+  $tail = array();
+  if (!empty($d['rate']))      $tail[] = $t['rate'] . ': ' . $d['rate'];
+  if (!empty($d['commodity'])) $tail[] = $t['commodity'] . ': ' . $d['commodity'];
+  if (!empty($d['weight']))    $tail[] = $t['weight'] . ': ' . $d['weight'];
+  if ($tail) $blocks[] = implode("\n", $tail);
+  return $blocks;
+}
+
+// Карточка водителю, разложенная по сообщениям под лимит Telegram (4096
+// символов). Раньше она просто обрезалась на 4000 — и на рейт-коне в 5-6
+// страниц последние стопы вместе со ставкой и весом ИСЧЕЗАЛИ из текста,
+// который диспетчер копирует и отправляет водителю. Ни в чате, ни в логе следа
+// не оставалось: сообщение выглядело законченным.
+// Упаковка — packBlocks() в lib/load-checks.php: она чистая и проверяется
+// тестом, а потерять здесь стоп дороже всего.
+function driverCardParts(array $d, $lang = 'en', $limit = 3800) {
+  return packBlocks(driverCardBlocks($d, $lang), $limit);
 }
 
 // Промпт разбора рейт-кона — один на всех потребителей (Gemini, запасной Groq,
@@ -889,6 +1000,10 @@ function rcPrompt() {
   . "\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
   . "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
   . "CRITICAL RULES:\n"
+  . "- The text may contain '=== PAGE n OF m ===' markers. Read EVERY page through to the last one. "
+  . "On multi-page rate confirmations the pickup is often on page 1 while deliveries, reference numbers "
+  . "and appointment windows are printed on later pages. A value from one page belongs to a stop on "
+  . "another page only if the document clearly ties them together.\n"
   . "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
   . "- Every value must stay in the document's own language, which is English. NEVER translate or "
   . "localise anything — dates and month names included. '08/17' or 'Aug 17' stays exactly as printed.\n"
@@ -1295,18 +1410,41 @@ function formatBrokerReport($rec, $kind, $number, $lang = 'ru') {
 // просто не смотрели, — хуже, чем не проверять.
 // $load передаётся ПО ССЫЛКЕ: найдя брокера по имени, мы дописываем в разбор
 // его DOT — от этого зависит и кнопка проверки, и предупреждение о пропавшем MC.
-function rcFraud(array &$load) {
+function rcFraud(array &$load, $ownMc = '') {
+  $name = isset($load['broker']) ? trim((string)$load['broker']) : '';
   $mc = preg_replace('/\D/', '', (string)(isset($load['mc']) ? $load['mc'] : ''));
+
+  // Свой собственный MC (из подписи /carrier) — точно не брокерский. Рейт-кон
+  // адресован перевозчику, его номер напечатан в шапке рядом с брокерским, и
+  // модель регулярно берёт не тот. Отчёт о собственной компании диспетчеру не
+  // нужен: он и так про неё всё знает.
+  if ($mc !== '' && $ownMc !== '' && $mc === $ownMc) { $load['mc'] = ''; $mc = ''; }
+
   if ($mc !== '') {
     list($rec, $err) = fetchBrokerRecord('broker', $mc);
     if ($err === 'nokey') return array();
+    // Запись нашлась, но это НЕ та компания, что выдала документ. Два разных
+    // случая, и путать их нельзя:
+    //  • перед нами перевозчик — значит из шапки взяли его номер вместо
+    //    брокерского. Это ошибка извлечения, а не мошенничество: молча ищем
+    //    брокера по названию и проверяем уже его.
+    //  • перед нами БРОКЕР с другим именем — вот это тревога, её оставляем.
+    if (is_array($rec) && $name !== '' && !recMatchesName($rec, $name) && recIsCarrierOnly($rec)) {
+      $byName = fetchBrokerByName($name);
+      $load['mc'] = '';                       // чужой номер в разборе не держим
+      if (is_array($byName)) {
+        if (!empty($byName['dotNumber'])) $load['dot'] = (string)$byName['dotNumber'];
+        return brokerFraudFlags($load, $byName);
+      }
+      // Брокера по имени не нашли — говорим прямо, что проверять было нечего.
+      return array(array('code' => 'mc_is_carrier', 'mc' => $mc));
+    }
     return brokerFraudFlags($load, $rec);
   }
   // MC в документе нет — на живых рейт-конах это обычное дело: номер печатают
   // мелким шрифтом в подвале, и он теряется при извлечении текста. Раньше на
   // этом проверка просто заканчивалась, то есть не работала ровно там, где
   // нужнее всего. Ищем по названию компании.
-  $name = isset($load['broker']) ? trim((string)$load['broker']) : '';
   if ($name === '') return array();
   $rec = fetchBrokerByName($name);
   // Не нашли или нашли неоднозначно — молчим. Отсутствие записи по имени не
@@ -1698,18 +1836,98 @@ function stateSet($chatId, array $s) {
   @file_put_contents(statePath($chatId), json_encode($s, JSON_UNESCAPED_UNICODE));
 }
 
+// Скачать одну картинку по file_id. null — не получилось, причина уже в логе.
+function photoBytes($token, $fileId) {
+  $info = json_decode(tgApi($token, 'getFile', array('file_id' => $fileId)), true);
+  if (empty($info['result']['file_path'])) return null;
+  $bytes = httpGet('https://api.telegram.org/file/bot' . $token . '/' . $info['result']['file_path']);
+  return ($bytes === false || $bytes === '') ? null : $bytes;
+}
+
 function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   global $progressId;
   $sent = json_decode(reply($token, $chatId, '⏳ Читаю скриншот… / Reading…'), true);
   if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
   finishRequest();
 
-  $info = json_decode(tgApi($token, 'getFile', array('file_id' => $fileId)), true);
-  if (empty($info['result']['file_path'])) { fail($token, $chatId, 'photo getFile: ' . json_encode($info), 'Telegram не отдал картинку'); return; }
-  $bytes = httpGet('https://api.telegram.org/file/bot' . $token . '/' . $info['result']['file_path']);
-  if ($bytes === false || $bytes === '') { fail($token, $chatId, 'photo download failed', 'не удалось скачать картинку'); return; }
+  $bytes = photoBytes($token, $fileId);
+  if ($bytes === null) { fail($token, $chatId, 'photo download failed: ' . $fileId, 'не удалось скачать картинку'); return; }
 
   list($load, $err) = photoExtractLoad($bytes, $mime);
+  photoRespond($token, $chatId, $load, $err);
+}
+
+// Альбом: две-три страницы одного документа, отправленные разом.
+//
+// Telegram присылает каждую страницу ОТДЕЛЬНЫМ апдейтом, объединённым только
+// полем media_group_id. Раньше его никто не смотрел: каждая страница
+// разбиралась сама по себе, вторая затирала первую в состоянии — и текст
+// водителю собирался по одной случайной странице, без половины стопов и
+// реф-номеров. Выглядело это как «бот разобрал», а не как ошибка.
+//
+// Поэтому: страницы копим в файле, а разбирает их ВСЕ разом та доставка,
+// которая пришла первой. Остальные молча дописывают свою страницу и уходят.
+// ponytail: сколько всего страниц в альбоме, Telegram не сообщает — ждём, пока
+// счётчик перестанет расти. Это единственный способ, других API нет.
+// Порядок страниц — порядок доставки апдейтов; Telegram присылает их по порядку.
+function handlePhotoGroup($token, $chatId, $groupId, $fileId, $mime) {
+  global $progressId;
+  $dir = __DIR__ . '/../../tg-state';
+  if (!is_dir($dir)) @mkdir($dir, 0700, true);
+  $file = $dir . '/group-' . preg_replace('/\W/', '', $groupId) . '.json';
+  // Недоеденные альбомы (первая доставка упала, собирать некому) не копим.
+  foreach ((array)@glob($dir . '/group-*.json') as $old) {
+    if (@filemtime($old) < time() - 3600) @unlink($old);
+  }
+
+  // Дописываем страницу под блокировкой: доставки идут параллельно, и без
+  // неё две одновременные записи затирают друг друга.
+  $h = @fopen($file, 'c+');
+  if ($h === false) { handlePhotoLoad($token, $chatId, $fileId, $mime); return; }  // хотя бы одну страницу разберём
+  flock($h, LOCK_EX);
+  $g = json_decode((string)stream_get_contents($h), true);
+  if (!is_array($g) || !isset($g['pages'])) $g = array('pages' => array());
+  $g['pages'][] = array('id' => $fileId, 'mime' => $mime);
+  $mine = count($g['pages']);
+  ftruncate($h, 0); rewind($h); fwrite($h, json_encode($g)); fflush($h);
+  flock($h, LOCK_UN); fclose($h);
+
+  if ($mine > 1) { echo 'ok'; return; }   // не первая страница — собирать будет первая
+
+  $sent = json_decode(reply($token, $chatId, '⏳ Собираю страницы… / Reading pages…'), true);
+  if (!empty($sent['result']['message_id'])) $progressId = $sent['result']['message_id'];
+  finishRequest();
+
+  // Ждём остальные страницы: обычно они доезжают меньше чем за секунду.
+  // Выходим, когда счётчик не менялся две проверки подряд, но не ждём дольше 6 с.
+  // Список держим отдельной переменной: если очередное чтение файла не удастся,
+  // разберём то, что уже собрали, а не потеряем альбом целиком.
+  $pages = $g['pages'];
+  $stable = 0;
+  for ($i = 0; $i < 24; $i++) {   // до 12 с: десяток страниц доезжает дольше двух
+    usleep(500000);
+    $fresh = json_decode((string)@file_get_contents($file), true);
+    if (!is_array($fresh) || !isset($fresh['pages'])) continue;
+    if (count($fresh['pages']) === count($pages)) { if (++$stable >= 2) break; }
+    else { $stable = 0; $pages = $fresh['pages']; }
+    if (count($pages) >= GROUP_MAX_PAGES) break;
+  }
+  @unlink($file);
+  $pages = array_slice($pages, 0, GROUP_MAX_PAGES);
+  $images = array();
+  foreach ($pages as $p) {
+    $b = photoBytes($token, $p['id']);
+    if ($b !== null) $images[] = array('bytes' => $b, 'mime' => $p['mime']);
+  }
+  if (!$images) { fail($token, $chatId, 'group download failed: ' . $groupId, 'не удалось скачать страницы'); return; }
+
+  list($load, $err) = photoExtractPages($images);
+  photoRespond($token, $chatId, $load, $err, count($images));
+}
+
+// Общий хвост для одной картинки и для альбома: ошибки, а дальше рейт-кон или
+// карточка груза. Был скопирован в обе ветки — теперь один.
+function photoRespond($token, $chatId, $load, $err, $pageCount = 1) {
   clearProgress($token, $chatId);
 
   if ($err === 'nokey') {
@@ -1730,6 +1948,11 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
 
   $st = stateGet($chatId);
   $lang = curLang($st);
+  // Сколько страниц реально попало в разбор — видно сразу. Иначе непонятно,
+  // прочитал бот вторую страницу или тихо обошёлся первой.
+  $pages = $pageCount > 1
+    ? ($lang === 'en' ? "📄 Merged from {$pageCount} pages\n\n" : "📄 Собрано из {$pageCount} страниц\n\n")
+    : '';
 
   // Фото/скан РЕЙТ-КОНА ведём по ветке рейт-кона, а не «груза с лоуборда»:
   // у него есть адреса складов, окна времени и реф-номера, и человеку нужен
@@ -1737,12 +1960,13 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   // поля молча терялись — ответ выглядел нормальным, но был неполным.
   if (isRateCon($load)) {
     $load = normalizeLoad($load);
-    $st['rc_fraud'] = rcFraud($load);   // до missingFields: может дописать DOT
+    // до missingFields: может дописать DOT. Свой MC — из подписи /carrier.
+    $st['rc_fraud'] = rcFraud($load, ownMcFromSignature(isset($st['carrier']) ? $st['carrier'] : ''));
     $st['rc'] = $load;
     $st['rc_missing'] = missingFields($load);
     $st['last'] = 'rc';
     stateSet($chatId, $st);
-    reply($token, $chatId, rcSummaryFull($load, $st['rc_missing'], $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
+    reply($token, $chatId, $pages . rcSummaryFull($load, $st['rc_missing'], $lang, $st['rc_fraud']), rcKeyboard($load, $lang));
     return;
   }
 
@@ -1753,7 +1977,7 @@ function handlePhotoLoad($token, $chatId, $fileId, $mime) {
   // Карточка + кнопки. Аналитика и письмо приходят по нажатию, а не сразу
   // тремя простынями подряд: обычно нужна одна из них.
   $tail = $lang === 'en' ? "\n\n👇 What to do with this load:" : "\n\n👇 Что сделать с этим грузом:";
-  reply($token, $chatId, photoLoadCard($load, $lang) . $tail, photoKeyboard($load, $lang));
+  reply($token, $chatId, $pages . photoLoadCard($load, $lang) . $tail, photoKeyboard($load, $lang));
 }
 
 function handleCarrier($token, $chatId, $sig) {

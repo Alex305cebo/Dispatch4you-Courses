@@ -70,10 +70,12 @@ function geminiCall($sys, array $parts, $models = null, $useThinkingConfig = tru
 
   $cfg = array(
     'temperature' => 0,
-    // С отключёнными «размышлениями» хватает 4096; если модель их не даёт
-    // отключить, лимит поднимается ниже — иначе thinking съест весь вывод
-    // и придёт пустой ответ вообще без ошибки (уже наступали на это).
-    'maxOutputTokens' => $useThinkingConfig ? 4096 : 16384,
+    // 8192 против прежних 4096: рейт-кон на 5-6 страниц с несколькими
+    // погрузками и выгрузками даёт крупный JSON, а обрыв на полуслове — это не
+    // ошибка от API, а невалидный JSON и «не смог разобрать» на ровном месте.
+    // Если модель не даёт отключить «размышления», лимит ещё выше — иначе
+    // thinking съедает весь вывод и приходит пустой ответ без ошибки.
+    'maxOutputTokens' => $useThinkingConfig ? 8192 : 16384,
     'responseMimeType' => 'application/json',
   );
   if ($useThinkingConfig) $cfg['thinkingConfig'] = array('thinkingBudget' => 0);
@@ -199,9 +201,37 @@ function visionPrompt() {
  * @return array{0:?array,1:string} [данные, код ошибки: ''|'nokey'|'api'|'nojson'|'notload']
  */
 function photoExtractLoad($bytes, $mime) {
-  list($data, $err) = geminiCall(visionPrompt(), array(
-    array('inline_data' => array('mime_type' => $mime, 'data' => base64_encode($bytes))),
-  ));
+  return photoExtractPages(array(array('bytes' => $bytes, 'mime' => $mime)));
+}
+
+/**
+ * Несколько страниц ОДНОГО документа — одним запросом и одним результатом.
+ * Двухстраничный рейт-кон в Telegram приходит альбомом, и разбирать страницы
+ * порознь бессмысленно: на первой обычно погрузка и ставка, на второй —
+ * доставка, реф-номера и условия. Модели отдаём их вместе, чтобы она видела
+ * документ целиком, а не додумывала половину.
+ * @param array $images список array{bytes:string, mime:string}
+ * @return array{0:?array,1:string}
+ */
+function photoExtractPages(array $images) {
+  $parts = array();
+  foreach ($images as $im) {
+    if (!isset($im['bytes']) || $im['bytes'] === '') continue;
+    $parts[] = array('inline_data' => array(
+      'mime_type' => isset($im['mime']) ? $im['mime'] : 'image/jpeg',
+      'data' => base64_encode($im['bytes']),
+    ));
+  }
+  if (!$parts) return array(null, 'nojson');
+  // Без этой приписки модель разбирает картинки как несвязанные и отвечает по
+  // последней: страницы для неё — просто набор изображений, а не документ.
+  if (count($parts) > 1) {
+    $parts[] = array('text' => 'The images above are consecutive pages of ONE document, in order. '
+      . 'Read ALL of them before answering and return a SINGLE merged result. '
+      . 'Never drop a stop, a reference number, an address or a time window that appears only on a later page. '
+      . 'If the pages together form a Rate Confirmation, list every pickup and delivery from all pages in document order.');
+  }
+  list($data, $err) = geminiCall(visionPrompt(), $parts);
   if (!is_array($data)) return array(null, $err === '' ? 'nojson' : $err);
   if (isset($data['is_load']) && $data['is_load'] === false) return array(null, 'notload');
   return array(enForce($data), '');

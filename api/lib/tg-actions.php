@@ -11,7 +11,7 @@
 // версия существует по прямой просьбе владельца бота, и это осознанный риск:
 // переключив на русский, не пересылайте их так водителю/брокеру.
 //
-// Функции опираются на driverCard/appLink/cityState/brokerReport/fetchBrokerRecord/
+// Функции опираются на driverCardParts/appLink/cityState/brokerReport/fetchBrokerRecord/
 // formatBrokerReport/curLang/langToggleButton/editMessage/reply/tgApi из
 // telegram-bot.php — файл подключается оттуда, отдельно не работает.
 
@@ -171,11 +171,20 @@ function handleCallback($token, array $cq) {
 
   if ($data === 'rc:driver') {
     if (empty($st['rc'])) { reply($token, $chatId, $stale); return; }
-    reply($token, $chatId, $lang === 'en' ? '🚚 Copy and forward to the driver:' : '🚚 Скопируйте и перешлите водителю:');
     // Карточка всегда СТАРТУЕТ на английском независимо от языка интерфейса
     // бота — её читает американский водитель. driverKeyboard('en') отражает
     // именно текущий язык ЭТОГО сообщения, а не настройку диспетчера.
-    reply($token, $chatId, driverCard($st['rc'], 'en'), driverKeyboard('en'));
+    $parts = driverCardParts($st['rc'], 'en');
+    $n = count($parts);
+    reply($token, $chatId, $lang === 'en'
+      ? ($n > 1 ? "🚚 Copy and forward to the driver — {$n} messages, all of them:" : '🚚 Copy and forward to the driver:')
+      : ($n > 1 ? "🚚 Скопируйте и перешлите водителю — {$n} сообщения, все:" : '🚚 Скопируйте и перешлите водителю:'));
+    // Кнопки — только под последним куском, иначе они лезут между частями
+    // текста, который человек копирует целиком.
+    foreach ($parts as $i => $p) {
+      reply($token, $chatId, ($n > 1 ? '(' . ($i + 1) . '/' . $n . ")\n" : '') . $p,
+        $i === $n - 1 ? driverKeyboard('en') : null);
+    }
     return;
   }
   if ($data === 'rc:mail' || $data === 'ph:mail') {
@@ -244,7 +253,16 @@ function handleTranslate($token, $chatId, $messageId, array $st, $msgtype, $lang
       if (empty($st['rc'])) return;
       // Собирали карточку жёстко на 'en', а $lang уходил только в подпись кнопки:
       // нажатие меняло надпись, текст оставался английским в обе стороны.
-      editMessage($token, $chatId, $messageId, driverCard($st['rc'], $lang), driverKeyboard($lang));
+      $parts = driverCardParts($st['rc'], $lang);
+      $n = count($parts);
+      // Один кусок — правим на месте, как раньше. Несколько — правкой не
+      // обойтись: кнопка живёт под последним, а остальные сообщения нам не
+      // адресованы. Тогда присылаем карточку заново целиком.
+      if ($n === 1) { editMessage($token, $chatId, $messageId, $parts[0], driverKeyboard($lang)); return; }
+      foreach ($parts as $i => $p) {
+        reply($token, $chatId, '(' . ($i + 1) . '/' . $n . ")\n" . $p,
+          $i === $n - 1 ? driverKeyboard($lang) : null);
+      }
       return;
     case 'mail':
       if (!MAIL_ENABLED) return;

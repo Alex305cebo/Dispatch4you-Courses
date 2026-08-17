@@ -6,6 +6,42 @@
 
 require __DIR__ . '/load-checks.php';
 
+// ── Раскладка карточки по сообщениям ────────────────────────────────
+// Короткое остаётся одним куском
+assert(packBlocks(array('коротко')) === array('коротко'));
+
+// Блок стопа содержит пустые строки ВНУТРИ (после подписи, после названия
+// склада) — именно поэтому упаковщик принимает готовые блоки, а не текст.
+$stops = array();
+for ($i = 1; $i <= 8; $i++) {
+  $stops[] = "Pick up Address {$i}:\n\nWIELAND COPPER PRODUCTS\n\n"
+    . str_repeat("1234 SOME STREET LINE\n", 10) . "EASTABOGA AL 3626{$i}";
+}
+$parts = packBlocks($stops, 800);
+assert(count($parts) > 1);                                  // ради этого и делалось
+assert(implode("\n\n", $parts) === implode("\n\n", $stops)); // ни одного потерянного символа
+foreach ($parts as $p) assert(mb_strlen($p) <= 800);
+// Стоп не разорван: каждая часть начинается с подписи стопа, а не с адреса
+foreach ($parts as $p) assert(strpos($p, 'Pick up Address') === 0);
+// И каждый стоп целиком лежит в одном сообщении
+foreach ($stops as $s) {
+  $whole = 0;
+  foreach ($parts as $p) if (strpos($p, $s) !== false) $whole++;
+  assert($whole === 1);
+}
+
+// Блок, который сам длиннее лимита, не теряется — уходит частями
+$huge = str_repeat('X', 2500);
+$parts = packBlocks(array('шапка', $huge), 1000);
+assert(implode('', array_map(function ($p) { return str_replace("\n\n", '', $p); }, $parts)) === 'шапка' . $huge);
+foreach ($parts as $p) assert(mb_strlen($p) <= 1000);
+
+// Пустые блоки просто пропускаются
+assert(packBlocks(array('a', '', 'b'), 100) === array("a\n\nb"));
+
+// Многобайтные символы считаются символами, а не байтами
+assert(mb_strlen(packBlocks(array(str_repeat('я', 50)), 100)[0]) === 50);
+
 // ── Одна ли это компания ────────────────────────────────────────────
 assert(sameCompany('ABC Logistics LLC', 'ABC LOGISTICS, INC.') === true);
 assert(sameCompany('Coyote Logistics', 'COYOTE LOGISTICS LLC') === true);
@@ -15,6 +51,41 @@ assert(sameCompany('TQL', 'TOTAL QUALITY LOGISTICS LLC') === true);
 assert(sameCompany('RXO Capacity Solutions', 'RXO CAPACITY SOLUTIONS LLC') === true);
 // А это уже другая контора
 assert(sameCompany('Coyote Logistics', 'Freight Xpress Inc') === false);
+
+// ── Когда стоит тратить запрос vision на повторное чтение PDF ────────
+// Не хватает того, без чего карточка водителю бессмысленна — стоит
+assert(rcIncomplete(array(array('field' => 'nopickup'))) === true);
+assert(rcIncomplete(array(array('field' => 'nodelivery'))) === true);
+assert(rcIncomplete(array(array('field' => 'address', 'type' => 'pickup', 'n' => 1))) === true);
+assert(rcIncomplete(array(array('field' => 'citystate', 'type' => 'delivery', 'n' => 2))) === true);
+// Мелкие пропуски картинкой не добираются — квоту на них не тратим
+assert(rcIncomplete(array(array('field' => 'rate'), array('field' => 'weight'),
+                          array('field' => 'refs', 'type' => 'pickup', 'n' => 1),
+                          array('field' => 'mc'), array('field' => 'time', 'type' => 'pickup', 'n' => 1))) === false);
+assert(rcIncomplete(array()) === false);
+
+// ── Свой MC из подписи и «это перевозчик, а не брокер» ──────────────
+// Из-за этого бот однажды выдал диспетчеру отчёт о его собственной компании:
+// в шапке рейт-кона номер перевозчика стоит рядом с брокерским.
+assert(ownMcFromSignature("MAYA LOGISTICS INC\nMC 626911\nJohn, (555) 111-2233") === '626911');
+assert(ownMcFromSignature('MC# 626911') === '626911');
+assert(ownMcFromSignature('MC: 626911') === '626911');
+assert(ownMcFromSignature('MC-626911') === '626911');
+assert(ownMcFromSignature('ABC Trucking, (555) 111-2233') === '');
+assert(ownMcFromSignature('') === '');
+
+// Перевозчик: брокерской авторити нет, обычная есть
+assert(recIsCarrierOnly(array('commonAuthorityStatus' => 'A')) === true);
+assert(recIsCarrierOnly(array('contractAuthorityStatus' => 'A')) === true);
+// Брокер — не перевозчик, даже если обе авторити активны
+assert(recIsCarrierOnly(array('brokerAuthorityStatus' => 'A', 'commonAuthorityStatus' => 'A')) === false);
+assert(recIsCarrierOnly(array('brokerAuthorityStatus' => 'A')) === false);
+assert(recIsCarrierOnly(null) === false);
+
+// Совпадение записи с названием из документа
+assert(recMatchesName(array('legalName' => 'MAYA LOGISTICS INC'), 'Maya Logistics') === true);
+assert(recMatchesName(array('legalName' => 'SOME HOLDINGS LLC', 'dbaName' => 'BLUE ARROW'), 'Blue Arrow') === true);
+assert(recMatchesName(array('legalName' => 'MAYA LOGISTICS INC'), 'Molo Solutions') === false);
 
 // ── Метки антифрода ─────────────────────────────────────────────────
 $codes = function ($flags) { return array_map(function ($f) { return $f['code']; }, $flags); };

@@ -483,7 +483,6 @@
 :root[data-theme="light"] .profession-text { color: var(--text-secondary) !important; }
 :root[data-theme="light"] .stats-source p { color: var(--text-muted) !important; }
 :root[data-theme="light"] .features-section .section-description { color: var(--text-primary) !important; }
-:root[data-theme="light"] .feature-content p { color: var(--text-secondary) !important; }
 :root[data-theme="light"] .carousel-btn,
 :root[data-theme="light"] button.carousel-btn { background: var(--glass-04) !important; color: var(--text-secondary) !important; }
 :root[data-theme="light"] .carousel-btn:hover { background: var(--glass-10) !important; border-color: var(--edge-10) !important; color: var(--text-primary) !important; }
@@ -701,12 +700,21 @@
 }
 /* Вуаль под текстом была почти чёрной — переворачиваем в белую, чтобы
    тёмный текст читался поверх ролика так же, как раньше читался белый. */
+/* Вуаль тянется до 88% ширины, а не до 58%.
+   Замер: текст карточки занимает от 3% до 79% ширины, а прежняя вуаль к
+   58% падала до 0.26 — дальше тёмный текст лежал прямо на видео и не
+   читался. Теперь плотная часть перекрывает весь текст, видео остаётся
+   открытым справа. */
+/* Вуаль плотная там, где текст, и отпускает ролик справа.
+   Замер: строка занимала до 79% ширины и уезжала на видео. Ограничиваем
+   текст 60% ширины (ниже) — и вуали хватает 68%, дальше кадр открыт. */
 :root[data-theme="light"] .explore-item-scrim {
-  background: linear-gradient(120deg,
-              rgba(255, 255, 255, 0.94) 0%,
-              rgba(255, 255, 255, 0.78) 30%,
-              rgba(255, 255, 255, 0.26) 58%,
-              rgba(255, 255, 255, 0) 78%) !important;
+  background: linear-gradient(105deg,
+              rgba(255, 255, 255, 0.98) 0%,
+              rgba(255, 255, 255, 0.96) 62%,
+              rgba(255, 255, 255, 0.90) 82%,
+              rgba(255, 255, 255, 0.40) 93%,
+              rgba(255, 255, 255, 0) 100%) !important;
 }
 :root[data-theme="light"] .explore-item:hover,
 :root[data-theme="light"] .explore-item:focus-visible {
@@ -1018,4 +1026,48 @@
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.04), rgba(15, 23, 42, 0.07)) !important;
   border-color: var(--border-subtle) !important;
   color: var(--text-primary) !important;
+}
+
+/* ── 7. Карточки секции «Что вы получите» ──
+   Текст карточки лежит ПОВЕРХ фотографии, которую затемняет вуаль
+   .feature-media::after — rgba(5,8,16,.35) сверху и .55 к низу. Карточка
+   остаётся тёмной в ЛЮБОЙ теме, потому что это фото, а не подложка.
+
+   В светлой теме заголовок брал --text-primary и становился тёмным на
+   тёмном фото: контраст около 1.5:1, читать невозможно. Здесь нужен не
+   «цвет по теме», а белый — как в тёмной.
+
+   Тень обязательна: фотографии разные, внизу вуаль слабее, и без неё
+   белый местами тонет в светлых участках кадра. */
+:root[data-theme="light"] .feature-content h3 {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+:root[data-theme="light"] .feature-content p {
+  color: rgba(255, 255, 255, 0.92) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55) !important;
+}
+/* Вуаль плотнее снизу, где лежит текст: 0.35→0.55 не хватало на светлых
+   кадрах даже белому. */
+:root[data-theme="light"] .feature-media::after {
+  background: linear-gradient(rgba(5, 8, 16, 0.30) 0%,
+                              rgba(5, 8, 16, 0.62) 55%,
+                              rgba(5, 8, 16, 0.86) 100%) !important;
+}
+
+/* ── Градиентный текст, начинавшийся с белого ──
+   .p2-title и .p2-amount залиты градиентом через background-clip:text.
+   Первый стоп у обоих — чистый белый: на тёмной теме это блик, на светлой
+   первая половина слова просто исчезала («Выберите свой», «$8» в «$850»).
+   Меняем стопы на тёмные, сам приём градиента сохраняем. */
+:root[data-theme="light"] .p2-title {
+  background-image: linear-gradient(120deg, #0f172a 0%, #4338ca 55%, #0b5c74 100%) !important;
+}
+:root[data-theme="light"] .p2-amount {
+  background-image: linear-gradient(120deg, #0f172a 0%, #0b5c74 100%) !important;
+  /* Обрезку по тексту задаём явно: у второй карточки её нет, и без этих
+     двух строк градиент лёг бы сплошной плашкой позади цены. */
+  -webkit-background-clip: text !important;
+          background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
 }
