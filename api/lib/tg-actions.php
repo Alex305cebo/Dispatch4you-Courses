@@ -61,6 +61,8 @@ function rcSummaryFull(array $d, array $missing, $lang = 'ru', array $fraud = ar
   if ($fr !== '') $text .= "\n\n" . $fr;
   $hos = hosText(hosFeasibility($d), $lang);
   if ($hos !== '') $text .= "\n\n" . $hos;
+  $rateWarn = rateSanityText($d, $lang);
+  if ($rateWarn !== "") $text .= "\n\n" . $rateWarn;
   if ($missing) {
     $list = implode(', ', missingFieldsText($missing, $lang));
     $text .= $lang === 'en'
