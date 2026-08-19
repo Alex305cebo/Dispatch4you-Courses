@@ -733,17 +733,14 @@
         // innerHTML: он затирает всё, что мы туда положили. Поэтому кнопку
         // ставим не один раз, а следим за контейнером и возвращаем её обратно.
         function place() {
-            var desk = document.getElementById('nav-actions-desktop');
-            if (desk && desk.querySelector('.nav-profile-link') &&
-                !desk.querySelector('.d4y-theme-btn')) {
-                desk.insertAdjacentHTML('beforeend', html);
-                bind(desk.querySelector('.d4y-theme-btn'));
-            }
-            var card = document.getElementById('mob-profile-card');
-            if (card && !card.querySelector('.d4y-theme-btn')) {
-                card.insertAdjacentHTML('beforeend',
+            // Единственное место кнопки — личный кабинет: <div id="theme-toggle-slot">
+            // в карточке профиля на dashboard.html. Ни в шапке, ни в бургер-меню
+            // её быть не должно: тема переключается только из раздела пользователя.
+            var slot = document.getElementById('theme-toggle-slot');
+            if (slot && !slot.querySelector('.d4y-theme-btn')) {
+                slot.insertAdjacentHTML('beforeend',
                     '<div class="d4y-theme-row">' + html + '<span>' + label + '</span></div>');
-                bind(card.querySelector('.d4y-theme-btn'));
+                bind(slot.querySelector('.d4y-theme-btn'));
             }
         }
 
@@ -774,9 +771,11 @@
         }
 
         place();
-        var desk = document.getElementById('nav-actions-desktop');
-        if (desk && window.MutationObserver) {
-            new MutationObserver(place).observe(desk, { childList: true, subtree: true });
+        // Кабинет дорисовывает карточку профиля после проверки авторизации,
+        // поэтому слота может ещё не быть в момент запуска.
+        var host = document.querySelector('.profile-card') || document.body;
+        if (host && window.MutationObserver) {
+            new MutationObserver(place).observe(host, { childList: true, subtree: true });
         }
 
         // Слушатель системной темы отключён: тёмная — тема по умолчанию,
