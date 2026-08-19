@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-17-3';
+const BUILD = '2026-08-17-4';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -1020,6 +1020,10 @@ function rcPrompt() {
   . "you have missed it — re-read the whole document, including pages after the first, before answering. "
   . "The pickup is often on a separate page or in a section titled only with the shipper's name.\n"
   . "- name: facility name. address_lines: the street line(s) AND then the 'CITY ST ZIP' line.\n"
+  . "- address_lines: ONLY the mailing address — street line(s) and the CITY ST ZIP line. Do NOT put "
+  . "directions, landmarks or notes there ('SOUTH OF BATTLE MOUNTAIN', 'ACROSS FROM THE SILO', "
+  . "'C/O RECEIVING'): the driver needs an address he can drive to, and such a line ends up "
+  . "standing where the street should be.\n"
   . "- address_lines MUST contain the CITY ST ZIP line whenever it appears in the document (e.g. 'EASTABOGA AL 36260'). "
   . "An address without its city line is unusable for a driver — never omit it.\n"
   . "- time: appointment date and window as printed, e.g. '02/02/26 @ 12:30' or '07/24/26 06:00 - 17:00'.\n"
@@ -1030,6 +1034,10 @@ function rcPrompt() {
   . "(e.g. '41870.00lbs 1713693K' means ref '1713693K'). Treat those bare codes as that stop's refs. "
   . "Do NOT invent a label for them — output the code alone.\n"
   . "- rate: the TOTAL rate paid to the carrier, with currency as printed.\n"
+  . "- If the rate is priced PER UNIT (per ton, per cwt, per hundredweight, per mile), keep that wording "
+  . "in rate exactly as printed, e.g. '$52.00 per ton'. Hay, grain and bulk loads are quoted this way and "
+  . "the printed TOTAL is then the unit price, not the trip total — dropping the words turns $52 per ton "
+  . "into a $52 trip.\n"
   . "- weight: shipment weight in pounds. miles: trip distance. Labels and values are often on separate lines — "
   . "match them by column position, not adjacency.\n"
   . "- commodity: the goods description ONLY, never the trailer type. equipment: trailer type (VAN, REEFER, FLATBED, POWER ONLY).\n"
@@ -1061,6 +1069,15 @@ function normalizeLoad(array $d) {
   // Через эту функцию проходит КАЖДЫЙ разбор рейт-кона — и из PDF, и с фото,
   // поэтому чистка кириллицы стоит тут: одно место вместо четырёх вызовов.
   $d = enForce($d);
+
+  // Ориентиры и пояснения из адреса убираем: первой строкой у водителя должна
+  // стоять улица, а не «SOUTH OF BATTLE MOUNTAIN». Заодно чинится ссылка в
+  // приложение — туда улицей уходила та же лишняя строка.
+  if (!empty($d['stops']) && is_array($d['stops'])) {
+    foreach ($d['stops'] as $i => $s) {
+      if (isset($s['address_lines'])) $d['stops'][$i]['address_lines'] = cleanAddressLines($s['address_lines']);
+    }
+  }
   $num = function ($v) {
     $v = preg_replace('/[^0-9.]/', '', (string)$v);
     return $v === '' ? null : (float)$v;

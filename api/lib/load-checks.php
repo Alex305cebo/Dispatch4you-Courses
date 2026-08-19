@@ -327,3 +327,89 @@ function hosText($h, $lang = 'ru') {
     . ($en ? 'It fits, but with no slack — one delay at the dock and the delivery is late.'
            : 'Успевает, но впритык — одна задержка на складе, и доставка опаздывает.');
 }
+
+// ── Адрес: только то, по чему водитель доедет ───────────────────────
+//
+// Брокеры печатают в адресе склада ориентиры и пояснения: «SOUTH OF BATTLE
+// MOUNTAIN», «ACROSS FROM THE GRAIN ELEVATOR», «C/O RECEIVING». Модель честно
+// копирует их как строки адреса — она и должна копировать всё, — но в карточке
+// водителю такая строка стоит первой и выглядит как улица. Хуже того, в ссылку
+// на приложение улицей уходила именно она.
+//
+// Оставляем строку, если в ней есть цифра (номер дома, HC 61 BOX 165, док),
+// если это «CITY ST ZIP» или если в ней есть слово-указатель улицы. Всё
+// остальное — пояснение, ему в адресе не место.
+function isCityStateZip($line) {
+  return (bool)preg_match('/\b[A-Z]{2}\b[ ,]+\d{5}/', strtoupper((string)$line));
+}
+
+function looksLikeStreet($line) {
+  $u = strtoupper((string)$line);
+  if (preg_match('/\d/', $u)) return true;
+  return (bool)preg_match('/\b(STREET|ST|AVENUE|AVE|ROAD|RD|DRIVE|DR|LANE|LN|BOULEVARD|BLVD|HIGHWAY|HWY|PARKWAY|PKWY|COURT|CT|CIRCLE|CIR|PLACE|PL|TERRACE|TER|WAY|TRAIL|TRL|SUITE|STE|UNIT|BOX|PO BOX|RR|HC)\b/', $u);
+}
+
+/**
+ * Чистим строки адреса. Осторожно: если после чистки не осталось строки с
+ * городом, которая БЫЛА до неё, значит правило ошиблось на этом документе —
+ * возвращаем исходное. Потерять адрес хуже, чем оставить в нём лишнюю строку.
+ */
+function cleanAddressLines($lines) {
+  $lines = (array)$lines;
+  $keep = array();
+  foreach ($lines as $l) {
+    $s = trim((string)$l);
+    if ($s === '') continue;
+    if (isCityStateZip($s) || looksLikeStreet($s)) $keep[] = $s;
+  }
+  if (!$keep) return $lines;
+  $hadCity = false;
+  foreach ($lines as $l) if (isCityStateZip($l)) { $hadCity = true; break; }
+  if ($hadCity) {
+    $keepsCity = false;
+    foreach ($keep as $l) if (isCityStateZip($l)) { $keepsCity = true; break; }
+    if (!$keepsCity) return $lines;
+  }
+  return $keep;
+}
+
+// ── Ставка похожа на цену за единицу, а не за рейс ──────────────────
+// Сено, зерно и наливные грузы брокеры считают за тонну, изредка за милю. В
+// документе печатается «$52.00», модель копирует верно — и в карточке водителя
+// стоит ставка $52 за рейс через полтора штата. Не исправляем молча (умножать
+// на вес наугад нельзя), но предупреждаем.
+function rateSanityText(array $d, $lang = 'ru') {
+  $raw = trim((string)(isset($d['rate']) ? $d['rate'] : ''));
+  if ($raw === '') return '';
+  $r = (float)preg_replace('/[^0-9.]/', '', $raw);
+  if ($r <= 0) return '';
+  $en = $lang === 'en';
+  $perTon = (bool)preg_match('/\bper\s*(ton|cwt|hundredweight)\b/i', $raw);
+
+  // Сказано «за тонну» и есть вес — считаем, сколько это за рейс. Не подменяем
+  // ставку молча: показываем обе цифры и оговорку, что окончательная сумма
+  // выйдет по scale ticket, как и написано в самом рейт-коне.
+  if ($perTon) {
+    $lbs = (float)preg_replace('/[^0-9.]/', '', (string)(isset($d['weight']) ? $d['weight'] : ''));
+    if ($lbs > 1000) {
+      $tons = $lbs / 2000;
+      $total = $r * $tons;
+      return $en
+        ? sprintf("⚠️ The rate is PER TON: %s. At %s lbs (%.1f tons) that is about $%s for the trip — "
+          . "the final amount comes from the scale tickets.", $raw, number_format($lbs), $tons, number_format($total, 2))
+        : sprintf("⚠️ Ставка указана ЗА ТОННУ: %s. При %s lbs (%.1f т) это примерно $%s за рейс — "
+          . "окончательная сумма выйдет по scale ticket.", $raw, number_format($lbs), $tons, number_format($total, 2));
+    }
+    return $en
+      ? "⚠️ The rate is PER TON (" . $raw . "), not the total for the trip. Without a weight I cannot work out the trip total."
+      : "⚠️ Ставка указана ЗА ТОННУ (" . $raw . "), а не за рейс. Без веса итог по рейсу не посчитать.";
+  }
+
+  // Единицы не написаны, но сумма для рейса неправдоподобно мала — предупреждаем.
+  if ($r >= 300) return '';
+  return $en
+    ? "⚠️ Rate " . $raw . " looks like a per-unit price (per ton or per mile), not the total for the trip. "
+      . "Check the rate confirmation for the total — that is the number the driver should see."
+    : "⚠️ Ставка " . $raw . " похожа на цену за единицу (за тонну или за милю), а не за рейс. "
+      . "Проверьте в рейт-коне итоговую сумму — водителю нужна именно она.";
+}

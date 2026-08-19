@@ -52,6 +52,43 @@ assert(sameCompany('RXO Capacity Solutions', 'RXO CAPACITY SOLUTIONS LLC') === t
 // А это уже другая контора
 assert(sameCompany('Coyote Logistics', 'Freight Xpress Inc') === false);
 
+// ── Адрес: только то, по чему водитель доедет ───────────────────────
+// Живой случай, рейт-кон MODE Transportation 16374612: ориентир «SOUTH OF
+// BATTLE MOUNTAIN» напечатан в документе строкой адреса и вставал у водителя
+// на место улицы.
+assert(cleanAddressLines(array('SOUTH OF BATTLE MOUNTAIN', 'HC 61 BOX 165', 'BATTLE MOUNTAIN, NV 89820'))
+  === array('HC 61 BOX 165', 'BATTLE MOUNTAIN, NV 89820'));
+// Нормальный адрес не трогаем
+assert(cleanAddressLines(array('217 WEST TERRA BELLA AVE', 'PIXLEY, CA 93256'))
+  === array('217 WEST TERRA BELLA AVE', 'PIXLEY, CA 93256'));
+// Улица без номера, но со словом-указателем — оставляем
+assert(cleanAddressLines(array('MAIN STREET', 'PIXLEY, CA 93256'))
+  === array('MAIN STREET', 'PIXLEY, CA 93256'));
+assert(cleanAddressLines(array('SUITE B', '217 W TERRA BELLA AVE', 'PIXLEY, CA 93256'))
+  === array('SUITE B', '217 W TERRA BELLA AVE', 'PIXLEY, CA 93256'));
+// Пояснения выкидываем
+assert(cleanAddressLines(array('C/O RECEIVING', '217 W TERRA BELLA AVE', 'PIXLEY, CA 93256'))
+  === array('217 W TERRA BELLA AVE', 'PIXLEY, CA 93256'));
+// Страховка: если правило съело бы всё или потеряло город — отдаём исходное
+assert(cleanAddressLines(array('ACROSS FROM THE SILO')) === array('ACROSS FROM THE SILO'));
+assert(cleanAddressLines(array()) === array());
+
+// ── Ставка за тонну, а не за рейс ───────────────────────────────────
+// Тот же документ: «$52.00 LINEHAUL ***per ton***» при 44000 lbs — это ≈$1144
+// за рейс, а в карточке водителя стояло $52.
+$t = rateSanityText(array('rate' => '$52.00 per ton', 'weight' => '44000 lbs'), 'ru');
+assert(strpos($t, '1,144.00') !== false);
+assert(strpos($t, '22.0') !== false);
+$t = rateSanityText(array('rate' => '$52.00 per ton', 'weight' => '44000 lbs'), 'en');
+assert(strpos($t, '1,144.00') !== false);
+// Без веса считать нечего, но предупредить надо
+assert(strpos(rateSanityText(array('rate' => '$52.00 per ton'), 'ru'), 'ЗА ТОННУ') !== false);
+// Единицы не написаны, сумма неправдоподобна для рейса
+assert(rateSanityText(array('rate' => '$52.00'), 'ru') !== '');
+// Обычная ставка — молчим
+assert(rateSanityText(array('rate' => '$1,956.34'), 'ru') === '');
+assert(rateSanityText(array('rate' => ''), 'ru') === '');
+
 // ── Когда стоит тратить запрос vision на повторное чтение PDF ────────
 // Не хватает того, без чего карточка водителю бессмысленна — стоит
 assert(rcIncomplete(array(array('field' => 'nopickup'))) === true);
