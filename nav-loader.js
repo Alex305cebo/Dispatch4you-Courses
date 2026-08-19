@@ -724,15 +724,33 @@
             '<span class="d4y-ico-sun" aria-hidden="true">☀</span>' +
             '<span class="d4y-ico-moon" aria-hidden="true">☾</span></button>';
 
-        var topbar = document.getElementById('topbar-lang-anchor');
-        var desk = document.getElementById('nav-actions-desktop');
-        if (topbar) topbar.insertAdjacentHTML('beforeend', html);
-        else if (desk) desk.insertAdjacentHTML('beforebegin', html);
-        else return;
+        // Кнопка живёт ТОЛЬКО в разделе пользователя, а не в общей шапке.
+        // На десктопе это блок профиля (#nav-actions-desktop с .nav-profile-link),
+        // на мобильном — карточка профиля в меню (#mob-profile-card). Оба
+        // появляются только у вошедшего пользователя.
+        //
+        // Блок профиля на десктопе перерисовывает firebase-auth-init.js через
+        // innerHTML: он затирает всё, что мы туда положили. Поэтому кнопку
+        // ставим не один раз, а следим за контейнером и возвращаем её обратно.
+        function place() {
+            var desk = document.getElementById('nav-actions-desktop');
+            if (desk && desk.querySelector('.nav-profile-link') &&
+                !desk.querySelector('.d4y-theme-btn')) {
+                desk.insertAdjacentHTML('beforeend', html);
+                bind(desk.querySelector('.d4y-theme-btn'));
+            }
+            var card = document.getElementById('mob-profile-card');
+            if (card && !card.querySelector('.d4y-theme-btn')) {
+                card.insertAdjacentHTML('beforeend',
+                    '<div class="d4y-theme-row">' + html + '<span>' + label + '</span></div>');
+                bind(card.querySelector('.d4y-theme-btn'));
+            }
+        }
 
-        var btn = document.querySelector('.d4y-theme-btn');
-        if (!btn) return;
-        btn.addEventListener('click', function () {
+        function bind(btn) {
+            if (!btn || btn.dataset.bound) return;
+            btn.dataset.bound = '1';
+            btn.addEventListener('click', function () {
             var root = document.documentElement;
             var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
             try { localStorage.setItem('d4y-theme', next); } catch (e) {}
@@ -752,10 +770,17 @@
             // ошибок разом: страница всегда рисуется одной темой.
             root.setAttribute('data-theme', next);
             location.reload();
-        });
+            });
+        }
+
+        place();
+        var desk = document.getElementById('nav-actions-desktop');
+        if (desk && window.MutationObserver) {
+            new MutationObserver(place).observe(desk, { childList: true, subtree: true });
+        }
 
         // Слушатель системной темы отключён: тёмная — тема по умолчанию,
-        // светлая включается только кнопкой.
+        // светлая включается только кнопкой в разделе пользователя.
         /* системная тема не учитывается */
     }
 
