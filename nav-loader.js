@@ -718,11 +718,22 @@
     // после отрисовки, и для выставления темы он опоздал бы.
     function injectThemeToggle() {
         if (document.querySelector('.d4y-theme-btn')) return;
-        var label = LANG === 'ru' ? 'Переключить тему' : 'Switch theme';
-        var html = '<button class="d4y-theme-btn" type="button" aria-label="' + label +
-            '" title="' + label + '">' +
-            '<span class="d4y-ico-sun" aria-hidden="true">☀</span>' +
-            '<span class="d4y-ico-moon" aria-hidden="true">☾</span></button>';
+        var ru = LANG === 'ru';
+        var label = ru ? 'Переключить тему' : 'Switch theme';
+        // Не иконка-загадка, а подписанный переключатель на два положения:
+        // видно и текущую тему, и что вообще можно выбрать.
+        var html =
+            '<div class="d4y-theme-switch" role="group" aria-label="' + label + '">' +
+              '<span class="d4y-theme-caption">' + (ru ? 'Тема оформления' : 'Appearance') + '</span>' +
+              '<div class="d4y-theme-opts">' +
+                '<button class="d4y-theme-btn d4y-theme-opt" data-theme-set="light" type="button">' +
+                  '<span aria-hidden="true">☀</span>' + (ru ? 'Светлая' : 'Light') +
+                '</button>' +
+                '<button class="d4y-theme-btn d4y-theme-opt" data-theme-set="dark" type="button">' +
+                  '<span aria-hidden="true">☾</span>' + (ru ? 'Тёмная' : 'Dark') +
+                '</button>' +
+              '</div>' +
+            '</div>';
 
         // Кнопка живёт ТОЛЬКО в разделе пользователя, а не в общей шапке.
         // На десктопе это блок профиля (#nav-actions-desktop с .nav-profile-link),
@@ -737,10 +748,22 @@
             // в карточке профиля на dashboard.html. Ни в шапке, ни в бургер-меню
             // её быть не должно: тема переключается только из раздела пользователя.
             var slot = document.getElementById('theme-toggle-slot');
-            if (slot && !slot.querySelector('.d4y-theme-btn')) {
-                slot.insertAdjacentHTML('beforeend',
-                    '<div class="d4y-theme-row">' + html + '<span>' + label + '</span></div>');
-                bind(slot.querySelector('.d4y-theme-btn'));
+            if (slot && !slot.querySelector('.d4y-theme-switch')) {
+                slot.insertAdjacentHTML('beforeend', html);
+                var opts = slot.querySelectorAll('.d4y-theme-opt');
+                for (var i = 0; i < opts.length; i++) bind(opts[i]);
+                mark(slot);
+            }
+        }
+
+        // Подсветка текущего положения
+        function mark(scope) {
+            var cur = document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+            var opts = (scope || document).querySelectorAll('.d4y-theme-opt');
+            for (var i = 0; i < opts.length; i++) {
+                var on = opts[i].getAttribute('data-theme-set') === cur;
+                opts[i].classList.toggle('is-active', on);
+                opts[i].setAttribute('aria-pressed', on ? 'true' : 'false');
             }
         }
 
@@ -749,7 +772,9 @@
             btn.dataset.bound = '1';
             btn.addEventListener('click', function () {
             var root = document.documentElement;
-            var next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            var next = btn.getAttribute('data-theme-set') ||
+                       (root.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+            if (next === root.getAttribute('data-theme')) return;
             try { localStorage.setItem('d4y-theme', next); } catch (e) {}
             // Перезагрузка, а не просто смена атрибута.
             //

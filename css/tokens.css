@@ -1110,10 +1110,75 @@
 :root[data-theme="light"] .d4y-theme-row {
   border-top-color: rgba(15, 23, 42, 0.12);
 }
-/* Слот в карточке профиля кабинета — единственное место кнопки */
-.theme-slot { margin-top: 16px; }
-.theme-slot .d4y-theme-row {
-  justify-content: center;
-  margin-top: 0;
-  padding-top: 14px;
+/* ── Переключатель темы в кабинете ──
+   Стоит первым в шапке кабинета и подписан: видно и текущее положение,
+   и что вообще можно выбрать. Иконка без подписи здесь не годится —
+   пользователь не обязан догадываться, что означает луна. */
+.theme-slot {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 20px;
+}
+.d4y-theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: var(--glass-05);
+  border: 1px solid var(--edge-10);
+}
+.d4y-theme-caption {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.d4y-theme-opts {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--glass-04);
+}
+.d4y-theme-btn.d4y-theme-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: auto;
+  height: auto;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .18s ease, color .18s ease;
+}
+.d4y-theme-btn.d4y-theme-opt:hover { color: var(--text-primary); }
+.d4y-theme-btn.d4y-theme-opt.is-active {
+  background: linear-gradient(135deg, #22d3ee, #0891b2);
+  color: #06283a;
+  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
+}
+:root[data-theme="light"] .d4y-theme-btn.d4y-theme-opt.is-active {
+  background: linear-gradient(135deg, #0b5c74, #075985);
+  color: #ffffff;
+}
+/* Иконки внутри подписанных кнопок показываем обе — они часть подписи */
+.d4y-theme-opt .d4y-ico-sun,
+.d4y-theme-opt .d4y-ico-moon { display: inline !important; }
+
+@media (max-width: 600px) {
+  .theme-slot { justify-content: stretch; }
+  .d4y-theme-switch { width: 100%; justify-content: space-between; }
+  .d4y-theme-caption { display: none; }
+  .d4y-theme-opts { flex: 1; }
+  .d4y-theme-btn.d4y-theme-opt { flex: 1; justify-content: center; }
 }
