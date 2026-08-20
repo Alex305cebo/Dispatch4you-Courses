@@ -370,13 +370,17 @@ function bc_wav_from_pcm($pcm, $rate) {
  * без голоса. Gemini TTS работает по обычному HTTP, значит доступен и здесь,
  * в отличие от Live-вебсокета.
  */
-function bc_gemini_speak($key, $text, $voice) {
+function bc_gemini_speak($key, $text, $voice, &$why = null) {
   $clean = trim((string) $text);
   if ($clean === '') { return null; }
 
-  $models = bc_gemini_models($key);
-  if (!is_array($models)) { return null; }
+  // Возвращает ПАРУ [код, модели]. Взять её как список моделей — ровно та
+  // ошибка, из-за которой на боевом озвучка отвечала «все модели отказали»:
+  // ранжирование перебирало [код, массив] и не находило ни одной модели.
+  list($mcode, $models) = bc_gemini_models($key);
+  if ($mcode < 200 || $mcode >= 300 || !is_array($models)) { $why = 'models.list ' . $mcode; return null; }
   $candidates = bc_gemini_rank($models, 'tts');
+  if (count($candidates) === 0) { $why = 'в каталоге нет модели с tts в имени (моделей: ' . count($models) . ')'; return null; }
 
   foreach ($candidates as $model) {
     list($code, $body) = bc_post_json(
@@ -392,20 +396,21 @@ function bc_gemini_speak($key, $text, $voice) {
         ],
       ]
     );
-    if ($code < 200 || $code >= 300) { continue; }
+    if ($code < 200 || $code >= 300) { $why = $model . ' ' . $code . ': ' . substr((string) $body, 0, 160); continue; }
 
     $data = json_decode((string) $body, true);
     $parts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
     foreach ($parts as $part) {
       if (!isset($part['inlineData']['data'])) { continue; }
       $pcm = base64_decode((string) $part['inlineData']['data'], true);
-      if ($pcm === false || $pcm === '') { continue; }
+      if ($pcm === false || $pcm === '') { $why = $model . ': пустой звук'; continue; }
       $rate = 24000;
       $mime = isset($part['inlineData']['mimeType']) ? (string) $part['inlineData']['mimeType'] : '';
       if (preg_match('/rate=(\d+)/', $mime, $m)) { $rate = (int) $m[1]; }
       return bc_wav_from_pcm($pcm, $rate);
     }
   }
+  if ($why === null) { $why = 'модель не вернула звук'; }
   return null;
 }
 
@@ -606,9 +611,10 @@ switch ($action) {
     // там, где брокер на самом деле говорит.
     if ($geminiKey !== '') {
       $t0 = microtime(true);
-      $wav = bc_gemini_speak($geminiKey, 'Okay, got it.', $DEFAULT_VOICE);
+      $why = null;
+      $wav = bc_gemini_speak($geminiKey, 'Okay, got it.', $DEFAULT_VOICE, $why);
       $result['probe']['tts'] = ($wav === null)
-        ? ['ok' => false, 'provider' => 'gemini', 'error' => 'все модели озвучки отказали']
+        ? ['ok' => false, 'provider' => 'gemini', 'error' => (string) $why]
         : ['ok' => true, 'provider' => 'gemini', 'bytes' => strlen($wav), 'ms' => (int) round((microtime(true) - $t0) * 1000)];
     } elseif ($groqKey !== '') {
       $t0 = microtime(true);
@@ -636,7 +642,12 @@ switch ($action) {
         $result['probe']['tts'] = $tts;
       }
 
-      // Распознавание: молчаливый WAV, нам важен факт приёма файла, а не текст.
+    }
+
+    // Распознавание. Своим блоком, а не внутри ветки озвучки: когда озвучка
+    // ушла на Gemini, проба слуха вместе с ней пропала из отчёта целиком.
+    if ($groqKey !== '') {
+      // Молчаливый WAV: нам важен факт приёма файла, а не текст.
       $wav = bc_silent_wav();
       $tmp = tempnam(sys_get_temp_dir(), 'bc');
       file_put_contents($tmp, $wav);
@@ -659,8 +670,12 @@ switch ($action) {
         ? ['ok' => true, 'ms' => (int) round((microtime(true) - $t0) * 1000)]
         : ['ok' => false, 'status' => $sttCode, 'error' => substr((string) $sttBody, 0, 200)];
     } else {
-      $result['probe']['tts'] = ['ok' => false, 'error' => 'no groq.key'];
+      // Только слух: озвучку выше уже проверил Gemini, и затирать его вердикт
+      // здесь означало бы показывать отказ там, где брокер говорит.
       $result['probe']['stt'] = ['ok' => false, 'error' => 'no groq.key'];
+      if (!isset($result['probe']['tts'])) {
+        $result['probe']['tts'] = ['ok' => false, 'error' => 'no TTS key'];
+      }
     }
 
     // Gemini: проба идёт тем же путём, что и звонок, — каталог, выбор модели,
