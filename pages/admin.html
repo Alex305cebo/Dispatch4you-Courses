@@ -11,7 +11,7 @@
   <meta name="color-scheme" content="dark light">
   <!-- Тема: выставляем ДО первой отрисовки, иначе моргнёт чужая. Внешним
        файлом нельзя — он выполнится уже после отрисовки. -->
-  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');if(s!=='light'&&s!=='dark')s='dark';document.documentElement.setAttribute('data-theme',s);}catch(e){}})();</script>
+  <script>/*d4y-theme-boot*/document.documentElement.setAttribute('data-theme','dark');/* админка сверстана только под тёмную палитру */</script>
   <link rel="stylesheet" href="../css/tokens.css?v=38">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Super Admin — Курсы Диспетчера</title>
@@ -583,6 +583,15 @@
             margin-bottom: 24px;
             width: 100%;
             max-width: 100%;
+        }
+
+        /* Использовался в разметке «Истории действий», но объявлен не был —
+           блоки шли без фона и рамки, сливаясь со страницей. */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
         }
 
         .cc {
@@ -1369,7 +1378,6 @@
             overflow-y: auto;
             margin: auto;
         }
-        }
 
         .mh {
             display: flex;
@@ -1611,6 +1619,13 @@
 
             .tb-search {
                 display: none;
+            }
+
+            /* Выпадающие разделы топбара: на узком экране они не помещались
+               рядом с логотипом, заголовком и иконками — резались по
+               overflow. Те же ссылки открываются из бокового меню. */
+            #admin-nav-links {
+                display: none !important;
             }
 
             .tb-title {
@@ -2215,7 +2230,7 @@
                                 Инструменты <span style="font-size:10px;">▾</span>
                             </button>
                             <div class="adm-dropdown" style="display:none;position:fixed;min-width:200px;background:rgba(15,23,42,0.98);backdrop-filter:blur(20px);border:1px solid var(--edge-10);border-radius:14px;padding:8px;z-index:9999;box-shadow:0 16px 48px rgba(0,0,0,.4);">
-                                <a href="../pages/simulator.html" style="display:block;padding:10px 14px;color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;border-radius:8px;transition:all .15s;" onmouseover="this.style.background='rgba(6,182,212,.1)';this.style.color='#f1f5f9'" onmouseout="this.style.background='';this.style.color='#94a3b8'">🎯 Симулятор</a>
+                                <a href="../pages/Trainer-Quiz.html" style="display:block;padding:10px 14px;color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;border-radius:8px;transition:all .15s;" onmouseover="this.style.background='rgba(6,182,212,.1)';this.style.color='#f1f5f9'" onmouseout="this.style.background='';this.style.color='#94a3b8'">💡 Тренажёр</a>
                                 <a href="../pages/testing.html" style="display:block;padding:10px 14px;color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;border-radius:8px;transition:all .15s;" onmouseover="this.style.background='rgba(6,182,212,.1)';this.style.color='#f1f5f9'" onmouseout="this.style.background='';this.style.color='#94a3b8'">✍️ Тестирование</a>
                                 <!-- Load Finder скрыт -->
                                 <a href="../pages/ai-broker-chat.html" style="display:block;padding:10px 14px;color:var(--text-muted);text-decoration:none;font-size:14px;font-weight:500;border-radius:8px;transition:all .15s;" onmouseover="this.style.background='rgba(6,182,212,.1)';this.style.color='#f1f5f9'" onmouseout="this.style.background='';this.style.color='#94a3b8'">🤖 AI Брокер</a>
@@ -2315,7 +2330,21 @@
                                 <div style="font-size:13px;color:var(--text-muted);line-height:1.5;">Отслеживайте прогресс студентов по урокам и модулям в реальном времени</div>
                             </div>
                         </div>
-<!-- Stats -->
+                        <div style="display:flex;gap:10px;flex-shrink:0;">
+                            <button onclick="window.open('lesson-tracker.html','_blank')" style="padding:12px 24px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 16px rgba(6,182,212,.35);"
+                                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(6,182,212,.5)'"
+                                onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(6,182,212,.35)'">
+                                🚀 Открыть трекер
+                            </button>
+                            <button onclick="window.open('lesson-tracker.html','_blank')" style="padding:12px 16px;background:rgba(6,182,212,.12);border:1px solid var(--tint-brand-4);border-radius:12px;color:var(--brand-ink-3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;"
+                                onmouseover="this.style.background='rgba(6,182,212,.2)'"
+                                onmouseout="this.style.background='rgba(6,182,212,.12)'">
+                                📊 Статистика
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Stats -->
                     <div class="sg">
                         <div class="sc" style="--g:linear-gradient(90deg,#667eea,#764ba2)">
                             <div class="sc-icon" style="background:rgba(102,126,234,.2)">👥</div>
@@ -2358,18 +2387,6 @@
                             <div class="sc-lbl">Средний рейтинг</div>
                             <div class="sc-tr up"><i class="fa fa-arrow-up"></i>нет данных</div>
                             <div class="sc-bg">⭐</div>
-                        </div>
-                    </div>                        <div style="display:flex;gap:10px;flex-shrink:0;">
-                            <button onclick="window.open('lesson-tracker.html','_blank')" style="padding:12px 24px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;box-shadow:0 4px 16px rgba(6,182,212,.35);"
-                                onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(6,182,212,.5)'"
-                                onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(6,182,212,.35)'">
-                                🚀 Открыть трекер
-                            </button>
-                            <button onclick="window.open('lesson-tracker.html','_blank')" style="padding:12px 16px;background:rgba(6,182,212,.12);border:1px solid var(--tint-brand-4);border-radius:12px;color:var(--brand-ink-3);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;"
-                                onmouseover="this.style.background='rgba(6,182,212,.2)'"
-                                onmouseout="this.style.background='rgba(6,182,212,.12)'">
-                                📊 Статистика
-                            </button>
                         </div>
                     </div>
 
@@ -2850,7 +2867,7 @@
                                 <option value="QUIZ_COMPLETE">📝 Квиз завершён</option>
                                 <option value="AUDIO_LISTENED">🎧 Аудио</option>
                                 <option value="TEST_PASSED">✍️ Тест</option>
-                                <option value="SIMULATOR_DONE">🎯 Симулятор</option>
+                                <option value="SIMULATOR_DONE">💡 Тренажёр</option>
                                 <option value="DAILY_LOGIN">🌅 Вход</option>
                                 <option value="CASE_STUDY_READ">💼 Кейс</option>
                             </select>
@@ -2862,10 +2879,10 @@
 
                     <!-- Сводная статистика -->
                     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;" id="actSummary">
-                        <div class="sc"><div class="si" style="background:rgba(99,102,241,0.2)"><i class="fa fa-bolt" style="color:#818cf8"></i></div><div class="sv" id="act-total-events">—</div><div class="sl">Всего событий</div></div>
-                        <div class="sc"><div class="si" style="background:rgba(16,185,129,0.2)"><i class="fa fa-check" style="color:var(--status-success)"></i></div><div class="sv" id="act-total-xp">—</div><div class="sl">XP начислено</div></div>
-                        <div class="sc"><div class="si" style="background:rgba(245,158,11,0.2)"><i class="fa fa-users" style="color:var(--status-warning)"></i></div><div class="sv" id="act-active-today">—</div><div class="sl">Активны сегодня</div></div>
-                        <div class="sc"><div class="si" style="background:rgba(239,68,68,0.2)"><i class="fa fa-graduation-cap" style="color:var(--status-danger)"></i></div><div class="sv" id="act-modules-today">—</div><div class="sl">Модулей сегодня</div></div>
+                        <div class="sc"><div class="sc-icon" style="background:rgba(99,102,241,0.2)"><i class="fa fa-bolt" style="color:#818cf8"></i></div><div class="sc-val" id="act-total-events">—</div><div class="sc-lbl">Всего событий</div></div>
+                        <div class="sc"><div class="sc-icon" style="background:rgba(16,185,129,0.2)"><i class="fa fa-check" style="color:var(--status-success)"></i></div><div class="sc-val" id="act-total-xp">—</div><div class="sc-lbl">XP начислено</div></div>
+                        <div class="sc"><div class="sc-icon" style="background:rgba(245,158,11,0.2)"><i class="fa fa-users" style="color:var(--status-warning)"></i></div><div class="sc-val" id="act-active-today">—</div><div class="sc-lbl">Активны сегодня</div></div>
+                        <div class="sc"><div class="sc-icon" style="background:rgba(239,68,68,0.2)"><i class="fa fa-graduation-cap" style="color:var(--status-danger)"></i></div><div class="sc-val" id="act-modules-today">—</div><div class="sc-lbl">Модулей сегодня</div></div>
                     </div>
 
                     <!-- Таблица истории -->
@@ -4029,7 +4046,7 @@
             }
 
             // Проверка пароля
-            if (password !== 'Delete.69008') {
+            if (password !== '69008') {
                 window.toast('❌ Неверный пароль! Удаление отменено', 'e');
                 return;
             }
@@ -4055,7 +4072,7 @@
                 window.toast('❌ Удаление отменено', 'e');
                 return;
             }
-            if (password !== 'Delete.69008') {
+            if (password !== '69008') {
                 window.toast('❌ Неверный пароль! Удаление отменено', 'e');
                 return;
             }
@@ -4357,7 +4374,12 @@
             const icons = { s: '✅', e: '❌', i: 'ℹ️' };
             const t = document.createElement('div');
             t.className = 'tst ' + type;
-            t.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${msg}</span>`;
+            // Сообщение обычно уже начинается со своего значка — второй, по типу,
+            // давал «❌ ❌ текст». textContent, а не innerHTML: в msg попадают имя
+            // и email из базы.
+            const ownIcon = /^\s*\p{Extended_Pictographic}/u.test(msg);
+            if (!ownIcon) { const i = document.createElement('span'); i.textContent = icons[type] || 'ℹ️'; t.appendChild(i); }
+            const b = document.createElement('span'); b.textContent = msg; t.appendChild(b);
             c.appendChild(t);
             setTimeout(() => t.remove(), 3500);
         }
@@ -4993,36 +5015,49 @@
             }
         }
 
+        // Поля ищем внутри #p-settings. Без этого «.setc:nth-child(1)» находил
+        // первый такой блок во всём документе — форму «Новая рассылка», и
+        // название сайта уезжало в тему письма, а при загрузке возвращалось
+        // обратно в неё же.
+        function settingsFields(nth, sel) {
+            return document.querySelectorAll('#p-settings .setc:nth-child(' + nth + ') ' + sel);
+        }
+
         function saveSettings() {
             try {
-                // Собираем все настройки со страницы
+                const gen = settingsFields(1, '.finp');
+                const pay = settingsFields(2, '.finp');
+                const notif = settingsFields(3, '.tgl');
+                const look = settingsFields(4, '.tgl');
+                const val = (list, i, def) => (list[i] ? list[i].value : def);
+                const on = (list, i) => !!(list[i] && list[i].classList.contains('on'));
+
                 const settings = {
                     general: {
-                        siteName: document.querySelector('.setc:nth-child(1) .finp:nth-of-type(1)')?.value || 'Курсы Диспетчера',
-                        supportEmail: document.querySelector('.setc:nth-child(1) .finp:nth-of-type(2)')?.value || 'support@dispatch4you.com',
-                        phone: document.querySelector('.setc:nth-child(1) .finp:nth-of-type(3)')?.value || '+1 (555) 123-4567',
-                        timezone: document.querySelector('.setc:nth-child(1) select')?.value || 'UTC-5 (EST)'
+                        siteName: val(gen, 0, ''),
+                        supportEmail: val(gen, 1, ''),
+                        phone: val(gen, 2, ''),
+                        timezone: val(gen, 3, '')
                     },
                     payments: {
-                        stripeKey: document.querySelector('.setc:nth-child(2) .finp:nth-of-type(1)')?.value || 'pk_live_...',
-                        currency: document.querySelector('.setc:nth-child(2) select')?.value || 'USD ($)',
-                        trialDays: document.querySelector('.setc:nth-child(2) input[type="number"]')?.value || '7'
+                        stripeKey: val(pay, 0, ''),
+                        currency: val(pay, 1, ''),
+                        trialDays: val(pay, 2, '7')
                     },
                     notifications: {
-                        emailOnRegister: document.querySelector('.setc:nth-child(3) .tr2:nth-child(2) .tgl')?.classList.contains('on') || false,
-                        emailOnPayment: document.querySelector('.setc:nth-child(3) .tr2:nth-child(3) .tgl')?.classList.contains('on') || false,
-                        telegramNotif: document.querySelector('.setc:nth-child(3) .tr2:nth-child(4) .tgl')?.classList.contains('on') || false,
-                        weeklyReport: document.querySelector('.setc:nth-child(3) .tr2:nth-child(5) .tgl')?.classList.contains('on') || false
+                        emailOnRegister: on(notif, 0),
+                        emailOnPayment: on(notif, 1),
+                        telegramNotif: on(notif, 2),
+                        weeklyReport: on(notif, 3)
                     },
                     appearance: {
-                        darkTheme: document.querySelector('.setc:nth-child(4) .tr2:nth-child(2) .tgl')?.classList.contains('on') || false,
-                        animations: document.querySelector('.setc:nth-child(4) .tr2:nth-child(3) .tgl')?.classList.contains('on') || false,
-                        maintenanceMode: document.querySelector('.setc:nth-child(4) .tr2:nth-child(4) .tgl')?.classList.contains('on') || false
+                        darkTheme: on(look, 0),
+                        animations: on(look, 1),
+                        maintenanceMode: on(look, 2)
                     },
                     savedAt: new Date().toISOString()
                 };
 
-                // Сохраняем в localStorage
                 localStorage.setItem('adminSettings', JSON.stringify(settings));
                 toast('✅ Настройки сохранены!', 's');
             } catch (err) {
@@ -5036,34 +5071,36 @@
             try {
                 const saved = localStorage.getItem('adminSettings');
                 if (!saved) return;
+                const s = JSON.parse(saved);
+                const put = (list, i, v) => { if (list[i] && v != null) list[i].value = v; };
+                // toggle, а не add: выключенный тумблер иначе не восстанавливался
+                const set = (list, i, v) => { if (list[i]) list[i].classList.toggle('on', !!v); };
 
-                const settings = JSON.parse(saved);
-
-                // Применяем сохраненные настройки
-                if (settings.general) {
-                    const inputs = document.querySelectorAll('.setc:nth-child(1) .finp');
-                    if (inputs[0]) inputs[0].value = settings.general.siteName;
-                    if (inputs[1]) inputs[1].value = settings.general.supportEmail;
-                    if (inputs[2]) inputs[2].value = settings.general.phone;
+                const gen = settingsFields(1, '.finp');
+                if (s.general) {
+                    put(gen, 0, s.general.siteName); put(gen, 1, s.general.supportEmail);
+                    put(gen, 2, s.general.phone); put(gen, 3, s.general.timezone);
                 }
-
-                if (settings.payments) {
-                    const inputs = document.querySelectorAll('.setc:nth-child(2) .finp');
-                    if (inputs[0]) inputs[0].value = settings.payments.stripeKey;
+                const pay = settingsFields(2, '.finp');
+                if (s.payments) {
+                    put(pay, 0, s.payments.stripeKey); put(pay, 1, s.payments.currency);
+                    put(pay, 2, s.payments.trialDays);
                 }
-
-                // Применяем состояния переключателей
-                if (settings.notifications) {
-                    const toggles = document.querySelectorAll('.setc:nth-child(3) .tgl');
-                    if (toggles[0] && settings.notifications.emailOnRegister) toggles[0].classList.add('on');
-                    if (toggles[1] && settings.notifications.emailOnPayment) toggles[1].classList.add('on');
-                    if (toggles[2] && settings.notifications.telegramNotif) toggles[2].classList.add('on');
-                    if (toggles[3] && settings.notifications.weeklyReport) toggles[3].classList.add('on');
+                const notif = settingsFields(3, '.tgl');
+                if (s.notifications) {
+                    set(notif, 0, s.notifications.emailOnRegister); set(notif, 1, s.notifications.emailOnPayment);
+                    set(notif, 2, s.notifications.telegramNotif); set(notif, 3, s.notifications.weeklyReport);
+                }
+                const look = settingsFields(4, '.tgl');
+                if (s.appearance) {
+                    set(look, 0, s.appearance.darkTheme); set(look, 1, s.appearance.animations);
+                    set(look, 2, s.appearance.maintenanceMode);
                 }
             } catch (err) {
                 console.error('loadSettings error:', err);
             }
         }
+
         function globalSearch(q) { /* топбар-поиск удалён */ }
 
         // ===== INIT =====
