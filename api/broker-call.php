@@ -241,6 +241,7 @@ function bc_gemini_pick($models, $kind) {
     $methods = (isset($model['supportedGenerationMethods']) && is_array($model['supportedGenerationMethods']))
       ? $model['supportedGenerationMethods'] : [];
     if (!in_array($rule['method'], $methods, true)) { continue; }
+    if (isset($rule['require']) && strpos($id, (string) $rule['require']) === false) { continue; }
 
     $rejected = false;
     foreach ($rule['reject'] as $bad) {
@@ -294,6 +295,119 @@ function bc_gemini_setup($model, $prompt, $voice) {
 // перепутанных наборах тренажёр однажды онемел.
 $GEMINI_VOICES = ['Puck', 'Charon', 'Fenrir', 'Orus', 'Kore', 'Aoede', 'Leda', 'Zephyr'];
 $GEMINI_DEFAULT_VOICE = 'Puck';
+
+/**
+ * Модели озвучки по убыванию пригодности.
+ *
+ * Список, а не одно имя: превью-модели Gemini регулярно отвечают
+ * «503 high demand» — на первом же живом запросе 3.1-flash-tts оказалась
+ * занята. С единственным именем брокер снова остался бы без голоса.
+ */
+function bc_gemini_rank($models, $kind) {
+  $config = bc_config();
+  if (!isset($config['geminiModelRules'][$kind])) { return []; }
+  $rule = $config['geminiModelRules'][$kind];
+
+  $scored = [];
+  foreach ($models as $model) {
+    if (!is_array($model) || !isset($model['name'])) { continue; }
+    $id = strtolower(trim(preg_replace('#^models/#', '', (string) $model['name'])));
+    if ($id === '') { continue; }
+
+    $methods = (isset($model['supportedGenerationMethods']) && is_array($model['supportedGenerationMethods']))
+      ? $model['supportedGenerationMethods'] : [];
+    if (!in_array($rule['method'], $methods, true)) { continue; }
+    if (isset($rule['require']) && strpos($id, (string) $rule['require']) === false) { continue; }
+
+    $rejected = false;
+    foreach ($rule['reject'] as $bad) {
+      if (strpos($id, $bad) !== false) { $rejected = true; break; }
+    }
+    if ($rejected) { continue; }
+
+    $version = 0.0;
+    if (preg_match('/gemini-(\d+(?:\.\d+)?)/', $id, $m)) { $version = (float) $m[1]; }
+    $score = $version * 100;
+    foreach ($rule['bonus'] as $bonus) {
+      if (strpos($id, (string) $bonus[0]) !== false) { $score += (float) $bonus[1]; }
+    }
+    $scored[] = ['id' => $id, 'score' => $score];
+  }
+
+  usort($scored, function ($a, $b) {
+    if ($a['score'] === $b['score']) { return strcmp($b['id'], $a['id']); }
+    return $a['score'] < $b['score'] ? 1 : -1;
+  });
+  $ids = [];
+  foreach ($scored as $s) { $ids[] = $s['id']; }
+  return $ids;
+}
+
+/** Голос Orpheus → голос Gemini, с сохранением пола и тембра. */
+function bc_gemini_voice_from_orpheus($raw) {
+  $map = [
+    'austin' => 'Puck', 'daniel' => 'Charon', 'troy' => 'Fenrir',
+    'diana'  => 'Kore', 'hannah' => 'Leda',   'autumn' => 'Aoede',
+  ];
+  $v = strtolower(trim((string) $raw));
+  return bc_gemini_voice(isset($map[$v]) ? $map[$v] : 'Puck');
+}
+
+/** Заголовок WAV поверх сырого PCM16 моно — Gemini отдаёт звук без него. */
+function bc_wav_from_pcm($pcm, $rate) {
+  $len = strlen($pcm);
+  return 'RIFF' . pack('V', 36 + $len) . 'WAVE'
+    . 'fmt ' . pack('V', 16) . pack('v', 1) . pack('v', 1)
+    . pack('V', $rate) . pack('V', $rate * 2) . pack('v', 2) . pack('v', 16)
+    . 'data' . pack('V', $len) . $pcm;
+}
+
+/**
+ * Озвучка через Gemini. Возвращает WAV строкой или null.
+ *
+ * Нужна потому, что Orpheus у Groq требует однократного принятия условий в
+ * консоли, и пока это не сделано, брокер на сайте молчит — голосовой тренажёр
+ * без голоса. Gemini TTS работает по обычному HTTP, значит доступен и здесь,
+ * в отличие от Live-вебсокета.
+ */
+function bc_gemini_speak($key, $text, $voice) {
+  $clean = trim((string) $text);
+  if ($clean === '') { return null; }
+
+  $models = bc_gemini_models($key);
+  if (!is_array($models)) { return null; }
+  $candidates = bc_gemini_rank($models, 'tts');
+
+  foreach ($candidates as $model) {
+    list($code, $body) = bc_post_json(
+      BC_GEMINI_API . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key),
+      '',
+      [
+        'contents' => [['parts' => [['text' => $clean]]]],
+        'generationConfig' => [
+          'responseModalities' => ['AUDIO'],
+          'speechConfig' => [
+            'voiceConfig' => ['prebuiltVoiceConfig' => ['voiceName' => bc_gemini_voice_from_orpheus($voice)]],
+          ],
+        ],
+      ]
+    );
+    if ($code < 200 || $code >= 300) { continue; }
+
+    $data = json_decode((string) $body, true);
+    $parts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
+    foreach ($parts as $part) {
+      if (!isset($part['inlineData']['data'])) { continue; }
+      $pcm = base64_decode((string) $part['inlineData']['data'], true);
+      if ($pcm === false || $pcm === '') { continue; }
+      $rate = 24000;
+      $mime = isset($part['inlineData']['mimeType']) ? (string) $part['inlineData']['mimeType'] : '';
+      if (preg_match('/rate=(\d+)/', $mime, $m)) { $rate = (int) $m[1]; }
+      return bc_wav_from_pcm($pcm, $rate);
+    }
+  }
+  return null;
+}
 
 function bc_gemini_voice($raw) {
   global $GEMINI_VOICES, $GEMINI_DEFAULT_VOICE;
@@ -487,8 +601,16 @@ switch ($action) {
       $result['probe']['chat'] = ['ok' => false, 'error' => 'no LLM key'];
     }
 
-    // Озвучка: та самая проба, которой не хватило, чтобы поймать чужие голоса.
-    if ($groqKey !== '') {
+    // Озвучка проверяется ТЕМ ЖЕ путём, каким идёт звонок: сперва Gemini,
+    // и только если ключа нет — Groq. Иначе проба показывала бы отказ Orpheus
+    // там, где брокер на самом деле говорит.
+    if ($geminiKey !== '') {
+      $t0 = microtime(true);
+      $wav = bc_gemini_speak($geminiKey, 'Okay, got it.', $DEFAULT_VOICE);
+      $result['probe']['tts'] = ($wav === null)
+        ? ['ok' => false, 'provider' => 'gemini', 'error' => 'все модели озвучки отказали']
+        : ['ok' => true, 'provider' => 'gemini', 'bytes' => strlen($wav), 'ms' => (int) round((microtime(true) - $t0) * 1000)];
+    } elseif ($groqKey !== '') {
       $t0 = microtime(true);
       list($code, $body) = bc_post_json(
         'https://api.groq.com/openai/v1/audio/speech',
@@ -713,10 +835,23 @@ switch ($action) {
   // Orpheus, а не playai-tts: Groq объявил playai устаревшим 23.12.2025.
   case 'tts': {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') { bc_fail(405, 'POST only'); }
-    if ($groqKey === '') { bc_fail(503, 'groq.key is not set'); }
     $in = bc_body();
     $text = isset($in['text']) ? (string) $in['text'] : '';
     if ($text === '') { bc_fail(400, 'no text'); }
+
+    // Gemini первым: Orpheus у Groq требует принятия условий, и без этого
+    // брокер молчит. Отказ — молча вниз, на Groq.
+    if ($geminiKey !== '') {
+      $wav = bc_gemini_speak($geminiKey, $text, isset($in['voice']) ? $in['voice'] : '');
+      if ($wav !== null) {
+        http_response_code(200);
+        header('Content-Type: audio/wav');
+        header('Cache-Control: no-store');
+        echo $wav;
+        exit;
+      }
+    }
+    if ($groqKey === '') { bc_fail(503, 'no TTS key configured'); }
 
     list($code, $body) = bc_post_json(
       'https://api.groq.com/openai/v1/audio/speech',

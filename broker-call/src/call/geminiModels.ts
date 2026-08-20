@@ -155,3 +155,8 @@ function version(id: string): number {
   const match = id.match(/gemini-(\d+(?:\.\d+)?)/)
   return match ? Number(match[1]) : 0
 }
+
+/** Модель озвучки. null — значит озвучиваем прежним провайдером. */
+export function pickTtsModel(models: readonly ModelInfo[]): string | null {
+  return rankModels(models, 'tts')[0]?.id ?? null
+}

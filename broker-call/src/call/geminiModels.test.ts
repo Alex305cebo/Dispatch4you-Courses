@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickLiveModel, pickTextModel, rankModels, type ModelInfo } from './geminiModels'
+import { pickLiveModel, pickTextModel, rankModels, type ModelInfo, pickTtsModel } from './geminiModels'
 
 /**
  * Имя модели в коде — это то, на чём мы горели трижды: Groq снял
@@ -144,5 +144,34 @@ describe('rankModels', () => {
     ]
     expect(() => rankModels(junk, 'text')).not.toThrow()
     expect(pickTextModel(junk)).toBe('gemini-2.5-flash-lite')
+  })
+})
+
+describe('выбор модели озвучки', () => {
+  const TTS = ['generateContent', 'countTokens']
+  const CATALOG_TTS = [
+    m('gemini-2.5-flash-preview-tts', TTS),
+    m('gemini-2.5-pro-preview-tts', TTS),
+    m('gemini-3.1-flash-tts-preview', TTS),
+    m('gemini-3.5-flash-lite', TEXT),
+  ]
+
+  it('берёт поколение новее среди моделей озвучки', () => {
+    expect(pickTtsModel(CATALOG_TTS)).toBe('gemini-3.1-flash-tts-preview')
+  })
+
+  it('не берёт pro — суточный лимит меньше, а озвучка идёт на каждую реплику', () => {
+    const ids = rankModels(CATALOG_TTS, 'tts').map((r) => r.id)
+    expect(ids).not.toContain('gemini-2.5-pro-preview-tts')
+  })
+
+  it('не выдаёт за озвучку обычную текстовую модель', () => {
+    // Без require сюда попадал бы flash-lite: метод у них один и тот же.
+    const ids = rankModels(CATALOG_TTS, 'tts').map((r) => r.id)
+    expect(ids).not.toContain('gemini-3.5-flash-lite')
+  })
+
+  it('без моделей озвучки возвращает null, а не выдуманное имя', () => {
+    expect(pickTtsModel([m('gemini-3.5-flash-lite', TEXT)])).toBeNull()
   })
 })

@@ -6,7 +6,7 @@ import { buildSystemPrompt } from '../src/call/prompt'
 import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
 import { buildDebriefPrompt } from '../src/call/debriefPrompt'
 import { toGeminiTools } from '../src/call/geminiTools'
-import { pickLiveModel, pickTextModel, type ModelInfo } from '../src/call/geminiModels'
+import { pickLiveModel, pickTextModel, rankModels, type ModelInfo } from '../src/call/geminiModels'
 import { normalizeVoice, DEFAULT_VOICE, ORPHEUS_VOICES } from '../src/voice/voices'
 import { normalizeGeminiVoice } from '../src/voice/geminiVoices'
 import { encodeWav, TARGET_SAMPLE_RATE } from '../src/voice/audio'
@@ -154,14 +154,26 @@ export function brokerApi(env: Record<string, string>): Plugin {
           }
         }
 
-        // Озвучка и распознавание.
-        if (groqKey) {
+        // Озвучка проверяется ТЕМ ЖЕ путём, каким идёт звонок: сперва Gemini,
+        // и только если ключа нет — Groq. Иначе проба показывала бы отказ
+        // Orpheus там, где брокер на самом деле говорит.
+        if (geminiKey) {
+          const started = Date.now()
+          try {
+            const wav = await geminiSpeak(geminiKey, 'Okay, got it.', DEFAULT_VOICE)
+            probe.tts = { ok: true, provider: 'gemini', bytes: wav.length, ms: Date.now() - started }
+          } catch (e) {
+            probe.tts = { ok: false, provider: 'gemini', error: (e as Error).message.slice(0, 200) }
+          }
+        } else if (groqKey) {
           probe.tts = await probeTts(groqKey, TTS_MODEL)
-          probe.stt = await probeStt(groqKey, STT_MODELS[0] ?? 'whisper-large-v3')
         } else {
-          probe.tts = { ok: false, error: 'no GROQ_API_KEY' }
-          probe.stt = { ok: false, error: 'no GROQ_API_KEY' }
+          probe.tts = { ok: false, error: 'no TTS key' }
         }
+
+        probe.stt = groqKey
+          ? await probeStt(groqKey, STT_MODELS[0] ?? 'whisper-large-v3')
+          : { ok: false, error: 'no GROQ_API_KEY' }
 
         // Gemini: каталог, выбор модели, выпуск токена — весь путь целиком.
         probe.gemini = geminiKey ? await probeGemini(geminiKey) : { ok: false, error: 'no GEMINI_API_KEY' }
@@ -326,8 +338,27 @@ export function brokerApi(env: Record<string, string>): Plugin {
       // ── Озвучка ───────────────────────────────────────────────────────────
       // Orpheus, а не playai-tts: Groq объявил playai устаревшим 23.12.2025.
       server.middlewares.use('/api/tts', raw(async (req, res) => {
-        if (!groqKey) throw new HttpError(503, 'GROQ_API_KEY is not set')
         const body = await readJson<{ text: string; voice?: string }>(req)
+
+        // Gemini первым, когда есть ключ.
+        //
+        // Orpheus у Groq требует однократного принятия условий в консоли, и
+        // пока это не сделано, брокер молчит — голосовой тренажёр без голоса.
+        // Gemini TTS работает по обычному HTTP, то есть доступен и боевому PHP,
+        // в отличие от Live-вебсокета. Отказ — молча вниз, на Groq.
+        if (geminiKey) {
+          try {
+            const wav = await geminiSpeak(geminiKey, body.text, body.voice)
+            res.statusCode = 200
+            res.setHeader('Content-Type', 'audio/wav')
+            res.end(wav)
+            return
+          } catch (e) {
+            console.warn(`[broker-call] Gemini TTS не ответил, откат на Groq: ${(e as Error).message}`)
+          }
+        }
+
+        if (!groqKey) throw new HttpError(503, 'no TTS key configured')
         const r = await fetch('https://api.groq.com/openai/v1/audio/speech', {
           method: 'POST',
           headers: {
@@ -921,4 +952,99 @@ function safeParse(raw: string): Record<string, unknown> {
     }
     return {}
   }
+}
+
+/**
+ * Озвучка через Gemini.
+ *
+ * Модель не вписана: берётся по политике из `MODEL_RULES.tts` из живого
+ * каталога. Голос приходит в именах Orpheus (`austin`, `diana`) — переводим в
+ * набор Gemini, сохраняя пол и тембр, чтобы брокер звучал одинаково независимо
+ * от того, кто сейчас озвучивает.
+ *
+ * Gemini отдаёт сырой PCM16, а фронт ждёт WAV, поэтому дописываем заголовок.
+ */
+async function geminiSpeak(key: string, text: string, voice?: string): Promise<Buffer> {
+  const clean = (text ?? '').trim()
+  if (!clean) throw new Error('пустой текст')
+
+  // Список, а не одно имя. Превью-модели Gemini регулярно отвечают
+  // «503 high demand»: на первом же живом запросе 3.1-flash-tts оказалась
+  // занята, и с единственным именем брокер снова остался бы без голоса.
+  const candidates = rankModels(await geminiModels(key), 'tts').map((m) => m.id)
+  if (candidates.length === 0) throw new Error('на этом ключе нет модели озвучки')
+
+  let lastError = ''
+  for (const model of candidates) {
+    const r = await fetch(
+      `${GEMINI_API}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: clean }] }],
+          generationConfig: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+              voiceConfig: { prebuiltVoiceConfig: { voiceName: geminiVoiceFor(voice) } },
+            },
+          },
+        }),
+      },
+    )
+    if (!r.ok) {
+      lastError = `${model} ${r.status}: ${(await r.text()).slice(0, 160)}`
+      continue
+    }
+
+    const data = (await r.json()) as {
+      candidates?: { content?: { parts?: { inlineData?: { data?: string; mimeType?: string } }[] } }[]
+    }
+    const part = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)
+    const base64 = part?.inlineData?.data
+    if (!base64) {
+      lastError = `${model} вернул ответ без звука`
+      continue
+    }
+
+    // Частота приезжает в mimeType вида `audio/L16;codec=pcm;rate=24000`.
+    const rate = Number(/rate=(\d+)/.exec(part?.inlineData?.mimeType ?? '')?.[1] ?? 24000)
+    return wavFromPcm16(Buffer.from(base64, 'base64'), rate)
+  }
+
+  throw new Error(lastError || 'все модели озвучки отказали')
+}
+
+/** Orpheus → Gemini, с сохранением пола: Рэй остаётся Рэем у обоих провайдеров. */
+function geminiVoiceFor(orpheusVoice: string | undefined): string {
+  const map: Record<string, string> = {
+    austin: 'Puck',
+    daniel: 'Charon',
+    troy: 'Fenrir',
+    diana: 'Kore',
+    hannah: 'Leda',
+    autumn: 'Aoede',
+  }
+  return normalizeGeminiVoice(map[normalizeVoice(orpheusVoice)] ?? DEFAULT_GEMINI_VOICE)
+}
+
+const DEFAULT_GEMINI_VOICE = 'Puck'
+
+/** Заголовок WAV поверх сырого PCM16 моно. */
+function wavFromPcm16(pcm: Buffer, sampleRate: number): Buffer {
+  const header = Buffer.alloc(44)
+  header.write('RIFF', 0)
+  header.writeUInt32LE(36 + pcm.length, 4)
+  header.write('WAVE', 8)
+  header.write('fmt ', 12)
+  header.writeUInt32LE(16, 16)
+  header.writeUInt16LE(1, 20) // PCM
+  header.writeUInt16LE(1, 22) // моно
+  header.writeUInt32LE(sampleRate, 24)
+  header.writeUInt32LE(sampleRate * 2, 28) // байт в секунду
+  header.writeUInt16LE(2, 32) // выравнивание блока
+  header.writeUInt16LE(16, 34) // бит на отсчёт
+  header.write('data', 36)
+  header.writeUInt32LE(pcm.length, 40)
+  return Buffer.concat([header, pcm])
 }
