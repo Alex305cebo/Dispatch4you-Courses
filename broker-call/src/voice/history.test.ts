@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { trimHistory } from './PipelineTransport'
+import { trimHistory } from './history'
 
 type M = { role: string; content?: string; tool_call_id?: string }
 
@@ -25,5 +25,22 @@ describe('обрезка истории разговора', () => {
     }
     const trimmed = trimHistory(messages as never) as M[]
     expect(trimmed[0]?.role).not.toBe('tool')
+  })
+})
+
+describe('обрезка и формат Gemini', () => {
+  it('окно всегда начинается с реплики диспетчера', () => {
+    // Иначе ведущий ход брокера с вызовом инструмента отбрасывался бы, а его
+    // ответы инструментов оставались сиротами — 400 от Gemini.
+    const messages: M[] = []
+    for (let i = 0; i < 12; i++) {
+      messages.push({ role: 'user', content: `q${i}` })
+      messages.push({ role: 'assistant', content: '' })
+      messages.push({ role: 'tool', tool_call_id: `c${i}`, content: '{}' })
+      messages.push({ role: 'assistant', content: `a${i}` })
+    }
+    const trimmed = trimHistory(messages as never) as M[]
+    expect(trimmed[0]?.role).toBe('user')
+    expect(trimmed.length).toBeLessThanOrEqual(14)
   })
 })

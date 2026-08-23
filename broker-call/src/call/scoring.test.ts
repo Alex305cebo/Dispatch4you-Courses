@@ -85,6 +85,8 @@ describe('оценка звонка', () => {
   it('растёт по закрытию по мере сбора данных', () => {
     const partial = played((m) => m.execute('record_booking_details', { driver_name: 'George' }))
     const full = played((m) => {
+      // Rate con уходит только по согласованной ставке.
+      m.execute('propose_rate', { amount: POSTED - 50 })
       m.execute('record_booking_details', {
         driver_name: 'George',
         truck_number: '482',

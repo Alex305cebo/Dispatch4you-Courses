@@ -136,15 +136,26 @@ describe('CallMachine — букинг', () => {
     expect(r4.data).toMatchObject({ complete: true })
   })
 
-  it('не отправляет rate con без адреса', () => {
+  it('не отправляет rate con, пока ставка не согласована', () => {
+    // Живой прогон: брокер стоял на своей контр-цифре, диспетчер просил
+    // больше, и документ ушёл на цифру брокера без согласия.
     const m = machine()
+    m.execute('propose_rate', { amount: 99000 }) // контр, не согласие
+    const r = m.execute('send_rate_con', { email: 'ops@startransport.com' })
+    expect(r.ok).toBe(false)
+    expect(r.error).toBe('no_agreed_rate')
+    expect(m.getState().facts.rateConSentTo).toBeNull()
+  })
+
+  it('не отправляет rate con без адреса', () => {
+    const m = agreed()
     const r = m.execute('send_rate_con', {})
     expect(r.ok).toBe(false)
     expect(r.error).toBe('no_email')
   })
 
   it('берёт адрес из ранее собранных данных', () => {
-    const m = machine()
+    const m = agreed()
     m.execute('record_booking_details', { email: 'ops@startransport.com' })
     const r = m.execute('send_rate_con', {})
     expect(r.ok).toBe(true)
@@ -152,6 +163,13 @@ describe('CallMachine — букинг', () => {
     expect(m.getState().stage).toBe('wrap_up')
   })
 })
+
+/** Звонок, в котором ставка уже согласована: просьба ниже борда принимается сразу. */
+function agreed() {
+  const m = machine()
+  m.execute('propose_rate', { amount: NEGOTIABLE.load.postedRate - 50 })
+  return m
+}
 
 describe('CallMachine — завершение', () => {
   it('закрывает звонок и проставляет причину', () => {
@@ -170,7 +188,7 @@ describe('CallMachine — завершение', () => {
   })
 
   it('не откатывает стадию назад', () => {
-    const m = machine()
+    const m = agreed()
     m.execute('send_rate_con', { email: 'a@b.com' })
     expect(m.getState().stage).toBe('wrap_up')
     m.execute('lookup_carrier', { mc_number: '445566' }) // стадия qualifying — раньше

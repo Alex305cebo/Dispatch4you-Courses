@@ -414,6 +414,142 @@ function bc_gemini_speak($key, $text, $voice, &$why = null) {
   return null;
 }
 
+/**
+ * Один ход разговора через Gemini по обычному HTTP. Возвращает ответ в
+ * формате OpenAI (как Groq) или null — тогда идём к запасным провайдерам.
+ *
+ * Зеркало broker-call/server/geminiTurn.ts. История клиента хранится в
+ * формате OpenAI; здесь она переводится в contents Gemini и обратно, чтобы
+ * клиенту не знать, кто отвечал. Подписи размышления (thought_signature)
+ * Gemini 3 ездят туда и обратно внутри tool_calls — без них модель теряет
+ * нить своего решения.
+ */
+function bc_gemini_turn($key, $prompt, $messages) {
+  list($mcode, $models) = bc_gemini_models($key);
+  if ($mcode < 200 || $mcode >= 300 || !is_array($models)) { return null; }
+  $candidates = bc_gemini_rank($models, 'chat');
+  if (count($candidates) === 0) { return null; }
+
+  $config = bc_config();
+  $body = [
+    'systemInstruction' => ['parts' => [['text' => $prompt]]],
+    'contents'          => bc_gemini_contents($messages),
+    'tools'             => $config['geminiTools'],
+    'generationConfig'  => ['temperature' => 0.85, 'maxOutputTokens' => 1024],
+  ];
+
+  foreach ($candidates as $model) {
+    if (bc_gemini_cooling($model)) { continue; }
+    list($code, $raw) = bc_post_json(
+      BC_GEMINI_API . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key),
+      '',
+      $body
+    );
+    // 429 — квота, и она СВОЯ у каждой модели: у новейших flash это 20 запросов
+    // в сутки. Помечаем на минуту и идём к следующей, не ждём.
+    if ($code === 429) { bc_gemini_cooldown($model); continue; }
+    if ($code < 200 || $code >= 300) { continue; }
+
+    $data = json_decode((string) $raw, true);
+    $parts = isset($data['candidates'][0]['content']['parts']) ? $data['candidates'][0]['content']['parts'] : [];
+    $text = '';
+    $toolCalls = [];
+    $messageCalls = [];
+    $i = 0;
+    foreach ($parts as $part) {
+      if (isset($part['text'])) { $text .= (string) $part['text']; }
+      if (isset($part['functionCall']['name'])) {
+        $id = 'call_' . base_convert((string) time(), 10, 36) . '_' . $i++;
+        $args = isset($part['functionCall']['args']) && is_array($part['functionCall']['args'])
+          ? $part['functionCall']['args'] : [];
+        $toolCalls[] = ['id' => $id, 'name' => $part['functionCall']['name'], 'arguments' => $args ? $args : new stdClass()];
+        $call = ['id' => $id, 'function' => ['name' => $part['functionCall']['name'], 'arguments' => json_encode($args ? $args : new stdClass())]];
+        if (isset($part['thoughtSignature'])) { $call['thought_signature'] = $part['thoughtSignature']; }
+        $messageCalls[] = $call;
+      }
+    }
+    $text = trim($text);
+    if ($text === '' && count($toolCalls) === 0) { continue; }
+
+    $message = ['role' => 'assistant', 'content' => $text];
+    if (count($messageCalls) > 0) { $message['tool_calls'] = $messageCalls; }
+    return [
+      'provider'  => 'gemini',
+      'model'     => $model,
+      'message'   => $message,
+      'content'   => $text,
+      'toolCalls' => $toolCalls,
+    ];
+  }
+  return null;
+}
+
+/** OpenAI-история → contents Gemini. Ответы инструментов — по имени, а не по id. */
+function bc_gemini_contents($messages) {
+  $nameById = [];
+  $out = [];
+  foreach ($messages as $m) {
+    $role = isset($m['role']) ? $m['role'] : '';
+    if ($role === 'system') { continue; }
+
+    if ($role === 'tool') {
+      $id = isset($m['tool_call_id']) ? (string) $m['tool_call_id'] : '';
+      $name = isset($nameById[$id]) ? $nameById[$id] : 'unknown_tool';
+      $decoded = json_decode(isset($m['content']) ? (string) $m['content'] : '', true);
+      $response = is_array($decoded) ? $decoded : ['result' => isset($m['content']) ? $m['content'] : ''];
+      $part = ['functionResponse' => ['name' => $name, 'response' => $response ? $response : new stdClass()]];
+      $last = count($out) - 1;
+      $allResponses = $last >= 0 && $out[$last]['role'] === 'user';
+      if ($allResponses) {
+        foreach ($out[$last]['parts'] as $pp) { if (!isset($pp['functionResponse'])) { $allResponses = false; break; } }
+      }
+      if ($allResponses) { $out[$last]['parts'][] = $part; }
+      else { $out[] = ['role' => 'user', 'parts' => [$part]]; }
+      continue;
+    }
+
+    if ($role === 'assistant') {
+      $parts = [];
+      if (isset($m['content']) && $m['content'] !== '') { $parts[] = ['text' => (string) $m['content']]; }
+      if (isset($m['tool_calls']) && is_array($m['tool_calls'])) {
+        foreach ($m['tool_calls'] as $c) {
+          $fname = isset($c['function']['name']) ? $c['function']['name'] : '';
+          if (isset($c['id'])) { $nameById[(string) $c['id']] = $fname; }
+          $args = json_decode(isset($c['function']['arguments']) ? (string) $c['function']['arguments'] : '{}', true);
+          $fc = ['functionCall' => ['name' => $fname, 'args' => is_array($args) && $args ? $args : new stdClass()]];
+          if (isset($c['thought_signature'])) { $fc['thoughtSignature'] = $c['thought_signature']; }
+          $parts[] = $fc;
+        }
+      }
+      if (count($parts) > 0) { $out[] = ['role' => 'model', 'parts' => $parts]; }
+      continue;
+    }
+
+    $text = trim(isset($m['content']) ? (string) $m['content'] : '');
+    if ($text !== '') { $out[] = ['role' => 'user', 'parts' => [['text' => $text]]]; }
+  }
+  // Gemini требует, чтобы история начиналась с user-хода.
+  while (count($out) > 0 && $out[0]['role'] !== 'user') { array_shift($out); }
+  return $out;
+}
+
+/**
+ * Исчерпанные модели, между запросами — в файле: PHP на каждый запрос
+ * стартует заново, а без памяти каждый ход сперва стучался бы во все модели
+ * с выбранной суточной квотой.
+ */
+function bc_gemini_cooldown_path() { return sys_get_temp_dir() . '/bc-gemini-cooldown.json'; }
+function bc_gemini_cooling($model) {
+  $map = json_decode((string) @file_get_contents(bc_gemini_cooldown_path()), true);
+  return is_array($map) && isset($map[$model]) && $map[$model] > time();
+}
+function bc_gemini_cooldown($model) {
+  $map = json_decode((string) @file_get_contents(bc_gemini_cooldown_path()), true);
+  if (!is_array($map)) { $map = []; }
+  $map[$model] = time() + 60;
+  @file_put_contents(bc_gemini_cooldown_path(), json_encode($map));
+}
+
 function bc_gemini_voice($raw) {
   global $GEMINI_VOICES, $GEMINI_DEFAULT_VOICE;
   $v = strtolower(trim((string) $raw));
@@ -744,7 +880,20 @@ switch ($action) {
     if ($scenario === null) { bc_fail(400, 'bad seed: ' . $seed); }
 
     $messages = isset($in['messages']) && is_array($in['messages']) ? $in['messages'] : [];
-    array_unshift($messages, ['role' => 'system', 'content' => $scenario['prompt']]);
+    // Сводка известных фактов приклеивается к промпту на каждом ходу. Она
+    // приходит с клиента: факты лежат в CallMachine, а он исполняется в
+    // браузере. Длина ограничена — это не канал для подмены промпта.
+    $known = isset($in['known']) ? substr((string) $in['known'], 0, 1500) : '';
+    $prompt = $known !== '' ? $scenario['prompt'] . "\n\n" . $known : $scenario['prompt'];
+
+    // Gemini первым — это основной путь разговора. Groq и Cerebras остаются
+    // запасными: у них 8000 токенов в минуту, и звонок встаёт на торге.
+    if ($geminiKey !== '') {
+      $reply = bc_gemini_turn($geminiKey, $prompt, $messages);
+      if ($reply !== null) { bc_json($reply); }
+    }
+
+    array_unshift($messages, ['role' => 'system', 'content' => $prompt]);
 
     $config = bc_config();
     $payload = [

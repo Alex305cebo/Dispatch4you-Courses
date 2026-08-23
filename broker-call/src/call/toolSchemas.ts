@@ -89,11 +89,15 @@ export const TOOL_SCHEMAS = [
     function: {
       name: 'propose_rate',
       description:
-        'Run the rate the dispatcher is asking for through pricing. Call this EVERY time they name a number. The result tells you whether to accept, counter, or hold firm — you do not decide this yourself.',
+        'Run a rate through pricing. Call this EVERY time the DISPATCHER names a number, and when they accept a number you offered. The result tells you whether to accept, counter, or hold firm — you do not decide this yourself. Never call it just to state or quote your own number: if they only asked what it pays, answer with the posted rate and wait for their number.',
       parameters: {
         type: 'object',
         properties: {
-          amount: { type: 'number', description: 'Dollar amount the dispatcher asked for, all-in' },
+          amount: {
+            type: 'number',
+            description:
+              'Dollar amount the dispatcher is asking for, all-in — or the number of yours they just accepted',
+          },
         },
         required: ['amount'],
       },

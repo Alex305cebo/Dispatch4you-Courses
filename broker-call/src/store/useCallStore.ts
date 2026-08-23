@@ -5,6 +5,7 @@ import { RealtimeTransport } from '../voice/RealtimeTransport'
 import { GeminiLiveTransport } from '../voice/GeminiLiveTransport'
 import type { TransportDeps, VoiceEvent, VoiceTransport } from '../voice/types'
 import { makeCallSetup, type CallSetup } from '../call/makeCall'
+import { knownFacts } from '../call/knownFacts'
 import type { CallState } from '../types'
 import { endpoint } from '../api'
 import { directionForStyle } from '../voice/voices'
@@ -99,6 +100,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       sttModel: config.sttModel,
       direction: directionForStyle(broker.style),
       style: broker.style,
+      knownFacts: () => knownFacts(machine.getState(), setup.load),
       runTool: (name, args) => {
         const result = machine.execute(name, args)
         set({ callState: machine.getState() })

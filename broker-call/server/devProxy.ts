@@ -7,6 +7,7 @@ import { TOOL_SCHEMAS } from '../src/call/toolSchemas'
 import { buildDebriefPrompt } from '../src/call/debriefPrompt'
 import { toGeminiTools } from '../src/call/geminiTools'
 import { pickLiveModel, pickTextModel, rankModels, type ModelInfo } from '../src/call/geminiModels'
+import { geminiTurn } from './geminiTurn'
 import { normalizeVoice, DEFAULT_VOICE, ORPHEUS_VOICES } from '../src/voice/voices'
 import { normalizeGeminiVoice } from '../src/voice/geminiVoices'
 import { encodeWav, TARGET_SAMPLE_RATE } from '../src/voice/audio'
@@ -264,16 +265,28 @@ export function brokerApi(env: Record<string, string>): Plugin {
       server.middlewares.use('/api/turn', json(async (req) => {
         const body = await readJson<TurnRequest>(req)
         const seed = requireSeed(body.seed)
-        const messages = [
-          { role: 'system', content: buildSystemPrompt(seed) },
-          ...(body.messages ?? []),
-        ]
+        // Сводка известных фактов приклеивается к промпту на каждом ходу. Она
+        // приходит с клиента: факты лежат в CallMachine, а он исполняется в
+        // браузере. Длина ограничена — это не канал для подмены промпта.
+        const known = typeof body.known === 'string' ? body.known.slice(0, 1500) : ''
+        const prompt = known ? `${buildSystemPrompt(seed)}\n\n${known}` : buildSystemPrompt(seed)
+        const messages = [{ role: 'system', content: prompt }, ...(body.messages ?? [])]
         const payload = {
           messages,
           tools: TOOL_SCHEMAS,
           tool_choice: 'auto',
           temperature: 0.85,
           max_tokens: 220,
+        }
+
+        // Gemini первым — это основной путь разговора. Groq и Cerebras остаются
+        // запасными: у них 8000 токенов в минуту, и звонок встаёт на торге.
+        if (geminiKey) {
+          try {
+            return await geminiTurn(geminiKey, prompt, body.messages ?? [], await geminiModels(geminiKey))
+          } catch (e) {
+            console.warn(`[broker-call] Gemini не ответил на ход, откат: ${(e as Error).message}`)
+          }
         }
 
         const attempts = buildAttempts()
@@ -865,6 +878,8 @@ function split(value: string | undefined): string[] | undefined {
 interface TurnRequest {
   seed: string
   messages: { role: string; content: string; [k: string]: unknown }[]
+  /** Что брокер уже знает — сводка из CallMachine, одной строкой. */
+  known?: string
 }
 
 export interface DebriefRequest {

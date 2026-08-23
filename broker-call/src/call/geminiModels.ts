@@ -24,7 +24,7 @@ export interface ModelInfo {
   supportedGenerationMethods?: string[]
 }
 
-export type ModelKind = 'live' | 'text' | 'tts'
+export type ModelKind = 'live' | 'text' | 'tts' | 'chat'
 
 export interface RankedModel {
   id: string
@@ -94,8 +94,28 @@ export const MODEL_RULES: Record<ModelKind, ModelRule> = {
     reject: [...NEVER.filter((n) => n !== 'tts'), 'pro'],
     bonus: [['flash', 100]],
   },
+  /**
+   * Диалог звонка по обычному HTTP. Это основной путь разговора и локально,
+   * и на боевом PHP: Live-вебсокет PHP проксировать не умеет, а Groq на
+   * бесплатном тарифе даёт 8000 токенов в минуту — четыре реплики, и звонок
+   * встаёт на торге. Здесь качество важнее суточного лимита, поэтому полный
+   * flash, а lite — только если полного нет.
+   */
+  chat: {
+    method: 'generateContent',
+    // В каталоге ключа бывают чужие превью (antigravity-preview-05-2026): они
+    // проходят по методу, а на второй реплике отвечают «multiturn chat is not
+    // enabled». Нам нужно только семейство gemini.
+    require: 'gemini',
+    reject: [...NEVER, 'pro', 'live', 'native-audio', 'customtools', 'computer-use', 'omni'],
+    bonus: [
+      ['flash', 100],
+      ['lite', -60],
+    ],
+  },
   text: {
     method: 'generateContent',
+    require: 'gemini',
     // pro отвергаем осознанно: суточный лимит там меньше, чем нам нужно,
     // и падение на него означает «разбор перестал открываться к обеду».
     reject: [...NEVER, 'pro', 'live', 'native-audio'],
@@ -154,6 +174,11 @@ function shortName(raw: unknown): string {
 function version(id: string): number {
   const match = id.match(/gemini-(\d+(?:\.\d+)?)/)
   return match ? Number(match[1]) : 0
+}
+
+/** Модель диалога. null — значит разговор идёт прежним провайдером. */
+export function pickChatModel(models: readonly ModelInfo[]): string | null {
+  return rankModels(models, 'chat')[0]?.id ?? null
 }
 
 /** Модель озвучки. null — значит озвучиваем прежним провайдером. */

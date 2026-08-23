@@ -277,8 +277,11 @@ export class CallMachine {
     this.patchFacts({
       offers,
       currentBrokerOffer: decision.amount,
-      agreedRate:
-        decision.outcome === 'accept' ? decision.amount : facts.agreedRate,
+      // Согласована только ПОСЛЕДНЯЯ принятая цифра. Контр или финал снимают
+      // прежнюю договорённость: на живом прогоне ставка с борда зафиксировалась
+      // случайно, торг ушёл выше, брокер назвал финал 1775 — а rate con ушёл на
+      // старые 1575, потому что «accept» из прошлого никто не отменял.
+      agreedRate: decision.outcome === 'accept' ? decision.amount : null,
     })
     this.advance(decision.outcome === 'accept' ? 'booking' : 'negotiation')
 
@@ -328,6 +331,20 @@ export class CallMachine {
   }
 
   private sendRateCon(email: string): ToolResult {
+    // Подтверждение ставки без ставки — нонсенс. На живом прогоне модель
+    // отправила rate con на свою же контр-цифру, пока торг ещё шёл: диспетчер
+    // просил 1950, брокер стоял на 1857, и документ ушёл на 1857 без согласия.
+    if (!this.state.facts.agreedRate) {
+      const position = this.state.facts.currentBrokerOffer
+      return {
+        ok: false,
+        error: 'no_agreed_rate',
+        instruction: `No rate has been agreed yet. Your last position is ${
+          position ? `$${position.toLocaleString('en-US')}` : 'the posted rate'
+        }. If they are taking it, run it through pricing at that number first.`,
+      }
+    }
+
     const target = email || this.state.facts.booking.email
     if (!target) {
       return {

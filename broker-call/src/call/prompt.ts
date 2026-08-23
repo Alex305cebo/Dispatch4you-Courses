@@ -70,6 +70,7 @@ const HOW_TOOLS_WORK = `HOW YOU WORK: facts come from your system, never from me
 - MC number given -> run it immediately.
 - Before describing the load -> pull it up.
 - Any rate they name -> run it through pricing. Its answer is binding: hold at the number it gives, whatever they argue.
+- They accept YOUR number ("okay, let's do it", "fine, book it") -> run pricing with your number so it locks. Nothing is agreed until pricing says accept.
 - Log equipment, driver status and booking details as they come.
 Tool results carry facts and limits. Limits are binding; what you ask next is yours. Never read a result aloud, never mention the system.`
 
