@@ -1,0 +1,20 @@
+# Cloudflare Worker — вебсокет-мост Gemini Live для боевого сайта.
+#
+# Зачем он существует. Живой разговор (speech-to-speech, как у HappyRobot и
+# FleetWorks) идёт по постоянному вебсокету, а PHP-хостинг Hostinger вебсокет
+# держать не умеет — поэтому на сайте до сих пор работал только медленный
+# пайплайн. Worker бесплатного тарифа Cloudflare вебсокеты умеет в обе стороны
+# и закрывает ровно эту дыру. Статика остаётся на Hostinger как была.
+#
+# Локальная проверка БЕЗ аккаунта:  npx wrangler dev   (ключ в .dev.vars)
+# Боевой деплой (один раз):         npx wrangler login && npx wrangler deploy
+#                                   npx wrangler secret put GEMINI_API_KEY
+# После деплоя адрес вида https://broker-call-live.<аккаунт>.workers.dev
+# кладётся на Hostinger в файл gemini-worker.url рядом с groq.key.
+
+name = "broker-call-live"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# Ключ задаётся секретом (wrangler secret put GEMINI_API_KEY), локально — в
+# файле .dev.vars строкой GEMINI_API_KEY=...  Файл в .gitignore.

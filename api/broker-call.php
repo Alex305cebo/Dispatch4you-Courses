@@ -60,6 +60,12 @@ $openaiKey   = bc_key('openai.key');
 // false, фронт даже не пробует и идёт прежним пайплайном. Появление файла —
 // единственный переключатель.
 $geminiKey   = bc_key('gemini.key');
+// Адрес Cloudflare Worker — вебсокет-моста Gemini Live. PHP вебсокет держать
+// не умеет, поэтому живой разговор на сайте идёт через Worker. Пока файла
+// нет — прежний пайплайн, ни одна строка не меняется. Включение: положить
+// https://broker-call-live.<аккаунт>.workers.dev в файл gemini-worker.url
+// рядом с groq.key.
+$geminiWorker = bc_key('gemini-worker.url');
 
 // Списки, а не одиночные имена: провайдеры снимают модели с бесплатного тарифа
 // без предупреждения. Groq объявил llama-3.3-70b-versatile устаревшей
@@ -663,22 +669,15 @@ switch ($action) {
       'transport' => ($openaiKey !== '' && getenv('BROKER_CALL_TRANSPORT') === 'realtime')
         ? 'realtime' : 'pipeline',
       'sttModel' => $STT_MODELS[0],
+      'geminiSessionUrl' => $geminiWorker !== '' ? rtrim($geminiWorker, '/') . '/api/gemini-session' : null,
       'ready' => [
         'llm'      => ($cerebrasKey !== '' || $groqKey !== ''),
         'stt'      => ($groqKey !== ''),
         'tts'      => ($groqKey !== ''),
         'realtime' => ($openaiKey !== ''),
-        // На боевом Gemini Live не работает, и ключ тут ни при чём.
-        //
-        // Разговор идёт по вебсокету. Эфемерные токены Google этот сокет не
-        // принимает (проверено: ?access_token= — 1008 unregistered callers,
-        // ?key= — 1007 invalid), поэтому локально сокет проксирует дев-сервер
-        // и держит ключ у себя. PHP так не умеет.
-        //
-        // Отдавать true означало бы: браузер десять секунд ждёт сокет, молча
-        // получает отказ и только потом идёт прежним путём. Студент всё это
-        // время слушает тишину. Честнее не начинать.
-        'gemini'   => false,
+        // Живой разговор доступен, когда задан адрес вебсокет-моста: сам PHP
+        // вебсокет держать не умеет, мостом работает Cloudflare Worker.
+        'gemini'   => ($geminiWorker !== ''),
       ],
     ]);
   }

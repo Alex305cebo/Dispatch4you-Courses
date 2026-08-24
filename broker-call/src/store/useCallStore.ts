@@ -101,6 +101,7 @@ export const useCallStore = create<CallStore>((set, get) => ({
       direction: directionForStyle(broker.style),
       style: broker.style,
       knownFacts: () => knownFacts(machine.getState(), setup.load),
+      geminiSessionUrl: config.geminiSessionUrl,
       runTool: (name, args) => {
         const result = machine.execute(name, args)
         set({ callState: machine.getState() })
@@ -199,6 +200,8 @@ interface ServerConfig {
   transport: 'pipeline' | 'realtime'
   ready: { llm: boolean; stt: boolean; tts: boolean; realtime: boolean; gemini?: boolean }
   sttModel?: string
+  /** Мост Gemini Live на боевом — Cloudflare Worker. */
+  geminiSessionUrl?: string
 }
 
 async function fetchConfig(): Promise<ServerConfig> {

@@ -147,7 +147,7 @@ export class GeminiLiveTransport implements VoiceTransport {
   // ── Соединение ────────────────────────────────────────────────────────────
 
   private async mintSession(): Promise<GeminiSession> {
-    const r = await fetch(endpoint('gemini-session'), {
+    const r = await fetch(this.deps.geminiSessionUrl ?? endpoint('gemini-session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ seed: this.deps.seed, voice: this.deps.voice }),

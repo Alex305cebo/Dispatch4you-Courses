@@ -29,6 +29,15 @@ const FROM_ORPHEUS: Record<string, string> = {
   autumn: 'Aoede',
 }
 
+/**
+ * Голос Orpheus -> голос Gemini с сохранением пола и тембра. Неизвестное имя
+ * раньше молча превращалось в Puck — и Sarah с Diana говорили мужским голосом.
+ */
+export function geminiVoiceFromOrpheus(voice: string | undefined | null): string {
+  const mapped = FROM_ORPHEUS[(voice ?? '').trim().toLowerCase()]
+  return normalizeGeminiVoice(mapped ?? voice)
+}
+
 export function geminiVoiceForBroker(brokerId: string): string {
   return FROM_ORPHEUS[voiceForBroker(brokerId)] ?? GEMINI_DEFAULT_VOICE
 }

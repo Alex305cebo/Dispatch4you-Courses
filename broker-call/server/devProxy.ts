@@ -9,7 +9,7 @@ import { toGeminiTools } from '../src/call/geminiTools'
 import { pickLiveModel, pickTextModel, rankModels, type ModelInfo } from '../src/call/geminiModels'
 import { geminiTurn } from './geminiTurn'
 import { normalizeVoice, DEFAULT_VOICE, ORPHEUS_VOICES } from '../src/voice/voices'
-import { normalizeGeminiVoice } from '../src/voice/geminiVoices'
+import { normalizeGeminiVoice, geminiVoiceFromOrpheus } from '../src/voice/geminiVoices'
 import { encodeWav, TARGET_SAMPLE_RATE } from '../src/voice/audio'
 import { CALL_SEEDS } from '../src/call/seeds'
 
@@ -779,7 +779,7 @@ function geminiSetup(model: string, seed: string, voice?: string) {
         // Разговор при этом шёл нормально — ломался только текст на экране,
         // то есть ровно то, ради чего тренажёр и нужен.
         languageCode: 'en-US',
-        voiceConfig: { prebuiltVoiceConfig: { voiceName: normalizeGeminiVoice(voice) } },
+        voiceConfig: { prebuiltVoiceConfig: { voiceName: geminiVoiceFromOrpheus(voice) } },
       },
     },
     systemInstruction: { parts: [{ text: buildSystemPrompt(seed) }] },
