@@ -164,6 +164,38 @@ jobs:
           echo "❌ Deploy failed after 4 attempts"
           exit 1
 
+      # Разовая уборка того, что раньше выкладывалось по ошибке.
+      #
+      # Почему отдельным шагом, а не через rsync: файл, попавший в --exclude,
+      # для --delete неприкосновенен — rsync считает, что этой части приёмника
+      # он не касается, и оставляет её как есть. Флаг --delete-excluded снял бы
+      # эту защиту, но заодно снёс бы /game/, /games/, /map-trainer/ и
+      # /broker-call/: они исключены здесь и приезжают отдельными задачами ниже.
+      #
+      # Поэтому — точный список путей, без единой маски. Каждый проверен на
+      # отсутствие ссылок со страниц сайта.
+      - name: Убрать с сервера то, что публиковалось по ошибке
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 \
+              -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key \
+              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
+              'cd ~/domains/dispatch4you.com/public_html && \
+               rm -rf ./ffmpeg-8.1 ./_archive ./TRUCKPIC13 && \
+               rm -f ./buttons-showcase.html ./card-variants.html \
+                     ./close-buttons-demo.html ./tutorial-demo.html \
+                     ./build_map.js ./build_final.js ./download_states.js \
+                     ./extract_states.js ./fetch_cities.js ./fetch_cities_osm.js \
+                     ./fetch_routes_osrm.js ./generate-favicon-ico.js \
+                     ./check_outliers.js ./check_roads.js ./check_snap.js \
+                     ./check-favicon-final.js ./states_clean.js ./states_new.js \
+                     ./states_publicamundi.js ./us-map-data.js \
+                     ./game-cities-data.js ./game-routes-data.js \
+                     ./game-weather.js ./game2-features.js ./truck_detail_new.js \
+                     ./cases-database.js ./simul-dialogs-database.js \
+                     ./aiService.ts ./.cursorrules ./.easignore ./.env.example && \
+               echo "убрано"' || echo "⚠️ уборка не удалась — не повод валить деплой"
+        continue-on-error: true
+
   # ─── 2. React/Expo (game1.html) → /game/ — только если изменился adventure/ ──
   deploy-react-game:
     name: Build & deploy React game (game1)
