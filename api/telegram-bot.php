@@ -535,7 +535,9 @@ try {
 $pagesTotal = count($pageTexts);
 $thinPages = array();
 foreach ($pageTexts as $i => $t) {
-  if (mb_strlen(trim(preg_replace('/\s+/u', ' ', $t))) < 80) $thinPages[] = $i + 1;
+  // (string) вокруг preg_replace не для красоты: на битой кодировке он вернёт
+  // null, а trim(null) в PHP 8.4 — Deprecated в лог на каждый такой документ.
+  if (mb_strlen(trim((string)preg_replace('/\s+/u', ' ', $t))) < 80) $thinPages[] = $i + 1;
 }
 $marked = array();
 foreach ($pageTexts as $i => $t) {

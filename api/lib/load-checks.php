@@ -81,7 +81,12 @@ function companyAcronym($s) {
   $out = '';
   foreach (preg_split('/\s+/', trim($s)) as $w) {
     if ($w === '') continue;
-    if (in_array(strtoupper($w), array('THE', 'OF', 'AND', 'A'), true)) continue;
+    // Юридическую форму в аббревиатуру не берём: «TOTAL QUALITY LOGISTICS LLC»
+    // давала TQLL, документ говорит TQL — и сверка не сходилась, то есть
+    // крупнейший брокер страны получал красный флаг double-brokering ни за что.
+    if (in_array(strtoupper($w), array('THE', 'OF', 'AND', 'A',
+        'LLC', 'INC', 'INCORPORATED', 'CORP', 'CORPORATION', 'CO', 'LTD', 'LP', 'LLP',
+        'COMPANY', 'USA', 'US'), true)) continue;
     $out .= strtoupper(substr($w, 0, 1));
   }
   return $out;

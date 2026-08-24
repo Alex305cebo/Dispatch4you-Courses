@@ -154,6 +154,9 @@ jobs:
               --exclude='simul-dialogs-database.js' --exclude='aiService.ts' \
               --exclude='TRUCKPIC13' \
               --exclude='.cursorrules' --exclude='.easignore' --exclude='.env.example' \
+              --exclude='shared-footer.html' --exclude='load-footer.js' \
+              --exclude='includes' --exclude='deploy' \
+              --exclude='INDEX.html' \
               -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
               ./ \
               ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/ \
@@ -192,7 +195,9 @@ jobs:
                      ./game-cities-data.js ./game-routes-data.js \
                      ./game-weather.js ./game2-features.js ./truck_detail_new.js \
                      ./cases-database.js ./simul-dialogs-database.js \
-                     ./aiService.ts ./.cursorrules ./.easignore ./.env.example && \
+                     ./aiService.ts ./.cursorrules ./.easignore ./.env.example \
+                     ./shared-footer.html ./load-footer.js && \
+               rm -rf ./includes ./deploy ./img/illlustrations/INDEX.html && \
                echo "убрано"' || echo "⚠️ уборка не удалась — не повод валить деплой"
         continue-on-error: true
 
