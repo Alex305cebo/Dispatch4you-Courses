@@ -3132,14 +3132,12 @@
                     style="font-size:14px;font-weight:700;color:var(--danger);margin-bottom:12px;display:flex;align-items:center;gap:8px">
                     <i class="fa fa-key"></i> Password Management
                 </h4>
-                <div class="fg">
-                    <label class="fl">New Password (leave blank to keep current)</label>
-                    <input id="editUserPassword" class="finp" type="password" placeholder="Minimum 8 characters">
-                    <small style="color:var(--muted);font-size:11px;margin-top:4px;display:block">
-                        ⚠️ The password will only change if you enter a new value
-                    </small>
-                </div>
-                <button class="btn btn-d btn-sm" onclick="resetUserPassword()" style="margin-top:8px">
+                <p style="font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 14px">
+                    You cannot set a password on someone's behalf — Firebase never hands out
+                    another account's password, not even to an admin. The person picks a new
+                    one themselves, from the link in the email.
+                </p>
+                <button class="btn btn-d" onclick="resetUserPassword()">
                     <i class="fa fa-envelope"></i> Send Password Reset Email
                 </button>
             </div>
@@ -3934,7 +3932,6 @@
             document.getElementById('editUserPhone').value = u.phone || '';
             document.getElementById('editUserStatus').value = u.status || 'active';
             document.getElementById('editUserRole').value = u.role || 1;
-            document.getElementById('editUserPassword').value = '';
             document.getElementById('editUserTariff').value = u.tariff || '';
             document.getElementById('editUserAccessRole').value = u.accessRole || 'registered';
             document.getElementById('editUserSubscriptionEnd').value = u.subscriptionEnd || '';
@@ -3949,7 +3946,6 @@
             const phone = document.getElementById('editUserPhone').value.trim();
             const status = document.getElementById('editUserStatus').value;
             const role = parseInt(document.getElementById('editUserRole').value) || 1;
-            const password = document.getElementById('editUserPassword').value.trim();
             const tariff = document.getElementById('editUserTariff').value;
             const accessRole = document.getElementById('editUserAccessRole').value || 'registered';
             const subscriptionEnd = document.getElementById('editUserSubscriptionEnd').value;
@@ -3972,18 +3968,6 @@
                 };
 
                 await updateDoc(doc(db, 'users', uid), updateData);
-
-                // If a new password is specified - update it via Firebase Auth
-                if (password && password.length >= 8) {
-                    try {
-                        const { getAuth, updatePassword } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
-                        const auth = getAuth();
-                        // Note: changing another user's password requires Admin SDK privileges
-                        window.toast('⚠️ Password can only be changed via Admin SDK or by sending a reset email', 'i');
-                    } catch (e) {
-                        console.warn('Password update requires Admin SDK', e);
-                    }
-                }
 
                 window.toast('✅ All data saved', 's');
                 closeModal('editUser');
