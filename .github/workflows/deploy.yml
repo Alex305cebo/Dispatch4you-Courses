@@ -102,6 +102,21 @@ jobs:
 
       - name: Deploy via rsync (with retry)
         run: |
+          # Что и почему исключено сверх прежнего списка (проверено запросами
+          # к боевому сайту, ни на что из этого страницы не ссылаются):
+          #   ffmpeg-8.1        — 10086 файлов чужих исходников, попавших в репо
+          #                       заодно; /ffmpeg-8.1/configure отдавался как
+          #                       300 КБ по прямой ссылке
+          #   _archive          — прошлые версии страниц; /_archive/backups/
+          #                       index.OLD.html отдавал 385 КБ старой главной
+          #   *-showcase/demo   — страницы-образцы вёрстки, ссылок на них нет
+          #   build_*/fetch_*/  — скрипты сборки данных карты, запускаются руками
+          #   check_*/states_*    на машине и браузеру не нужны
+          #   TRUCKPIC13        — картинки, не используемые ни одной страницей
+          #   .cursorrules и    — служебные файлы разработки, зря показывают
+          #   .env.example        устройство проекта
+          # НЕ исключать: __/auth — это обработчик входа Firebase, домен входа
+          # authDomain="dispatch4you.com", без него ломается вход через Google.
           for i in 1 2 3 4; do
             echo "Deploy attempt $i..."
             rsync -avzrc --delete \
@@ -121,6 +136,24 @@ jobs:
               --exclude='*.py' --exclude='*.ps1' --exclude='states_extracted.txt' \
               --exclude='MAP_DEBUG_INSTRUCTIONS.html' --exclude='game-test.html' \
               --exclude='test-*.html' \
+              --exclude='ffmpeg-8.1' \
+              --exclude='_archive' \
+              --exclude='buttons-showcase.html' --exclude='card-variants.html' \
+              --exclude='close-buttons-demo.html' --exclude='tutorial-demo.html' \
+              --exclude='build_map.js' --exclude='build_final.js' \
+              --exclude='download_states.js' --exclude='extract_states.js' \
+              --exclude='fetch_cities.js' --exclude='fetch_cities_osm.js' \
+              --exclude='fetch_routes_osrm.js' --exclude='generate-favicon-ico.js' \
+              --exclude='check_outliers.js' --exclude='check_roads.js' \
+              --exclude='check_snap.js' --exclude='check-favicon-final.js' \
+              --exclude='states_clean.js' --exclude='states_new.js' \
+              --exclude='states_publicamundi.js' --exclude='us-map-data.js' \
+              --exclude='game-cities-data.js' --exclude='game-routes-data.js' \
+              --exclude='game-weather.js' --exclude='game2-features.js' \
+              --exclude='truck_detail_new.js' --exclude='cases-database.js' \
+              --exclude='simul-dialogs-database.js' --exclude='aiService.ts' \
+              --exclude='TRUCKPIC13' \
+              --exclude='.cursorrules' --exclude='.easignore' --exclude='.env.example' \
               -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
               ./ \
               ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/ \

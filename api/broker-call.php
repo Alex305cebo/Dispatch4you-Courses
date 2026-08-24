@@ -22,7 +22,18 @@
 // страницу сайта, сюда надо добавить проверку куки d4y_sess (api/session.php
 // её уже выдаёт) и квоту минут на uid.
 
-header('Access-Control-Allow-Origin: *');
+require_once __DIR__ . '/origin-guard.php';
+
+// Домашняя сеть разрешена намеренно: микрофон и звук проверяются с телефона
+// по адресу вида http://192.168.x.x:5180/broker-call/ — см. CLAUDE.md.
+$ALLOWED_HOSTS = array('dispatch4you.com', 'localhost', '127.0.0.1');
+$PRIVATE_NET   = true;
+
+// Раньше стояла звёздочка: ответ этого прокси могла читать страница любого
+// сайта. Отдаём ровно тот источник, который сами признали своим.
+$corsOrigin = d4y_cors_origin($ALLOWED_HOSTS, $PRIVATE_NET);
+if ($corsOrigin !== null) { header('Access-Control-Allow-Origin: ' . $corsOrigin); }
+header('Vary: Origin');
 header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
@@ -36,14 +47,12 @@ $action = isset($_GET['action']) ? $_GET['action'] : '';
 // Секретов она не отдаёт — только «работает/не работает» и текст ошибки
 // провайдера. Без этого исключения «спроси у сервера, что сломалось» не
 // работает, и причину приходится выводить чтением исходников.
-$origin  = isset($_SERVER['HTTP_ORIGIN'])  ? $_SERVER['HTTP_ORIGIN']  : '';
-$referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
-$allowedOrigins = ['dispatch4you.com', 'localhost', '127.0.0.1'];
-$originOk = false;
-foreach ($allowedOrigins as $o) {
-  if (stripos($origin, $o) !== false || stripos($referer, $o) !== false) { $originOk = true; break; }
+// Сравнивается ХОСТ целиком. Прежняя проверка искала подстроку и пропускала
+// любой адрес, где встретились нужные буквы, — включая
+// https://dispatch4you.com.чужой-домен.ru и https://зло.example/?dispatch4you.com.
+if (!d4y_origin_allowed($ALLOWED_HOSTS, $PRIVATE_NET) && $action !== 'health') {
+  bc_fail(403, 'forbidden');
 }
-if (!$originOk && $action !== 'health') { bc_fail(403, 'forbidden'); }
 
 // ── Ключи ────────────────────────────────────────────────────────────────────
 function bc_key($name) {
