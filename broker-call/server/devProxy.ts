@@ -979,8 +979,14 @@ function safeParse(raw: string): Record<string, unknown> {
  *
  * Gemini отдаёт сырой PCM16, а фронт ждёт WAV, поэтому дописываем заголовок.
  */
+/** Модели озвучки с выбитой квотой — минуту в них не стучимся. */
+const ttsCoolingDown = new Map<string, number>()
+
 async function geminiSpeak(key: string, text: string, voice?: string): Promise<Buffer> {
-  const clean = (text ?? '').trim()
+  // Ремарка Orpheus вида «[warm] …» срезается и здесь: старый бандл фронта из
+  // кэша браузера ещё может её слать, а Gemini TTS читает такие пометки вслух —
+  // шёпоты в начале реплик были ровно этим.
+  const clean = (text ?? '').replace(/^\[[a-z\s-]{2,20}\]\s*/i, '').trim()
   if (!clean) throw new Error('пустой текст')
 
   // Список, а не одно имя. Превью-модели Gemini регулярно отвечают
@@ -991,6 +997,9 @@ async function geminiSpeak(key: string, text: string, voice?: string): Promise<B
 
   let lastError = ''
   for (const model of candidates) {
+    // Исчерпанную квоту помним: без этого голос прыгал между моделями от
+    // реплики к реплике — «брокер отвечает разными голосами».
+    if (ttsCoolingDown.get(model)! > Date.now()) continue
     const r = await fetch(
       `${GEMINI_API}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
       {
@@ -1008,6 +1017,7 @@ async function geminiSpeak(key: string, text: string, voice?: string): Promise<B
       },
     )
     if (!r.ok) {
+      if (r.status === 429) ttsCoolingDown.set(model, Date.now() + 60_000)
       lastError = `${model} ${r.status}: ${(await r.text()).slice(0, 160)}`
       continue
     }

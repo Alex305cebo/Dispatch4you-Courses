@@ -371,7 +371,10 @@ function bc_wav_from_pcm($pcm, $rate) {
  * в отличие от Live-вебсокета.
  */
 function bc_gemini_speak($key, $text, $voice, &$why = null) {
-  $clean = trim((string) $text);
+  // Ремарка Orpheus вида «[warm] …» срезается: старый бандл фронта из кэша
+  // браузера ещё может её слать, а Gemini TTS читает такие пометки вслух —
+  // шёпоты в начале реплик были ровно этим.
+  $clean = trim(preg_replace('/^\[[a-z\s-]{2,20}\]\s*/i', '', (string) $text));
   if ($clean === '') { return null; }
 
   // Возвращает ПАРУ [код, модели]. Взять её как список моделей — ровно та
@@ -383,6 +386,9 @@ function bc_gemini_speak($key, $text, $voice, &$why = null) {
   if (count($candidates) === 0) { $why = 'в каталоге нет модели с tts в имени (моделей: ' . count($models) . ')'; return null; }
 
   foreach ($candidates as $model) {
+    // Исчерпанную квоту помним: без этого голос прыгал между моделями от
+    // реплики к реплике — «брокер отвечает разными голосами».
+    if (bc_gemini_cooling($model)) { continue; }
     list($code, $body) = bc_post_json(
       BC_GEMINI_API . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key),
       '',
@@ -396,6 +402,7 @@ function bc_gemini_speak($key, $text, $voice, &$why = null) {
         ],
       ]
     );
+    if ($code === 429) { bc_gemini_cooldown($model); $why = $model . ' 429: quota'; continue; }
     if ($code < 200 || $code >= 300) { $why = $model . ' ' . $code . ': ' . substr((string) $body, 0, 160); continue; }
 
     $data = json_decode((string) $body, true);

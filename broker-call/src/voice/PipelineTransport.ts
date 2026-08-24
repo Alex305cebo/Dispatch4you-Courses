@@ -4,8 +4,7 @@ import { TelephonyAudio } from './TelephonyAudio'
 import { encodeWav, durationSeconds } from './audio'
 import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript } from '../data/terms'
 import { endpoint } from '../api'
-import { estimateDurationMs, speakInBrowser, type BrowserSpeech } from './browserVoice'
-import { Backchannel } from './backchannel'
+import { estimateDurationMs } from './browserVoice'
 import { synthesize } from './tts'
 import { trimHistory } from './history'
 
@@ -24,10 +23,8 @@ export class PipelineTransport implements VoiceTransport {
   /** История в формате провайдера. Системный промпт добавляет сервер. */
   private messages: ChatMessage[] = []
   private playing: AudioBufferSourceNode | null = null
-  private browserSpeech: BrowserSpeech | null = null
   /** Об отказе озвучки сообщаем один раз за звонок, а не на каждой реплике. */
   private ttsReported = false
-  private backchannel: Backchannel | null = null
   /** Замеры пауз — уходят в разбор звонка. */
   private readonly turnLatencies: number[] = []
   private currentUtterance: { id: string; startedAt: number; durationMs: number } | null = null
@@ -49,18 +46,16 @@ export class PipelineTransport implements VoiceTransport {
   }
 
   async connect(): Promise<void> {
-    const ctx = await this.telephony.ensureContext()
+    await this.telephony.ensureContext()
 
     // Микрофон запрашиваем ДО гудков: если студент откажет, лучше узнать это
     // сразу, а не после десяти секунд ожидания ответа.
     await this.vad.start()
 
-    // Отклики синтезируются во время гудков — три секунды простоя как раз на
-    // это и уходят. БЕЗ await: не успели или провайдер молчит — звонок идёт
-    // без них, задерживать разговор ради «угу» бессмысленно.
-    this.backchannel = new Backchannel(ctx, this.deps.voice, this.deps.style, this.deps.direction)
-    void this.backchannel.prepare()
-
+    // Подкладок «угу» больше нет. Они синтезировались пятью отдельными
+    // запросами озвучки на старте звонка: съедали суточную квоту Gemini TTS
+    // ещё до первой реплики, а сами клипы выходили с шёпотом и другим тембром —
+    // «брокер отвечает разными голосами» с живого прогона было ровно этим.
     const stopRing = await this.telephony.ring()
     await wait(3200)
     if (this.closed) return
@@ -110,11 +105,6 @@ export class PipelineTransport implements VoiceTransport {
       this.deps.emit({ type: 'user_dropped', reason: 'too_short' })
       return
     }
-
-    // Отклик уходит в линию ПЕРВЫМ делом, до распознавания. Пока он звучит,
-    // успевают отработать и Whisper, и модель — паузы студент не слышит.
-    const line = this.telephony.getLineInput()
-    if (line) this.backchannel?.ack(line)
 
     const startedAt = performance.now()
     this.vad.setPaused(true)
@@ -243,17 +233,10 @@ export class PipelineTransport implements VoiceTransport {
   private scheduleHold(): void {
     if (this.holdTimer !== null) return
 
-    // Сначала брокер говорит вслух, что смотрит — так делает живой человек.
-    // Музыка ожидания включается только если он копается дольше отклика:
-    // включать её сразу значит превращать полусекундную задержку в «вас
-    // поставили на удержание».
-    const line = this.telephony.getLineInput()
-    const spokenMs = line ? (this.backchannel?.filler(line) ?? 0) : 0
-
-    this.holdTimer = window.setTimeout(
-      () => void this.telephony.startHold(),
-      Math.max(900, spokenMs + 600),
-    )
+    // Музыка ожидания — только если инструмент копается заметно дольше
+    // обычного: включать её на полусекундную задержку значит превращать её
+    // в «вас поставили на удержание».
+    this.holdTimer = window.setTimeout(() => void this.telephony.startHold(), 1500)
   }
 
   private cancelHold(): void {
@@ -278,10 +261,7 @@ export class PipelineTransport implements VoiceTransport {
 
     let buffer: AudioBuffer | null = null
     try {
-      // В провайдер уходит текст с вокальной ремаркой, на экран — чистый.
-      buffer = await ctx.decodeAudioData(
-        await synthesize(text, this.deps.voice, this.deps.direction),
-      )
+      buffer = await ctx.decodeAudioData(await synthesize(text, this.deps.voice))
     } catch (e) {
       // Причину показываем: раньше она уходила в консоль, и «почему молчит»
       // приходилось выяснять чтением исходников. Но один раз за звонок —
@@ -330,19 +310,23 @@ export class PipelineTransport implements VoiceTransport {
     if (this.playing === source) this.finishUtterance(false)
   }
 
+  /**
+   * Озвучка отказала — реплика идёт текстом, без звука.
+   *
+   * Раньше здесь включался голос браузера (speechSynthesis), и посреди звонка
+   * брокер внезапно начинал говорить казённым роботом с другим тембром. Это
+   * хуже тишины: тишина с текстом читается как «плохая связь», робот — как
+   * поломка. Текст раскрывается в темпе речи, разговор продолжается.
+   */
   private async playInBrowser(text: string): Promise<void> {
-    const speech = speakInBrowser(text, this.deps.voice)
     const id = nextId()
-    const durationMs = speech?.estimatedMs ?? estimateDurationMs(text)
+    const durationMs = estimateDurationMs(text)
 
     this.deps.emit({ type: 'agent_utterance_start', id, text, durationMs })
     this.currentUtterance = { id, startedAt: performance.now(), durationMs }
-    this.browserSpeech = speech
 
-    if (speech) await Promise.race([speech.done, wait(durationMs + 4000)])
-    else await wait(durationMs)
+    await wait(durationMs)
 
-    this.browserSpeech = null
     this.finishUtterance(false)
   }
 
@@ -354,12 +338,6 @@ export class PipelineTransport implements VoiceTransport {
   }
 
   private stopPlayback(interrupted: boolean): void {
-    // Перебивание должно затыкать и запасной голос — иначе браузер продолжит
-    // договаривать реплику поверх студента.
-    if (this.browserSpeech) {
-      this.browserSpeech.cancel()
-      this.browserSpeech = null
-    }
     if (this.playing) {
       try {
         this.playing.onended = null
