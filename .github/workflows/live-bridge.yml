@@ -1,0 +1,74 @@
+# Мост Gemini Live — вебсокет для живого разговора на сайте.
+#
+# PHP на Hostinger вебсокет держать не умеет, поэтому мост живёт на Cloudflare
+# Worker. Аккаунта Cloudflare нет и не нужно: wrangler deploy --temporary
+# разворачивает на временный аккаунт без логина. Временный — значит смертный,
+# поэтому мост пересоздаётся по расписанию каждую ночь, а свежий адрес
+# записывается на Hostinger в gemini-worker.url. Умер среди дня — сайт сам
+# откатывается на пайплайн, ночью мост воскресает.
+#
+# Ключ Gemini не хранится в GitHub: CI читает его по SSH с Hostinger, где он
+# уже лежит (gemini.key рядом с groq.key).
+
+name: Gemini Live bridge
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'broker-call/worker/**'
+      - '.github/workflows/live-bridge.yml'
+
+concurrency:
+  group: live-bridge
+  cancel-in-progress: true
+
+jobs:
+  deploy-bridge:
+    name: Deploy websocket bridge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Deploy bridge and publish its URL
+        run: |
+          set -e
+          SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
+          KEY=$($SSH "cat ~/domains/dispatch4you.com/gemini.key" 2>/dev/null | tr -d '\r\n ')
+          if [ -z "$KEY" ]; then
+            echo "gemini.key на сервере нет — мост не разворачиваем, сайт остаётся на пайплайне"
+            exit 0
+          fi
+
+          cd broker-call/worker
+          # Ключ уезжает переменной внутрь деплоя: секреты на временный аккаунт
+          # не кладутся (нет авторизации), а наружу ключ не виден.
+          printf '\n[vars]\nGEMINI_API_KEY = "%s"\n' "$KEY" >> wrangler.toml
+          OUT=$(npx wrangler deploy --temporary 2>&1) || { echo "деплой не прошёл:"; echo "$OUT" | grep -v -i "claim\|token" | tail -6; exit 0; }
+          URL=$(echo "$OUT" | grep -o 'https://[a-z0-9.-]*workers\.dev' | head -1)
+          if [ -z "$URL" ]; then echo "адрес воркера в выводе не найден"; exit 0; fi
+
+          # Мост проверяется тем же путём, каким пойдёт звонок: выдача сессии.
+          if ! curl -s -X POST "$URL/api/gemini-session" -H 'Content-Type: application/json' -H 'Origin: https://dispatch4you.com' -d '{"seed":"call-001"}' | grep -q '"token"'; then
+            echo "мост поднялся, но сессию не выдаёт — адрес на сайт не публикуем"
+            exit 0
+          fi
+
+          $SSH "printf '%s' '$URL' > ~/domains/dispatch4you.com/gemini-worker.url"
+          echo "мост живой и опубликован: $URL"
