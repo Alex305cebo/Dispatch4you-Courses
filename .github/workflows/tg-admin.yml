@@ -1,0 +1,56 @@
+name: tg-admin
+
+# Кто получает служебные ответы бота (/diag) и тревоги сторожа.
+# Файл tg-admin.txt лежит на сервере ВЫШЕ public_html, в репозиторий не входит и
+# по HTTP недоступен. Chat id — не секрет, но и не для публики.
+#
+# Запуск без параметра — показать, что там сейчас.
+# Запуск с chat_id — записать новый (узнаётся командой /id у бота).
+
+on:
+  workflow_dispatch:
+    inputs:
+      chat_id:
+        description: 'Chat id владельца (пусто — только показать текущий)'
+        required: false
+        default: ''
+
+jobs:
+  admin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Show or set tg-admin.txt
+        run: |
+          set -e
+          SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
+          BASE=~/domains/dispatch4you.com
+
+          echo "== что лежит на сервере сейчас =="
+          for f in tg-admin.txt tg-bot.key gemini.key fmcsa.key groq.key; do
+            SIZE=$($SSH "wc -c < $BASE/$f 2>/dev/null || echo -1")
+            case "$SIZE" in
+              -1) STATE="файла нет" ;;
+              0)  STATE="ПУСТ" ;;
+              *)  STATE="есть, $SIZE байт" ;;
+            esac
+            printf '%-14s %s\n' "$f" "$STATE"
+          done
+
+          echo
+          echo "tg-admin.txt содержит: '$($SSH "cat $BASE/tg-admin.txt 2>/dev/null" | tr -d '\r\n')'"
+
+          ID='${{ inputs.chat_id }}'
+          if [ -n "$ID" ]; then
+            case "$ID" in
+              ''|*[!0-9-]*) echo "chat id должен быть числом, получено: $ID"; exit 1 ;;
+            esac
+            $SSH "printf '%s' '$ID' > $BASE/tg-admin.txt && chmod 600 $BASE/tg-admin.txt"
+            echo "записано: $($SSH "cat $BASE/tg-admin.txt" | tr -d '\r\n')"
+          fi
