@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-17-4';
+const BUILD = '2026-08-24-1';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -159,8 +159,20 @@ if (isset($_GET['lasterr'])) {
   $lp = realpath(__DIR__ . '/../..') . '/tg-bot.log';
   $txt = @file_get_contents(__DIR__ . '/../../tg-bot.log');
   if ($txt === false) { echo "tg-bot.log не читается\nискали тут: $lp\n"; exit; }
-  $fatal = array_filter(explode("\n", $txt), function ($l) { return strpos($l, '[FATAL]') !== false; });
-  echo $fatal ? implode("\n", array_slice($fatal, -10)) . "\n" : "записей [FATAL] нет\n";
+  $lines = array_values(array_filter(explode("\n", $txt), function ($l) { return trim($l) !== ''; }));
+
+  // ?lasterr=45CD33 — найти запись по коду, который бот показал в чате.
+  // Раньше наружу отдавались только строки [FATAL], и это делало код ошибки
+  // бесполезным: человек называл 45CD33, а посмотреть, что за ним стоит, было
+  // негде — ни в чате, ни по ссылке. Сам лог теперь под ключом, прятать от
+  // владельца его собственные записи незачем.
+  $code = strtoupper(preg_replace('/[^0-9A-Za-z]/', '', (string)$_GET['lasterr']));
+  if ($code !== '' && $code !== '1') {
+    $hits = array_filter($lines, function ($l) use ($code) { return stripos($l, '[' . $code . ']') !== false; });
+    echo $hits ? implode("\n", $hits) . "\n" : "записей с кодом $code нет\n";
+    exit;
+  }
+  echo implode("\n", array_slice($lines, -25)) . "\n";
   exit;
 }
 
@@ -381,7 +393,8 @@ if (!isset($msg['document'])) {
         "🔧 Служебные ссылки. Ключ считается из токена бота — сменишь токен, "
         . "ссылки станут другими, старые перестанут работать.\n\n"
         . "Живы ли расширения и утилиты:\n" . SELF_URL . "?diag=1&k=" . $k . "\n\n"
-        . "Последние падения:\n" . SELF_URL . "?lasterr=1&k=" . $k . "\n\n"
+        . "Последние 25 записей лога:\n" . SELF_URL . "?lasterr=1&k=" . $k . "\n\n"
+        . "Найти ошибку по коду из чата (подставь свой):\n" . SELF_URL . "?lasterr=45CD33&k=" . $k . "\n\n"
         . "Что Telegram думает о вебхуке:\n" . SELF_URL . "?webhookinfo=1&k=" . $k . "\n\n"
         . "Жив ли ключ Gemini (тратит 1 запрос из 20 в сутки):\n" . SELF_URL . "?geminicheck=1&k=" . $k . "\n\n"
         . "Жив ли ключ FMCSA:\n" . SELF_URL . "?fmcsacheck=115789&k=" . $k . "\n\n"
@@ -1960,7 +1973,37 @@ function photoRespond($token, $chatId, $load, $err, $pageCount = 1) {
       . "Рейт-кон лучше присылать файлом PDF — так точнее.");
     return;
   }
-  if ($err !== '') { fail($token, $chatId, 'photo vision: ' . $err, 'сервис распознавания не справился с картинкой'); return; }
+  if ($err !== '') {
+    // Причину называем словами, а не «не справился с картинкой»: под этой
+    // фразой пряталось всё подряд, включая исчерпанный дневной лимит — а это
+    // не сбой, это «приходите завтра или пришлите PDF». Текстовый путь у PDF
+    // подстрахован Groq, у картинки страховки нет: vision-модели у Groq на
+    // нашем аккаунте нет вообще.
+    $why = 'сервис распознавания не справился с картинкой';
+    if (stripos($err, 'quota') !== false || stripos($err, 'RESOURCE_EXHAUSTED') !== false
+        || stripos($err, 'rate limit') !== false) {
+      clearProgress($token, $chatId);
+      reply($token, $chatId,
+        "📷 Дневной лимит распознавания картинок исчерпан — он бесплатный и обновляется раз в сутки.\n\n"
+        . "Что можно сделать сейчас:\n"
+        . "• прислать рейт-кон файлом PDF — он читается другим путём и лимитом не ограничен\n"
+        . "• вернуться к скриншотам завтра\n\n"
+        . "— — —\n"
+        . "Daily image-recognition limit reached. Send the rate confirmation as a PDF instead, "
+        . "or try screenshots again tomorrow.");
+      @file_put_contents(__DIR__ . '/../../tg-bot.log',
+        date('c') . ' [QUOTA] photo vision: ' . mb_substr($err, 0, 200) . "\n", FILE_APPEND);
+      return;
+    }
+    if (stripos($err, 'api key') !== false || stripos($err, 'api_key') !== false
+        || stripos($err, 'permission') !== false) {
+      $why = 'ключ сервиса распознавания недействителен (это на нашей стороне)';
+    } elseif (strpos($err, 'nojson') === 0) {
+      $why = 'сервис вернул ответ в неожиданном формате';
+    }
+    fail($token, $chatId, 'photo vision: ' . $err, $why);
+    return;
+  }
 
   $st = stateGet($chatId);
   $lang = curLang($st);

@@ -1,0 +1,123 @@
+name: bot-keys
+
+# Проверка ключей бота ИЗ САМОГО HOSTINGER и лечение мёртвого ключа Gemini.
+#
+# Почему именно оттуда: ключ на сервере может быть привязан к IP, и с раннера
+# GitHub Google отвечает «API key not valid» даже на живой ключ. Проверка с
+# раннера уже один раз обманула самолечение в live-bridge.yml.
+#
+# Ключи наружу не печатаются — только префикс, длина и код ответа.
+
+on:
+  workflow_dispatch:
+    inputs:
+      heal:
+        description: 'Если ключ Gemini мёртв — заменить его первым рабочим из найденных'
+        type: boolean
+        default: false
+      scan:
+        description: 'Искать рабочий ключ по всем сайтам на сервере'
+        type: boolean
+        default: true
+
+jobs:
+  keys:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Check keys from the server
+        env:
+          BRIDGE_KEY: ${{ secrets.GEMINI_API_KEY_BRIDGE }}
+          HEAL: ${{ inputs.heal }}
+        run: |
+          set -e
+          SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
+
+          ANCHOR=$($SSH "find ~ -maxdepth 4 -name tg-bot.key 2>/dev/null | head -1")
+          [ -n "$ANCHOR" ] || { echo "tg-bot.key не найден"; exit 1; }
+          BASE=$(dirname "$ANCHOR")
+          echo "папка с ключами: $BASE"
+          echo
+
+          # Всё исполняется НА СЕРВЕРЕ: и чтение ключа, и запрос к Google.
+          $SSH "bash -s" <<REMOTE
+          BASE="$BASE"
+          KEY=\$(grep -o 'AIza[A-Za-z0-9_-]\{30,\}' "\$BASE/gemini.key" 2>/dev/null | head -1)
+          if [ -z "\$KEY" ]; then
+            echo "gemini.key: ключа формата AIza в файле нет"
+          else
+            echo "gemini.key: префикс \${KEY:0:6}, длина \${#KEY}"
+            LIST=\$(curl -s -o /dev/null -w '%{http_code}' "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=\$KEY")
+            echo "  models.list с сервера: HTTP \$LIST"
+            GEN=\$(curl -s -X POST -H 'Content-Type: application/json' \
+              -d '{"contents":[{"parts":[{"text":"ping"}]}]}' \
+              "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\$KEY")
+            echo "  generateContent: \$(echo "\$GEN" | head -c 200)"
+          fi
+          echo
+          echo "fmcsa.key: \$(wc -c < "\$BASE/fmcsa.key" 2>/dev/null) байт"
+          echo "groq.key:  \$(wc -c < "\$BASE/groq.key" 2>/dev/null) байт"
+          # Groq — единственный живой ключ. Если у них появилась модель,
+          # которая видит картинки, скриншоты можно читать вообще без Gemini.
+          GK=\$(tr -d '\r\n' < "\$BASE/groq.key" 2>/dev/null)
+          if [ -n "\$GK" ]; then
+            echo
+            echo "модели, доступные нашему ключу Groq:"
+            curl -s -H "Authorization: Bearer \$GK" https://api.groq.com/openai/v1/models               | grep -o '"id":"[^"]*"' | sed 's/"id":"/  /; s/"//' | sort
+          fi
+          REMOTE
+
+          # ── Поиск рабочего ключа по всем нашим сайтам на этом сервере ──
+          # Ключи Gemini живут не только у бота: у голосового тренажёра, у
+          # приложения на app.mayalogisticsinc.com, в .env веб-аппов. Проверяем
+          # КАЖДЫЙ найденный с сервера — отсюда же ходит бот, значит и годность
+          # ключа надо мерить отсюда. Наружу печатаем только префикс и код.
+          if [ "${{ inputs.scan }}" = "true" ]; then
+            echo
+            echo "== ищу ключи Gemini по сайтам на сервере =="
+            $SSH "bash -s" <<'SCAN'
+          FILES=$(grep -rIl 'AIza[A-Za-z0-9_-]\{30,\}' ~             --include='.env*' --include='*.php' --include='*.key' --include='*.json' --include='*.txt'             --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next --exclude-dir=cache             2>/dev/null | head -40)
+          if [ -z "$FILES" ]; then echo "ключей формата AIza на сервере не нашлось"; exit 0; fi
+          KEYS=$(for f in $FILES; do grep -o 'AIza[A-Za-z0-9_-]\{30,\}' "$f"; done | sort -u)
+          echo "файлов с ключами: $(echo "$FILES" | wc -l), уникальных ключей: $(echo "$KEYS" | wc -l)"
+          echo
+          for K in $KEYS; do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=$K")
+            WHERE=$(grep -rIl "$K" ~ --include='.env*' --include='*.php' --include='*.key' --include='*.json' --include='*.txt' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next 2>/dev/null | head -1)
+            echo "  ${K:0:10}… HTTP $CODE   <- $WHERE"
+            if [ "$CODE" = "200" ]; then echo "$K" > /tmp/live-gemini.key; fi
+          done
+          if [ -s /tmp/live-gemini.key ]; then echo; echo "РАБОЧИЙ КЛЮЧ НАЙДЕН"; else echo; echo "рабочих среди них нет"; fi
+          SCAN
+          fi
+
+          if [ "$HEAL" != "true" ]; then
+            echo
+            echo "лечение не запрашивалось (heal=false)"
+            exit 0
+          fi
+          # Сначала пробуем то, что нашли на сервере, потом секрет GitHub.
+          if $SSH "test -s /tmp/live-gemini.key"; then
+            $SSH "cp /tmp/live-gemini.key $BASE/gemini.key && chmod 600 $BASE/gemini.key"
+            echo "gemini.key заменён рабочим ключом, найденным на сервере"
+            $SSH "rm -f /tmp/live-gemini.key"
+            exit 0
+          fi
+          [ -n "$BRIDGE_KEY" ] || { echo "секрета GEMINI_API_KEY_BRIDGE нет — заменять нечем"; exit 0; }
+
+          # Проверяем кандидата ТОЖЕ с сервера: только там видно, примет ли его
+          # Google при боевых запросах бота.
+          CODE=$($SSH "curl -s -o /dev/null -w '%{http_code}' 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=$BRIDGE_KEY'")
+          echo "ключ из секрета, проверенный с сервера: HTTP $CODE"
+          if [ "$CODE" = "200" ]; then
+            $SSH "printf '%s' '$BRIDGE_KEY' > $BASE/gemini.key && chmod 600 $BASE/gemini.key"
+            echo "gemini.key на сервере заменён рабочим"
+          else
+            echo "кандидат тоже не работает с сервера — нужен новый ключ: gh secret set GEMINI_API_KEY_BRIDGE"
+          fi
