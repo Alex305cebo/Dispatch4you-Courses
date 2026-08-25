@@ -1,16 +1,21 @@
-# Мост Gemini Live — вебсокет для живого разговора на сайте.
+# Здоровье ключа Gemini на боевом сайте.
 #
-# PHP на Hostinger вебсокет держать не умеет, поэтому мост живёт на Cloudflare
-# Worker. Аккаунта Cloudflare нет и не нужно: wrangler deploy --temporary
-# разворачивает на временный аккаунт без логина. Временный — значит смертный,
-# поэтому мост пересоздаётся по расписанию каждую ночь, а свежий адрес
-# записывается на Hostinger в gemini-worker.url. Умер среди дня — сайт сам
-# откатывается на пайплайн, ночью мост воскресает.
+# Раньше этот воркфлоу ещё разворачивал вебсокет-мост на бесплатном Cloudflare
+# Worker для живого speech-to-speech. Оказалось: временный аккаунт Cloudflare
+# держит воркер за бот-защитой «Just a moment», и cross-origin fetch из браузера
+# её решить не может — 403 всем, кроме GitHub-IP. То есть на бесплатном тарифе
+# живой мост для студентов недостижим; ему нужен платный аккаунт Cloudflare,
+# где Bot Fight Mode выключается. Код моста сохранён в broker-call/worker/ на
+# будущее, но здесь не разворачивается.
 #
-# Ключ Gemini не хранится в GitHub: CI читает его по SSH с Hostinger, где он
-# уже лежит (gemini.key рядом с groq.key).
+# Что этот воркфлоу делает сейчас и зачем: держит на сервере РАБОЧИЙ ключ
+# Gemini. Ключи отзывают (утёкший — за минуты), и когда gemini.key на Hostinger
+# мёртв, у сайта отваливаются озвучка, разбор и диалог через Gemini. Воркфлоу
+# берёт рабочий ключ из секрета GEMINI_API_KEY_BRIDGE, проверяет его у Google и,
+# если серверный мёртв, заменяет — без единого действия человека. Заодно стирает
+# устаревший gemini-worker.url, чтобы сайт не тыкался в недоступный мост.
 
-name: Gemini Live bridge
+name: Gemini key health
 
 on:
   schedule:
@@ -19,26 +24,17 @@ on:
   push:
     branches: [main]
     paths:
-      - 'broker-call/worker/**'
       - '.github/workflows/live-bridge.yml'
 
 concurrency:
-  group: live-bridge
+  group: gemini-key-health
   cancel-in-progress: true
 
 jobs:
-  deploy-bridge:
-    name: Deploy websocket bridge
+  heal-key:
+    name: Heal gemini.key on Hostinger
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
@@ -46,18 +42,17 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
 
-      - name: Deploy bridge and publish its URL
+      - name: Check and heal the key
         env:
           BRIDGE_KEY: ${{ secrets.GEMINI_API_KEY_BRIDGE }}
         run: |
-          # Без set -e намеренно: SSH к Hostinger флейкует таймаутом, и один
-          # обрыв не должен ронять весь деплой моста. Ошибки ловим руками.
+          # Без set -e: SSH к Hostinger флейкует таймаутом, обрыв не должен
+          # ронять шаг. Ошибки ловим руками.
           SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
 
           check_key() {
             curl -s -o /dev/null -w '%{http_code}' "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=$1"
           }
-          # SSH с тремя попытками: сервер отвечает не с первого раза.
           ssh_retry() {
             for a in 1 2 3; do
               if $SSH "$1"; then return 0; fi
@@ -67,74 +62,24 @@ jobs:
           }
 
           # Ключ Gemini бывает двух форматов: старый AIza… и новый AQ.…
-          # По SSH вместе с файлом может приехать баннер хостинга, поэтому
-          # выделяем ключ по формату, а не берём файл целиком.
           KEYRE='AIza[A-Za-z0-9_-]\{30,\}\|AQ\.[A-Za-z0-9_.-]\{30,\}'
           HOSTKEY=$($SSH "cat ~/domains/dispatch4you.com/gemini.key" 2>/dev/null | grep -o "$KEYRE" | head -1)
-          KEY=""
-          for CAND in "$BRIDGE_KEY" "$HOSTKEY"; do
-            [ -z "$CAND" ] && continue
-            CODE=$(check_key "$CAND")
-            echo "ключ (префикс ${CAND:0:6}, ${#CAND} симв.): models.list HTTP $CODE"
-            if [ "$CODE" = "200" ]; then KEY="$CAND"; break; fi
-          done
-          if [ -z "$KEY" ]; then
-            echo "рабочего ключа для моста нет — сайт остаётся на пайплайне"
-            exit 0
-          fi
 
-          # Самое ценное — оживить озвучку и диалог на САМОМ сайте: записать
-          # рабочий ключ в gemini.key на сервере. Это не зависит от моста и
-          # чинит сайт напрямую (PHP ходит в Google этим ключом).
-          if [ "$KEY" != "$HOSTKEY" ]; then
-            if printf '%s' "$KEY" | ssh_retry "cat > ~/domains/dispatch4you.com/gemini.key"; then
-              echo "gemini.key на Hostinger заменён рабочим — озвучка и диалог сайта оживают"
+          HCODE="000"; [ -n "$HOSTKEY" ] && HCODE=$(check_key "$HOSTKEY")
+          echo "ключ на сервере: HTTP $HCODE"
+          if [ "$HCODE" = "200" ]; then
+            echo "серверный ключ рабочий — ничего не трогаю"
+          elif [ -n "$BRIDGE_KEY" ] && [ "$(check_key "$BRIDGE_KEY")" = "200" ]; then
+            if printf '%s' "$BRIDGE_KEY" | ssh_retry "cat > ~/domains/dispatch4you.com/gemini.key"; then
+              echo "серверный ключ был мёртв — заменён рабочим из секрета"
             else
-              echo "SSH недоступен — gemini.key не обновил (перезапуск воркфлоу починит)"
+              echo "SSH недоступен — не заменил (перезапуск воркфлоу починит)"
             fi
+          else
+            echo "рабочего ключа нет ни на сервере, ни в секрете GEMINI_API_KEY_BRIDGE"
+            echo "положить новый: gh secret set GEMINI_API_KEY_BRIDGE — дальше воркфлоу сам"
           fi
 
-          cd broker-call/worker
-          # Ключ уезжает переменной внутрь деплоя: секреты на временный аккаунт
-          # не кладутся (нет авторизации), а наружу ключ не виден.
-          printf '\n[vars]\nGEMINI_API_KEY = "%s"\n' "$KEY" >> wrangler.toml
-          OUT=$(npx wrangler deploy --temporary 2>&1) || { echo "деплой не прошёл:"; echo "$OUT" | grep -v -i "claim\|token" | tail -6; exit 0; }
-          URL=$(echo "$OUT" | grep -o 'https://[a-z0-9.-]*workers\.dev' | head -1)
-          if [ -z "$URL" ]; then echo "адрес воркера в выводе не найден"; exit 0; fi
-
-          # Проверка ДОЛЖНА идти не с раннера: у GitHub-IP хорошая репутация и
-          # бот-защита Cloudflare его пропускает, а обычный трафик с temporary-
-          # аккаунта ловит челлендж «Just a moment» (403). CI-проверка отсюда
-          # дала бы ложное «мост живой», а у студента в браузере — 403.
-          # Поэтому проверяем ИЗ разных сетей публичным прокси-эхо и публикуем
-          # адрес, только если сессия выдаётся снаружи.
-          probe_outside() {
-            curl -s --max-time 25 "https://api.allorigins.win/raw?url=$(printf '%s' "$URL/api/gemini-session" | sed 's|:|%3A|g;s|/|%2F|g')" \
-              -X POST -H 'Content-Type: application/json' -d '{"seed":"call-001"}' 2>/dev/null || true
-          }
-          OK=""
-          for i in 1 2 3; do
-            sleep 6
-            R=$(curl -s --max-time 20 -X POST "$URL/api/gemini-session" -H 'Content-Type: application/json' -H 'Origin: https://dispatch4you.com' -d '{"seed":"call-001"}' || true)
-            if echo "$R" | grep -q 'Just a moment\|challenge-platform'; then
-              echo "попытка $i: Cloudflare челлендж — мост будет 403 у студентов"
-              CHALLENGED=yes; continue
-            fi
-            if echo "$R" | grep -q '"token"'; then OK=yes; break; fi
-            echo "попытка $i: $(echo "$R" | head -c 120)"
-          done
-
-          # Мост доступен извне — публикуем адрес, сайт пойдёт живым путём.
-          if [ -n "$OK" ]; then
-            if printf '%s' "$URL" | ssh_retry "cat > ~/domains/dispatch4you.com/gemini-worker.url"; then
-              echo "мост живой и опубликован: $URL"
-            fi
-            exit 0
-          fi
-
-          # Мост за челленджем — НЕ публикуем и стираем прежний адрес, чтобы сайт
-          # шёл надёжным путём PHP+Gemini (голос и диалог там уже работают на
-          # свежем gemini.key). Живой speech-to-speech недостижим без платного
-          # аккаунта Cloudflare, где бот-защиту можно выключить.
+          # Мост недоступен на бесплатном тарифе — стираем его адрес, чтобы сайт
+          # не пробовал недоступную точку и шёл рабочим путём PHP+Gemini.
           ssh_retry "rm -f ~/domains/dispatch4you.com/gemini-worker.url" || true
-          echo "мост за бот-защитой Cloudflare — сайт остаётся на рабочем пути PHP+Gemini"
