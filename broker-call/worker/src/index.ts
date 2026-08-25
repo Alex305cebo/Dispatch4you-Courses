@@ -39,7 +39,16 @@ export default {
     if (request.method === 'OPTIONS') return withCors(new Response(null, { status: 204 }), request)
 
     if (url.pathname === '/api/gemini-session' && request.method === 'POST') {
-      return withCors(await mintSession(request, env), request)
+      // Причина отказа обязана выйти наружу текстом: голый «error 1101»
+      // Cloudflare не говорит ничего, и искать его приходится вслепую.
+      try {
+        return withCors(await mintSession(request, env), request)
+      } catch (e) {
+        return withCors(
+          Response.json({ error: `bridge: ${(e as Error).message}`.slice(0, 300) }, { status: 502 }),
+          request,
+        )
+      }
     }
     if (url.pathname === '/api/gemini-ws') {
       return proxyLive(request, env)
@@ -162,7 +171,7 @@ let modelCache: { at: number; models: ModelInfo[] } | null = null
 async function geminiModels(key: string): Promise<ModelInfo[]> {
   if (modelCache && Date.now() - modelCache.at < 10 * 60_000) return modelCache.models
   const r = await fetch(`https://${GEMINI_HOST}/v1beta/models?pageSize=1000&key=${encodeURIComponent(key)}`)
-  if (!r.ok) throw new Error(`models.list ${r.status}`)
+  if (!r.ok) throw new Error(`models.list ${r.status}: ${(await r.text()).slice(0, 160)}`)
   const data = (await r.json()) as { models?: ModelInfo[] }
   modelCache = { at: Date.now(), models: data.models ?? [] }
   return modelCache.models
