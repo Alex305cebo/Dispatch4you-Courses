@@ -716,6 +716,16 @@
     // КАЖДОЙ страницы — до первой отрисовки, иначе моргает чужая тема.
     // Здесь только кнопка: nav-loader грузится с defer, то есть уже
     // после отрисовки, и для выставления темы он опоздал бы.
+    // Светлая тема ещё не доведена и наружу не показывается: переключатель
+    // видит только администратор. Роль лежит в localStorage — её пишет
+    // role-guard.js после проверки в Firestore. Подделать значение в консоли
+    // можно, но прятать тут нечего: это незаконченное оформление, а не данные.
+    function themeSwitchAllowed() {
+        try {
+            return (localStorage.getItem('user_role') || '').toLowerCase() === 'superuser';
+        } catch (e) { return false; }
+    }
+
     function injectThemeToggle() {
         if (document.querySelector('.d4y-theme-btn')) return;
         var ru = LANG === 'ru';
@@ -748,6 +758,10 @@
             // в карточке профиля на dashboard.html. Ни в шапке, ни в бургер-меню
             // её быть не должно: тема переключается только из раздела пользователя.
             var slot = document.getElementById('theme-toggle-slot');
+            // Роль приходит из Firestore не сразу, поэтому проверяем её здесь,
+            // а не один раз при загрузке: наблюдатель ниже вызовет place()
+            // повторно, когда роль появится.
+            if (!themeSwitchAllowed()) { return; }
             if (slot && !slot.querySelector('.d4y-theme-switch')) {
                 slot.insertAdjacentHTML('beforeend', html);
                 var opts = slot.querySelectorAll('.d4y-theme-opt');
@@ -802,6 +816,10 @@
         if (host && window.MutationObserver) {
             new MutationObserver(place).observe(host, { childList: true, subtree: true });
         }
+        // Роль приходит из Firestore уже после отрисовки страницы. Без этого
+        // администратор при первом входе не увидел бы переключатель до
+        // перезагрузки: в момент запуска роли в localStorage ещё нет.
+        document.addEventListener('roleReady', place);
 
         // Слушатель системной темы отключён: тёмная — тема по умолчанию,
         // светлая включается только кнопкой в разделе пользователя.
