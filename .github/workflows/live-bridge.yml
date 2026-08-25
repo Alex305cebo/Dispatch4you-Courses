@@ -50,20 +50,27 @@ jobs:
         env:
           BRIDGE_KEY: ${{ secrets.GEMINI_API_KEY_BRIDGE }}
         run: |
-          set -e
-          SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
+          # Без set -e намеренно: SSH к Hostinger флейкует таймаутом, и один
+          # обрыв не должен ронять весь деплой моста. Ошибки ловим руками.
+          SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=20 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
 
           check_key() {
             curl -s -o /dev/null -w '%{http_code}' "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=$1"
           }
+          # SSH с тремя попытками: сервер отвечает не с первого раза.
+          ssh_retry() {
+            for a in 1 2 3; do
+              if $SSH "$1"; then return 0; fi
+              echo "  SSH попытка $a не прошла, жду…" >&2; sleep 10
+            done
+            return 1
+          }
 
-          # Кандидаты по порядку: секрет GitHub, затем ключ с Hostinger.
-          # Ключ с Hostinger привязан к серверу — Google принимает его только
-          # оттуда (проверено: с раннера 400 API key not valid, с Hostinger
-          # работает). Мост живёт на Cloudflare, ему нужен свободный ключ.
-          # По SSH вместе с файлом может приехать баннер хостинга, поэтому ключ
-          # выделяется по формату AIza.
-          HOSTKEY=$($SSH "cat ~/domains/dispatch4you.com/gemini.key" 2>/dev/null | grep -o 'AIza[A-Za-z0-9_-]\{30,\}' | head -1)
+          # Ключ Gemini бывает двух форматов: старый AIza… и новый AQ.…
+          # По SSH вместе с файлом может приехать баннер хостинга, поэтому
+          # выделяем ключ по формату, а не берём файл целиком.
+          KEYRE='AIza[A-Za-z0-9_-]\{30,\}\|AQ\.[A-Za-z0-9_.-]\{30,\}'
+          HOSTKEY=$($SSH "cat ~/domains/dispatch4you.com/gemini.key" 2>/dev/null | grep -o "$KEYRE" | head -1)
           KEY=""
           for CAND in "$BRIDGE_KEY" "$HOSTKEY"; do
             [ -z "$CAND" ] && continue
@@ -73,19 +80,17 @@ jobs:
           done
           if [ -z "$KEY" ]; then
             echo "рабочего ключа для моста нет — сайт остаётся на пайплайне"
-            echo "новый ключ кладётся ОДНИМ действием: gh secret set GEMINI_API_KEY_BRIDGE — дальше всё само"
             exit 0
           fi
 
-          # Самолечение: если ключ на Hostinger мёртв (утёкший отзывают в
-          # минуты), а рабочий есть — обновляем gemini.key на сервере. Тогда
-          # озвучка и разбор на самом сайте оживают без человека.
+          # Самое ценное — оживить озвучку и диалог на САМОМ сайте: записать
+          # рабочий ключ в gemini.key на сервере. Это не зависит от моста и
+          # чинит сайт напрямую (PHP ходит в Google этим ключом).
           if [ "$KEY" != "$HOSTKEY" ]; then
-            HCODE="000"
-            [ -n "$HOSTKEY" ] && HCODE=$(check_key "$HOSTKEY")
-            if [ "$HCODE" != "200" ]; then
-              $SSH "printf '%s' '$KEY' > ~/domains/dispatch4you.com/gemini.key"
-              echo "gemini.key на Hostinger был мёртв (HTTP $HCODE) — заменён рабочим"
+            if printf '%s' "$KEY" | ssh_retry "cat > ~/domains/dispatch4you.com/gemini.key"; then
+              echo "gemini.key на Hostinger заменён рабочим — озвучка и диалог сайта оживают"
+            else
+              echo "SSH недоступен — gemini.key не обновил (перезапуск воркфлоу починит)"
             fi
           fi
 
@@ -112,5 +117,8 @@ jobs:
             exit 0
           fi
 
-          $SSH "printf '%s' '$URL' > ~/domains/dispatch4you.com/gemini-worker.url"
-          echo "мост живой и опубликован: $URL"
+          if printf '%s' "$URL" | ssh_retry "cat > ~/domains/dispatch4you.com/gemini-worker.url"; then
+            echo "мост живой и опубликован: $URL"
+          else
+            echo "мост живой ($URL), но адрес на Hostinger не записался — сайт пока на пайплайне"
+          fi
