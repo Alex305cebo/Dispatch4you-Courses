@@ -50,9 +50,21 @@ jobs:
         run: |
           set -e
           SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
-          KEY=$($SSH "cat ~/domains/dispatch4you.com/gemini.key" 2>/dev/null | tr -d '\r\n ')
+          # Ключ выделяется по формату: по SSH вместе с файлом может приехать
+          # баннер хостинга, и «ключ» из баннера Google честно называл invalid.
+          KEY=$($SSH "cat ~/domains/dispatch4you.com/gemini.key" 2>/dev/null | grep -o 'AIza[A-Za-z0-9_-]\{30,\}' | head -1)
           if [ -z "$KEY" ]; then
-            echo "gemini.key на сервере нет — мост не разворачиваем, сайт остаётся на пайплайне"
+            echo "gemini.key на сервере нет или не похож на ключ — мост не разворачиваем"
+            exit 0
+          fi
+          echo "ключ прочитан: ${#KEY} символов, префикс ${KEY:0:4}"
+
+          # Проверка ключа с раннера ДО деплоя: отделяет «ключ не работает вне
+          # Hostinger» от «Cloudflare не может ходить в Google».
+          MCODE=$(curl -s -o /dev/null -w '%{http_code}' "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=$KEY")
+          echo "models.list с раннера: HTTP $MCODE"
+          if [ "$MCODE" != "200" ]; then
+            echo "ключ с Hostinger не работает за пределами Hostinger — мост не разворачиваем"
             exit 0
           fi
 
