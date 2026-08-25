@@ -244,8 +244,8 @@ document.addEventListener('DOMContentLoaded', () => {
 const statsData = [
   {
     title: 'Dry Van Spot Rate',
-    value: '$2.44/mi',
-    changeLabel: '+48% year over year',
+    value: '$3.01/mi',
+    changeLabel: '+$0.76/mile year over year',
     icon: '🚚',
     color: '#9333ea',
     gradient: 'linear-gradient(135deg, #9333ea, #f97316)',
@@ -258,20 +258,20 @@ const statsData = [
       { year: 'Apr', value: 2.67 },
       { year: 'May', value: 2.89 },
       { year: 'Jun', value: 3.00 },
-      { year: 'Jul', value: 2.44 }
+      { year: 'Jul', value: 3.01 }
     ],
     facts: [
-      { icon: '📈', text: 'June 2026 hit a record $3.00/mi — seven straight months of gains' },
-      { icon: '📉', text: 'July brought a seasonal cool-down to $2.44/mi, still up 48% year over year' },
-      { icon: '🏆', text: 'The highest level since 2022 — carriers have real leverage for the first time in 3 years' },
+      { icon: '📈', text: 'July 2026 — $3.01/mile, the seventh straight month of gains' },
+      { icon: '💵', text: 'Up $0.76 a mile year over year: linehaul went from $1.63 to $2.39' },
+      { icon: '🏆', text: 'Spot passed contract for the first time since February 2022 — carriers have real leverage' },
       { icon: '🔮', text: 'DAT iQ forecasts another +12% on spot over the next 12 months' }
     ],
-    source: 'DAT Freight & Analytics — monthly spot rates, January–July 2026'
+    source: 'DAT Freight & Analytics — monthly spot rates including fuel, January–July 2026'
   },
   {
     title: 'Reefer Spot Rate',
-    value: '$2.80/mi',
-    changeLabel: '+40% year over year',
+    value: '$3.42/mi',
+    changeLabel: '+$0.79/mile year over year',
     icon: '❄️',
     color: '#06b6d4',
     gradient: 'linear-gradient(135deg, #06b6d4, #0ea5e9)',
@@ -282,22 +282,22 @@ const statsData = [
       { year: 'Feb', value: 2.88 },
       { year: 'Mar', value: 2.97 },
       { year: 'Apr', value: 3.12 },
-      { year: 'May', value: 3.11 },
+      { year: 'May', value: 3.35 },
       { year: 'Jun', value: 3.39 },
-      { year: 'Jul', value: 2.80 }
+      { year: 'Jul', value: 3.42 }
     ],
     facts: [
-      { icon: '📈', text: 'June 2026 hit $3.39/mi — a multi-year high' },
-      { icon: '📉', text: 'July brought a correction to $2.80/mi, still up 40% year over year' },
+      { icon: '📈', text: 'July 2026 — $3.42/mile, rising for the third month running' },
+      { icon: '💵', text: 'Up $0.79 a mile year over year on linehaul' },
       { icon: '🥶', text: 'Perishable freight keeps a premium over dry van year-round' },
       { icon: '🔮', text: 'DAT iQ forecasts continued rate growth over the next 12 months' }
     ],
-    source: 'DAT Freight & Analytics — monthly spot rates, January–July 2026'
+    source: 'DAT Freight & Analytics — monthly spot rates including fuel, January–July 2026'
   },
   {
     title: 'Flatbed Spot Rate',
-    value: '$2.95/mi',
-    changeLabel: '+42% year over year',
+    value: '$3.64/mi',
+    changeLabel: '+$0.86/mile year over year',
     icon: '🪵',
     color: '#10b981',
     gradient: 'linear-gradient(135deg, #10b981, #14b8a6)',
@@ -307,18 +307,18 @@ const statsData = [
       { year: 'Jan', value: 2.85 },
       { year: 'Feb', value: 2.72 },
       { year: 'Mar', value: 3.09 },
-      { year: 'Apr', value: 3.44 },
+      { year: 'Apr', value: 3.46 },
       { year: 'May', value: 3.65 },
       { year: 'Jun', value: 3.69 },
-      { year: 'Jul', value: 2.95 }
+      { year: 'Jul', value: 3.64 }
     ],
     facts: [
       { icon: '📈', text: 'June 2026 hit $3.69/mi — an all-time high' },
-      { icon: '📉', text: 'July brought a correction to $2.95/mi, still up 42% year over year' },
+      { icon: '📉', text: 'July eased slightly to $3.64/mile — the only one of the three to dip' },
       { icon: '🏗️', text: 'Construction materials and industrial freight keep rates elevated' },
       { icon: '🚚', text: 'The highest rate of the three main equipment types all year' }
     ],
-    source: 'DAT Freight & Analytics — monthly spot rates, January–July 2026'
+    source: 'DAT Freight & Analytics — monthly spot rates including fuel, January–July 2026'
   },
   {
     title: 'ATA Truck Tonnage Index',
@@ -333,7 +333,8 @@ const statsData = [
       { year: 'Mar', value: 3.0 },
       { year: 'Apr', value: 3.5 },
       { year: 'May', value: -0.7 },
-      { year: 'Jun', value: -0.1 }
+      { year: 'Jun', value: -0.1 },
+      { year: 'Jul', value: -0.5 }
     ],
     facts: [
       { icon: '📈', text: 'March 2026 rose 3% — the largest y/y gain since October 2022' },
@@ -341,7 +342,7 @@ const statsData = [
       { icon: '📊', text: 'First half of 2026 is up 1.4% year over year overall' },
       { icon: '💬', text: '"The decrease in capacity over the last year probably has fleets feeling a little better" — Bob Costello, ATA Chief Economist' }
     ],
-    source: 'American Trucking Associations — ATA Truck Tonnage Index, June 2026'
+    source: 'American Trucking Associations — ATA Truck Tonnage Index, July 2026'
   },
   {
     title: 'DAT iQ Rate Forecast',

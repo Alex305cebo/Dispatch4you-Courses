@@ -3131,14 +3131,11 @@
                     style="font-size:14px;font-weight:700;color:var(--danger);margin-bottom:12px;display:flex;align-items:center;gap:8px">
                     <i class="fa fa-key"></i> Управление паролем
                 </h4>
-                <div class="fg">
-                    <label class="fl">Новый пароль (оставьте пустым если не хотите менять)</label>
-                    <input id="editUserPassword" class="finp" type="password" placeholder="Минимум 8 символов">
-                    <small style="color:var(--muted);font-size:11px;margin-top:4px;display:block">
-                        ⚠️ Пароль будет изменен только если вы введете новое значение
-                    </small>
-                </div>
-                <button class="btn btn-d btn-sm" onclick="resetUserPassword()" style="margin-top:8px">
+                <p style="font-size:13px;color:var(--muted);line-height:1.55;margin:0 0 14px">
+                    Задать пароль за пользователя нельзя — Firebase не отдаёт чужие пароли
+                    даже администратору. Человек придумывает новый сам, по ссылке из письма.
+                </p>
+                <button class="btn btn-d" onclick="resetUserPassword()">
                     <i class="fa fa-envelope"></i> Отправить письмо для сброса пароля
                 </button>
             </div>
@@ -3933,7 +3930,6 @@
             document.getElementById('editUserPhone').value = u.phone || '';
             document.getElementById('editUserStatus').value = u.status || 'active';
             document.getElementById('editUserRole').value = u.role || 1;
-            document.getElementById('editUserPassword').value = '';
             document.getElementById('editUserTariff').value = u.tariff || '';
             document.getElementById('editUserAccessRole').value = u.accessRole || 'registered';
             document.getElementById('editUserSubscriptionEnd').value = u.subscriptionEnd || '';
@@ -3948,7 +3944,6 @@
             const phone = document.getElementById('editUserPhone').value.trim();
             const status = document.getElementById('editUserStatus').value;
             const role = parseInt(document.getElementById('editUserRole').value) || 1;
-            const password = document.getElementById('editUserPassword').value.trim();
             const tariff = document.getElementById('editUserTariff').value;
             const accessRole = document.getElementById('editUserAccessRole').value || 'registered';
             const subscriptionEnd = document.getElementById('editUserSubscriptionEnd').value;
@@ -3971,18 +3966,6 @@
                 };
 
                 await updateDoc(doc(db, 'users', uid), updateData);
-
-                // Если указан новый пароль - обновляем его через Firebase Auth
-                if (password && password.length >= 8) {
-                    try {
-                        const { getAuth, updatePassword } = await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
-                        const auth = getAuth();
-                        // Примечание: для изменения пароля другого пользователя нужны Admin SDK права
-                        window.toast('⚠️ Пароль можно изменить только через Admin SDK или отправив письмо для сброса', 'i');
-                    } catch (e) {
-                        console.warn('Password update requires Admin SDK', e);
-                    }
-                }
 
                 window.toast('✅ Все данные сохранены', 's');
                 closeModal('editUser');

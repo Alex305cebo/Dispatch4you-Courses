@@ -56,6 +56,36 @@ function rcIncomplete(array $missing) {
   return false;
 }
 
+// ── Числа в карточке ────────────────────────────────────────────────
+//
+// Модель отдаёт то, что видит: «7450.0», «$7450», «42851.0 lbs». Карточку
+// читают как документ — водитель и брокер, — и «Ставка: $7450.0» выглядит как
+// опечатка в цене рейса.
+//
+// Хвост после числа сохраняем ОБЯЗАТЕЛЬНО: «$52.00 per ton» без слов
+// превращается в ставку $52 за рейс, а на этом уже обжигались.
+function formatMoney($s) {
+  $s = trim((string)$s);
+  if ($s === '') return $s;
+  if (!preg_match('/^\$?\s*([\d,]+(?:\.\d+)?)\s*(.*)$/u', $s, $m)) return $s;
+  $n = (float)str_replace(',', '', $m[1]);
+  if ($n <= 0) return $s;
+  $tail = trim($m[2]);
+  return '$' . number_format($n, 2) . ($tail !== '' ? ' ' . $tail : '');
+}
+
+function formatWeight($s) {
+  $s = trim((string)$s);
+  if ($s === '') return $s;
+  if (!preg_match('/^([\d,]+(?:\.\d+)?)\s*(.*)$/u', $s, $m)) return $s;
+  $n = (float)str_replace(',', '', $m[1]);
+  if ($n <= 0) return $s;
+  // Дробные фунты в рейт-конах бывают («41870.50»), но в карточке они не нужны:
+  // ни один водитель не взвешивает груз до половины фунта.
+  $tail = trim($m[2]);
+  return number_format($n, 0) . ($tail !== '' ? ' ' . $tail : '');
+}
+
 // ── Антифрод: сходится ли брокер в документе с тем, чей MC в нём напечатан ──
 //
 // Схема, на которой диспетчеры теряют рейс целиком: рейт-кон приходит от имени
@@ -81,7 +111,12 @@ function companyAcronym($s) {
   $out = '';
   foreach (preg_split('/\s+/', trim($s)) as $w) {
     if ($w === '') continue;
-    if (in_array(strtoupper($w), array('THE', 'OF', 'AND', 'A'), true)) continue;
+    // Юридическую форму в аббревиатуру не берём: «TOTAL QUALITY LOGISTICS LLC»
+    // давала TQLL, документ говорит TQL — и сверка не сходилась, то есть
+    // крупнейший брокер страны получал красный флаг double-brokering ни за что.
+    if (in_array(strtoupper($w), array('THE', 'OF', 'AND', 'A',
+        'LLC', 'INC', 'INCORPORATED', 'CORP', 'CORPORATION', 'CO', 'LTD', 'LP', 'LLP',
+        'COMPANY', 'USA', 'US'), true)) continue;
     $out .= strtoupper(substr($w, 0, 1));
   }
   return $out;

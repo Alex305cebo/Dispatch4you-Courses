@@ -535,7 +535,9 @@ try {
 $pagesTotal = count($pageTexts);
 $thinPages = array();
 foreach ($pageTexts as $i => $t) {
-  if (mb_strlen(trim(preg_replace('/\s+/u', ' ', $t))) < 80) $thinPages[] = $i + 1;
+  // (string) вокруг preg_replace не для красоты: на битой кодировке он вернёт
+  // null, а trim(null) в PHP 8.4 — Deprecated в лог на каждый такой документ.
+  if (mb_strlen(trim((string)preg_replace('/\s+/u', ' ', $t))) < 80) $thinPages[] = $i + 1;
 }
 $marked = array();
 foreach ($pageTexts as $i => $t) {
@@ -734,7 +736,6 @@ function helpFull() {
     '• аналитику: ставка за милю, сравнение с ориентиром, топливо, на что смотреть',
   );
   if (MAIL_ENABLED) {
-    $L[] = '• черновик письма брокеру';
     $L[] = '';
     $L[] = '✉️ Работа с письмом:';
     $L[] = '/carrier — задать подпись (компания, MC, телефон, ваш email)';
@@ -782,8 +783,7 @@ function helpStart(array $state) {
     $L[] = '📄 RATE CONFIRMATION (PDF)';
     $L[] = "Send the broker's file — you get a load summary, then buttons for:";
     $L[] = '• driver text — addresses, time windows, every reference number';
-    if (MAIL_ENABLED) $L[] = '• broker email — ready to send, editable';
-    $L[] = '• full breakdown with a route map and the numbers';
+    $L[] = '• the load on a map at dispatch4you.pro — miles, rate per mile, fuel';
     $L[] = '';
     $L[] = '📷 LOAD BOARD SCREENSHOT (DAT, Truckstop)';
     $L[] = "Send a picture — I'll read it and calculate:";
@@ -807,8 +807,7 @@ function helpStart(array $state) {
     $L[] = '📄 RATE CONFIRMATION (PDF)';
     $L[] = 'Пришлите файл от брокера — верну сводку по грузу, а по кнопкам:';
     $L[] = '• текст для водителя — адреса, окна времени, все реф-номера';
-    if (MAIL_ENABLED) $L[] = '• письмо брокеру — готовое, с возможностью правки';
-    $L[] = '• полный разбор с картой маршрута и расчётом';
+    $L[] = '• груз на карте на dispatch4you.pro — мили, ставка за милю, топливо';
     $L[] = '';
     $L[] = '📷 СКРИНШОТ ГРУЗА С ЛОУБОРДА (DAT, Truckstop)';
     $L[] = 'Пришлите картинку — разберу и посчитаю:';
@@ -1098,11 +1097,11 @@ function normalizeLoad(array $d) {
   if ($w !== null && !preg_match('/[a-zA-Zа-яА-Я]/u', (string)$d['weight'])) {
     $d['weight'] = trim($d['weight']) . ' lbs';
   }
-  // «1200.00» → «$1,200.00»: в рейт-конах доллар часто в заголовке столбца
-  if (!empty($d['rate']) && preg_match('/^[\d.,]+$/', trim($d['rate']))) {
-    $r = (float)str_replace(',', '', $d['rate']);
-    if ($r > 0) $d['rate'] = '$' . number_format($r, 2);
-  }
+  // «7450.0» → «$7,450.00», «42851.0 lbs» → «42,851 lbs». Модель отдаёт числа
+  // как попало, а водитель и брокер читают карточку как документ: «Ставка
+  // $7450.0» выглядит как опечатка в цене рейса.
+  if (!empty($d['rate']))   $d['rate']   = formatMoney($d['rate']);
+  if (!empty($d['weight'])) $d['weight'] = formatWeight($d['weight']);
   return $d;
 }
 
@@ -1993,7 +1992,8 @@ function photoRespond($token, $chatId, $load, $err, $pageCount = 1) {
 
   // Карточка + кнопки. Аналитика и письмо приходят по нажатию, а не сразу
   // тремя простынями подряд: обычно нужна одна из них.
-  $tail = $lang === 'en' ? "\n\n👇 What to do with this load:" : "\n\n👇 Что сделать с этим грузом:";
+  $tail = "\n\n" . appPitch($lang)
+    . ($lang === 'en' ? "\n\n👇 What to do with this load:" : "\n\n👇 Что сделать с этим грузом:");
   reply($token, $chatId, $pages . photoLoadCard($load, $lang) . $tail, photoKeyboard($load, $lang));
 }
 

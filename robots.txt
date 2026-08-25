@@ -29,6 +29,32 @@ Disallow: /*?*auth=
 Disallow: /dashboard.html
 Disallow: /checkout.html
 
+# Панель администратора и внутренняя статистика. Строка «Allow: /pages/» выше
+# разрешала их к индексации: /pages/admin.html и /pages/users-stats.html
+# отвечали 200 и были открыты для любого бота. Правила для конкретных адресов
+# длиннее общего «Allow: /pages/», а при равном приоритете выигрывает более
+# длинное правило — поэтому запрет действует, хотя разрешение осталось.
+Disallow: /pages/admin.html
+Disallow: /en/pages/admin.html
+Disallow: /pages/users-stats.html
+Disallow: /en/pages/users-stats.html
+Disallow: /pages/analytics.html
+Disallow: /en/pages/analytics.html
+Disallow: /pages/lesson-tracker.html
+Disallow: /en/pages/lesson-tracker.html
+
+# Серверные точки входа: боту там нечего индексировать, они отвечают только
+# на POST и на GET возвращают 405.
+Disallow: /api/
+
+# Страница-заглушка на время работ: попав в выдачу, она подменяет собой
+# нормальную страницу в результатах поиска.
+Disallow: /maintenance.html
+
+# Обработчик входа Firebase. Нужен браузеру при входе через Google, но это
+# служебный скрипт, а не страница для людей.
+Disallow: /__/
+
 # Разрешаем CSS и JS для рендеринга (но не индексируем)
 Allow: /css/*.css
 Allow: /js/*.js

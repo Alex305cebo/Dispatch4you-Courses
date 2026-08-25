@@ -102,6 +102,21 @@ jobs:
 
       - name: Deploy via rsync (with retry)
         run: |
+          # Что и почему исключено сверх прежнего списка (проверено запросами
+          # к боевому сайту, ни на что из этого страницы не ссылаются):
+          #   ffmpeg-8.1        — 10086 файлов чужих исходников, попавших в репо
+          #                       заодно; /ffmpeg-8.1/configure отдавался как
+          #                       300 КБ по прямой ссылке
+          #   _archive          — прошлые версии страниц; /_archive/backups/
+          #                       index.OLD.html отдавал 385 КБ старой главной
+          #   *-showcase/demo   — страницы-образцы вёрстки, ссылок на них нет
+          #   build_*/fetch_*/  — скрипты сборки данных карты, запускаются руками
+          #   check_*/states_*    на машине и браузеру не нужны
+          #   TRUCKPIC13        — картинки, не используемые ни одной страницей
+          #   .cursorrules и    — служебные файлы разработки, зря показывают
+          #   .env.example        устройство проекта
+          # НЕ исключать: __/auth — это обработчик входа Firebase, домен входа
+          # authDomain="dispatch4you.com", без него ломается вход через Google.
           for i in 1 2 3 4; do
             echo "Deploy attempt $i..."
             rsync -avzrc --delete \
@@ -121,6 +136,27 @@ jobs:
               --exclude='*.py' --exclude='*.ps1' --exclude='states_extracted.txt' \
               --exclude='MAP_DEBUG_INSTRUCTIONS.html' --exclude='game-test.html' \
               --exclude='test-*.html' \
+              --exclude='ffmpeg-8.1' \
+              --exclude='_archive' \
+              --exclude='buttons-showcase.html' --exclude='card-variants.html' \
+              --exclude='close-buttons-demo.html' --exclude='tutorial-demo.html' \
+              --exclude='build_map.js' --exclude='build_final.js' \
+              --exclude='download_states.js' --exclude='extract_states.js' \
+              --exclude='fetch_cities.js' --exclude='fetch_cities_osm.js' \
+              --exclude='fetch_routes_osrm.js' --exclude='generate-favicon-ico.js' \
+              --exclude='check_outliers.js' --exclude='check_roads.js' \
+              --exclude='check_snap.js' --exclude='check-favicon-final.js' \
+              --exclude='states_clean.js' --exclude='states_new.js' \
+              --exclude='states_publicamundi.js' --exclude='us-map-data.js' \
+              --exclude='game-cities-data.js' --exclude='game-routes-data.js' \
+              --exclude='game-weather.js' --exclude='game2-features.js' \
+              --exclude='truck_detail_new.js' --exclude='cases-database.js' \
+              --exclude='simul-dialogs-database.js' --exclude='aiService.ts' \
+              --exclude='TRUCKPIC13' \
+              --exclude='.cursorrules' --exclude='.easignore' --exclude='.env.example' \
+              --exclude='shared-footer.html' --exclude='load-footer.js' \
+              --exclude='includes' --exclude='deploy' \
+              --exclude='INDEX.html' \
               -e "ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key" \
               ./ \
               ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:~/domains/dispatch4you.com/public_html/ \
@@ -130,6 +166,40 @@ jobs:
           done
           echo "❌ Deploy failed after 4 attempts"
           exit 1
+
+      # Разовая уборка того, что раньше выкладывалось по ошибке.
+      #
+      # Почему отдельным шагом, а не через rsync: файл, попавший в --exclude,
+      # для --delete неприкосновенен — rsync считает, что этой части приёмника
+      # он не касается, и оставляет её как есть. Флаг --delete-excluded снял бы
+      # эту защиту, но заодно снёс бы /game/, /games/, /map-trainer/ и
+      # /broker-call/: они исключены здесь и приезжают отдельными задачами ниже.
+      #
+      # Поэтому — точный список путей, без единой маски. Каждый проверен на
+      # отсутствие ссылок со страниц сайта.
+      - name: Убрать с сервера то, что публиковалось по ошибке
+        run: |
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 \
+              -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key \
+              ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} \
+              'cd ~/domains/dispatch4you.com/public_html && \
+               rm -rf ./ffmpeg-8.1 ./_archive ./TRUCKPIC13 && \
+               rm -f ./buttons-showcase.html ./card-variants.html \
+                     ./close-buttons-demo.html ./tutorial-demo.html \
+                     ./build_map.js ./build_final.js ./download_states.js \
+                     ./extract_states.js ./fetch_cities.js ./fetch_cities_osm.js \
+                     ./fetch_routes_osrm.js ./generate-favicon-ico.js \
+                     ./check_outliers.js ./check_roads.js ./check_snap.js \
+                     ./check-favicon-final.js ./states_clean.js ./states_new.js \
+                     ./states_publicamundi.js ./us-map-data.js \
+                     ./game-cities-data.js ./game-routes-data.js \
+                     ./game-weather.js ./game2-features.js ./truck_detail_new.js \
+                     ./cases-database.js ./simul-dialogs-database.js \
+                     ./aiService.ts ./.cursorrules ./.easignore ./.env.example \
+                     ./shared-footer.html ./load-footer.js && \
+               rm -rf ./includes ./deploy ./img/illlustrations/INDEX.html && \
+               echo "убрано"' || echo "⚠️ уборка не удалась — не повод валить деплой"
+        continue-on-error: true
 
   # ─── 2. React/Expo (game1.html) → /game/ — только если изменился adventure/ ──
   deploy-react-game:

@@ -69,6 +69,9 @@ function rcSummaryFull(array $d, array $missing, $lang = 'ru', array $fraud = ar
       ? "\n\n⚠️ Not found in the document: {$list}.\nCheck manually — either the rate con doesn't have this, or it's written non-standardly."
       : "\n\n⚠️ Не найдено в документе: {$list}.\nПроверьте вручную — в рейт-коне этих данных нет или они записаны нестандартно.";
   }
+  // Приглашение на сайт стоит ПЕРЕД кнопками и отдельным абзацем: одной
+  // подписи на кнопке мало, человек должен понимать, что он там получит.
+  $text .= "\n\n" . appPitch($lang);
   $text .= $lang === 'en' ? "\n\n👇 What to do with this load:" : "\n\n👇 Что сделать с этим грузом:";
   return $text;
 }
@@ -89,11 +92,14 @@ function rcEnds(array $d) {
 }
 
 // ── Клавиатуры: у каждого типа сообщения свои кнопки + переключатель языка ──
+// Письма брокеру тут НЕТ и быть не должно: рейт-кон означает, что груз уже
+// взят и подтверждён. Письмо «нас интересует ваш груз, назовите лучшую ставку»
+// после подписанного рейт-кона выглядит так, будто диспетчер не понимает, что
+// происходит. Торгуются ДО, по карточке с лоуборда — там кнопка и осталась.
 function rcKeyboard(array $d, $lang = 'ru') {
   $rows = array(
     array(array('text' => $lang === 'en' ? '🚚 Driver text' : '🚚 Текст водителю', 'callback_data' => 'rc:driver')),
   );
-  if (MAIL_ENABLED) $rows[] = array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'rc:mail'));
   // MC из рейт-кона извлекается давно, а кнопки проверки тут не было — она
   // существовала только у груза со скриншота. Полный отчёт FMCSA в один тап
   // нужен как раз по рейт-кону: это документ, который собираются подписывать.
@@ -101,16 +107,32 @@ function rcKeyboard(array $d, $lang = 'ru') {
   // по названию — проверить его от этого можно ровно так же.
   if (!empty($d['mc']) || !empty($d['dot'])) $rows[] = array(array('text' => $lang === 'en' ? '🔎 Check broker' : '🔎 Проверить брокера', 'callback_data' => 'rc:mc'));
   $url = appLink($d);
-  if ($url !== null) $rows[] = array(array('text' => $lang === 'en' ? '📊 Full breakdown with map' : '📊 Полный разбор с картой', 'url' => $url));
+  if ($url !== null) $rows[] = array(array('text' => appButtonText($lang), 'url' => $url));
   $rows[] = array(langToggleButton($lang, 'rc'));
   return $rows;
 }
 
+// Кнопка и пояснение к ней — в одном месте, потому что это витрина сайта, а не
+// служебная ссылка. «Полный разбор с картой» ни о чём не говорило: человек не
+// понимал, что откроется, и не нажимал. Теперь названо то, что он получит.
+function appButtonText($lang = 'ru') {
+  return $lang === 'en' ? '🗺 Open on the map — dispatch4you.pro' : '🗺 Открыть на карте — dispatch4you.pro';
+}
+
+function appPitch($lang = 'ru') {
+  return $lang === 'en'
+    ? "🗺 Tap «Open on the map» — the load opens on dispatch4you.pro:\n"
+      . "route on the map, miles, rate per mile, fuel and what is left, broker check.\n"
+      . "Opens straight away, no sign-up."
+    : "🗺 Нажмите «Открыть на карте» — груз откроется на dispatch4you.pro:\n"
+      . "маршрут на карте, мили, ставка за милю, топливо и остаток, проверка брокера.\n"
+      . "Открывается сразу, регистрация не нужна.";
+}
+
+// Под текстом водителю письма брокеру тоже нет — по той же причине, что и под
+// рейт-коном: груз уже взят.
 function driverKeyboard($lang = 'ru') {
-  $rows = array();
-  if (MAIL_ENABLED) $rows[] = array(array('text' => $lang === 'en' ? '✉️ Broker email' : '✉️ Письмо брокеру', 'callback_data' => 'rc:mail'));
-  $rows[] = array(langToggleButton($lang, 'driver'));
-  return $rows;
+  return array(array(langToggleButton($lang, 'driver')));
 }
 
 function mailKeyboard($lang = 'ru') {
@@ -134,7 +156,7 @@ function photoKeyboard(array $d, $lang = 'ru') {
   // Та же кнопка на полный разбор, что у рейт-кона — раньше её тут не было
   // вообще, разбор со скриншота не вёл на сайт.
   $url = photoAppLink($d);
-  if ($url !== null) $rows[] = array(array('text' => $lang === 'en' ? '📊 Full breakdown with map' : '📊 Полный разбор с картой', 'url' => $url));
+  if ($url !== null) $rows[] = array(array('text' => appButtonText($lang), 'url' => $url));
   $rows[] = array(langToggleButton($lang, 'photo'));
   return $rows;
 }

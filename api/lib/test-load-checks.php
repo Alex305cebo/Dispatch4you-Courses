@@ -52,6 +52,22 @@ assert(sameCompany('RXO Capacity Solutions', 'RXO CAPACITY SOLUTIONS LLC') === t
 // А это уже другая контора
 assert(sameCompany('Coyote Logistics', 'Freight Xpress Inc') === false);
 
+// ── Деньги и вес в карточке ─────────────────────────────────────────
+// Живой случай, рейт-кон J.B. Hunt 8HH3583: в карточке стояло «$7450.0».
+assert(formatMoney('$7450.0') === '$7,450.00');
+assert(formatMoney('7450') === '$7,450.00');
+assert(formatMoney('$1,956.34') === '$1,956.34');
+// Хвост после числа НЕ теряем: без слов «per ton» ставка $52 за тонну
+// превращается в рейс за $52 — на этом уже обжигались
+assert(formatMoney('$52.00 per ton') === '$52.00 per ton');
+assert(formatMoney('') === '');
+assert(formatMoney('по договорённости') === 'по договорённости');
+
+assert(formatWeight('42851.0 lbs') === '42,851 lbs');
+assert(formatWeight('44000') === '44,000');
+assert(formatWeight('41,870.50 lbs') === '41,871 lbs');
+assert(formatWeight('') === '');
+
 // ── Адрес: только то, по чему водитель доедет ───────────────────────
 // Живой случай, рейт-кон MODE Transportation 16374612: ориентир «SOUTH OF
 // BATTLE MOUNTAIN» напечатан в документе строкой адреса и вставал у водителя
@@ -172,7 +188,9 @@ assert(fraudText(array()) === '');
 // ── Окна времени ────────────────────────────────────────────────────
 $w = parseWindow('07/24/26 06:00 - 17:00');
 assert($w !== null);
-assert(($w['end'] - $w['start']) / 3600 === 11.0);
+// Сравниваем по значению, а не ===: PHP делит два целых в ЦЕЛОЕ, если делится
+// нацело, и 11 === 11.0 не выполняется.
+assert(abs(($w['end'] - $w['start']) / 3600 - 11) < 0.001);
 assert(date('Y-m-d H:i', $w['start']) === '2026-07-24 06:00');
 
 $w = parseWindow('02/02/26 @ 12:30');           // одна точка времени, не окно
