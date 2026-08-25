@@ -63,6 +63,14 @@ jobs:
           echo
           echo "fmcsa.key: \$(wc -c < "\$BASE/fmcsa.key" 2>/dev/null) байт"
           echo "groq.key:  \$(wc -c < "\$BASE/groq.key" 2>/dev/null) байт"
+          # Groq — единственный живой ключ. Если у них появилась модель,
+          # которая видит картинки, скриншоты можно читать вообще без Gemini.
+          GK=\$(tr -d '\r\n' < "\$BASE/groq.key" 2>/dev/null)
+          if [ -n "\$GK" ]; then
+            echo
+            echo "модели, доступные нашему ключу Groq:"
+            curl -s -H "Authorization: Bearer \$GK" https://api.groq.com/openai/v1/models               | grep -o '"id":"[^"]*"' | sed 's/"id":"/  /; s/"//' | sort
+          fi
           REMOTE
 
           # ── Поиск рабочего ключа по всем нашим сайтам на этом сервере ──
