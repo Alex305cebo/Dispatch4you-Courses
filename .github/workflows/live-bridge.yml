@@ -73,7 +73,20 @@ jobs:
           done
           if [ -z "$KEY" ]; then
             echo "рабочего ключа для моста нет — сайт остаётся на пайплайне"
+            echo "новый ключ кладётся ОДНИМ действием: gh secret set GEMINI_API_KEY_BRIDGE — дальше всё само"
             exit 0
+          fi
+
+          # Самолечение: если ключ на Hostinger мёртв (утёкший отзывают в
+          # минуты), а рабочий есть — обновляем gemini.key на сервере. Тогда
+          # озвучка и разбор на самом сайте оживают без человека.
+          if [ "$KEY" != "$HOSTKEY" ]; then
+            HCODE="000"
+            [ -n "$HOSTKEY" ] && HCODE=$(check_key "$HOSTKEY")
+            if [ "$HCODE" != "200" ]; then
+              $SSH "printf '%s' '$KEY' > ~/domains/dispatch4you.com/gemini.key"
+              echo "gemini.key на Hostinger был мёртв (HTTP $HCODE) — заменён рабочим"
+            fi
           fi
 
           cd broker-call/worker
