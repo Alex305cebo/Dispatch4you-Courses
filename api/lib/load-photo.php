@@ -323,10 +323,7 @@ function photoLoadCard(array $d, $lang = 'ru') {
 // ── Аналитика: считаем то, что считается, и честно говорим про остальное ──
 function photoLoadAnalytics(array $d, $lang = 'ru') {
   $en = $lang === 'en';
-  $num = function ($v) {
-    $v = preg_replace('/[^0-9.]/', '', (string)$v);
-    return $v === '' ? null : (float)$v;
-  };
+  $num = function ($v) { return numOf($v); };
   $rate     = $num(isset($d['rate']) ? $d['rate'] : '');
   $miles    = $num(isset($d['miles']) ? $d['miles'] : '');
   $weight   = $num(isset($d['weight']) ? $d['weight'] : '');
@@ -336,6 +333,11 @@ function photoLoadAnalytics(array $d, $lang = 'ru') {
   // как полную сумму рейса — отличаем по величине, полную сумму переводим в $/mi.
   $spotRpm = null;
   if ($spot !== null) $spotRpm = ($spot < 20 ? $spot : ($miles > 0 ? $spot / $miles : null));
+  // Вторая линия обороны после numOf(): что бы ни пришло с картинки, ставка за
+  // милю вне разумных границ — это не рынок, а ошибка чтения. Показать «рынок
+  // $22.20/mi» хуже, чем не показать рынок вовсе: на такой цифре бот советует
+  // торговаться там, где ставка на самом деле ВЫШЕ рыночной.
+  if ($spotRpm !== null && ($spotRpm < 0.3 || $spotRpm > 15)) $spotRpm = null;
   $equip = strtoupper(trim((string)(isset($d['equipment']) ? $d['equipment'] : '')));
 
   $L = array($en ? '📊 ANALYTICS' : '📊 АНАЛИТИКА');

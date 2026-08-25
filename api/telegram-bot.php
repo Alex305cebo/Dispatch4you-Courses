@@ -22,7 +22,7 @@
 // содержимым и не меняет ему время правки, поэтому opcache может держать
 // старую скомпилированную копию сколько угодно. Менять эту строку — самый
 // дешёвый способ заставить сервер перечитать файл.
-const BUILD = '2026-08-24-1';
+const BUILD = '2026-08-25-1';
 
 const SELF_URL = 'https://dispatch4you.com/api/telegram-bot.php';
 // Куда ведёт кнопка «Открыть в приложении». Разбор передаётся в ХЕШЕ ссылки, а хеш
@@ -1090,10 +1090,7 @@ function normalizeLoad(array $d) {
       if (isset($s['address_lines'])) $d['stops'][$i]['address_lines'] = cleanAddressLines($s['address_lines']);
     }
   }
-  $num = function ($v) {
-    $v = preg_replace('/[^0-9.]/', '', (string)$v);
-    return $v === '' ? null : (float)$v;
-  };
+  $num = function ($v) { return numOf($v); };
   $w = $num(isset($d['weight']) ? $d['weight'] : '');
   $m = $num(isset($d['miles']) ? $d['miles'] : '');
 
@@ -1642,7 +1639,8 @@ function cityState(array $stop) {
 // Пустые поля не кладём — приложение само спросит то, чего в рейт-коне не было
 // (мили и дни в пути документ нередко не печатает).
 function appLink(array $d) {
-  $num = function ($v) { $v = preg_replace('/[^0-9.]/', '', (string)$v); return $v === '' ? null : $v; };
+  // В ссылку число уходит строкой, но добывается тем же разбором, что и везде.
+  $num = function ($v) { $n = numOf($v); return $n === null ? null : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.'); };
   $pickup = null; $delivery = null;
   foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
     if (isset($s['type']) && $s['type'] === 'delivery') { $delivery = $s; }  // последняя выгрузка
@@ -1698,7 +1696,8 @@ function appLink(array $d) {
 // у скриншота в принципе не бывает (точный адрес склада, дата отдельно от
 // времени), просто не заполняются — приложение и на этом соберёт разбор.
 function photoAppLink(array $d) {
-  $num = function ($v) { $v = preg_replace('/[^0-9.]/', '', (string)$v); return $v === '' ? null : $v; };
+  // В ссылку число уходит строкой, но добывается тем же разбором, что и везде.
+  $num = function ($v) { $n = numOf($v); return $n === null ? null : rtrim(rtrim(number_format($n, 2, '.', ''), '0'), '.'); };
   $p = array();
   $rate = $num(isset($d['rate']) ? $d['rate'] : '');
   $miles = $num(isset($d['miles']) ? $d['miles'] : '');
@@ -1710,7 +1709,8 @@ function photoAppLink(array $d) {
   $spot = $num(isset($d['spot_rate']) ? $d['spot_rate'] : '');
   if ($spot !== null) {
     $spotRpm = $spot < 20 ? $spot : ($miles !== null && (float)$miles > 0 ? $spot / (float)$miles : null);
-    if ($spotRpm !== null) $p['spot'] = round($spotRpm, 2);
+    // Границы те же, что в аналитике: невозможную ставку в приложение не тащим.
+    if ($spotRpm !== null && $spotRpm >= 0.3 && $spotRpm <= 15) $p['spot'] = round($spotRpm, 2);
   }
   if (!empty($d['origin']))      $p['origin'] = $d['origin'];
   if (!empty($d['destination'])) $p['dest']   = $d['destination'];

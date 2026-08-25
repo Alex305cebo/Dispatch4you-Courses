@@ -76,10 +76,9 @@ function rcSummaryFull(array $d, array $missing, $lang = 'ru', array $fraud = ar
   return $text;
 }
 
-function tgNum($v) {
-  $v = preg_replace('/[^0-9.]/', '', (string)$v);
-  return $v === '' ? null : (float)$v;
-}
+// Тонкая обёртка над numOf() из load-checks.php: раньше тут была своя копия
+// разбора чисел, и она склеивала «$4,045 ($2.22/mi)» в одно число.
+function tgNum($v) { return numOf($v); }
 
 /** Первая погрузка и последняя доставка — из них строится маршрут. */
 function rcEnds(array $d) {

@@ -56,6 +56,24 @@ function rcIncomplete(array $missing) {
   return false;
 }
 
+// ── Число из строки ─────────────────────────────────────────────────
+//
+// Единственная точка разбора чисел во всём боте. Раньше в восьми местах стоял
+// один и тот же приём: выкинуть из строки всё, кроме цифр и точек. На строке с
+// ОДНИМ числом он работает, а биржа печатает два сразу — «$4,045 ($2.22/mi)».
+// Приём склеивал их в 40452.22, и рыночная ставка выходила $22.20 за милю:
+// невозможная цифра, из-за которой бот советовал торговаться там, где ставка
+// на самом деле выше рынка.
+//
+// Берём ПЕРВОЕ число строки. Для обеих форм записи биржи это верно: из
+// «$4,045 ($2.22/mi)» получаем сумму рейса, из «$2.22/mi» — цену за милю,
+// а различает их вызывающий код по величине.
+function numOf($v) {
+  if (!preg_match('/\d[\d,]*(?:\.\d+)?/', (string)$v, $m)) return null;
+  $n = str_replace(',', '', $m[0]);
+  return $n === '' ? null : (float)$n;
+}
+
 // ── Числа в карточке ────────────────────────────────────────────────
 //
 // Модель отдаёт то, что видит: «7450.0», «$7450», «42851.0 lbs». Карточку
@@ -317,7 +335,7 @@ function parseWindow($s) {
  * @return array|null null, если считать не из чего (нет миль или дат)
  */
 function hosFeasibility(array $d) {
-  $miles = (float)preg_replace('/[^0-9.]/', '', (string)(isset($d['miles']) ? $d['miles'] : ''));
+  $miles = (float)numOf(isset($d['miles']) ? $d['miles'] : '');
   if ($miles <= 0) return null;
 
   $first = null; $last = null;
@@ -416,7 +434,7 @@ function cleanAddressLines($lines) {
 function rateSanityText(array $d, $lang = 'ru') {
   $raw = trim((string)(isset($d['rate']) ? $d['rate'] : ''));
   if ($raw === '') return '';
-  $r = (float)preg_replace('/[^0-9.]/', '', $raw);
+  $r = (float)numOf($raw);
   if ($r <= 0) return '';
   $en = $lang === 'en';
   $perTon = (bool)preg_match('/\bper\s*(ton|cwt|hundredweight)\b/i', $raw);
@@ -425,7 +443,7 @@ function rateSanityText(array $d, $lang = 'ru') {
   // ставку молча: показываем обе цифры и оговорку, что окончательная сумма
   // выйдет по scale ticket, как и написано в самом рейт-коне.
   if ($perTon) {
-    $lbs = (float)preg_replace('/[^0-9.]/', '', (string)(isset($d['weight']) ? $d['weight'] : ''));
+    $lbs = (float)numOf(isset($d['weight']) ? $d['weight'] : '');
     if ($lbs > 1000) {
       $tons = $lbs / 2000;
       $total = $r * $tons;
