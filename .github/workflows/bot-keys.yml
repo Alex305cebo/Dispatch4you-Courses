@@ -48,9 +48,9 @@ jobs:
           # Всё исполняется НА СЕРВЕРЕ: и чтение ключа, и запрос к Google.
           $SSH "bash -s" <<REMOTE
           BASE="$BASE"
-          KEY=\$(grep -o 'AIza[A-Za-z0-9_-]\{30,\}' "\$BASE/gemini.key" 2>/dev/null | head -1)
+          KEY=\$(grep -oE '(AIza[A-Za-z0-9_-]{30,}|AQ\.[A-Za-z0-9_.-]{30,})' "\$BASE/gemini.key" 2>/dev/null | head -1)
           if [ -z "\$KEY" ]; then
-            echo "gemini.key: ключа формата AIza в файле нет"
+            echo "gemini.key: ключа в файле нет (ни AIza…, ни AQ.…)"
           else
             echo "gemini.key: префикс \${KEY:0:6}, длина \${#KEY}"
             LIST=\$(curl -s -o /dev/null -w '%{http_code}' "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=\$KEY")
@@ -82,9 +82,9 @@ jobs:
             echo
             echo "== ищу ключи Gemini по сайтам на сервере =="
             $SSH "bash -s" <<'SCAN'
-          FILES=$(grep -rIl 'AIza[A-Za-z0-9_-]\{30,\}' ~             --include='.env*' --include='*.php' --include='*.key' --include='*.json' --include='*.txt'             --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next --exclude-dir=cache             2>/dev/null | head -40)
-          if [ -z "$FILES" ]; then echo "ключей формата AIza на сервере не нашлось"; exit 0; fi
-          KEYS=$(for f in $FILES; do grep -o 'AIza[A-Za-z0-9_-]\{30,\}' "$f"; done | sort -u)
+          FILES=$(grep -rIlE '(AIza[A-Za-z0-9_-]{30,}|AQ\.[A-Za-z0-9_.-]{30,})' ~             --include='.env*' --include='*.php' --include='*.key' --include='*.json' --include='*.txt'             --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next --exclude-dir=cache             2>/dev/null | head -40)
+          if [ -z "$FILES" ]; then echo "ключей Gemini на сервере не нашлось"; exit 0; fi
+          KEYS=$(for f in $FILES; do grep -oE '(AIza[A-Za-z0-9_-]{30,}|AQ\.[A-Za-z0-9_.-]{30,})' "$f"; done | sort -u)
           echo "файлов с ключами: $(echo "$FILES" | wc -l), уникальных ключей: $(echo "$KEYS" | wc -l)"
           echo
           for K in $KEYS; do
