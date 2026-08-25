@@ -12,9 +12,13 @@ on:
   workflow_dispatch:
     inputs:
       heal:
-        description: 'Если ключ Gemini мёртв — заменить его секретом GEMINI_API_KEY_BRIDGE'
+        description: 'Если ключ Gemini мёртв — заменить его первым рабочим из найденных'
         type: boolean
         default: false
+      scan:
+        description: 'Искать рабочий ключ по всем сайтам на сервере'
+        type: boolean
+        default: true
 
 jobs:
   keys:
@@ -61,9 +65,40 @@ jobs:
           echo "groq.key:  \$(wc -c < "\$BASE/groq.key" 2>/dev/null) байт"
           REMOTE
 
+          # ── Поиск рабочего ключа по всем нашим сайтам на этом сервере ──
+          # Ключи Gemini живут не только у бота: у голосового тренажёра, у
+          # приложения на app.mayalogisticsinc.com, в .env веб-аппов. Проверяем
+          # КАЖДЫЙ найденный с сервера — отсюда же ходит бот, значит и годность
+          # ключа надо мерить отсюда. Наружу печатаем только префикс и код.
+          if [ "${{ inputs.scan }}" = "true" ]; then
+            echo
+            echo "== ищу ключи Gemini по сайтам на сервере =="
+            $SSH "bash -s" <<'SCAN'
+          FILES=$(grep -rIl 'AIza[A-Za-z0-9_-]\{30,\}' ~             --include='.env*' --include='*.php' --include='*.key' --include='*.json' --include='*.txt'             --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next --exclude-dir=cache             2>/dev/null | head -40)
+          if [ -z "$FILES" ]; then echo "ключей формата AIza на сервере не нашлось"; exit 0; fi
+          KEYS=$(for f in $FILES; do grep -o 'AIza[A-Za-z0-9_-]\{30,\}' "$f"; done | sort -u)
+          echo "файлов с ключами: $(echo "$FILES" | wc -l), уникальных ключей: $(echo "$KEYS" | wc -l)"
+          echo
+          for K in $KEYS; do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=$K")
+            WHERE=$(grep -rIl "$K" ~ --include='.env*' --include='*.php' --include='*.key' --include='*.json' --include='*.txt' --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=.next 2>/dev/null | head -1)
+            echo "  ${K:0:10}… HTTP $CODE   <- $WHERE"
+            if [ "$CODE" = "200" ]; then echo "$K" > /tmp/live-gemini.key; fi
+          done
+          if [ -s /tmp/live-gemini.key ]; then echo; echo "РАБОЧИЙ КЛЮЧ НАЙДЕН"; else echo; echo "рабочих среди них нет"; fi
+          SCAN
+          fi
+
           if [ "$HEAL" != "true" ]; then
             echo
             echo "лечение не запрашивалось (heal=false)"
+            exit 0
+          fi
+          # Сначала пробуем то, что нашли на сервере, потом секрет GitHub.
+          if $SSH "test -s /tmp/live-gemini.key"; then
+            $SSH "cp /tmp/live-gemini.key $BASE/gemini.key && chmod 600 $BASE/gemini.key"
+            echo "gemini.key заменён рабочим ключом, найденным на сервере"
+            $SSH "rm -f /tmp/live-gemini.key"
             exit 0
           fi
           [ -n "$BRIDGE_KEY" ] || { echo "секрета GEMINI_API_KEY_BRIDGE нет — заменять нечем"; exit 0; }
