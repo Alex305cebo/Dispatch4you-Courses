@@ -30,7 +30,20 @@ jobs:
         run: |
           set -e
           SSH="ssh -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p ${{ secrets.SSH_PORT }} -i ~/.ssh/deploy_key ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}"
-          BASE=~/domains/dispatch4you.com
+          # Путь не угадываем: на Hostinger корень домена бывает и ~/domains/<домен>,
+          # и просто ~. Ищем по якорю — файлу с токеном, который бот точно читает.
+          ANCHOR=$($SSH "find ~ -maxdepth 4 -name tg-bot.key -not -path '*/node_modules/*' 2>/dev/null | head -1")
+          if [ -z "$ANCHOR" ]; then
+            echo "tg-bot.key на сервере не найден вообще — искали в ~ на 4 уровня вглубь"
+            echo "что лежит в домашней папке:"
+            $SSH "ls -la ~ | head -20"
+            echo "и в ~/domains:"
+            $SSH "ls -la ~/domains 2>/dev/null | head -20"
+            exit 1
+          fi
+          BASE=$(dirname "$ANCHOR")
+          echo "папка с ключами: $BASE"
+          echo
 
           echo "== что лежит на сервере сейчас =="
           for f in tg-admin.txt tg-bot.key gemini.key fmcsa.key groq.key; do
