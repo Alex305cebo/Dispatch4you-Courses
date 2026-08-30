@@ -16,6 +16,13 @@ Could you also confirm the commodity and the best available rate for this shipme
 
 Thank you`;
 
+// ⟳ — reload the extension (picks up updated files) + every DAT tab
+document.getElementById('reloadExt').addEventListener('click', async () => {
+  const tabs = await chrome.tabs.query({ url: 'https://one.dat.com/*' });
+  tabs.forEach(t => chrome.tabs.reload(t.id));
+  chrome.runtime.reload();
+});
+
 // Tabs
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
