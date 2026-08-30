@@ -12,8 +12,18 @@ const DEFAULT_SETTINGS = {
   dispatcherName: '',
   companyPhone: '',
   mcNumber: '',
+  gmailAccount: '',
   minRpm: 2.0
 };
+
+// Compose in the CHOSEN Gmail account: authuser makes Gmail switch to that
+// address if it's logged in this browser; empty → default account as before.
+function gmailComposeUrl(to, subject, body) {
+  const p = new URLSearchParams({ view: 'cm', to, su: subject, body });
+  const acc = (currentSettings.gmailAccount || '').trim();
+  if (acc) p.set('authuser', acc);
+  return 'https://mail.google.com/mail/?' + p;
+}
 
 const DEFAULT_TEMPLATE = `Subject: CHECKING YOUR LOAD - {{origin}} to {{dest}}
 
@@ -264,7 +274,7 @@ function attachActions(panel) {
     const lines    = fillTemplate(currentTemplate, d, currentSettings).split('\n');
     const subject  = lines[0].replace(/^Subject:\s*/i, '');
     const bodyText = lines.slice(2).join('\n');
-    window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(d.email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`, '_blank');
+    window.open(gmailComposeUrl(d.email, subject, bodyText), '_blank');
   });
 
   panel.querySelector('#dp-maps').addEventListener('click', () => {
@@ -1104,7 +1114,7 @@ function tryInject() {
       const lines   = fillTemplate(currentTemplate, d, currentSettings).split('\n');
       const subject = lines[0].replace(/^Subject:\s*/i, '');
       const body    = lines.slice(2).join('\n');
-      window.open(`https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(emailAddr)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+      window.open(gmailComposeUrl(emailAddr, subject, body), '_blank');
     });
     link.insertAdjacentElement('afterend', emailBtn);
 

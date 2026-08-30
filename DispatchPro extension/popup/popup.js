@@ -1,4 +1,4 @@
-const DEFAULT_SETTINGS = { companyName: '', dispatcherName: '', companyPhone: '', mcNumber: '', minRpm: 2.0 };
+const DEFAULT_SETTINGS = { companyName: '', dispatcherName: '', companyPhone: '', mcNumber: '', gmailAccount: '', minRpm: 2.0 };
 const DEFAULT_TEMPLATE = `Subject: CHECKING YOUR LOAD - {{origin}} to {{dest}}
 
 Hello,
@@ -31,6 +31,7 @@ chrome.storage.sync.get(['settings', 'template'], ({ settings = DEFAULT_SETTINGS
   document.getElementById('dispatcherName').value = settings.dispatcherName || '';
   document.getElementById('companyPhone').value = settings.companyPhone || '';
   document.getElementById('mcNumber').value = settings.mcNumber || '';
+  document.getElementById('gmailAccount').value = settings.gmailAccount || '';
   document.getElementById('minRpm').value = settings.minRpm ?? 2.0;
   document.getElementById('geminiKey').value = settings.geminiKey || '';
   document.getElementById('emailTemplate').value = template;
@@ -49,6 +50,7 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     dispatcherName: document.getElementById('dispatcherName').value,
     companyPhone: document.getElementById('companyPhone').value,
     mcNumber: document.getElementById('mcNumber').value,
+    gmailAccount: document.getElementById('gmailAccount').value.trim(),
     minRpm: parseFloat(document.getElementById('minRpm').value) || 2.0,
     geminiKey: document.getElementById('geminiKey').value.trim()
   };
