@@ -1389,9 +1389,9 @@ function applyFilters() {
 
 // ── Collapse DAT's left nav / search form (CSS-only, reversible) ──
 // Selectors verified from LoadConnect's shipped "Maximize View" CSS.
+// The search form is NEVER hidden — dispatchers need it visible at all times.
 const LAYOUT_RULES = {
-  sidebar: 'mat-sidenav{display:none!important;} mat-sidenav-content{margin-left:0!important;}',
-  search:  'dat-search-tab dat-search-form{display:none!important;}'
+  sidebar: 'mat-sidenav{display:none!important;} mat-sidenav-content{margin-left:0!important;}'
 };
 
 function setRegionHidden(which, hidden) {
@@ -1476,8 +1476,6 @@ function injectLayoutToggles() {
   // Аккуратные SVG-шевроны (рисунок, не текст), наследуют цвет кнопки
   const chev = d => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
   const ICON = {
-    up: chev('M6 15l6-6 6 6'),
-    down: chev('M6 9l6 6 6-6'),
     left: chev('M15 6l-6 6 6 6'),
     right: chev('M9 6l6 6-6 6'),
   };
@@ -1498,12 +1496,10 @@ function injectLayoutToggles() {
     return btn;
   };
 
-  // Направление развёрнуто наоборот: sidebar ▶/◀, search ▼/▲
+  // Only the sidebar is togglable (▶/◀); the search form always stays visible.
+  localStorage.removeItem('d4y-hide-search');   // clear a stuck "hidden" state
   const sidebar = make('sidebar', ICON.right, ICON.left, 'Скрыть/показать левое меню');
-  const search = make('search', ICON.down, ICON.up, 'Скрыть/показать форму поиска');
   document.body.appendChild(sidebar);
-  document.body.appendChild(search);
-  makeEdgeDraggable(search, 'x');   // ездит вдоль верхнего края
   makeEdgeDraggable(sidebar, 'y');  // ездит вдоль левого края
 }
 
