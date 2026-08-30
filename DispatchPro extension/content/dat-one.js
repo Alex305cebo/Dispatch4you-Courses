@@ -307,9 +307,38 @@ function attachActions(panel) {
   attachVoice(panel);
 }
 
-// Groq API key lives server-side (above web root). All calls go through our
-// proxy on the site, so no secret ships inside the extension.
-const GROQ_PROXY = 'https://dispatch4you.com/api/groq.php?path=';
+// AI = Gemini with the user's OWN free key (popup → Settings → Gemini API Key,
+// aistudio.google.com/apikey). The fetch itself runs in the background worker,
+// where DAT's CSP can't block it. No server, no shared key.
+function askGemini(parts) {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage({ type: 'gemini', parts }, resp => {
+      if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+      if (!resp || resp.error === 'NO_KEY')
+        return reject(new Error('Нет ключа Gemini — введи в настройках D4Y (бесплатно: aistudio.google.com/apikey)'));
+      if (resp.error) return reject(new Error(resp.error));
+      resolve(resp.text);
+    });
+  });
+}
+
+const blobToBase64 = blob => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(r.result.split(',')[1]);
+  r.onerror = () => reject(new Error('audio read failed'));
+  r.readAsDataURL(blob);
+});
+
+// lang: 'ru' | 'en' | '' (auto-detect)
+async function geminiTranscribe(blob, lang) {
+  const hint = lang
+    ? ` The speech is in ${lang === 'ru' ? 'Russian' : 'English'}.`
+    : ' The speech is in Russian or English.';
+  return askGemini([
+    { text: 'Transcribe this audio verbatim. Output only the transcribed text, nothing else.' + hint },
+    { inlineData: { mimeType: blob.type || 'audio/webm', data: await blobToBase64(blob) } }
+  ]);
+}
 
 function attachVoice(panel) {
   const micBtn     = panel.querySelector('#dp-mic');
@@ -401,18 +430,7 @@ function attachVoice(panel) {
 
       micStatus.textContent = '⏳ Распознавание...';
       try {
-        const form = new FormData();
-        form.append('file', blob, 'audio.webm');
-        form.append('model', 'whisper-large-v3-turbo');
-        form.append('response_format', 'text');
-        form.append('language', voiceLang.split('-')[0]); // 'ru' or 'en'
-        const res = await fetch(GROQ_PROXY + 'audio/transcriptions', {
-          method: 'POST',
-          body: form
-        });
-        const text = await res.text();
-        if (!res.ok) throw new Error(text.slice(0, 120));
-        mainArea.value = text.trim();
+        mainArea.value = await geminiTranscribe(blob, voiceLang.split('-')[0]);
         micStatus.textContent = '✅ Готово';
       } catch (err) {
         micStatus.textContent = '❌ ' + err.message;
@@ -675,8 +693,8 @@ function buildVerdict(data) {
 }
 
 // ponytail: standalone voice wiring for the load panel's dictation section.
-// Duplicates the Whisper call from attachVoice on purpose, so the separate
-// voice-panel tool stays untouched. Merge into one helper if a 3rd caller appears.
+// Shares geminiTranscribe with attachVoice; the recorder wiring stays duplicated
+// on purpose so the separate voice-panel tool is untouched.
 function wireSectionVoice(panel) {
   const micBtn  = panel.querySelector('.dp-v2-mic');
   const trBtn   = panel.querySelector('.dp-v2-tr');
@@ -689,21 +707,9 @@ function wireSectionVoice(panel) {
     if (!txt) return;
     status.textContent = '🌐 Перевод...';
     try {
-      const res = await fetch(GROQ_PROXY + 'chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          temperature: 0.2,
-          messages: [
-            { role: 'system', content: `Detect the language of the user's text. If it is Russian, translate it to English; otherwise translate it to Russian. Output only the translation, no notes.` },
-            { role: 'user', content: txt }
-          ]
-        })
-      });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j.error?.message || res.status);
-      area.value = j.choices[0].message.content.trim();
+      area.value = await askGemini([
+        { text: `Detect the language of the text below. If it is Russian, translate it to English; otherwise translate it to Russian. Output only the translation, no notes.\n\n${txt}` }
+      ]);
       status.textContent = '✅ Переведено';
     } catch (err) {
       status.textContent = '❌ ' + err.message;
@@ -756,17 +762,8 @@ function wireSectionVoice(panel) {
 
       status.textContent = '⏳ Распознавание...';
       try {
-        const form = new FormData();
-        form.append('file', blob, 'audio.webm');
-        form.append('model', 'whisper-large-v3-turbo');
-        form.append('response_format', 'text');
-        // no 'language' → Whisper auto-detects RU or EN from the audio
-        const res = await fetch(GROQ_PROXY + 'audio/transcriptions', {
-          method: 'POST', body: form
-        });
-        const text = await res.text();
-        if (!res.ok) throw new Error(text.slice(0, 120));
-        area.value = text.trim();
+        // no lang → Gemini auto-detects RU or EN from the audio
+        area.value = await geminiTranscribe(blob, '');
         status.textContent = '✅ Готово';
       } catch (err) {
         status.textContent = '❌ ' + err.message;

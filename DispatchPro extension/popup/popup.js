@@ -32,8 +32,15 @@ chrome.storage.sync.get(['settings', 'template'], ({ settings = DEFAULT_SETTINGS
   document.getElementById('companyPhone').value = settings.companyPhone || '';
   document.getElementById('mcNumber').value = settings.mcNumber || '';
   document.getElementById('minRpm').value = settings.minRpm ?? 2.0;
-  document.getElementById('groqKey').value = settings.groqKey || '';
+  document.getElementById('geminiKey').value = settings.geminiKey || '';
   document.getElementById('emailTemplate').value = template;
+});
+// Factoring creds live in storage.local only (never synced, never in code)
+chrome.storage.local.get('factorCreds', ({ factorCreds = {} }) => {
+  document.getElementById('rtsUser').value = factorCreds.rts?.user || '';
+  document.getElementById('rtsPass').value = factorCreds.rts?.pass || '';
+  document.getElementById('sjcUser').value = factorCreds.sjc?.user || '';
+  document.getElementById('sjcPass').value = factorCreds.sjc?.pass || '';
 });
 
 document.getElementById('saveSettings').addEventListener('click', () => {
@@ -43,9 +50,15 @@ document.getElementById('saveSettings').addEventListener('click', () => {
     companyPhone: document.getElementById('companyPhone').value,
     mcNumber: document.getElementById('mcNumber').value,
     minRpm: parseFloat(document.getElementById('minRpm').value) || 2.0,
-    groqKey: document.getElementById('groqKey').value.trim()
+    geminiKey: document.getElementById('geminiKey').value.trim()
   };
-  chrome.storage.sync.set({ settings }, () => {
+  const factorCreds = {
+    rts: { user: document.getElementById('rtsUser').value.trim(), pass: document.getElementById('rtsPass').value },
+    sjc: { user: document.getElementById('sjcUser').value.trim(), pass: document.getElementById('sjcPass').value },
+    otr: { user: '', pass: '' }
+  };
+  chrome.storage.sync.set({ settings });
+  chrome.storage.local.set({ factorCreds }, () => {
     document.getElementById('saveSettings').textContent = 'Saved ✓';
     setTimeout(() => { document.getElementById('saveSettings').textContent = 'Save Settings'; }, 1500);
   });
