@@ -1,0 +1,1825 @@
+<!DOCTYPE html>
+<html lang="ru" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="../css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Relay для диспетчера | Курсы Диспетчера</title>
+  <link rel="canonical" href="https://dispatch4you.com/pages/amazon-relay.html">
+    <meta name="description" content="Полный гайд: как устроен Amazon Relay, требования к перевозчику, типы грузов, работа диспетчера с водителями на площадках Amazon, performance score, оплата и разбор проблемных ситуаций.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=8.7">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.2">
+    <link rel="stylesheet" href="../lesson-visuals.css?v=3">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; width: 100%; max-width: 100vw; scroll-behavior: smooth; }
+
+        :root {
+            --primary: #06b6d4;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary:#e2e8f0;
+            --text-muted:#94a3b8;
+            --border: rgba(255, 255, 255, 0.15);
+            --amz: #ff9900;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker); color: var(--text-primary);
+            line-height: 1.6; overflow-x: hidden; width: 100%; max-width: 100vw; margin: 0; padding: 0;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.15), transparent 50%),
+                        radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(14,165,233,.08), transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 40px; }
+
+        /* HERO */
+        .page-header { padding: 130px 0 70px; text-align: center; }
+        .page-badge {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(255,153,0,.15), rgba(14,165,233,.15));
+            border:1px solid var(--tint-brand-4); border-radius: 24px;
+            font-size: 13px; font-weight: 700; color: var(--primary);
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .page-title {
+            font-size: clamp(40px,5vw,64px); font-weight: 900;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 40%, #ff9900 80%, #fbbf24 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 24px; line-height: 1.1;
+        }
+        .page-subtitle { font-size: 20px; color:var(--text-secondary); max-width: 800px; margin: 0 auto; line-height: 1.7; }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat-number {
+            font-size: 36px; font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--amz));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-stat-label { font-size: 13px; color:var(--text-soft); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 4px; }
+
+        /* SECTIONS */
+        .section { padding: 8px 0; }
+        .section-title {
+            font-size: clamp(28px,3vw,38px); font-weight: 900; margin-bottom: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #ff9900 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .section-desc { font-size: 17px; color:var(--text-secondary); line-height: 1.8; max-width: 900px; margin-bottom: 40px; }
+        .section-text { font-size: 16px; color:var(--text-secondary); line-height: 1.85; margin-bottom: 20px; max-width: 950px; }
+        .section-text strong { color: var(--text-primary); }
+        .section h3 { font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 36px 0 14px; }
+        .section h4 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 24px 0 10px; }
+        .section ul.plain { margin: 0 0 20px 22px; color: var(--text-secondary); font-size: 15px; line-height: 1.8; }
+        .section ul.plain li { margin-bottom: 6px; }
+        .section ul.plain strong { color: var(--text-primary); }
+        .section a { color: var(--primary); }
+
+        /* GLASS CARD */
+        .glass-card {
+            background:var(--glass-03); border:1px solid var(--edge-08);
+            border-radius: 20px; padding: 32px; backdrop-filter: blur(10px); transition: all .35s ease;
+        }
+        .glass-card:hover {
+            border-color:var(--tint-brand-4); background: rgba(6,182,212,.05);
+            transform: translateY(-4px); box-shadow: 0 12px 40px rgba(6,182,212,.1);
+        }
+        .glass-card h3 { margin-top: 0; }
+
+        /* ===== NAVIGATION ===== */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:var(--glass-03);border:1px solid var(--edge-08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:var(--glass-03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:var(--glass-05);transform:translateY(-2px)}.navigation-toggle.active{background:var(--glass-05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:var(--brand-ink);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--brand-ink);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--tint-brand-3)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:var(--text-secondary);text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid var(--edge-08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:var(--brand-ink-3);border-color:var(--tint-brand-4);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:var(--brand-ink)}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:var(--brand-ink-3);border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:var(--brand-ink)}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:var(--brand-ink);transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+
+        /* ===== ОГЛАВЛЕНИЕ ГАЙДА ===== */
+        .ar-toc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0 32px; }
+        .ar-toc a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 600; transition: all .2s; }
+        .ar-toc a:hover { background: rgba(255,153,0,.08); border-color: rgba(255,153,0,.35); color: var(--text-primary); transform: translateX(3px); }
+        .ar-toc .n { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        /* ===== ТАБЛИЦЫ ===== */
+        .ar-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 16px 0 28px; border-radius: 16px; }
+        .ar-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 640px; }
+        .ar-table thead th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); white-space: nowrap; }
+        .ar-table tbody tr { background: var(--glass-03); transition: background .2s; }
+        .ar-table tbody tr:hover { background: rgba(6,182,212,.08); }
+        .ar-table td { padding: 12px 14px; font-size: 14px; color: var(--text-secondary); vertical-align: top; line-height: 1.6; }
+        .ar-table td:first-child { border-radius: 12px 0 0 12px; font-weight: 600; color: var(--text-primary); }
+        .ar-table td:last-child { border-radius: 0 12px 12px 0; }
+        .ar-table td strong { color: var(--text-primary); }
+        .ar-table .ok { color: var(--success); font-weight: 700; }
+        .ar-table .no { color: var(--danger); font-weight: 700; }
+        .ar-table .warn { color: var(--warning); font-weight: 700; }
+        .ar-table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: var(--primary); }
+
+        /* ===== БЕЙДЖИ / КОЛЛАУТЫ ===== */
+        .ar-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; vertical-align: middle; }
+        .ar-badge.off { background: rgba(16,185,129,.15); color: var(--success); border: 1px solid rgba(16,185,129,.3); }
+        .ar-badge.third { background: rgba(245,158,11,.15); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
+        .ar-badge.amz { background: rgba(255,153,0,.15); color: var(--amz); border: 1px solid rgba(255,153,0,.35); }
+        .ar-badge.blue { background: rgba(6,182,212,.15); color: var(--primary); border: 1px solid rgba(6,182,212,.3); }
+        .tip-block { display: flex; gap: 14px; padding: 18px 20px; border-radius: 14px; margin: 18px 0; background: rgba(6,182,212,.07); border: 1px solid rgba(6,182,212,.2); }
+        .tip-block .tip-icon { font-size: 22px; flex-shrink: 0; }
+        .tip-block .tip-text { font-size: 14.5px; color: var(--text-secondary); line-height: 1.75; }
+        .tip-block .tip-text strong { color: var(--text-primary); }
+        .tip-block.warn { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); }
+        .tip-block.gold { background: rgba(255,153,0,.07); border-color: rgba(255,153,0,.3); }
+        .tip-block.src { background: var(--glass-03); border-color: var(--edge-08); }
+        .tip-block.src .tip-text { font-size: 13px; color: var(--text-soft); }
+        .tip-block.src a { color: var(--primary); word-break: break-all; }
+
+        /* ===== СКРИНШОТЫ / МАКЕТЫ ===== */
+        .ar-fig { margin: 22px 0 30px; background: var(--glass-03); border: 1px solid var(--edge-08); border-radius: 18px; overflow: hidden; }
+        .ar-fig img { display: block; width: 100%; height: auto; max-width: 100%; }
+        .ar-fig figcaption { padding: 12px 18px; font-size: 13px; color: var(--text-soft); line-height: 1.6; border-top: 1px solid var(--edge-08); }
+        .ar-fig figcaption strong { color: var(--text-secondary); }
+        .ar-fig.phone { max-width: 360px; }
+        .ar-fig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .ar-fig-row .ar-fig { margin: 22px 0 10px; }
+        .ar-mock { margin: 22px 0 30px; background: #0f1524; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; overflow: hidden; font-size: 13px; color: #e2e8f0; }
+        .ar-mock .m-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #131b2e; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 12px; color: #94a3b8; }
+        .ar-mock .m-bar i { width: 10px; height: 10px; border-radius: 50%; background: #334155; display: inline-block; }
+        .ar-mock .m-bar i:nth-child(1) { background: #ef4444; } .ar-mock .m-bar i:nth-child(2) { background: #f59e0b; } .ar-mock .m-bar i:nth-child(3) { background: #10b981; }
+        .ar-mock .m-body { padding: 16px; }
+        .ar-mock .m-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.04); margin-bottom: 8px; flex-wrap: wrap; }
+        .ar-mock .m-row b { color: #fff; }
+        .ar-mock .m-pill { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(6,182,212,.18); color: #67e8f9; }
+        .ar-mock .m-pill.g { background: rgba(16,185,129,.18); color: #6ee7b7; } .ar-mock .m-pill.o { background: rgba(255,153,0,.2); color: #fbbf24; } .ar-mock .m-pill.r { background: rgba(239,68,68,.2); color: #fca5a5; } .ar-mock .m-pill.gr { background: rgba(148,163,184,.2); color: #cbd5e1; }
+        .ar-mock .m-btn { padding: 8px 16px; border-radius: 8px; background: #ff9900; color: #111; font-weight: 800; font-size: 12px; }
+        .ar-mock .m-btn.sec { background: transparent; border: 1px solid #ff9900; color: #ffb84d; }
+        .ar-mock .m-caption { padding: 10px 16px; font-size: 12px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .ar-mock .m-cols4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .ar-mock .m-metric { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.04); text-align: center; }
+        .ar-mock .m-metric .v { font-size: 26px; font-weight: 900; color: #fff; }
+        .ar-mock .m-metric .l { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+        .ar-mock .m-metric.min { outline: 2px solid #ef4444; }
+        .ar-mock .m-qr { width: 120px; height: 120px; margin: 10px auto; background: repeating-conic-gradient(#fff 0 25%, #0f1524 0 50%) 0 0/16px 16px; border: 6px solid #fff; border-radius: 6px; }
+        .ar-mock .m-side { display: grid; grid-template-columns: 170px 1fr; }
+        .ar-mock .m-nav { background: #0b1020; padding: 12px 0; border-right: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-nav div { padding: 8px 16px; color: #94a3b8; font-size: 12px; }
+        .ar-mock .m-nav div.on { color: #fff; background: rgba(255,153,0,.15); border-left: 3px solid #ff9900; }
+        @media (max-width: 640px) { .ar-mock .m-side { grid-template-columns: 1fr; } .ar-mock .m-nav { display: flex; flex-wrap: wrap; } .ar-mock .m-cols, .ar-mock .m-cols4 { grid-template-columns: 1fr 1fr; } }
+
+        /* ===== ШАГИ / ЧЕК-ЛИСТ / КАРТОЧКИ ===== */
+        .ar-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 28px; counter-reset: st; }
+        .ar-step { display: flex; gap: 16px; padding: 18px 20px; border-radius: 14px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-step::before { counter-increment: st; content: counter(st); width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ar-step > div { flex: 1; min-width: 0; }
+        .ar-step h4 { margin: 0 0 6px; font-size: 16px; }
+        .ar-step p { font-size: 14px; color: var(--text-secondary); line-height: 1.75; margin: 0; }
+        .ar-step p + p { margin-top: 8px; }
+        .checklist { list-style: none; }
+        .checklist-item { padding: 14px 0; border-bottom:1px solid var(--glass-05); cursor: pointer; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-header { display: flex; align-items: center; gap: 12px; font-size: 15.5px; font-weight: 600; color: var(--text-primary); transition: color .2s; }
+        .checklist-header:hover { color: var(--primary); }
+        .checklist-icon { font-size: 20px; flex-shrink: 0; }
+        .checklist-arrow { margin-left: auto; font-size: 12px; color:var(--text-soft); transition: transform .3s; }
+        .checklist-item.open .checklist-arrow { transform: rotate(180deg); }
+        .checklist-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .checklist-item.open .checklist-body { max-height: 900px; }
+        .checklist-body p { padding: 12px 0 4px 32px; font-size: 14px; color:var(--text-secondary); line-height: 1.8; }
+        .ar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0 28px; }
+        .ar-grid.two { grid-template-columns: 1fr 1fr; }
+        .ar-card { padding: 22px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-card .ic { font-size: 30px; margin-bottom: 10px; }
+        .ar-card h4 { margin: 0 0 8px; font-size: 16px; }
+        .ar-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-card.hot { border-color: rgba(255,153,0,.4); background: rgba(255,153,0,.06); }
+        .ar-card.bad { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.05); }
+        .ar-card.good { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.05); }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .pros, .cons { padding: 20px; border-radius: 14px; }
+        .pros { background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.15); }
+        .cons { background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.15); }
+        .pros h4, .cons h4 { margin-top: 0; font-size: 14px; }
+        .pros h4 { color: var(--success); } .cons h4 { color: var(--danger); }
+        .pros ul, .cons ul { list-style: none; }
+        .pros li, .cons li { padding: 6px 0; color: var(--text-secondary); font-size: 14px; display: flex; gap: 10px; line-height: 1.6; }
+        .pros li::before { content: '✓'; color: var(--success); font-weight: 700; } .cons li::before { content: '✗'; color: var(--danger); font-weight: 700; }
+
+        /* ===== ПРОБЛЕМЫ ===== */
+        .ar-problem { margin-bottom: 12px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); overflow: hidden; }
+        .ar-problem summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15.5px; color: var(--text-primary); }
+        .ar-problem summary::-webkit-details-marker { display: none; }
+        .ar-problem summary .sev { font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 800; letter-spacing: .5px; margin-left: auto; flex-shrink: 0; }
+        .sev.hi { background: rgba(239,68,68,.18); color: #fca5a5; } .sev.md { background: rgba(245,158,11,.18); color: #fcd34d; } .sev.lo { background: rgba(16,185,129,.18); color: #6ee7b7; }
+        .ar-problem[open] summary { border-bottom: 1px solid var(--edge-08); background: rgba(6,182,212,.05); }
+        .ar-problem .pb { padding: 16px 20px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .ar-problem .pb > div { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.03); font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-problem .pb .lbl { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+        .ar-problem .pb .d .lbl { color: var(--primary); } .ar-problem .pb .w .lbl { color: var(--amz); } .ar-problem .pb .c .lbl { color: var(--danger); } .ar-problem .pb .r .lbl { color: var(--success); }
+        .ar-problem .pb .full { grid-column: 1 / -1; }
+
+        /* ===== ДЕНЬ ДИСПЕТЧЕРА ===== */
+        .ar-day { display: grid; grid-template-columns: 110px 1fr; gap: 0 16px; margin: 16px 0 28px; }
+        .ar-day .t { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--primary); padding: 14px 0; text-align: right; border-right: 2px solid var(--tint-brand-3); padding-right: 14px; }
+        .ar-day .w { padding: 12px 0 12px 4px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; border-bottom: 1px solid var(--glass-05); }
+        .ar-day .w strong { color: var(--text-primary); }
+
+        /* ===== SVG ===== */
+        .ar-svg { width: 100%; height: auto; display: block; margin: 16px 0 28px; }
+        .ar-svg text { font-family: 'Inter', sans-serif; }
+
+        /* ===== ГЛОССАРИЙ ===== */
+        .ar-gl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 28px; }
+        .ar-gl div { padding: 14px 16px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        .ar-gl b { color: var(--amz); display: block; margin-bottom: 4px; font-size: 15px; }
+
+        /* QUIZ */
+        .quiz-card { background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(255,153,0,.05)); border:1px solid var(--tint-brand-3); border-radius: 24px; padding: 40px; }
+        .quiz-question { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; line-height: 1.5; }
+        .quiz-options { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+        .quiz-option { padding: 16px 20px; background:var(--glass-05); border:1px solid var(--edge-10); border-radius: 14px; color:var(--text-secondary); font-size: 15px; font-weight: 500; cursor: pointer; transition: all .3s; font-family: inherit; text-align: left; }
+        .quiz-option:hover { background:var(--tint-brand-1); border-color:var(--tint-brand-4); color: var(--text-primary); }
+        .quiz-option.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .quiz-option.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: var(--danger); }
+        .quiz-option:disabled { cursor: default; }
+        .quiz-feedback { padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.7; display: none; }
+        .quiz-feedback.visible { display: block; animation: fadeIn .3s ease; }
+        .quiz-feedback.success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .quiz-feedback.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .quiz-counter { font-size: 14px; color:var(--text-soft); font-weight: 600; }
+        .quiz-next-btn { padding: 10px 24px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .3s; font-family: inherit; display: none; }
+        .quiz-next-btn.visible { display: inline-block; }
+        .quiz-score { text-align: center; padding: 32px; display: none; }
+        .quiz-score.visible { display: block; }
+        .quiz-restart-btn { margin-top: 20px; padding: 12px 28px; background:var(--glass-08); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .3s; font-family: inherit; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) { .ar-grid { grid-template-columns: 1fr 1fr; } .ar-toc { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .page-header { padding: 100px 0 50px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-number { font-size: 28px; }
+            .quiz-options { grid-template-columns: 1fr; }
+            .ar-grid, .ar-grid.two, .ar-gl, .pros-cons, .ar-fig-row, .ar-problem .pb { grid-template-columns: 1fr; }
+            .ar-toc { grid-template-columns: 1fr; }
+            .ar-day { grid-template-columns: 74px 1fr; }
+        }
+        @media (max-width: 480px) { .container { padding: 0 16px; } .hero-stats { flex-direction: column; gap: 16px; } }
+        @media (max-width: 360px) { .container { padding: 0 12px; } .glass-card { padding: 20px; } .quiz-card { padding: 24px; } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-darker); }
+        ::-webkit-scrollbar-thumb { background:var(--tint-brand-4); border-radius: 4px; }
+
+        /* ===== SCROLL TO TOP BUTTON ===== */
+        .scroll-to-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(6,182,212,0.3);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);opacity:0;visibility:hidden;z-index:999}.scroll-to-top.visible{opacity:1;visibility:visible}.scroll-to-top.inactive{opacity:0.2}.scroll-to-top:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(6,182,212,0.4)}.scroll-to-top svg{color:var(--text-primary)}@media(max-width:768px){.scroll-to-top{width:48px;height:48px;bottom:24px;right:24px}}
+
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:40px auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--glass-03);border:1px solid var(--edge-08);border-radius:14px;text-decoration:none;color:var(--text-primary);transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:var(--text-primary)}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="../role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=20"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">📦 Гайд · Amazon Relay</div>
+            <h1 class="page-title">Amazon Relay для диспетчера</h1>
+            <p class="page-subtitle">
+                Amazon — крупнейший грузоотправитель США, и он работает с перевозчиками напрямую, без брокера,
+                через платформу Relay. Правила здесь свои: нет торга по телефону, зато есть аукционы, недельные блоки,
+                чужие трейлеры, QR-пропуск на воротах и оценка перевозчика по четырём метрикам.
+                Этот гайд — полная инструкция: от онбординга компании до разбора проблемных ситуаций на площадке.
+            </p>
+            <div class="hero-stats">
+                <div class="hero-stat"><span class="hero-stat-number">80 000+</span><span class="hero-stat-label">трейлеров Amazon</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">50 000+</span><span class="hero-stat-label">перевозчиков в сети</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">$0</span><span class="hero-stat-label">комиссия платформы</span></div>
+                <div class="hero-stat"><span class="hero-stat-number">Пятница</span><span class="hero-stat-label">еженедельная выплата</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- НАВИГАЦИЯ ПО КУРСУ -->
+    <section class="section" style="padding-top: 0; padding-bottom: 30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Навигация по курсу</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="documentation.html">📚 Курс</a>
+                                    <a href="intro.html">📋 Введение</a>
+                                    <a href="role.html">👤 Роль</a>
+                                    <a href="equipment.html">🚛 Типы траков</a>
+                                    <a href="routes.html">🗺 Маршруты</a>
+                                    <a href="loadboards.html">📡 Load Boards</a>
+                                    <a href="negotiation.html">🤝 Переговоры</a>
+                                    <a href="brokers.html">💼 Брокеры</a>
+                                    <a href="docs.html">📄 Документы</a>
+                                    <a href="regulations.html">⚖️ Законы</a>
+                                    <a href="technology.html">🖥 Технологии</a>
+                                    <a href="communication.html">📞 Коммуникация</a>
+                                    <a href="problems.html">⚠️ Проблемы</a>
+                                    <a href="finances.html">💰 Финансы</a>
+                                    <a href="career.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ МОДУЛИ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="doc-module-1-complete.html">🏭 Введение</a>
+                                    <a href="doc-module-2-complete.html">⚖️ Законы</a>
+                                    <a href="doc-module-3-complete.html">🚛 Оборудование</a>
+                                    <a href="doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="doc-module-5-complete.html">🤝 Переговоры</a>
+                                    <a href="doc-module-6-complete.html">🗺 Маршруты</a>
+                                    <a href="doc-module-7-complete.html">📄 Документы</a>
+                                    <a href="doc-module-8-complete.html">👥 Водители</a>
+                                    <a href="doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="doc-module-10-complete.html">💰 Финансы</a>
+                                    <a href="doc-module-11-complete.html">🚨 Кризисы</a>
+                                    <a href="doc-module-12-complete.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ ИНСТРУМЕНТЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="Trainer-Quiz.html">💡 Тренажёр</a>
+                                    <a href="testing.html">📝 Тесты</a>
+                                    <a href="cases.html">🗂 Кейсы</a>
+                                    <a href="amazon-relay.html" class="active">📦 Amazon Relay</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top:0">Содержание гайда</h3>
+            <div class="ar-toc">
+                <a href="#s1"><span class="n">1</span>Amazon как шиппер</a>
+                <a href="#s2"><span class="n">2</span>Требования к перевозчику</a>
+                <a href="#s3"><span class="n">3</span>Онбординг компании и водителей</a>
+                <a href="#s4"><span class="n">4</span>Типы фрахта в Relay</a>
+                <a href="#s5"><span class="n">5</span>Поиск и бронирование груза</a>
+                <a href="#s6"><span class="n">6</span>Назначение водителя и трака</a>
+                <a href="#s7"><span class="n">7</span>Водитель на площадке Amazon</a>
+                <a href="#s8"><span class="n">8</span>Трекинг, ROC и коммуникация</a>
+                <a href="#s9"><span class="n">9</span>Проблемные ситуации</a>
+                <a href="#s10"><span class="n">10</span>Деньги: ставки и выплаты</a>
+                <a href="#s11"><span class="n">11</span>Performance score</a>
+                <a href="#s12"><span class="n">12</span>Итоги, глоссарий, квиз</a>
+            </div>
+
+            <div class="tip-block gold">
+                <div class="tip-icon">📌</div>
+                <div class="tip-text">
+                    <strong>Как читать этот гайд.</strong> Всё, что помечено <span class="ar-badge off">Amazon</span>, взято из официальных
+                    материалов Relay (FAQ и блог relay.amazon.com) и актуально на сентябрь 2026 года. Пометка
+                    <span class="ar-badge third">по данным перевозчиков</span> означает: Amazon это публично не подтверждал, цифра — из опыта
+                    компаний, которые возят Relay. Такие вещи уточняйте в Support Center вашего аккаунта. Правила Relay меняются
+                    несколько раз в год (последнее крупное изменение — performance score от 2 сентября 2025), поэтому дата важна.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 1. AMAZON КАК ШИППЕР -->
+    <section class="section" id="s1">
+        <div class="container">
+            <h2 class="section-title">1. Amazon — шиппер, а не брокер</h2>
+            <p class="section-text">
+                В обычной схеме между вами и грузом стоит брокер: он нашёл шиппера, забрал свою маржу и выставил
+                груз на DAT. У Amazon посредника нет. Amazon сам владеет грузом, сам владеет трейлерами, сам управляет
+                площадками и сам выдаёт грузы перевозчикам через свою платформу <strong>Amazon Relay</strong>.
+                Для диспетчера это значит три вещи: ставка не обсуждается голосом, отношения с «заказчиком»
+                измеряются цифрами (performance score), а любая проблема решается не звонком знакомому брокеру,
+                а через процедуры Amazon.
+            </p>
+
+            <h3>Три «двери» в Amazon: не перепутайте</h3>
+            <div class="ar-grid">
+                <div class="ar-card hot">
+                    <div class="ic">🚛</div>
+                    <h4>Amazon Relay</h4>
+                    <p><strong>Наш случай.</strong> Платформа для перевозчиков с собственным MC/DOT: load board, аукционы контрактов,
+                    Post A Truck, приложение для водителей. Вы возите грузы Amazon на своём траке. Регистрация и бронирование бесплатны.</p>
+                </div>
+                <div class="ar-card">
+                    <div class="ic">🏢</div>
+                    <h4>Amazon Freight</h4>
+                    <p>«Витрина» для шипперов: Amazon как брокер с активами (MC-826094) продаёт свои мощности сторонним
+                    компаниям — FTL, LTL, интермодал. Грузы сторонних шипперов попадают перевозчикам всё равно через Relay.</p>
+                </div>
+                <div class="ar-card">
+                    <div class="ic">🏭</div>
+                    <h4>Amazon Freight Partner (AFP)</h4>
+                    <p><strong>Не для перевозчика.</strong> Программа «построй компанию под Amazon»: подаёт физлицо с $40k,
+                    Amazon даёт 10–20 брендированных траков, топливо и страховку, партнёр нанимает 20–45 водителей и возит только Amazon.</p>
+                </div>
+            </div>
+
+            <h3>Как устроена сеть площадок</h3>
+            <p class="section-text">
+                Трак Relay ходит между объектами Amazon. Их типы важно различать, потому что от типа площадки
+                зависит, что вас там ждёт: живая погрузка или drop-and-hook, очередь на воротах, ночной режим.
+            </p>
+
+            <svg class="ar-svg" viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Схема сети Amazon: IXD, FC, SC, DS">
+                <defs>
+                    <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#06b6d4"/></marker>
+                </defs>
+                <g font-size="13" fill="var(--text-secondary)">
+                    <rect x="20" y="110" width="130" height="80" rx="14" fill="var(--glass-05)" stroke="var(--edge-10)"/>
+                    <text x="85" y="145" text-anchor="middle" font-weight="700" fill="var(--text-primary)">Поставщики</text>
+                    <text x="85" y="166" text-anchor="middle" font-size="11">заводы, порты, 3PL</text>
+                    <rect x="200" y="100" width="150" height="100" rx="14" fill="rgba(255,153,0,.10)" stroke="rgba(255,153,0,.5)"/>
+                    <text x="275" y="132" text-anchor="middle" font-weight="800" font-size="16" fill="#ff9900">IXD</text>
+                    <text x="275" y="152" text-anchor="middle" font-size="11">Inbound Cross-Dock</text>
+                    <text x="275" y="170" text-anchor="middle" font-size="11">разбивает паллеты</text>
+                    <text x="275" y="186" text-anchor="middle" font-size="11">и раздаёт по FC</text>
+                    <rect x="400" y="60" width="150" height="80" rx="14" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+                    <text x="475" y="90" text-anchor="middle" font-weight="800" font-size="16" fill="#06b6d4">FC / AR</text>
+                    <text x="475" y="110" text-anchor="middle" font-size="11">Fulfillment Center</text>
+                    <text x="475" y="126" text-anchor="middle" font-size="11">хранение и сборка заказов</text>
+                    <rect x="400" y="160" width="150" height="80" rx="14" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+                    <text x="475" y="190" text-anchor="middle" font-weight="800" font-size="16" fill="#06b6d4">AMXL</text>
+                    <text x="475" y="210" text-anchor="middle" font-size="11">крупногабарит</text>
+                    <text x="475" y="226" text-anchor="middle" font-size="11">&gt;50 lb, мебель, техника</text>
+                    <rect x="600" y="100" width="150" height="100" rx="14" fill="rgba(14,165,233,.10)" stroke="rgba(14,165,233,.5)"/>
+                    <text x="675" y="132" text-anchor="middle" font-weight="800" font-size="16" fill="#0ea5e9">SC</text>
+                    <text x="675" y="152" text-anchor="middle" font-size="11">Sortation Center</text>
+                    <text x="675" y="170" text-anchor="middle" font-size="11">сортировка посылок</text>
+                    <text x="675" y="186" text-anchor="middle" font-size="11">по зонам доставки</text>
+                    <rect x="800" y="110" width="150" height="80" rx="14" fill="rgba(16,185,129,.10)" stroke="rgba(16,185,129,.5)"/>
+                    <text x="875" y="140" text-anchor="middle" font-weight="800" font-size="16" fill="#10b981">DS</text>
+                    <text x="875" y="160" text-anchor="middle" font-size="11">Delivery Station</text>
+                    <text x="875" y="176" text-anchor="middle" font-size="11">последняя миля, вэны</text>
+                    <g stroke="#06b6d4" stroke-width="2.5" fill="none" marker-end="url(#arw)">
+                        <path d="M150 150 H198"/>
+                        <path d="M350 140 Q375 100 398 100"/>
+                        <path d="M350 160 Q375 200 398 200"/>
+                        <path d="M550 100 Q575 140 598 140"/>
+                        <path d="M550 200 Q575 160 598 160"/>
+                        <path d="M750 150 H798"/>
+                    </g>
+                    <g font-size="11" fill="#ff9900" font-weight="700">
+                        <text x="174" y="138" text-anchor="middle">🚛 53'</text>
+                        <text x="374" y="80" text-anchor="middle">🚛 53'</text>
+                        <text x="574" y="86" text-anchor="middle">🚛 53'</text>
+                        <text x="774" y="138" text-anchor="middle">🚛 53' / 26'</text>
+                    </g>
+                    <text x="500" y="280" text-anchor="middle" font-size="12" fill="var(--text-soft)">Большинство Relay-грузов — линейные перевозки между площадками Amazon (middle mile). Трак Relay почти никогда не едет к конечному покупателю.</text>
+                </g>
+            </svg>
+
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Код</th><th>Что это</th><th>Что ждёт водителя</th></tr></thead>
+                    <tbody>
+                        <tr><td>FC</td><td>Fulfillment Center — склад хранения и сборки заказов. <em>Sortable</em> — мелкие товары (до ~18 дюймов и ~3 lb), конвейеры; <em>non-sortable</em> — паллеты, крупные коробки.</td><td>Чаще всего drop-and-hook: оставил гружёный трейлер, взял пустой или другой гружёный. Большие ярды, регламентированный порядок движения.</td></tr>
+                        <tr><td>AR</td><td>Amazon Robotics FC — sortable-склад с роботами. По логике для водителя = FC.</td><td>То же, что FC.</td></tr>
+                        <tr><td>IXD</td><td>Inbound Cross-Dock — принимает паллеты от поставщиков, разбивает и рассылает по FC. Бывает национальный (nIXD) и региональный (rIXD).</td><td>Очень плотный входящий трафик, живая разгрузка встречается чаще, чем на FC. Очереди в пик.</td></tr>
+                        <tr><td>SC</td><td>Sortation Center — сортирует готовые посылки по географии доставки.</td><td>Жёсткие волны по времени: опоздание на 30–45 минут может сорвать волну. Много ночных окон.</td></tr>
+                        <tr><td>DS</td><td>Delivery Station — последняя миля, отсюда выезжают вэны курьеров.</td><td>Тесные ярды, ночные разгрузки (2–6 утра), иногда 26-футовые box trucks вместо 53'.</td></tr>
+                        <tr><td>AMXL</td><td>Крупногабарит: мебель, техника, всё тяжелее ~50 lb или длиннее ~96 дюймов.</td><td>Обычно паллетная работа, живая погрузка встречается чаще.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Как читать код площадки: ONT8, FTW1, JFK8</h3>
+            <p class="section-text">
+                Каждая площадка Amazon имеет код из трёх букв и цифры. Буквы — это код ближайшего крупного аэропорта
+                (IATA), цифра — порядковый номер объекта в этом регионе. <strong>ONT8</strong> — восьмой объект у аэропорта
+                Ontario (Moreno Valley, Калифорния). <strong>FTW1</strong> — первый у Fort Worth (Техас). <strong>JFK8</strong> — восьмой
+                у JFK (Staten Island, Нью-Йорк). Код нужен, чтобы быстро понять регион в карточке груза ещё до того, как вы
+                открыли адрес: маршрут «CDW5 → JFK8» — это Нью-Джерси → Нью-Йорк, короткое плечо через мосты с толлами.
+            </p>
+            <div class="tip-block">
+                <div class="tip-icon">💡</div>
+                <div class="tip-text">
+                    <strong>Привычка диспетчера:</strong> заведите себе таблицу кодов площадок в вашем регионе с пометками —
+                    «ночью ворота работают?», «где парковка ожидания?», «сколько обычно стоят на въезде?». Через месяц работы
+                    с Relay это станет главным рабочим документом, потому что одни и те же коды повторяются в 80% ваших грузов.
+                </div>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/" target="_blank" rel="noopener">relay.amazon.com</a>, <a href="https://freight.amazon.com/" target="_blank" rel="noopener">freight.amazon.com</a>, <a href="https://freightpartner.amazon.com/marketing/faq" target="_blank" rel="noopener">freightpartner.amazon.com/marketing/faq</a>. Типы площадок и расшифровка кодов — по открытым справочникам логистических компаний, Amazon официальной таблицы не публикует.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. ТРЕБОВАНИЯ -->
+    <section class="section" id="s2">
+        <div class="container">
+            <h2 class="section-title">2. Кому подходит Relay: требования к перевозчику</h2>
+            <p class="section-text">
+                Amazon проверяет перевозчика автоматически по базам FMCSA и по страховому сертификату. Здесь нет
+                «договориться»: если один пункт не проходит, заявка отклоняется без объяснений. Поэтому диспетчер,
+                который готовит компанию к Relay, обязан пройти по таблице ниже пункт за пунктом ДО подачи заявки.
+            </p>
+
+            <h3>Требования к компании <span class="ar-badge off">Amazon</span></h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Пункт</th><th>Требование</th><th>Где проверить</th><th>Типичная ошибка</th></tr></thead>
+                    <tbody>
+                        <tr><td>Authority</td><td>Активные DOT и MC с <strong>interstate</strong> authority. Authority должна быть активна не менее <strong>180 дней</strong>.</td><td>FMCSA SAFER / Licensing &amp; Insurance</td><td>Свежая компания подаёт заявку на 3-м месяце — автоотказ. Ждите 180 дней.</td></tr>
+                        <tr><td>Тип сущности</td><td><strong>Carrier</strong>, тип груза <strong>Property</strong>, статус <strong>For-Hire</strong>.</td><td>SAFER → Entity Type / Operation Classification</td><td>В SAFER стоит Private или Broker — Amazon не примет. Исправляется через MCS-150.</td></tr>
+                        <tr><td>Safety Rating</td><td>Satisfactory, None или Not Rated. <span class="no">Conditional и Unsatisfactory — отказ.</span></td><td>SAFER → Safety Rating</td><td>Conditional после аудита закрывает Relay до пересмотра рейтинга.</td></tr>
+                        <tr><td>BASIC-процентили</td><td>Unsafe Driving <strong>&lt;60%</strong>, HOS <strong>&lt;60%</strong>, Vehicle Maintenance <strong>&lt;75%</strong>, Controlled Substances <strong>&lt;75%</strong>, Driver Fitness <strong>&lt;75%</strong>. Пороги Amazon строже федеральных.</td><td>CSA / SMS портал (логин компании)</td><td>Перевозчик смотрит только «alert» в SMS (65/80%), а Amazon режет раньше.</td></tr>
+                        <tr><td>Violation Rate <span class="ar-badge amz">с 2026</span></td><td>Driver Violation Rate <strong>≤35%</strong>, Vehicle Violation Rate <strong>≤50%</strong>. Формула: (нарушения не-OOS + OOS×2) ÷ число инспекций за 12 месяцев. Считается после <strong>3 и более инспекций</strong>. <span class="no">Апелляции нет.</span></td><td>Relay → Scorecard → Safety</td><td>Две «грязные» инспекции из трёх — и перевозчик вылетает, хотя в CSA всё зелёное.</td></tr>
+                        <tr><td>Оборудование</td><td>Day cab или sleeper; 53' и 48' dry van; 53' reefer (по FDA Sanitary Transportation Rule); box truck 16'/26' только dock-height с tuck-under liftgate; контейнеры 20/40/45' (UIIA). Минимума по размеру парка <strong>нет</strong> — один трак подходит.</td><td>Профиль оборудования в Relay</td><td>Cargo van и box truck без dock-height не берут. Для Power Only свой трейлер не нужен вообще.</td></tr>
+                        <tr><td>Регистрация</td><td>Бесплатно. Комиссий за бронирование нет. Заявка занимает ~20 минут, решение — <strong>1–3 недели</strong>.</td><td>relay.amazon.com → Get started</td><td>Подача второй заявки с другого e-mail «чтобы быстрее» = подозрение на мультиаккаунт.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Страховка: где проваливается каждая вторая заявка <span class="ar-badge off">Amazon</span></h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Полис</th><th>Минимум Amazon</th><th>Нюанс</th></tr></thead>
+                    <tbody>
+                        <tr><td>Auto Liability</td><td><strong>$1 000 000</strong> per occurrence</td><td>Стандарт рынка, обычно есть у всех.</td></tr>
+                        <tr><td>Trailer Replacement / Trailer Interchange</td><td><strong>$50 000</strong></td><td class="warn">Главная причина отказов. Для Power Only вы цепляете трейлер Amazon, и Amazon хочет видеть отдельную строку в COI на $50k. У многих полисов по умолчанию стоит $25k или строки нет вовсе — система отклоняет.</td></tr>
+                        <tr><td>Commercial General Liability</td><td><strong>$1 000 000</strong> / <strong>$2 000 000</strong> aggregate</td><td>Owner-operators часто не имеют GL вообще — придётся докупать.</td></tr>
+                        <tr><td>Cargo</td><td><strong>$100 000</strong></td><td>Стандарт.</td></tr>
+                        <tr><td>Workers' Compensation</td><td>По требованиям штата</td><td>Employers Liability $100 000, если есть наёмные водители на W-2.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tip-block warn">
+                <div class="tip-icon">⚠️</div>
+                <div class="tip-text">
+                    <strong>COI забирает не вы, а сторонний вендор Amazon напрямую у вашего страхового агента.</strong>
+                    Вы указываете контакты агента в заявке, вендор запрашивает сертификат и грузит его в систему. Если агент
+                    отвечает неделю — заявка висит. Продление полиса нужно передавать минимум за 5 дней до окончания старого,
+                    иначе аккаунт блокируется на «лапс страховки», и все забронированные грузы слетают. Ориентир стоимости
+                    полного пакета под Relay: $12–18k в год новому перевозчику, $8–14k с историей.
+                </div>
+            </div>
+
+            <h3>Что Amazon требует от водителя <span class="ar-badge off">Amazon</span></h3>
+            <ul class="plain">
+                <li><strong>CDL класса A</strong> (для box truck — по правилам штата) и действующая медицинская карта — это ваша ответственность как перевозчика, Amazon не проверяет, но при инспекции нарушение попадёт в Violation Rate.</li>
+                <li><strong>Верификация личности в приложении Relay:</strong> селфи + фото водительского удостоверения с двух сторон. Проверка занимает около 48 часов.</li>
+                <li><strong>Background check</strong> (с августа 2025 — обязателен для всех новых водителей): через провайдера Amazon, нужны SSN или ITIN и e-mail водителя; проверяются criminal history и MVR.</li>
+                <li><strong>Периодические селфи</strong> на pickup и delivery: приложение сверяет лицо с верифицированным. Водитель, который «одолжил» аккаунт коллеге, блокирует и себя, и перевозчика.</li>
+                <li>Drug &amp; Alcohol программа, HOS, Clearinghouse — обычные федеральные требования, Amazon их не дублирует, но опирается на результаты инспекций.</li>
+            </ul>
+
+            <h3>Кому Relay НЕ подходит</h3>
+            <div class="ar-grid">
+                <div class="ar-card bad"><div class="ic">🆕</div><h4>Authority моложе 180 дней</h4><p>Заявку не примут. Используйте это время, чтобы набрать чистые инспекции и поставить страховку с нужными строками.</p></div>
+                <div class="ar-card bad"><div class="ic">📉</div><h4>Conditional rating или BASIC выше порогов</h4><p>Автоотказ. Сначала работа с safety: DataQ на спорные нарушения, чистые инспекции, потом Relay.</p></div>
+                <div class="ar-card bad"><div class="ic">💸</div><h4>Тот, кто хочет максимальную ставку за милю</h4><p>Relay платит ниже брокерского spot-рынка на 15–30%. Он выигрывает стабильностью, еженедельной оплатой и отсутствием deadhead-поиска, а не ценой.</p></div>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/faq" target="_blank" rel="noopener">relay.amazon.com/faq</a>, <a href="https://relay.amazon.com/blog/intro-to-amazon-relay/understanding-amazon-relay-insurance-requirements" target="_blank" rel="noopener">Understanding Amazon Relay insurance requirements</a>, <a href="https://relay.amazon.com/blog/amazon-relay-truck-requirements" target="_blank" rel="noopener">Amazon Relay truck requirements</a>, <a href="https://relay.amazon.com/blog/intro-to-amazon-relay/driver-eligibility-requirements-to-haul-amazon-loads" target="_blank" rel="noopener">Driver eligibility requirements</a>.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. ОНБОРДИНГ -->
+    <section class="section" id="s3">
+        <div class="container">
+            <h2 class="section-title">3. Онбординг: компания, доступы, водители</h2>
+            <p class="section-text">
+                Онбординг в Relay — это три отдельные процедуры: заявка компании, настройка доступов для диспетчера,
+                подключение каждого водителя. Первую делают один раз, третью — каждый раз, когда в компании появляется
+                новый водитель. Если диспетчер приходит в компанию, которая уже возит Relay, ему нужны только шаги 5–8.
+            </p>
+
+            <h3>Шаг за шагом: заявка компании <span class="ar-badge off">Amazon</span></h3>
+            <div class="ar-steps">
+                <div class="ar-step"><div><h4>Соберите пакет до подачи</h4><p>MC и DOT, EIN, юридический адрес, контакты страхового агента (имя, телефон, e-mail), список оборудования (тип трейлера, количество траков), банковские реквизиты для выплат (их вводит владелец, не диспетчер), W-9. Проверьте SAFER: Entity Type = Carrier, Operation = Interstate, статус Authorized for Property.</p></div></div>
+                <div class="ar-step"><div><h4>Заявка на relay.amazon.com</h4><p>Кнопка «Get started», вход через Amazon-аккаунт компании (заведите отдельный e-mail компании, не личный). Форма занимает около 20 минут: данные компании, оборудование, страховой агент, ответственные лица.</p><p>Один MC — один аккаунт Relay. Второй аккаунт на тот же MC с другого e-mail система расценивает как мультиаккаунт и блокирует оба.</p></div></div>
+                <div class="ar-step"><div><h4>Ожидание COI и проверка FMCSA</h4><p>Вендор Amazon запрашивает COI у вашего агента. Параллельно система тянет данные FMCSA: authority, safety rating, BASIC, инспекции. Диспетчер в это время звонит агенту и просит ответить на запрос вендора в тот же день с правильными строками (см. таблицу страховок выше, особенно Trailer Interchange $50k).</p></div></div>
+                <div class="ar-step"><div><h4>Решение: 1–3 недели</h4><p>Письмо об одобрении или отказе. Причины отказа Amazon не расшифровывает. Если отказ — идите по таблице требований, ищите пункт, который не проходит, исправляйте и подавайте повторно через Support Center (не новой заявкой).</p><p>После одобрения перевозчик стартует с грейдом <strong>Basic</strong> в Relay Rewards и без performance score (он появится после первых 10 грузов).</p></div></div>
+            </div>
+
+            <h3>Доступы: почему диспетчеру нужен Administrator <span class="ar-badge third">по данным перевозчиков</span></h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Роль в Relay</th><th>Что может</th><th>Чего не может</th><th>Кому давать</th></tr></thead>
+                    <tbody>
+                        <tr><td>Primary Administrator</td><td>Всё: банк, налоговые формы (1099), выдача и отзыв доступов, страховка, профиль компании.</td><td>—</td><td>Владелец компании. Один на аккаунт.</td></tr>
+                        <tr><td>Administrator</td><td>Бронирование грузов, ставки на аукционах, Post A Truck, назначение водителей, добавление и удаление водителей, диспуты по оплате и performance.</td><td>Банк, 1099, управление доступами.</td><td class="ok">Диспетчер. Это рабочая роль.</td></tr>
+                        <tr><td>Dispatcher</td><td>Просмотр карты, трипов, статусов, документов.</td><td class="no">Не может бронировать, не может подать диспут, не может добавить водителя.</td><td>Помощник, стажёр, бухгалтер, контроль трекинга в ночную смену.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tip-block warn">
+                <div class="tip-icon">⚠️</div>
+                <div class="tip-text">
+                    Название роли «Dispatcher» вводит в заблуждение: это доступ «только смотреть». Классическая ситуация —
+                    диспетчер видит на борде груз за $3 000, а кнопка Book неактивна, и пока он дозванивается владельцу,
+                    груз уходит. Просите роль Administrator до первого рабочего дня. Отдельный аккаунт (свой e-mail) для
+                    каждого сотрудника, никаких общих логинов: Amazon смотрит, кто нажимал кнопки, при разборе споров.
+                </div>
+            </div>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/portal-scorecard.webp" alt="Веб-портал Amazon Relay: левое меню Dashboard, Trips, Load Board, Auctions, Contracts, Scorecard, Rewards, Payments" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Веб-портал Relay целиком.</strong> Слева — все рабочие разделы диспетчера: Dashboard, Trips (трипы и назначение водителей), Load Board, Auctions, Contracts, Scorecard (performance и safety), Rewards, Payments. Открыт раздел Scorecard → Safety с процентилями FMCSA. Источник: официальный блог Amazon Relay, relay.amazon.com/blog. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Подключение водителя: от инвайта до первого груза</h3>
+            <div class="ar-steps">
+                <div class="ar-step"><div><h4>Инвайт из портала</h4><p>Manage Resources → Driver Roster → Add Driver. Вводите имя, телефон, e-mail водителя, номер CDL и штат. Водителю уходит SMS и письмо со ссылкой на приложение Amazon Relay (iOS/Android) и кодом привязки к вашей компании.</p></div></div>
+                <div class="ar-step"><div><h4>Водитель ставит приложение и проходит верификацию</h4><p>В приложении: селфи, фото CDL с двух сторон, согласие на background check (нужны SSN или ITIN и личный e-mail водителя). Проверка личности — около 48 часов, background check — обычно ещё 1–3 дня. Статус в Driver Roster меняется с <span class="ar-badge amz">Pending</span> на <span class="ar-badge off">Active</span>. Реально это занимает 2–5 рабочих дней.</p></div></div>
+                <div class="ar-step"><div><h4>Обучающие видео</h4><p>Приложение не выпустит водителя на первый груз, пока он не посмотрит короткие ролики Amazon про чек-ин, ярд и работу с трейлером. Диспетчер проверяет в Roster, что обучение пройдено, ДО того как назначать водителя на трип.</p></div></div>
+                <div class="ar-step"><div><h4>Разрешения телефона</h4><p>Геолокация «Всегда» (не «При использовании»), уведомления включены, батарея без режима экономии для приложения Relay. Без этого app usage score начнёт падать с первого же груза. Проверьте вместе с водителем по видеозвонку — это 5 минут, которые экономят 6 недель восстановления score.</p></div></div>
+            </div>
+
+            <div class="ar-mock">
+                <div class="m-bar"><i></i><i></i><i></i> relay.amazon.com → Manage Resources → Driver Roster</div>
+                <div class="m-body">
+                    <div class="m-row"><span><b>Ivanov, Sergei</b> · CDL-A TX · +1 (469) ···-··90</span><span class="m-pill g">Active</span><span>Training ✓ · ID ✓ · BGC ✓</span></div>
+                    <div class="m-row"><span><b>Petrov, Andrei</b> · CDL-A IL · +1 (773) ···-··12</span><span class="m-pill o">Pending</span><span>Training — · ID ✓ · BGC in progress</span></div>
+                    <div class="m-row"><span><b>Kim, Daniel</b> · CDL-A CA · +1 (818) ···-··55</span><span class="m-pill r">Inactive</span><span>ID verification failed — resubmit</span></div>
+                    <div class="m-row" style="justify-content:flex-end"><span class="m-btn sec">Add driver</span></div>
+                </div>
+                <div class="m-caption">Схема раздела Driver Roster (не скриншот). Диспетчер назначает на трипы только водителей со статусом Active и пройденным обучением.</div>
+            </div>
+
+            <h3>Чек-лист «до первого груза»</h3>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🏢</span>Аккаунт компании одобрен, роль Administrator у диспетчера<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Зайдите под своим логином, откройте Load Board и убедитесь, что кнопка Book активна на любом грузе (нажимать не нужно). Если серая — у вас роль Dispatcher.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🛡️</span>COI в системе, дата окончания полиса записана в календарь<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Профиль компании → Insurance. Поставьте напоминание за 14 дней до окончания: агенту нужно время, вендору Amazon — до 5 дней на обработку.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🚛</span>Оборудование внесено: трак (VIN, номер, штат), трейлер (если свой)<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Для Power Only трейлер не добавляется. Номер трака должен совпадать с реальным — на воротах Amazon камеры читают номера.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">👤</span>Водитель Active, обучение пройдено, геолокация «Всегда»<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Проверьте статус в Driver Roster и попросите водителя прислать скриншот настроек геолокации для приложения Relay.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">📱</span>У водителя есть ваш номер, у вас — его, и вы оба знаете, как открыть Support в приложении<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Первый груз лучше ставить на будний день в рабочие часы, чтобы диспетчер был на связи от чек-ина до чек-аута.</p></div></li>
+                </ul>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-to-become-a-carrier-for-amazon-relay" target="_blank" rel="noopener">How to become a carrier for Amazon Relay</a>, <a href="https://relay.amazon.com/blog/how-truckers-use-the-amazon-relay-mobile-app" target="_blank" rel="noopener">How truckers use the Amazon Relay mobile app</a>. Описание ролей — по опыту перевозчиков; названия ролей в вашем аккаунте могут отличаться.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. ТИПЫ ФРАХТА -->
+    <section class="section" id="s4">
+        <div class="container">
+            <h2 class="section-title">4. Типы фрахта в Relay: борд, Post A Truck, контракты, блоки</h2>
+            <p class="section-text">
+                В Relay нет одного «load board» в привычном смысле. Есть четыре способа получить груз, и они
+                открываются по мере роста performance score. Новый перевозчик видит только spot-борд и Post A Truck.
+                Аукционы контрактов — с грейда C+, сами контракты — с B. Диспетчер должен понимать все четыре, потому что
+                хорошая неделя с Amazon обычно собирается из их комбинации.
+            </p>
+
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Способ</th><th>Что это</th><th>Ставка</th><th>Доступ</th><th>Для кого</th></tr></thead>
+                    <tbody>
+                        <tr><td>Load Board (spot)</td><td>Разовые грузы: one-way, round trip и короткие блоки. Кнопка <strong>Book now</strong> — фиксированная ставка, бронируется мгновенно. Кнопка <strong>Bid</strong> — предлагаете свою цену, Amazon выбирает.</td><td>All-in, указана в карточке. Торга нет.</td><td>Все грейды</td><td>Заполнить дыры в расписании, backhaul из региона Amazon.</td></tr>
+                        <tr><td>Post A Truck</td><td>Вы публикуете трак: где стоит, когда свободен, тип трейлера, водитель solo/team, <strong>минимальная ставка за милю</strong>. Система сама подбирает и бронирует груз под ваши условия.</td><td>Ваш минимум или выше.</td><td>Все грейды</td><td>Когда трак освобождается в известное время и вам некогда сидеть на борде.</td></tr>
+                        <tr><td>Auctions (контракты)</td><td>Аукцион недельных контрактов на 1–10 недель вперёд (планирование до 6 месяцев). Вы называете цену за блок, видите лидирующий бид и таймер. Побеждает сочетание цены и performance.</td><td>Ваш бид.</td><td>Грейд C+ (reefer — B, часть box truck — B+)</td><td>Стабильный недельный доход на постоянном лейне.</td></tr>
+                        <tr><td>Contracts</td><td>Выигранный аукцион превращается в контракт: каждую неделю те же блоки на тех же лейнах. Виды: full-week, partial-week, reservation (3 блока в неделю), standby.</td><td>Зафиксирована на срок контракта.</td><td>Грейд B и выше</td><td>Компания с 2+ траками, которой нужен предсказуемый план.</td></tr>
+                        <tr><td>Equipment auction</td><td>Отдельно: сдать свой 53' dry van в аренду Amazon за фиксированную сумму в неделю. Требования: CARB/SmartWay, юбки, свежая DOT-инспекция; Amazon ставит GPS и наклейки.</td><td>$/трейлер/неделя</td><td>По приглашению в портале</td><td>У кого простаивают трейлеры.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ar-fig-row">
+                <figure class="ar-fig">
+                    <img src="../img/amazon-relay/post-a-truck.webp" alt="Интерфейс Post A Truck в Amazon Relay" loading="lazy" width="1000" height="563">
+                    <figcaption><strong>Post A Truck.</strong> Диспетчер задаёт локацию, окно доступности и минимальную ставку; Match Outlook показывает, насколько реально найти груз под эти условия. Источник: блог Amazon Relay. © Amazon.</figcaption>
+                </figure>
+                <figure class="ar-fig">
+                    <img src="../img/amazon-relay/post-a-truck-form.webp" alt="Форма Create Post A Truck order" loading="lazy" width="1000" height="563">
+                    <figcaption><strong>Форма создания поста.</strong> Трак, трейлер, водитель, дата и время, радиус, минимум за милю. Система бронирует груз без вашего участия — учтите это, если водитель может задержаться. Источник: блог Amazon Relay. © Amazon.</figcaption>
+                </figure>
+            </div>
+
+            <h3>Что такое «блок» и почему это главная единица Relay <span class="ar-badge off">Amazon</span></h3>
+            <p class="section-text">
+                <strong>Block</strong> — это оплачиваемое окно времени, внутри которого Amazon назначает вам два и более трипа.
+                Вы покупаете не груз, а время трака: например, 13 часов в субботу. Amazon сам решает, что в эти 13 часов
+                водитель повезёт. Ключевое свойство: <strong>блок оплачивается полностью, даже если Amazon использовал
+                его не целиком</strong>. Перевозчики называют цепочку трипов внутри блока «tour» — это жаргон, в официальных
+                документах слова «tour» нет.
+            </p>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Типовой блок</th><th>Длительность</th><th>Кто ведёт</th><th>Оборудование</th><th>Как выглядит на практике</th></tr></thead>
+                    <tbody>
+                        <tr><td>5 × 13 ч</td><td>Пять дневных блоков по 13 часов</td><td>Solo</td><td>Day cab подходит</td><td>Локальные челноки между FC и SC/DS в одном регионе, водитель ночует дома. Самый частый контракт для small carrier.</td></tr>
+                        <tr><td>3 × 37 ч</td><td>Три блока по полтора суток</td><td>Solo</td><td>Sleeper обязателен</td><td>Региональный out-and-back: уехал, переночевал в траке, вернулся. 3 блока = 111 часов на неделе.</td></tr>
+                        <tr><td>1 × 109 ч</td><td>Один блок ~5 дней</td><td>Solo</td><td>Sleeper</td><td>Длинный региональный или межрегиональный круг с несколькими стопами.</td></tr>
+                        <tr><td>1 × 119 ч</td><td>Один блок ~5 дней</td><td>Team</td><td>Sleeper</td><td>Трансконтинентальные плечи без остановок; team едет почти круглосуточно.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Power Only и drop-and-hook: как выглядит большинство грузов <span class="ar-badge off">Amazon</span></h3>
+            <p class="section-text">
+                Amazon владеет более чем 80 000 трейлеров, и <strong>большинство грузов Relay — Power Only</strong>: вы приезжаете
+                на тягаче, цепляете уже загруженный трейлер Amazon, везёте, отцепляете на площадке назначения, цепляете
+                следующий. Живая погрузка (live load) встречается, но реже. Это меняет экономику: свой трейлер не нужен,
+                время на площадке в идеале 20–40 минут, но появляется ответственность за чужое имущество (отсюда Trailer
+                Interchange в страховке) и обязанность осматривать трейлер перед выездом.
+            </p>
+            <div class="ar-grid">
+                <div class="ar-card good"><div class="ic">✅</div><h4>Плюсы Power Only</h4><p>Не нужен свой трейлер и его страховка/обслуживание. Быстрый оборот на площадке. Много грузов на короткое плечо для day cab.</p></div>
+                <div class="ar-card"><div class="ic">🔍</div><h4>Обязанность: инспекция трейлера</h4><p>Приложение требует пройти Trailer Inspection перед выездом: фото, шины, свет, пломба. Повреждение, не зафиксированное на инспекции, вешается на вас.</p></div>
+                <div class="ar-card bad"><div class="ic">⛔</div><h4>Риск: «нет пустого трейлера»</h4><p>На дропе может не оказаться пустого для следующего трипа. Это классическая проблема Relay — разбираем в разделе 9.</p></div>
+            </div>
+
+            <div class="ar-fig-row">
+                <figure class="ar-fig">
+                    <img src="../img/amazon-relay/contracts.webp" alt="Вкладка Contracts в Amazon Relay" loading="lazy" width="1000" height="563">
+                    <figcaption><strong>Раздел Contracts.</strong> Здесь видны доступные аукционы и уже выигранные контракты с их блоками по неделям. Источник: блог Amazon Relay. © Amazon.</figcaption>
+                </figure>
+                <figure class="ar-fig">
+                    <img src="../img/amazon-relay/contracts-filters.webp" alt="Фильтры контрактов в Amazon Relay" loading="lazy" width="1000" height="563">
+                    <figcaption><strong>Фильтры аукционов.</strong> Регион, тип блока, solo/team, тип трейлера, даты старта. Диспетчер настраивает их один раз под свой парк. Источник: блог Amazon Relay. © Amazon.</figcaption>
+                </figure>
+            </div>
+
+            <h3>Как работает аукцион контракта</h3>
+            <div class="ar-steps">
+                <div class="ar-step"><div><h4>Найти аукцион</h4><p>Auctions → фильтр по региону и типу блока. В карточке: лейн или регион, дни недели, длительность блоков, дата старта, число недель, ориентировочный пробег в блоке, текущий лидирующий бид и время до закрытия.</p></div></div>
+                <div class="ar-step"><div><h4>Посчитать цену блока</h4><p>Не за милю, а за блок: (ожидаемые мили × ваша себестоимость за милю) + оплата водителя за часы блока + прибыль. Помните, что deadhead к старту блока и домой Amazon не оплачивает. Считайте худший сценарий: полный блок с максимальным пробегом.</p></div></div>
+                <div class="ar-step"><div><h4>Поставить бид</h4><p>«Name your price»: ставите сумму за блок. Можно bulk-bid на несколько недель сразу с нижней границей. Побеждает не самая низкая цена, а комбинация цены и performance score — перевозчик с A+ может выиграть, будучи дороже.</p></div></div>
+                <div class="ar-step"><div><h4>Выигрыш = обязательство</h4><p>С момента выигрыша блоки появляются в Trips. Отказ от блока бьёт по Acceptance: больше чем за 24 часа до старта — обычный штраф (×1), меньше чем за 24 часа или после старта — четырёхкратный (×4). Отказ от контракта целиком: за 3+ недели ×1, меньше ×2.</p></div></div>
+            </div>
+            <figure class="ar-fig phone">
+                <img src="../img/amazon-relay/auction-bid.webp" alt="Ставка на аукционе в мобильном приложении Relay" loading="lazy" width="375" height="500">
+                <figcaption><strong>Ставка на аукционе с телефона.</strong> Видны лидирующий бид и таймер. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-to-use-amazon-relays-load-board" target="_blank" rel="noopener">How to use Amazon Relay's load board</a>, <a href="https://relay.amazon.com/blog/amazon-trucking-contracts" target="_blank" rel="noopener">Amazon trucking contracts</a>, <a href="https://relay.amazon.com/blog/load-types-programs/power-only-loads-on-amazon-relay" target="_blank" rel="noopener">Power Only loads on Amazon Relay</a>, <a href="https://relay.amazon.com/blog/trailer-auctions-how-to-rent-equipment-to-amazon" target="_blank" rel="noopener">Trailer auctions</a>.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. ПОИСК И БРОНИРОВАНИЕ -->
+    <section class="section" id="s5">
+        <div class="container">
+            <h2 class="section-title">5. Как диспетчер ищет и бронирует груз на борде</h2>
+            <p class="section-text">
+                Борд Relay похож на DAT только внешне. Главные отличия: ставка уже включает топливо и толлы, торговаться
+                не с кем, груз можно забронировать одной кнопкой без звонка и без rate confirmation по e-mail, а обновление
+                списка идёт примерно каждые 30 секунд. Зато здесь нельзя «подержать» груз: нажали Book — вы обязаны его отвезти.
+            </p>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/loadboard-web.webp" alt="Веб-версия Load Board в Amazon Relay со списком грузов" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Load Board в браузере.</strong> Вкладки It's a match (подобранные под ваш профиль) и Hot Loads (срочные, часто с повышенной ставкой). В строке груза: коды площадок (например CDW5 → JFK8), мили, тип трейлера, live или drop, окно pickup, ставка. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Как читать карточку груза</h3>
+            <div class="ar-mock">
+                <div class="m-bar"><i></i><i></i><i></i> Load Board → карточка груза</div>
+                <div class="m-body">
+                    <div class="m-row"><span><b>CDW5</b> Carteret, NJ → <b>JFK8</b> Staten Island, NY</span><span class="m-pill">One-way · 2 stops</span><span><b>$412</b> all-in</span></div>
+                    <div class="m-row"><span>Pickup: <b>Thu 09/04 · 22:00–23:00</b></span><span>Delivery: <b>Fri 09/05 · 02:30</b></span><span class="m-pill gr">38 mi · ~1 h 20 min</span></div>
+                    <div class="m-row"><span>Trailer: <b>53' Dry Van · Amazon trailer</b></span><span class="m-pill g">Drop / Hook</span><span>Driver: Solo</span></div>
+                    <div class="m-row"><span>Deadhead to origin: <b>17 mi</b> (не оплачивается)</span><span>Toll: included</span><span>FSC: included</span></div>
+                    <div class="m-row" style="justify-content:flex-end;gap:10px"><span class="m-btn sec">Bid</span><span class="m-btn">Book now</span></div>
+                </div>
+                <div class="m-caption">Схема карточки (не скриншот). Цифры условные. Обратите внимание: 38 миль за $412 — это $10,8/милю, но реальная экономика — это два часа работы ночью плюс 17 миль deadhead и обратный порожний путь.</div>
+            </div>
+
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Поле</th><th>На что смотреть</th><th>Ловушка</th></tr></thead>
+                    <tbody>
+                        <tr><td>Коды площадок</td><td>Регион и тип объекта (FC/SC/DS). Знакомый код = вы знаете, сколько там стоят на воротах.</td><td>DS ночью может быть закрыт для въезда раньше окна — уточняйте по своей таблице кодов.</td></tr>
+                        <tr><td>Окно pickup</td><td>Обычно 1 час. Чек-ин в приложении должен попасть в окно, иначе опоздание.</td><td>«Arrive by» считается по таймстампу чек-ина в приложении, а не по факту приезда на парковку.</td></tr>
+                        <tr><td>Stops</td><td>Число стопов. 2 стопа = pickup + delivery. 4–6 стопов = мини-блок с несколькими площадками.</td><td>Каждый стоп — своё окно и свой риск опоздания. Время между стопами уже посчитано Amazon без запаса.</td></tr>
+                        <tr><td>Live / Drop</td><td>Drop — приехал, отцепил, прицепил, уехал. Live — стоите под погрузкой.</td><td>Live на IXD в пик — это 2–4 часа. Детеншн Amazon начисляет не всегда автоматически.</td></tr>
+                        <tr><td>Trailer status</td><td>Loaded / Empty / Amazon trailer / Your trailer.</td><td>Если требуется свой трейлер, а у вас Power Only — фильтр должен это отсеять; проверьте настройки профиля.</td></tr>
+                        <tr><td>Ставка all-in</td><td>Base + fuel surcharge + tolls в одной сумме. Что видите, то и получите.</td><td>Deadhead к origin и от destination не входит никогда. Считайте полный круг.</td></tr>
+                        <tr><td>Book now / Bid</td><td>Book now — мгновенно ваш. Bid — Amazon выберет лучшее предложение к дедлайну.</td><td>Бид, который Amazon принял, — это тоже обязательство. Не ставьте биды на грузы, которые не сможете отвезти при выигрыше.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Расчёт: брать или не брать</h3>
+            <p class="section-text">
+                Считайте не ставку за милю по карточке, а <strong>доход на час трака за полный круг</strong>. Формула диспетчера:
+            </p>
+            <div class="glass-card" style="margin-bottom:24px">
+                <p style="font-size:15px;color:var(--text-secondary);line-height:1.9">
+                    <strong style="color:var(--text-primary)">Реальный RPM</strong> = ставка all-in ÷ (deadhead к origin + мили груза + deadhead к следующему грузу или домой)<br>
+                    <strong style="color:var(--text-primary)">Доход в час</strong> = ставка all-in ÷ (время в пути + время на площадках + deadhead-время)<br><br>
+                    Пример: $412 за 38 миль. Deadhead 17 миль туда, 20 миль обратно на базу. Итого 75 миль → реальный RPM $5,49. Время: 40 мин deadhead + 1 ч 20 мин груз + 30 мин на каждой площадке + 40 мин домой ≈ 3 ч 40 мин → <strong style="color:var(--success)">$112 в час</strong>. Для ночного локального плеча это отлично. Тот же расчёт для «$1 850 за 900 миль» с 120 милями deadhead даёт $1,81/милю и около $95 в час с учётом сна водителя — уже спорно.
+                </p>
+            </div>
+
+            <div class="lv" data-visual-for="">
+                <div class="lv-head">
+                    <span class="lv-title">Ставки Relay по дистанции: ориентир 2025–2026, 53' dry van</span>
+                    <span class="lv-note">$/милю all-in, по данным перевозчиков</span>
+                </div>
+                <div class="lv-rows" data-div="5" style="--div:5">
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">10–75 миль (локал)</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:100%"></span></span><span class="lv-row-value">$2,50–4,00+</span></div></div>
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">75–200 миль</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:75%"></span></span><span class="lv-row-value">$2,25–3,00</span></div></div>
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">200–500 миль</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:62%"></span></span><span class="lv-row-value">$2,10–2,75</span></div></div>
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">500+ миль</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:50%"></span></span><span class="lv-row-value">$1,85–2,50</span></div></div>
+                </div>
+                <div class="lv-legend"><span>Диапазоны сведены из нескольких открытых обзоров перевозчиков за 2025–2026; на коротком плече за милю платят больше, но и часов на площадках больше. Amazon официальных ставок не публикует. Сезонность: январь–сентябрь ниже, октябрь–январь и недели вокруг Prime Day заметно выше.</span></div>
+            </div>
+
+            <h3>Правила бронирования, которые нельзя нарушать</h3>
+            <div class="ar-grid two">
+                <div class="ar-card bad"><div class="ic">⏳</div><h4>Забронированный груз «истёк» = отказ</h4><p>Если вы забронировали груз и не назначили водителя / водитель не начал трип к сроку, система снимает груз и засчитывает это как rejection в Acceptance score. Бронируйте только то, на что есть конкретный водитель прямо сейчас.</p></div>
+                <div class="ar-card bad"><div class="ic">🔁</div><h4>Двойной букинг</h4><p>Один трак на два пересекающихся трипа система может пропустить, если трак не привязан жёстко. Дальше — отказ от одного из них с полным штрафом. Держите календарь траков вне Relay.</p></div>
+                <div class="ar-card"><div class="ic">🔄</div><h4>Reload-подсказки</h4><p>После бронирования борд предлагает следующий груз из точки доставки. Это самый дешёвый способ убрать пустой обратный путь. Смотрите сразу при бронировании, а не после доставки.</p></div>
+                <div class="ar-card"><div class="ic">🔥</div><h4>Hot Loads и Relay Assistant</h4><p>Срочные грузы получают повышенную ставку. Для перевозчиков с высоким грейдом Relay Assistant (ИИ-помощник в приложении) может предложить контроффер на срочный spot-груз — единственный случай «переговоров» в Relay.</p></div>
+            </div>
+            <figure class="ar-fig phone">
+                <img src="../img/amazon-relay/app-loadboard.webp" alt="Load Board в мобильном приложении Amazon Relay" loading="lazy" width="273" height="592">
+                <figcaption><strong>Тот же борд в приложении.</strong> Видны deadhead до origin и ставка. Диспетчер работает в браузере, но с телефона удобно ловить Hot Loads вне офиса. Источник: страница приложения Amazon Relay в Google Play. © Amazon.</figcaption>
+            </figure>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-to-use-amazon-relays-load-board" target="_blank" rel="noopener">How to use Amazon Relay's load board</a>, <a href="https://relay.amazon.com/blog/intro-to-amazon-relay/understanding-amazon-relay-rates" target="_blank" rel="noopener">Understanding Amazon Relay rates</a>. Диапазоны ставок — открытые обзоры перевозчиков (otrucking, truckdispatchexperts, carrierproacademy), не Amazon.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. НАЗНАЧЕНИЕ ВОДИТЕЛЯ -->
+    <section class="section" id="s6">
+        <div class="container">
+            <h2 class="section-title">6. Назначение водителя и трака на трип</h2>
+            <p class="section-text">
+                Забронированный груз появляется в разделе <strong>Trips</strong>. Пока на нём нет водителя, для Amazon это
+                «груз без исполнителя», и за час-два до окна pickup система начнёт слать предупреждения, а потом снимет груз
+                как rejection. Назначение — это то, что диспетчер делает сразу после Book, а не «когда водитель проснётся».
+            </p>
+
+            <div class="ar-steps">
+                <div class="ar-step"><div><h4>Trips → выбрать трип → Assign driver</h4><p>В списке появятся только водители со статусом Active. Выбираете водителя и трак (для Power Only — только трак). Водителю в приложение приходит push с трипом и кнопкой «Begin work» на день старта.</p></div></div>
+                <div class="ar-step"><div><h4>Проверить совпадение данных</h4><p>Номер трака и штат в Relay должны совпадать с реальным траком: на воротах Amazon камеры читают номера, и расхождение — причина отказа во въезде. Водитель в приложении = водитель за рулём: селфи-проверка на площадке это подтверждает.</p></div></div>
+                <div class="ar-step"><div><h4>Переназначить, если что-то поменялось</h4><p>Рядом с именем водителя — крестик. Снимаете, назначаете другого. Делайте это до начала трипа; замена водителя после Begin work требует обращения в Support и попадает в Disruption-free score.</p></div></div>
+                <div class="ar-step"><div><h4>Отправить водителю бриф</h4><p>Приложение покажет водителю адреса, окна и инструкции, но не покажет вашу логику: где парковаться до окна, кому звонить, что делать при задержке. Короткое сообщение с планом (шаблон ниже) экономит два звонка ночью.</p></div></div>
+            </div>
+
+            <div class="ar-fig-row">
+                <figure class="ar-fig">
+                    <img src="../img/amazon-relay/app-trip-begin.webp" alt="Экраны приложения Amazon Relay: навигация, трип с кнопкой Begin work, load board" loading="lazy" width="768" height="432">
+                    <figcaption><strong>Что видит водитель.</strong> Слева направо: навигация, карточка трипа со стопами и кнопкой Begin work, борд. Водитель не видит ставку и не может бронировать — только исполняет. Источник: relay.amazon.com/get-started. © Amazon.</figcaption>
+                </figure>
+                <figure class="ar-fig phone">
+                    <img src="../img/amazon-relay/app-schedule.webp" alt="Расписание стопов трипа в приложении Amazon Relay" loading="lazy" width="273" height="592">
+                    <figcaption><strong>Расписание блока.</strong> Шесть стопов с окнами по времени. Каждый стоп — отдельный чек-ин и отдельный риск опоздания. Источник: Google Play, страница приложения Amazon Relay. © Amazon.</figcaption>
+                </figure>
+            </div>
+
+            <h3>Что важно знать о стороне водителя <span class="ar-badge off">Amazon</span></h3>
+            <ul class="plain">
+                <li><strong>Водитель не видит деньги.</strong> Ставки, биды, выплаты — только у Administrator. Это удобно: водитель не спорит о цене груза, но и не мотивирован «ловить» дорогие грузы сам.</li>
+                <li><strong>Водитель не может бронировать.</strong> Всё бронирование — через портал компании. Если водитель хочет «взять ещё один», он звонит вам.</li>
+                <li><strong>Cancellation alert за 5 часов.</strong> Если Amazon отменяет трип, водитель получает уведомление за 5 часов до старта. Диспетчер видит отмену в Trips раньше — проверяйте Trips утром перед каждым блоком.</li>
+                <li><strong>Приложение ведёт по шагам.</strong> Check In → Pick Up (Dock Door, Verify Trailer ID) → Drop Off (Trailer Detach, Inspection). Каждый шаг с таймстампом. Пропущенный шаг = минус к App usage.</li>
+                <li><strong>Погода и навигация внутри.</strong> Truck-friendly маршрут до конкретной двери, погодные алерты каждые 10 минут по маршруту. Водитель может ехать по своему навигатору, но шаги в приложении Relay всё равно обязательны.</li>
+            </ul>
+
+            <h3>Шаблон брифа водителю перед трипом</h3>
+            <div class="glass-card">
+                <p style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.9;color:var(--text-secondary);white-space:pre-wrap">Трип T-112576GH5, чт 09/04.
+1) CDW5 Carteret NJ — окно 22:00–23:00. Приезжай к 21:15, парковка ожидания — справа от въезда, до ворот НЕ заезжай раньше 21:45.
+2) Чек-ин в приложении сразу как встал в очередь на ворота, не после.
+3) Трейлер Amazon, drop-and-hook. Инспекция трейлера в приложении: 6 фото + пломба + шины. Пломба не совпадает с BOL — не выезжай, звони мне.
+4) JFK8 Staten Island — 02:30. Толлы включены, едешь по Goethals.
+5) На JFK8 отцепил → Drop Off в приложении → ищем reload, я скину.
+6) Любая задержка больше 30 минут на площадке — сообщение мне с временем и скрином экрана приложения.
+Я на связи всю ночь: +1 ···.</p>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-truckers-use-the-amazon-relay-mobile-app" target="_blank" rel="noopener">How truckers use the Amazon Relay mobile app</a>, <a href="https://relay.amazon.com/get-started" target="_blank" rel="noopener">relay.amazon.com/get-started</a>. Порядок кнопок в Trips — по опыту перевозчиков.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. ВОДИТЕЛЬ НА ПЛОЩАДКЕ -->
+    <section class="section" id="s7">
+        <div class="container">
+            <h2 class="section-title">7. Водитель на площадке Amazon: ворота, ярд, трейлер</h2>
+            <p class="section-text">
+                Площадка Amazon — это не склад брокерского шиппера, где охранник записывает номер в тетрадь. Это
+                автоматизированный ярд: ворота открываются по QR-коду или по номеру трака, инструкции выводятся на мониторы и в
+                приложение, а выезд контролируют датчики на трейлере. Всё, что водитель делает не по процедуре, система видит.
+                Задача диспетчера — чтобы водитель знал процедуру до первого визита.
+            </p>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/app-trip-steps.webp" alt="Шаги трипа в приложении Amazon Relay: Check In с QR-кодом, Pick Up с номером двери и проверкой трейлера, Drop Off с инспекцией" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Три экрана, которые водитель проходит на каждом стопе.</strong> Check In: Load ID и QR-код («present this QR code»), время Arrive by. Pick Up: номер двери (Dock Door), подтверждение Trailer ID. Drop Off: Trailer Detach и Inspection Complete. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Что происходит на воротах и в ярде <span class="ar-badge off">Amazon</span></h3>
+            <svg class="ar-svg" viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Путь водителя на площадке Amazon">
+                <defs><marker id="arw2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ff9900"/></marker></defs>
+                <g font-size="12" fill="var(--text-secondary)">
+                    <g stroke="#ff9900" stroke-width="2.5" fill="none" marker-end="url(#arw2)">
+                        <path d="M170 90 H198"/><path d="M370 90 H398"/><path d="M570 90 H598"/><path d="M770 90 H798"/>
+                    </g>
+                    <rect x="20" y="50" width="150" height="80" rx="14" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+                    <text x="95" y="80" text-anchor="middle" font-weight="800" fill="#06b6d4">1. До приезда</text>
+                    <text x="95" y="100" text-anchor="middle" font-size="11">Gate Pass (QR) в app</text>
+                    <text x="95" y="116" text-anchor="middle" font-size="11">данные трака и трейлера</text>
+                    <rect x="200" y="50" width="170" height="80" rx="14" fill="rgba(255,153,0,.10)" stroke="rgba(255,153,0,.5)"/>
+                    <text x="285" y="80" text-anchor="middle" font-weight="800" fill="#ff9900">2. Ворота</text>
+                    <text x="285" y="100" text-anchor="middle" font-size="11">скан QR / номера трака</text>
+                    <text x="285" y="116" text-anchor="middle" font-size="11">Check In = таймстамп on-time</text>
+                    <rect x="400" y="50" width="170" height="80" rx="14" fill="rgba(14,165,233,.10)" stroke="rgba(14,165,233,.5)"/>
+                    <text x="485" y="80" text-anchor="middle" font-weight="800" fill="#0ea5e9">3. Ярд</text>
+                    <text x="485" y="100" text-anchor="middle" font-size="11">монитор / app: дверь или слот</text>
+                    <text x="485" y="116" text-anchor="middle" font-size="11">in-yard instructions</text>
+                    <rect x="600" y="50" width="170" height="80" rx="14" fill="rgba(16,185,129,.10)" stroke="rgba(16,185,129,.5)"/>
+                    <text x="685" y="80" text-anchor="middle" font-weight="800" fill="#10b981">4. Трейлер</text>
+                    <text x="685" y="100" text-anchor="middle" font-size="11">отцепить / прицепить</text>
+                    <text x="685" y="116" text-anchor="middle" font-size="11">Trailer ID + инспекция + пломба</text>
+                    <rect x="800" y="50" width="180" height="80" rx="14" fill="rgba(239,68,68,.08)" stroke="rgba(239,68,68,.4)"/>
+                    <text x="890" y="80" text-anchor="middle" font-weight="800" fill="#ef4444">5. Выезд</text>
+                    <text x="890" y="100" text-anchor="middle" font-size="11">датчики сверяют трейлер и BOL</text>
+                    <text x="890" y="116" text-anchor="middle" font-size="11">Check Out в app, e-BOL</text>
+                    <text x="500" y="180" text-anchor="middle" font-size="12" fill="var(--text-soft)">Каждый этап оставляет таймстамп в приложении. По этим таймстампам Amazon считает on-time и app usage, а вы — детеншн для диспута.</text>
+                    <text x="500" y="205" text-anchor="middle" font-size="12" fill="var(--text-soft)">Живая погрузка добавляет между 3 и 4 ожидание у двери; drop-and-hook в норме укладывается в 20–40 минут.</text>
+                </g>
+            </svg>
+
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Этап</th><th>Что делает водитель</th><th>Что контролирует диспетчер</th></tr></thead>
+                    <tbody>
+                        <tr><td>Подъезд</td><td>Приезжает к площадке за 30–45 минут до окна, ждёт на разрешённой парковке ожидания, не блокирует подъезд к воротам. В приложении заранее введены трак и трейлер — получен Gate Pass с QR-кодом.</td><td>Видит по трекингу, что трак рядом. Если водитель приехал сильно раньше — напоминает не заезжать до окна: на некоторых площадках ранний въезд не разрешают.</td></tr>
+                        <tr><td>Ворота</td><td>Показывает QR на сканере или ворота читают номер трака. Нажимает Check In в приложении в момент прибытия к воротам. На воротах без автоматики — охраннику называет Load ID.</td><td>Проверяет, что таймстамп Check In попал в окно. Если водитель забыл нажать — звонит немедленно: чем позже нажмёт, тем больше «опоздание».</td></tr>
+                        <tr><td>Ярд</td><td>Читает на мониторе или в приложении номер двери (live) или слота (drop). Едет по разметке ярда, скорость — как написано на знаках (обычно 5–10 mph). Не паркуется в чужих слотах.</td><td>При «нет слота / нет двери» — водитель фотографирует экран приложения, диспетчер пишет в Support с таймстампом.</td></tr>
+                        <tr><td>Трейлер (drop)</td><td>Отцепляет свой/приехавший трейлер в указанном слоте, подтверждает Trailer Detach в приложении. Находит указанный трейлер для следующего трипа, сверяет номер (Verify Trailer ID), проходит Trailer Inspection: фото, шины, свет, двери, пломба.</td><td>Инспекция — единственная защита от чужих повреждений. Требует от водителя не пропускать её ни при каких обстоятельствах.</td></tr>
+                        <tr><td>Трейлер (live)</td><td>Ставится к двери, открывает двери трейлера по требованию, ждёт погрузки. Фиксирует время постановки к двери и время окончания погрузки.</td><td>Считает ожидание от Check In. При превышении 2 часов — готовит скрины для диспута детеншна.</td></tr>
+                        <tr><td>Пломба</td><td>Сверяет номер пломбы с BOL в приложении. Не срывает пломбу сам ни при каких условиях. Фотографирует пломбу крупно с читаемым номером.</td><td>Правила Amazon по пломбам публично не описаны; общее правило отрасли: несовпадение номера — не выезжать, звонить в Support до выезда.</td></tr>
+                        <tr><td>Выезд</td><td>На выезде датчики/RFID сверяют, что уезжает правильный трейлер с правильным грузом. Электронный BOL и POD формируются в приложении. Нажимает завершение шага.</td><td>Видит статус в трипе. Если у водителя «не отпускают» на выезде — обычно расхождение номера трейлера; проверяет Trailer ID в трипе.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ar-mock" style="max-width:380px">
+                <div class="m-bar"><i></i><i></i><i></i> Amazon Relay app → Check In</div>
+                <div class="m-body" style="text-align:center">
+                    <div style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">Gate Pass</div>
+                    <div style="font-size:18px;font-weight:800;color:#fff;margin:4px 0">Load 1A2B3C4D</div>
+                    <div class="m-qr"></div>
+                    <div style="font-size:12px;color:#94a3b8">Present this QR code at the gate</div>
+                    <div class="m-row" style="margin-top:12px"><span>Truck</span><b>TX 4821-AB</b></div>
+                    <div class="m-row"><span>Arrive by</span><b>22:00–23:00</b></div>
+                    <div class="m-btn" style="display:block;margin-top:8px">Check In</div>
+                </div>
+                <div class="m-caption">Схема экрана Gate Pass (не скриншот). Настоящий QR-экран показан выше на официальном изображении Amazon.</div>
+            </div>
+
+            <h3>Скрипт диспетчера для водителя-новичка: 10 правил на площадке Amazon</h3>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">1️⃣</span>Check In нажимаешь в момент, когда встал в очередь к воротам, а не после<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>On-time считается по таймстампу кнопки. Приехал в 22:05, нажал в 22:40 после разговора с охраной — для Amazon ты опоздал на 40 минут, хотя окно до 23:00 и ты в нём. Правило простое: подъехал — нажал.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">2️⃣</span>Приложение открыто и геолокация включена от Begin work до последнего Drop Off<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Половина App usage score — это доступность геолокации. Закрыл приложение на заправке, телефон разрядился — score падает. Зарядка в кабине, режим экономии батареи для Relay выключен.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">3️⃣</span>Инспекцию трейлера делаешь всегда, даже если торопишься<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Шесть сторон, шины, свет, двери, пол, пломба. Царапина, которую ты не сфотографировал на инспекции, на следующей площадке станет твоей. Инспекция — это твоя страховка, а не формальность Amazon.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">4️⃣</span>Номер трейлера сверяешь три раза: в приложении, на трейлере, на BOL<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Похожие номера в соседних слотах — обычная история. Увёз не тот трейлер — на выезде не выпустят датчики, а если выпустили, это уже инцидент с Disruption-free score и звонком из Amazon.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">5️⃣</span>Пломбу не срываешь никогда, номер фотографируешь крупно<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Не совпадает с BOL — стоишь на месте и звонишь диспетчеру, диспетчер пишет в Support. Выехал с чужой пломбой — на разгрузке это вопрос о целостности груза, и ответ будет искать у тебя.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">6️⃣</span>Селфи по запросу приложения делаешь сразу и сам<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Приложение сверяет лицо с верифицированным водителем. Попытка «подменить» водителя блокирует аккаунт водителя и создаёт проблему перевозчику вплоть до suspension.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">7️⃣</span>В ярде — скорость по знакам, парковка только в своём слоте, телефон не в руках за рулём<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Ярды Amazon под камерами. Нарушение правил ярда — это жалоба на перевозчика, а повторная — блокировка на конкретной площадке.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">8️⃣</span>Любое ожидание дольше 30 минут — сообщение диспетчеру с временем и скрином<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Не через два часа, когда уже нервы, а через 30 минут. Диспетчеру нужно время, чтобы открыть тикет в Support пока ситуация ещё длится: диспут задним числом слабее.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">9️⃣</span>Нет слота, нет пустого трейлера, ворота закрыты — не решаешь сам, звонишь<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Самодеятельность («оставил трейлер у забора и уехал») превращается в инцидент. Диспетчер связывается с Support, получает инструкцию, и водитель действует по ней. Время на ожидание фиксируется.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🔟</span>Drop Off и Check Out нажимаешь до того, как выехал за ворота<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Уехал без Check Out — трип «висит» незавершённым, следующий трип может не открыться, а по этому не будет корректного POD. Возвращаться, чтобы нажать кнопку, — худший вариант.</p></div></li>
+                </ul>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-truckers-use-the-amazon-relay-mobile-app" target="_blank" rel="noopener">How truckers use the Amazon Relay mobile app</a>, <a href="https://freight.amazon.com/newsroom/technology/2023-yard-tech" target="_blank" rel="noopener">Amazon Freight: yard technology</a>. Правила по пломбам и поведению в ярде — общеотраслевые, официальной публичной инструкции Amazon нет.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. ТРЕКИНГ, ROC -->
+    <section class="section" id="s8">
+        <div class="container">
+            <h2 class="section-title">8. Трекинг, ROC и коммуникация с Amazon</h2>
+            <p class="section-text">
+                В брокерском фрахте трекинг — это ваш ELD или Macropoint, а связь — телефон брокера. В Relay источник правды один:
+                приложение водителя. Диспетчер видит его данные в портале на карте, а Amazon по этим же данным считает score.
+                Связь с Amazon идёт не через «своего человека», а через <strong>ROC (Relay Operations Center)</strong> — круглосуточный
+                центр поддержки, доступный из портала и приложения.
+            </p>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/tracking-map.webp" alt="Трекинг груза на карте в веб-портале Amazon Relay" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Карта трекинга в портале.</strong> Положение трака обновляется примерно каждые 30 секунд по геолокации из приложения водителя; красные метки — трипы с прогнозируемым опозданием. Ниже карты — таймлайн трипа: прибытие, отъезд, стоянки, загруженные документы. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Как работает трекинг <span class="ar-badge off">Amazon</span></h3>
+            <ul class="plain">
+                <li><strong>Условие:</strong> у водителя включена геолокация И приложение открыто (или в фоне с разрешением «Всегда»). Без этого точки на карте нет, и Amazon считает, что перевозчик «не отслеживается».</li>
+                <li><strong>Обновление ~30 секунд.</strong> Карта в портале показывает все активные трипы; фильтр по водителю, по площадке, по статусу.</li>
+                <li><strong>Красные иконки = прогноз опоздания.</strong> Система сравнивает ETA с окном стопа. Красный трип — сигнал диспетчеру звонить водителю и писать в Support заранее, а не после.</li>
+                <li><strong>Таймлайн трипа:</strong> Begin work, Check In, Pick Up, Drop Off, стоянки, документы. Это же — доказательная база для диспутов по детеншну.</li>
+                <li><strong>Свой ELD не заменяет приложение.</strong> Можно параллельно использовать любой ELD, но App usage считается только по приложению Relay.</li>
+            </ul>
+
+            <h3>Support Center, Relay Assistant и ROC: куда писать и когда</h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Канал</th><th>Что это</th><th>Когда использовать</th></tr></thead>
+                    <tbody>
+                        <tr><td>Support Center (портал)</td><td>Тикеты по категориям: трип, оплата, аккаунт, водители, performance dispute. Работает 24/7. История переписки сохраняется.</td><td>Всё, что не горит прямо сейчас: диспуты, вопросы по выплатам, апелляции, обновление документов.</td></tr>
+                        <tr><td>Relay Assistant (приложение и портал)</td><td>Чат-помощник с ИИ внутри приложения. Отвечает на типовые вопросы, открывает тикет, для топ-перевозчиков предлагает контроффер по срочным грузам.</td><td>Водитель на площадке с типовой проблемой (нет слота, вопрос по инструкции). Быстрее, чем звонок.</td></tr>
+                        <tr><td>ROC — Relay Operations Center</td><td>Живые операторы 24/7, к которым эскалирует Support/Assistant. Телефон ROC <span class="ar-badge third">по данным перевозчиков</span>: (866) 886-8802 — Amazon публично номер не подтверждает, у вашего аккаунта он может быть другой (смотрите в Support Center).</td><td>Трип под угрозой прямо сейчас: поломка, авария, водитель заблокирован на площадке, трейлер не найден, нужно перенести окно.</td></tr>
+                        <tr><td>relay-network-reports@amazon.com</td><td>Официальный адрес для сообщений о подозрительной активности: мошенники, фейковые «диспетчеры Amazon», предложения купить аккаунт.</td><td>Кто-то звонит вам «от Amazon Relay» и просит логин, или предлагает «поделиться» аккаунтом.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/app-support.webp" alt="Экран поддержки в приложении Amazon Relay" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Support в приложении водителя.</strong> Отсюда водитель открывает чат с Relay Assistant и тикет в ROC, не выходя из трипа. Диспетчер должен показать водителю этот экран до первого груза. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Как правильно писать в Support: структура тикета</h3>
+            <div class="glass-card" style="margin-bottom:24px">
+                <p style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.9;color:var(--text-secondary);white-space:pre-wrap">Trip ID: T-112576GH5 · Load ID: 1A2B3C4D
+Driver: Sergei Ivanov · Truck: TX 4821-AB
+Facility: JFK8 · Stop 2 of 2 (Drop Off)
+Issue: No empty trailer available at assigned slot D-114 for next trip T-11258QQ2.
+Timeline: Check In 02:21 · Instructed to slot D-114 at 02:34 · Slot empty, yard staff confirmed no empties at 02:50 · Still waiting at 03:40.
+Request: instruction for driver (wait / bobtail to next stop / reassign) and detention for waiting time.
+Attachments: screenshot of in-yard instruction, photo of empty slot, yard staff name.</p>
+            </div>
+            <div class="ar-grid">
+                <div class="ar-card good"><div class="ic">🕐</div><h4>Пишите, пока проблема длится</h4><p>Тикет с таймстампом «сейчас 03:40, стоим с 02:21» весит больше, чем «вчера стояли два часа». Диспуты задним числом чаще отклоняют.</p></div>
+                <div class="ar-card good"><div class="ic">📎</div><h4>Скрин + фото + имя</h4><p>Скриншот экрана приложения с инструкцией, фото места, имя сотрудника ярда. Три вложения решают тикет быстрее любого текста.</p></div>
+                <div class="ar-card good"><div class="ic">🎯</div><h4>Один тикет — одна просьба</h4><p>«Дайте инструкцию водителю» и «оплатите детеншн» — два разных тикета. Смешанные закрываются частично.</p></div>
+            </div>
+
+            <h3>Что Amazon считает нарушением коммуникации</h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Ситуация</th><th>Как это видит Amazon</th><th>Правильное действие</th></tr></thead>
+                    <tbody>
+                        <tr><td>Водитель опаздывает, вы молчите</td><td>Красный трип без реакции перевозчика. Опоздание фиксируется полностью.</td><td>Как только ETA ушёл за окно — тикет «running late, new ETA hh:mm, reason». Опоздание всё равно засчитают, но при разборе Disruption-free история тикетов учитывается.</td></tr>
+                        <tr><td>Отказ от груза по телефону водителя</td><td>Водитель не может отменять. Груз висит до истечения → rejection.</td><td>Отказ делает только Administrator в портале, и как можно раньше (см. множители штрафов в разделе 11).</td></tr>
+                        <tr><td>Смена трака без обновления в Relay</td><td>На воротах номер не совпадает — отказ во въезде, опоздание.</td><td>Переназначить трак в трипе ДО выезда.</td></tr>
+                        <tr><td>Водитель выключил приложение «чтобы не следили»</td><td>Потеря трекинга, App usage вниз, при разборе инцидентов — нет доказательств.</td><td>Объяснить водителю: трекинг — это защита его детеншна и его алиби.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/load-tracking-with-amazon-relay" target="_blank" rel="noopener">Load tracking with Amazon Relay</a>, <a href="https://relay.amazon.com/faq" target="_blank" rel="noopener">relay.amazon.com/faq</a>. Телефон ROC — из открытых обзоров перевозчиков; используйте контакты из Support Center своего аккаунта как приоритетные.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. ПРОБЛЕМНЫЕ СИТУАЦИИ -->
+    <section class="section" id="s9">
+        <div class="container">
+            <h2 class="section-title">9. Проблемные ситуации: что делает диспетчер</h2>
+            <p class="section-text">
+                Каждая ситуация ниже — реальный сценарий из практики перевозчиков Relay. Формат одинаковый:
+                что делает диспетчер, что говорит водителю, чем это грозит по score и деньгам, и как не допустить в следующий раз.
+                Метка справа — насколько ситуация опасна для аккаунта. Раскройте нужную.
+            </p>
+            <div class="tip-block warn">
+                <div class="tip-icon">🧭</div>
+                <div class="tip-text">
+                    <strong>Универсальное правило для любой проблемы на площадке:</strong> водитель стоит на месте и звонит диспетчеру →
+                    диспетчер открывает тикет в Support с Trip ID и таймстампом, пока проблема длится → водитель действует
+                    только по инструкции из тикета или от ROC → все экраны и часы фиксируются скриншотами. Самодеятельность
+                    водителя почти всегда дороже ожидания.
+                </div>
+            </div>
+
+            <h3>На площадке</h3>
+
+            <details class="ar-problem"><summary>🚫 Трейлер не готов: указанный трейлер ещё грузят или его нет в слоте<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Тикет в Support сразу: Trip ID, слот, время Check In, «trailer not ready». Просите либо новый трейлер, либо подтверждение ожидания с оплатой. Следите за окном следующего стопа: если ожидание срывает его — пишите об этом в том же тикете заранее.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Стой в своём слоте или на парковке ожидания, не ищи трейлер сам по ярду. Сфотографируй пустой слот с номером и экран приложения. Каждые 30 минут — сообщение мне».</div>
+                <div class="c"><span class="lbl">Последствия</span>Опоздание на следующий стоп по вине площадки обычно можно оспорить через performance dispute, если есть тикет с таймстампами. Детеншн — по диспуту после 2 часов (ориентир перевозчиков), не автоматически.</div>
+                <div class="r"><span class="lbl">Профилактика</span>На «капризных» площадках закладывать +45 минут в план. Вести свою таблицу площадок с типовым временем ожидания.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📭 Нет пустого трейлера для следующего трипа (Power Only)<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Тикет: «no empty trailer at [код], next trip T-…». Возможные ответы Amazon: ждать, ехать bobtail на следующий стоп, переназначить трип. Без письменной инструкции водитель никуда не едет — bobtail «по своему решению» может обернуться отказом от трипа.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Спроси у сотрудника ярда, есть ли пустые в другой зоне, запиши его имя. Сам по ярду не катайся. Жди моего сообщения».</div>
+                <div class="c"><span class="lbl">Последствия</span>Если Amazon переназначает трип по своей вине — по score не бьёт. Если водитель уехал без инструкции и трип «истёк» — rejection на вас.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Проверять в Trips статус трейлера следующего трипа за час до Drop Off; при статусе «not available» звонить в Support заранее.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>⏱️ Ожидание на живой погрузке больше 2 часов<span class="sev lo">НИЗКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Через 1 час 30 минут с момента Check In — тикет «driver waiting since hh:mm at door N». Через 2 часа — второй тикет в категории Payment с просьбой о детеншне. Собираете: скрин Check In, скрин постановки к двери, время выезда. Payment dispute можно подать в течение 30 дней после трипа.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Не выключай приложение. Скрин экрана с таймлайном сейчас и при выезде. Если просят переставиться к другой двери — сфотографируй время».</div>
+                <div class="c"><span class="lbl">Последствия</span>Официальных сумм и free time Amazon не публикует. По данным перевозчиков: ориентир 2 часа free time, ставка детеншна ограничена сверху и без диспута начисляется редко.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Live-грузы на IXD в пик считать по времени, а не по милям; закладывать в расчёт 2–3 часа на площадке.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🔒 Пломба не совпадает с BOL или повреждена<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Тикет немедленно, до выезда: Trip ID, номер трейлера, номер пломбы по BOL, номер по факту, фото. Ждёте инструкцию: заменить пломбу силами площадки, перевыпустить BOL или заменить трейлер.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Пломбу не трогай. Фото пломбы крупно, фото BOL в приложении, фото номера трейлера. Стой на месте, никуда не выезжай, пока я не напишу».</div>
+                <div class="c"><span class="lbl">Последствия</span>Выезд с несовпадающей пломбой = на разгрузке вопрос о целостности груза к перевозчику. Возможен claim за груз и инцидент в Disruption-free. Стоять час дешевле.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Сверка пломбы — обязательный пункт инспекции трейлера в приложении. Не пропускать.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🛠️ Трейлер Amazon повреждён или неисправен (шина, свет, двери, пол)<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Проверяете, что водитель зафиксировал повреждение в Trailer Inspection в приложении. Тикет: «trailer [№] damaged: описание, фото». Если трейлер не пригоден к движению (шина, свет, тормоза) — требуете замену трейлера, а не «езжайте так».</div>
+                <div class="w"><span class="lbl">Водителю</span>«Все повреждения — в инспекцию с фото, даже мелкие. Если что-то влияет на безопасность — не выезжай, DOT-инспекция по дороге пойдёт в наш Violation Rate».</div>
+                <div class="c"><span class="lbl">Последствия</span>Незафиксированное повреждение → предъявят вам на дропе. Выезд на неисправном трейлере → нарушение при инспекции → Vehicle Violation Rate, апелляции по нему нет.</div>
+                <div class="r"><span class="lbl">Профилактика</span>10 минут на инспекцию всегда. Фотографировать даже «чистый» трейлер: это доказывает, что повреждений не было.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🚧 Нет слота или двери, водителя гоняют по ярду<span class="sev lo">НИЗКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Тикет с временем Check In и текущим временем: «no slot/door assigned». Relay Assistant часто решает это за минуты. Фиксируете время для возможного детеншна.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Спроси у сотрудника ярда, встань там, где скажут, не занимай чужой слот. Скрин экрана с in-yard instructions».</div>
+                <div class="c"><span class="lbl">Последствия</span>Обычно только потеря времени. Если срывается следующий стоп — тикет уже открыт, диспут по on-time реалистичен.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Знать площадку: на многих есть «overflow»-зона ожидания, о которой водитель-новичок не знает.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🌙 Ворота закрыты, площадка не принимает в назначенное окно (ночь, выходной)<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Тикет и звонок в ROC: «facility closed at scheduled window». Просите новое окно и подтверждение, что опоздание — по вине площадки. Если водитель ждёт до утра — фиксируйте для layover-claim.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Check In нажми в окне в любом случае, даже если ворота закрыты — это докажет, что ты был вовремя. Сфотографируй закрытые ворота и табличку с часами работы. Жди на разрешённой парковке».</div>
+                <div class="c"><span class="lbl">Последствия</span>С тикетом и Check In в окне — оспаривается. Без Check In — опоздание на вас.</div>
+                <div class="r"><span class="lbl">Профилактика</span>В таблицу площадок — часы работы ворот. Для DS ночью уточнять заранее через Assistant.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📵 Приложение не фиксирует Check In: нет связи, зависло, водитель забыл нажать<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Если водитель на месте, а Check In не прошёл — тикет немедленно: «driver arrived hh:mm, app check-in failed, screenshot attached». В портале в таймлайне трипа видно, есть ли точка геолокации у площадки — это ваш аргумент. Если водитель просто забыл — нажать сейчас и сразу тикет с объяснением: разница в минутах меньше, чем через час.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Скрин экрана с ошибкой и время на телефоне в кадре. Перезапусти приложение, проверь геолокацию. Если не помогает — сообщи охране Load ID и время приезда, попроси записать».</div>
+                <div class="c"><span class="lbl">Последствия</span>Без таймстампа Amazon считает опоздание до момента фактического Check In: 1–60 минут ×1, 61–240 ×2, дальше ×4 и ×8. Плюс минус в App usage.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Правило №1 из скрипта водителя. Проверять у новичка первые 3 трипа по трекингу: приехал — нажал?</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🚪 Водитель уехал с площадки без Drop Off / Check Out<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Если водитель в 5–10 минутах — вернуть и нажать (геолокация должна совпасть с площадкой). Если далеко — тикет: «driver departed [код] at hh:mm, drop-off step not completed, trailer № left at slot X», с фото трейлера в слоте, если есть.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Следующий стоп не открывай, пока я не разберусь. Есть ли фото трейлера в слоте? Во сколько выехал?»</div>
+                <div class="c"><span class="lbl">Последствия</span>Незавершённый шаг → минус App usage; POD формируется с задержкой; следующий трип может быть заблокирован до закрытия предыдущего.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Правило №10: кнопки нажимаются до выезда за ворота.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🧑‍✈️ Водитель не проходит селфи-верификацию на площадке<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Если это тот же водитель (борода, очки, освещение) — тикет с просьбой ручной проверки, водитель пробует ещё раз при хорошем свете. Если водитель не тот, кто назначен — немедленно переназначить трип на фактического водителя (если он Active) и честно указать это в тикете. Подмена водителя, вскрывшаяся позже, опаснее любого опоздания.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Сними кепку и очки, встань лицом к свету, попробуй ещё раз. Не проси коллегу «показать лицо» — это блокировка обоих».</div>
+                <div class="c"><span class="lbl">Последствия</span>Несовпадение личности — блокировка водителя, инцидент на перевозчике, при повторе — suspension аккаунта.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Назначать в Relay именно того, кто поедет. Замена водителя — только через переназначение в портале.</div>
+            </div></details>
+
+            <h3>До и после трипа</h3>
+
+            <details class="ar-problem"><summary>⌛ Забронированный груз «истёк»: не назначили водителя вовремя<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Здесь уже ничего не спасти: истечение = rejection в Acceptance score. Дальше — только не повторять. Если груз ещё виден на борде, можно перебронировать и назначить сразу, но первый отказ уже засчитан.</div>
+                <div class="w"><span class="lbl">Водителю</span>—</div>
+                <div class="c"><span class="lbl">Последствия</span>Acceptance падает; чем ближе к pickup случилось истечение, тем сильнее. Итоговый score = минимум из четырёх метрик, так что одна просадка Acceptance тянет вниз весь грейд.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Правило: Book → Assign в одно действие. Нет водителя под груз прямо сейчас — не бронировать, а поставить Post A Truck.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>❌ Нужно отказаться от забронированного груза или блока<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Отказ — только в портале, только Administrator, и как можно раньше. Множители с 2 сентября 2025: отказ от блока более чем за 24 часа до старта — ×1, менее чем за 24 часа или после старта — ×4; отказ от контракта за 3+ недели — ×1, меньше — ×2. Перед отказом проверьте, нет ли на борде замены трака (второй водитель, Post A Truck на этот слот).</div>
+                <div class="w"><span class="lbl">Водителю</span>«Не «отменяй» ничего сам в приложении и не игнорируй трип — отказ оформляю я».</div>
+                <div class="c"><span class="lbl">Последствия</span>Acceptance score вниз пропорционально множителю. Отмены самим Amazon по счёту не бьют.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Решение об отказе принимать за 25+ часов, а не «утром посмотрим». Резервный водитель на контрактные блоки.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📦 Amazon отменил трип: за сутки, за 5 часов, после приезда водителя<span class="sev lo">НИЗКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>По score не бьёт. Смотрите Trips утром: отмены видны там раньше, чем водитель получит cancellation alert (за 5 часов). Отмена после приезда водителя на площадку — тикет в Payment: «truck arrived hh:mm, load cancelled at hh:mm», просьба TONU/layover. Борд сразу предлагает замену из этой точки.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Трип отменён Amazon, это не наша вина. Не уезжай пока — ищу замену из этой точки. Если приехал уже — скрин таймлайна с Check In».</div>
+                <div class="c"><span class="lbl">Последствия</span>TONU по данным перевозчиков ~$175 при поздней отмене (условия и суммы Amazon публично не фиксирует); layover — по claim, если отменили после прибытия. Блок отменённый частично оплачивается полностью.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Не планировать deadhead 200 миль под один spot-груз без reload: отмена сделает поездку пустой.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🔁 Двойной букинг: один трак попал на два пересекающихся трипа<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Немедленно решить, какой трип реален, и отказаться от второго — сейчас, пока до его старта больше 24 часов (×1), а не завтра (×4). Если оба уже «горят» — проверить второго водителя/трак; в крайнем случае Post A Truck не спасёт, отказ неизбежен.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Твой трип — T-…, второй снимаю. Ничего не меняй в приложении».</div>
+                <div class="c"><span class="lbl">Последствия</span>Один rejection с множителем по сроку.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Календарь траков вне Relay (таблица или TMS) с блоками и spot-грузами. Смотреть его перед каждым Book.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🌨️ Опоздание из-за погоды, пробки, аварии на трассе<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Как только ETA в портале ушёл за окно — тикет «running late»: причина, новый ETA, скрин погодного алерта из приложения или карты пробок. Опоздание засчитают, но performance dispute по форс-мажору с документами иногда проходит.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Безопасность важнее окна. Скрин алерта погоды из приложения Relay. Едешь по правилам, я уже написал в Support».</div>
+                <div class="c"><span class="lbl">Последствия</span>On-time: 1–60 минут ×1, 61–240 ×2, 241–600 ×4, 601+ ×8. Раннее уведомление множитель не меняет, но помогает при диспуте.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Погодные алерты в приложении обновляются каждые 10 минут — водитель должен их видеть, а диспетчер проверять перед стартом блока.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🔧 Поломка трака в блоке или на пути к pickup<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Звонок в ROC + тикет: «breakdown at [место], trip T-…, trailer № on board / not attached». Варианты: замена трака (переназначить в трипе), ROC переназначает груз, эвакуация с трейлером Amazon — только по согласованию с ROC. Если трейлер Amazon остался у обочины — это уже их имущество и их инструкция.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Безопасное место, треугольники, фото. Не отцепляй трейлер Amazon без моей команды. Приложение не закрывай».</div>
+                <div class="c"><span class="lbl">Последствия</span>Disruption-free score вниз, опоздание/отказ по остальным стопам блока. Блок оплачивается за выполненную часть, детали — через Support.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Pre-trip по-настоящему: шины и тормоза — главные причины и поломок, и нарушений на инспекциях.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>👮 DOT-инспекция во время блока<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Тикет «DOT inspection in progress at [место], expected delay X». Записать номер отчёта инспекции. После — проверить отчёт: каждое нарушение идёт в Violation Rate Amazon (не-OOS ×1, OOS ×2, делится на число инспекций за 12 месяцев). Спорные нарушения — DataQ в FMCSA сразу, до того как Amazon пересчитает.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Спокойно, документы в порядке, не спорь с инспектором. Копию отчёта — мне фото».</div>
+                <div class="c"><span class="lbl">Последствия</span>Чистая инспекция улучшает знаменатель Violation Rate. Грязная — портит числитель; при 3+ инспекциях и ставке выше 35% (водитель) / 50% (трак) — отключение без апелляции.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Годовая инспекция, CDL/med card в кабине, ELD без ошибок, чистая кабина. Насколько инспектор захочет копать — часто зависит от первого впечатления.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🚚 Смена трака внутри блока (второй трак, ремонт первого)<span class="sev lo">НИЗКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Переназначить трак в трипе ДО подъезда к следующей площадке — ворота читают номер. Тикет с уведомлением о смене трака внутри блока, чтобы не было вопросов при разборе.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Пока не сменил трак в приложении — на площадку не заезжай. Подтверди, что видишь новый номер в трипе».</div>
+                <div class="c"><span class="lbl">Последствия</span>Без обновления: отказ во въезде, опоздание, возможный инцидент.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Все траки компании внесены в Relay заранее, а не в момент замены.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🅿️ Трейлер Amazon «завис» у перевозчика после трипа или блока<span class="sev md">СРЕДНЯЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Трейлер Amazon не должен ночевать на вашей базе. Тикет сразу: «Amazon trailer № at our yard after trip T-…, request instruction: return to [код] / next load». Обычно Amazon даёт груз-возврат или адрес сдачи. Хранение и любое повреждение в это время — на вас (Trailer Interchange).</div>
+                <div class="w"><span class="lbl">Водителю</span>«Трейлер закрыть, пломбу не трогать, поставить на охраняемую часть базы, фото со всех сторон».</div>
+                <div class="c"><span class="lbl">Последствия</span>Претензии по имуществу, если с трейлером что-то случится. Задержка возврата без тикета — вопросы от Amazon.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Не завершать день с чужим трейлером без инструкции. При планировании блока смотреть, чем он заканчивается: drop на площадке или «с трейлером».</div>
+            </div></details>
+
+            <h3>Аккаунт</h3>
+
+            <details class="ar-problem"><summary>🛡️ COI истёк или обновлён неправильно: аккаунт заморожен, грузы слетели<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Звонок агенту: новый COI с ВСЕМИ строками (AL $1M, Trailer Interchange $50k, GL $1M/$2M, Cargo $100k) на вендора Amazon сегодня. Тикет в Support: «insurance renewed, COI sent to vendor at hh:mm, please expedite». Забронированные грузы, снятые при заморозке, могут засчитаться как отказы — просите пересмотр в том же тикете.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Пауза на 1–3 дня, готовься к возврату. На борд не смотри — он у нас заблокирован».</div>
+                <div class="c"><span class="lbl">Последствия</span>Потеря выручки за дни заморозки, возможные отказы по слетевшим грузам, потеря контрактов, если заморозка долгая.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Напоминание за 14 дней до окончания полиса. Агенту — список требований Relay письмом, чтобы каждое продление шло с правильными строками.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📉 Performance упал ниже C+: пропали аукционы, слетают контракты<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Открыть Scorecard и найти минимальную из четырёх метрик — именно она и есть ваш score. Дальше действовать точечно: On-time → ранний выезд и чек-ин; Acceptance → не бронировать лишнего, не давать истекать; App usage → работа с водителями по геолокации; Disruption-free → разбор инцидентов. Спорные записи — performance dispute в портале (не в приложении). Окно расчёта — последние 6 активных недель, значит чистые 6 недель полностью обновляют score.</div>
+                <div class="w"><span class="lbl">Водителю</span>Конкретно: «У нас просел App usage. Две недели: приложение открыто всегда, каждый шаг нажимаем. Я буду проверять по каждому трипу».</div>
+                <div class="c"><span class="lbl">Последствия</span>Ниже C+ — нет аукционов и уже выигранные контракты могут быть отозваны. Ниже — потеря части борда, риск suspension.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Ежедневно: минимальная метрика и её тренд. Не ждать письма от Amazon.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>⛔ Аккаунт suspended<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Прочитать письмо с причиной: safety-скоры выше порогов, лапс страховки, no-show, «load hopping» (массовые отказы ради более дорогих грузов), мультиаккаунты, низкий performance. Для большинства причин — апелляция через Support Center с Plan of Action: что случилось, что уже исправлено, какие меры на будущее, документы. По Violation Rate апелляции нет — только ждать, пока старые инспекции выйдут из 12-месячного окна, и набирать чистые.</div>
+                <div class="w"><span class="lbl">Водителю</span>Честно о сроках. Если причина — конкретный водитель (подмена, нарушения), решение о нём принимает владелец.</div>
+                <div class="c"><span class="lbl">Последствия</span>Простой от недель до постоянного отключения.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Всё, что выше в этом разделе. И никогда — второй аккаунт «на другую компанию» с теми же людьми: это обнаруживается и закрывает оба.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🎭 Звонок «от Amazon Relay»: просят логин, предлагают купить аккаунт или «диспетчерские услуги с гарантией грузов»<span class="sev hi">ВЫСОКАЯ</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Диспетчер</span>Amazon не звонит с просьбой продиктовать пароль и не продаёт аккаунты. Ничего не сообщать, переслать детали на relay-network-reports@amazon.com. Если кто-то в компании уже поделился доступом — сменить пароль, отозвать доступы в портале, тикет в Support.</div>
+                <div class="w"><span class="lbl">Водителю</span>«Никому не называй код из SMS Relay и не устанавливай «второе приложение» по просьбе звонящего».</div>
+                <div class="c"><span class="lbl">Последствия</span>Чужие грузы под вашим MC, чужие водители под вашим аккаунтом, suspension за мультиаккаунт/фрод.</div>
+                <div class="r"><span class="lbl">Профилактика</span>Личные логины у каждого сотрудника, двухфакторка на аккаунте Amazon компании.</div>
+            </div></details>
+
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Множители штрафов и правила отказов: <a href="https://relay.amazon.com/blog/amazon-relay-performance-score" target="_blank" rel="noopener">Amazon Relay performance score</a>. Причины suspension и процедуры на площадке — по открытым материалам перевозчиков и сообществ; официальных публичных инструкций Amazon по ситуациям «трейлер не готов / нет пустого» нет, действуйте через Support.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ДЕНЬ ДИСПЕТЧЕРА -->
+    <section class="section" id="s9b">
+        <div class="container">
+            <h2 class="section-title">Задачи диспетчера по дням: неделя с Amazon</h2>
+            <p class="section-text">
+                Работа с Relay — это не «найти груз и позвонить». Это цикл: неделя вперёд — аукционы и контракты, сутки вперёд —
+                назначения и проверка готовности, день блока — контроль по часам, после — документы, диспуты и сверка выплат.
+                Ниже — рабочий регламент, который можно распечатать.
+            </p>
+
+            <h3>За неделю и раньше: планирование</h3>
+            <div class="ar-day">
+                <div class="t">Пн–Вт</div><div class="w"><strong>Аукционы.</strong> Проверить Auctions на 1–6 недель вперёд под ваш парк. Посчитать цену блока по худшему сценарию (полный пробег + часы водителя + deadhead). Поставить биды. Посмотреть, какие контракты заканчиваются — переподать.</div>
+                <div class="t">Ср</div><div class="w"><strong>Календарь траков.</strong> Свести выигранные блоки, spot-грузы и брокерский фрахт в один календарь на следующую неделю. Проверить пересечения. Определить, где нужен Post A Truck на «дыры».</div>
+                <div class="t">Чт–Пт</div><div class="w"><strong>Люди и железо.</strong> Каждому блоку — водитель со статусом Active и трак, внесённый в Relay. Проверить HOS: 37-часовой блок solo требует свежих часов. Для новых водителей — обучение в приложении пройдено.</div>
+                <div class="t">Пт</div><div class="w"><strong>Деньги.</strong> Сверить выплату за прошлую неделю (Payments) с трипами. Расхождения → payment dispute (окно 30 дней). Проверить performance-прогноз в Scorecard.</div>
+            </div>
+
+            <h3>За 24 часа до блока</h3>
+            <div class="ar-day">
+                <div class="t">−24 ч</div><div class="w"><strong>Trips.</strong> Все трипы блока назначены на водителя и трак. Открыть каждый: стопы, окна, тип трейлера, live/drop. Красные флаги: ночной DS, IXD в пик, стоп в незнакомом коде.</div>
+                <div class="t">−24 ч</div><div class="w"><strong>Решение об отказе, если он нужен.</strong> Именно сейчас: до 24 часов отказ ×1, после — ×4. Есть сомнения в водителе или траке — решать здесь.</div>
+                <div class="t">−12 ч</div><div class="w"><strong>Бриф водителю</strong> по шаблону из раздела 6: адреса, окна, куда встать до ворот, что фотографировать, ваш телефон.</div>
+                <div class="t">−12 ч</div><div class="w"><strong>Телефон водителя.</strong> Приложение обновлено, геолокация «Всегда», зарядка в кабине. Для новичка — видеозвонок с проверкой настроек.</div>
+                <div class="t">−2 ч</div><div class="w"><strong>Trips ещё раз.</strong> Отмены Amazon видны здесь раньше, чем cancellation alert водителю (за 5 часов). Если отмена — сразу reload с борда из той же точки.</div>
+            </div>
+
+            <h3>День блока: контроль по часам</h3>
+            <div class="ar-day">
+                <div class="t">Старт −1 ч</div><div class="w">Водитель нажал <strong>Begin work</strong>. Точка появилась на карте трекинга. Если точки нет — звонок: приложение, геолокация.</div>
+                <div class="t">Pickup −45 мин</div><div class="w">Трак у площадки, на парковке ожидания. Напомнить: <strong>Check In в момент подъезда к воротам</strong>.</div>
+                <div class="t">Pickup</div><div class="w">Таймстамп Check In в окне — проверить в таймлайне трипа. Дальше: Pick Up, Verify Trailer ID, инспекция, пломба. Ждать фото пломбы от водителя.</div>
+                <div class="t">+30 мин</div><div class="w">Водитель ещё на площадке? Спросить причину. <strong>+90 мин</strong> — тикет в Support «waiting since». <strong>+120 мин</strong> — второй тикет на детеншн.</div>
+                <div class="t">В пути</div><div class="w">Карта: цвет трипа. Красный → звонок водителю + тикет «running late, new ETA». Погодный алерт → водитель в курсе.</div>
+                <div class="t">Delivery −30 мин</div><div class="w">Статус трейлера следующего трипа (если блок продолжается): есть ли пустой/гружёный на дропе. Проблема видна заранее → тикет заранее.</div>
+                <div class="t">Delivery</div><div class="w">Check In → Drop Off → Trailer Detach → Check Out до выезда. Скрин таймлайна от водителя. Reload с борда, если блок закончился.</div>
+                <div class="t">Конец</div><div class="w">Трейлер Amazon не остался у водителя? Если остался — тикет до конца смены. Все трипы блока в статусе Completed.</div>
+            </div>
+
+            <h3>После блока</h3>
+            <div class="ar-day">
+                <div class="t">+1 день</div><div class="w"><strong>Документы.</strong> e-POD/e-BOL в трипе на месте. Скрины таймлайнов с задержками — в папку трипа. Тикеты на детеншн/TONU/layover открыты, где есть основания.</div>
+                <div class="t">+1 день</div><div class="w"><strong>Scorecard.</strong> Появились ли новые инциденты: опоздание, пропущенный шаг, потеря трекинга. Спорные — performance dispute в портале сразу с приложенными тикетами дня.</div>
+                <div class="t">+1–2 дня</div><div class="w"><strong>Разбор с водителем.</strong> Не «почему опоздал», а «на каком шаге потеряли время и что меняем». Один пункт за раз.</div>
+                <div class="t">Пятница</div><div class="w"><strong>Выплата.</strong> Цикл воскресенье–суббота, деньги приходят в следующую пятницу. Сверка суммы с трипами; детеншн, который обещали в тикете, но не начислили — payment dispute.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 10. ДЕНЬГИ -->
+    <section class="section" id="s10">
+        <div class="container">
+            <h2 class="section-title">10. Деньги: как считается ставка и когда приходят выплаты</h2>
+            <p class="section-text">
+                Финансовая модель Relay проще брокерской и в этом её сила: нет rate confirmation, нет инвойса на e-mail,
+                нет 30–45 дней ожидания и нет факторинга с его 2–4%. Но есть и обратная сторона: цена не обсуждается,
+                deadhead не оплачивается, а accessorials (детеншн, TONU, layover) устроены непрозрачно и требуют диспутов.
+            </p>
+
+            <h3>Из чего состоит ставка <span class="ar-badge off">Amazon</span></h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Компонент</th><th>Как формируется</th><th>Что важно диспетчеру</th></tr></thead>
+                    <tbody>
+                        <tr><td>Base rate</td><td>Amazon назначает по лейну, спросу и срочности. Меняется от часа к часу; Hot Loads — с наценкой.</td><td>Одна и та же пара площадок может стоить по-разному утром и вечером. Не «запоминайте цену лейна» — смотрите борд.</td></tr>
+                        <tr><td>Fuel surcharge</td><td>Включён в all-in по Relay Program Policies (внутренняя формула Amazon). Отдельной строкой не торгуется.</td><td>Сравнивая с брокером, помните: у брокера FSC часто отдельно, у Relay — уже внутри.</td></tr>
+                        <tr><td>Tolls</td><td>Включены в all-in.</td><td>На маршрутах Северо-Востока это заметная часть ставки. Транспондер должен быть на траке, чеки не собираются.</td></tr>
+                        <tr><td>Deadhead</td><td class="no">Не оплачивается никогда.</td><td>Главный «скрытый расход». Считайте полный круг (см. раздел 5).</td></tr>
+                        <tr><td>Block pay</td><td>Блок оплачивается целиком за время, даже если Amazon использовал не все часы.</td><td>Недогруженный блок — это прибыль, а не потеря: водитель отдыхает, деньги те же.</td></tr>
+                        <tr><td>Торг</td><td>Отсутствует, кроме трёх случаев: Post A Truck (вы задаёте минимум), аукционы (ваш бид), Relay Assistant (контроффер на срочные грузы для перевозчиков с высоким грейдом).</td><td>Не звоните в Support с просьбой «поднять ставку» — такого механизма нет.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Выплаты <span class="ar-badge off">Amazon</span></h3>
+            <svg class="ar-svg" viewBox="0 0 1000 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Цикл выплат Relay: неделя воскресенье-суббота, выплата в следующую пятницу">
+                <g font-size="12" fill="var(--text-secondary)">
+                    <rect x="20" y="40" width="560" height="60" rx="12" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+                    <text x="300" y="65" text-anchor="middle" font-weight="800" fill="#06b6d4" font-size="14">Платёжная неделя: воскресенье 00:00 → суббота 23:59</text>
+                    <text x="300" y="86" text-anchor="middle" font-size="11">все трипы, завершённые в этом окне</text>
+                    <g stroke="#ff9900" stroke-width="2.5" fill="none"><path d="M580 70 H660"/><path d="M652 63 L660 70 L652 77"/></g>
+                    <rect x="660" y="40" width="320" height="60" rx="12" fill="rgba(255,153,0,.10)" stroke="rgba(255,153,0,.5)"/>
+                    <text x="820" y="65" text-anchor="middle" font-weight="800" fill="#ff9900" font-size="14">Выплата: следующая пятница</text>
+                    <text x="820" y="86" text-anchor="middle" font-size="11">на банковский счёт, без комиссий</text>
+                    <text x="500" y="140" text-anchor="middle" font-size="12" fill="var(--text-soft)">Трип завершён в субботу вечером → деньги через 6 дней. Трип завершён в воскресенье утром → уже следующая неделя, деньги через 12 дней.</text>
+                </g>
+            </svg>
+            <ul class="plain">
+                <li><strong>Комиссий нет.</strong> Ни за регистрацию, ни за бронирование, ни за выплату.</li>
+                <li><strong>Факторинг не обязателен.</strong> Еженедельная выплата от Amazon надёжнее большинства брокеров. Если факторинг у компании всё равно есть — факторы принимают Relay-инвойсы, но платить им 2–4% за деньги, которые и так придут в пятницу, бессмысленно.</li>
+                <li><strong>«Fast Pay» / QuickPay</strong> в Relay нет <span class="ar-badge third">по данным перевозчиков</span>: ускорить выплату нельзя.</li>
+                <li><strong>Документы.</strong> e-POD и e-BOL формируются в приложении и на воротах. Отдельно ничего никуда не отправляется. Если в трипе нет документа — тикет, а не e-mail.</li>
+                <li><strong>Payment dispute — 30 дней</strong> с момента трипа. Позже спорить не с чем.</li>
+            </ul>
+
+            <h3>Accessorials: детеншн, TONU, layover <span class="ar-badge third">по данным перевозчиков</span></h3>
+            <div class="tip-block warn">
+                <div class="tip-icon">⚠️</div>
+                <div class="tip-text">
+                    Amazon <strong>публично не публикует</strong> ни free time, ни ставку детеншна, ни сумму TONU. Всё ниже — сводка из опыта
+                    перевозчиков 2025–2026, и она может отличаться от условий вашего аккаунта. Смотрите Relay Program Policies
+                    в портале и задавайте вопросы в Support до того, как рассчитывать на эти деньги.
+                </div>
+            </div>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Вид</th><th>Ориентир перевозчиков</th><th>Как получить</th></tr></thead>
+                    <tbody>
+                        <tr><td>Detention</td><td>Free time около 2 часов от Check In. Ставка в час есть, но ограничена сверху («капнутый детеншн»). Автоматически начисляется не всегда — часто только если шаги в приложении зафиксированы точно.</td><td>Тикет «waiting since hh:mm» в момент ожидания + payment dispute после трипа со скринами таймлайна. Без таймстампов Check In / Pick Up / Drop Off шансов почти нет.</td></tr>
+                        <tr><td>TONU (Truck Ordered Not Used)</td><td>Около $175 при поздней отмене Amazon (источники расходятся: «менее чем за 2 часа» и «после прибытия»). Иногда 25–50% ставки на усмотрение Amazon.</td><td>Тикет в Payment сразу после отмены с временем Check In или временем выезда к площадке.</td></tr>
+                        <tr><td>Layover</td><td>Возможен claim, если трип отменили после прибытия водителя и ему пришлось ночевать. Суммы не публикуются.</td><td>Тикет с таймлайном и фото/чеками.</td></tr>
+                        <tr><td>Chargebacks / штрафы деньгами</td><td>Открытых данных нет. Основной «штраф» Relay — не деньги, а performance score.</td><td>—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Пример расчёта: блок 3 × 37 часов, solo, sleeper</h3>
+            <div class="glass-card" style="margin-bottom:24px">
+                <div class="ar-table-wrap" style="margin:0">
+                    <table class="ar-table" style="min-width:520px">
+                        <thead><tr><th>Строка</th><th>Расчёт</th><th>Сумма</th></tr></thead>
+                        <tbody>
+                            <tr><td>Выигранный бид за блок</td><td>Ваш бид на аукционе, ×3 блока в неделю</td><td><strong>3 × $2 100 = $6 300</strong></td></tr>
+                            <tr><td>Ожидаемый пробег в блоке</td><td>Из карточки аукциона: ~900 миль на блок</td><td>2 700 миль/нед</td></tr>
+                            <tr><td>Deadhead к старту и домой</td><td>60 миль × 2 × 3 блока (не оплачивается)</td><td>360 миль/нед</td></tr>
+                            <tr><td>Себестоимость трака</td><td>$1,25/милю (топливо, износ, страховка, платежи) × 3 060 миль</td><td>−$3 825</td></tr>
+                            <tr><td>Водитель</td><td>Например, 28% от выручки блока</td><td>−$1 764</td></tr>
+                            <tr><td>Толлы и топливо</td><td>Уже внутри all-in ставки и себестоимости</td><td>$0</td></tr>
+                            <tr><td><strong>Прибыль компании</strong></td><td>$6 300 − $3 825 − $1 764</td><td class="ok">$711/нед на трак</td></tr>
+                            <tr><td>Реальная ставка за милю</td><td>$6 300 ÷ 3 060 миль (с deadhead)</td><td>$2,06/mi</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p style="font-size:14px;color:var(--text-secondary);line-height:1.8;margin-top:16px">Цифры условные, но структура расчёта — рабочая. Обратите внимание: недогруженный Amazon блок (например, 700 миль вместо 900) оплачивается теми же $2 100, а себестоимость падает — прибыль растёт. Именно поэтому опытные перевозчики любят контрактные блоки больше spot-борда.</p>
+            </div>
+
+            <h3>Программы бонусов <span class="ar-badge off">Amazon</span></h3>
+            <div class="ar-grid">
+                <div class="ar-card"><div class="ic">🏅</div><h4>Relay Rewards</h4><p>Тиры (старт — Basic), пересчёт 5-го числа каждого месяца по performance, милям и стажу. Бонусы на промо-грузах (выплата до 3 недель), скидки на топливо, шины, страховку.</p></div>
+                <div class="ar-card"><div class="ic">🛡️</div><h4>Safety Rewards</h4><p>Opt-in: от $0,01 до $0,04 за милю без ДТП (ступени по годовому пробегу до 400k миль). Условие — дашкам Motive, Netradyne или Verizon Connect; Amazon оплачивает оборудование и год подписки. ДТП обнуляет счётчик.</p></div>
+                <div class="ar-card"><div class="ic">🎁</div><h4>Промо для новичков</h4><p>Периодически: бонус за первые N грузов (например, $1 500 за 7 грузов перед Prime Day 2026). Условия смотрите на главной relay.amazon.com при регистрации.</p></div>
+            </div>
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/rewards-grades.webp" alt="Таблица доступности бонусов Relay Rewards по грейдам performance" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Что открывает грейд.</strong> Таблица из портала: доступ к бонусам и программам зависит от performance grade. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/intro-to-amazon-relay/understanding-amazon-relay-rates" target="_blank" rel="noopener">Understanding Amazon Relay rates</a>, <a href="https://relay.amazon.com/faq" target="_blank" rel="noopener">FAQ</a>, <a href="https://relay.amazon.com/blog/how-carriers-save-with-relay-rewards" target="_blank" rel="noopener">Relay Rewards</a>, <a href="https://relay.amazon.com/blog/trucking-safety/amazon-relays-mileage-bonuses-for-collision-free-hauling" target="_blank" rel="noopener">Safety Rewards</a>. Accessorials — открытые обзоры перевозчиков, не Amazon.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 11. PERFORMANCE -->
+    <section class="section" id="s11">
+        <div class="container">
+            <h2 class="section-title">11. Performance score: как Amazon оценивает перевозчика</h2>
+            <p class="section-text">
+                В брокерском мире репутация — это «нас знают». В Relay репутация — это число от 0 до 100 и грейд от F до A+,
+                пересчитываемые по последним 6 активным неделям. Это число решает, какие грузы вы видите, выиграете ли аукцион
+                и останетесь ли в системе. Диспетчер, который не смотрит Scorecard каждый день, управляет вслепую.
+            </p>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/performance-how.webp" alt="Схема расчёта performance score Amazon Relay: четыре метрики" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Четыре метрики.</strong> On-time, Acceptance, App usage, Disruption-free. Официальная схема Amazon. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Четыре метрики и главное правило <span class="ar-badge off">Amazon</span></h3>
+            <div class="ar-mock">
+                <div class="m-bar"><i></i><i></i><i></i> relay.amazon.com → Scorecard → Performance</div>
+                <div class="m-body">
+                    <div class="m-cols4">
+                        <div class="m-metric"><div class="v">97%</div><div class="l">On-time</div></div>
+                        <div class="m-metric"><div class="v">100%</div><div class="l">Acceptance</div></div>
+                        <div class="m-metric min"><div class="v">84%</div><div class="l">App usage</div></div>
+                        <div class="m-metric"><div class="v">99%</div><div class="l">Disruption-free</div></div>
+                    </div>
+                    <div class="m-row" style="margin-top:14px"><span>Overall performance score</span><b style="font-size:20px">84% · B−</b><span class="m-pill r">= минимум из четырёх</span></div>
+                    <div class="m-row"><span>Окно расчёта</span><b>последние 6 активных недель · 47 грузов</b></div>
+                </div>
+                <div class="m-caption">Схема (не скриншот). Итоговый score — это НЕ среднее, а самая слабая метрика. Здесь три метрики отличные, но App usage 84% делает весь score 84%.</div>
+            </div>
+
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Метрика</th><th>Что измеряет</th><th>Что её ломает</th><th>Кто отвечает</th></tr></thead>
+                    <tbody>
+                        <tr><td>On-time</td><td>Прибытие в окно на каждом стопе по таймстампу Check In.</td><td>Опоздание с множителем по длительности: 1–60 мин ×1, 61–240 ×2, 241–600 ×4, 601+ ×8.</td><td>Водитель (чек-ин вовремя) + диспетчер (реалистичный план, ранний выезд).</td></tr>
+                        <tr><td>Acceptance</td><td>Доля забронированного, которое вы реально отвезли.</td><td>Отказы и истёкшие грузы. Множители: блок >24 ч ×1, <24 ч и после старта ×4; контракт >3 нед ×1, <3 нед ×2.</td><td>Диспетчер. Полностью.</td></tr>
+                        <tr><td>App usage</td><td>50% — выполнение шагов в приложении (Check In, Pick Up, Drop Off…), 50% — доступность геолокации в пути.</td><td>Пропущенные шаги, выключенное приложение, режим экономии батареи, «забыл нажать».</td><td>Водитель + диспетчер (настройка телефона, контроль по трекингу).</td></tr>
+                        <tr><td>Disruption-free</td><td>Отсутствие инцидентов: не тот трейлер, смена водителя в трипе, нарушения на площадке, жалобы, повреждения.</td><td>Инциденты, зафиксированные Amazon или площадкой.</td><td>Оба.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <ul class="plain">
+                <li><strong>Окно:</strong> последние 6 активных недель (недели без грузов не считаются). Нужно минимум 10 грузов, чтобы score появился.</li>
+                <li><strong>Границы грейдов</strong> <span class="ar-badge third">по данным перевозчиков</span>: A — от 98%, B — 90–97,9%, C — 70–89,9%, D/F — ниже 70%. Amazon точные границы не публикует.</li>
+                <li><strong>Отмены самим Amazon</strong> в score не идут.</li>
+                <li><strong>Performance dispute</strong> подаётся в разделе Performance веб-портала (не из приложения), с тикетами и скринами по каждому спорному событию.</li>
+            </ul>
+
+            <h3>Что открывает каждый грейд <span class="ar-badge off">Amazon</span></h3>
+            <svg class="ar-svg" viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Лестница грейдов Relay и что открывает каждый">
+                <g font-size="12" fill="var(--text-secondary)">
+                    <rect x="20" y="220" width="150" height="60" rx="10" fill="rgba(239,68,68,.12)" stroke="rgba(239,68,68,.5)"/>
+                    <text x="95" y="245" text-anchor="middle" font-weight="800" fill="#ef4444" font-size="15">F · D · C</text>
+                    <text x="95" y="265" text-anchor="middle" font-size="11">риск suspension</text>
+                    <rect x="190" y="180" width="150" height="100" rx="10" fill="rgba(245,158,11,.12)" stroke="rgba(245,158,11,.5)"/>
+                    <text x="265" y="205" text-anchor="middle" font-weight="800" fill="#f59e0b" font-size="15">C+</text>
+                    <text x="265" y="228" text-anchor="middle" font-size="11">Load Board, Post A Truck</text>
+                    <text x="265" y="244" text-anchor="middle" font-size="11">Rewards</text>
+                    <text x="265" y="262" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-primary)">+ аукционы контрактов</text>
+                    <rect x="360" y="140" width="150" height="140" rx="10" fill="rgba(6,182,212,.12)" stroke="rgba(6,182,212,.5)"/>
+                    <text x="435" y="165" text-anchor="middle" font-weight="800" fill="#06b6d4" font-size="15">B</text>
+                    <text x="435" y="188" text-anchor="middle" font-size="11">всё, что у C+</text>
+                    <text x="435" y="208" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-primary)">+ контракты</text>
+                    <text x="435" y="226" text-anchor="middle" font-size="11">reefer-аукционы</text>
+                    <text x="435" y="246" text-anchor="middle" font-size="11">ниже B+ — без раннего</text>
+                    <text x="435" y="262" text-anchor="middle" font-size="11">доступа к грузам</text>
+                    <rect x="530" y="100" width="150" height="180" rx="10" fill="rgba(14,165,233,.12)" stroke="rgba(14,165,233,.5)"/>
+                    <text x="605" y="125" text-anchor="middle" font-weight="800" fill="#0ea5e9" font-size="15">B+</text>
+                    <text x="605" y="148" text-anchor="middle" font-size="11">всё, что у B</text>
+                    <text x="605" y="168" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-primary)">+ ранний доступ</text>
+                    <text x="605" y="184" text-anchor="middle" font-size="11">к spot и контрактам</text>
+                    <text x="605" y="204" text-anchor="middle" font-size="11">box-truck аукционы</text>
+                    <rect x="700" y="60" width="150" height="220" rx="10" fill="rgba(16,185,129,.12)" stroke="rgba(16,185,129,.5)"/>
+                    <text x="775" y="85" text-anchor="middle" font-weight="800" fill="#10b981" font-size="15">A · A+</text>
+                    <text x="775" y="108" text-anchor="middle" font-size="11">всё, что у B+</text>
+                    <text x="775" y="128" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text-primary)">+ price alerts</text>
+                    <text x="775" y="146" text-anchor="middle" font-size="11">преимущество в аукционах</text>
+                    <text x="775" y="164" text-anchor="middle" font-size="11">Relay Assistant:</text>
+                    <text x="775" y="180" text-anchor="middle" font-size="11">контроффер на Hot Loads</text>
+                    <text x="775" y="200" text-anchor="middle" font-size="11">верхние тиры Rewards</text>
+                    <g stroke="rgba(239,68,68,.6)" stroke-width="2" stroke-dasharray="6 4"><line x1="180" y1="40" x2="180" y2="290"/></g>
+                    <text x="180" y="30" text-anchor="middle" font-size="11" fill="#ef4444" font-weight="700">ниже C+ — уже выигранные контракты отзываются</text>
+                    <text x="925" y="270" text-anchor="middle" font-size="11" fill="var(--text-soft)">score = min(4 метрик)</text>
+                </g>
+            </svg>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/performance-score.webp" alt="Performance score в веб-портале Amazon Relay" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Performance в портале.</strong> Кроме текущего score, портал показывает ежедневный прогноз: что будет со score, если ничего не менять. Смотреть утром, до бронирований. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Safety Scorecard: второй экран, который нельзя игнорировать <span class="ar-badge off">Amazon</span></h3>
+            <p class="section-text">
+                Scorecard → Safety показывает ваши процентили BASIC и с 2026 года — Driver и Vehicle Violation Rate.
+                В отличие от performance, safety нельзя «починить за 6 недель»: окно — 12 месяцев, и апелляции по Violation Rate нет.
+                Единственные рычаги: чистые инспекции (они увеличивают знаменатель) и DataQ в FMCSA на спорные нарушения (уменьшают числитель).
+            </p>
+            <div class="ar-grid">
+                <div class="ar-card"><div class="ic">🔧</div><h4>Vehicle Violation Rate ≤50%</h4><p>Шины, тормоза, свет — три категории, которые дают большинство нарушений на инспекциях. Годовая инспекция и pre-trip по чек-листу — не формальность.</p></div>
+                <div class="ar-card"><div class="ic">🧑‍✈️</div><h4>Driver Violation Rate ≤35%</h4><p>HOS, med card, CDL, ELD-ошибки, ремень. Порог жёстче, чем для трака. Один OOS считается за два.</p></div>
+                <div class="ar-card"><div class="ic">🚫</div><h4>Без апелляции</h4><p>Превысили порог при 3+ инспекциях — отключение. Восстановление только по мере выхода старых инспекций из 12-месячного окна.</p></div>
+            </div>
+
+            <h3>Ежедневная рутина диспетчера по score</h3>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🌅</span>Утро: Scorecard → минимальная метрика и прогноз<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Не смотрите на общий score — смотрите, какая из четырёх сейчас минимальная. Именно на неё уходит внимание дня. Прогноз показывает, куда всё идёт, если ничего не менять.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">📋</span>Новые события в Performance за вчера<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Каждое опоздание, пропущенный шаг, инцидент — с Trip ID. Спорные → performance dispute сегодня с тикетами вчерашнего дня.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">📱</span>App usage по водителям<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Если метрика падает, найти, чей трип её тянет: в таймлайнах видно, где не было геолокации или пропущен шаг. Разговор с конкретным водителем, а не рассылка «всем включить приложение».</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🛡️</span>Раз в неделю: Safety Scorecard<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Новые инспекции, изменение процентилей, Violation Rate. Спорное нарушение — DataQ немедленно.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🎯</span>Перед каждым Book: «Есть водитель прямо сейчас?»<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Acceptance — единственная метрика, которую диспетчер контролирует на 100%. Один истёкший груз в неделю на 20 грузов — это минус 5% и грейд ниже.</p></div></li>
+                </ul>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/amazon-relay-performance-score" target="_blank" rel="noopener">Amazon Relay performance score</a>, <a href="https://relay.amazon.com/blog/intro-to-amazon-relay/relay-performance-grades-how-to-unlock-hauling-opportunities" target="_blank" rel="noopener">Relay performance grades</a>, <a href="https://relay.amazon.com/blog/trucking-safety/safety-scorecard-helps-relay-carriers-monitor-performance" target="_blank" rel="noopener">Safety Scorecard</a>. Числовые границы грейдов и множители по минутам — по разборам перевозчиков обновления от 2 сентября 2025.</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 12. ИТОГИ -->
+    <section class="section" id="s12">
+        <div class="container">
+            <h2 class="section-title">12. Relay против брокерского фрахта, глоссарий и квиз</h2>
+
+            <h3>Честное сравнение</h3>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✓ ЗА RELAY</h4>
+                    <ul>
+                        <li>Прямой шиппер: никакого double-brokering, никаких «брокер не заплатил».</li>
+                        <li>Еженедельная выплата без комиссий и без факторинга.</li>
+                        <li>Трейлеры Amazon: Power Only без затрат на свой трейлер.</li>
+                        <li>Бронирование одной кнопкой, без звонков и rate con. Reload-подсказки из точки доставки.</li>
+                        <li>Контрактные блоки: предсказуемая неделя и оплата за время, даже при недогрузе.</li>
+                        <li>Стабильный объём, пик октябрь–январь и Prime Day.</li>
+                        <li>Трекинг и документы внутри одного приложения, POD не «теряется».</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>✗ ПРОТИВ</h4>
+                    <ul>
+                        <li>Ставки ниже spot-рынка брокеров на 15–30%, торга нет.</li>
+                        <li>Deadhead не оплачивается никогда.</li>
+                        <li>Жёсткие окна: 30–45 минут опоздания — уже штраф в score.</li>
+                        <li>Очереди на площадках в пик 2–4 часа, детеншн «капнутый» и через диспут.</li>
+                        <li>Score считается по слабейшей метрике; один плохой водитель тянет всю компанию.</li>
+                        <li>Violation Rate без апелляции; suspension по формальным причинам.</li>
+                        <li>Нет «своего человека»: только тикеты и ROC.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="tip-block gold">
+                <div class="tip-icon">🎯</div>
+                <div class="tip-text">
+                    <strong>Рабочая пропорция, к которой приходят большинство небольших перевозчиков:</strong> 20–50% загрузки — Relay
+                    (контрактные блоки как «скелет» недели, spot-борд для backhaul и дыр), остальное — брокерский фрахт с более высокой
+                    маржой. Relay даёт стабильность и кэшфлоу, брокеры — доход. Диспетчер, который умеет и то, и другое, стоит дороже.
+                </div>
+            </div>
+
+            <h3>Глоссарий Relay</h3>
+            <div class="ar-gl">
+                <div><b>Amazon Relay</b>Платформа Amazon для перевозчиков: борд, аукционы, контракты, приложение водителя. relay.amazon.com.</div>
+                <div><b>Amazon Freight</b>Брокерско-шипперская сторона Amazon для сторонних грузовладельцев (MC-826094). Перевозчики получают эти грузы через Relay.</div>
+                <div><b>AFP (Amazon Freight Partner)</b>Программа создания компании под флот Amazon. Не для действующих перевозчиков.</div>
+                <div><b>Block</b>Оплачиваемое окно времени (13, 37, 109, 119 часов) с двумя и более трипами внутри. Оплачивается полностью.</div>
+                <div><b>Tour</b>Жаргон перевозчиков: цепочка трипов внутри блока. В документах Amazon термина нет.</div>
+                <div><b>Trip</b>Единица работы в Relay: один груз или один сегмент блока со своими стопами, Trip ID вида T-…</div>
+                <div><b>Power Only</b>Тягач и водитель ваши, трейлер и груз — Amazon. Большинство грузов Relay.</div>
+                <div><b>Drop-and-hook</b>Отцепил приехавший трейлер, прицепил следующий. Противоположность live load.</div>
+                <div><b>Post A Truck</b>Публикация свободного трака с минимальной ставкой; система бронирует груз сама.</div>
+                <div><b>Book now / Bid</b>Мгновенное бронирование по фиксированной ставке / предложение своей цены.</div>
+                <div><b>Gate Pass</b>QR-код в приложении для въезда на площадку. Формируется до приезда.</div>
+                <div><b>Check In / Check Out</b>Шаги в приложении на въезде и выезде. Таймстамп Check In = основа on-time.</div>
+                <div><b>Trailer Inspection</b>Обязательный осмотр трейлера Amazon в приложении перед выездом: фото, шины, свет, пломба.</div>
+                <div><b>ROC</b>Relay Operations Center: круглосуточная поддержка через Support Center, Relay Assistant и телефон.</div>
+                <div><b>Relay Assistant</b>ИИ-чат в приложении и портале: инструкции, тикеты, для топ-грейдов — контроффер по срочным грузам.</div>
+                <div><b>Performance score</b>Минимум из On-time, Acceptance, App usage, Disruption-free за 6 активных недель. Грейд F…A+.</div>
+                <div><b>Violation Rate</b>Driver ≤35% / Vehicle ≤50%: (нарушения + OOS×2) ÷ инспекции за 12 месяцев. Без апелляции.</div>
+                <div><b>Trailer Interchange</b>Строка страховки на $50 000 за чужой (Amazon) трейлер. Обязательна для Power Only.</div>
+                <div><b>TONU</b>Truck Ordered Not Used — компенсация за отменённый после выезда/прибытия груз. В Relay — по claim.</div>
+                <div><b>FC / SC / DS / IXD / AR / AMXL</b>Типы площадок Amazon: fulfillment, sortation, delivery station, inbound cross-dock, robotics, крупногабарит.</div>
+                <div><b>Relay Rewards / Safety Rewards</b>Программы бонусов: тиры по performance и стажу; доплата за милю без ДТП с дашкамом.</div>
+                <div><b>Plan of Action</b>Документ для апелляции при suspension: что случилось, что исправлено, меры на будущее.</div>
+            </div>
+
+            <h3>Квиз: проверь себя</h3>
+            <p class="section-desc">10 вопросов по материалу гайда. Ответы с объяснениями появляются сразу.</p>
+            <div class="quiz-card" id="quizCard">
+                <div id="quizBody">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                    <div class="quiz-nav">
+                        <span class="quiz-counter" id="quizCounter"></span>
+                        <button class="quiz-next-btn" id="quizNext" onclick="nextQ()">Далее →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="quizScore">
+                    <div class="score-number" id="scoreNum"></div>
+                    <p id="scoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartQuiz()">Пройти заново</button>
+                </div>
+            </div>
+
+            <div class="tip-block src" style="margin-top:32px">
+                <div class="tip-icon">📅</div>
+                <div class="tip-text">Гайд составлен 3 сентября 2026 года по открытым материалам Amazon Relay и отзывам перевозчиков. Amazon меняет правила Relay несколько раз в год; перед тем как опираться на цифру из этого текста, проверьте её в FAQ и Program Policies своего аккаунта.</div>
+            </div>
+        </div>
+
+        <div class="module-navigation">
+            <a href="loadboards.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Связанный урок</span><span class="title">📡 Load Boards</span></div></a>
+            <a href="brokers.html" class="module-nav-btn next"><div class="text"><span class="label">Связанный урок</span><span class="title">💼 Брокеры</span></div><span class="icon">→</span></a>
+        </div>
+    </section>
+
+    <script>
+        // NAVIGATION
+        (function() {
+            const toggle = document.getElementById('navigationToggle');
+            const content = document.getElementById('navigationContent');
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                content.classList.toggle('active');
+            });
+            function initMobileAccordion() {
+                if (window.innerWidth <= 640) {
+                    const navSections = document.querySelectorAll('.nav-section');
+                    document.querySelectorAll('.section-arrow').forEach(arrow => { arrow.style.display = 'inline-block'; });
+                    navSections.forEach(function(section, index) {
+                        if (index > 0) section.classList.add('collapsed');
+                        const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                            header.addEventListener('click', function() { section.classList.toggle('collapsed'); });
+                            header.dataset.listenerAdded = 'true';
+                        }
+                    });
+                } else {
+                    document.querySelectorAll('.section-arrow').forEach(arrow => { arrow.style.display = 'none'; });
+                }
+            }
+            initMobileAccordion();
+            window.addEventListener('resize', initMobileAccordion);
+        })();
+
+        function toggleChecklist(el) { el.classList.toggle('open'); }
+
+        // QUIZ
+        const quizData = [
+            { q: 'Через какое время после получения interstate authority перевозчик может подать заявку в Amazon Relay?', options: ['Сразу после активации MC', 'Через 90 дней', 'Через 180 дней', 'Через 12 месяцев'], correct: 2, explanation: 'Amazon требует, чтобы authority была активна не менее 180 дней. Более ранняя заявка отклоняется автоматически.' },
+            { q: 'Какая строка страховки чаще всего становится причиной отказа при онбординге в Relay?', options: ['Cargo $100 000', 'Auto Liability $1 000 000', 'Trailer Replacement / Interchange $50 000', 'General Liability $1 000 000'], correct: 2, explanation: 'Для Power Only вы цепляете трейлер Amazon, и в COI должна быть отдельная строка Trailer Interchange на $50 000. У многих полисов по умолчанию $25 000 или строки нет.' },
+            { q: 'Что такое «block» в Amazon Relay?', options: ['Заблокированный аккаунт перевозчика', 'Оплачиваемое окно времени с двумя и более трипами внутри', 'Груз, который нельзя отменить', 'Зона площадки, куда запрещён въезд'], correct: 1, explanation: 'Block — оплачиваемый отрезок времени (например 13 или 37 часов), в который Amazon назначает несколько трипов. Оплачивается полностью, даже если использован не целиком.' },
+            { q: 'Какую роль в Relay должен иметь диспетчер, чтобы бронировать грузы и подавать диспуты?', options: ['Dispatcher', 'Administrator', 'Driver', 'Viewer'], correct: 1, explanation: 'Роль «Dispatcher» в Relay — только просмотр. Бронирование, назначение водителей и диспуты доступны роли Administrator.' },
+            { q: 'По какому событию Amazon считает время прибытия для метрики On-time?', options: ['По ELD трака', 'По звонку водителя охране', 'По таймстампу Check In в приложении Relay', 'По времени открытия ворот'], correct: 2, explanation: 'On-time считается по таймстампу кнопки Check In в приложении. Приехал вовремя, нажал через 40 минут — для Amazon это опоздание на 40 минут.' },
+            { q: 'Как вычисляется общий performance score из четырёх метрик?', options: ['Среднее арифметическое', 'Взвешенное среднее с упором на On-time', 'Берётся минимальная из четырёх', 'Сумма баллов'], correct: 2, explanation: 'Итоговый score = минимальная из четырёх метрик (On-time, Acceptance, App usage, Disruption-free). Одна слабая метрика тянет вниз весь грейд.' },
+            { q: 'Диспетчер понимает, что не сможет выполнить контрактный блок. Когда отказ обойдётся дешевле всего по score?', options: ['После старта блока, чтобы «попытаться»', 'Менее чем за 24 часа до старта', 'Более чем за 24 часа до старта', 'Время не влияет'], correct: 2, explanation: 'Отказ от блока более чем за 24 часа до старта — множитель ×1. Менее чем за 24 часа или после старта — ×4.' },
+            { q: 'Когда перевозчик получает выплату за трип, завершённый во вторник?', options: ['На следующий день', 'В ближайшую пятницу', 'В пятницу следующей недели', 'Через 30 дней'], correct: 2, explanation: 'Платёжная неделя — воскресенье–суббота. Выплата за все трипы этой недели приходит в следующую пятницу.' },
+            { q: 'Водитель на дропе обнаружил, что номер пломбы не совпадает с BOL. Правильное действие?', options: ['Сорвать пломбу и проверить груз', 'Выехать, на разгрузке разберутся', 'Стоять на месте, фото пломбы и BOL, диспетчер открывает тикет в Support', 'Попросить сотрудника ярда поменять пломбу без записи'], correct: 2, explanation: 'Пломбу не трогать, никуда не выезжать, фиксировать всё фото и открывать тикет до выезда. Выезд с несовпадающей пломбой — вопрос о целостности груза к перевозчику.' },
+            { q: 'Что оплачивает Amazon в ставке all-in на борде Relay?', options: ['Только base rate, топливо отдельно', 'Base rate + fuel surcharge + tolls', 'Base rate + deadhead к origin', 'Base rate + детеншн автоматически'], correct: 1, explanation: 'All-in включает base rate, fuel surcharge и толлы. Deadhead не оплачивается никогда, детеншн — по диспуту.' }
+        ];
+
+        let qIdx = 0, qScore = 0, qAnswered = false;
+        function renderQ() {
+            const q = quizData[qIdx];
+            document.getElementById('quizQuestion').textContent = q.q;
+            document.getElementById('quizCounter').textContent = (qIdx+1) + ' / ' + quizData.length;
+            document.getElementById('quizFeedback').className = 'quiz-feedback';
+            document.getElementById('quizNext').classList.remove('visible');
+            qAnswered = false;
+            const el = document.getElementById('quizOptions');
+            el.innerHTML = '';
+            q.options.forEach((o, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'quiz-option'; btn.textContent = o;
+                btn.onclick = () => answerQ(i); el.appendChild(btn);
+            });
+        }
+        function answerQ(i) {
+            if (qAnswered) return; qAnswered = true;
+            const q = quizData[qIdx];
+            document.querySelectorAll('.quiz-option').forEach((b, j) => { b.disabled = true; if (j === q.correct) b.classList.add('correct'); if (j === i && i !== q.correct) b.classList.add('wrong'); });
+            const fb = document.getElementById('quizFeedback');
+            if (i === q.correct) { qScore++; fb.className = 'quiz-feedback visible success'; fb.textContent = '✅ Правильно! ' + q.explanation; }
+            else { fb.className = 'quiz-feedback visible error'; fb.textContent = '❌ Неправильно. ' + q.explanation; }
+            if (qIdx < quizData.length - 1) document.getElementById('quizNext').classList.add('visible');
+            else setTimeout(showQScore, 1500);
+        }
+        function nextQ() { qIdx++; renderQ(); }
+        function showQScore() {
+            const popup = document.createElement('div');
+            popup.id = 'quizResultPopup';
+            popup.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,rgba(10,14,26,0.98),rgba(7,11,20,0.98));border:2px solid rgba(6,182,212,0.3);border-radius:24px;padding:48px 40px;max-width:500px;width:90%;z-index:10000;box-shadow:0 20px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(6,182,212,0.1) inset;animation:popupFadeIn 0.4s ease`;
+            const p = Math.round(qScore/quizData.length*100);
+            const msg = p === 100 ? 'Идеально! Вы готовы диспетчировать Relay.' : p >= 75 ? 'Отличный результат! Перечитайте разделы, где ошиблись.' : p >= 50 ? 'Неплохо, но стоит повторить материал.' : 'Рекомендуем перечитать гайд и попробовать снова.';
+            const scoreColor = p === 100 ? '#10b981' : p >= 75 ? '#f59e0b' : '#ef4444';
+            popup.innerHTML = `<div style="text-align:center;"><div style="font-size:72px;font-weight:900;background:linear-gradient(135deg,${scoreColor},#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:16px;">${qScore}/${quizData.length}</div><div style="font-size:20px;font-weight:600;color:var(--text-secondary);margin-bottom:32px;">${msg}</div><button onclick="closeQuizPopup();restartQuiz()" style="padding:14px 32px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.2s;">Пройти заново</button></div>`;
+            const overlay = document.createElement('div');
+            overlay.id = 'quizResultOverlay';
+            overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;animation:overlayFadeIn 0.3s ease`;
+            overlay.onclick = closeQuizPopup;
+            if (!document.getElementById('quizPopupStyles')) {
+                const style = document.createElement('style');
+                style.id = 'quizPopupStyles';
+                style.textContent = `@keyframes popupFadeIn{from{opacity:0;transform:translate(-50%,-45%)}to{opacity:1;transform:translate(-50%,-50%)}}@keyframes overlayFadeIn{from{opacity:0}to{opacity:1}}@keyframes popupFadeOut{from{opacity:1;transform:translate(-50%,-50%)}to{opacity:0;transform:translate(-50%,-55%)}}`;
+                document.head.appendChild(style);
+            }
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+        }
+        function closeQuizPopup() {
+            const popup = document.getElementById('quizResultPopup');
+            const overlay = document.getElementById('quizResultOverlay');
+            if (popup) {
+                popup.style.animation = 'popupFadeOut 0.3s ease';
+                setTimeout(() => { popup.remove(); if (overlay) overlay.remove(); }, 300);
+            }
+        }
+        function restartQuiz() { qIdx=0; qScore=0; renderQ(); }
+        document.addEventListener('DOMContentLoaded', renderQ);
+    </script>
+
+    <script src="../lesson-visuals.js?v=3"></script>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Вернуться наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <script>
+        (function() {
+            const scrollBtn = document.getElementById('scrollToTop');
+            let inactivityTimer;
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) { scrollBtn.classList.add('visible'); resetInactivityTimer(); }
+                else { scrollBtn.classList.remove('visible'); scrollBtn.classList.remove('inactive'); }
+            });
+            function resetInactivityTimer() {
+                scrollBtn.classList.remove('inactive');
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(function() { scrollBtn.classList.add('inactive'); }, 2000);
+            }
+            window.addEventListener('mousemove', resetInactivityTimer);
+            window.addEventListener('scroll', resetInactivityTimer);
+            window.addEventListener('touchstart', resetInactivityTimer);
+            scrollBtn.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        })();
+    </script>
+
+<!-- Enhanced Quiz System -->
+<link rel="stylesheet" href="../enhanced-quiz-system.css">
+<script src="../enhanced-quiz-system.js"></script>
+</body>
+</html>
