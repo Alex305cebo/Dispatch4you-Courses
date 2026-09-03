@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ru" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="../css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Часть 3. Рабочий день диспетчера в Relay | Курсы Диспетчера</title>
+  <link rel="canonical" href="https://dispatch4you.com/pages/amazon-relay-3-workday.html">
+    <meta name="description" content="Часть 3 гайда Amazon Relay: поиск и бронирование груза, назначение водителя, процедура на площадке Amazon, трекинг, ROC, регламент недели диспетчера.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=8.7">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.2">
+    <link rel="stylesheet" href="../lesson-visuals.css?v=3">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; width: 100%; max-width: 100vw; scroll-behavior: smooth; }
+
+        :root {
+            --primary: #06b6d4;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary:#e2e8f0;
+            --text-muted:#94a3b8;
+            --border: rgba(255, 255, 255, 0.15);
+            --amz: #ff9900;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker); color: var(--text-primary);
+            line-height: 1.6; overflow-x: hidden; width: 100%; max-width: 100vw; margin: 0; padding: 0;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.15), transparent 50%),
+                        radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(14,165,233,.08), transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 40px; }
+
+        /* HERO */
+        .page-header { padding: 130px 0 70px; text-align: center; }
+        .page-badge {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(255,153,0,.15), rgba(14,165,233,.15));
+            border:1px solid var(--tint-brand-4); border-radius: 24px;
+            font-size: 13px; font-weight: 700; color: var(--primary);
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .page-title {
+            font-size: clamp(40px,5vw,64px); font-weight: 900;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 40%, #ff9900 80%, #fbbf24 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 24px; line-height: 1.1;
+        }
+        .page-subtitle { font-size: 20px; color:var(--text-secondary); max-width: 800px; margin: 0 auto; line-height: 1.7; }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat-number {
+            font-size: 36px; font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--amz));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-stat-label { font-size: 13px; color:var(--text-soft); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 4px; }
+
+        /* SECTIONS */
+        .section { padding: 8px 0; }
+        .section-title {
+            font-size: clamp(28px,3vw,38px); font-weight: 900; margin-bottom: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #ff9900 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .section-desc { font-size: 17px; color:var(--text-secondary); line-height: 1.8; max-width: 900px; margin-bottom: 40px; }
+        .section-text { font-size: 16px; color:var(--text-secondary); line-height: 1.85; margin-bottom: 20px; max-width: 950px; }
+        .section-text strong { color: var(--text-primary); }
+        .section h3 { font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 36px 0 14px; }
+        .section h4 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 24px 0 10px; }
+        .section ul.plain { margin: 0 0 20px 22px; color: var(--text-secondary); font-size: 15px; line-height: 1.8; }
+        .section ul.plain li { margin-bottom: 6px; }
+        .section ul.plain strong { color: var(--text-primary); }
+        .section a { color: var(--primary); }
+
+        /* GLASS CARD */
+        .glass-card {
+            background:var(--glass-03); border:1px solid var(--edge-08);
+            border-radius: 20px; padding: 32px; backdrop-filter: blur(10px); transition: all .35s ease;
+        }
+        .glass-card:hover {
+            border-color:var(--tint-brand-4); background: rgba(6,182,212,.05);
+            transform: translateY(-4px); box-shadow: 0 12px 40px rgba(6,182,212,.1);
+        }
+        .glass-card h3 { margin-top: 0; }
+
+        /* ===== NAVIGATION ===== */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:var(--glass-03);border:1px solid var(--edge-08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:var(--glass-03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:var(--glass-05);transform:translateY(-2px)}.navigation-toggle.active{background:var(--glass-05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:var(--brand-ink);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--brand-ink);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--tint-brand-3)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:var(--text-secondary);text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid var(--edge-08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:var(--brand-ink-3);border-color:var(--tint-brand-4);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:var(--brand-ink)}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:var(--brand-ink-3);border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:var(--brand-ink)}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:var(--brand-ink);transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+
+        
+        /* ===== КАРТА ГАЙДА (5 частей) ===== */
+        .ar-map { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 8px 0 24px; }
+        .ar-map a { display: block; padding: 14px 14px 12px; border-radius: 14px; background: var(--glass-03); border: 1px solid var(--edge-08); color: var(--text-secondary); text-decoration: none; transition: all .2s; }
+        .ar-map a:hover { border-color: rgba(255,153,0,.4); background: rgba(255,153,0,.06); transform: translateY(-2px); }
+        .ar-map a.on { border-color: rgba(255,153,0,.6); background: rgba(255,153,0,.10); box-shadow: 0 0 0 1px rgba(255,153,0,.25) inset; }
+        .ar-map .mn { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; font-size: 12px; font-weight: 800; align-items: center; justify-content: center; margin-bottom: 8px; }
+        .ar-map .mt { display: block; font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .ar-map .md { display: block; font-size: 12px; line-height: 1.5; color: var(--text-soft); }
+        .ar-map a.on .mt { color: var(--amz); }
+        @media (max-width: 1024px) { .ar-map { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 640px) { .ar-map { grid-template-columns: 1fr 1fr; } .ar-map .md { display: none; } }
+        /* ===== ОГЛАВЛЕНИЕ ГАЙДА ===== */
+        .ar-toc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0 32px; }
+        .ar-toc a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 600; transition: all .2s; }
+        .ar-toc a:hover { background: rgba(255,153,0,.08); border-color: rgba(255,153,0,.35); color: var(--text-primary); transform: translateX(3px); }
+        .ar-toc .n { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        /* ===== ТАБЛИЦЫ ===== */
+        .ar-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 16px 0 28px; border-radius: 16px; }
+        .ar-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 640px; }
+        .ar-table thead th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); white-space: nowrap; }
+        .ar-table tbody tr { background: var(--glass-03); transition: background .2s; }
+        .ar-table tbody tr:hover { background: rgba(6,182,212,.08); }
+        .ar-table td { padding: 12px 14px; font-size: 14px; color: var(--text-secondary); vertical-align: top; line-height: 1.6; }
+        .ar-table td:first-child { border-radius: 12px 0 0 12px; font-weight: 600; color: var(--text-primary); }
+        .ar-table td:last-child { border-radius: 0 12px 12px 0; }
+        .ar-table td strong { color: var(--text-primary); }
+        .ar-table .ok { color: var(--success); font-weight: 700; }
+        .ar-table .no { color: var(--danger); font-weight: 700; }
+        .ar-table .warn { color: var(--warning); font-weight: 700; }
+        .ar-table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: var(--primary); }
+
+        /* ===== БЕЙДЖИ / КОЛЛАУТЫ ===== */
+        .ar-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; vertical-align: middle; }
+        .ar-badge.off { background: rgba(16,185,129,.15); color: var(--success); border: 1px solid rgba(16,185,129,.3); }
+        .ar-badge.third { background: rgba(245,158,11,.15); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
+        .ar-badge.amz { background: rgba(255,153,0,.15); color: var(--amz); border: 1px solid rgba(255,153,0,.35); }
+        .ar-badge.blue { background: rgba(6,182,212,.15); color: var(--primary); border: 1px solid rgba(6,182,212,.3); }
+        .tip-block { display: flex; gap: 14px; padding: 18px 20px; border-radius: 14px; margin: 18px 0; background: rgba(6,182,212,.07); border: 1px solid rgba(6,182,212,.2); }
+        .tip-block .tip-icon { font-size: 22px; flex-shrink: 0; }
+        .tip-block .tip-text { font-size: 14.5px; color: var(--text-secondary); line-height: 1.75; }
+        .tip-block .tip-text strong { color: var(--text-primary); }
+        .tip-block.warn { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); }
+        .tip-block.gold { background: rgba(255,153,0,.07); border-color: rgba(255,153,0,.3); }
+        .tip-block.src { background: var(--glass-03); border-color: var(--edge-08); }
+        .tip-block.src .tip-text { font-size: 13px; color: var(--text-soft); }
+        .tip-block.src a { color: var(--primary); word-break: break-all; }
+
+        /* ===== СКРИНШОТЫ / МАКЕТЫ ===== */
+        .ar-fig { margin: 22px 0 30px; background: var(--glass-03); border: 1px solid var(--edge-08); border-radius: 18px; overflow: hidden; }
+        .ar-fig img { display: block; width: 100%; height: auto; max-width: 100%; }
+        .ar-fig figcaption { padding: 12px 18px; font-size: 13px; color: var(--text-soft); line-height: 1.6; border-top: 1px solid var(--edge-08); }
+        .ar-fig figcaption strong { color: var(--text-secondary); }
+        .ar-fig.phone { max-width: 360px; }
+        .ar-fig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .ar-fig-row .ar-fig { margin: 22px 0 10px; }
+        .ar-mock { margin: 22px 0 30px; background: #0f1524; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; overflow: hidden; font-size: 13px; color: #e2e8f0; }
+        .ar-mock .m-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #131b2e; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 12px; color: #94a3b8; }
+        .ar-mock .m-bar i { width: 10px; height: 10px; border-radius: 50%; background: #334155; display: inline-block; }
+        .ar-mock .m-bar i:nth-child(1) { background: #ef4444; } .ar-mock .m-bar i:nth-child(2) { background: #f59e0b; } .ar-mock .m-bar i:nth-child(3) { background: #10b981; }
+        .ar-mock .m-body { padding: 16px; }
+        .ar-mock .m-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.04); margin-bottom: 8px; flex-wrap: wrap; }
+        .ar-mock .m-row b { color: #fff; }
+        .ar-mock .m-pill { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(6,182,212,.18); color: #67e8f9; }
+        .ar-mock .m-pill.g { background: rgba(16,185,129,.18); color: #6ee7b7; } .ar-mock .m-pill.o { background: rgba(255,153,0,.2); color: #fbbf24; } .ar-mock .m-pill.r { background: rgba(239,68,68,.2); color: #fca5a5; } .ar-mock .m-pill.gr { background: rgba(148,163,184,.2); color: #cbd5e1; }
+        .ar-mock .m-btn { padding: 8px 16px; border-radius: 8px; background: #ff9900; color: #111; font-weight: 800; font-size: 12px; }
+        .ar-mock .m-btn.sec { background: transparent; border: 1px solid #ff9900; color: #ffb84d; }
+        .ar-mock .m-caption { padding: 10px 16px; font-size: 12px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .ar-mock .m-cols4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .ar-mock .m-metric { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.04); text-align: center; }
+        .ar-mock .m-metric .v { font-size: 26px; font-weight: 900; color: #fff; }
+        .ar-mock .m-metric .l { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+        .ar-mock .m-metric.min { outline: 2px solid #ef4444; }
+        .ar-mock .m-qr { width: 120px; height: 120px; margin: 10px auto; background: repeating-conic-gradient(#fff 0 25%, #0f1524 0 50%) 0 0/16px 16px; border: 6px solid #fff; border-radius: 6px; }
+        .ar-mock .m-side { display: grid; grid-template-columns: 170px 1fr; }
+        .ar-mock .m-nav { background: #0b1020; padding: 12px 0; border-right: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-nav div { padding: 8px 16px; color: #94a3b8; font-size: 12px; }
+        .ar-mock .m-nav div.on { color: #fff; background: rgba(255,153,0,.15); border-left: 3px solid #ff9900; }
+        @media (max-width: 640px) { .ar-mock .m-side { grid-template-columns: 1fr; } .ar-mock .m-nav { display: flex; flex-wrap: wrap; } .ar-mock .m-cols, .ar-mock .m-cols4 { grid-template-columns: 1fr 1fr; } }
+
+        /* ===== ШАГИ / ЧЕК-ЛИСТ / КАРТОЧКИ ===== */
+        .ar-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 28px; counter-reset: st; }
+        .ar-step { display: flex; gap: 16px; padding: 18px 20px; border-radius: 14px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-step::before { counter-increment: st; content: counter(st); width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ar-step > div { flex: 1; min-width: 0; }
+        .ar-step h4 { margin: 0 0 6px; font-size: 16px; }
+        .ar-step p { font-size: 14px; color: var(--text-secondary); line-height: 1.75; margin: 0; }
+        .ar-step p + p { margin-top: 8px; }
+        .checklist { list-style: none; }
+        .checklist-item { padding: 14px 0; border-bottom:1px solid var(--glass-05); cursor: pointer; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-header { display: flex; align-items: center; gap: 12px; font-size: 15.5px; font-weight: 600; color: var(--text-primary); transition: color .2s; }
+        .checklist-header:hover { color: var(--primary); }
+        .checklist-icon { font-size: 20px; flex-shrink: 0; }
+        .checklist-arrow { margin-left: auto; font-size: 12px; color:var(--text-soft); transition: transform .3s; }
+        .checklist-item.open .checklist-arrow { transform: rotate(180deg); }
+        .checklist-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .checklist-item.open .checklist-body { max-height: 900px; }
+        .checklist-body p { padding: 12px 0 4px 32px; font-size: 14px; color:var(--text-secondary); line-height: 1.8; }
+        .ar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0 28px; }
+        .ar-grid.two { grid-template-columns: 1fr 1fr; }
+        .ar-card { padding: 22px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-card .ic { font-size: 30px; margin-bottom: 10px; }
+        .ar-card h4 { margin: 0 0 8px; font-size: 16px; }
+        .ar-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-card.hot { border-color: rgba(255,153,0,.4); background: rgba(255,153,0,.06); }
+        .ar-card.bad { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.05); }
+        .ar-card.good { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.05); }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .pros, .cons { padding: 20px; border-radius: 14px; }
+        .pros { background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.15); }
+        .cons { background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.15); }
+        .pros h4, .cons h4 { margin-top: 0; font-size: 14px; }
+        .pros h4 { color: var(--success); } .cons h4 { color: var(--danger); }
+        .pros ul, .cons ul { list-style: none; }
+        .pros li, .cons li { padding: 6px 0; color: var(--text-secondary); font-size: 14px; display: flex; gap: 10px; line-height: 1.6; }
+        .pros li::before { content: '✓'; color: var(--success); font-weight: 700; } .cons li::before { content: '✗'; color: var(--danger); font-weight: 700; }
+
+        /* ===== ПРОБЛЕМЫ ===== */
+        .ar-problem { margin-bottom: 12px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); overflow: hidden; }
+        .ar-problem summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15.5px; color: var(--text-primary); }
+        .ar-problem summary::-webkit-details-marker { display: none; }
+        .ar-problem summary .sev { font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 800; letter-spacing: .5px; margin-left: auto; flex-shrink: 0; }
+        .sev.hi { background: rgba(239,68,68,.18); color: #fca5a5; } .sev.md { background: rgba(245,158,11,.18); color: #fcd34d; } .sev.lo { background: rgba(16,185,129,.18); color: #6ee7b7; }
+        .ar-problem[open] summary { border-bottom: 1px solid var(--edge-08); background: rgba(6,182,212,.05); }
+        .ar-problem .pb { padding: 16px 20px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .ar-problem .pb > div { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.03); font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-problem .pb .lbl { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+        .ar-problem .pb .d .lbl { color: var(--primary); } .ar-problem .pb .w .lbl { color: var(--amz); } .ar-problem .pb .c .lbl { color: var(--danger); } .ar-problem .pb .r .lbl { color: var(--success); }
+        .ar-problem .pb .full { grid-column: 1 / -1; }
+
+        /* ===== ДЕНЬ ДИСПЕТЧЕРА ===== */
+        .ar-day { display: grid; grid-template-columns: 110px 1fr; gap: 0 16px; margin: 16px 0 28px; }
+        .ar-day .t { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--primary); padding: 14px 0; text-align: right; border-right: 2px solid var(--tint-brand-3); padding-right: 14px; }
+        .ar-day .w { padding: 12px 0 12px 4px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; border-bottom: 1px solid var(--glass-05); }
+        .ar-day .w strong { color: var(--text-primary); }
+
+        /* ===== SVG ===== */
+        .ar-svg { width: 100%; height: auto; display: block; margin: 16px 0 28px; }
+        .ar-svg text { font-family: 'Inter', sans-serif; }
+
+        /* ===== ГЛОССАРИЙ ===== */
+        .ar-gl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 28px; }
+        .ar-gl div { padding: 14px 16px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        .ar-gl b { color: var(--amz); display: block; margin-bottom: 4px; font-size: 15px; }
+
+        /* QUIZ */
+        .quiz-card { background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(255,153,0,.05)); border:1px solid var(--tint-brand-3); border-radius: 24px; padding: 40px; }
+        .quiz-question { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; line-height: 1.5; }
+        .quiz-options { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+        .quiz-option { padding: 16px 20px; background:var(--glass-05); border:1px solid var(--edge-10); border-radius: 14px; color:var(--text-secondary); font-size: 15px; font-weight: 500; cursor: pointer; transition: all .3s; font-family: inherit; text-align: left; }
+        .quiz-option:hover { background:var(--tint-brand-1); border-color:var(--tint-brand-4); color: var(--text-primary); }
+        .quiz-option.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .quiz-option.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: var(--danger); }
+        .quiz-option:disabled { cursor: default; }
+        .quiz-feedback { padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.7; display: none; }
+        .quiz-feedback.visible { display: block; animation: fadeIn .3s ease; }
+        .quiz-feedback.success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .quiz-feedback.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .quiz-counter { font-size: 14px; color:var(--text-soft); font-weight: 600; }
+        .quiz-next-btn { padding: 10px 24px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .3s; font-family: inherit; display: none; }
+        .quiz-next-btn.visible { display: inline-block; }
+        .quiz-score { text-align: center; padding: 32px; display: none; }
+        .quiz-score.visible { display: block; }
+        .quiz-restart-btn { margin-top: 20px; padding: 12px 28px; background:var(--glass-08); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .3s; font-family: inherit; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* ===== МОБИЛЬНАЯ ЧИТАЕМОСТЬ ===== */
+        .ar-svg-wrap { margin: 16px 0 28px; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+        .ar-svg-wrap .ar-svg { margin: 0; }
+        @media (max-width: 640px) {
+            .ar-svg-wrap .ar-svg { min-width: 760px; }
+            .ar-svg-wrap::after { content: '← схему можно прокручивать пальцем →'; display: block; text-align: center; font-size: 12px; color: var(--text-soft); padding: 6px 0 2px; }
+            .ar-table { min-width: 0; border-spacing: 0; }
+            .ar-table thead { display: none; }
+            .ar-table tbody, .ar-table tr, .ar-table td { display: block; width: 100%; }
+            .ar-table tr { margin-bottom: 10px; border-radius: 14px; padding: 8px 0; border: 1px solid var(--edge-08); }
+            .ar-table td { padding: 6px 14px; border-radius: 0 !important; font-size: 14.5px; }
+            .ar-table td:first-child { padding-top: 12px; font-size: 16px; color: var(--amz); }
+            .ar-table td:last-child { padding-bottom: 12px; }
+            .ar-table td:not(:first-child)[data-label]::before { content: attr(data-label); display: block; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-soft); margin-bottom: 2px; }
+            .ar-mock { font-size: 13.5px; }
+            .ar-mock .m-row { font-size: 13.5px; }
+            .ar-problem summary { font-size: 15px; }
+            .glass-card p[style*="monospace"], .glass-card p[style*="Menlo"] { font-size: 12.5px !important; }
+        }
+        /* RESPONSIVE */
+        @media (max-width: 1024px) { .ar-grid { grid-template-columns: 1fr 1fr; } .ar-toc { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .page-header { padding: 100px 0 50px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-number { font-size: 28px; }
+            .quiz-options { grid-template-columns: 1fr; }
+            .ar-grid, .ar-grid.two, .ar-gl, .pros-cons, .ar-fig-row, .ar-problem .pb { grid-template-columns: 1fr; }
+            .ar-toc { grid-template-columns: 1fr; }
+            .ar-day { grid-template-columns: 74px 1fr; }
+        }
+        @media (max-width: 480px) { .container { padding: 0 16px; } .hero-stats { flex-direction: column; gap: 16px; } }
+        @media (max-width: 360px) { .container { padding: 0 12px; } .glass-card { padding: 20px; } .quiz-card { padding: 24px; } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-darker); }
+        ::-webkit-scrollbar-thumb { background:var(--tint-brand-4); border-radius: 4px; }
+
+        /* ===== SCROLL TO TOP BUTTON ===== */
+        .scroll-to-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(6,182,212,0.3);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);opacity:0;visibility:hidden;z-index:999}.scroll-to-top.visible{opacity:1;visibility:visible}.scroll-to-top.inactive{opacity:0.2}.scroll-to-top:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(6,182,212,0.4)}.scroll-to-top svg{color:var(--text-primary)}@media(max-width:768px){.scroll-to-top{width:48px;height:48px;bottom:24px;right:24px}}
+
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:40px auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--glass-03);border:1px solid var(--edge-08);border-radius:14px;text-decoration:none;color:var(--text-primary);transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:var(--text-primary)}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="../role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=20"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">📦 Гайд Amazon Relay · часть 3 из 5</div>
+            <h1 class="page-title">Рабочий день диспетчера</h1>
+            <p class="page-subtitle">Основная часть гайда. Как читать карточку груза и считать реальный доход, как назначить водителя и что ему сказать, что происходит на воротах и в ярде Amazon, как работает трекинг и куда писать, когда что-то идёт не так. В конце — регламент недели диспетчера по дням и часам.</p>
+        </div>
+    </section>
+
+    <!-- НАВИГАЦИЯ ПО КУРСУ -->
+    <section class="section" style="padding-top: 0; padding-bottom: 30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Навигация по курсу</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ РАЗДЕЛЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="documentation.html">📚 Курс</a>
+                                    <a href="intro.html">📋 Введение</a>
+                                    <a href="role.html">👤 Роль</a>
+                                    <a href="equipment.html">🚛 Типы траков</a>
+                                    <a href="routes.html">🗺 Маршруты</a>
+                                    <a href="loadboards.html">📡 Load Boards</a>
+                                    <a href="negotiation.html">🤝 Переговоры</a>
+                                    <a href="brokers.html">💼 Брокеры</a>
+                                    <a href="docs.html">📄 Документы</a>
+                                    <a href="regulations.html">⚖️ Законы</a>
+                                    <a href="technology.html">🖥 Технологии</a>
+                                    <a href="communication.html">📞 Коммуникация</a>
+                                    <a href="problems.html">⚠️ Проблемы</a>
+                                    <a href="finances.html">💰 Финансы</a>
+                                    <a href="career.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ МОДУЛИ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="doc-module-1-complete.html">🏭 Введение</a>
+                                    <a href="doc-module-2-complete.html">⚖️ Законы</a>
+                                    <a href="doc-module-3-complete.html">🚛 Оборудование</a>
+                                    <a href="doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="doc-module-5-complete.html">🤝 Переговоры</a>
+                                    <a href="doc-module-6-complete.html">🗺 Маршруты</a>
+                                    <a href="doc-module-7-complete.html">📄 Документы</a>
+                                    <a href="doc-module-8-complete.html">👥 Водители</a>
+                                    <a href="doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="doc-module-10-complete.html">💰 Финансы</a>
+                                    <a href="doc-module-11-complete.html">🚨 Кризисы</a>
+                                    <a href="doc-module-12-complete.html">📈 Карьера</a>
+                                </div>
+                            </div>
+
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ ИНСТРУМЕНТЫ<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="Trainer-Quiz.html">💡 Тренажёр</a>
+                                    <a href="testing.html">📝 Тесты</a>
+                                    <a href="cases.html">🗂 Кейсы</a>
+                                    <a href="amazon-relay.html" class="active">📦 Amazon Relay</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top:0">Гайд Amazon Relay: 5 частей</h3>
+            <div class="ar-map">
+                <a href="amazon-relay.html"><span class="mn">1</span><span class="mt">Понять Amazon</span><span class="md">Читать первой. Что такое Relay, как устроена сеть Amazon, какие бывают грузы и чем это отличается от брокеров.</span></a>
+                <a href="amazon-relay-2-onboarding.html"><span class="mn">2</span><span class="mt">Подключиться</span><span class="md">Один раз, при заходе компании в Relay: требования FMCSA, страховка, заявка, роли доступа, подключение водителей.</span></a>
+                <a href="amazon-relay-3-workday.html" class="on"><span class="mn">3</span><span class="mt">Рабочий день</span><span class="md">Каждый день: найти и забронировать груз, назначить водителя, провести его через площадку, следить по трекингу, общаться с ROC. Регламент недели по часам.</span></a>
+                <a href="amazon-relay-4-problems.html"><span class="mn">4</span><span class="mt">Проблемы</span><span class="md">Открывать, когда что-то пошло не так: 22 ситуации на площадке, до и после трипа и с аккаунтом — что делает диспетчер, что говорит водителю, чем грозит.</span></a>
+                <a href="amazon-relay-5-money-score.html"><span class="mn">5</span><span class="mt">Деньги и рейтинг</span><span class="md">Как формируется ставка и когда приходят выплаты, детеншн и TONU, четыре метрики performance score, Safety Scorecard, ежедневная рутина по score. Квиз по всему гайду.</span></a>
+            </div>
+            <h3>В этой части</h3>
+            <div class="ar-toc">
+                <a href="#s5"><span class="n">3.1</span>Как диспетчер ищет и бронирует груз на борде</a>
+                <a href="#s6"><span class="n">3.2</span>Назначение водителя и трака на трип</a>
+                <a href="#s7"><span class="n">3.3</span>Водитель на площадке Amazon: ворота, ярд, трейлер</a>
+                <a href="#s8"><span class="n">3.4</span>Трекинг, ROC и коммуникация с Amazon</a>
+                <a href="#s9b"><span class="n">3.5</span>Задачи диспетчера по дням: неделя с Amazon</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="s5">
+        <div class="container">
+            <h2 class="section-title">3.1 Как диспетчер ищет и бронирует груз на борде</h2>
+            <p class="section-text">
+                Борд Relay похож на DAT только внешне. Главные отличия: ставка уже включает топливо и толлы, торговаться
+                не с кем, груз можно забронировать одной кнопкой без звонка и без rate confirmation по e-mail, а обновление
+                списка идёт примерно каждые 30 секунд. Зато здесь нельзя «подержать» груз: нажали Book — вы обязаны его отвезти.
+            </p>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/loadboard-web.webp" alt="Веб-версия Load Board в Amazon Relay со списком грузов" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Load Board в браузере.</strong> Вкладки It's a match (подобранные под ваш профиль) и Hot Loads (срочные, часто с повышенной ставкой). В строке груза: коды площадок (например CDW5 → JFK8), мили, тип трейлера, live или drop, окно pickup, ставка. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Как читать карточку груза</h3>
+            <div class="ar-mock">
+                <div class="m-bar"><i></i><i></i><i></i> Load Board → карточка груза</div>
+                <div class="m-body">
+                    <div class="m-row"><span><b>CDW5</b> Carteret, NJ → <b>JFK8</b> Staten Island, NY</span><span class="m-pill">One-way · 2 stops</span><span><b>$412</b> all-in</span></div>
+                    <div class="m-row"><span>Pickup: <b>Thu 09/04 · 22:00–23:00</b></span><span>Delivery: <b>Fri 09/05 · 02:30</b></span><span class="m-pill gr">38 mi · ~1 h 20 min</span></div>
+                    <div class="m-row"><span>Trailer: <b>53' Dry Van · Amazon trailer</b></span><span class="m-pill g">Drop / Hook</span><span>Driver: Solo</span></div>
+                    <div class="m-row"><span>Deadhead to origin: <b>17 mi</b> (не оплачивается)</span><span>Toll: included</span><span>FSC: included</span></div>
+                    <div class="m-row" style="justify-content:flex-end;gap:10px"><span class="m-btn sec">Bid</span><span class="m-btn">Book now</span></div>
+                </div>
+                <div class="m-caption">Схема карточки (не скриншот). Цифры условные. Обратите внимание: 38 миль за $412 — это $10,8/милю, но реальная экономика — это два часа работы ночью плюс 17 миль deadhead и обратный порожний путь.</div>
+            </div>
+
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Поле</th><th>На что смотреть</th><th>Ловушка</th></tr></thead>
+                    <tbody>
+                        <tr><td>Коды площадок</td><td>Регион и тип объекта (FC/SC/DS). Знакомый код = вы знаете, сколько там стоят на воротах.</td><td>DS ночью может быть закрыт для въезда раньше окна — уточняйте по своей таблице кодов.</td></tr>
+                        <tr><td>Окно pickup</td><td>Обычно 1 час. Чек-ин в приложении должен попасть в окно, иначе опоздание.</td><td>«Arrive by» считается по таймстампу чек-ина в приложении, а не по факту приезда на парковку.</td></tr>
+                        <tr><td>Stops</td><td>Число стопов. 2 стопа = pickup + delivery. 4–6 стопов = мини-блок с несколькими площадками.</td><td>Каждый стоп — своё окно и свой риск опоздания. Время между стопами уже посчитано Amazon без запаса.</td></tr>
+                        <tr><td>Live / Drop</td><td>Drop — приехал, отцепил, прицепил, уехал. Live — стоите под погрузкой.</td><td>Live на IXD в пик — это 2–4 часа. Детеншн Amazon начисляет не всегда автоматически.</td></tr>
+                        <tr><td>Trailer status</td><td>Loaded / Empty / Amazon trailer / Your trailer.</td><td>Если требуется свой трейлер, а у вас Power Only — фильтр должен это отсеять; проверьте настройки профиля.</td></tr>
+                        <tr><td>Ставка all-in</td><td>Base + fuel surcharge + tolls в одной сумме. Что видите, то и получите.</td><td>Deadhead к origin и от destination не входит никогда. Считайте полный круг.</td></tr>
+                        <tr><td>Book now / Bid</td><td>Book now — мгновенно ваш. Bid — Amazon выберет лучшее предложение к дедлайну.</td><td>Бид, который Amazon принял, — это тоже обязательство. Не ставьте биды на грузы, которые не сможете отвезти при выигрыше.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Расчёт: брать или не брать</h3>
+            <p class="section-text">
+                Считайте не ставку за милю по карточке, а <strong>доход на час трака за полный круг</strong>. Формула диспетчера:
+            </p>
+            <div class="glass-card" style="margin-bottom:24px">
+                <p style="font-size:15px;color:var(--text-secondary);line-height:1.9">
+                    <strong style="color:var(--text-primary)">Реальный RPM</strong> = ставка all-in ÷ (deadhead к origin + мили груза + deadhead к следующему грузу или домой)<br>
+                    <strong style="color:var(--text-primary)">Доход в час</strong> = ставка all-in ÷ (время в пути + время на площадках + deadhead-время)<br><br>
+                    Пример: $412 за 38 миль. Deadhead 17 миль туда, 20 миль обратно на базу. Итого 75 миль → реальный RPM $5,49. Время: 40 мин deadhead + 1 ч 20 мин груз + 30 мин на каждой площадке + 40 мин домой ≈ 3 ч 40 мин → <strong style="color:var(--success)">$112 в час</strong>. Для ночного локального плеча это отлично. Тот же расчёт для «$1 850 за 900 миль» с 120 милями deadhead даёт $1,81/милю и около $95 в час с учётом сна водителя — уже спорно.
+                </p>
+            </div>
+
+            <div class="lv" data-visual-for="">
+                <div class="lv-head">
+                    <span class="lv-title">Ставки Relay по дистанции: ориентир 2025–2026, 53' dry van</span>
+                    <span class="lv-note">$/милю all-in, по данным перевозчиков</span>
+                </div>
+                <div class="lv-rows" data-div="5" style="--div:5">
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">10–75 миль (локал)</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:100%"></span></span><span class="lv-row-value">$2,50–4,00+</span></div></div>
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">75–200 миль</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:75%"></span></span><span class="lv-row-value">$2,25–3,00</span></div></div>
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">200–500 миль</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:62%"></span></span><span class="lv-row-value">$2,10–2,75</span></div></div>
+                    <div class="lv-item"><div class="lv-row" style="cursor:default"><span class="lv-row-label">500+ миль</span><span class="lv-track"><span class="lv-fill" style="--x:0%;--w:50%"></span></span><span class="lv-row-value">$1,85–2,50</span></div></div>
+                </div>
+                <div class="lv-legend"><span>Диапазоны сведены из нескольких открытых обзоров перевозчиков за 2025–2026; на коротком плече за милю платят больше, но и часов на площадках больше. Amazon официальных ставок не публикует. Сезонность: январь–сентябрь ниже, октябрь–январь и недели вокруг Prime Day заметно выше.</span></div>
+            </div>
+
+            <h3>Правила бронирования, которые нельзя нарушать</h3>
+            <div class="ar-grid two">
+                <div class="ar-card bad"><div class="ic">⏳</div><h4>Забронированный груз «истёк» = отказ</h4><p>Если вы забронировали груз и не назначили водителя / водитель не начал трип к сроку, система снимает груз и засчитывает это как rejection в Acceptance score. Бронируйте только то, на что есть конкретный водитель прямо сейчас.</p></div>
+                <div class="ar-card bad"><div class="ic">🔁</div><h4>Двойной букинг</h4><p>Один трак на два пересекающихся трипа система может пропустить, если трак не привязан жёстко. Дальше — отказ от одного из них с полным штрафом. Держите календарь траков вне Relay.</p></div>
+                <div class="ar-card"><div class="ic">🔄</div><h4>Reload-подсказки</h4><p>После бронирования борд предлагает следующий груз из точки доставки. Это самый дешёвый способ убрать пустой обратный путь. Смотрите сразу при бронировании, а не после доставки.</p></div>
+                <div class="ar-card"><div class="ic">🔥</div><h4>Hot Loads и Relay Assistant</h4><p>Срочные грузы получают повышенную ставку. Для перевозчиков с высоким грейдом Relay Assistant (ИИ-помощник в приложении) может предложить контроффер на срочный spot-груз — единственный случай «переговоров» в Relay.</p></div>
+            </div>
+            <figure class="ar-fig phone">
+                <img src="../img/amazon-relay/app-loadboard.webp" alt="Load Board в мобильном приложении Amazon Relay" loading="lazy" width="273" height="592">
+                <figcaption><strong>Тот же борд в приложении.</strong> Видны deadhead до origin и ставка. Диспетчер работает в браузере, но с телефона удобно ловить Hot Loads вне офиса. Источник: страница приложения Amazon Relay в Google Play. © Amazon.</figcaption>
+            </figure>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-to-use-amazon-relays-load-board" target="_blank" rel="noopener">How to use Amazon Relay's load board</a>, <a href="https://relay.amazon.com/blog/intro-to-amazon-relay/understanding-amazon-relay-rates" target="_blank" rel="noopener">Understanding Amazon Relay rates</a>. Диапазоны ставок — открытые обзоры перевозчиков (otrucking, truckdispatchexperts, carrierproacademy), не Amazon.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="s6">
+        <div class="container">
+            <h2 class="section-title">3.2 Назначение водителя и трака на трип</h2>
+            <p class="section-text">
+                Забронированный груз появляется в разделе <strong>Trips</strong>. Пока на нём нет водителя, для Amazon это
+                «груз без исполнителя», и за час-два до окна pickup система начнёт слать предупреждения, а потом снимет груз
+                как rejection. Назначение — это то, что диспетчер делает сразу после Book, а не «когда водитель проснётся».
+            </p>
+
+            <div class="ar-steps">
+                <div class="ar-step"><div><h4>Trips → выбрать трип → Assign driver</h4><p>В списке появятся только водители со статусом Active. Выбираете водителя и трак (для Power Only — только трак). Водителю в приложение приходит push с трипом и кнопкой «Begin work» на день старта.</p></div></div>
+                <div class="ar-step"><div><h4>Проверить совпадение данных</h4><p>Номер трака и штат в Relay должны совпадать с реальным траком: на воротах Amazon камеры читают номера, и расхождение — причина отказа во въезде. Водитель в приложении = водитель за рулём: селфи-проверка на площадке это подтверждает.</p></div></div>
+                <div class="ar-step"><div><h4>Переназначить, если что-то поменялось</h4><p>Рядом с именем водителя — крестик. Снимаете, назначаете другого. Делайте это до начала трипа; замена водителя после Begin work требует обращения в Support и попадает в Disruption-free score.</p></div></div>
+                <div class="ar-step"><div><h4>Отправить водителю бриф</h4><p>Приложение покажет водителю адреса, окна и инструкции, но не покажет вашу логику: где парковаться до окна, кому звонить, что делать при задержке. Короткое сообщение с планом (шаблон ниже) экономит два звонка ночью.</p></div></div>
+            </div>
+
+            <div class="ar-fig-row">
+                <figure class="ar-fig">
+                    <img src="../img/amazon-relay/app-trip-begin.webp" alt="Экраны приложения Amazon Relay: навигация, трип с кнопкой Begin work, load board" loading="lazy" width="768" height="432">
+                    <figcaption><strong>Что видит водитель.</strong> Слева направо: навигация, карточка трипа со стопами и кнопкой Begin work, борд. Водитель не видит ставку и не может бронировать — только исполняет. Источник: relay.amazon.com/get-started. © Amazon.</figcaption>
+                </figure>
+                <figure class="ar-fig phone">
+                    <img src="../img/amazon-relay/app-schedule.webp" alt="Расписание стопов трипа в приложении Amazon Relay" loading="lazy" width="273" height="592">
+                    <figcaption><strong>Расписание блока.</strong> Шесть стопов с окнами по времени. Каждый стоп — отдельный чек-ин и отдельный риск опоздания. Источник: Google Play, страница приложения Amazon Relay. © Amazon.</figcaption>
+                </figure>
+            </div>
+
+            <h3>Что важно знать о стороне водителя <span class="ar-badge off">Amazon</span></h3>
+            <ul class="plain">
+                <li><strong>Водитель не видит деньги.</strong> Ставки, биды, выплаты — только у Administrator. Это удобно: водитель не спорит о цене груза, но и не мотивирован «ловить» дорогие грузы сам.</li>
+                <li><strong>Водитель не может бронировать.</strong> Всё бронирование — через портал компании. Если водитель хочет «взять ещё один», он звонит вам.</li>
+                <li><strong>Cancellation alert за 5 часов.</strong> Если Amazon отменяет трип, водитель получает уведомление за 5 часов до старта. Диспетчер видит отмену в Trips раньше — проверяйте Trips утром перед каждым блоком.</li>
+                <li><strong>Приложение ведёт по шагам.</strong> Check In → Pick Up (Dock Door, Verify Trailer ID) → Drop Off (Trailer Detach, Inspection). Каждый шаг с таймстампом. Пропущенный шаг = минус к App usage.</li>
+                <li><strong>Погода и навигация внутри.</strong> Truck-friendly маршрут до конкретной двери, погодные алерты каждые 10 минут по маршруту. Водитель может ехать по своему навигатору, но шаги в приложении Relay всё равно обязательны.</li>
+            </ul>
+
+            <h3>Шаблон брифа водителю перед трипом</h3>
+            <div class="glass-card">
+                <p style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.9;color:var(--text-secondary);white-space:pre-wrap">Трип T-112576GH5, чт 09/04.
+1) CDW5 Carteret NJ — окно 22:00–23:00. Приезжай к 21:15, парковка ожидания — справа от въезда, до ворот НЕ заезжай раньше 21:45.
+2) Чек-ин в приложении сразу как встал в очередь на ворота, не после.
+3) Трейлер Amazon, drop-and-hook. Инспекция трейлера в приложении: 6 фото + пломба + шины. Пломба не совпадает с BOL — не выезжай, звони мне.
+4) JFK8 Staten Island — 02:30. Толлы включены, едешь по Goethals.
+5) На JFK8 отцепил → Drop Off в приложении → ищем reload, я скину.
+6) Любая задержка больше 30 минут на площадке — сообщение мне с временем и скрином экрана приложения.
+Я на связи всю ночь: +1 ···.</p>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-truckers-use-the-amazon-relay-mobile-app" target="_blank" rel="noopener">How truckers use the Amazon Relay mobile app</a>, <a href="https://relay.amazon.com/get-started" target="_blank" rel="noopener">relay.amazon.com/get-started</a>. Порядок кнопок в Trips — по опыту перевозчиков.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="s7">
+        <div class="container">
+            <h2 class="section-title">3.3 Водитель на площадке Amazon: ворота, ярд, трейлер</h2>
+            <p class="section-text">
+                Площадка Amazon — это не склад брокерского шиппера, где охранник записывает номер в тетрадь. Это
+                автоматизированный ярд: ворота открываются по QR-коду или по номеру трака, инструкции выводятся на мониторы и в
+                приложение, а выезд контролируют датчики на трейлере. Всё, что водитель делает не по процедуре, система видит.
+                Задача диспетчера — чтобы водитель знал процедуру до первого визита.
+            </p>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/app-trip-steps.webp" alt="Шаги трипа в приложении Amazon Relay: Check In с QR-кодом, Pick Up с номером двери и проверкой трейлера, Drop Off с инспекцией" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Три экрана, которые водитель проходит на каждом стопе.</strong> Check In: Load ID и QR-код («present this QR code»), время Arrive by. Pick Up: номер двери (Dock Door), подтверждение Trailer ID. Drop Off: Trailer Detach и Inspection Complete. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Что происходит на воротах и в ярде <span class="ar-badge off">Amazon</span></h3>
+            <div class="ar-svg-wrap"><svg class="ar-svg" viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Путь водителя на площадке Amazon">
+                <defs><marker id="arw2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ff9900"/></marker></defs>
+                <g font-size="12" fill="var(--text-secondary)">
+                    <g stroke="#ff9900" stroke-width="2.5" fill="none" marker-end="url(#arw2)">
+                        <path d="M170 90 H198"/><path d="M370 90 H398"/><path d="M570 90 H598"/><path d="M770 90 H798"/>
+                    </g>
+                    <rect x="20" y="50" width="150" height="80" rx="14" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+                    <text x="95" y="80" text-anchor="middle" font-weight="800" fill="#06b6d4">1. До приезда</text>
+                    <text x="95" y="100" text-anchor="middle" font-size="11">Gate Pass (QR) в app</text>
+                    <text x="95" y="116" text-anchor="middle" font-size="11">данные трака и трейлера</text>
+                    <rect x="200" y="50" width="170" height="80" rx="14" fill="rgba(255,153,0,.10)" stroke="rgba(255,153,0,.5)"/>
+                    <text x="285" y="80" text-anchor="middle" font-weight="800" fill="#ff9900">2. Ворота</text>
+                    <text x="285" y="100" text-anchor="middle" font-size="11">скан QR / номера трака</text>
+                    <text x="285" y="116" text-anchor="middle" font-size="11">Check In = таймстамп on-time</text>
+                    <rect x="400" y="50" width="170" height="80" rx="14" fill="rgba(14,165,233,.10)" stroke="rgba(14,165,233,.5)"/>
+                    <text x="485" y="80" text-anchor="middle" font-weight="800" fill="#0ea5e9">3. Ярд</text>
+                    <text x="485" y="100" text-anchor="middle" font-size="11">монитор / app: дверь или слот</text>
+                    <text x="485" y="116" text-anchor="middle" font-size="11">in-yard instructions</text>
+                    <rect x="600" y="50" width="170" height="80" rx="14" fill="rgba(16,185,129,.10)" stroke="rgba(16,185,129,.5)"/>
+                    <text x="685" y="80" text-anchor="middle" font-weight="800" fill="#10b981">4. Трейлер</text>
+                    <text x="685" y="100" text-anchor="middle" font-size="11">отцепить / прицепить</text>
+                    <text x="685" y="116" text-anchor="middle" font-size="11">Trailer ID + инспекция + пломба</text>
+                    <rect x="800" y="50" width="180" height="80" rx="14" fill="rgba(239,68,68,.08)" stroke="rgba(239,68,68,.4)"/>
+                    <text x="890" y="80" text-anchor="middle" font-weight="800" fill="#ef4444">5. Выезд</text>
+                    <text x="890" y="100" text-anchor="middle" font-size="11">датчики сверяют трейлер и BOL</text>
+                    <text x="890" y="116" text-anchor="middle" font-size="11">Check Out в app, e-BOL</text>
+                    <text x="500" y="180" text-anchor="middle" font-size="12" fill="var(--text-soft)">Каждый этап оставляет таймстамп в приложении. По этим таймстампам Amazon считает on-time и app usage, а вы — детеншн для диспута.</text>
+                    <text x="500" y="205" text-anchor="middle" font-size="12" fill="var(--text-soft)">Живая погрузка добавляет между 3 и 4 ожидание у двери; drop-and-hook в норме укладывается в 20–40 минут.</text>
+                </g>
+            </svg></div>
+
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Этап</th><th>Что делает водитель</th><th>Что контролирует диспетчер</th></tr></thead>
+                    <tbody>
+                        <tr><td>Подъезд</td><td>Приезжает к площадке за 30–45 минут до окна, ждёт на разрешённой парковке ожидания, не блокирует подъезд к воротам. В приложении заранее введены трак и трейлер — получен Gate Pass с QR-кодом.</td><td>Видит по трекингу, что трак рядом. Если водитель приехал сильно раньше — напоминает не заезжать до окна: на некоторых площадках ранний въезд не разрешают.</td></tr>
+                        <tr><td>Ворота</td><td>Показывает QR на сканере или ворота читают номер трака. Нажимает Check In в приложении в момент прибытия к воротам. На воротах без автоматики — охраннику называет Load ID.</td><td>Проверяет, что таймстамп Check In попал в окно. Если водитель забыл нажать — звонит немедленно: чем позже нажмёт, тем больше «опоздание».</td></tr>
+                        <tr><td>Ярд</td><td>Читает на мониторе или в приложении номер двери (live) или слота (drop). Едет по разметке ярда, скорость — как написано на знаках (обычно 5–10 mph). Не паркуется в чужих слотах.</td><td>При «нет слота / нет двери» — водитель фотографирует экран приложения, диспетчер пишет в Support с таймстампом.</td></tr>
+                        <tr><td>Трейлер (drop)</td><td>Отцепляет свой/приехавший трейлер в указанном слоте, подтверждает Trailer Detach в приложении. Находит указанный трейлер для следующего трипа, сверяет номер (Verify Trailer ID), проходит Trailer Inspection: фото, шины, свет, двери, пломба.</td><td>Инспекция — единственная защита от чужих повреждений. Требует от водителя не пропускать её ни при каких обстоятельствах.</td></tr>
+                        <tr><td>Трейлер (live)</td><td>Ставится к двери, открывает двери трейлера по требованию, ждёт погрузки. Фиксирует время постановки к двери и время окончания погрузки.</td><td>Считает ожидание от Check In. При превышении 2 часов — готовит скрины для диспута детеншна.</td></tr>
+                        <tr><td>Пломба</td><td>Сверяет номер пломбы с BOL в приложении. Не срывает пломбу сам ни при каких условиях. Фотографирует пломбу крупно с читаемым номером.</td><td>Правила Amazon по пломбам публично не описаны; общее правило отрасли: несовпадение номера — не выезжать, звонить в Support до выезда.</td></tr>
+                        <tr><td>Выезд</td><td>На выезде датчики/RFID сверяют, что уезжает правильный трейлер с правильным грузом. Электронный BOL и POD формируются в приложении. Нажимает завершение шага.</td><td>Видит статус в трипе. Если у водителя «не отпускают» на выезде — обычно расхождение номера трейлера; проверяет Trailer ID в трипе.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ar-mock" style="max-width:380px">
+                <div class="m-bar"><i></i><i></i><i></i> Amazon Relay app → Check In</div>
+                <div class="m-body" style="text-align:center">
+                    <div style="font-size:11px;color:#94a3b8;letter-spacing:1px;text-transform:uppercase">Gate Pass</div>
+                    <div style="font-size:18px;font-weight:800;color:#fff;margin:4px 0">Load 1A2B3C4D</div>
+                    <div class="m-qr"></div>
+                    <div style="font-size:12px;color:#94a3b8">Present this QR code at the gate</div>
+                    <div class="m-row" style="margin-top:12px"><span>Truck</span><b>TX 4821-AB</b></div>
+                    <div class="m-row"><span>Arrive by</span><b>22:00–23:00</b></div>
+                    <div class="m-btn" style="display:block;margin-top:8px">Check In</div>
+                </div>
+                <div class="m-caption">Схема экрана Gate Pass (не скриншот). Настоящий QR-экран показан выше на официальном изображении Amazon.</div>
+            </div>
+
+            <h3>Скрипт диспетчера для водителя-новичка: 10 правил на площадке Amazon</h3>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">1️⃣</span>Check In нажимаешь в момент, когда встал в очередь к воротам, а не после<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>On-time считается по таймстампу кнопки. Приехал в 22:05, нажал в 22:40 после разговора с охраной — для Amazon ты опоздал на 40 минут, хотя окно до 23:00 и ты в нём. Правило простое: подъехал — нажал.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">2️⃣</span>Приложение открыто и геолокация включена от Begin work до последнего Drop Off<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Половина App usage score — это доступность геолокации. Закрыл приложение на заправке, телефон разрядился — score падает. Зарядка в кабине, режим экономии батареи для Relay выключен.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">3️⃣</span>Инспекцию трейлера делаешь всегда, даже если торопишься<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Шесть сторон, шины, свет, двери, пол, пломба. Царапина, которую ты не сфотографировал на инспекции, на следующей площадке станет твоей. Инспекция — это твоя страховка, а не формальность Amazon.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">4️⃣</span>Номер трейлера сверяешь три раза: в приложении, на трейлере, на BOL<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Похожие номера в соседних слотах — обычная история. Увёз не тот трейлер — на выезде не выпустят датчики, а если выпустили, это уже инцидент с Disruption-free score и звонком из Amazon.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">5️⃣</span>Пломбу не срываешь никогда, номер фотографируешь крупно<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Не совпадает с BOL — стоишь на месте и звонишь диспетчеру, диспетчер пишет в Support. Выехал с чужой пломбой — на разгрузке это вопрос о целостности груза, и ответ будет искать у тебя.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">6️⃣</span>Селфи по запросу приложения делаешь сразу и сам<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Приложение сверяет лицо с верифицированным водителем. Попытка «подменить» водителя блокирует аккаунт водителя и создаёт проблему перевозчику вплоть до suspension.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">7️⃣</span>В ярде — скорость по знакам, парковка только в своём слоте, телефон не в руках за рулём<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Ярды Amazon под камерами. Нарушение правил ярда — это жалоба на перевозчика, а повторная — блокировка на конкретной площадке.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">8️⃣</span>Любое ожидание дольше 30 минут — сообщение диспетчеру с временем и скрином<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Не через два часа, когда уже нервы, а через 30 минут. Диспетчеру нужно время, чтобы открыть тикет в Support пока ситуация ещё длится: диспут задним числом слабее.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">9️⃣</span>Нет слота, нет пустого трейлера, ворота закрыты — не решаешь сам, звонишь<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Самодеятельность («оставил трейлер у забора и уехал») превращается в инцидент. Диспетчер связывается с Support, получает инструкцию, и водитель действует по ней. Время на ожидание фиксируется.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🔟</span>Drop Off и Check Out нажимаешь до того, как выехал за ворота<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Уехал без Check Out — трип «висит» незавершённым, следующий трип может не открыться, а по этому не будет корректного POD. Возвращаться, чтобы нажать кнопку, — худший вариант.</p></div></li>
+                </ul>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/how-truckers-use-the-amazon-relay-mobile-app" target="_blank" rel="noopener">How truckers use the Amazon Relay mobile app</a>, <a href="https://freight.amazon.com/newsroom/technology/2023-yard-tech" target="_blank" rel="noopener">Amazon Freight: yard technology</a>. Правила по пломбам и поведению в ярде — общеотраслевые, официальной публичной инструкции Amazon нет.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="s8">
+        <div class="container">
+            <h2 class="section-title">3.4 Трекинг, ROC и коммуникация с Amazon</h2>
+            <p class="section-text">
+                В брокерском фрахте трекинг — это ваш ELD или Macropoint, а связь — телефон брокера. В Relay источник правды один:
+                приложение водителя. Диспетчер видит его данные в портале на карте, а Amazon по этим же данным считает score.
+                Связь с Amazon идёт не через «своего человека», а через <strong>ROC (Relay Operations Center)</strong> — круглосуточный
+                центр поддержки, доступный из портала и приложения.
+            </p>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/tracking-map.webp" alt="Трекинг груза на карте в веб-портале Amazon Relay" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Карта трекинга в портале.</strong> Положение трака обновляется примерно каждые 30 секунд по геолокации из приложения водителя; красные метки — трипы с прогнозируемым опозданием. Ниже карты — таймлайн трипа: прибытие, отъезд, стоянки, загруженные документы. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Как работает трекинг <span class="ar-badge off">Amazon</span></h3>
+            <ul class="plain">
+                <li><strong>Условие:</strong> у водителя включена геолокация И приложение открыто (или в фоне с разрешением «Всегда»). Без этого точки на карте нет, и Amazon считает, что перевозчик «не отслеживается».</li>
+                <li><strong>Обновление ~30 секунд.</strong> Карта в портале показывает все активные трипы; фильтр по водителю, по площадке, по статусу.</li>
+                <li><strong>Красные иконки = прогноз опоздания.</strong> Система сравнивает ETA с окном стопа. Красный трип — сигнал диспетчеру звонить водителю и писать в Support заранее, а не после.</li>
+                <li><strong>Таймлайн трипа:</strong> Begin work, Check In, Pick Up, Drop Off, стоянки, документы. Это же — доказательная база для диспутов по детеншну.</li>
+                <li><strong>Свой ELD не заменяет приложение.</strong> Можно параллельно использовать любой ELD, но App usage считается только по приложению Relay.</li>
+            </ul>
+
+            <h3>Support Center, Relay Assistant и ROC: куда писать и когда</h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Канал</th><th>Что это</th><th>Когда использовать</th></tr></thead>
+                    <tbody>
+                        <tr><td>Support Center (портал)</td><td>Тикеты по категориям: трип, оплата, аккаунт, водители, performance dispute. Работает 24/7. История переписки сохраняется.</td><td>Всё, что не горит прямо сейчас: диспуты, вопросы по выплатам, апелляции, обновление документов.</td></tr>
+                        <tr><td>Relay Assistant (приложение и портал)</td><td>Чат-помощник с ИИ внутри приложения. Отвечает на типовые вопросы, открывает тикет, для топ-перевозчиков предлагает контроффер по срочным грузам.</td><td>Водитель на площадке с типовой проблемой (нет слота, вопрос по инструкции). Быстрее, чем звонок.</td></tr>
+                        <tr><td>ROC — Relay Operations Center</td><td>Живые операторы 24/7, к которым эскалирует Support/Assistant. Телефон ROC <span class="ar-badge third">по данным перевозчиков</span>: (866) 886-8802 — Amazon публично номер не подтверждает, у вашего аккаунта он может быть другой (смотрите в Support Center).</td><td>Трип под угрозой прямо сейчас: поломка, авария, водитель заблокирован на площадке, трейлер не найден, нужно перенести окно.</td></tr>
+                        <tr><td>relay-network-reports@amazon.com</td><td>Официальный адрес для сообщений о подозрительной активности: мошенники, фейковые «диспетчеры Amazon», предложения купить аккаунт.</td><td>Кто-то звонит вам «от Amazon Relay» и просит логин, или предлагает «поделиться» аккаунтом.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <figure class="ar-fig">
+                <img src="../img/amazon-relay/app-support.webp" alt="Экран поддержки в приложении Amazon Relay" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Support в приложении водителя.</strong> Отсюда водитель открывает чат с Relay Assistant и тикет в ROC, не выходя из трипа. Диспетчер должен показать водителю этот экран до первого груза. Источник: блог Amazon Relay. © Amazon.</figcaption>
+            </figure>
+
+            <h3>Как правильно писать в Support: структура тикета</h3>
+            <div class="glass-card" style="margin-bottom:24px">
+                <p style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.9;color:var(--text-secondary);white-space:pre-wrap">Trip ID: T-112576GH5 · Load ID: 1A2B3C4D
+Driver: Sergei Ivanov · Truck: TX 4821-AB
+Facility: JFK8 · Stop 2 of 2 (Drop Off)
+Issue: No empty trailer available at assigned slot D-114 for next trip T-11258QQ2.
+Timeline: Check In 02:21 · Instructed to slot D-114 at 02:34 · Slot empty, yard staff confirmed no empties at 02:50 · Still waiting at 03:40.
+Request: instruction for driver (wait / bobtail to next stop / reassign) and detention for waiting time.
+Attachments: screenshot of in-yard instruction, photo of empty slot, yard staff name.</p>
+            </div>
+            <div class="ar-grid">
+                <div class="ar-card good"><div class="ic">🕐</div><h4>Пишите, пока проблема длится</h4><p>Тикет с таймстампом «сейчас 03:40, стоим с 02:21» весит больше, чем «вчера стояли два часа». Диспуты задним числом чаще отклоняют.</p></div>
+                <div class="ar-card good"><div class="ic">📎</div><h4>Скрин + фото + имя</h4><p>Скриншот экрана приложения с инструкцией, фото места, имя сотрудника ярда. Три вложения решают тикет быстрее любого текста.</p></div>
+                <div class="ar-card good"><div class="ic">🎯</div><h4>Один тикет — одна просьба</h4><p>«Дайте инструкцию водителю» и «оплатите детеншн» — два разных тикета. Смешанные закрываются частично.</p></div>
+            </div>
+
+            <h3>Что Amazon считает нарушением коммуникации</h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Ситуация</th><th>Как это видит Amazon</th><th>Правильное действие</th></tr></thead>
+                    <tbody>
+                        <tr><td>Водитель опаздывает, вы молчите</td><td>Красный трип без реакции перевозчика. Опоздание фиксируется полностью.</td><td>Как только ETA ушёл за окно — тикет «running late, new ETA hh:mm, reason». Опоздание всё равно засчитают, но при разборе Disruption-free история тикетов учитывается.</td></tr>
+                        <tr><td>Отказ от груза по телефону водителя</td><td>Водитель не может отменять. Груз висит до истечения → rejection.</td><td>Отказ делает только Administrator в портале, и как можно раньше (см. множители штрафов в части 5, раздел 5.2).</td></tr>
+                        <tr><td>Смена трака без обновления в Relay</td><td>На воротах номер не совпадает — отказ во въезде, опоздание.</td><td>Переназначить трак в трипе ДО выезда.</td></tr>
+                        <tr><td>Водитель выключил приложение «чтобы не следили»</td><td>Потеря трекинга, App usage вниз, при разборе инцидентов — нет доказательств.</td><td>Объяснить водителю: трекинг — это защита его детеншна и его алиби.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="tip-block src">
+                <div class="tip-icon">🔗</div>
+                <div class="tip-text">Источники: <a href="https://relay.amazon.com/blog/load-tracking-with-amazon-relay" target="_blank" rel="noopener">Load tracking with Amazon Relay</a>, <a href="https://relay.amazon.com/faq" target="_blank" rel="noopener">relay.amazon.com/faq</a>. Телефон ROC — из открытых обзоров перевозчиков; используйте контакты из Support Center своего аккаунта как приоритетные.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="s9b">
+        <div class="container">
+            <h2 class="section-title">3.5 Задачи диспетчера по дням: неделя с Amazon</h2>
+            <p class="section-text">
+                Работа с Relay — это не «найти груз и позвонить». Это цикл: неделя вперёд — аукционы и контракты, сутки вперёд —
+                назначения и проверка готовности, день блока — контроль по часам, после — документы, диспуты и сверка выплат.
+                Ниже — рабочий регламент, который можно распечатать.
+            </p>
+
+            <h3>За неделю и раньше: планирование</h3>
+            <div class="ar-day">
+                <div class="t">Пн–Вт</div><div class="w"><strong>Аукционы.</strong> Проверить Auctions на 1–6 недель вперёд под ваш парк. Посчитать цену блока по худшему сценарию (полный пробег + часы водителя + deadhead). Поставить биды. Посмотреть, какие контракты заканчиваются — переподать.</div>
+                <div class="t">Ср</div><div class="w"><strong>Календарь траков.</strong> Свести выигранные блоки, spot-грузы и брокерский фрахт в один календарь на следующую неделю. Проверить пересечения. Определить, где нужен Post A Truck на «дыры».</div>
+                <div class="t">Чт–Пт</div><div class="w"><strong>Люди и железо.</strong> Каждому блоку — водитель со статусом Active и трак, внесённый в Relay. Проверить HOS: 37-часовой блок solo требует свежих часов. Для новых водителей — обучение в приложении пройдено.</div>
+                <div class="t">Пт</div><div class="w"><strong>Деньги.</strong> Сверить выплату за прошлую неделю (Payments) с трипами. Расхождения → payment dispute (окно 30 дней). Проверить performance-прогноз в Scorecard.</div>
+            </div>
+
+            <h3>За 24 часа до блока</h3>
+            <div class="ar-day">
+                <div class="t">−24 ч</div><div class="w"><strong>Trips.</strong> Все трипы блока назначены на водителя и трак. Открыть каждый: стопы, окна, тип трейлера, live/drop. Красные флаги: ночной DS, IXD в пик, стоп в незнакомом коде.</div>
+                <div class="t">−24 ч</div><div class="w"><strong>Решение об отказе, если он нужен.</strong> Именно сейчас: до 24 часов отказ ×1, после — ×4. Есть сомнения в водителе или траке — решать здесь.</div>
+                <div class="t">−12 ч</div><div class="w"><strong>Бриф водителю</strong> по шаблону из раздела 3.2: адреса, окна, куда встать до ворот, что фотографировать, ваш телефон.</div>
+                <div class="t">−12 ч</div><div class="w"><strong>Телефон водителя.</strong> Приложение обновлено, геолокация «Всегда», зарядка в кабине. Для новичка — видеозвонок с проверкой настроек.</div>
+                <div class="t">−2 ч</div><div class="w"><strong>Trips ещё раз.</strong> Отмены Amazon видны здесь раньше, чем cancellation alert водителю (за 5 часов). Если отмена — сразу reload с борда из той же точки.</div>
+            </div>
+
+            <h3>День блока: контроль по часам</h3>
+            <div class="ar-day">
+                <div class="t">Старт −1 ч</div><div class="w">Водитель нажал <strong>Begin work</strong>. Точка появилась на карте трекинга. Если точки нет — звонок: приложение, геолокация.</div>
+                <div class="t">Pickup −45 мин</div><div class="w">Трак у площадки, на парковке ожидания. Напомнить: <strong>Check In в момент подъезда к воротам</strong>.</div>
+                <div class="t">Pickup</div><div class="w">Таймстамп Check In в окне — проверить в таймлайне трипа. Дальше: Pick Up, Verify Trailer ID, инспекция, пломба. Ждать фото пломбы от водителя.</div>
+                <div class="t">+30 мин</div><div class="w">Водитель ещё на площадке? Спросить причину. <strong>+90 мин</strong> — тикет в Support «waiting since». <strong>+120 мин</strong> — второй тикет на детеншн.</div>
+                <div class="t">В пути</div><div class="w">Карта: цвет трипа. Красный → звонок водителю + тикет «running late, new ETA». Погодный алерт → водитель в курсе.</div>
+                <div class="t">Delivery −30 мин</div><div class="w">Статус трейлера следующего трипа (если блок продолжается): есть ли пустой/гружёный на дропе. Проблема видна заранее → тикет заранее.</div>
+                <div class="t">Delivery</div><div class="w">Check In → Drop Off → Trailer Detach → Check Out до выезда. Скрин таймлайна от водителя. Reload с борда, если блок закончился.</div>
+                <div class="t">Конец</div><div class="w">Трейлер Amazon не остался у водителя? Если остался — тикет до конца смены. Все трипы блока в статусе Completed.</div>
+            </div>
+
+            <h3>После блока</h3>
+            <div class="ar-day">
+                <div class="t">+1 день</div><div class="w"><strong>Документы.</strong> e-POD/e-BOL в трипе на месте. Скрины таймлайнов с задержками — в папку трипа. Тикеты на детеншн/TONU/layover открыты, где есть основания.</div>
+                <div class="t">+1 день</div><div class="w"><strong>Scorecard.</strong> Появились ли новые инциденты: опоздание, пропущенный шаг, потеря трекинга. Спорные — performance dispute в портале сразу с приложенными тикетами дня.</div>
+                <div class="t">+1–2 дня</div><div class="w"><strong>Разбор с водителем.</strong> Не «почему опоздал», а «на каком шаге потеряли время и что меняем». Один пункт за раз.</div>
+                <div class="t">Пятница</div><div class="w"><strong>Выплата.</strong> Цикл воскресенье–суббота, деньги приходят в следующую пятницу. Сверка суммы с трипами; детеншн, который обещали в тикете, но не начислили — payment dispute.</div>
+            </div>
+        </div>
+    </section>
+
+        <div class="module-navigation">
+            <a href="amazon-relay-2-onboarding.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Часть 2 из 5</span><span class="title">Подключиться</span></div></a>
+            <a href="amazon-relay-4-problems.html" class="module-nav-btn next"><div class="text"><span class="label">Часть 4 из 5</span><span class="title">Проблемы</span></div><span class="icon">→</span></a>
+        </div>
+
+    <script>
+        // NAVIGATION
+        (function() {
+            const toggle = document.getElementById('navigationToggle');
+            const content = document.getElementById('navigationContent');
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                content.classList.toggle('active');
+            });
+            function initMobileAccordion() {
+                if (window.innerWidth <= 640) {
+                    const navSections = document.querySelectorAll('.nav-section');
+                    document.querySelectorAll('.section-arrow').forEach(arrow => { arrow.style.display = 'inline-block'; });
+                    navSections.forEach(function(section, index) {
+                        if (index > 0) section.classList.add('collapsed');
+                        const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                            header.addEventListener('click', function() { section.classList.toggle('collapsed'); });
+                            header.dataset.listenerAdded = 'true';
+                        }
+                    });
+                } else {
+                    document.querySelectorAll('.section-arrow').forEach(arrow => { arrow.style.display = 'none'; });
+                }
+            }
+            initMobileAccordion();
+            window.addEventListener('resize', initMobileAccordion);
+        })();
+
+        function toggleChecklist(el) { el.classList.toggle('open'); }
+
+        // Подписи колонок для таблиц на мобильном (thead скрыт, ячейки складываются в карточку)
+        document.querySelectorAll('.ar-table').forEach(t => {
+            const heads = [...t.querySelectorAll('thead th')].map(th => th.textContent.trim());
+            if (!heads.length) return;
+            t.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => { if (i > 0 && heads[i]) td.setAttribute('data-label', heads[i]); }));
+        });
+    </script>
+
+    <script src="../lesson-visuals.js?v=3"></script>
+
+    <!-- Scroll to Top Button -->
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Вернуться наверх">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
+
+    <script>
+        (function() {
+            const scrollBtn = document.getElementById('scrollToTop');
+            let inactivityTimer;
+            window.addEventListener('scroll', function() {
+                if (window.pageYOffset > 300) { scrollBtn.classList.add('visible'); resetInactivityTimer(); }
+                else { scrollBtn.classList.remove('visible'); scrollBtn.classList.remove('inactive'); }
+            });
+            function resetInactivityTimer() {
+                scrollBtn.classList.remove('inactive');
+                clearTimeout(inactivityTimer);
+                inactivityTimer = setTimeout(function() { scrollBtn.classList.add('inactive'); }, 2000);
+            }
+            window.addEventListener('mousemove', resetInactivityTimer);
+            window.addEventListener('scroll', resetInactivityTimer);
+            window.addEventListener('touchstart', resetInactivityTimer);
+            scrollBtn.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        })();
+    </script>
+
+</body>
+</html>
