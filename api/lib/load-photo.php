@@ -19,6 +19,9 @@ const RPM_BASELINE = array('VAN' => 2.15, 'REEFER' => 2.45, 'FLATBED' => 2.40, '
 // до папки с ключами (рядом с public_html) отсюда ТРИ шага вверх, а не два.
 function geminiKey() {
   $k = @trim(file_get_contents(__DIR__ . '/../../../gemini.key'));
+  // Запасной путь для локальных прогонов на живых документах: на сервере файл
+  // есть всегда, а на машине разработчика его нет и быть не должно.
+  if ($k === '' || $k === false) $k = trim((string)getenv('GEMINI_API_KEY'));
   return ($k === '' || $k === false) ? null : $k;
 }
 
@@ -143,6 +146,67 @@ function geminiFile($sys, $bytes, $mime, $models = null, $timeout = 120) {
   ), $models, true, $timeout);
 }
 
+// Промпт разбора рейт-кона — один на всех потребителей (Gemini, запасной Groq,
+// запасной Groq). Проверен на живых документах: без запрета «придумывать»
+// модель подставляет адрес офиса брокера и выдуманные реф-номера.
+function rcPrompt() {
+  return "You extract data from freight Rate Confirmation documents.\n"
+  . "The text is extracted from a PDF, so table columns may be interleaved and spacing is irregular. Read carefully.\n\n"
+  . "Return ONLY a JSON object:\n"
+  . "{\"load_id\":\"\",\"refs\":[],\"broker\":\"\",\"mc\":\"\",\"broker_phone\":\"\",\"broker_email\":\"\","
+  . "\"rate\":\"\",\"commodity\":\"\",\"weight\":\"\",\"miles\":\"\",\"equipment\":\"\",\"stops\":"
+  . "[{\"type\":\"pickup or delivery\",\"name\":\"\",\"address_lines\":[],\"time\":\"\",\"refs\":[]}]}\n\n"
+  . "CRITICAL RULES:\n"
+  . "- The text may contain '=== PAGE n OF m ===' markers. Read EVERY page through to the last one. "
+  . "On multi-page rate confirmations the pickup is often on page 1 while deliveries, reference numbers "
+  . "and appointment windows are printed on later pages. A value from one page belongs to a stop on "
+  . "another page only if the document clearly ties them together.\n"
+  . "- Copy every value VERBATIM from the document. NEVER invent, guess or fill in plausible data.\n"
+  . "- Every value must stay in the document's own language, which is English. NEVER translate or "
+  . "localise anything — dates and month names included. '08/17' or 'Aug 17' stays exactly as printed.\n"
+  . "- If a value is not in the document, use an empty string (or empty array). An empty field is CORRECT; an invented field is a serious error.\n"
+  . "- Strip label words glued to a value: 'Appointment', 'Time', 'Ref', 'Weight', '#'. Keep only the value.\n"
+  . "- load_id: the load/order/PRO number of this shipment.\n"
+  . "- refs (TOP LEVEL): every reference number printed for the WHOLE load, normally in the header "
+  . "block next to the order number — 'Shipment ID', 'Reference #', 'BOL#', 'PRO#', 'Customer PO'. "
+  . "Format each as '<LABEL> <NUMBER>' with the label exactly as printed. Do NOT repeat load_id here. "
+  . "These are the numbers the shipper and receiver ask the driver for at the gate: when the per-stop "
+  . "Ref/PO columns are empty, they are the ONLY numbers he has, and dropping them leaves him standing "
+  . "at the dock. A number printed inside a stop's own row belongs to that stop's refs instead.\n"
+  . "- broker: the company issuing the rate confirmation (not the carrier).\n"
+  . "- mc: the BROKER's MC/MC# number, digits only. It is usually in the header or footer next to the broker's "
+  . "name and address, printed as 'MC 123456', 'MC# 123456' or 'MC-123456'. NEVER take the carrier's MC — the "
+  . "carrier is the company the document is addressed TO. If only a DOT number is printed, leave mc empty.\n"
+  . "- broker_phone / broker_email: the booking contact for THIS load (the broker's rep), not the carrier's.\n"
+  . "- stops: pickups (PICK, PICKUP, SHIPPER) and deliveries (STOP, DROP, CONSIGNEE, DELIVERY), in document order.\n"
+  . "- EVERY rate confirmation has at least one pickup AND at least one delivery. If your stops list has no pickup, "
+  . "you have missed it — re-read the whole document, including pages after the first, before answering. "
+  . "The pickup is often on a separate page or in a section titled only with the shipper's name.\n"
+  . "- name: facility name. address_lines: the street line(s) AND then the 'CITY ST ZIP' line.\n"
+  . "- address_lines: ONLY the mailing address — street line(s) and the CITY ST ZIP line. Do NOT put "
+  . "directions, landmarks or notes there ('SOUTH OF BATTLE MOUNTAIN', 'ACROSS FROM THE SILO', "
+  . "'C/O RECEIVING'): the driver needs an address he can drive to, and such a line ends up "
+  . "standing where the street should be.\n"
+  . "- address_lines MUST contain the CITY ST ZIP line whenever it appears in the document (e.g. 'EASTABOGA AL 36260'). "
+  . "An address without its city line is unusable for a driver — never omit it.\n"
+  . "- time: appointment date and window as printed, e.g. '02/02/26 @ 12:30' or '07/24/26 06:00 - 17:00'.\n"
+  . "- refs: EVERY reference number belonging to that stop. Format each as '<LABEL> <NUMBER>' using the label as printed "
+  . "(PU, PO, BOL, Order#). If the label is only 'Ref' or 'Ref #', output the number alone.\n"
+  . "- Some rate cons print stops as a TABLE with a 'Pick/Drop #' or 'PU/Delv #' column instead of labelled refs. "
+  . "There the pickup/delivery number is a bare code sitting right after the stop's weight or time "
+  . "(e.g. '41870.00lbs 1713693K' means ref '1713693K'). Treat those bare codes as that stop's refs. "
+  . "Do NOT invent a label for them — output the code alone.\n"
+  . "- rate: the TOTAL rate paid to the carrier, with currency as printed.\n"
+  . "- If the rate is priced PER UNIT (per ton, per cwt, per hundredweight, per mile), keep that wording "
+  . "in rate exactly as printed, e.g. '$52.00 per ton'. Hay, grain and bulk loads are quoted this way and "
+  . "the printed TOTAL is then the unit price, not the trip total — dropping the words turns $52 per ton "
+  . "into a $52 trip.\n"
+  . "- weight: shipment weight in pounds. miles: trip distance. Labels and values are often on separate lines — "
+  . "match them by column position, not adjacency.\n"
+  . "- commodity: the goods description ONLY, never the trailer type. equipment: trailer type (VAN, REEFER, FLATBED, POWER ONLY).\n"
+  . "Output JSON only, no commentary.";
+}
+
 /**
  * Промпт для картинок и сканов. Одним запросом определяем ТИП документа и
  * достаём поля обоих видов: карточка с лоуборда и рейт-кон устроены по-разному,
@@ -155,7 +219,7 @@ function visionPrompt() {
     . "(DAT One, Truckstop, 123Loadboard), broker emails, and scanned/photographed "
     . "Rate Confirmations. First decide WHICH kind it is, then extract accordingly.\n\n"
     . "Return ONLY a JSON object:\n"
-    . '{"is_load":true,"doc_type":"load_board or rate_con","source":"",'
+    . '{"is_load":true,"doc_type":"load_board or rate_con","source":"","refs":[],'
     . '"origin":"","destination":"","pickup":"","delivery":"","equipment":"",'
     . '"rate":"","miles":"","weight":"","length":"","commodity":"","broker":"","mc":"","contact_name":"",'
     . '"email":"","phone":"","reference":"","notes":"",'
@@ -171,6 +235,8 @@ function visionPrompt() {
     . "'load_board' for a posting/search result on a load board, or a broker's offer email.\n\n"
     . "IF doc_type IS 'rate_con', ALSO fill these — they are what a driver actually needs:\n"
     . "- load_id: the load/order/PRO number.\n"
+    . "- refs: reference numbers printed for the WHOLE load in the header (Shipment ID, Reference #, "
+    . "BOL#, PRO#), each as '<LABEL> <NUMBER>'. Do not repeat load_id. Stop-specific numbers go to that stop.\n"
     . "- stops: every pickup and delivery IN DOCUMENT ORDER.\n"
     . "- stop.name: facility name. stop.address_lines: street line(s) AND then the 'CITY ST ZIP' line — "
     . "never omit the city line, an address without it is useless for a driver.\n"

@@ -29,6 +29,10 @@ function rcSummary(array $d, $lang = 'ru') {
   list($first, $last) = rcEnds($d);
   $L = array($t['title'], '');
   if (!empty($d['load_id'])) $L[] = $t['load'] . ': #' . ltrim($d['load_id'], '#');
+  // Реф-номера груза в целом — сразу в сводке: диспетчеру они нужны для
+  // инвойса и разговора с брокером, а не только водителю на въезде.
+  $docRefs = array_values(array_filter((array)(isset($d['refs']) ? $d['refs'] : array())));
+  if ($docRefs) $L[] = ($lang === 'en' ? 'Ref' : 'Реф') . ': ' . implode(' · ', $docRefs);
   if (!empty($d['broker']))  $L[] = $t['broker'] . ': ' . $d['broker'];
   $from = $first ? cityState($first) : null;
   $to   = $last ? cityState($last) : null;

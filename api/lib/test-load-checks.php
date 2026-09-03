@@ -52,6 +52,42 @@ assert(sameCompany('RXO Capacity Solutions', 'RXO CAPACITY SOLUTIONS LLC') === t
 // А это уже другая контора
 assert(sameCompany('Coyote Logistics', 'Freight Xpress Inc') === false);
 
+// ── Реф-номера, напечатанные для груза в целом ──────────────────────
+// Живой случай, рейт-кон Arrive Logistics 9497205: колонки Ref/PO# у стопов
+// пустые, а «Shipment ID 934219923» и «Reference # T064090» стоят в шапке.
+// Раньше в схеме не было поля под такие номера, и они пропадали — водитель
+// приезжал на склад без единого номера, который у него спросят.
+$rc = array(
+  'load_id' => '9497205',
+  'refs' => array('Shipment ID 934219923', 'Reference # T064090'),
+  'rate' => '$2,080.00', 'weight' => '40512 lb', 'commodity' => 'FIRELOG',
+  'stops' => array(
+    array('type' => 'pickup', 'name' => 'Royal Oak',
+          'address_lines' => array('6202 Industrial Dr', 'Greenville, TX 75402'),
+          'time' => 'Sep 3, 2026 10:00 CDT', 'refs' => array()),
+    array('type' => 'delivery', 'name' => 'ROYAL OAK CHARCOAL',
+          'address_lines' => array('6400 CORPORATE PARK DRIVE', 'Loudon, TN 37774'),
+          'time' => 'Sep 4, 2026 11:00 EDT', 'refs' => array()),
+  ),
+);
+$blocks = driverCardBlocks($rc, 'en');
+// Оба номера — в шапке карточки, рядом с номером загрузки
+assert(strpos($blocks[0], 'Shipment ID 934219923') !== false);
+assert(strpos($blocks[0], 'Reference # T064090') !== false);
+assert(strpos($blocks[0], 'LOAD ID: #9497205') !== false);
+
+// И на пустые реф-номера стопов бот больше не жалуется: номера есть, просто
+// напечатаны в шапке. Раньше он писал «реф-номера (погрузка #1)» под карточкой,
+// в которой эти номера стояли строкой выше.
+$codes = array_map(function ($m) { return $m['field']; }, missingFields($rc));
+assert(!in_array('refs', $codes, true));
+
+// А когда номеров нет вообще — жалоба на месте
+$rcNoRefs = $rc;
+$rcNoRefs['refs'] = array();
+$codes = array_map(function ($m) { return $m['field']; }, missingFields($rcNoRefs));
+assert(in_array('refs', $codes, true));
+
 // ── Число из строки ─────────────────────────────────────────────────
 // Живой случай: биржа DAT печатает рыночную ставку как «$4,045 ($2.22/mi)».
 // Прежний разбор («выкинуть всё, кроме цифр и точек») склеивал два числа в

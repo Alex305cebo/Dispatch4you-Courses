@@ -466,3 +466,186 @@ function rateSanityText(array $d, $lang = 'ru') {
     : "⚠️ Ставка " . $raw . " похожа на цену за единицу (за тонну или за милю), а не за рейс. "
       . "Проверьте в рейт-коне итоговую сумму — водителю нужна именно она.";
 }
+
+// Вес и мили модель регулярно меняет местами: в рейт-конах подписи столбцов
+// и значения печатаются на разных строках. Разводим их арифметикой — это
+// надёжнее любых уговоров в промпте.
+// ponytail: порог 3000 (пробег редко больше, вес редко меньше). Если пойдут
+// сборные LTL-грузы легче 3000 lbs — брать вес из подписи, а не из величины.
+function normalizeLoad(array $d) {
+  // Через эту функцию проходит КАЖДЫЙ разбор рейт-кона — и из PDF, и с фото,
+  // поэтому чистка кириллицы стоит тут: одно место вместо четырёх вызовов.
+  $d = enForce($d);
+
+  // Ориентиры и пояснения из адреса убираем: первой строкой у водителя должна
+  // стоять улица, а не «SOUTH OF BATTLE MOUNTAIN». Заодно чинится ссылка в
+  // приложение — туда улицей уходила та же лишняя строка.
+  if (!empty($d['stops']) && is_array($d['stops'])) {
+    foreach ($d['stops'] as $i => $s) {
+      if (isset($s['address_lines'])) $d['stops'][$i]['address_lines'] = cleanAddressLines($s['address_lines']);
+    }
+  }
+  $num = function ($v) { return numOf($v); };
+  $w = $num(isset($d['weight']) ? $d['weight'] : '');
+  $m = $num(isset($d['miles']) ? $d['miles'] : '');
+
+  if ($w !== null && $m !== null && $m > $w) {           // явно перепутаны местами
+    $t = $d['weight']; $d['weight'] = $d['miles']; $d['miles'] = $t;
+    $t = $w; $w = $m; $m = $t;
+  } elseif ($w === null && $m !== null && $m >= 3000) {  // вес уехал в мили
+    $d['weight'] = $d['miles']; $d['miles'] = ''; $w = $m; $m = null;
+  } elseif ($m === null && $w !== null && $w < 3000) {   // мили уехали в вес
+    $d['miles'] = $d['weight']; $d['weight'] = ''; $m = $w; $w = null;
+  }
+
+  // «41438» → «41438 lbs»: в карточке единицы должны быть всегда
+  if ($w !== null && !preg_match('/[a-zA-Zа-яА-Я]/u', (string)$d['weight'])) {
+    $d['weight'] = trim($d['weight']) . ' lbs';
+  }
+  // «7450.0» → «$7,450.00», «42851.0 lbs» → «42,851 lbs». Модель отдаёт числа
+  // как попало, а водитель и брокер читают карточку как документ: «Ставка
+  // $7450.0» выглядит как опечатка в цене рейса.
+  if (!empty($d['rate']))   $d['rate']   = formatMoney($d['rate']);
+  if (!empty($d['weight'])) $d['weight'] = formatWeight($d['weight']);
+  return $d;
+}
+
+// Список того, чего в разборе не хватает — по-человечески, с указанием стопа.
+// Возвращает структурные метки (не текст), чтобы список можно было отрисовать
+// на любом языке позже, без повторного разбора документа — см. missingFieldsText().
+function missingFields(array $d) {
+  $miss = array();
+  if (empty($d['load_id']))   $miss[] = array('field' => 'load_id');
+  if (empty($d['rate']))      $miss[] = array('field' => 'rate');
+  if (empty($d['weight']))    $miss[] = array('field' => 'weight');
+  if (empty($d['commodity'])) $miss[] = array('field' => 'commodity');
+  // Про MC жалуемся, только если брокера не удалось опознать вообще: когда его
+  // нашли в FMCSA по названию, номер у нас есть — просто не из документа.
+  if (empty($d['mc']) && empty($d['dot'])) $miss[] = array('field' => 'mc');
+  // Целиком пропавший стоп раньше не считался пропажей: в сводке просто
+  // появлялось «Маршрут: ? → …», а карта в приложении не строилась вообще,
+  // и понять, что бот не дочитал документ, было невозможно.
+  $kinds = array();
+  foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
+    $kinds[(isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup'] = true;
+  }
+  if (empty($kinds['pickup']))   $miss[] = array('field' => 'nopickup');
+  if (empty($kinds['delivery'])) $miss[] = array('field' => 'nodelivery');
+
+  $hasDocRefs = !empty(array_filter((array)(isset($d['refs']) ? $d['refs'] : array())));
+  $i = 0;
+  foreach ((array)(isset($d['stops']) ? $d['stops'] : array()) as $s) {
+    $i++;
+    $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
+    if (empty($s['name']) && empty($s['address_lines'])) {
+      $miss[] = array('field' => 'address', 'type' => $type, 'n' => $i);
+    } elseif (!preg_match('/\b[A-Z]{2}\b[ ,]+\d{5}/', implode(' ', (array)(isset($s['address_lines']) ? $s['address_lines'] : array())))) {
+      // без «CITY ST ZIP» водителю адрес бесполезен — предупреждаем явно
+      $miss[] = array('field' => 'citystate', 'type' => $type, 'n' => $i);
+    }
+    if (empty($s['time'])) $miss[] = array('field' => 'time', 'type' => $type, 'n' => $i);
+    // Про пустые реф-номера стопа молчим, если номера напечатаны для груза в
+    // целом: они и есть то, что спросят у водителя. Иначе бот жаловался на
+    // «отсутствие» номеров, которые в карточке прямо над этим и стоят.
+    if (empty($s['refs']) && !$hasDocRefs) $miss[] = array('field' => 'refs', 'type' => $type, 'n' => $i);
+  }
+  return $miss;
+}
+
+// Превращает структурные метки missingFields() в читаемый список на нужном языке.
+function missingFieldsText(array $miss, $lang = 'ru') {
+  $labels = $lang === 'en'
+    ? array('load_id' => 'load number', 'rate' => 'rate', 'weight' => 'weight', 'commodity' => 'commodity',
+            'address' => 'address', 'citystate' => 'city and zip', 'time' => 'time', 'refs' => 'reference numbers',
+            'mc' => "broker's MC — the app cannot run the FMCSA check without it",
+            'nopickup' => 'the PICKUP stop — no map without it',
+            'nodelivery' => 'the DELIVERY stop — no map without it')
+    : array('load_id' => 'номер загрузки', 'rate' => 'ставка', 'weight' => 'вес', 'commodity' => 'груз',
+            'address' => 'адрес', 'citystate' => 'город и индекс', 'time' => 'время', 'refs' => 'реф-номера',
+            'mc' => 'MC брокера — без него приложение не проверит его по FMCSA',
+            'nopickup' => 'ПОГРУЗКА — без неё не построится карта',
+            'nodelivery' => 'ДОСТАВКА — без неё не построится карта');
+  $stopWord = $lang === 'en'
+    ? array('pickup' => 'pickup', 'delivery' => 'delivery')
+    : array('pickup' => 'погрузка', 'delivery' => 'доставка');
+  $out = array();
+  foreach ($miss as $m) {
+    $label = isset($labels[$m['field']]) ? $labels[$m['field']] : $m['field'];
+    $out[] = isset($m['type']) ? $label . ' (' . $stopWord[$m['type']] . ' #' . $m['n'] . ')' : $label;
+  }
+  return $out;
+}
+
+// ────────────────────────────────────────────────────────────────────
+// $lang меняет только подписи полей (LOAD ID, Pick up Address, Time, Ref...) —
+// сами данные (адреса, суммы, номера) не переводятся, это факты, а не текст.
+// ⚠️ Карточка по умолчанию — для американского водителя, который читает по-английски;
+// русская версия существует по прямому запросу и отправлять её водителю не стоит.
+// Блоки: шапка с номером загрузки, каждый стоп ОДНИМ блоком, итоговые строки.
+// Именно блоками, а не готовой строкой: из них собирается и целая карточка, и
+// разложенная по сообщениям (driverCardParts ниже) — так стоп не разрывается.
+function driverCardBlocks(array $d, $lang = 'en') {
+  $t = $lang === 'ru'
+    ? array('load' => 'НОМЕР ЗАГРУЗКИ', 'pickup' => 'Адрес погрузки', 'delivery' => 'Адрес доставки',
+            'time' => 'Время', 'ref' => 'Реф', 'rate' => 'Ставка', 'commodity' => 'Груз', 'weight' => 'Вес')
+    : array('load' => 'LOAD ID', 'pickup' => 'Pick up Address', 'delivery' => 'Delivery Address',
+            'time' => 'Time', 'ref' => 'Ref', 'rate' => 'Rate', 'commodity' => 'Commodity', 'weight' => 'Weight');
+  $hr = '__________________________';
+  $blocks = array();
+  // Шапка: номер загрузки и реф-номера, напечатанные для ГРУЗА В ЦЕЛОМ.
+  // Живой случай — рейт-кон Arrive Logistics 9497205: колонки Ref/PO# у стопов
+  // пустые, а «Shipment ID 934219923» и «Reference # T064090» стоят в шапке.
+  // Именно эти номера спрашивают у водителя на въезде, и без них он стоит у
+  // склада и звонит диспетчеру.
+  $head = array();
+  if (!empty($d['load_id'])) $head[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#');
+  $docRefs = array_values(array_filter((array)(isset($d['refs']) ? $d['refs'] : array())));
+  foreach ($docRefs as $r) $head[] = $r;
+  if ($head) $blocks[] = implode("\n", $head);
+
+  $stops = (array)(isset($d['stops']) ? $d['stops'] : array());
+  $counts = array('pickup' => 0, 'delivery' => 0);
+  foreach ($stops as $s) {
+    $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
+    $counts[$type]++;
+  }
+  $seen = array('pickup' => 0, 'delivery' => 0);
+  foreach ($stops as $s) {
+    $type = (isset($s['type']) && $s['type'] === 'delivery') ? 'delivery' : 'pickup';
+    $seen[$type]++;
+    $label = ($type === 'delivery') ? $t['delivery'] : $t['pickup'];
+    if ($counts[$type] > 1) $label .= ' ' . $seen[$type];
+    $L = array($label . ':', '');
+    // Пустая строка после названия склада — иначе оно визуально слипается
+    // с адресом на следующей строке.
+    if (!empty($s['name'])) { $L[] = $s['name']; $L[] = ''; }
+    foreach ((array)(isset($s['address_lines']) ? $s['address_lines'] : array()) as $a) if ($a !== '') $L[] = $a;
+    $L[] = '';
+    if (!empty($s['time'])) { $L[] = $hr; $L[] = $t['time'] . ': ' . $s['time']; }
+    $refs = array_filter((array)(isset($s['refs']) ? $s['refs'] : array()));
+    if ($refs) {
+      $L[] = $hr;
+      $first = true;
+      foreach ($refs as $r) { $L[] = ($first ? $t['ref'] . ': ' : '') . $r; $first = false; }
+    }
+    $L[] = $hr;
+    $blocks[] = implode("\n", $L);
+  }
+  $tail = array();
+  if (!empty($d['rate']))      $tail[] = $t['rate'] . ': ' . $d['rate'];
+  if (!empty($d['commodity'])) $tail[] = $t['commodity'] . ': ' . $d['commodity'];
+  if (!empty($d['weight']))    $tail[] = $t['weight'] . ': ' . $d['weight'];
+  if ($tail) $blocks[] = implode("\n", $tail);
+  return $blocks;
+}
+
+// Карточка водителю, разложенная по сообщениям под лимит Telegram (4096
+// символов). Раньше она просто обрезалась на 4000 — и на рейт-коне в 5-6
+// страниц последние стопы вместе со ставкой и весом ИСЧЕЗАЛИ из текста,
+// который диспетчер копирует и отправляет водителю. Ни в чате, ни в логе следа
+// не оставалось: сообщение выглядело законченным.
+// Упаковка — packBlocks() в lib/load-checks.php: она чистая и проверяется
+// тестом, а потерять здесь стоп дороже всего.
+function driverCardParts(array $d, $lang = 'en', $limit = 3800) {
+  return packBlocks(driverCardBlocks($d, $lang), $limit);
+}
