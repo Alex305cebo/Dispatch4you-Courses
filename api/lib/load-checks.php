@@ -592,16 +592,13 @@ function driverCardBlocks(array $d, $lang = 'en') {
             'time' => 'Time', 'ref' => 'Ref', 'rate' => 'Rate', 'commodity' => 'Commodity', 'weight' => 'Weight');
   $hr = '__________________________';
   $blocks = array();
-  // Шапка: номер загрузки и реф-номера, напечатанные для ГРУЗА В ЦЕЛОМ.
-  // Живой случай — рейт-кон Arrive Logistics 9497205: колонки Ref/PO# у стопов
-  // пустые, а «Shipment ID 934219923» и «Reference # T064090» стоят в шапке.
-  // Именно эти номера спрашивают у водителя на въезде, и без них он стоит у
-  // склада и звонит диспетчеру.
-  $head = array();
-  if (!empty($d['load_id'])) $head[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#');
+  // В шапке — ТОЛЬКО номер загрузки. Реф-номера в утверждённом формате
+  // драйвер-инфо стоят внутри блока стопа, после времени: водителя спрашивают
+  // о них на конкретном складе, там он их и ищет глазами. Номера груза в
+  // целом (Shipment ID, PO#, BOL) подставляются ниже — в тот стоп, у которого
+  // своих номеров нет.
+  if (!empty($d['load_id'])) $blocks[] = '* ' . $t['load'] . ': #' . ltrim($d['load_id'], '#');
   $docRefs = array_values(array_filter((array)(isset($d['refs']) ? $d['refs'] : array())));
-  foreach ($docRefs as $r) $head[] = $r;
-  if ($head) $blocks[] = implode("\n", $head);
 
   $stops = (array)(isset($d['stops']) ? $d['stops'] : array());
   $counts = array('pickup' => 0, 'delivery' => 0);
@@ -622,7 +619,10 @@ function driverCardBlocks(array $d, $lang = 'en') {
     foreach ((array)(isset($s['address_lines']) ? $s['address_lines'] : array()) as $a) if ($a !== '') $L[] = $a;
     $L[] = '';
     if (!empty($s['time'])) { $L[] = $hr; $L[] = $t['time'] . ': ' . $s['time']; }
+    // Свои номера стопа, а если их нет — номера груза в целом: они относятся
+    // ко всему рейсу, и на въезде спросят именно их.
     $refs = array_filter((array)(isset($s['refs']) ? $s['refs'] : array()));
+    if (!$refs) $refs = $docRefs;
     if ($refs) {
       $L[] = $hr;
       $first = true;

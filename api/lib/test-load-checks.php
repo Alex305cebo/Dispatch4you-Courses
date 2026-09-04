@@ -71,10 +71,21 @@ $rc = array(
   ),
 );
 $blocks = driverCardBlocks($rc, 'en');
-// Оба номера — в шапке карточки, рядом с номером загрузки
-assert(strpos($blocks[0], 'Shipment ID 934219923') !== false);
-assert(strpos($blocks[0], 'Reference # T064090') !== false);
+// В шапке — ТОЛЬКО номер загрузки: реф-номера в утверждённом формате стоят
+// внутри блока стопа, после времени, а не под LOAD ID.
 assert(strpos($blocks[0], 'LOAD ID: #9497205') !== false);
+assert(strpos($blocks[0], 'Shipment ID') === false);
+// Номера груза подставились в оба стопа — своих у них нет
+assert(strpos($blocks[1], 'Ref: Shipment ID 934219923') !== false);
+assert(strpos($blocks[1], 'Reference # T064090') !== false);
+assert(strpos($blocks[2], 'Shipment ID 934219923') !== false);
+
+// А свои номера стопа номерами груза НЕ подменяются
+$rcOwn = $rc;
+$rcOwn['stops'][0]['refs'] = array('PU 1067917');
+$b2 = driverCardBlocks($rcOwn, 'en');
+assert(strpos($b2[1], 'PU 1067917') !== false);
+assert(strpos($b2[1], 'Shipment ID') === false);
 
 // И на пустые реф-номера стопов бот больше не жалуется: номера есть, просто
 // напечатаны в шапке. Раньше он писал «реф-номера (погрузка #1)» под карточкой,
