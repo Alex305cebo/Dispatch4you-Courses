@@ -274,7 +274,7 @@
     // ── Load nav HTML ──────────────────────────────────────────────
     function loadNav() {
         // Language-specific nav file, absolute path (works from any depth).
-        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=13.7';
+        var navFile = (LANG === 'ru' ? '/nav.html' : '/nav.' + LANG + '.html') + '?v=13.8';
         fetch(navFile)
             .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
             .then(function (html) { inject(html.replace(/\{\{BASE\}\}/g, BASE)); })
@@ -386,6 +386,14 @@
                     i.classList.remove('open');
                     var b = i.querySelector('.nav-btn');
                     if (b) b.setAttribute('aria-expanded', 'false');
+                });
+                // Вложенные списки внутри выпадающего меню тоже сворачиваем.
+                // Классы раскрытия висят на элементах и сами не снимаются:
+                // без этого раскрытый однажды список из пятнадцати уроков
+                // встречал бы человека при каждом следующем открытии меню.
+                document.querySelectorAll('.dropdown-nested.show').forEach(function (n) { n.classList.remove('show'); });
+                document.querySelectorAll('.dropdown-arrow.expanded, .dropdown-main.expanded, .mega-dropdown.expanded').forEach(function (n) {
+                    n.classList.remove('expanded');
                 });
             }
             if (btn && item) {
@@ -524,19 +532,30 @@
         var menu = document.getElementById('mobMenu');
         var overlay = document.getElementById('mobOverlay');
         var burger = document.getElementById('burgerBtn');
+        // Меню открывается полностью свёрнутым: видны только три заголовка
+        // разделов. Раньше «Курс обучения» раскрывался сам, а внутри него был
+        // раскрыт список из пятнадцати уроков — меню начиналось с длинной
+        // простыни, и до «Инструментов» с «Информацией» нужно было листать.
+        collapseMobMenu();
         if (menu) menu.classList.add('active');
         if (overlay) overlay.classList.add('active');
         if (burger) burger.setAttribute('aria-expanded', 'true');
         document.body.style.overflow = 'hidden';
-        
-        // На мобильном изначально раскрыт только «Курс - 15 Уроков»: сама секция
-        // «Курс обучения» + её первый вложенный список. Остальное — закрыто.
-        setTimeout(function() {
-            var courseAccordion = document.querySelector('.mob-acc[data-section="course"]');
-            if (courseAccordion && !courseAccordion.classList.contains('open')) {
-                courseAccordion.classList.add('open');
-            }
-        }, 100);
+    }
+
+    // Свернуть всё в мобильном меню. Нужно и при открытии, и при закрытии:
+    // классы раскрытия живут на элементах и сами не снимаются, поэтому без
+    // этого меню помнило бы, что было развёрнуто в прошлый раз.
+    function collapseMobMenu() {
+        document.querySelectorAll('.mob-acc.open').forEach(function (a) {
+            a.classList.remove('open');
+            var t = a.querySelector('.mob-acc-title');
+            if (t) t.setAttribute('aria-expanded', 'false');
+        });
+        document.querySelectorAll('.mob-sub-nested.show').forEach(function (n) { n.classList.remove('show'); });
+        document.querySelectorAll('.mob-sub-arrow.expanded, .mob-sub-main.expanded').forEach(function (n) {
+            n.classList.remove('expanded');
+        });
     }
 
     function closeMenu() {
@@ -547,6 +566,7 @@
         if (overlay) overlay.classList.remove('active');
         if (burger) burger.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = '';
+        collapseMobMenu();
     }
 
     // ── Highlight active link ─────────────────────────────────────
