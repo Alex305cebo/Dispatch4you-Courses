@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ru" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="../css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видеоурок: Amazon Relay, часть 1 | Курсы Диспетчера</title>
+  <link rel="canonical" href="https://dispatch4you.com/pages/amazon-relay-video.html">
+    <meta name="description" content="Видеоурок с озвучкой: что такое Amazon Relay, чем отличается от брокера, как подключается компания и водитель. 11 минут, 22 сцены.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=8.7">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.2">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; scroll-behavior: smooth; }
+        :root { --primary:#06b6d4; --secondary:#0ea5e9; --amz:#ff9900; --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+                --bg-darker:#070b14; --text-primary:#fff; --text-secondary:#e2e8f0; --text-muted:#94a3b8; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg-darker); color:var(--text-primary); line-height:1.6; overflow-x:hidden; }
+        body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.13), transparent 50%), radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%); }
+        .container { max-width:1180px; margin:0 auto; padding:0 24px; }
+        .vhead { padding:110px 0 24px; text-align:center; }
+        .vbadge { display:inline-block; padding:8px 18px; border-radius:24px; background:linear-gradient(135deg,rgba(255,153,0,.15),rgba(14,165,233,.15)); border:1px solid rgba(255,153,0,.35); color:var(--amz); font-size:12px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:16px; }
+        .vtitle { font-size:clamp(28px,4vw,46px); font-weight:900; line-height:1.15; margin-bottom:12px;
+            background:linear-gradient(135deg,#06b6d4,#0ea5e9 45%,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .vsub { font-size:16px; color:var(--text-muted); }
+
+        /* ===== ПЛЕЕР ===== */
+        .player { max-width:1100px; margin:0 auto; }
+        .stage { position:relative; width:100%; aspect-ratio:16/9; background:#080d18; border:1px solid rgba(255,255,255,.10); border-radius:18px; overflow:hidden; --u:11px; }
+        .stage:fullscreen { border-radius:0; border:none; }
+        .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.4) calc(var(--u)*5) calc(var(--u)*4); }
+        .scene.live { display:flex; }
+        .scene-cap { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); margin-bottom:calc(var(--u)*2.2); flex-shrink:0; }
+        .sc-ch { font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .sc-tt { font-size:calc(var(--u)*1.45); color:var(--text-muted); }
+        .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.8); min-height:0; }
+        [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
+        [data-at].on { opacity:1; transform:none; }
+        g[data-at], text[data-at], path[data-at] { transform:none !important; }
+
+        /* блоки сцен */
+        .sc-title { text-align:center; }
+        .sc-title .kicker { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*1.6); }
+        .sc-title .big { font-size:calc(var(--u)*6.2); font-weight:900; line-height:1.08; letter-spacing:-.02em; }
+        .sc-title.small .big { font-size:calc(var(--u)*4.6); }
+        .sc-title .accent { background:linear-gradient(135deg,#06b6d4,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .chips { display:flex; gap:calc(var(--u)*1); justify-content:center; margin-top:calc(var(--u)*2.6); flex-wrap:wrap; }
+        .chip { display:flex; align-items:center; gap:calc(var(--u)*.7); padding:calc(var(--u)*.9) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .chip i { width:calc(var(--u)*2); height:calc(var(--u)*2); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,var(--primary),var(--amz)); display:flex; align-items:center; justify-content:center; font-style:normal; font-weight:800; font-size:calc(var(--u)*1.1); color:#fff; }
+
+        .sc-cols3 { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.6); }
+        .sc-cols3.tight { margin-top:calc(var(--u)*2.4); }
+        .ccard { padding:calc(var(--u)*2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.4); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .ccard.need { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .ccard .ic { font-size:calc(var(--u)*2.6); margin-bottom:calc(var(--u)*.7); }
+        .ccard .cnum { font-size:calc(var(--u)*3.1); font-weight:900; background:linear-gradient(135deg,var(--primary),var(--amz)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .ccard .clab { font-size:calc(var(--u)*1.28); color:var(--text-muted); margin-top:calc(var(--u)*.4); }
+        .sc-arrow { text-align:center; font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; }
+        .sc-relay { display:flex; justify-content:center; }
+        .rbox { padding:calc(var(--u)*1.8) calc(var(--u)*3); border-radius:calc(var(--u)*1.4); background:linear-gradient(135deg,rgba(6,182,212,.16),rgba(255,153,0,.14)); border:1px solid rgba(255,153,0,.4); text-align:center; }
+        .rbox .rt { font-size:calc(var(--u)*2.6); font-weight:900; }
+        .rbox .rs { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.3); }
+
+        .sc-vs { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .vs-head { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); padding:0 calc(var(--u)*1.4); }
+        .vs-head .vh { font-size:calc(var(--u)*1.5); font-weight:800; }
+        .vs-head .vh:first-child { grid-column:2; color:var(--text-muted); }
+        .vs-head .vh.b { color:var(--amz); }
+        .vs-row { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); }
+        .vs-row .vl { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .vs-row .va { font-size:calc(var(--u)*1.42); color:var(--text-secondary); }
+        .vs-row .vb { font-size:calc(var(--u)*1.42); color:var(--amz); font-weight:600; }
+
+        .sc-days { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.6); }
+        .day { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .day.b { border-color:rgba(255,153,0,.4); background:rgba(255,153,0,.06); }
+        .day .dh { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .day .dstep { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.42) 0; border-bottom:1px solid rgba(255,255,255,.06); }
+        .day .dtime { margin-top:calc(var(--u)*.9); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .day .dtime.ok { color:var(--success); }
+
+        .sc-who { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .who { padding:calc(var(--u)*1.7) calc(var(--u)*1.2); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .who.hi { border-color:rgba(6,182,212,.45); background:rgba(6,182,212,.08); }
+        .who .wic { font-size:calc(var(--u)*2.8); }
+        .who .wn { font-size:calc(var(--u)*1.75); font-weight:800; margin:calc(var(--u)*.5) 0 calc(var(--u)*.3); }
+        .who .wd { font-size:calc(var(--u)*1.18); color:var(--text-muted); line-height:1.45; }
+
+        .sc-svg { width:100%; height:auto; max-height:100%; }
+        .svgt { fill:#e2e8f0; font-size:15px; font-family:'Inter',sans-serif; }
+        .svgt.b { fill:#fff; font-size:19px; font-weight:800; }
+        .svgt.s { fill:#94a3b8; font-size:14px; }
+        .svgt.o { font-size:20px; } .svgt.g { font-size:20px; }
+        .truck-anim { transform:translateX(0); }
+        .truck-anim.on { animation:driveAcross 7.5s cubic-bezier(.4,0,.5,1) .3s forwards; }
+        @keyframes driveAcross { to { transform:translateX(490px); } }
+
+        .sc-code { text-align:center; }
+        .codebig { font-size:calc(var(--u)*7); font-weight:900; letter-spacing:.02em; }
+        .codebig .letters { color:var(--primary); }
+        .codebig .digit { color:var(--amz); }
+        .codelegend { display:flex; justify-content:center; gap:calc(var(--u)*3); margin-top:calc(var(--u)*1.2); }
+        .cl { display:flex; align-items:center; gap:calc(var(--u)*.8); }
+        .cll { font-size:calc(var(--u)*1.7); font-weight:900; color:var(--primary); }
+        .cll.d { color:var(--amz); }
+        .clt { font-size:calc(var(--u)*1.28); color:var(--text-muted); }
+        .codeex { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.2); margin-top:calc(var(--u)*2.2); }
+        .ce { padding:calc(var(--u)*1.2); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ce b { display:block; font-size:calc(var(--u)*1.9); color:#fff; }
+        .ce span { font-size:calc(var(--u)*1.2); color:var(--text-muted); }
+
+        .sc-req { display:flex; flex-direction:column; gap:calc(var(--u)*1.4); }
+        .req { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .req .rn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .req .rb { flex:1; min-width:0; }
+        .req .rt { font-size:calc(var(--u)*1.75); font-weight:800; }
+        .req .rv { font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; margin-top:calc(var(--u)*.2); }
+        .req .rx { font-size:calc(var(--u)*1.25); color:var(--text-muted); margin-top:calc(var(--u)*.55); }
+        .tag { display:inline-block; padding:calc(var(--u)*.25) calc(var(--u)*.8); border-radius:99px; background:rgba(255,153,0,.18); color:var(--amz); font-size:calc(var(--u)*1); font-weight:800; text-transform:uppercase; letter-spacing:.06em; vertical-align:middle; margin-left:calc(var(--u)*.6); }
+        .pills { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; margin-top:calc(var(--u)*.7); }
+        .pill { padding:calc(var(--u)*.5) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:700; }
+        .pill.ok { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.35); }
+        .pill.no { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); text-decoration:line-through; }
+        .bars { display:flex; flex-direction:column; gap:calc(var(--u)*.55); margin-top:calc(var(--u)*.7); }
+        .bar { display:grid; grid-template-columns:auto 1fr auto; gap:calc(var(--u)*1); align-items:center; }
+        .bar .bl { font-size:calc(var(--u)*1.25); color:var(--text-secondary); min-width:calc(var(--u)*16); }
+        .bar .bt { height:calc(var(--u)*.9); border-radius:99px; background:rgba(255,255,255,.08); position:relative; overflow:hidden; }
+        .bar .bt i { position:absolute; inset:0 auto 0 0; width:var(--w); background:linear-gradient(90deg,var(--primary),var(--amz)); border-radius:99px; }
+        .bar .bv { font-size:calc(var(--u)*1.3); font-weight:800; color:var(--amz); }
+        .formula { margin-top:calc(var(--u)*.8); padding:calc(var(--u)*.9) calc(var(--u)*1.2); border-radius:calc(var(--u)*.8); background:rgba(6,182,212,.09); border:1px solid rgba(6,182,212,.28); font-size:calc(var(--u)*1.25); color:var(--text-secondary); }
+
+        .sc-eq { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .eq { padding:calc(var(--u)*1.5) calc(var(--u)*1.1); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .eq .eic { font-size:calc(var(--u)*2.6); }
+        .eq .en { font-size:calc(var(--u)*1.55); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.2); }
+        .eq .ed { font-size:calc(var(--u)*1.15); color:var(--text-muted); line-height:1.45; }
+        .sc-two { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+
+        .sc-ins { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ins { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+        .ins.hot { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.5); }
+        .ins .il { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ins .il .sub { display:block; font-size:calc(var(--u)*1.1); color:var(--amz); }
+        .ins .iv { font-size:calc(var(--u)*1.75); font-weight:900; color:#fff; white-space:nowrap; }
+        .ins.hot .iv { color:var(--amz); }
+
+        .sc-flow { display:flex; align-items:stretch; gap:calc(var(--u)*1); }
+        .fw { flex:1; padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .fw .fi { font-size:calc(var(--u)*2.3); }
+        .fw .ft { font-size:calc(var(--u)*1.25); color:var(--text-secondary); margin-top:calc(var(--u)*.4); line-height:1.45; }
+        .fa { display:flex; align-items:center; color:var(--amz); font-size:calc(var(--u)*2); }
+
+        .sc-case { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .sc-case .ch { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.9); }
+        .sc-case .cline { font-size:calc(var(--u)*1.42); color:var(--text-secondary); padding:calc(var(--u)*.45) 0 calc(var(--u)*.45) calc(var(--u)*1.6); position:relative; }
+        .sc-case .cline::before { content:'•'; position:absolute; left:0; color:var(--text-muted); }
+        .sc-case .cline.bad { color:#fca5a5; } .sc-case .cline.bad::before { content:'✕'; color:#fca5a5; font-size:.85em; }
+        .sc-case .cline.good { color:#6ee7b7; } .sc-case .cline.good::before { content:'✓'; color:#6ee7b7; }
+        .sc-case .cfoot { margin-top:calc(var(--u)*.9); padding-top:calc(var(--u)*.9); border-top:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.35); color:var(--amz); font-weight:600; }
+
+        .sc-roles { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .role { position:relative; padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .role.best { border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.08); }
+        .role.trap { border-color:rgba(239,68,68,.45); background:rgba(239,68,68,.07); }
+        .rbadge { position:absolute; top:calc(var(--u)*-.9); left:calc(var(--u)*1.2); padding:calc(var(--u)*.3) calc(var(--u)*.9); border-radius:99px; background:#10b981; color:#04231a; font-size:calc(var(--u)*1); font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+        .rbadge.trap { background:#ef4444; color:#2a0505; }
+        .role .rname { font-size:calc(var(--u)*1.8); font-weight:800; }
+        .role .rwho { font-size:calc(var(--u)*1.2); color:var(--amz); margin:calc(var(--u)*.2) 0 calc(var(--u)*.6); }
+        .role .rcan { font-size:calc(var(--u)*1.25); color:var(--text-muted); line-height:1.5; }
+
+        .sc-steps { display:flex; flex-direction:column; gap:calc(var(--u)*1.3); }
+        .st { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .st.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .st .sn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .st .sb { flex:1; min-width:0; }
+        .sc-steps .stt { font-size:calc(var(--u)*1.7); font-weight:800; }
+        .st .std { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.35); line-height:1.5; }
+        .st .std.dim { color:var(--text-muted); }
+        .toggles { display:flex; flex-direction:column; gap:calc(var(--u)*.6); margin-top:calc(var(--u)*.9); }
+        .tg { display:grid; grid-template-columns:calc(var(--u)*16) auto 1fr; gap:calc(var(--u)*1); align-items:center; }
+        .tgl { font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .tgv { padding:calc(var(--u)*.4) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:800; text-align:center; }
+        .tgv.on { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .tgv.off { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); }
+        .tgn { font-size:calc(var(--u)*1.15); color:var(--text-muted); }
+
+        .sc-yesno { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.5); }
+        .sc-yesno .col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .sc-yesno .col.yes { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .sc-yesno .col.no { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .sc-yesno .colh { font-size:calc(var(--u)*1.55); font-weight:800; margin-bottom:calc(var(--u)*.8); }
+        .sc-yesno .col.yes .colh { color:#6ee7b7; } .sc-yesno .col.no .colh { color:#fca5a5; }
+        .sc-yesno .li { font-size:calc(var(--u)*1.32); color:var(--text-secondary); padding:calc(var(--u)*.35) 0 calc(var(--u)*.35) calc(var(--u)*1.7); position:relative; }
+        .sc-yesno .col.yes .li::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .sc-yesno .col.no .li::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-yesno .lin { margin-top:calc(var(--u)*.8); font-size:calc(var(--u)*1.25); color:var(--amz); }
+
+        .sc-status { display:flex; align-items:center; justify-content:center; gap:calc(var(--u)*1.4); }
+        .sc-status .stt { padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:99px; font-size:calc(var(--u)*1.6); font-weight:800; }
+        .sc-status .stt.pending { background:rgba(245,158,11,.16); color:#fcd34d; border:1px solid rgba(245,158,11,.4); }
+        .sc-status .stt.active { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .sc-status .arr { color:var(--text-muted); font-size:calc(var(--u)*1.8); }
+
+        .sc-sum { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sumh { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--amz); }
+        .sumline { font-size:calc(var(--u)*1.5); color:var(--text-secondary); padding:calc(var(--u)*.9) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid var(--primary); line-height:1.5; }
+        .sumline b { color:#fff; }
+        .nextup { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(255,153,0,.12)); border:1px solid rgba(255,153,0,.35); }
+        .nextup .nl { display:block; font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .nextup .nt { font-size:calc(var(--u)*1.5); color:#fff; }
+
+        .sc-note { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); font-size:calc(var(--u)*1.4); color:var(--text-secondary); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
+        .sc-note.warn { background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.35); color:#fcd34d; }
+        .sc-note.ok { background:rgba(16,185,129,.10); border-color:rgba(16,185,129,.35); color:#6ee7b7; }
+        .sc-note.danger { background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.38); color:#fca5a5; }
+        .sc-note.big { font-size:calc(var(--u)*1.6); font-weight:600; text-align:center; }
+
+        /* заставка и кнопка старта */
+        .poster { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u)*1.6); background:linear-gradient(160deg,#0a1120,#0e1830); z-index:5; cursor:pointer; }
+        .poster.hide { display:none; }
+        .poster .pt { font-size:calc(var(--u)*3.4); font-weight:900; text-align:center; line-height:1.15; }
+        .poster .ps { font-size:calc(var(--u)*1.5); color:var(--text-muted); }
+        .bigplay { width:calc(var(--u)*7); height:calc(var(--u)*7); border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--amz)); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 calc(var(--u)*.8) calc(var(--u)*3) rgba(6,182,212,.35); transition:transform .2s; }
+        .bigplay:hover { transform:scale(1.06); }
+        .bigplay svg { width:calc(var(--u)*2.6); height:calc(var(--u)*2.6); fill:#fff; margin-left:calc(var(--u)*.3); }
+
+        /* субтитры */
+        .subs { margin-top:14px; min-height:76px; padding:16px 22px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-left:3px solid var(--amz); display:flex; gap:14px; align-items:flex-start; }
+        .subs.off { display:none; }
+        .subs .sic { font-size:18px; flex-shrink:0; opacity:.7; }
+        .subs .stx { font-size:17px; line-height:1.6; color:var(--text-secondary); }
+
+        /* управление */
+        .bar-wrap { margin-top:14px; }
+        .track { position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.09); cursor:pointer; }
+        .track .fill { position:absolute; inset:0 auto 0 0; width:0; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--amz)); }
+        .track .knob { position:absolute; top:50%; left:0; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+        .track i { position:absolute; top:0; width:2px; height:100%; background:rgba(255,255,255,.35); }
+        .ctrls { display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap; }
+        .cbtn { display:flex; align-items:center; justify-content:center; gap:7px; height:44px; min-width:44px; padding:0 14px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--text-primary); font:600 14px Inter,sans-serif; cursor:pointer; transition:all .2s; }
+        .cbtn:hover { background:rgba(255,153,0,.14); border-color:rgba(255,153,0,.4); }
+        .cbtn.main { background:linear-gradient(135deg,var(--primary),var(--secondary)); border-color:transparent; }
+        .cbtn svg { width:18px; height:18px; fill:currentColor; }
+        .ctime { font:700 14px ui-monospace,Menlo,Consolas,monospace; color:var(--text-muted); margin-left:4px; }
+        .spacer { flex:1; }
+        .cbtn.small { height:38px; font-size:13px; padding:0 12px; }
+
+        /* главы */
+        .chapters { margin-top:26px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+        .chap { display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); cursor:pointer; text-align:left; transition:all .2s; font-family:inherit; }
+        .chap:hover { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .chap.on { border-color:var(--amz); background:rgba(255,153,0,.11); }
+        .chap-t { font:800 12px ui-monospace,Menlo,Consolas,monospace; color:var(--amz); }
+        .chap-n { font-size:15px; font-weight:700; color:#fff; }
+        .chap-d { font-size:12.5px; color:var(--text-muted); }
+
+        .after { margin:44px auto 60px; max-width:1100px; }
+        .after h2 { font-size:22px; font-weight:800; margin-bottom:14px; }
+        .after-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+        .after-grid a { display:block; padding:16px 18px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-decoration:none; color:var(--text-secondary); transition:all .2s; }
+        .after-grid a:hover { border-color:rgba(6,182,212,.5); background:rgba(6,182,212,.08); color:#fff; }
+        .after-grid b { display:block; color:#fff; font-size:15px; margin-bottom:3px; }
+        .after-grid span { font-size:13px; color:var(--text-muted); }
+
+        @media (max-width:900px) {
+            .vhead { padding:96px 0 18px; }
+            .sc-who, .sc-eq { grid-template-columns:1fr 1fr; }
+            .sc-roles, .sc-cols3, .codeex { grid-template-columns:1fr; gap:calc(var(--u)*.9); }
+            .sc-days, .sc-yesno, .sc-two { grid-template-columns:1fr; }
+            .vs-head, .vs-row { grid-template-columns:1fr 1fr; }
+            .vs-head .vh:first-child { display:none; }
+            .vs-row .vl { grid-column:1/-1; font-size:calc(var(--u)*1.5); }
+            .sc-flow { flex-direction:column; } .fa { justify-content:center; transform:rotate(90deg); }
+            .subs .stx { font-size:15px; }
+        }
+        @media (max-width:600px) { .container { padding:0 14px; } .ctrls { gap:7px; } .cbtn { padding:0 10px; font-size:13px; } }
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="../role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=21"></script>
+
+    <div class="container">
+      <div class="vhead">
+        <div class="vbadge">🎬 Видеоурок · часть 1 из 4</div>
+        <h1 class="vtitle">Amazon Relay для диспетчера</h1>
+        <p class="vsub">11:10 · 22 сцены · озвучка и субтитры · 5 глав</p>
+      </div>
+
+      <div class="player">
+        <div class="stage" id="stage">
+          <div class="scene" data-i="0">
+      <div class="scene-cap"><span class="sc-ch">Вступление</span><span class="sc-tt">Amazon Relay для диспетчера</span></div>
+      <div class="scene-body"><div class="sc-title">
+  <div class="kicker" data-at="0">Курс диспетчера · часть 1 из 4</div>
+  <h1 class="big" data-at="0">Amazon Relay<br><span class="accent">для диспетчера</span></h1>
+  <div class="chips" data-at="1">
+    <span class="chip"><i>1</i> Что такое Relay</span>
+    <span class="chip"><i>2</i> Как подключается компания</span>
+    <span class="chip"><i>3</i> Как подключается водитель</span>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="1">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. Что такое Relay</span><span class="sc-tt">У Amazon есть всё, кроме тягачей</span></div>
+      <div class="scene-body"><div class="sc-cols3">
+  <div class="ccard" data-at="1"><div class="ic">🏭</div><div class="cnum">сотни</div><div class="clab">складов по стране</div></div>
+  <div class="ccard" data-at="1"><div class="ic">🚛</div><div class="cnum">80 000+</div><div class="clab">своих прицепов</div></div>
+  <div class="ccard need" data-at="2"><div class="ic">❓</div><div class="cnum">нет</div><div class="clab">тягачей с водителями</div></div>
+</div>
+<div class="sc-arrow" data-at="2">Amazon нанимает тягачи у перевозчиков</div>
+<div class="sc-relay" data-at="3">
+  <div class="rbox"><div class="rt">Amazon Relay</div><div class="rs">сайт для диспетчера + приложение для водителя</div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="2">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. Что такое Relay</span><span class="sc-tt">Чем Relay отличается от брокера</span></div>
+      <div class="scene-body"><div class="sc-vs">
+  <div class="vs-head"><span class="vh a">Брокер</span><span class="vh b">Amazon Relay</span></div>
+  <div class="vs-row" data-at="1"><span class="vl">Кто даёт груз</span><span class="va">посредник</span><span class="vb">сам владелец груза</span></div>
+  <div class="vs-row" data-at="2"><span class="vl">Цена</span><span class="va">торгуетесь по телефону</span><span class="vb">написана заранее</span></div>
+  <div class="vs-row" data-at="2"><span class="vl">Как забронировать</span><span class="va">звонок и подтверждение</span><span class="vb">одна кнопка</span></div>
+  <div class="vs-row" data-at="3"><span class="vl">Когда платят</span><span class="va">через 30–45 дней</span><span class="vb">каждую пятницу</span></div>
+  <div class="vs-row" data-at="4"><span class="vl">Прицеп</span><span class="va">нужен свой</span><span class="vb">прицеп Amazon</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="3">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. Что такое Relay</span><span class="sc-tt">Один и тот же день</span></div>
+      <div class="scene-body"><div class="sc-days">
+  <div class="day a" data-at="1">
+    <div class="dh">📞 День с брокером</div>
+    <div class="dstep">07:00 нашли груз на доске</div>
+    <div class="dstep">07:15 дозвонились, торгуемся</div>
+    <div class="dstep">08:10 ждём подтверждение на почту</div>
+    <div class="dstep">08:40 подписали, переслали водителю</div>
+    <div class="dtime">≈ 1 час 40 минут</div>
+  </div>
+  <div class="day b" data-at="2">
+    <div class="dh">📦 День с Relay</div>
+    <div class="dstep">07:00 открыли сайт, цена видна сразу</div>
+    <div class="dstep">07:02 нажали «Забронировать»</div>
+    <div class="dstep">07:04 назначили водителя и тягач</div>
+    <div class="dstep">07:05 водитель видит поездку в приложении</div>
+    <div class="dtime ok">≈ 5 минут</div>
+  </div>
+</div>
+<div class="sc-note warn" data-at="3">Плата за скорость: цену изменить нельзя, отказ бьёт по рейтингу</div></div>
+    </div>
+    <div class="scene" data-i="4">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. Что такое Relay</span><span class="sc-tt">Кто в этой схеме кто</span></div>
+      <div class="scene-body"><div class="sc-who">
+  <div class="who" data-at="1"><div class="wic">📦</div><div class="wn">Amazon</div><div class="wd">владелец груза и прицепов</div></div>
+  <div class="who" data-at="2"><div class="wic">🏢</div><div class="wn">Перевозчик</div><div class="wd">ваша компания, её номера MC и DOT</div></div>
+  <div class="who hi" data-at="3"><div class="wic">🖥️</div><div class="wn">Диспетчер</div><div class="wd">сайт Relay: грузы, назначения, контроль</div></div>
+  <div class="who hi" data-at="4"><div class="wic">📱</div><div class="wn">Водитель</div><div class="wd">приложение: поездка, ворота, кнопки</div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="5">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. Что такое Relay</span><span class="sc-tt">Power Only: только тягач</span></div>
+      <div class="scene-body"><svg class="sc-svg" viewBox="0 0 900 260">
+  <rect x="30" y="40" width="200" height="120" rx="14" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+  <text x="130" y="90" text-anchor="middle" class="svgt b">Склад A</text>
+  <text x="130" y="118" text-anchor="middle" class="svgt s">прицеп уже загружен</text>
+  <rect x="670" y="40" width="200" height="120" rx="14" fill="rgba(16,185,129,.10)" stroke="rgba(16,185,129,.5)"/>
+  <text x="770" y="90" text-anchor="middle" class="svgt b">Склад Б</text>
+  <text x="770" y="118" text-anchor="middle" class="svgt s">отцепил, взял следующий</text>
+  <line x1="230" y1="200" x2="670" y2="200" stroke="#334155" stroke-width="3"/>
+  <g class="truck-anim" data-at="1">
+    <g id="vtruck">
+      <rect x="0" y="170" width="52" height="34" rx="5" fill="#06b6d4"/>
+      <circle cx="14" cy="210" r="8" fill="#1e293b"/><circle cx="40" cy="210" r="8" fill="#1e293b"/>
+      <g class="vtrailer" data-at="2"><rect x="52" y="160" width="86" height="44" rx="5" fill="#ff9900"/><circle cx="120" cy="210" r="8" fill="#1e293b"/></g>
+    </g>
+  </g>
+  <text x="450" y="248" text-anchor="middle" class="svgt s" data-at="3">Ваш тягач + водитель · прицеп и груз Amazon</text>
+</svg></div>
+    </div>
+    <div class="scene" data-i="6">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. Что такое Relay</span><span class="sc-tt">Между какими складами ездит трак</span></div>
+      <div class="scene-body"><svg class="sc-svg" viewBox="0 0 900 250">
+  <g data-at="1"><rect x="20" y="60" width="200" height="110" rx="14" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+  <text x="120" y="98" text-anchor="middle" class="svgt b">Большой склад</text>
+  <text x="120" y="124" text-anchor="middle" class="svgt s">товары и сборка заказов</text>
+  <text x="120" y="148" text-anchor="middle" class="svgt s">отцепил → прицепил</text></g>
+  <g data-at="2"><rect x="250" y="60" width="200" height="110" rx="14" fill="rgba(14,165,233,.10)" stroke="rgba(14,165,233,.5)"/>
+  <text x="350" y="98" text-anchor="middle" class="svgt b">Сортировочный центр</text>
+  <text x="350" y="124" text-anchor="middle" class="svgt s">раскладка по направлениям</text>
+  <text x="350" y="148" text-anchor="middle" class="svgt s">волны по расписанию</text></g>
+  <g data-at="3"><rect x="480" y="60" width="200" height="110" rx="14" fill="rgba(16,185,129,.10)" stroke="rgba(16,185,129,.5)"/>
+  <text x="580" y="98" text-anchor="middle" class="svgt b">Станция доставки</text>
+  <text x="580" y="124" text-anchor="middle" class="svgt s">отсюда едут фургоны</text>
+  <text x="580" y="148" text-anchor="middle" class="svgt s">тесно, часто ночью</text></g>
+  <g data-at="3"><rect x="710" y="60" width="170" height="110" rx="14" fill="rgba(255,255,255,.05)" stroke="#334155"/>
+  <text x="795" y="105" text-anchor="middle" class="svgt b">Покупатель</text>
+  <text x="795" y="132" text-anchor="middle" class="svgt s">сюда трак не едет</text></g>
+  <g stroke="#ff9900" stroke-width="3" fill="none">
+    <path d="M222 115 H246" data-at="2"/><path d="M452 115 H476" data-at="3"/>
+  </g>
+  <path d="M682 115 H706" stroke="#10b981" stroke-width="3" fill="none" data-at="3"/>
+  <text x="234" y="100" text-anchor="middle" class="svgt o" data-at="2">🚛</text>
+  <text x="464" y="100" text-anchor="middle" class="svgt o" data-at="3">🚛</text>
+  <text x="694" y="100" text-anchor="middle" class="svgt g" data-at="3">🚐</text>
+  <text x="450" y="225" text-anchor="middle" class="svgt s" data-at="0">Трак работает между складами. Последнюю милю везут фургоны.</text>
+</svg></div>
+    </div>
+    <div class="scene" data-i="7">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. Что такое Relay</span><span class="sc-tt">Как читать код склада</span></div>
+      <div class="scene-body"><div class="sc-code">
+  <div class="codebig" data-at="0"><span class="letters">ONT</span><span class="digit">8</span></div>
+  <div class="codelegend">
+    <div class="cl" data-at="1"><span class="cll">ONT</span><span class="clt">код ближайшего аэропорта</span></div>
+    <div class="cl" data-at="1"><span class="cll d">8</span><span class="clt">номер склада в этом районе</span></div>
+  </div>
+  <div class="codeex">
+    <div class="ce" data-at="2"><b>ONT8</b><span>Морено-Вэлли, Калифорния</span></div>
+    <div class="ce" data-at="2"><b>JFK8</b><span>Стейтен-Айленд, Нью-Йорк</span></div>
+    <div class="ce" data-at="2"><b>FTW1</b><span>Форт-Уэрт, Техас</span></div>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="8">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Глава 2. Как компания попадает в Relay</span></div>
+      <div class="scene-body"><div class="sc-title small">
+  <div class="kicker" data-at="0">Глава 2</div>
+  <h1 class="big" data-at="0">Как компания<br><span class="accent">попадает в Relay</span></h1>
+  <div class="sc-cols3 tight">
+    <div class="ccard" data-at="1"><div class="cnum">$0</div><div class="clab">регистрация и бронирование</div></div>
+    <div class="ccard" data-at="2"><div class="cnum">20 мин</div><div class="clab">заполнить заявку</div></div>
+    <div class="ccard" data-at="2"><div class="cnum">1–3 нед</div><div class="clab">ждать ответ</div></div>
+  </div>
+  <div class="sc-note warn" data-at="3">Проверка автоматическая. Один пункт не прошёл — отказ без объяснения причин</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="9">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Возраст компании и тип</span></div>
+      <div class="scene-body"><div class="sc-req">
+  <div class="req" data-at="0"><div class="rn">1</div><div class="rb"><div class="rt">Возраст разрешения</div><div class="rv">не меньше 180 дней</div><div class="rx" data-at="1">Заявка на 3-м месяце — автоматический отказ</div></div></div>
+  <div class="req" data-at="2"><div class="rn">2</div><div class="rb"><div class="rt">Тип компании в базе</div><div class="rv">перевозчик грузов по найму</div><div class="rx" data-at="3">Стоит «брокер» или «свои грузы» — исправляется формой MCS-150</div></div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="10">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Безопасность: рейтинг и показатели</span></div>
+      <div class="scene-body"><div class="sc-req">
+  <div class="req" data-at="0"><div class="rn">3</div><div class="rb"><div class="rt">Рейтинг безопасности</div>
+    <div class="pills"><span class="pill ok">Satisfactory</span><span class="pill ok">None</span><span class="pill ok">Not Rated</span><span class="pill no" data-at="1">Conditional</span><span class="pill no" data-at="1">Unsatisfactory</span></div></div></div>
+  <div class="req" data-at="2"><div class="rn">4</div><div class="rb"><div class="rt">Показатели безопасности</div>
+    <div class="bars">
+      <div class="bar"><span class="bl">Опасное вождение</span><span class="bt"><i style="--w:60%"></i></span><span class="bv">&lt; 60%</span></div>
+      <div class="bar"><span class="bl">Часы работы</span><span class="bt"><i style="--w:60%"></i></span><span class="bv">&lt; 60%</span></div>
+      <div class="bar"><span class="bl">Состояние техники</span><span class="bt"><i style="--w:75%"></i></span><span class="bv">&lt; 75%</span></div>
+      <div class="bar"><span class="bl">Документы водителей</span><span class="bt"><i style="--w:75%"></i></span><span class="bv">&lt; 75%</span></div>
+    </div>
+    <div class="rx" data-at="3">Пороги Amazon строже, чем «тревога» у регулятора</div></div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="11">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Нарушения на проверках: правило 2026 года</span></div>
+      <div class="scene-body"><div class="sc-req">
+  <div class="req" data-at="0"><div class="rn">5</div><div class="rb"><div class="rt">Доля нарушений на проверках <span class="tag">новое с 2026</span></div>
+    <div class="bars">
+      <div class="bar"><span class="bl">У водителей</span><span class="bt"><i style="--w:35%"></i></span><span class="bv">≤ 35%</span></div>
+      <div class="bar"><span class="bl">По технике</span><span class="bt"><i style="--w:50%"></i></span><span class="bv">≤ 50%</span></div>
+    </div>
+    <div class="formula" data-at="2">(нарушения + нарушения с запретом движения × 2) ÷ число проверок за год</div>
+    <div class="rx" data-at="2">Считается после трёх и более проверок</div>
+  </div></div>
+</div>
+<div class="sc-note danger big" data-at="3">Обжаловать нельзя. Две грязные проверки из трёх — отключение</div></div>
+    </div>
+    <div class="scene" data-i="12">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Какая техника подходит</span></div>
+      <div class="scene-body"><div class="sc-eq">
+  <div class="eq" data-at="0"><div class="eic">🚚</div><div class="en">Тягач</div><div class="ed">кабина любая: дневная или со спальником</div></div>
+  <div class="eq" data-at="0"><div class="eic">📦</div><div class="en">Сухой прицеп</div><div class="ed">48 или 53 фута</div></div>
+  <div class="eq" data-at="0"><div class="eic">❄️</div><div class="en">Рефрижератор</div><div class="ed">53 фута</div></div>
+  <div class="eq" data-at="0"><div class="eic">🚛</div><div class="en">Грузовик с будкой</div><div class="ed">16 или 26 футов, на высоте рампы</div></div>
+</div>
+<div class="sc-two">
+  <div class="sc-note ok" data-at="1">Минимума по числу траков нет: одного достаточно</div>
+  <div class="sc-note ok" data-at="2">Для Power Only свой прицеп не нужен вообще</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="13">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Страховка: где проваливаются заявки</span></div>
+      <div class="scene-body"><div class="sc-ins">
+  <div class="ins" data-at="1"><span class="il">Ответственность перед третьими лицами</span><span class="iv">$1 000 000</span></div>
+  <div class="ins hot" data-at="2"><span class="il">Ответственность за чужой прицеп<span class="sub">отдельной строкой в сертификате</span></span><span class="iv">$50 000</span></div>
+  <div class="ins" data-at="4"><span class="il">Общая ответственность</span><span class="iv">$1 000 000 / $2 000 000</span></div>
+  <div class="ins" data-at="4"><span class="il">Страховка груза</span><span class="iv">$100 000</span></div>
+  <div class="ins" data-at="4"><span class="il">Страховка работников</span><span class="iv">по правилам штата</span></div>
+</div>
+<div class="sc-note danger big" data-at="3">В большинстве полисов стоит $25 000 или строки нет — заявку отклоняют молча</div></div>
+    </div>
+    <div class="scene" data-i="14">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Как забирают сертификат, и один реальный случай</span></div>
+      <div class="scene-body"><div class="sc-flow">
+  <div class="fw" data-at="0"><div class="fi">📝</div><div class="ft">Вы указываете контакты агента</div></div>
+  <div class="fa" data-at="0">→</div>
+  <div class="fw" data-at="0"><div class="fi">🏢</div><div class="ft">Подрядчик Amazon сам запрашивает сертификат</div></div>
+  <div class="fa" data-at="0">→</div>
+  <div class="fw" data-at="0"><div class="fi">✅</div><div class="ft">Сертификат попадает в систему</div></div>
+</div>
+<div class="sc-note warn" data-at="1">Агент отвечает неделю — заявка висит неделю. Позвоните ему в день подачи</div>
+<div class="sc-case" data-at="2">
+  <div class="ch">Случай из практики</div>
+  <div class="cline" data-at="2">Подали заявку с полисом, где чужой прицеп на $25 000</div>
+  <div class="cline bad" data-at="3">Через 2 недели — отказ без причины</div>
+  <div class="cline" data-at="3">Подняли строку до $50 000, отправили заново</div>
+  <div class="cline good" data-at="3">Через 8 дней — одобрение</div>
+  <div class="cfoot" data-at="4">Проверка до заявки сэкономила бы три недели</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="15">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. Компания в Relay</span><span class="sc-tt">Доступ диспетчера: главная ловушка</span></div>
+      <div class="scene-body"><div class="sc-roles">
+  <div class="role" data-at="1"><div class="rname">Главный администратор</div><div class="rwho">владелец компании</div><div class="rcan">банк, налоги, выдача доступов</div></div>
+  <div class="role best" data-at="2"><div class="rbadge">роль диспетчера</div><div class="rname">Администратор</div><div class="rwho">рабочая роль</div><div class="rcan">бронирует грузы, назначает водителей, подаёт споры</div></div>
+  <div class="role trap" data-at="3"><div class="rbadge trap">ловушка</div><div class="rname">Диспетчер</div><div class="rwho">только просмотр</div><div class="rcan">не бронирует, не назначает водителей</div></div>
+</div>
+<div class="sc-note danger big" data-at="4">Без роли администратора вы увидите груз за $3 000 и не сможете нажать кнопку</div></div>
+    </div>
+    <div class="scene" data-i="16">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель</span><span class="sc-tt">Глава 3. Как подключается водитель</span></div>
+      <div class="scene-body"><div class="sc-title small">
+  <div class="kicker" data-at="0">Глава 3</div>
+  <h1 class="big" data-at="0">Как подключается<br><span class="accent">водитель</span></h1>
+  <div class="sc-cols3 tight">
+    <div class="ccard" data-at="1"><div class="ic">✉️</div><div class="clab">приглашает диспетчер с сайта</div></div>
+    <div class="ccard" data-at="2"><div class="cnum">2–5</div><div class="clab">рабочих дней до готовности</div></div>
+    <div class="ccard need" data-at="2"><div class="ic">⏰</div><div class="clab">подключать заранее, не в день груза</div></div>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="17">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель</span><span class="sc-tt">Приглашение и проверка личности</span></div>
+      <div class="scene-body"><div class="sc-steps">
+  <div class="st" data-at="0"><div class="sn">1</div><div class="sb"><div class="stt">Диспетчер отправляет приглашение</div><div class="std">Сайт → управление ресурсами → список водителей → добавить водителя</div><div class="std dim" data-at="1">Имя, телефон, почта, номер прав → водителю приходит ссылка</div></div></div>
+  <div class="st" data-at="2"><div class="sn">2</div><div class="sb"><div class="stt">Водитель подтверждает личность</div><div class="std">Селфи и фото прав с двух сторон, проверка около 48 часов</div><div class="std dim" data-at="3">Затем проверка биографии: судимости и история вождения</div></div></div>
+</div>
+<div class="sc-note" data-at="3">Проверка биографии обязательна для всех новых водителей с августа 2025 года</div></div>
+    </div>
+    <div class="scene" data-i="18">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель</span><span class="sc-tt">Обучение и настройки телефона</span></div>
+      <div class="scene-body"><div class="sc-steps">
+  <div class="st" data-at="0"><div class="sn">3</div><div class="sb"><div class="stt">Обучающие ролики в приложении</div><div class="std">Про ворота, двор и работу с прицепом. Без них приложение не даст начать поездку</div></div></div>
+  <div class="st hot" data-at="1"><div class="sn">4</div><div class="sb"><div class="stt">Настройки телефона <span class="tag">пропускают чаще всего</span></div>
+    <div class="toggles">
+      <div class="tg" data-at="2"><span class="tgl">Геолокация</span><span class="tgv on">Всегда</span><span class="tgn">не «При использовании»</span></div>
+      <div class="tg" data-at="3"><span class="tgl">Уведомления</span><span class="tgv on">Включены</span><span class="tgn"></span></div>
+      <div class="tg" data-at="3"><span class="tgl">Экономия батареи</span><span class="tgv off">Выключена</span><span class="tgn">для приложения Relay</span></div>
+    </div></div></div>
+</div>
+<div class="sc-note danger big" data-at="4">Иначе Amazon не видит трак в пути, и рейтинг падает с первой поездки</div></div>
+    </div>
+    <div class="scene" data-i="19">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель</span><span class="sc-tt">Что водитель видит, а чего не видит</span></div>
+      <div class="scene-body"><div class="sc-yesno">
+  <div class="col yes" data-at="0"><div class="colh">Водитель видит</div>
+    <div class="li">свои поездки и адреса</div><div class="li">время каждой остановки</div><div class="li">номер прицепа</div><div class="li">кнопки: приехал, забрал, сдал</div>
+    <div class="li" data-at="3">навигацию для грузовиков</div><div class="li" data-at="3">погоду по маршруту</div><div class="li" data-at="3">чат с поддержкой</div>
+  </div>
+  <div class="col no" data-at="1"><div class="colh">Водитель не видит и не может</div>
+    <div class="li">цену груза</div><div class="li" data-at="2">бронировать грузы сам</div><div class="li" data-at="2">отменять поездку</div>
+    <div class="lin" data-at="2">Всё это делает диспетчер на сайте</div>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="20">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель</span><span class="sc-tt">Случай: водитель со статусом «Ожидание»</span></div>
+      <div class="scene-body"><div class="sc-case wide" data-at="0">
+  <div class="ch">Случай из практики</div>
+  <div class="cline" data-at="1">Четверг: водителя пригласили в систему</div>
+  <div class="cline" data-at="1">Пятница, вечер: поставили на первый груз</div>
+  <div class="cline bad" data-at="2">Статус ещё «Ожидание» — приложение не дало начать поездку</div>
+  <div class="cline bad" data-at="3">Груз сняли → первый штраф к рейтингу за отказ</div>
+  <div class="cfoot" data-at="4">На поездку ставим только водителя со статусом «Активен»</div>
+</div>
+<div class="sc-status" data-at="2">
+  <span class="stt pending">Ожидание</span><span class="arr">→</span><span class="stt active">Активен</span>
+</div></div>
+    </div>
+    <div class="scene" data-i="21">
+      <div class="scene-cap"><span class="sc-ch">Итог</span><span class="sc-tt">Итог первой части</span></div>
+      <div class="scene-body"><div class="sc-sum">
+  <div class="sumh" data-at="0">Запомнить из части 1</div>
+  <div class="sumline" data-at="1"><b>Relay — Amazon без посредника.</b> Цена фиксированная, бронирование кнопкой, деньги по пятницам</div>
+  <div class="sumline" data-at="2"><b>Компании больше 180 дней.</b> В страховке строка на чужой прицеп $50 000</div>
+  <div class="sumline" data-at="3"><b>Диспетчеру нужна роль «Администратор».</b> Роль «Диспетчер» только смотрит</div>
+  <div class="sumline" data-at="4"><b>Водитель со статусом «Активен».</b> Геолокация «Всегда», экономия батареи выключена</div>
+  <div class="nextup" data-at="5"><span class="nl">Дальше, часть 2</span><span class="nt">Какие бывают грузы, как бронировать и как водитель проходит склад</span></div>
+</div></div>
+    </div>
+          <div class="poster" id="poster">
+            <div class="pt">Amazon Relay<br>для диспетчера</div>
+            <button class="bigplay" id="bigplay" aria-label="Смотреть"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+            <div class="ps">Часть 1 из 4 · 11:10 · со звуком</div>
+          </div>
+        </div>
+
+        <div class="subs" id="subs"><span class="sic">🎙️</span><span class="stx" id="subtext">Нажмите «Смотреть», чтобы запустить урок со звуком.</span></div>
+
+        <div class="bar-wrap">
+          <div class="track" id="track"><div class="fill" id="fill"></div><i style="left:2.37%"></i><i style="left:33.46%"></i><i style="left:72.38%"></i><i style="left:94.85%"></i><div class="knob" id="knob"></div></div>
+          <div class="ctrls">
+            <button class="cbtn main" id="play" aria-label="Пуск"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span id="playLabel">Смотреть</span></button>
+            <button class="cbtn" id="prev" aria-label="Предыдущая сцена"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+            <button class="cbtn" id="next" aria-label="Следующая сцена"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+            <span class="ctime"><span id="tcur">0:00</span> / 11:10</span>
+            <span class="spacer"></span>
+            <button class="cbtn small" id="rate">1×</button>
+            <button class="cbtn small" id="cc">Субтитры вкл</button>
+            <button class="cbtn small" id="fs">Во весь экран</button>
+          </div>
+        </div>
+
+        <div class="chapters" id="chapters">
+          <button type="button" class="chap" data-t="0.00" data-ci="0">
+        <span class="chap-t">0:00</span>
+        <span class="chap-n">Вступление</span>
+        <span class="chap-d">1 сцена · 0:16</span>
+      </button>
+      <button type="button" class="chap" data-t="15.88" data-ci="1">
+        <span class="chap-t">0:16</span>
+        <span class="chap-n">Глава 1. Что такое Relay</span>
+        <span class="chap-d">7 сцен · 3:28</span>
+      </button>
+      <button type="button" class="chap" data-t="224.20" data-ci="2">
+        <span class="chap-t">3:44</span>
+        <span class="chap-n">Глава 2. Компания в Relay</span>
+        <span class="chap-d">8 сцен · 4:21</span>
+      </button>
+      <button type="button" class="chap" data-t="484.94" data-ci="3">
+        <span class="chap-t">8:05</span>
+        <span class="chap-n">Глава 3. Водитель</span>
+        <span class="chap-d">5 сцен · 2:31</span>
+      </button>
+      <button type="button" class="chap" data-t="635.47" data-ci="4">
+        <span class="chap-t">10:35</span>
+        <span class="chap-n">Итог</span>
+        <span class="chap-d">1 сцена · 0:35</span>
+      </button>
+        </div>
+      </div>
+
+      <div class="after">
+        <h2>После ролика</h2>
+        <div class="after-grid">
+          <a href="amazon-relay.html"><b>Текстовая версия части 1</b><span>то же самое текстом, с таблицами и самопроверкой</span></a>
+          <a href="amazon-relay-2-loads.html"><b>Часть 2. Грузы и поездка</b><span>какие бывают грузы, бронирование, склад</span></a>
+          <a href="amazon-relay-3-problems.html"><b>Часть 3. Проблемные ситуации</b><span>22 случая с действиями диспетчера</span></a>
+          <a href="amazon-relay-4-money-rating.html"><b>Часть 4. Деньги и рейтинг</b><span>выплаты, показатели, неделя диспетчера</span></a>
+        </div>
+      </div>
+    </div>
+
+    <audio id="track-audio" src="../audio/relay-video/part1.mp3" preload="auto"></audio>
+
+<script>
+(function () {
+  var CUES = [{"s":"s01","i":0,"t":0,"x":"Амазон Рилэй для диспетчера. Часть первая: что это такое и как к нему подключиться."},{"s":"s01","i":1,"t":7.352,"x":"За двенадцать минут разберём, чем Рилэй отличается от брокера, что Амазон требует от компании и как подключить водителя."},{"s":"s02","i":0,"t":15.882,"x":"Начнём с главного. Амазон продаёт товары и сам развозит их по стране."},{"s":"s02","i":1,"t":22.394,"x":"У него сотни складов и больше восьмидесяти тысяч собственных прицепов."},{"s":"s02","i":2,"t":27.682,"x":"Чего у Амазона почти нет, так это тягачей с водителями. Их он нанимает у обычных перевозчиков, таких как ваша компания."},{"s":"s02","i":3,"t":37.314,"x":"Чтобы раздавать эти перевозки, Амазон сделал свою площадку Рилэй. Сайт для диспетчера и приложение для водителя."},{"s":"s03","i":0,"t":46.732,"x":"Первое, что нужно понять: в Рилэй нет посредника."},{"s":"s03","i":1,"t":51.228,"x":"У брокера вы торгуетесь по телефону, ждёте подтверждение на почту и деньги через месяц."},{"s":"s03","i":2,"t":57.332,"x":"В Рилэй цена написана в карточке груза и не обсуждается. Бронирование одной кнопкой."},{"s":"s03","i":3,"t":64.636,"x":"Деньги приходят каждую пятницу, без комиссии и без факторинга."},{"s":"s03","i":4,"t":69.876,"x":"И прицеп чаще всего не нужен свой: вы едете за прицепом Амазона."},{"s":"s04","i":0,"t":75.742,"x":"Посмотрим на один и тот же рабочий день."},{"s":"s04","i":1,"t":79.158,"x":"С брокером: нашли груз, дозвонились, поторговались, дождались подтверждения, подписали, переслали водителю. Полтора часа."},{"s":"s04","i":2,"t":88.838,"x":"С Рилэй: открыли сайт, увидели цену, нажали забронировать, назначили водителя. Пять минут."},{"s":"s04","i":3,"t":96.862,"x":"Но за эту скорость вы платите тем, что цену изменить нельзя, а отказаться от груза можно только со штрафом к рейтингу."},{"s":"s05","i":0,"t":105.08,"x":"Теперь запомним, кто в этой схеме кто."},{"s":"s05","i":1,"t":108.736,"x":"Амазон — владелец груза и прицепов."},{"s":"s05","i":2,"t":112.608,"x":"Перевозчик — ваша компания со своими номерами. Именно компания регистрируется в Рилэй, а не диспетчер и не водитель."},{"s":"s05","i":3,"t":121.256,"x":"Диспетчер работает на сайте: выбирает грузы, назначает водителей, следит за поездкой."},{"s":"s05","i":4,"t":127.624,"x":"Водитель работает в приложении на телефоне: видит поездку, отмечает приезд и отъезд, проходит ворота склада."},{"s":"s06","i":0,"t":135.746,"x":"Как выглядит обычная перевозка для Амазона?"},{"s":"s06","i":1,"t":139.666,"x":"Водитель приезжает на склад на одном тягаче, без прицепа."},{"s":"s06","i":2,"t":144.378,"x":"Цепляет уже загруженный прицеп Амазона, везёт его на другой склад, отцепляет там и цепляет следующий."},{"s":"s06","i":3,"t":151.322,"x":"Это называется Пауэр Онли, только тягач. Вы даёте тягач и водителя, Амазон даёт прицеп и груз."},{"s":"s06","i":4,"t":159.61,"x":"Большинство перевозок в Рилэй именно такие."},{"s":"s07","i":0,"t":164.084,"x":"Ваш трак ездит между складами Амазона. К покупателю он не едет никогда."},{"s":"s07","i":1,"t":171.052,"x":"Большой склад хранения: там лежат товары и собираются заказы. Обычно приехал, отцепил, прицепил, уехал."},{"s":"s07","i":2,"t":180.228,"x":"Сортировочный центр: там посылки раскладывают по направлениям. Работа идёт волнами, опоздание на полчаса срывает волну."},{"s":"s07","i":3,"t":189.404,"x":"Станция доставки: оттуда посылки уезжают к покупателям на фургонах. Тесные дворы, разгрузка часто ночью."},{"s":"s08","i":0,"t":198.558,"x":"У каждого склада есть код: три буквы и цифра."},{"s":"s08","i":1,"t":202.742,"x":"Буквы это код ближайшего аэропорта, цифра номер склада в этом районе."},{"s":"s08","i":2,"t":208.39,"x":"О-Эн-Ти восемь — восьмой склад у аэропорта Онтарио в Калифорнии. Джей-Эф-Кей восемь — восьмой у аэропорта Джей-Эф-Кей в Нью-Йорке."},{"s":"s08","i":3,"t":217.59,"x":"Увидев код в карточке груза, вы сразу понимаете, в какой части страны едет трак."},{"s":"s09","i":0,"t":224.2,"x":"Глава вторая: как компания попадает в Рилэй."},{"s":"s09","i":1,"t":228.384,"x":"Регистрация бесплатная и делается один раз для всей компании."},{"s":"s09","i":2,"t":233.36,"x":"Заявка на сайте занимает минут двадцать, ответ приходит через одну — три недели."},{"s":"s09","i":3,"t":239.296,"x":"Проверка автоматическая: Амазон смотрит базы регулятора и ваш страховой сертификат. Один пункт не прошёл — отказ без объяснений."},{"s":"s10","i":0,"t":249.746,"x":"Первое требование — возраст компании. Разрешению на межштатные перевозки должно быть не меньше ста восьмидесяти дней."},{"s":"s10","i":1,"t":258.25,"x":"Совсем новую компанию не примут. Подадите на третьем месяце — автоматический отказ."},{"s":"s10","i":2,"t":265.314,"x":"Второе требование — тип компании. В базе регулятора вы должны быть записаны как перевозчик грузов по найму."},{"s":"s10","i":3,"t":273.554,"x":"Если стоит брокер или перевозчик своих товаров — откажут. Исправляется формой эм си эс сто пятьдесят."},{"s":"s11","i":0,"t":282.516,"x":"Третье — рейтинг безопасности. Подходят Сатисфактори, Нон или Нот Рейтед."},{"s":"s11","i":1,"t":289.556,"x":"Если после проверки регулятора вам поставили Кондишенл или Ансатисфактори — в Рилэй не пустят."},{"s":"s11","i":2,"t":296.332,"x":"Четвёртое — показатели безопасности. Опасное вождение и часы работы должны быть ниже шестидесяти процентов, остальные ниже семидесяти пяти."},{"s":"s11","i":3,"t":306.708,"x":"Обратите внимание: пороги Амазона строже, чем у самого регулятора. Многие смотрят только на тревогу в системе и потом не понимают, почему им отказали."},{"s":"s12","i":0,"t":317.926,"x":"Пятое требование появилось в две тысячи двадцать шестом году: доля нарушений на дорожных проверках."},{"s":"s12","i":1,"t":324.342,"x":"У водителей не больше тридцати пяти процентов, по технике не больше пятидесяти."},{"s":"s12","i":2,"t":329.942,"x":"Считается после трёх проверок за год. Нарушение с запретом движения считается вдвойне."},{"s":"s12","i":3,"t":337.174,"x":"И главное: обжаловать это правило нельзя. Две грязные проверки из трёх, и компанию отключают, даже если в общей системе всё зелёное."},{"s":"s13","i":0,"t":348.176,"x":"Шестое — техника. Подходят тягач с любой кабиной, сухой прицеп сорок восемь или пятьдесят три фута, рефрижератор, грузовик с будкой на высоте рампы."},{"s":"s13","i":1,"t":359.056,"x":"Минимального размера парка нет, одного тягача достаточно."},{"s":"s13","i":2,"t":363.648,"x":"А для Пауэр Онли свой прицеп вообще не нужен."},{"s":"s14","i":0,"t":368.098,"x":"Теперь страховка — место, где заявки проваливаются чаще всего."},{"s":"s14","i":1,"t":373.338,"x":"Ответственность перед третьими лицами: миллион долларов. Есть у всех."},{"s":"s14","i":2,"t":379.562,"x":"Ответственность за чужой прицеп: пятьдесят тысяч, отдельной строкой. Вот на этом и спотыкаются."},{"s":"s14","i":3,"t":387.586,"x":"У большинства полисов по умолчанию стоит двадцать пять тысяч или строки нет вовсе. И система молча отклоняет заявку."},{"s":"s14","i":4,"t":396.498,"x":"Ещё нужны общая ответственность миллион на два, страховка груза сто тысяч и страховка работников по правилам штата."},{"s":"s15","i":0,"t":404.716,"x":"Сертификат у вас не спрашивают. Вы указываете контакты своего страхового агента, а подрядчик Амазона сам запрашивает документ."},{"s":"s15","i":1,"t":413.988,"x":"Если агент отвечает неделю, заявка висит неделю. Позвоните агенту в день подачи."},{"s":"s15","i":2,"t":421.34,"x":"Реальный случай. Компания подала заявку с обычным полисом, где чужой прицеп застрахован на двадцать пять тысяч."},{"s":"s15","i":3,"t":429.676,"x":"Через две недели пришёл отказ без причины. Диспетчер нашёл эту строку, попросил агента поднять её до пятидесяти тысяч, и через восемь дней компанию одобрили."},{"s":"s15","i":4,"t":440.94,"x":"Проверили бы до заявки — сэкономили бы три недели."},{"s":"s16","i":0,"t":445.678,"x":"После одобрения диспетчеру нужен правильный доступ. И здесь ловушка."},{"s":"s16","i":1,"t":451.806,"x":"В Рилэй три вида пользователей. Главный администратор — это владелец: банк, налоги, выдача доступов."},{"s":"s16","i":2,"t":460.31,"x":"Администратор бронирует грузы, назначает водителей, подаёт споры. Это рабочая роль диспетчера."},{"s":"s16","i":3,"t":467.998,"x":"А роль с названием Диспетчер умеет только смотреть. Ни забронировать, ни назначить водителя она не может."},{"s":"s16","i":4,"t":475.998,"x":"Просите роль администратора сразу. Иначе вы увидите груз за три тысячи долларов и не сможете нажать кнопку."},{"s":"s17","i":0,"t":484.936,"x":"Глава третья: как подключается водитель."},{"s":"s17","i":1,"t":488.736,"x":"Сам он зарегистрироваться не может. Его приглашает диспетчер с сайта компании."},{"s":"s17","i":2,"t":495.272,"x":"От приглашения до готовности проходит два — пять рабочих дней. Поэтому нового водителя подключают заранее, а не в день первого груза."},{"s":"s18","i":0,"t":505.482,"x":"Шаг первый. На сайте: управление ресурсами, список водителей, добавить водителя."},{"s":"s18","i":1,"t":512.882,"x":"Вводите имя, телефон, почту и номер прав. Водителю приходит сообщение со ссылкой на приложение."},{"s":"s18","i":2,"t":519.706,"x":"Шаг второй. В приложении водитель делает селфи и фотографирует права с двух сторон. Проверка занимает около двух суток."},{"s":"s18","i":3,"t":529.578,"x":"Дальше проверка биографии: судимости и история вождения. С августа две тысячи двадцать пятого года она обязательна для всех новых водителей."},{"s":"s19","i":0,"t":540.46,"x":"Шаг третий — обучающие ролики Амазона про ворота, двор и работу с прицепом. Пока они не просмотрены, приложение не даст начать поездку."},{"s":"s19","i":1,"t":550.716,"x":"Шаг четвёртый — настройки телефона. Его пропускают чаще всего, а он важнее остальных."},{"s":"s19","i":2,"t":558.452,"x":"Геолокация для приложения должна стоять Всегда, а не При использовании."},{"s":"s19","i":3,"t":563.74,"x":"Уведомления включены, режим экономии батареи для приложения выключен."},{"s":"s19","i":4,"t":568.98,"x":"Без этого Амазон не видит ваш трак в пути, и рейтинг начинает падать с первой же поездки."},{"s":"s20","i":0,"t":575.902,"x":"Что водитель видит в приложении? Свои поездки, адреса, время, номер прицепа. И пошаговые кнопки: приехал, забрал, сдал."},{"s":"s20","i":1,"t":587.358,"x":"Чего он не видит, так это денег. Цена груза доступна только диспетчеру."},{"s":"s20","i":2,"t":593.774,"x":"И бронировать он тоже не может. Всё бронирование идёт через сайт компании."},{"s":"s20","i":3,"t":600.454,"x":"Зато в приложении есть навигация для грузовиков до конкретных ворот, прогноз погоды по маршруту и чат с поддержкой."},{"s":"s21","i":0,"t":608.336,"x":"Ещё один случай из практики."},{"s":"s21","i":1,"t":611.536,"x":"Водителя подключили в четверг, а в пятницу вечером поставили на первый груз."},{"s":"s21","i":2,"t":616.92,"x":"Проверка личности ещё шла, статус был Ожидание. Приложение не дало начать поездку."},{"s":"s21","i":3,"t":624.224,"x":"Груз пришлось снять, и компания получила первый штраф к рейтингу за отказ."},{"s":"s21","i":4,"t":629.704,"x":"Правило простое: водитель со статусом Ожидание на поездку не ставится."},{"s":"s22","i":0,"t":635.474,"x":"Подведём итог первой части."},{"s":"s22","i":1,"t":638.506,"x":"Рилэй — это Амазон без посредника: цена фиксированная, бронирование кнопкой, оплата по пятницам."},{"s":"s22","i":2,"t":645.858,"x":"Компании должно быть больше ста восьмидесяти дней, а в страховке обязательна строка на чужой прицеп: пятьдесят тысяч."},{"s":"s22","i":3,"t":653.258,"x":"Диспетчеру нужна роль администратора, а не роль Диспетчер."},{"s":"s22","i":4,"t":657.85,"x":"Водителя ставим на поездку только со статусом Активен и включённой геолокацией."},{"s":"s22","i":5,"t":663.666,"x":"Во второй части разберём, какие бывают грузы, как их бронировать и как водитель проходит склад."}];
+  var SC = [{"id":"s01","t":0,"e":15.882},{"id":"s02","t":15.882,"e":46.732},{"id":"s03","t":46.732,"e":75.742},{"id":"s04","t":75.742,"e":105.08},{"id":"s05","t":105.08,"e":135.746},{"id":"s06","t":135.746,"e":164.084},{"id":"s07","t":164.084,"e":198.558},{"id":"s08","t":198.558,"e":224.2},{"id":"s09","t":224.2,"e":249.746},{"id":"s10","t":249.746,"e":282.516},{"id":"s11","t":282.516,"e":317.926},{"id":"s12","t":317.926,"e":348.176},{"id":"s13","t":348.176,"e":368.098},{"id":"s14","t":368.098,"e":404.716},{"id":"s15","t":404.716,"e":445.678},{"id":"s16","t":445.678,"e":484.936},{"id":"s17","t":484.936,"e":505.482},{"id":"s18","t":505.482,"e":540.46},{"id":"s19","t":540.46,"e":575.902},{"id":"s20","t":575.902,"e":608.336},{"id":"s21","t":608.336,"e":635.474},{"id":"s22","t":635.474,"e":669.98}];
+  var CH = [{"t":0,"e":15.882},{"t":15.882,"e":224.2},{"t":224.2,"e":484.936},{"t":484.936,"e":635.474},{"t":635.474,"e":669.98}];
+  var TOTAL = 669.98;
+  var a = document.getElementById('track-audio'), stage = document.getElementById('stage');
+  var scenes = [].slice.call(stage.querySelectorAll('.scene'));
+  var cur = -1, curCue = -1, subsOn = true, rates = [1, 1.25, 1.5, 0.75], ri = 0;
+
+  function unit() { stage.style.setProperty('--u', (stage.clientWidth / 100) + 'px'); }
+  unit(); addEventListener('resize', unit);
+  if (window.ResizeObserver) new ResizeObserver(unit).observe(stage);
+
+  function cueAt(t) { var lo = 0, hi = CUES.length - 1, r = 0; while (lo <= hi) { var m = (lo + hi) >> 1; if (CUES[m].t <= t) { r = m; lo = m + 1; } else hi = m - 1; } return r; }
+  function sceneAt(t) { for (var i = SC.length - 1; i >= 0; i--) if (t >= SC[i].t - 0.05) return i; return 0; }
+
+  function showScene(i) {
+    if (i === cur) return;
+    if (cur >= 0) { scenes[cur].classList.remove('live'); scenes[cur].querySelectorAll('[data-at]').forEach(function (el) { el.classList.remove('on'); }); }
+    cur = i; scenes[i].classList.add('live');
+    var ci = CH.findIndex(function (c, k) { return SC[i].t >= c.t - 0.05 && (k === CH.length - 1 || SC[i].t < CH[k + 1].t - 0.05); });
+    document.querySelectorAll('.chap').forEach(function (b, k) { b.classList.toggle('on', k === ci); });
+  }
+  function reveal(sceneIdx, lineIdx) {
+    scenes[sceneIdx].querySelectorAll('[data-at]').forEach(function (el) {
+      el.classList.toggle('on', +el.getAttribute('data-at') <= lineIdx);
+    });
+  }
+  function paint() {
+    var t = a.currentTime;
+    var si = sceneAt(t); showScene(si);
+    var ci = cueAt(t);
+    if (ci !== curCue) { curCue = ci; document.getElementById('subtext').textContent = CUES[ci].x; }
+    reveal(si, CUES[ci].s === SC[si].id ? CUES[ci].i : 0);
+    var p = Math.min(100, t / TOTAL * 100);
+    document.getElementById('fill').style.width = p + '%';
+    document.getElementById('knob').style.left = p + '%';
+    document.getElementById('tcur').textContent = fmt(t);
+  }
+  function fmt(s) { s = Math.max(0, s); return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'); }
+
+  var raf;
+  function loop() { paint(); if (!a.paused) raf = requestAnimationFrame(loop); }
+  a.addEventListener('play', function () { setPlay(true); loop(); });
+  a.addEventListener('pause', function () { setPlay(false); cancelAnimationFrame(raf); });
+  a.addEventListener('seeked', paint);
+  a.addEventListener('ended', function () { setPlay(false); });
+
+  function setPlay(on) {
+    document.getElementById('playIcon').innerHTML = on ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    document.getElementById('playLabel').textContent = on ? 'Пауза' : (a.currentTime > 0 ? 'Продолжить' : 'Смотреть');
+  }
+  function start() { document.getElementById('poster').classList.add('hide'); a.play(); }
+  document.getElementById('bigplay').onclick = start;
+  document.getElementById('poster').onclick = start;
+  document.getElementById('play').onclick = function () { if (a.paused) start(); else a.pause(); };
+  document.getElementById('prev').onclick = function () { var i = sceneAt(a.currentTime); if (a.currentTime - SC[i].t < 1.2 && i > 0) i--; a.currentTime = SC[i].t; paint(); };
+  document.getElementById('next').onclick = function () { var i = sceneAt(a.currentTime); if (i < SC.length - 1) { a.currentTime = SC[i + 1].t; paint(); } };
+  document.getElementById('track').onclick = function (e) {
+    var r = this.getBoundingClientRect();
+    a.currentTime = Math.min(TOTAL - 0.1, Math.max(0, (e.clientX - r.left) / r.width * TOTAL));
+    document.getElementById('poster').classList.add('hide'); paint();
+  };
+  document.querySelectorAll('.chap').forEach(function (b) {
+    b.onclick = function () { document.getElementById('poster').classList.add('hide'); a.currentTime = +b.dataset.t; paint(); if (a.paused) a.play(); };
+  });
+  document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
+  document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Субтитры вкл' : 'Субтитры выкл'; };
+  document.getElementById('fs').onclick = function () {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (stage.requestFullscreen) stage.requestFullscreen();
+  };
+  document.addEventListener('fullscreenchange', function () {
+    document.getElementById('fs').textContent = document.fullscreenElement ? 'Свернуть' : 'Во весь экран'; unit();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (/INPUT|TEXTAREA/.test((e.target.tagName || ''))) return;
+    if (e.code === 'Space') { e.preventDefault(); a.paused ? start() : a.pause(); }
+    if (e.code === 'ArrowRight') { a.currentTime = Math.min(TOTAL - .1, a.currentTime + 10); paint(); }
+    if (e.code === 'ArrowLeft') { a.currentTime = Math.max(0, a.currentTime - 10); paint(); }
+  });
+  showScene(0); reveal(0, -1); setPlay(false);
+})();
+</script>
+
+    <link rel="stylesheet" href="../enhanced-quiz-system.css">
+</body>
+</html>
