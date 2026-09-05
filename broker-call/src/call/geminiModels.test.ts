@@ -56,6 +56,13 @@ describe('выбор модели для разговора', () => {
     expect(pickLiveModel(junk)).toBe('gemini-2.5-flash-native-audio-preview-09-2025')
   })
 
+  it('транскрибирующая модель старшего поколения не обыгрывает говорящую младшего', () => {
+    // Реальный каталог ключа 05.09.2026: transcribe-live 3.5 брала верх по
+    // поколению, сокет закрывался 1007 «AUDIO not supported», Live не поднимался.
+    const real = [m('gemini-3.5-transcribe-live', BIDI), m('gemini-3.1-flash-live-preview', BIDI), m('gemini-2.5-flash-native-audio-latest', BIDI)]
+    expect(pickLiveModel(real)).toBe('gemini-3.1-flash-live-preview')
+  })
+
   it('без native audio откатывается на flash live', () => {
     const without = CATALOG.filter((x) => !x.name.includes('native-audio'))
     expect(pickLiveModel(without)).toBe('gemini-3-flash-live-preview')

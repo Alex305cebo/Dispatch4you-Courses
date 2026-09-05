@@ -365,6 +365,7 @@ return json_decode(<<<'BROKER_CONFIG_JSON'
         "vision",
         "aqa",
         "translate",
+        "transcribe",
         "robotics"
       ],
       "bonus": [
@@ -389,6 +390,7 @@ return json_decode(<<<'BROKER_CONFIG_JSON'
         "vision",
         "aqa",
         "translate",
+        "transcribe",
         "robotics",
         "pro"
       ],
@@ -411,6 +413,7 @@ return json_decode(<<<'BROKER_CONFIG_JSON'
         "vision",
         "aqa",
         "translate",
+        "transcribe",
         "robotics",
         "pro",
         "live",
@@ -442,6 +445,7 @@ return json_decode(<<<'BROKER_CONFIG_JSON'
         "vision",
         "aqa",
         "translate",
+        "transcribe",
         "robotics",
         "pro",
         "live",
