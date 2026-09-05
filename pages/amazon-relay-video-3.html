@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="ru" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="../site-protection.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="../css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Видеоурок: Amazon Relay, часть 3 | Курсы Диспетчера</title>
+  <link rel="canonical" href="https://dispatch4you.com/pages/amazon-relay-video-3.html">
+    <meta name="description" content="Видеоурок с озвучкой: 22 проблемные ситуации в Amazon Relay и что делает диспетчер в каждой. 11 минут, 24 сцены.">
+    <meta property="og:type" content="video.other">
+    <meta property="og:site_name" content="Dispatch4You">
+    <meta property="og:title" content="Видеоурок: Amazon Relay, часть 3 — если что-то пошло не так">
+    <meta property="og:description" content="11:11 с озвучкой и субтитрами: 22 ситуации — прицеп не готов, пломба не совпала, отказ от груза, отключение аккаунта. Что делает диспетчер в каждой.">
+    <meta property="og:url" content="https://dispatch4you.com/pages/amazon-relay-video-3.html">
+    <meta property="og:image" content="https://dispatch4you.com/img/amazon-relay/og-video-3.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="ru_RU">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Видеоурок: Amazon Relay, часть 3 — если что-то пошло не так">
+    <meta name="twitter:image" content="https://dispatch4you.com/img/amazon-relay/og-video-3.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../shared-nav.css?v=8.7">
+    <link rel="stylesheet" href="../shared-styles.css?v=2.2">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; scroll-behavior: smooth; }
+        :root { --primary:#06b6d4; --secondary:#0ea5e9; --amz:#ff9900; --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+                --bg-darker:#070b14; --text-primary:#fff; --text-secondary:#e2e8f0; --text-muted:#94a3b8; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg-darker); color:var(--text-primary); line-height:1.6; overflow-x:hidden; }
+        body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.13), transparent 50%), radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%); }
+        .container { max-width:1400px; margin:0 auto; padding:0 24px; }
+        .vhead { padding:74px 0 8px; display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap; }
+        .vbadge { display:inline-block; padding:8px 18px; border-radius:24px; background:linear-gradient(135deg,rgba(255,153,0,.15),rgba(14,165,233,.15)); border:1px solid rgba(255,153,0,.35); color:var(--amz); font-size:11px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; margin-bottom:0; }
+        .vtitle { font-size:clamp(18px,2vw,25px); font-weight:900; line-height:1.2; margin-bottom:0;
+            background:linear-gradient(135deg,#06b6d4,#0ea5e9 45%,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .vsub { font-size:13px; color:var(--text-muted); }
+        .vdone { padding:5px 12px; border-radius:99px; background:rgba(16,185,129,.16); border:1px solid rgba(16,185,129,.4); color:#6ee7b7; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .pres { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.16); color:#fff; font:600 calc(var(--u)*1.3)/1 Inter,sans-serif; cursor:pointer; }
+        .pres:hover { background:rgba(255,255,255,.13); }
+
+        /* ===== ПЛЕЕР ===== */
+        .player { --chrome:330px; max-width:min(1320px, calc((100dvh - var(--chrome)) * 16 / 9)); margin:0 auto; scroll-margin-top:74px; }
+        .stage { position:relative; width:100%; aspect-ratio:16/9; background:#080d18; border:1px solid rgba(255,255,255,.10); border-radius:18px; overflow:hidden; --u:11px; }
+        .pbox { position:relative; }
+        .pbox:fullscreen, .pbox.fsfake { background:#000; display:flex; align-items:center; justify-content:center; max-width:none; }
+        .pbox.fsfake { position:fixed; inset:0; z-index:9999; }
+        .pbox:fullscreen .stage, .pbox.fsfake .stage { width:100vw; height:100dvh; max-width:none; aspect-ratio:auto; border-radius:0; border:none; }
+        .pbox:fullscreen .bar-wrap, .pbox.fsfake .bar-wrap { position:absolute; left:0; right:0; bottom:0; margin:0; padding:16px 22px 18px; background:linear-gradient(transparent, rgba(0,0,0,.82)); z-index:30; transition:opacity .35s; }
+        .pbox:fullscreen.idle .bar-wrap, .pbox.fsfake.idle .bar-wrap { opacity:0; pointer-events:none; }
+        .pbox:fullscreen.idle, .pbox.fsfake.idle { cursor:none; }
+        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--u)*7.4); }
+        .pbox:fullscreen.idle .subs, .pbox.fsfake.idle .subs { bottom:calc(var(--u)*2.6); }
+        .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*7.6); }
+        .scene.live { display:flex; }
+        .scene-cap { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); margin-bottom:calc(var(--u)*2.2); flex-shrink:0; }
+        .sc-ch { font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .sc-tt { font-size:calc(var(--u)*1.45); color:var(--text-muted); }
+        .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.5); min-height:0; }
+        [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
+        [data-at].on { opacity:1; transform:none; }
+        g[data-at], text[data-at], path[data-at] { transform:none !important; }
+
+        /* блоки сцен */
+        .sc-title { text-align:center; }
+        .sc-title .kicker { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*1.6); }
+        .sc-title .big { font-size:calc(var(--u)*6.2); font-weight:900; line-height:1.08; letter-spacing:-.02em; }
+        .sc-title.small .big { font-size:calc(var(--u)*4.6); }
+        .sc-title .accent { background:linear-gradient(135deg,#06b6d4,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .chips { display:flex; gap:calc(var(--u)*1); justify-content:center; margin-top:calc(var(--u)*2.6); flex-wrap:wrap; }
+        .chip { display:flex; align-items:center; gap:calc(var(--u)*.7); padding:calc(var(--u)*.9) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .chip i { width:calc(var(--u)*2); height:calc(var(--u)*2); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,var(--primary),var(--amz)); display:flex; align-items:center; justify-content:center; font-style:normal; font-weight:800; font-size:calc(var(--u)*1.1); color:#fff; }
+
+        .sc-cols3 { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.6); }
+        .sc-cols3.tight { margin-top:calc(var(--u)*2.4); }
+        .ccard { padding:calc(var(--u)*2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.4); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .ccard.need { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .ccard .ic { font-size:calc(var(--u)*2.6); margin-bottom:calc(var(--u)*.7); }
+        .ccard .cnum { font-size:calc(var(--u)*3.1); font-weight:900; background:linear-gradient(135deg,var(--primary),var(--amz)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .ccard .clab { font-size:calc(var(--u)*1.28); color:var(--text-muted); margin-top:calc(var(--u)*.4); }
+        .sc-arrow { text-align:center; font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; }
+        .sc-relay { display:flex; justify-content:center; }
+        .rbox { padding:calc(var(--u)*1.8) calc(var(--u)*3); border-radius:calc(var(--u)*1.4); background:linear-gradient(135deg,rgba(6,182,212,.16),rgba(255,153,0,.14)); border:1px solid rgba(255,153,0,.4); text-align:center; }
+        .rbox .rt { font-size:calc(var(--u)*2.6); font-weight:900; }
+        .rbox .rs { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.3); }
+
+        .sc-vs { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .vs-head { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); padding:0 calc(var(--u)*1.4); }
+        .vs-head .vh { font-size:calc(var(--u)*1.5); font-weight:800; }
+        .vs-head .vh:first-child { grid-column:2; color:var(--text-muted); }
+        .vs-head .vh.b { color:var(--amz); }
+        .vs-row { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); }
+        .vs-row .vl { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .vs-row .va { font-size:calc(var(--u)*1.42); color:var(--text-secondary); }
+        .vs-row .vb { font-size:calc(var(--u)*1.42); color:var(--amz); font-weight:600; }
+
+        .sc-days { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.6); }
+        .day { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .day.b { border-color:rgba(255,153,0,.4); background:rgba(255,153,0,.06); }
+        .day .dh { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .day .dstep { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.42) 0; border-bottom:1px solid rgba(255,255,255,.06); }
+        .day .dtime { margin-top:calc(var(--u)*.9); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .day .dtime.ok { color:var(--success); }
+
+        .sc-who { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .who { padding:calc(var(--u)*1.7) calc(var(--u)*1.2); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .who.hi { border-color:rgba(6,182,212,.45); background:rgba(6,182,212,.08); }
+        .who .wic { font-size:calc(var(--u)*2.8); }
+        .who .wn { font-size:calc(var(--u)*1.75); font-weight:800; margin:calc(var(--u)*.5) 0 calc(var(--u)*.3); }
+        .who .wd { font-size:calc(var(--u)*1.18); color:var(--text-muted); line-height:1.45; }
+
+        .sc-svg { width:100%; height:auto; max-height:100%; }
+        .svgt { fill:#e2e8f0; font-size:15px; font-family:'Inter',sans-serif; }
+        .svgt.b { fill:#fff; font-size:19px; font-weight:800; }
+        .svgt.s { fill:#94a3b8; font-size:14px; }
+        .svgt.o { font-size:20px; } .svgt.g { font-size:20px; }
+        .truck-anim { transform:translateX(0); }
+        .truck-anim.on { animation:driveAcross 7.5s cubic-bezier(.4,0,.5,1) .3s forwards; }
+        @keyframes driveAcross { to { transform:translateX(490px); } }
+
+        .sc-code { text-align:center; }
+        .codebig { font-size:calc(var(--u)*7); font-weight:900; letter-spacing:.02em; }
+        .codebig .letters { color:var(--primary); }
+        .codebig .digit { color:var(--amz); }
+        .codelegend { display:flex; justify-content:center; gap:calc(var(--u)*3); margin-top:calc(var(--u)*1.2); }
+        .cl { display:flex; align-items:center; gap:calc(var(--u)*.8); }
+        .cll { font-size:calc(var(--u)*1.7); font-weight:900; color:var(--primary); }
+        .cll.d { color:var(--amz); }
+        .clt { font-size:calc(var(--u)*1.28); color:var(--text-muted); }
+        .codeex { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.2); margin-top:calc(var(--u)*2.2); }
+        .ce { padding:calc(var(--u)*1.2); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ce b { display:block; font-size:calc(var(--u)*1.9); color:#fff; }
+        .ce span { font-size:calc(var(--u)*1.2); color:var(--text-muted); }
+
+        .sc-req { display:flex; flex-direction:column; gap:calc(var(--u)*1.4); }
+        .req { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .req .rn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .req .rb { flex:1; min-width:0; }
+        .req .rt { font-size:calc(var(--u)*1.75); font-weight:800; }
+        .req .rv { font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; margin-top:calc(var(--u)*.2); }
+        .req .rx { font-size:calc(var(--u)*1.25); color:var(--text-muted); margin-top:calc(var(--u)*.55); }
+        .tag { display:inline-block; padding:calc(var(--u)*.25) calc(var(--u)*.8); border-radius:99px; background:rgba(255,153,0,.18); color:var(--amz); font-size:calc(var(--u)*1); font-weight:800; text-transform:uppercase; letter-spacing:.06em; vertical-align:middle; margin-left:calc(var(--u)*.6); }
+        .pills { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; margin-top:calc(var(--u)*.7); }
+        .pillrow { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; align-items:center; margin-top:calc(var(--u)*.6); }
+        .plab { font-size:calc(var(--u)*1.25); font-weight:800; min-width:calc(var(--u)*9); }
+        .plab.ok { color:#6ee7b7; } .plab.no { color:#fca5a5; }
+        .pill { padding:calc(var(--u)*.5) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:700; }
+        .pill.ok { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.35); }
+        .pill.no { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); text-decoration:line-through; }
+        .bars { display:flex; flex-direction:column; gap:calc(var(--u)*.55); margin-top:calc(var(--u)*.7); }
+        .bar { display:grid; grid-template-columns:auto 1fr auto; gap:calc(var(--u)*1); align-items:center; }
+        .bar .bl { font-size:calc(var(--u)*1.25); color:var(--text-secondary); min-width:calc(var(--u)*16); }
+        .bar .bt { height:calc(var(--u)*.9); border-radius:99px; background:rgba(255,255,255,.08); position:relative; overflow:hidden; }
+        .bar .bt i { position:absolute; inset:0 auto 0 0; width:var(--w); background:linear-gradient(90deg,var(--primary),var(--amz)); border-radius:99px; }
+        .bar .bv { font-size:calc(var(--u)*1.3); font-weight:800; color:var(--amz); }
+        .formula { margin-top:calc(var(--u)*.8); padding:calc(var(--u)*.9) calc(var(--u)*1.2); border-radius:calc(var(--u)*.8); background:rgba(6,182,212,.09); border:1px solid rgba(6,182,212,.28); font-size:calc(var(--u)*1.25); color:var(--text-secondary); }
+
+        .sc-eq { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .eq { padding:calc(var(--u)*1.5) calc(var(--u)*1.1); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .eq .eic { font-size:calc(var(--u)*2.6); }
+        .eq .en { font-size:calc(var(--u)*1.55); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.2); }
+        .eq .ed { font-size:calc(var(--u)*1.15); color:var(--text-muted); line-height:1.45; }
+        .sc-two { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+
+        .sc-ins { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ins { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+        .ins.hot { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.5); }
+        .ins .il { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ins .il .sub { display:block; font-size:calc(var(--u)*1.1); color:var(--amz); }
+        .ins .iv { font-size:calc(var(--u)*1.75); font-weight:900; color:#fff; white-space:nowrap; }
+        .ins.hot .iv { color:var(--amz); }
+
+        .sc-flow { display:flex; align-items:stretch; gap:calc(var(--u)*1); }
+        .fw { flex:1; padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .fw .fi { font-size:calc(var(--u)*2.3); }
+        .fw .ft { font-size:calc(var(--u)*1.25); color:var(--text-secondary); margin-top:calc(var(--u)*.4); line-height:1.45; }
+        .fa { display:flex; align-items:center; color:var(--amz); font-size:calc(var(--u)*2); }
+
+        .sc-case { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .sc-case .ch { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.9); }
+        .sc-case .cline { font-size:calc(var(--u)*1.38); color:var(--text-secondary); padding:calc(var(--u)*.34) 0 calc(var(--u)*.34) calc(var(--u)*1.6); position:relative; }
+        .sc-case .cline::before { content:'•'; position:absolute; left:0; color:var(--text-muted); }
+        .sc-case .cline.bad { color:#fca5a5; } .sc-case .cline.bad::before { content:'✕'; color:#fca5a5; font-size:.85em; }
+        .sc-case .cline.good { color:#6ee7b7; } .sc-case .cline.good::before { content:'✓'; color:#6ee7b7; }
+        .sc-case .cfoot { margin-top:calc(var(--u)*.9); padding-top:calc(var(--u)*.9); border-top:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.35); color:var(--amz); font-weight:600; }
+
+        .sc-roles { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .role { position:relative; padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .role.best { border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.08); }
+        .role.trap { border-color:rgba(239,68,68,.45); background:rgba(239,68,68,.07); }
+        .rbadge { position:absolute; top:calc(var(--u)*-.9); left:calc(var(--u)*1.2); padding:calc(var(--u)*.3) calc(var(--u)*.9); border-radius:99px; background:#10b981; color:#04231a; font-size:calc(var(--u)*1); font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+        .rbadge.trap { background:#ef4444; color:#2a0505; }
+        .role .rname { font-size:calc(var(--u)*1.8); font-weight:800; }
+        .role .rwho { font-size:calc(var(--u)*1.2); color:var(--amz); margin:calc(var(--u)*.2) 0 calc(var(--u)*.6); }
+        .role .rcan { font-size:calc(var(--u)*1.25); color:var(--text-muted); line-height:1.5; }
+
+        .sc-steps { display:flex; flex-direction:column; gap:calc(var(--u)*1.3); }
+        .st { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .st.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .st .sn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .st .sb { flex:1; min-width:0; }
+        .sc-steps .stt { font-size:calc(var(--u)*1.7); font-weight:800; }
+        .st .std { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.35); line-height:1.5; }
+        .st .std.dim { color:var(--text-muted); }
+        .toggles { display:flex; flex-direction:column; gap:calc(var(--u)*.6); margin-top:calc(var(--u)*.9); }
+        .tg { display:grid; grid-template-columns:calc(var(--u)*16) auto 1fr; gap:calc(var(--u)*1); align-items:center; }
+        .tgl { font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .tgv { padding:calc(var(--u)*.4) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:800; text-align:center; }
+        .tgv.on { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .tgv.off { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); }
+        .tgn { font-size:calc(var(--u)*1.15); color:var(--text-muted); }
+
+        .sc-yesno { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.5); }
+        .sc-yesno .col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .sc-yesno .col.yes { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .sc-yesno .col.no { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .sc-yesno .colh { font-size:calc(var(--u)*1.55); font-weight:800; margin-bottom:calc(var(--u)*.8); }
+        .sc-yesno .col.yes .colh { color:#6ee7b7; } .sc-yesno .col.no .colh { color:#fca5a5; }
+        .sc-yesno .li { font-size:calc(var(--u)*1.32); color:var(--text-secondary); padding:calc(var(--u)*.35) 0 calc(var(--u)*.35) calc(var(--u)*1.7); position:relative; }
+        .sc-yesno .col.yes .li::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .sc-yesno .col.no .li::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-yesno .lin { margin-top:calc(var(--u)*.8); font-size:calc(var(--u)*1.25); color:var(--amz); }
+
+        .sc-status { display:flex; align-items:center; justify-content:center; gap:calc(var(--u)*1.4); }
+        .sc-status .stt { padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:99px; font-size:calc(var(--u)*1.6); font-weight:800; }
+        .sc-status .stt.pending { background:rgba(245,158,11,.16); color:#fcd34d; border:1px solid rgba(245,158,11,.4); }
+        .sc-status .stt.active { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .sc-status .arr { color:var(--text-muted); font-size:calc(var(--u)*1.8); }
+
+        .sc-sum { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sumh { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--amz); }
+        .sumline { font-size:calc(var(--u)*1.5); color:var(--text-secondary); padding:calc(var(--u)*.9) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid var(--primary); line-height:1.5; }
+        .sumline b { color:#fff; }
+        .nextup { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(255,153,0,.12)); border:1px solid rgba(255,153,0,.35); }
+        .nextup .nl { display:block; font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .nextup .nt { font-size:calc(var(--u)*1.5); color:#fff; }
+
+        .sc-note { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); font-size:calc(var(--u)*1.4); color:var(--text-secondary); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
+        .sc-note.warn { background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.35); color:#fcd34d; }
+        .sc-note.ok { background:rgba(16,185,129,.10); border-color:rgba(16,185,129,.35); color:#6ee7b7; }
+        .sc-note.danger { background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.38); color:#fca5a5; }
+        .sc-note.big { font-size:calc(var(--u)*1.6); font-weight:600; text-align:center; }
+
+        /* заставка и кнопка старта */
+        .poster { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u)*1.6); background:linear-gradient(160deg,#0a1120,#0e1830); cursor:pointer; }
+        .poster.hide { display:none; }
+        .poster .pt { font-size:calc(var(--u)*3.4); font-weight:900; text-align:center; line-height:1.15; }
+        .poster .ps { font-size:calc(var(--u)*1.5); color:var(--text-muted); }
+        .bigplay { width:calc(var(--u)*7); height:calc(var(--u)*7); border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--amz)); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 calc(var(--u)*.8) calc(var(--u)*3) rgba(6,182,212,.35); transition:transform .2s; }
+        .bigplay:hover { transform:scale(1.06); }
+        .bigplay svg { width:calc(var(--u)*2.6); height:calc(var(--u)*2.6); fill:#fff; margin-left:calc(var(--u)*.3); }
+
+        /* субтитры */
+        .subs { position:absolute; left:0; right:0; bottom:calc(var(--u)*2.4); display:flex; justify-content:center; padding:0 calc(var(--u)*4); z-index:6; pointer-events:none; transition:bottom .35s ease; }
+        .subs.off { display:none; }
+        .subs .stx { max-width:88%; background:rgba(6,10,20,.86); padding:calc(var(--u)*.75) calc(var(--u)*1.5); border-radius:calc(var(--u)*.7); text-align:center; text-wrap:balance; }
+        .subs .stx { font-size:max(15px, calc(var(--u)*1.9)); line-height:1.42; color:#fff; font-weight:500; }
+        .subs.below { position:static; padding:0; margin-top:10px; }
+        .subs.below .stx { width:100%; max-width:none; text-align:left; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); border-left:3px solid var(--amz); border-radius:12px; padding:11px 14px; font-size:15px; line-height:1.55; color:var(--text-secondary); }
+
+        /* управление */
+        .bar-wrap { margin-top:12px; }
+        .track { position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.09); cursor:pointer; }
+        .track .fill { position:absolute; inset:0 auto 0 0; width:0; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--amz)); }
+        .track .knob { position:absolute; top:50%; left:0; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+        .track i { position:absolute; top:0; width:2px; height:100%; background:rgba(255,255,255,.35); }
+        .ctrls { display:flex; align-items:center; gap:9px; margin-top:10px; flex-wrap:wrap; }
+        .cbtn { display:flex; align-items:center; justify-content:center; gap:7px; height:44px; min-width:44px; padding:0 14px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--text-primary); font:600 14px Inter,sans-serif; cursor:pointer; transition:all .2s; }
+        .cbtn:hover { background:rgba(255,153,0,.14); border-color:rgba(255,153,0,.4); }
+        .cbtn.main { background:linear-gradient(135deg,var(--primary),var(--secondary)); border-color:transparent; }
+        .cbtn svg { width:18px; height:18px; fill:currentColor; }
+        .ctime { font:700 14px ui-monospace,Menlo,Consolas,monospace; color:var(--text-muted); margin-left:4px; }
+        .spacer { flex:1; }
+        .cbtn.small { height:38px; font-size:13px; padding:0 12px; }
+
+        /* главы */
+        .chapters { margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+        .chap { display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); cursor:pointer; text-align:left; transition:all .2s; font-family:inherit; }
+        .chap:hover { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .chap.on { border-color:var(--amz); background:rgba(255,153,0,.11); }
+        .chap-t { font:800 12px ui-monospace,Menlo,Consolas,monospace; color:var(--amz); }
+        .chap-n { font-size:15px; font-weight:700; color:#fff; }
+        .chap-d { font-size:12.5px; color:var(--text-muted); }
+
+        .after { margin:44px auto 60px; max-width:1100px; }
+        .after h2 { font-size:22px; font-weight:800; margin-bottom:14px; }
+        .after-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+        .after-grid a { display:block; padding:16px 18px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-decoration:none; color:var(--text-secondary); transition:all .2s; }
+        .after-grid a:hover { border-color:rgba(6,182,212,.5); background:rgba(6,182,212,.08); color:#fff; }
+        .after-grid b { display:block; color:#fff; font-size:15px; margin-bottom:3px; }
+        .after-grid span { font-size:13px; color:var(--text-muted); }
+
+
+
+        /* ===== БЛОКИ ЧАСТИ 3 ===== */
+        .sc-sit { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sit-cols { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+        .sit-c { padding:calc(var(--u)*1.3) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.4); color:var(--text-secondary); line-height:1.55; }
+        .sit-c .lbl, .sit-risk .lbl, .sit-prev .lbl { display:block; font-size:calc(var(--u)*1.1); font-weight:800; letter-spacing:.09em; text-transform:uppercase; margin-bottom:calc(var(--u)*.4); }
+        .sit-c.d { border-color:rgba(6,182,212,.35); } .sit-c.d .lbl { color:var(--primary); }
+        .sit-c.w { border-color:rgba(255,153,0,.35); } .sit-c.w .lbl { color:var(--amz); }
+        .sit-risk { padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); font-size:calc(var(--u)*1.35); line-height:1.55; }
+        .sit-risk.hi { background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.38); color:#fca5a5; }
+        .sit-risk.md { background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.35); color:#fcd34d; }
+        .sit-risk.lo { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); color:#6ee7b7; }
+        .sit-risk .lbl { color:inherit; opacity:.85; }
+        .sit-prev { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:var(--glass-03); border:1px solid var(--edge-08); font-size:calc(var(--u)*1.3); color:var(--text-muted); line-height:1.5; }
+        .sit-prev .lbl { color:var(--text-soft); }
+        .sc-rule { display:flex; flex-direction:column; gap:calc(var(--u)*.9); }
+        .rl { display:flex; gap:calc(var(--u)*1.3); align-items:flex-start; padding:calc(var(--u)*1.35) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .rl-n { width:calc(var(--u)*3); height:calc(var(--u)*3); flex-shrink:0; border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--amz)); color:#fff; font-size:calc(var(--u)*1.6); font-weight:900; display:flex; align-items:center; justify-content:center; }
+        .rl-t { font-size:calc(var(--u)*1.32); color:var(--text-muted); line-height:1.5; }
+        .rl-t b { display:block; font-size:calc(var(--u)*1.65); color:#fff; margin-bottom:calc(var(--u)*.2); }
+        .sc-fine { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .fn { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .fn-w { font-size:calc(var(--u)*1.5); color:var(--text-secondary); }
+        .fn-x { font-size:calc(var(--u)*2.1); font-weight:900; }
+        .fn-x.ok { color:#6ee7b7; } .fn-x.mid { color:#fcd34d; } .fn-x.bad { color:#fca5a5; }
+        .sc-two-sit { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.3); }
+        .ts { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ts-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*.6); }
+        .ts-b { font-size:calc(var(--u)*1.32); color:var(--text-secondary); line-height:1.55; }
+        .sc-quiz { display:flex; flex-direction:column; gap:calc(var(--u)*1); }
+        .qz { padding:calc(var(--u)*1.4) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .qz-q { font-size:calc(var(--u)*1.5); font-weight:700; color:#fff; }
+        .qz-a { margin-top:calc(var(--u)*.6); padding-left:calc(var(--u)*2); font-size:calc(var(--u)*1.4); color:#6ee7b7; position:relative; }
+        .qz-a::before { content:'✓'; position:absolute; left:0; font-weight:800; }
+        @media (max-width:900px) { .sit-cols, .sc-two-sit { grid-template-columns:1fr; } .fn { flex-direction:column; align-items:flex-start; gap:calc(var(--u)*.3); } }
+        /* ===== БЛОКИ ЧАСТИ 2 ===== */
+        .sc-cols3.four { grid-template-columns:repeat(4,1fr); }
+        .ccard .cnote { font-size:calc(var(--u)*1.1); color:var(--amz); margin-top:calc(var(--u)*.4); }
+        .sc-shot { display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*.7); min-height:0; margin:0; }
+        .sc-shot img { max-width:100%; max-height:calc(var(--u)*30); object-fit:contain; border-radius:calc(var(--u)*.9); border:1px solid rgba(255,255,255,.14); background:#0b1120; }
+        .sc-shot .cap { font-size:calc(var(--u)*1.12); color:var(--text-muted); text-align:center; line-height:1.4; }
+        .sc-shots { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); min-height:0; }
+        .sc-shots .sc-shot img { max-height:calc(var(--u)*24); }
+        .sc-block { display:flex; justify-content:center; }
+        .blk { width:100%; padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .blk-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .blk-bar { display:flex; gap:calc(var(--u)*.3); height:calc(var(--u)*4.4); }
+        .seg { width:var(--w); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,rgba(6,182,212,.55),rgba(14,165,233,.4)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.2); font-weight:700; color:#fff; }
+        .seg.free { background:repeating-linear-gradient(45deg,rgba(255,255,255,.07),rgba(255,255,255,.07) 8px,rgba(255,255,255,.03) 8px,rgba(255,255,255,.03) 16px); color:var(--text-muted); font-weight:600; }
+        .blk-f { margin-top:calc(var(--u)*1); font-size:calc(var(--u)*1.5); font-weight:700; color:var(--success); }
+        .sc-table { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .sc-table .tr { display:grid; grid-template-columns:1.1fr 1fr 1fr 1.8fr; gap:calc(var(--u)*1); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .sc-table .tr.th { background:none; padding-top:0; padding-bottom:calc(var(--u)*.3); font-size:calc(var(--u)*1.2); color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+        .sc-table .ok { color:#6ee7b7; font-weight:700; } .sc-table .warn { color:#fcd34d; font-weight:700; }
+        .sc-choice { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ch-row { display:grid; grid-template-columns:1.3fr auto 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ch-if { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ch-arr { color:var(--amz); font-size:calc(var(--u)*1.7); }
+        .ch-do { font-size:calc(var(--u)*1.55); font-weight:800; color:var(--amz); }
+        .sc-load { display:flex; flex-direction:column; gap:calc(var(--u)*.5); }
+        .ld-row { display:grid; grid-template-columns:calc(var(--u)*16) 1fr; gap:calc(var(--u)*1.2); align-items:baseline; padding:calc(var(--u)*.95) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ld-row.big { background:rgba(255,153,0,.10); border:1px solid rgba(255,153,0,.4); }
+        .ld-l { font-size:calc(var(--u)*1.22); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .ld-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ld-v b { color:#fff; }
+        .ld-money { font-size:calc(var(--u)*2.2); color:var(--amz) !important; }
+        .ld-warn { color:#fcd34d; }
+        .sc-calc { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .cl-row { display:grid; grid-template-columns:calc(var(--u)*12) 1fr calc(var(--u)*17); gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .cl-row.res { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); }
+        .cl-l { font-size:calc(var(--u)*1.2); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .cl-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .cl-v.dim { color:var(--text-muted); text-decoration:line-through; }
+        .cl-x { font-size:calc(var(--u)*1.25); color:var(--amz); text-align:right; }
+        .cl-x.ok { color:#6ee7b7; }
+        .sc-dont { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .dn { display:flex; gap:calc(var(--u)*1.2); align-items:flex-start; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.25); }
+        .dn-x { color:#fca5a5; font-size:calc(var(--u)*1.7); font-weight:800; line-height:1; }
+        .dn-t { font-size:calc(var(--u)*1.3); color:var(--text-secondary); line-height:1.5; }
+        .dn-t b { display:block; color:#fff; font-size:calc(var(--u)*1.45); margin-bottom:calc(var(--u)*.2); }
+        .sc-msg { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .msg-h { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.8); }
+        .msg-b { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:calc(var(--u)*1.22); line-height:1.7; color:var(--text-secondary); white-space:pre-wrap; }
+        .sc-three { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1); }
+        .sc-note.gold { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.4); color:#fcd34d; }
+        @media (max-width:900px) { .sc-cols3.four { grid-template-columns:1fr 1fr; } .sc-shots, .sc-three { grid-template-columns:1fr; }
+          .sc-table .tr { grid-template-columns:1fr 1fr; } .ch-row { grid-template-columns:1fr; gap:calc(var(--u)*.3); } .ch-arr { display:none; }
+          .ld-row, .cl-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); } .cl-x { text-align:left; } }
+        @media (max-width:900px) {
+            .vhead { padding:78px 0 6px; gap:8px; }
+            .player { --chrome:250px; }
+            .sc-who, .sc-eq { grid-template-columns:1fr 1fr; }
+            .sc-roles, .sc-cols3, .codeex { grid-template-columns:1fr; gap:calc(var(--u)*.9); }
+            .sc-days, .sc-yesno, .sc-two { grid-template-columns:1fr; }
+            .vs-head { display:none; }
+            .vs-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); padding:calc(var(--u)*.95) calc(var(--u)*1.3); }
+            .vs-row .vl { font-size:calc(var(--u)*1.5); color:#fff; font-weight:700; }
+            .vs-row .va::before { content:'Брокер: '; color:var(--text-muted); }
+            .vs-row .vb::before { content:'Relay: '; color:var(--amz); font-weight:800; }
+            .sc-flow { flex-direction:column; } .fa { justify-content:center; transform:rotate(90deg); }
+            .scene { padding-bottom:calc(var(--u)*4); }
+            .subs .stx { font-size:15px; }
+        }
+        @media (max-width:600px) { .container { padding:0 14px; } .ctrls { gap:7px; } .cbtn { padding:0 10px; font-size:13px; } }
+    </style>
+    <script type="module" src="../firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="../role-guard.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="../nav-loader.js?v=20"></script>
+
+    <div class="container">
+      <div class="vhead">
+        <span class="vbadge">🎬 Часть 3 из 4</span>
+        <h1 class="vtitle">Если что-то пошло не так</h1>
+        <span class="vdone" id="vdone" hidden>✓ Просмотрено</span>
+        <span class="vsub">11:11 · 24 сцены · озвучка и субтитры · 6 глав</span>
+      </div>
+
+      <div class="player">
+        <div class="pbox" id="pbox">
+        <div class="stage" id="stage">
+          <div class="scene" data-i="0">
+      <div class="scene-cap"><span class="sc-ch">Вступление</span><span class="sc-tt">Если что-то пошло не так</span></div>
+      <div class="scene-body"><div class="sc-title">
+  <div class="kicker" data-at="0">Курс диспетчера · часть 3 из 4</div>
+  <h1 class="big" data-at="0">Если что-то<br><span class="accent">пошло не так</span></h1>
+  <div class="chips" data-at="1">
+    <span class="chip"><i>10</i> на складе</span>
+    <span class="chip"><i>6</i> до и после поездки</span>
+    <span class="chip"><i>4</i> с аккаунтом</span>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="1">
+      <div class="scene-cap"><span class="sc-ch">Вступление</span><span class="sc-tt">Одно правило на все случаи</span></div>
+      <div class="scene-body"><div class="sc-rule">
+  <div class="rl" data-at="1"><span class="rl-n">1</span><span class="rl-t"><b>Водитель стоит и звонит</b>Не решает сам, никуда не уезжает</span></div>
+  <div class="rl" data-at="2"><span class="rl-n">2</span><span class="rl-t"><b>Диспетчер пишет в поддержку сразу</b>Пока проблема длится: номер поездки, время, суть</span></div>
+  <div class="rl" data-at="3"><span class="rl-n">3</span><span class="rl-t"><b>Действуем по ответу</b>Снимки экрана и часов — в переписку</span></div>
+</div>
+<div class="sc-note danger big" data-at="4">Самодеятельность водителя дороже, чем час ожидания</div></div>
+    </div>
+    <div class="scene" data-i="2">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Прицеп не готов</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Обращение сразу: номер поездки, номер места, время приезда. Просим другой прицеп или подтверждение ожидания</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Стой на месте, сам прицеп по двору не ищи. Фото пустого места и экрана. Каждые 30 минут — сообщение»</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">Чем грозит · опасность средняя</span>Опоздание на следующую остановку по вине склада оспаривается, если есть обращение с временем. Простой — по отдельному обращению</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>На складах, где это повторяется, закладывать лишние 45 минут</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="3">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Нет пустого прицепа</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Обращение: «нет пустого прицепа на складе, следующая поездка такая-то». Ждём письменный ответ</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Спроси сотрудника двора, есть ли пустые в другой зоне, запиши имя. Сам по двору не катайся»</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">Чем грозит · опасность средняя</span>Переназначили по вине Amazon — рейтинг не страдает. Уехал без инструкции и поездка сгорела — отказ записывают вам</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>За час до сдачи смотреть статус прицепа следующей поездки</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="4">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Ожидание больше двух часов</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Через 1,5 часа — обращение «ждём с такого-то». Через 2 часа — второе, про оплату простоя. Спор по оплате: 30 дней</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Приложение не выключай. Снимок ленты событий сейчас и при выезде»</div>
+  </div>
+  <div class="sit-risk lo" data-at="2"><span class="lbl">Чем грозит · опасность низкая</span>Официальных сумм Amazon не публикует. По данным перевозчиков: 2 часа бесплатно, дальше по обращению</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Живую погрузку в сезон считать по времени, а не по милям</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="5">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Пломба не совпадает</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Обращение немедленно, до выезда: номер поездки, номер прицепа, номер пломбы по документу и по факту, фото</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Пломбу не трогай. Фото пломбы крупно, документа и номера прицепа. Стой, пока не напишу»</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Выезд с чужой пломбой — вопрос о целостности груза к вам, возможна претензия и запись об инциденте</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Сверка пломбы входит в осмотр прицепа. Не пропускать</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="6">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Прицеп повреждён</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Проверить, что повреждение снято в осмотре. Обращение с фото. Нельзя ехать — требуем замену прицепа</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Все повреждения — в осмотр с фото, даже мелкие. Влияет на безопасность — не выезжай»</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">Чем грозит · опасность средняя</span>Незафиксированное повреждение предъявят вам. Выезд на неисправном — нарушение на проверке, а его не обжаловать</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Десять минут на осмотр всегда, даже на целом прицепе</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="7">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Не дали место или ворота</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Обращение с временем приезда и текущим временем. Помощник в приложении решает быстрее всего</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Спроси сотрудника двора, встань где скажут, чужое место не занимай. Снимок экрана с инструкцией»</div>
+  </div>
+  <div class="sit-risk lo" data-at="2"><span class="lbl">Чем грозит · опасность низкая</span>Обычно только потеря времени. Если срывается следующая остановка — обращение уже есть, опоздание оспаривается</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Знать склад: на многих есть отдельная зона ожидания</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="8">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Ворота закрыты в назначенное время</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Обращение и живой оператор: просим новое окно и подтверждение, что вина склада. Ждём до утра — фиксируем для оплаты</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Нажми „Приехал“ в окне в любом случае. Фото закрытых ворот и таблички с часами. Жди на разрешённой парковке»</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">Чем грозит · опасность средняя</span>С отметкой в окне и обращением — оспаривается. Без отметки опоздание запишут вам</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Часы работы ворот — в свою таблицу складов</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="9">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Приложение не приняло отметку</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Обращение немедленно со снимком ошибки. В ленте поездки видно геолокацию у склада — это аргумент</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Снимок экрана с ошибкой и часами в кадре. Перезапусти приложение, проверь геолокацию. Назови охране номер груза и время»</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Опоздание считают до момента появления отметки: до часа — обычный штраф, до четырёх — двойной, дальше больше</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Правило водителя номер один: подъехал — нажал</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="10">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Уехал, не нажав «Сдал»</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Рядом — вернуть и нажать. Далеко — обращение: время выезда, номер прицепа, место, фото</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Следующую остановку не начинай, пока не разберусь. Во сколько выехал? Есть фото прицепа на месте?»</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">Чем грозит · опасность средняя</span>Незавершённый шаг — минус к показателю приложения, документ о сдаче с задержкой, следующая поездка может не открыться</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Кнопки нажимаются до выезда за ворота</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="11">
+      <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Селфи не проходит проверку</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Тот же водитель — обращение с просьбой ручной проверки. Не тот — немедленно переназначить поездку и указать это</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Сними кепку и очки, встань лицом к свету, попробуй ещё раз. Не проси коллегу подставить лицо»</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Несовпадение личности — блокировка водителя и запись на компанию, при повторе отключение аккаунта</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Назначать в системе именно того, кто поедет</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="12">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. До и после поездки</span><span class="sc-tt">Груз сгорел без водителя</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Исправить нельзя. Если груз ещё на доске — забронировать снова и сразу назначить, но первый отказ уже записан</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>—</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Падает показатель принятия. Чем ближе к времени забора это случилось, тем сильнее удар по рейтингу</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Нет водителя прямо сейчас — не бронируем, а выставляем свой трак на доску</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="13">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. До и после поездки</span><span class="sc-tt">Нужно отказаться от груза</span></div>
+      <div class="scene-body"><div class="sc-fine">
+  <div class="fn" data-at="1"><span class="fn-w">Блок, больше суток до старта</span><span class="fn-x ok">×1</span></div>
+  <div class="fn" data-at="2"><span class="fn-w">Блок, меньше суток или после старта</span><span class="fn-x bad">×4</span></div>
+  <div class="fn" data-at="2"><span class="fn-w">Контракт, за 3 недели и раньше</span><span class="fn-x ok">×1</span></div>
+  <div class="fn" data-at="2"><span class="fn-w">Контракт, ближе трёх недель</span><span class="fn-x mid">×2</span></div>
+</div>
+<div class="sc-note danger big" data-at="3">Решение об отказе — за 25 часов, а не «утром посмотрим»</div></div>
+    </div>
+    <div class="scene" data-i="14">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. До и после поездки</span><span class="sc-tt">Amazon отменил поездку</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Рейтинг не страдает. Смотреть поездки утром. Отменили после приезда — обращение в раздел выплат</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Это не наша вина. Не уезжай, ищу замену из этой точки. Приехал — пришли снимок ленты с отметкой»</div>
+  </div>
+  <div class="sit-risk lo" data-at="2"><span class="lbl">Чем грозит · опасность низкая</span>По данным перевозчиков за позднюю отмену платят около 175 долларов. Частично отменённый блок оплачивается полностью</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Не ехать 200 миль пустым под один груз без обратного</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="15">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. До и после поездки</span><span class="sc-tt">Один трак на две поездки</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Сразу решить, какая поездка реальна, и отказаться от второй сегодня — пока до старта больше суток</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Твоя поездка такая-то, вторую снимаю. Ничего не меняй в приложении»</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Один отказ со штрафом по сроку. Завтра тот же отказ вчетверо дороже</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Календарь траков вне Relay и взгляд в него перед каждым бронированием</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="16">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. До и после поездки</span><span class="sc-tt">Опоздание из-за погоды или пробки</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Обращение сразу, как ETA ушёл за окно: причина, новое время, снимок предупреждения о погоде или пробках</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Безопасность важнее окна. Едешь по правилам, я уже написал в поддержку»</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">Чем грозит · опасность средняя</span>Штраф по длительности: до часа обычный, до четырёх часов двойной, дальше вчетверо и ввосьмеро</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Погодные предупреждения в приложении обновляются каждые 10 минут — смотреть перед стартом</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="17">
+      <div class="scene-cap"><span class="sc-ch">Глава 2. До и после поездки</span><span class="sc-tt">Поломка и дорожная проверка</span></div>
+      <div class="scene-body"><div class="sc-two-sit">
+  <div class="ts" data-at="1"><div class="ts-h">🔧 Поломка</div><div class="ts-b">Живой оператор и обращение. Прицеп Amazon не отцеплять без команды. Варианты: замена тягача, переназначение груза, эвакуация по согласованию</div></div>
+  <div class="ts" data-at="2"><div class="ts-h">👮 Дорожная проверка</div><div class="ts-b">Обращение с ожидаемой задержкой, записать номер отчёта. Каждое нарушение идёт в показатели компании</div></div>
+</div>
+<div class="sc-note warn" data-at="3">Спорные нарушения оспаривать у регулятора сразу, пока не пересчитали показатели</div></div>
+    </div>
+    <div class="scene" data-i="18">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. С аккаунтом компании</span><span class="sc-tt">Страховка закончилась</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Агенту: новый сертификат со всеми строками сегодня. Обращение: «страховка продлена, документ отправлен, просим ускорить»</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Пауза на один-три дня, доска у нас заблокирована»</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Потеря выручки за дни простоя, возможные отказы по слетевшим грузам, потеря контрактов при долгой заморозке</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Напоминание за 14 дней до конца полиса и список требований агенту письмом</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="19">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. С аккаунтом компании</span><span class="sc-tt">Рейтинг упал ниже нужного</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Найти худший из четырёх показателей и работать точечно по нему. Спорные записи — спор на сайте, не в приложении</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>Конкретно: «У нас просел показатель по приложению. Две недели: приложение открыто, каждый шаг нажимаем»</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Ниже нужного уровня пропадают аукционы, выигранные контракты могут отозвать, дальше — риск отключения</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Смотреть худший показатель каждый день, а не ждать письма от Amazon</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="20">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. С аккаунтом компании</span><span class="sc-tt">Аккаунт отключили</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Прочитать причину. Обжалование через поддержку с планом: что случилось, что исправлено, меры на будущее</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>Честно о сроках. Если причина в конкретном водителе, решение принимает владелец</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Простой от нескольких недель до постоянного отключения</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Никогда не заводить второй аккаунт на ту же команду: находят и закрывают оба</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="21">
+      <div class="scene-cap"><span class="sc-ch">Глава 3. С аккаунтом компании</span><span class="sc-tt">Звонят «из Amazon Relay»</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Ничего не сообщать. Детали — на relay-network-reports@amazon.com. Поделились доступом — сменить пароль и отозвать доступы</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Никому не называй код из сообщения и не ставь второе приложение по просьбе звонящего»</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Чужие грузы под вашим номером, чужие водители под вашим аккаунтом, отключение за мошенничество</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Личный логин у каждого сотрудника и двухэтапный вход</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="22">
+      <div class="scene-cap"><span class="sc-ch">Проверь себя</span><span class="sc-tt">Три вопроса на проверку</span></div>
+      <div class="scene-body"><div class="sc-quiz">
+  <div class="qz" data-at="1"><div class="qz-q">Охранник просит подождать. Что делать прямо сейчас?</div><div class="qz-a" data-at="2">Нажать «Приехал» немедленно, разбираться потом</div></div>
+  <div class="qz" data-at="3"><div class="qz-q">Водитель на завтрашний блок заболел, замены нет</div><div class="qz-a" data-at="4">Отказаться сегодня, пока до старта больше суток</div></div>
+  <div class="qz" data-at="5"><div class="qz-q">Пломба отличается на одну цифру, доставка через 2 часа</div><div class="qz-a" data-at="6">Стоять и ждать ответ поддержки, не выезжать</div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="23">
+      <div class="scene-cap"><span class="sc-ch">Итог</span><span class="sc-tt">Итог третьей части</span></div>
+      <div class="scene-body"><div class="sc-sum">
+  <div class="sumh" data-at="0">Запомнить из части 3</div>
+  <div class="sumline" data-at="1"><b>Водитель стоит и звонит, диспетчер пишет сразу.</b> Время и снимки — ваша защита</div>
+  <div class="sumline" data-at="2"><b>Самое опасное:</b> сгоревший груз, подмена водителя, чужая пломба, перерыв в страховке</div>
+  <div class="sumline" data-at="3"><b>Отказ — как можно раньше.</b> Сегодня и завтра различаются в четыре раза</div>
+  <div class="nextup" data-at="4"><span class="nl">Дальше, часть 4</span><span class="nt">Деньги и рейтинг: ставка, выплаты по пятницам, четыре показателя и неделя диспетчера</span></div>
+</div></div>
+    </div>
+          <div class="subs" id="subs"><span class="stx" id="subtext">Нажмите «Смотреть», чтобы запустить урок со звуком.</span></div>
+          <div class="poster" id="poster">
+            <div class="pt">Если что-то<br>пошло не так</div>
+            <button class="bigplay" id="bigplay" aria-label="Смотреть"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+            <div class="ps" id="posterSub">Часть 3 из 4 · 11:11 · со звуком</div>
+            <button class="pres" id="pres" hidden type="button">Начать сначала</button>
+          </div>
+        </div>
+
+        <div class="bar-wrap">
+          <div class="track" id="track"><div class="fill" id="fill"></div><i style="left:8.42%"></i><i style="left:45.50%"></i><i style="left:68.01%"></i><i style="left:85.07%"></i><i style="left:94.94%"></i><div class="knob" id="knob"></div></div>
+          <div class="ctrls">
+            <button class="cbtn main" id="play" aria-label="Пуск"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span id="playLabel">Смотреть</span></button>
+            <button class="cbtn" id="prev" aria-label="Предыдущая сцена"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+            <button class="cbtn" id="next" aria-label="Следующая сцена"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+            <span class="ctime"><span id="tcur">0:00</span> / 11:11</span>
+            <span class="spacer"></span>
+            <button class="cbtn small" id="rate">1×</button>
+            <button class="cbtn small" id="cc">Субтитры вкл</button>
+            <button class="cbtn small" id="fs">Во весь экран</button>
+          </div>
+        </div>
+        </div>
+
+        <div class="chapters" id="chapters">
+          <button type="button" class="chap" data-t="0.00" data-ci="0">
+        <span class="chap-t">0:00</span>
+        <span class="chap-n">Вступление</span>
+        <span class="chap-d">2 сцены · 0:57</span>
+      </button>
+      <button type="button" class="chap" data-t="56.56" data-ci="1">
+        <span class="chap-t">0:57</span>
+        <span class="chap-n">Глава 1. На складе</span>
+        <span class="chap-d">10 сцен · 4:09</span>
+      </button>
+      <button type="button" class="chap" data-t="305.50" data-ci="2">
+        <span class="chap-t">5:06</span>
+        <span class="chap-n">Глава 2. До и после поездки</span>
+        <span class="chap-d">6 сцен · 2:31</span>
+      </button>
+      <button type="button" class="chap" data-t="456.68" data-ci="3">
+        <span class="chap-t">7:37</span>
+        <span class="chap-n">Глава 3. С аккаунтом компании</span>
+        <span class="chap-d">4 сцены · 1:55</span>
+      </button>
+      <button type="button" class="chap" data-t="571.24" data-ci="4">
+        <span class="chap-t">9:31</span>
+        <span class="chap-n">Проверь себя</span>
+        <span class="chap-d">1 сцена · 1:06</span>
+      </button>
+      <button type="button" class="chap" data-t="637.47" data-ci="5">
+        <span class="chap-t">10:37</span>
+        <span class="chap-n">Итог</span>
+        <span class="chap-d">1 сцена · 0:34</span>
+      </button>
+        </div>
+      </div>
+
+      <div class="after">
+        <h2>После ролика</h2>
+        <div class="after-grid">
+          <a href="amazon-relay-3-problems.html"><b>Текстовая версия части 3</b><span>все 22 ситуации подробно, с фильтром и тренажёром</span></a>
+          <a href="amazon-relay-video-2.html"><b>◀ Видеоурок, часть 2</b><span>грузы, бронирование и поездка</span></a>
+          <a href="amazon-relay-video.html"><b>Видеоурок, часть 1</b><span>что такое Relay и как подключиться</span></a>
+          <a href="amazon-relay-4-money-rating.html"><b>Часть 4. Деньги и рейтинг</b><span>выплаты, показатели, неделя диспетчера</span></a>
+        </div>
+      </div>
+    </div>
+
+    <audio id="track-audio" src="../audio/relay-video/part3.mp3" preload="auto"></audio>
+
+<script>
+(function () {
+  var CUES = [{"s":"s01","i":0,"t":0,"x":"Амазон Рилэй для диспетчера. Часть третья: что делать, когда что-то пошло не так."},{"s":"s01","i":1,"t":7.208,"x":"Разберём двадцать две ситуации: десять на складе, шесть до и после поездки и четыре с аккаунтом компании."},{"s":"s01","i":2,"t":14.368,"x":"По каждой — что делает диспетчер, что говорит водителю и чем это грозит."},{"s":"s02","i":0,"t":20.426,"x":"Сначала — правило, которое работает в любой из этих ситуаций."},{"s":"s02","i":1,"t":25.546,"x":"Водитель останавливается и звонит диспетчеру. Не решает сам, не уезжает, не спорит с сотрудниками склада."},{"s":"s02","i":2,"t":34.074,"x":"Диспетчер пишет в поддержку, пока проблема ещё длится: номер поездки, точное время, что случилось."},{"s":"s02","i":3,"t":41.33,"x":"Водитель действует только по инструкции из ответа. Всё, что видно на экране и на часах, фиксируется снимками."},{"s":"s02","i":4,"t":50.218,"x":"Самодеятельность водителя почти всегда обходится дороже, чем час ожидания."},{"s":"s03","i":0,"t":56.564,"x":"Ситуация первая. Приехали, а нужный прицеп ещё грузят или его нет на месте."},{"s":"s03","i":1,"t":63.676,"x":"Диспетчер сразу пишет в поддержку: номер поездки, номер места, время приезда. Просит либо другой прицеп, либо подтверждение ожидания с оплатой."},{"s":"s03","i":2,"t":74.484,"x":"Водитель стоит на своём месте, фотографирует пустое место с номером и экран приложения, и каждые полчаса пишет диспетчеру."},{"s":"s04","i":0,"t":83.134,"x":"Вторая. На дропе нет пустого прицепа для следующего рейса."},{"s":"s04","i":1,"t":88.998,"x":"Диспетчер пишет в поддержку и ждёт письменный ответ: ждать, ехать без прицепа или поездку переназначат."},{"s":"s04","i":2,"t":96.446,"x":"Без ответа водитель никуда не едет: уехал по своему решению — это может засчитаться как отказ от поездки."},{"s":"s05","i":0,"t":104.112,"x":"Третья. Живая погрузка тянется больше двух часов."},{"s":"s05","i":1,"t":109.664,"x":"Через полтора часа диспетчер пишет первое обращение: водитель ждёт с такого-то времени. Через два часа — второе, уже про оплату простоя."},{"s":"s05","i":2,"t":119.92,"x":"Собираем снимки: отметка о приезде, время постановки к воротам, время выезда. На спор по оплате есть тридцать дней."},{"s":"s06","i":0,"t":129.458,"x":"Четвёртая, и она опасная. Номер пломбы не совпадает с документом или пломба повреждена."},{"s":"s06","i":1,"t":137.146,"x":"Диспетчер пишет в поддержку немедленно, до выезда, с фотографиями и обоими номерами."},{"s":"s06","i":2,"t":143.37,"x":"Водитель пломбу не трогает и никуда не выезжает. Выезд с чужой пломбой означает, что на разгрузке о целостности груза спросят у вас."},{"s":"s07","i":0,"t":153.556,"x":"Пятая. Прицеп Амазона повреждён: шина, фонарь, двери, пол."},{"s":"s07","i":1,"t":160.26,"x":"Диспетчер проверяет, что водитель снял повреждение в осмотре, и пишет в поддержку с фотографиями."},{"s":"s07","i":2,"t":167.012,"x":"Если прицеп нельзя выпускать на дорогу, требуем замену, а не «езжайте так»: нарушение на дорожной проверке попадёт в показатели компании."},{"s":"s08","i":0,"t":176.454,"x":"Шестая. Водителю не назначили место или ворота, его гоняют по двору."},{"s":"s08","i":1,"t":183.206,"x":"Диспетчер пишет в поддержку с временем приезда и текущим временем. Помощник в приложении часто решает это за минуты."},{"s":"s08","i":2,"t":192.07,"x":"Водитель встаёт там, где скажет сотрудник двора, и не занимает чужие места."},{"s":"s09","i":0,"t":198.608,"x":"Седьмая. Приехали в своё окно, а склад закрыт: ночь или выходной."},{"s":"s09","i":1,"t":205.264,"x":"Диспетчер пишет в поддержку и просит живого оператора: нужно новое время и подтверждение, что задержка не по вашей вине."},{"s":"s09","i":2,"t":213.144,"x":"Водитель всё равно нажимает «Приехал» в своём окне: это докажет, что он был вовремя. И фотографирует закрытые ворота с табличкой часов работы."},{"s":"s10","i":0,"t":224.122,"x":"Восьмая, и она бьёт по рейтингу сильнее всего. Водитель на месте, а отметка о приезде не проходит: нет связи, приложение зависло или он просто забыл."},{"s":"s10","i":1,"t":235.29,"x":"Диспетчер пишет в поддержку немедленно: водитель приехал в такое-то время, отметка не прошла, снимок ошибки приложен."},{"s":"s10","i":2,"t":243.05,"x":"В ленте поездки видно, была ли геолокация у склада — это ваш главный аргумент."},{"s":"s10","i":3,"t":248.842,"x":"Если водитель просто забыл, нажимаем сейчас и сразу пишем объяснение: разница в минутах меньше, чем через час."},{"s":"s11","i":0,"t":257.012,"x":"Девятая. Водитель уехал со склада, не завершив шаг сдачи."},{"s":"s11","i":1,"t":263.212,"x":"Если он в пяти-десяти минутах — возвращаем и нажимаем, геолокация должна совпасть со складом."},{"s":"s11","i":2,"t":269.892,"x":"Если далеко — пишем в поддержку: во сколько выехал, где оставил прицеп, фото если есть."},{"s":"s12","i":0,"t":277.078,"x":"Десятая. Приложение не узнаёт водителя по селфи."},{"s":"s12","i":1,"t":282.558,"x":"Если это тот же водитель — борода, очки, плохой свет — пишем в поддержку и просим ручную проверку."},{"s":"s12","i":2,"t":290.03,"x":"Если за рулём не тот, кто назначен, немедленно переназначаем поездку на фактического водителя и честно пишем об этом."},{"s":"s12","i":3,"t":297.766,"x":"Подмена, которая вскроется позже, опаснее любого опоздания: блокируют и водителя, и компанию."},{"s":"s13","i":0,"t":305.504,"x":"Глава вторая: что случается до и после поездки. Первая ситуация — забронированный груз сгорел, потому что на него вовремя не назначили водителя."},{"s":"s13","i":1,"t":316.144,"x":"Здесь уже ничего не исправить: сгоревший груз засчитывается как ваш отказ."},{"s":"s13","i":2,"t":321.912,"x":"Правило простое: бронирование и назначение водителя — это одно действие, а не два разных дня."},{"s":"s14","i":0,"t":329.242,"x":"Вторая. Вы понимаете, что везти не сможете, и нужно отказаться."},{"s":"s14","i":1,"t":335.778,"x":"Отказ делает только диспетчер с правами администратора и как можно раньше."},{"s":"s14","i":2,"t":341.186,"x":"Отказ от блока больше чем за сутки — обычный штраф. Меньше суток или после старта — вчетверо больше. От контракта за три недели — обычный, ближе — вдвое."},{"s":"s14","i":3,"t":354.274,"x":"Поэтому решение об отказе принимается сегодня, а не «утром посмотрим»."},{"s":"s15","i":0,"t":360.596,"x":"Третья. Поездку отменил сам Амазон."},{"s":"s15","i":1,"t":365.5,"x":"По рейтингу это не бьёт вообще. Смотрите раздел поездок утром: отмены видны там раньше, чем уведомление дойдёт до водителя."},{"s":"s15","i":2,"t":374.7,"x":"Если отменили после того, как водитель уже приехал, пишем обращение в раздел выплат и просим компенсацию за холостой выезд."},{"s":"s16","i":0,"t":383.374,"x":"Четвёртая. Один трак случайно оказался на двух поездках в одно время."},{"s":"s16","i":1,"t":389.958,"x":"Решаем немедленно, какая поездка реальна, и отказываемся от второй прямо сейчас, пока до неё больше суток."},{"s":"s16","i":2,"t":397.358,"x":"Завтра тот же отказ будет стоить вчетверо дороже."},{"s":"s17","i":0,"t":402.048,"x":"Пятая. Водитель опаздывает из-за погоды, аварии или пробки."},{"s":"s17","i":1,"t":408.368,"x":"Как только расчётное время ушло за окно, диспетчер пишет обращение: причина, новое время, снимок погодного предупреждения или карты пробок."},{"s":"s17","i":2,"t":417.472,"x":"Опоздание всё равно засчитают, но спор с документами иногда проходит. И главное — безопасность важнее окна."},{"s":"s18","i":0,"t":426.866,"x":"Шестая и седьмая ситуации рядом: поломка тягача и дорожная проверка."},{"s":"s18","i":1,"t":432.418,"x":"При поломке — звонок живому оператору и обращение. Прицеп Амазона водитель не отцепляет без команды: это их имущество и их инструкция."},{"s":"s18","i":2,"t":442.674,"x":"При проверке — записать номер отчёта и потом проверить его: каждое нарушение идёт в показатели компании, а их не обжалуешь."},{"s":"s18","i":3,"t":450.794,"x":"Спорные нарушения оспариваются у регулятора сразу, не откладывая."},{"s":"s19","i":0,"t":456.684,"x":"Глава третья: ситуации с аккаунтом компании. Первая — закончилась или неправильно продлена страховка, и аккаунт заморожен."},{"s":"s19","i":1,"t":466.148,"x":"Звоним агенту: новый сертификат со всеми строками сегодня же. Пишем в поддержку, что страховка продлена и документ отправлен."},{"s":"s19","i":2,"t":475.564,"x":"Забронированные грузы, которые слетели при заморозке, могут засчитаться как отказы — просите пересмотр в том же обращении."},{"s":"s20","i":0,"t":484.262,"x":"Вторая. Рейтинг упал, и пропали аукционы, а контракты под угрозой."},{"s":"s20","i":1,"t":491.062,"x":"Открываем рейтинг и находим худший из четырёх показателей: именно он и есть ваш рейтинг."},{"s":"s20","i":2,"t":497.646,"x":"Дальше действуем точечно по этому показателю, а спорные записи оспариваем на сайте."},{"s":"s20","i":3,"t":503.894,"x":"Окно расчёта — последние шесть недель с грузами, поэтому шесть чистых недель полностью обновляют картину."},{"s":"s21","i":0,"t":511.656,"x":"Третья, самая тяжёлая. Компанию отключили от Рилэй."},{"s":"s21","i":1,"t":517.616,"x":"Читаем письмо с причиной: показатели безопасности, перерыв в страховке, неявка, массовые отказы ради более дорогих грузов, несколько аккаунтов."},{"s":"s21","i":2,"t":527.056,"x":"По большинству причин есть обжалование через поддержку с планом исправления: что случилось, что уже сделано, какие меры на будущее."},{"s":"s21","i":3,"t":535.416,"x":"По доле нарушений на проверках обжалования нет: только ждать, пока старые проверки выйдут из годового окна."},{"s":"s22","i":0,"t":542.914,"x":"Четвёртая. Вам звонят «из Амазон Рилэй» и просят логин, предлагают купить аккаунт или диспетчерские услуги с гарантией грузов."},{"s":"s22","i":1,"t":552.594,"x":"Амазон не звонит с просьбой продиктовать пароль и не продаёт аккаунты."},{"s":"s22","i":2,"t":557.498,"x":"Ничего не сообщаем, детали пересылаем на официальный адрес для сообщений о мошенничестве."},{"s":"s22","i":3,"t":563.674,"x":"Если кто-то в компании уже поделился доступом — меняем пароль, отзываем доступы и пишем в поддержку."},{"s":"s23","i":0,"t":571.244,"x":"Проверим, как это работает на практике. Три коротких вопроса, ответ появится сразу."},{"s":"s23","i":1,"t":578.644,"x":"Первый. Водитель подъехал к воротам в десять минут одиннадцатого, окно до одиннадцати. Охранник просит подождать и уходит. Что делать прямо сейчас?"},{"s":"s23","i":2,"t":591.084,"x":"Нажать «Приехал» немедленно, а с охраной разбираться потом. Отметка ставится в момент подъезда, и чем позже она появится, тем больше опоздание."},{"s":"s23","i":3,"t":601.94,"x":"Второй. Вторник, три часа дня. Водитель на завтрашний блок заболел, замены нет. Что делает диспетчер?"},{"s":"s23","i":4,"t":612.58,"x":"Ищет замену и, если не нашёл, отказывается от блока сегодня — пока до старта больше суток и штраф в четыре раза меньше."},{"s":"s23","i":5,"t":620.484,"x":"Третий. Номер пломбы отличается от документа на одну цифру, до доставки два часа. Что делать?"},{"s":"s23","i":6,"t":629.084,"x":"Стоять, фотографировать и ждать ответ поддержки. С чужой пломбой не выезжают даже ради срока."},{"s":"s24","i":0,"t":637.47,"x":"Подведём итог."},{"s":"s24","i":1,"t":639.878,"x":"Водитель стоит и звонит, диспетчер пишет в поддержку, пока проблема длится, и всё фиксируется временем и снимками."},{"s":"s24","i":2,"t":647.83,"x":"Самое опасное для компании: сгоревшие грузы, подмена водителя, выезд с чужой пломбой и перерыв в страховке."},{"s":"s24","i":3,"t":655.542,"x":"Отказ от груза делаем как можно раньше: разница между «сегодня» и «завтра» — четырёхкратный штраф."},{"s":"s24","i":4,"t":662.822,"x":"В четвёртой части разберём деньги и рейтинг: как считается ставка, когда приходят выплаты и по каким показателям Амазон оценивает перевозчика."}];
+  var SC = [{"id":"s01","t":0,"e":20.426},{"id":"s02","t":20.426,"e":56.564},{"id":"s03","t":56.564,"e":83.134},{"id":"s04","t":83.134,"e":104.112},{"id":"s05","t":104.112,"e":129.458},{"id":"s06","t":129.458,"e":153.556},{"id":"s07","t":153.556,"e":176.454},{"id":"s08","t":176.454,"e":198.608},{"id":"s09","t":198.608,"e":224.122},{"id":"s10","t":224.122,"e":257.012},{"id":"s11","t":257.012,"e":277.078},{"id":"s12","t":277.078,"e":305.504},{"id":"s13","t":305.504,"e":329.242},{"id":"s14","t":329.242,"e":360.596},{"id":"s15","t":360.596,"e":383.374},{"id":"s16","t":383.374,"e":402.048},{"id":"s17","t":402.048,"e":426.866},{"id":"s18","t":426.866,"e":456.684},{"id":"s19","t":456.684,"e":484.262},{"id":"s20","t":484.262,"e":511.656},{"id":"s21","t":511.656,"e":542.914},{"id":"s22","t":542.914,"e":571.244},{"id":"s23","t":571.244,"e":637.47},{"id":"s24","t":637.47,"e":671.46}];
+  var CH = [{"t":0,"e":56.564},{"t":56.564,"e":305.504},{"t":305.504,"e":456.684},{"t":456.684,"e":571.244},{"t":571.244,"e":637.47},{"t":637.47,"e":671.46}];
+  var TOTAL = 671.46;
+  var a = document.getElementById('track-audio'), stage = document.getElementById('stage');
+  var scenes = [].slice.call(stage.querySelectorAll('.scene'));
+  var cur = -1, curCue = -1, subsOn = true, rates = [1, 1.25, 1.5, 0.75], ri = 0;
+
+  function unit() { var w = stage.clientWidth, h = stage.clientHeight; stage.style.setProperty('--u', Math.min(w / 100, h / 56.25) + 'px'); }
+  var player = document.querySelector('.player'), pbox = document.getElementById('pbox');
+  function isFS() { return document.fullscreenElement === pbox || pbox.classList.contains('fsfake'); }
+  var subsEl = document.getElementById('subs');
+  function placeSubs() {
+    var wantBelow = window.innerWidth < 760 && !isFS();
+    if (wantBelow && subsEl.parentElement !== pbox) { pbox.insertBefore(subsEl, pbox.querySelector('.bar-wrap')); subsEl.classList.add('below'); }
+    else if (!wantBelow && subsEl.parentElement !== stage) { stage.appendChild(subsEl); subsEl.classList.remove('below'); }
+  }
+  function fit() {
+    placeSubs();
+    if (isFS()) { player.style.maxWidth = ''; unit(); return; }
+    player.style.maxWidth = '';
+    var top = player.getBoundingClientRect().top + (window.scrollY || 0);
+    var below = document.querySelector('.bar-wrap').offsetHeight + (subsEl.classList.contains('below') ? subsEl.offsetHeight + 10 : 0) + 20;
+    var avail = window.innerHeight - top - below - 24;
+    player.style.maxWidth = Math.max(300, Math.min(1320, avail * 16 / 9)) + 'px';
+    var over = document.querySelector('.ctrls').getBoundingClientRect().bottom - window.innerHeight + 14;
+    if (over > 0) player.style.maxWidth = Math.max(300, parseFloat(player.style.maxWidth) - over * 16 / 9) + 'px';
+    unit();
+  }
+  var fitT, lastVP = '';
+  function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fit, 80); }
+  function onViewport() { var v = window.innerWidth + 'x' + window.innerHeight; if (v === lastVP) return; lastVP = v; scheduleFit(); }
+  fit(); lastVP = window.innerWidth + 'x' + window.innerHeight;
+  addEventListener('resize', scheduleFit); addEventListener('orientationchange', scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(onViewport).observe(document.documentElement);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleFit);
+  addEventListener('load', scheduleFit); document.fonts && document.fonts.ready.then(scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(unit).observe(stage);
+
+  function cueAt(t) { var lo = 0, hi = CUES.length - 1, r = 0; while (lo <= hi) { var m = (lo + hi) >> 1; if (CUES[m].t <= t) { r = m; lo = m + 1; } else hi = m - 1; } return r; }
+  function sceneAt(t) { for (var i = SC.length - 1; i >= 0; i--) if (t >= SC[i].t - 0.05) return i; return 0; }
+
+  function showScene(i) {
+    if (i === cur) return;
+    if (cur >= 0) { scenes[cur].classList.remove('live'); scenes[cur].querySelectorAll('[data-at]').forEach(function (el) { el.classList.remove('on'); }); }
+    cur = i; scenes[i].classList.add('live');
+    var ci = CH.findIndex(function (c, k) { return SC[i].t >= c.t - 0.05 && (k === CH.length - 1 || SC[i].t < CH[k + 1].t - 0.05); });
+    document.querySelectorAll('.chap').forEach(function (b, k) { b.classList.toggle('on', k === ci); });
+  }
+  function reveal(sceneIdx, lineIdx) {
+    scenes[sceneIdx].querySelectorAll('[data-at]').forEach(function (el) {
+      el.classList.toggle('on', +el.getAttribute('data-at') <= lineIdx);
+    });
+  }
+  function paint() {
+    var t = a.currentTime;
+    var si = sceneAt(t); showScene(si);
+    var ci = cueAt(t);
+    if (ci !== curCue) { curCue = ci; document.getElementById('subtext').textContent = CUES[ci].x; }
+    reveal(si, CUES[ci].s === SC[si].id ? CUES[ci].i : 0);
+    var p = Math.min(100, t / TOTAL * 100);
+    document.getElementById('fill').style.width = p + '%';
+    document.getElementById('knob').style.left = p + '%';
+    document.getElementById('tcur').textContent = fmt(t);
+    if (!a.paused && Date.now() - lastSave > 5000) saveState();
+    if (t > TOTAL * 0.95) markDone();
+  }
+  function fmt(s) { s = Math.max(0, s); return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'); }
+
+  var raf;
+  function loop() { paint(); if (!a.paused) raf = requestAnimationFrame(loop); }
+  a.addEventListener('play', function () { setPlay(true); loop(); if (isFS()) armIdle(); });
+  a.addEventListener('pause', function () { setPlay(false); cancelAnimationFrame(raf); });
+  a.addEventListener('seeked', paint);
+  a.addEventListener('ended', function () { setPlay(false); });
+
+  function setPlay(on) {
+    document.getElementById('playIcon').innerHTML = on ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    document.getElementById('playLabel').textContent = on ? 'Пауза' : (a.currentTime > 0 ? 'Продолжить' : 'Смотреть');
+  }
+  function start() {
+    document.getElementById('poster').classList.add('hide');
+    if (resumeAt && a.currentTime < 1) { a.currentTime = resumeAt; resumeAt = 0; paint(); }
+    document.querySelector('.player').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    a.play();
+  }
+  document.getElementById('bigplay').onclick = start;
+  document.getElementById('poster').onclick = start;
+  document.getElementById('play').onclick = function () { if (a.paused) start(); else a.pause(); };
+  document.getElementById('prev').onclick = function () { var i = sceneAt(a.currentTime); if (a.currentTime - SC[i].t < 1.2 && i > 0) i--; a.currentTime = SC[i].t; paint(); };
+  document.getElementById('next').onclick = function () { var i = sceneAt(a.currentTime); if (i < SC.length - 1) { a.currentTime = SC[i + 1].t; paint(); } };
+  document.getElementById('track').onclick = function (e) {
+    var r = this.getBoundingClientRect();
+    a.currentTime = Math.min(TOTAL - 0.1, Math.max(0, (e.clientX - r.left) / r.width * TOTAL));
+    document.getElementById('poster').classList.add('hide'); paint();
+  };
+  document.querySelectorAll('.chap').forEach(function (b) {
+    b.onclick = function () { document.getElementById('poster').classList.add('hide'); a.currentTime = +b.dataset.t; paint(); if (a.paused) a.play(); };
+  });
+  document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
+  document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Субтитры вкл' : 'Субтитры выкл'; fit(); };
+  var fsBtn = document.getElementById('fs'), idleT;
+  function syncFS() { fsBtn.textContent = isFS() ? 'Свернуть' : 'Во весь экран'; fit(); }
+  function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); idleT = setTimeout(function () { if (isFS() && !a.paused) pbox.classList.add('idle'); }, 2600); }
+  function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; syncFS(); armIdle(); }
+  function fakeOff() { pbox.classList.remove('fsfake', 'idle'); document.body.style.overflow = ''; syncFS(); }
+  fsBtn.onclick = function () {
+    if (pbox.classList.contains('fsfake')) return fakeOff();
+    if (document.fullscreenElement) return document.exitFullscreen();
+    var p;
+    try { p = pbox.requestFullscreen && pbox.requestFullscreen(); } catch (e) { p = null; }
+    if (p && p.catch) p.catch(fakeOn);
+    if (!pbox.requestFullscreen) fakeOn();
+    setTimeout(function () { if (!document.fullscreenElement) fakeOn(); }, 400);
+  };
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) pbox.classList.remove('idle'); else armIdle(); syncFS(); });
+  pbox.addEventListener('mousemove', function () { if (isFS()) armIdle(); });
+  pbox.addEventListener('touchstart', function () { if (isFS()) armIdle(); }, { passive: true });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && pbox.classList.contains('fsfake')) fakeOff(); });
+  document.addEventListener('keydown', function (e) {
+    if (/INPUT|TEXTAREA/.test((e.target.tagName || ''))) return;
+    if (e.code === 'Space') { e.preventDefault(); a.paused ? start() : a.pause(); }
+    if (e.code === 'ArrowRight') { a.currentTime = Math.min(TOTAL - .1, a.currentTime + 10); paint(); }
+    if (e.code === 'ArrowLeft') { a.currentTime = Math.max(0, a.currentTime - 10); paint(); }
+  });
+  // память просмотра: место остановки и отметка «просмотрено»
+  var SKEY = 'relay-video-part3', saved = null, doneFlag = false, lastSave = 0;
+  try { saved = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { saved = null; }
+  if (saved && saved.done) doneFlag = true;
+  function saveState() {
+    try { localStorage.setItem(SKEY, JSON.stringify({ t: Math.floor(a.currentTime), done: doneFlag })); } catch (e) {}
+    lastSave = Date.now();
+  }
+  function markDone() { if (doneFlag) return; doneFlag = true; document.getElementById('vdone').hidden = false; saveState(); }
+  if (doneFlag) document.getElementById('vdone').hidden = false;
+  var resumeAt = 0;
+  if (saved && saved.t > 25 && saved.t < TOTAL - 20) {
+    resumeAt = saved.t;
+    document.getElementById('posterSub').textContent = 'Продолжить с ' + fmt(resumeAt) + ' · часть 3 из 4 · ' + fmt(TOTAL);
+    var pres = document.getElementById('pres');
+    pres.hidden = false;
+    pres.onclick = function (e) { e.stopPropagation(); resumeAt = 0; a.currentTime = 0; paint(); start(); };
+  }
+  a.addEventListener('pause', saveState);
+  a.addEventListener('ended', markDone);
+  addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) saveState(); });
+
+  showScene(0); reveal(0, -1); setPlay(false);
+})();
+</script>
+
+    <link rel="stylesheet" href="../enhanced-quiz-system.css">
+</body>
+</html>
