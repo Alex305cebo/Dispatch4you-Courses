@@ -73,9 +73,11 @@ describe('EnergyDetector', () => {
     // случай», разговор снова станет похож на автоответчик, и заметить это
     // будет некому — поэтому граница закреплена тестом.
     // Верхняя граница — чтобы её не подняли обратно «с запасом».
-    // Нижняя — чтобы не резало живую речь на куски: на 450 мс фразы уже рвались.
-    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeLessThanOrEqual(650)
-    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeGreaterThanOrEqual(550)
+    // Нижняя — чтобы не резало живую речь на куски: на 450 мс фразы рвались,
+    // на 600 — тоже (живой звонок с сайта 05.09.2026: «текст не пишется
+    // полностью»). 900 — пауза на неродном языке прощается.
+    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeLessThanOrEqual(1000)
+    expect(DEFAULT_ENERGY_OPTIONS.hangoverMs).toBeGreaterThanOrEqual(800)
 
     const d = new EnergyDetector()
     settle(d)

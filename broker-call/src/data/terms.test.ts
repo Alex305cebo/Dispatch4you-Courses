@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeTranscript } from './terms'
+import { normalizeTranscript, isWhisperPhantom } from './terms'
 
 /**
  * Отраслевые слова распознавание калечит одинаково у обоих провайдеров.
@@ -31,5 +31,21 @@ describe('починка расшифровки', () => {
   it('оставляет уже правильный текст как есть', () => {
     const clean = 'MC 445566, we run 53-foot dry van, all-in rate please'
     expect(normalizeTranscript(clean)).toBe(clean)
+  })
+})
+
+describe('фантомы Whisper', () => {
+  it('отбрасывает то, что Whisper выдумывает на тишине и эхе', () => {
+    // Живой звонок с сайта 05.09.2026: два «Thank you.» подряд перебили брокера.
+    expect(isWhisperPhantom('Thank you.')).toBe(true)
+    expect(isWhisperPhantom(' you')).toBe(true)
+    expect(isWhisperPhantom('Bye.')).toBe(true)
+    expect(isWhisperPhantom('')).toBe(true)
+  })
+
+  it('живую речь не трогает, даже короткую', () => {
+    expect(isWhisperPhantom('MC 445566')).toBe(false)
+    expect(isWhisperPhantom('Dry van.')).toBe(false)
+    expect(isWhisperPhantom('Thank you, send the rate con to dispatch at star transport dot com')).toBe(false)
   })
 })

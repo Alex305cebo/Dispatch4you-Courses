@@ -2,7 +2,7 @@ import { PICKUP_CUE, type TransportDeps, type VoiceTransport } from './types'
 import { MicVad } from './vad'
 import { TelephonyAudio } from './TelephonyAudio'
 import { encodeWav, durationSeconds } from './audio'
-import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript } from '../data/terms'
+import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript, isWhisperPhantom } from '../data/terms'
 import { endpoint } from '../api'
 import { estimateDurationMs } from './browserVoice'
 import { synthesize } from './tts'
@@ -33,6 +33,10 @@ export class PipelineTransport implements VoiceTransport {
   private holdTimer: number | null = null
   private closed = false
   private busy = false
+  /** Студент договорил, пока брокер ещё думал: ход не теряется, а ждёт. */
+  private pendingTurn = false
+  /** Перебивание — только если речь длится, а не щёлкнула. */
+  private interruptTimer: number | null = null
 
   onLevel: ((level: number) => void) | null = null
 
@@ -95,10 +99,22 @@ export class PipelineTransport implements VoiceTransport {
   private handleSpeechStart(): void {
     this.deps.emit({ type: 'user_speech_start' })
     // Заговорил поверх брокера — брокер замолкает на полуслове, как человек.
-    if (this.currentUtterance) this.interrupt()
+    // Но не с первого кадра: щелчок, кашель и эхо из динамика тоже открывают
+    // детектор, и брокер обрывался на «Northbound Freight Solutions, this…»
+    // из-за фантомного «Thank you». Полсекунды живой речи — тогда да.
+    if (this.currentUtterance && this.interruptTimer === null) {
+      this.interruptTimer = window.setTimeout(() => {
+        this.interruptTimer = null
+        if (this.currentUtterance) this.interrupt()
+      }, 500)
+    }
   }
 
   private async handleSpeechEnd(audio: Float32Array): Promise<void> {
+    if (this.interruptTimer !== null) {
+      window.clearTimeout(this.interruptTimer)
+      this.interruptTimer = null
+    }
     if (this.closed) return
 
     if (durationSeconds(audio) < 0.35) {
@@ -116,6 +132,10 @@ export class PipelineTransport implements VoiceTransport {
       }
       if (looksNonEnglish(text)) {
         this.deps.emit({ type: 'user_dropped', reason: 'not_english' })
+        return
+      }
+      if (isWhisperPhantom(text)) {
+        this.deps.emit({ type: 'user_dropped', reason: 'empty' })
         return
       }
 
@@ -156,7 +176,13 @@ export class PipelineTransport implements VoiceTransport {
   // ── Ход брокера ───────────────────────────────────────────────────────────
 
   private async runTurn(): Promise<void> {
-    if (this.busy) return
+    // Реплика пришла, пока брокер думает над прошлой: раньше здесь был
+    // `return`, и такая реплика ложилась в историю без ответа — «брокер
+    // иногда не отвечает совсем». Теперь она ждёт своей очереди.
+    if (this.busy) {
+      this.pendingTurn = true
+      return
+    }
     this.busy = true
     this.deps.emit({ type: 'agent_thinking', active: true })
 
@@ -200,6 +226,10 @@ export class PipelineTransport implements VoiceTransport {
       this.cancelHold()
       this.busy = false
       this.deps.emit({ type: 'agent_thinking', active: false })
+      if (this.pendingTurn && !this.closed) {
+        this.pendingTurn = false
+        void this.runTurn()
+      }
     }
   }
 

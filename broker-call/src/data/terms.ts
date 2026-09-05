@@ -104,3 +104,24 @@ export function looksNonEnglish(text: string): boolean {
   const nonLatin = text.match(/[^\x00-\x7F]/g)?.length ?? 0
   return nonLatin / text.length > 0.2
 }
+
+/**
+ * Фантомы Whisper: на тишине, шуме и эхе из динамика он выдумывает «Thank
+ * you.», «Bye.», «you» — то, чем в обучающих данных кончались ролики. На
+ * живом звонке с сайта такой фантом шёл в историю как реплика диспетчера и
+ * перебивал брокера на полуслове. Список короткий и только для реплик до
+ * трёх слов: живой «thank you» в конце звонка тоже сюда попадёт, но студент
+ * в этот момент ничего не теряет — брокер и так уже закрывает разговор.
+ */
+const WHISPER_PHANTOMS = new Set([
+  'thank you', 'thanks', 'thank you very much', 'thanks for watching',
+  'thank you for watching', 'bye', 'goodbye', 'you', 'the end', 'so', 'oh',
+  'hmm', 'mm', 'uh', 'um', 'okay', 'ok', 'yeah', 'subtitles by the amara org community',
+])
+
+export function isWhisperPhantom(text: string): boolean {
+  const t = text.toLowerCase().replace(/[^a-z\s]/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!t) return true
+  if (t.split(' ').length > 3 && !t.startsWith('subtitles by')) return false
+  return WHISPER_PHANTOMS.has(t)
+}
