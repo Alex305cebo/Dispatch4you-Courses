@@ -204,7 +204,18 @@
         document.addEventListener('keydown', onPrintScreen, true);
         document.addEventListener('keyup', onPrintScreen, true);
 
-        window.addEventListener('blur', function () { showBlur(0); });
+        // Фокус, ушедший в свой же <iframe> (тренажёр звонка, игры), для окна
+        // выглядит как blur — но пользователь никуда не ушёл, он внутри
+        // страницы. Без этой проверки страница вокруг фрейма размывалась на
+        // весь сеанс и читалась как «сломано». activeElement выставляется
+        // после события, поэтому проверка через setTimeout(0).
+        window.addEventListener('blur', function () {
+            setTimeout(function () {
+                var a = document.activeElement;
+                if (a && a.tagName === 'IFRAME') return;
+                showBlur(0);
+            }, 0);
+        });
         window.addEventListener('focus', hideBlur);
         document.addEventListener('visibilitychange', function () {
             if (document.visibilityState === 'hidden') showBlur(0); else hideBlur();
