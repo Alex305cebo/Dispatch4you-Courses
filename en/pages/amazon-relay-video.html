@@ -57,7 +57,19 @@
         .pbox:fullscreen .bar-wrap, .pbox.fsfake .bar-wrap { position:absolute; left:0; right:0; bottom:0; margin:0; padding:16px 22px 18px; background:linear-gradient(transparent, rgba(0,0,0,.82)); z-index:30; transition:opacity .35s; }
         .pbox:fullscreen.idle .bar-wrap, .pbox.fsfake.idle .bar-wrap { opacity:0; pointer-events:none; }
         .pbox:fullscreen.idle, .pbox.fsfake.idle { cursor:none; }
-        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--u)*7.4); }
+        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--barh, 64px) + 8px); }
+        .pbox.rot { position:fixed; inset:auto; top:50%; left:50%; width:100dvh; height:100vw; transform:translate(-50%,-50%) rotate(90deg); transform-origin:center; }
+        .pbox.rot .stage { width:100%; height:100%; }
+        .pbox.narrow .ctrls { gap:6px; }
+        .pbox.narrow .cbtn, .pbox.narrow .cbtn.fs { height:38px; min-width:38px; padding:0 11px; font-size:12.5px; }
+        .pbox.narrow .cbtn svg, .pbox.narrow .cbtn.fs svg { width:16px; height:16px; }
+        .pbox.narrow .ctime { font-size:12px; }
+        .pbox.narrow #playLabel { display:none; }
+        .pbox.tight .ctime, .pbox.tight #rate { display:none; }
+        .pbox.tight #cc { font-size:0; padding:0 10px; }
+        .pbox.tight #cc::before { content:'CC'; font-size:12px; font-weight:800; letter-spacing:.04em; }
+        .pbox.icons #fsLabel { display:none; }
+        .pbox.icons .cbtn.fs { padding:0 11px; }
         .pbox:fullscreen.idle .subs, .pbox.fsfake.idle .subs { bottom:calc(var(--u)*2.6); }
         .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*7.6); }
         .scene.live { display:flex; }
@@ -272,7 +284,11 @@
         .track .fill { position:absolute; inset:0 auto 0 0; width:0; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--amz)); }
         .track .knob { position:absolute; top:50%; left:0; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.5); }
         .track i { position:absolute; top:0; width:2px; height:100%; background:rgba(255,255,255,.35); }
-        .ctrls { display:flex; align-items:center; gap:9px; margin-top:10px; flex-wrap:wrap; }
+        .ctrls { display:flex; align-items:center; gap:9px; margin-top:10px; flex-wrap:nowrap; }
+        .ctrls .cbtn { flex:0 0 auto; }
+        .ctrls .spacer { flex:1 1 auto; min-width:4px; }
+        .ctrls .ctime { flex:0 0 auto; white-space:nowrap; }
+        #cc.off { color:var(--text-muted); }
         .cbtn { display:flex; align-items:center; justify-content:center; gap:7px; height:44px; min-width:44px; padding:0 14px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--text-primary); font:600 14px Inter,sans-serif; cursor:pointer; transition:all .2s; }
         .cbtn:hover { background:rgba(255,153,0,.14); border-color:rgba(255,153,0,.4); }
         .cbtn.main { background:linear-gradient(135deg,var(--primary),var(--secondary)); border-color:transparent; }
@@ -889,23 +905,68 @@
     if (wantBelow && subsEl.parentElement !== pbox) { pbox.insertBefore(subsEl, pbox.querySelector('.bar-wrap')); subsEl.classList.add('below'); }
     else if (!wantBelow && subsEl.parentElement !== stage) { stage.appendChild(subsEl); subsEl.classList.remove('below'); }
   }
+  // Вертикальный телефон: кадр 16:9 занял бы полоску посередине — разворачиваем
+  // плеер боком, чтобы он занял весь экран. Панель кнопок в узком кадре ужимается.
+  function fsLayout() {
+    var portrait = window.innerHeight > window.innerWidth;
+    var touch = false; try { touch = matchMedia('(pointer: coarse)').matches; } catch (e) {}
+    var rot = portrait && touch && Math.min(window.innerWidth, window.innerHeight) < 820;
+    pbox.classList.toggle('rot', rot);
+  }
+  // Панель всегда в один ряд: если не влезает — ужимаем подписи ступенями.
+  function compact() {
+    var c = document.querySelector('.ctrls'); if (!c) return;
+    function over() {
+      var gap = parseFloat(getComputedStyle(c).columnGap) || 0, w = 0, k = c.children;
+      for (var i = 0; i < k.length; i++) if (!/spacer/.test(k[i].className)) w += k[i].getBoundingClientRect().width;
+      return w + gap * (k.length - 1) + 6 > c.clientWidth;
+    }
+    pbox.classList.remove('narrow', 'tight', 'icons');
+    if (over()) pbox.classList.add('narrow');
+    if (over()) pbox.classList.add('tight');
+    if (over()) pbox.classList.add('icons');
+  }
+  // Субтитры ставим ровно над панелью, а когда панель спрятана — опускаем ниже.
+  function barH() {
+    var b = document.querySelector('.bar-wrap');
+    if (!b || !isFS()) { subsEl.style.bottom = ''; return; }
+    var u = parseFloat(getComputedStyle(stage).getPropertyValue('--u')) || 10;
+    subsEl.style.bottom = (pbox.classList.contains('idle') ? u * 2.6 : b.offsetHeight + 8) + 'px';
+  }
+  function lockLandscape() {
+    try {
+      var o = screen.orientation;
+      if (o && o.lock && window.innerHeight > window.innerWidth) o.lock('landscape').catch(function () {});
+    } catch (e) {}
+  }
+  function unlockOrientation() { try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch (e) {} }
   function fit() {
     placeSubs();
-    if (isFS()) { player.style.maxWidth = ''; unit(); return; }
+    if (isFS()) { player.style.maxWidth = ''; fsLayout(); unit(); compact(); barH(); return; }
+    pbox.classList.remove('rot'); pbox.style.removeProperty('--barh'); subsEl.style.bottom = '';
     player.style.maxWidth = '';
     var top = player.getBoundingClientRect().top + (window.scrollY || 0);
     var below = document.querySelector('.bar-wrap').offsetHeight + (subsEl.classList.contains('below') ? subsEl.offsetHeight + 10 : 0) + 20;
     var avail = window.innerHeight - top - below - 24;
-    player.style.maxWidth = Math.max(300, Math.min(1320, avail * 16 / 9)) + 'px';
+    // ширина кадра не должна превышать ширину колонки, иначе страница едет вбок
+    var host = player.parentElement, hcs = getComputedStyle(host);
+    var hostW = host.clientWidth - parseFloat(hcs.paddingLeft || 0) - parseFloat(hcs.paddingRight || 0);
+    player.style.maxWidth = Math.max(280, Math.min(1320, avail * 16 / 9, hostW)) + 'px';
     var over = document.querySelector('.ctrls').getBoundingClientRect().bottom - window.innerHeight + 14;
     if (over > 0) player.style.maxWidth = Math.max(300, parseFloat(player.style.maxWidth) - over * 16 / 9) + 'px';
-    unit();
+    unit(); compact();
   }
   var fitT, lastVP = '';
   function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fit, 80); }
   function onViewport() { var v = window.innerWidth + 'x' + window.innerHeight; if (v === lastVP) return; lastVP = v; scheduleFit(); }
   fit(); lastVP = window.innerWidth + 'x' + window.innerHeight;
   addEventListener('resize', scheduleFit); addEventListener('orientationchange', scheduleFit);
+  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { compact(); barH(); }); } catch (e) {}
+  setTimeout(function () { compact(); barH(); }, 400);
+  setTimeout(function () { compact(); barH(); }, 1600);
+  if (window.ResizeObserver) { var rq = false; new ResizeObserver(function () {
+    if (rq) return; rq = true; requestAnimationFrame(function () { rq = false; compact(); barH(); });
+  }).observe(document.querySelector('.bar-wrap')); }
   if (window.ResizeObserver) new ResizeObserver(onViewport).observe(document.documentElement);
   if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleFit);
   addEventListener('load', scheduleFit); document.fonts && document.fonts.ready.then(scheduleFit);
@@ -971,13 +1032,13 @@
   document.querySelectorAll('.chap').forEach(function (b) {
     b.onclick = function () { document.getElementById('poster').classList.add('hide'); a.currentTime = +b.dataset.t; paint(); if (a.paused) a.play(); };
   });
-  document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
-  document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Subtitles on' : 'Subtitles off'; fit(); };
+  document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; compact(); };
+  document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Subtitles on' : 'Subtitles off'; fit(); };
   var fsBtn = document.getElementById('fs'), idleT;
-  function syncFS() { document.getElementById('fsLabel').textContent = isFS() ? 'Exit fullscreen' : 'Fullscreen'; fit(); }
-  function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); idleT = setTimeout(function () { if (isFS() && !a.paused) pbox.classList.add('idle'); }, 2600); }
-  function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; syncFS(); armIdle(); }
-  function fakeOff() { pbox.classList.remove('fsfake', 'idle'); document.body.style.overflow = ''; syncFS(); }
+  function syncFS() { document.getElementById('fsLabel').textContent = isFS() ? 'Exit fullscreen' : 'Fullscreen'; fit(); setTimeout(function () { compact(); barH(); }, 140); setTimeout(function () { compact(); barH(); }, 500); }
+  function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); barH(); idleT = setTimeout(function () { if (isFS() && !a.paused) { pbox.classList.add('idle'); barH(); } }, 2600); }
+  function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; lockLandscape(); syncFS(); armIdle(); }
+  function fakeOff() { pbox.classList.remove('fsfake', 'idle', 'rot'); document.body.style.overflow = ''; unlockOrientation(); syncFS(); }
   fsBtn.onclick = function () {
     if (pbox.classList.contains('fsfake')) return fakeOff();
     if (document.fullscreenElement) return document.exitFullscreen();
@@ -987,7 +1048,11 @@
     if (!pbox.requestFullscreen) fakeOn();
     setTimeout(function () { if (!document.fullscreenElement) fakeOn(); }, 400);
   };
-  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) pbox.classList.remove('idle'); else armIdle(); syncFS(); });
+  document.addEventListener('fullscreenchange', function () {
+    if (!document.fullscreenElement) { pbox.classList.remove('idle', 'rot'); unlockOrientation(); }
+    else { armIdle(); lockLandscape(); }
+    syncFS();
+  });
   pbox.addEventListener('mousemove', function () { if (isFS()) armIdle(); });
   pbox.addEventListener('touchstart', function () { if (isFS()) armIdle(); }, { passive: true });
   addEventListener('keydown', function (e) { if (e.key === 'Escape' && pbox.classList.contains('fsfake')) fakeOff(); });
