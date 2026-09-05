@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="/site-protection.en.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="../../css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 4. Money and Performance Score | Amazon Relay | Dispatcher Course</title>
+  <link rel="canonical" href="https://dispatch4you.com/en/pages/amazon-relay-4-money-rating.html">
+    <meta name="description" content="Part 4 of the Amazon Relay guide: the all-in rate, weekly pay, detention, the four score metrics, grades, safety scorecard, the dispatcher’s week, glossary and quiz.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-nav.css?v=9.1">
+    <link rel="stylesheet" href="/shared-styles.css?v=2.2">
+    <link rel="stylesheet" href="/lesson-visuals.css?v=3">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; width: 100%; max-width: 100vw; scroll-behavior: smooth; }
+
+        :root {
+            --primary: #06b6d4;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary:#e2e8f0;
+            --text-muted:#94a3b8;
+            --border: rgba(255, 255, 255, 0.15);
+            --amz: #ff9900;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker); color: var(--text-primary);
+            line-height: 1.6; overflow-x: hidden; width: 100%; max-width: 100vw; margin: 0; padding: 0;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.15), transparent 50%),
+                        radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(14,165,233,.08), transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 40px; }
+
+        /* HERO */
+        .page-header { padding: 130px 0 70px; text-align: center; }
+        .page-badge {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(255,153,0,.15), rgba(14,165,233,.15));
+            border:1px solid var(--tint-brand-4); border-radius: 24px;
+            font-size: 13px; font-weight: 700; color: var(--primary);
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .page-title {
+            font-size: clamp(40px,5vw,64px); font-weight: 900;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 40%, #ff9900 80%, #fbbf24 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 24px; line-height: 1.1;
+        }
+        .page-subtitle { font-size: 20px; color:var(--text-secondary); max-width: 800px; margin: 0 auto; line-height: 1.7; }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat-number {
+            font-size: 36px; font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--amz));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-stat-label { font-size: 13px; color:var(--text-soft); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 4px; }
+
+        /* SECTIONS */
+        .section { padding: 8px 0; }
+        .section-title {
+            font-size: clamp(28px,3vw,38px); font-weight: 900; margin-bottom: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #ff9900 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .section-desc { font-size: 17px; color:var(--text-secondary); line-height: 1.8; max-width: 900px; margin-bottom: 40px; }
+        .section-text { font-size: 16px; color:var(--text-secondary); line-height: 1.85; margin-bottom: 20px; max-width: 950px; }
+        .section-text strong { color: var(--text-primary); }
+        .section h3 { font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 36px 0 14px; }
+        .section h4 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 24px 0 10px; }
+        .section ul.plain { margin: 0 0 20px 22px; color: var(--text-secondary); font-size: 15px; line-height: 1.8; }
+        .section ul.plain li { margin-bottom: 6px; }
+        .section ul.plain strong { color: var(--text-primary); }
+        .section a { color: var(--primary); }
+
+        /* GLASS CARD */
+        .glass-card {
+            background:var(--glass-03); border:1px solid var(--edge-08);
+            border-radius: 20px; padding: 32px; backdrop-filter: blur(10px); transition: all .35s ease;
+        }
+        .glass-card:hover {
+            border-color:var(--tint-brand-4); background: rgba(6,182,212,.05);
+            transform: translateY(-4px); box-shadow: 0 12px 40px rgba(6,182,212,.1);
+        }
+        .glass-card h3 { margin-top: 0; }
+
+        /* ===== NAVIGATION ===== */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:var(--glass-03);border:1px solid var(--edge-08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:var(--glass-03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:var(--glass-05);transform:translateY(-2px)}.navigation-toggle.active{background:var(--glass-05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:var(--brand-ink);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--brand-ink);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--tint-brand-3)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:var(--text-secondary);text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid var(--edge-08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:var(--brand-ink-3);border-color:var(--tint-brand-4);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:var(--brand-ink)}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:var(--brand-ink-3);border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:var(--brand-ink)}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:var(--brand-ink);transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+
+
+        /* ===== БЛОКИ УРОКА ===== */
+        .ar-remember, .ar-example, .ar-warn { padding: 18px 22px; border-radius: 14px; margin: 22px 0 8px; font-size: 15px; line-height: 1.75; color: var(--text-secondary); }
+        .ar-remember b, .ar-example b, .ar-warn b { display: block; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+        .ar-remember { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3); } .ar-remember b { color: var(--success); }
+        .ar-example { background: rgba(6,182,212,.07); border: 1px solid rgba(6,182,212,.25); } .ar-example b { color: var(--primary); }
+        .ar-warn { background: rgba(255,153,0,.08); border: 1px solid rgba(255,153,0,.35); } .ar-warn b { color: var(--amz); }
+        .ar-warn strong, .ar-example strong, .ar-remember strong { color: var(--text-primary); }
+        .section h4 { font-size: 18px; color: var(--amz); margin: 26px 0 8px; }
+        .ar-map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 8px 0 24px; }
+        .ar-map a { display: block; padding: 14px 14px 12px; border-radius: 14px; background: var(--glass-03); border: 1px solid var(--edge-08); color: var(--text-secondary); text-decoration: none; transition: all .2s; }
+        .ar-map a:hover { border-color: rgba(255,153,0,.4); background: rgba(255,153,0,.06); transform: translateY(-2px); }
+        .ar-map a.on { border-color: rgba(255,153,0,.6); background: rgba(255,153,0,.10); }
+        .ar-map .mn { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; font-size: 12px; font-weight: 800; align-items: center; justify-content: center; margin-bottom: 8px; }
+        .ar-map .mt { display: block; font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .ar-map .md { display: block; font-size: 12px; line-height: 1.5; color: var(--text-soft); }
+        .ar-map a.on .mt { color: var(--amz); }
+        @media (max-width: 1024px) { .ar-map { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 640px) { .ar-map { grid-template-columns: 1fr 1fr; } .ar-map .md { display: none; } }
+
+
+        /* ===== ССЫЛКА НА ВИДЕОУРОК ===== */
+        .ar-video-cta { display:flex; align-items:center; gap:16px; margin:8px 0 26px; padding:18px 22px; border-radius:16px; text-decoration:none;
+            background:linear-gradient(135deg, rgba(255,153,0,.12), rgba(6,182,212,.10)); border:1px solid rgba(255,153,0,.4); transition:all .25s; }
+        .ar-video-cta:hover { border-color:rgba(255,153,0,.7); transform:translateY(-2px); box-shadow:0 10px 30px rgba(255,153,0,.12); }
+        .ar-video-cta .vic { width:46px; height:46px; flex-shrink:0; border-radius:50%; background:linear-gradient(135deg,#06b6d4,#ff9900); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center; padding-left:3px; }
+        .ar-video-cta .vtx { flex:1; min-width:0; }
+        .ar-video-cta .vtx b { display:block; font-size:16px; color:var(--text-primary); margin-bottom:2px; }
+        .ar-video-cta .vtx span { font-size:13.5px; color:var(--text-soft); line-height:1.5; }
+        .ar-video-cta .varr { color:var(--amz); font-size:20px; flex-shrink:0; }
+        /* ===== ИНТЕРАКТИВ ===== */
+        .ar-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+        .ar-tab-btn { padding: 10px 18px; border-radius: 12px; background: var(--glass-05); border: 1px solid var(--edge-10); color: var(--text-secondary); font: 600 14px/1.3 Inter, sans-serif; cursor: pointer; transition: all .2s; }
+        .ar-tab-btn:hover { border-color: rgba(255,153,0,.4); color: var(--text-primary); }
+        .ar-tab-btn.active { background: rgba(255,153,0,.15); border-color: rgba(255,153,0,.55); color: var(--amz); }
+        .ar-pane { display: none; } .ar-pane.active { display: block; animation: fadeIn .3s ease; }
+        .ar-check label { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--glass-05); cursor: pointer; font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+        .ar-check label:last-of-type { border-bottom: none; }
+        .ar-check input { width: 22px; height: 22px; accent-color: #ff9900; flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+        .ar-verdict { margin-top: 14px; padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: 14.5px; line-height: 1.6; background: var(--glass-05); color: var(--text-secondary); }
+        .ar-verdict.ok { background: rgba(16,185,129,.12); color: var(--success); }
+        .ar-verdict.no { background: rgba(239,68,68,.12); color: #fca5a5; }
+        .ar-verdict.mid { background: rgba(245,158,11,.12); color: #fcd34d; }
+        .ar-calc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .ar-calc label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); margin-bottom: 6px; }
+        .ar-calc input, .ar-calc select { width: 100%; padding: 12px 14px; background: var(--glass-06); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: var(--text-primary); font-size: 16px; font-family: inherit; }
+        .ar-calc input:focus, .ar-calc select:focus { outline: none; border-color: var(--amz); box-shadow: 0 0 0 3px rgba(255,153,0,.15); }
+        .ar-out { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 18px; }
+        .ar-out .v { font-size: 30px; font-weight: 900; color: var(--primary); line-height: 1.1; }
+        .ar-out .l { font-size: 11px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .ar-stepper .ar-sdots { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .ar-sdots button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--edge-10); background: var(--glass-05); color: var(--text-secondary); font: 800 14px Inter, sans-serif; cursor: pointer; }
+        .ar-sdots button.done { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .ar-sdots button.active { background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; border-color: transparent; }
+        .ar-sstep { display: none; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .ar-sstep.active { display: grid; animation: fadeIn .3s ease; }
+        .ar-stepper.all .ar-sstep { display: grid; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--glass-05); }
+        .ar-sstep > div { padding: 16px; border-radius: 12px; background: rgba(255,255,255,.03); font-size: 14.5px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-sstep b { color: var(--text-primary); }
+        .ar-sstep .lbl { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+        .ar-sstep .w .lbl { color: var(--amz); } .ar-sstep .d .lbl { color: var(--primary); }
+        .ar-sbtns { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .ar-sbtn { padding: 10px 20px; border-radius: 12px; border: 1px solid var(--edge-10); background: var(--glass-05); color: var(--text-primary); font: 700 14px Inter, sans-serif; cursor: pointer; }
+        .ar-sbtn:disabled { opacity: .35; cursor: default; }
+        .ar-sbtn.ar-snext { background: linear-gradient(135deg, var(--primary), var(--secondary)); border-color: transparent; color: #fff; }
+        svg [data-step] rect { transition: all .3s; }
+        svg [data-step].on rect { stroke: #ff9900; stroke-width: 3; fill: rgba(255,153,0,.22); }
+        svg [data-step].done rect { stroke: rgba(16,185,129,.6); fill: rgba(16,185,129,.12); }
+        .ar-scenario { margin-bottom: 16px; }
+        .ar-sq { font-size: 16px; font-weight: 700; color: var(--text-primary); line-height: 1.55; margin-bottom: 14px; }
+        .ar-opt { display: block; width: 100%; text-align: left; padding: 13px 16px; margin-bottom: 8px; border-radius: 12px; background: var(--glass-05); border: 1px solid var(--edge-10); color: var(--text-secondary); font: 500 14.5px/1.5 Inter, sans-serif; cursor: pointer; transition: all .2s; }
+        .ar-opt:hover:not(:disabled) { border-color: rgba(255,153,0,.45); color: var(--text-primary); }
+        .ar-opt.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.45); color: var(--success); }
+        .ar-opt.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.45); color: #fca5a5; }
+        .ar-opt:disabled { cursor: default; }
+        .ar-sfb { display: none; margin-top: 10px; padding: 12px 16px; border-radius: 12px; background: var(--glass-05); font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+        .ar-sfb.show { display: block; animation: fadeIn .3s ease; }
+        .ar-rs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .ar-rs > div { padding: 14px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); transition: all .2s; }
+        .ar-rs > div.min { border-color: #ef4444; box-shadow: 0 0 0 1px #ef4444 inset; background: rgba(239,68,68,.06); }
+        .ar-rs label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+        .ar-rs label b { color: var(--text-primary); }
+        .ar-rs input[type=range] { width: 100%; accent-color: #ff9900; }
+        @media (max-width: 768px) { .ar-calc, .ar-calc[style] { grid-template-columns: 1fr 1fr !important; } .ar-rs { grid-template-columns: 1fr 1fr; } .ar-sstep, .ar-stepper.all .ar-sstep { grid-template-columns: 1fr; } .ar-out .v { font-size: 24px; } }
+        @media (max-width: 480px) { .ar-calc, .ar-calc[style] { grid-template-columns: 1fr !important; } .ar-rs { grid-template-columns: 1fr; } }
+        /* ===== ОГЛАВЛЕНИЕ ГАЙДА ===== */
+        .ar-toc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0 32px; }
+        .ar-toc a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 600; transition: all .2s; }
+        .ar-toc a:hover { background: rgba(255,153,0,.08); border-color: rgba(255,153,0,.35); color: var(--text-primary); transform: translateX(3px); }
+        .ar-toc .n { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        /* ===== ТАБЛИЦЫ ===== */
+        .ar-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 16px 0 28px; border-radius: 16px; }
+        .ar-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 640px; }
+        .ar-table thead th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); white-space: nowrap; }
+        .ar-table tbody tr { background: var(--glass-03); transition: background .2s; }
+        .ar-table tbody tr:hover { background: rgba(6,182,212,.08); }
+        .ar-table td { padding: 12px 14px; font-size: 14px; color: var(--text-secondary); vertical-align: top; line-height: 1.6; }
+        .ar-table td:first-child { border-radius: 12px 0 0 12px; font-weight: 600; color: var(--text-primary); }
+        .ar-table td:last-child { border-radius: 0 12px 12px 0; }
+        .ar-table td strong { color: var(--text-primary); }
+        .ar-table .ok { color: var(--success); font-weight: 700; }
+        .ar-table .no { color: var(--danger); font-weight: 700; }
+        .ar-table .warn { color: var(--warning); font-weight: 700; }
+        .ar-table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: var(--primary); }
+
+        /* ===== БЕЙДЖИ / КОЛЛАУТЫ ===== */
+        .ar-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; vertical-align: middle; }
+        .ar-badge.off { background: rgba(16,185,129,.15); color: var(--success); border: 1px solid rgba(16,185,129,.3); }
+        .ar-badge.third { background: rgba(245,158,11,.15); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
+        .ar-badge.amz { background: rgba(255,153,0,.15); color: var(--amz); border: 1px solid rgba(255,153,0,.35); }
+        .ar-badge.blue { background: rgba(6,182,212,.15); color: var(--primary); border: 1px solid rgba(6,182,212,.3); }
+        .tip-block { display: flex; gap: 14px; padding: 18px 20px; border-radius: 14px; margin: 18px 0; background: rgba(6,182,212,.07); border: 1px solid rgba(6,182,212,.2); }
+        .tip-block .tip-icon { font-size: 22px; flex-shrink: 0; }
+        .tip-block .tip-text { font-size: 14.5px; color: var(--text-secondary); line-height: 1.75; }
+        .tip-block .tip-text strong { color: var(--text-primary); }
+        .tip-block.warn { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); }
+        .tip-block.gold { background: rgba(255,153,0,.07); border-color: rgba(255,153,0,.3); }
+        .tip-block.src { background: var(--glass-03); border-color: var(--edge-08); }
+        .tip-block.src .tip-text { font-size: 13px; color: var(--text-soft); }
+        .tip-block.src a { color: var(--primary); word-break: break-all; }
+
+        /* ===== СКРИНШОТЫ / МАКЕТЫ ===== */
+        .ar-fig { margin: 22px 0 30px; background: var(--glass-03); border: 1px solid var(--edge-08); border-radius: 18px; overflow: hidden; }
+        .ar-fig img { display: block; width: 100%; height: auto; max-width: 100%; }
+        .ar-fig figcaption { padding: 12px 18px; font-size: 13px; color: var(--text-soft); line-height: 1.6; border-top: 1px solid var(--edge-08); }
+        .ar-fig figcaption strong { color: var(--text-secondary); }
+        .ar-fig.phone { max-width: 360px; }
+        .ar-fig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .ar-fig-row .ar-fig { margin: 22px 0 10px; }
+        .ar-mock { margin: 22px 0 30px; background: #0f1524; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; overflow: hidden; font-size: 13px; color: #e2e8f0; }
+        .ar-mock .m-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #131b2e; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 12px; color: #94a3b8; }
+        .ar-mock .m-bar i { width: 10px; height: 10px; border-radius: 50%; background: #334155; display: inline-block; }
+        .ar-mock .m-bar i:nth-child(1) { background: #ef4444; } .ar-mock .m-bar i:nth-child(2) { background: #f59e0b; } .ar-mock .m-bar i:nth-child(3) { background: #10b981; }
+        .ar-mock .m-body { padding: 16px; }
+        .ar-mock .m-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.04); margin-bottom: 8px; flex-wrap: wrap; }
+        .ar-mock .m-row b { color: #fff; }
+        .ar-mock .m-pill { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(6,182,212,.18); color: #67e8f9; }
+        .ar-mock .m-pill.g { background: rgba(16,185,129,.18); color: #6ee7b7; } .ar-mock .m-pill.o { background: rgba(255,153,0,.2); color: #fbbf24; } .ar-mock .m-pill.r { background: rgba(239,68,68,.2); color: #fca5a5; } .ar-mock .m-pill.gr { background: rgba(148,163,184,.2); color: #cbd5e1; }
+        .ar-mock .m-btn { padding: 8px 16px; border-radius: 8px; background: #ff9900; color: #111; font-weight: 800; font-size: 12px; }
+        .ar-mock .m-btn.sec { background: transparent; border: 1px solid #ff9900; color: #ffb84d; }
+        .ar-mock .m-caption { padding: 10px 16px; font-size: 12px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .ar-mock .m-cols4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .ar-mock .m-metric { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.04); text-align: center; }
+        .ar-mock .m-metric .v { font-size: 26px; font-weight: 900; color: #fff; }
+        .ar-mock .m-metric .l { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+        .ar-mock .m-metric.min { outline: 2px solid #ef4444; }
+        .ar-mock .m-qr { width: 120px; height: 120px; margin: 10px auto; background: repeating-conic-gradient(#fff 0 25%, #0f1524 0 50%) 0 0/16px 16px; border: 6px solid #fff; border-radius: 6px; }
+        .ar-mock .m-side { display: grid; grid-template-columns: 170px 1fr; }
+        .ar-mock .m-nav { background: #0b1020; padding: 12px 0; border-right: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-nav div { padding: 8px 16px; color: #94a3b8; font-size: 12px; }
+        .ar-mock .m-nav div.on { color: #fff; background: rgba(255,153,0,.15); border-left: 3px solid #ff9900; }
+        @media (max-width: 640px) { .ar-mock .m-side { grid-template-columns: 1fr; } .ar-mock .m-nav { display: flex; flex-wrap: wrap; } .ar-mock .m-cols, .ar-mock .m-cols4 { grid-template-columns: 1fr 1fr; } }
+
+        /* ===== ШАГИ / ЧЕК-ЛИСТ / КАРТОЧКИ ===== */
+        .ar-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 28px; counter-reset: st; }
+        .ar-step { display: flex; gap: 16px; padding: 18px 20px; border-radius: 14px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-step::before { counter-increment: st; content: counter(st); width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ar-step > div { flex: 1; min-width: 0; }
+        .ar-step h4 { margin: 0 0 6px; font-size: 16px; }
+        .ar-step p { font-size: 14px; color: var(--text-secondary); line-height: 1.75; margin: 0; }
+        .ar-step p + p { margin-top: 8px; }
+        .checklist { list-style: none; }
+        .checklist-item { padding: 14px 0; border-bottom:1px solid var(--glass-05); cursor: pointer; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-header { display: flex; align-items: center; gap: 12px; font-size: 15.5px; font-weight: 600; color: var(--text-primary); transition: color .2s; }
+        .checklist-header:hover { color: var(--primary); }
+        .checklist-icon { font-size: 20px; flex-shrink: 0; }
+        .checklist-arrow { margin-left: auto; font-size: 12px; color:var(--text-soft); transition: transform .3s; }
+        .checklist-item.open .checklist-arrow { transform: rotate(180deg); }
+        .checklist-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .checklist-item.open .checklist-body { max-height: 900px; }
+        .checklist-body p { padding: 12px 0 4px 32px; font-size: 14px; color:var(--text-secondary); line-height: 1.8; }
+        .ar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0 28px; }
+        .ar-grid.two { grid-template-columns: 1fr 1fr; }
+        .ar-card { padding: 22px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-card .ic { font-size: 30px; margin-bottom: 10px; }
+        .ar-card h4 { margin: 0 0 8px; font-size: 16px; }
+        .ar-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-card.hot { border-color: rgba(255,153,0,.4); background: rgba(255,153,0,.06); }
+        .ar-card.bad { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.05); }
+        .ar-card.good { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.05); }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .pros, .cons { padding: 20px; border-radius: 14px; }
+        .pros { background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.15); }
+        .cons { background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.15); }
+        .pros h4, .cons h4 { margin-top: 0; font-size: 14px; }
+        .pros h4 { color: var(--success); } .cons h4 { color: var(--danger); }
+        .pros ul, .cons ul { list-style: none; }
+        .pros li, .cons li { padding: 6px 0; color: var(--text-secondary); font-size: 14px; display: flex; gap: 10px; line-height: 1.6; }
+        .pros li::before { content: '✓'; color: var(--success); font-weight: 700; } .cons li::before { content: '✗'; color: var(--danger); font-weight: 700; }
+
+        /* ===== ПРОБЛЕМЫ ===== */
+        .ar-problem { margin-bottom: 12px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); overflow: hidden; }
+        .ar-problem summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15.5px; color: var(--text-primary); }
+        .ar-problem summary::-webkit-details-marker { display: none; }
+        .ar-problem summary .sev { font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 800; letter-spacing: .5px; margin-left: auto; flex-shrink: 0; }
+        .sev.hi { background: rgba(239,68,68,.18); color: #fca5a5; } .sev.md { background: rgba(245,158,11,.18); color: #fcd34d; } .sev.lo { background: rgba(16,185,129,.18); color: #6ee7b7; }
+        .ar-problem[open] summary { border-bottom: 1px solid var(--edge-08); background: rgba(6,182,212,.05); }
+        .ar-problem .pb { padding: 16px 20px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .ar-problem .pb > div { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.03); font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-problem .pb .lbl { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+        .ar-problem .pb .d .lbl { color: var(--primary); } .ar-problem .pb .w .lbl { color: var(--amz); } .ar-problem .pb .c .lbl { color: var(--danger); } .ar-problem .pb .r .lbl { color: var(--success); }
+        .ar-problem .pb .full { grid-column: 1 / -1; }
+
+        /* ===== ДЕНЬ ДИСПЕТЧЕРА ===== */
+        .ar-day { display: grid; grid-template-columns: 110px 1fr; gap: 0 16px; margin: 16px 0 28px; }
+        .ar-day .t { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--primary); padding: 14px 0; text-align: right; border-right: 2px solid var(--tint-brand-3); padding-right: 14px; }
+        .ar-day .w { padding: 12px 0 12px 4px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; border-bottom: 1px solid var(--glass-05); }
+        .ar-day .w strong { color: var(--text-primary); }
+
+        /* ===== SVG ===== */
+        .ar-svg { width: 100%; height: auto; display: block; margin: 16px 0 28px; }
+        .ar-svg text { font-family: 'Inter', sans-serif; }
+
+        /* ===== ГЛОССАРИЙ ===== */
+        .ar-gl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 28px; }
+        .ar-gl div { padding: 14px 16px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        .ar-gl b { color: var(--amz); display: block; margin-bottom: 4px; font-size: 15px; }
+
+        /* QUIZ */
+        .quiz-card { background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(255,153,0,.05)); border:1px solid var(--tint-brand-3); border-radius: 24px; padding: 40px; }
+        .quiz-question { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; line-height: 1.5; }
+        .quiz-options { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+        .quiz-option { padding: 16px 20px; background:var(--glass-05); border:1px solid var(--edge-10); border-radius: 14px; color:var(--text-secondary); font-size: 15px; font-weight: 500; cursor: pointer; transition: all .3s; font-family: inherit; text-align: left; }
+        .quiz-option:hover { background:var(--tint-brand-1); border-color:var(--tint-brand-4); color: var(--text-primary); }
+        .quiz-option.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .quiz-option.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: var(--danger); }
+        .quiz-option:disabled { cursor: default; }
+        .quiz-feedback { padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.7; display: none; }
+        .quiz-feedback.visible { display: block; animation: fadeIn .3s ease; }
+        .quiz-feedback.success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .quiz-feedback.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .quiz-counter { font-size: 14px; color:var(--text-soft); font-weight: 600; }
+        .quiz-next-btn { padding: 10px 24px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .3s; font-family: inherit; display: none; }
+        .quiz-next-btn.visible { display: inline-block; }
+        .quiz-score { text-align: center; padding: 32px; display: none; }
+        .quiz-score.visible { display: block; }
+        .quiz-restart-btn { margin-top: 20px; padding: 12px 28px; background:var(--glass-08); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .3s; font-family: inherit; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* ===== МОБИЛЬНАЯ ЧИТАЕМОСТЬ ===== */
+        .ar-svg-wrap { margin: 16px 0 28px; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+        .ar-svg-wrap .ar-svg { margin: 0; }
+        @media (max-width: 640px) {
+            .ar-svg-wrap .ar-svg { min-width: 760px; }
+            .ar-svg-wrap::after { content: '← swipe to scroll the diagram →'; display: block; text-align: center; font-size: 12px; color: var(--text-soft); padding: 6px 0 2px; }
+            .ar-table { min-width: 0; border-spacing: 0; }
+            .ar-table thead { display: none; }
+            .ar-table tbody, .ar-table tr, .ar-table td { display: block; width: 100%; }
+            .ar-table tr { margin-bottom: 10px; border-radius: 14px; padding: 8px 0; border: 1px solid var(--edge-08); }
+            .ar-table td { padding: 6px 14px; border-radius: 0 !important; font-size: 14.5px; }
+            .ar-table td:first-child { padding-top: 12px; font-size: 16px; color: var(--amz); }
+            .ar-table td:last-child { padding-bottom: 12px; }
+            .ar-table td:not(:first-child)[data-label]::before { content: attr(data-label); display: block; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-soft); margin-bottom: 2px; }
+            .ar-mock { font-size: 13.5px; }
+            .ar-mock .m-row { font-size: 13.5px; }
+            .ar-problem summary { font-size: 15px; }
+            .glass-card p[style*="monospace"], .glass-card p[style*="Menlo"] { font-size: 12.5px !important; }
+        }
+        /* RESPONSIVE */
+        @media (max-width: 1024px) { .ar-grid { grid-template-columns: 1fr 1fr; } .ar-toc { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .page-header { padding: 100px 0 50px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-number { font-size: 28px; }
+            .quiz-options { grid-template-columns: 1fr; }
+            .ar-grid, .ar-grid.two, .ar-gl, .pros-cons, .ar-fig-row, .ar-problem .pb { grid-template-columns: 1fr; }
+            .ar-toc { grid-template-columns: 1fr; }
+            .ar-day { grid-template-columns: 74px 1fr; }
+        }
+        @media (max-width: 480px) { .container { padding: 0 16px; } .hero-stats { flex-direction: column; gap: 16px; } }
+        @media (max-width: 360px) { .container { padding: 0 12px; } .glass-card { padding: 20px; } .quiz-card { padding: 24px; } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-darker); }
+        ::-webkit-scrollbar-thumb { background:var(--tint-brand-4); border-radius: 4px; }
+
+        /* ===== SCROLL TO TOP BUTTON ===== */
+        .scroll-to-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(6,182,212,0.3);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);opacity:0;visibility:hidden;z-index:999}.scroll-to-top.visible{opacity:1;visibility:visible}.scroll-to-top.inactive{opacity:0.2}.scroll-to-top:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(6,182,212,0.4)}.scroll-to-top svg{color:var(--text-primary)}@media(max-width:768px){.scroll-to-top{width:48px;height:48px;bottom:24px;right:24px}}
+
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:40px auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--glass-03);border:1px solid var(--edge-08);border-radius:14px;text-decoration:none;color:var(--text-primary);transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:var(--text-primary)}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+    </style>
+    <script type="module" src="/firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="/role-guard.en.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=26"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">📦 Amazon Relay guide · part 4 of 4</div>
+            <h1 class="page-title">Money and score</h1>
+            <p class="page-subtitle">What Amazon pays and what drops your score. How the rate is built, when the money lands, how to get paid for detention. The four metrics and the rule that your score is the worst of them. The dispatcher’s week day by day, a glossary of every term in the guide and a ten-question check.</p>
+        </div>
+    </section>
+
+    <!-- COURSE NAVIGATION -->
+    <section class="section" style="padding-top: 0; padding-bottom: 30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Course Navigation</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ SECTIONS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/documentation.html">📚 Course</a>
+                                    <a href="/en/pages/intro.html">📋 Introduction</a>
+                                    <a href="/en/pages/role.html">👤 Role</a>
+                                    <a href="/en/pages/equipment.html">🚛 Truck Types</a>
+                                    <a href="/en/pages/routes.html">🗺 Routes</a>
+                                    <a href="/en/pages/loadboards.html">📡 Load Boards</a>
+                                    <a href="/en/pages/negotiation.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/brokers.html">💼 Brokers</a>
+                                    <a href="/en/pages/docs.html">📄 Documents</a>
+                                    <a href="/en/pages/regulations.html">⚖️ Regulations</a>
+                                    <a href="/en/pages/technology.html">🖥 Technology</a>
+                                    <a href="/en/pages/communication.html">📞 Communication</a>
+                                    <a href="/en/pages/problems.html">⚠️ Problems</a>
+                                    <a href="/en/pages/finances.html">💰 Finances</a>
+                                    <a href="/en/pages/career.html">📈 Career</a>
+                                </div>
+                            </div>
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ MODULES<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/doc-module-1-complete.html">🏭 Introduction</a>
+                                    <a href="/en/pages/doc-module-2-complete.html">⚖️ Regulations</a>
+                                    <a href="/en/pages/doc-module-3-complete.html">🚛 Equipment</a>
+                                    <a href="/en/pages/doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="/en/pages/doc-module-5-complete.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/doc-module-6-complete.html">🗺 Routes</a>
+                                    <a href="/en/pages/doc-module-7-complete.html">📄 Documents</a>
+                                    <a href="/en/pages/doc-module-8-complete.html">👥 Drivers</a>
+                                    <a href="/en/pages/doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="/en/pages/doc-module-10-complete.html">💰 Finances</a>
+                                    <a href="/en/pages/doc-module-11-complete.html">🚨 Crises</a>
+                                    <a href="/en/pages/doc-module-12-complete.html">📈 Career</a>
+                                </div>
+                            </div>
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ TOOLS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/Trainer-Quiz.html">💡 Trainer</a>
+                                    <a href="/en/pages/testing.html">📝 Tests</a>
+                                    <a href="/en/pages/cases.html">🗂 Cases</a>
+                                    <a href="amazon-relay.html" class="active">📦 Amazon Relay</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top:0">A four-part guide</h3>
+            <div class="ar-map">
+                <a href="amazon-relay.html"><span class="mn">1</span><span class="mt">What it is and how to join</span><span class="md">What Relay is and how it differs from a broker. How your company gets in. How to add a driver.</span></a>
+                <a href="amazon-relay-2-loads.html"><span class="mn">2</span><span class="mt">Loads, booking, the run</span><span class="md">The kinds of loads. How a dispatcher books one and assigns a driver. How the driver works a facility.</span></a>
+                <a href="amazon-relay-3-problems.html"><span class="mn">3</span><span class="mt">When things go wrong</span><span class="md">22 situations at the facility, before and after the run, and with the account. What the dispatcher does in each.</span></a>
+                <a href="amazon-relay-4-money-rating.html" class="on"><span class="mn">4</span><span class="mt">Money, score, the week</span><span class="md">How the rate is built and when you get paid. How Amazon scores a carrier. The dispatcher’s week, glossary and quiz.</span></a>
+            </div>
+            <h3>In this part</h3>
+            <div class="ar-toc">
+                <a href="#r8"><span class="n">8</span>How the money works</a>
+                <a href="#r9"><span class="n">9</span>How Amazon scores a carrier</a>
+                <a href="#r10"><span class="n">10</span>A dispatcher's week with Amazon</a>
+                <a href="#r11"><span class="n">11</span>Relay against broker freight</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="r8">
+        <div class="container">
+            <h2 class="section-title">8. How the money works</h2>
+
+            <h3>What it is</h3>
+            <p class="section-text">
+                Money in Relay is simpler than with brokers. No rate confirmation in your inbox, no invoice to raise, no waiting
+                thirty to forty-five days and no factoring taking its percentage. The other side of that coin: the price is not
+                negotiable, deadhead is never paid, and accessorials like detention and truck-ordered-not-used are opaque and
+                have to be claimed through cases.
+            </p>
+
+            <h3>What the rate is made of</h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Component</th><th>How it is set</th><th>What it means for you</th></tr></thead>
+                    <tbody>
+                        <tr><td>Base rate</td><td>Amazon sets it by lane, demand and urgency. It moves hour to hour, and Hot Loads carry a premium.</td><td>The same pair of facilities can pay differently in the morning and in the evening. Do not memorise a lane price, read the board.</td></tr>
+                        <tr><td>Fuel surcharge</td><td>Included in the all-in figure under Relay's own program policies. Not shown separately, not negotiable.</td><td>When comparing with a broker, remember their fuel is often quoted separately while Relay's is already inside.</td></tr>
+                        <tr><td>Tolls</td><td>Included in the all-in figure.</td><td>On Northeast lanes that is a real chunk of the rate. Keep a transponder in the truck; you do not collect receipts.</td></tr>
+                        <tr><td>Deadhead</td><td>Never paid.</td><td>The main hidden cost. Price the whole loop, not the loaded leg.</td></tr>
+                        <tr><td>Block pay</td><td>A block is paid in full for the time, even if Amazon did not use every hour.</td><td>An underused block is profit, not loss: the driver rests and the money is the same.</td></tr>
+                        <tr><td>Negotiation</td><td>None, with three exceptions: Post A Truck where you set the minimum, auctions where you name a price, and Relay Assistant offering a counter-offer on urgent loads to high-grade carriers.</td><td>Do not call support asking for more money; that mechanism does not exist.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>When the money lands</h3>
+            <div class="ar-svg-wrap"><svg class="ar-svg" viewBox="0 0 1000 170" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pay week runs Sunday to Saturday, paid the following Friday">
+                <g font-size="12" fill="var(--text-secondary)">
+                    <rect x="20" y="40" width="560" height="60" rx="12" fill="rgba(6,182,212,.10)" stroke="rgba(6,182,212,.5)"/>
+                    <text x="300" y="65" text-anchor="middle" font-weight="800" fill="#06b6d4" font-size="14">Pay week: Sunday 00:00 → Saturday 23:59</text>
+                    <text x="300" y="86" text-anchor="middle" font-size="11">every trip completed inside that window</text>
+                    <g stroke="#ff9900" stroke-width="2.5" fill="none"><path d="M580 70 H660"/><path d="M652 63 L660 70 L652 77"/></g>
+                    <rect x="660" y="40" width="320" height="60" rx="12" fill="rgba(255,153,0,.10)" stroke="rgba(255,153,0,.5)"/>
+                    <text x="820" y="65" text-anchor="middle" font-weight="800" fill="#ff9900" font-size="14">Paid: the following Friday</text>
+                    <text x="820" y="86" text-anchor="middle" font-size="11">into the bank account, no fees</text>
+                    <text x="500" y="140" text-anchor="middle" font-size="12" fill="var(--text-soft)">A trip finished Saturday night is paid in six days. A trip finished Sunday morning belongs to the next week and waits twelve.</text>
+                </g>
+            </svg></div>
+            <div class="glass-card" style="margin-bottom:20px">
+                <div class="ar-calc" style="grid-template-columns:1fr 2fr">
+                    <div><label for="pdDay">Trip completed on</label><select id="pdDay"><option value="0">Sunday</option><option value="1">Monday</option><option value="2" selected>Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option></select></div>
+                    <div><label>When the money lands</label><div class="ar-verdict ok" id="pdOut" style="margin-top:0"></div></div>
+                </div>
+            </div>
+            <ul class="plain">
+                <li><strong>No fees.</strong> Not for registration, not for booking, not for the payout.</li>
+                <li><strong>Factoring is optional.</strong> A weekly payment from Amazon is more reliable than most brokers. Paying a factor two to four percent for money that arrives on Friday makes little sense.</li>
+                <li><strong>There is no fast pay.</strong> Relay has no way to speed a payout up. <span class="ar-badge third">carrier reports</span></li>
+                <li><strong>Paperwork is automatic.</strong> Electronic proof of delivery is generated in the app and at the gate. Nothing gets emailed anywhere. If a document is missing from the trip, open a case rather than sending mail.</li>
+                <li><strong>Payment disputes: thirty days</strong> from the trip. After that there is nothing to argue about.</li>
+            </ul>
+
+            <h3>Detention, cancelled loads and layover</h3>
+            <div class="ar-warn">
+                <b>Important</b>
+                Amazon does <strong>not publish</strong> free time, detention rates or the truck-ordered-not-used amount. Everything
+                below comes from carrier experience in 2025 and 2026 and may differ for your account. Check Relay Program Policies
+                in your portal and ask support before you count on this money.
+            </div>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>What for</th><th>What carriers report</th><th>How to get it</th></tr></thead>
+                    <tbody>
+                        <tr><td>Detention</td><td>Around two hours free from Check In. There is an hourly rate but it is capped, and it is rarely paid automatically, usually only when the app steps are timestamped cleanly.</td><td>A case saying "waiting since hh:mm" while you are still there, plus a payment dispute afterwards with timeline screenshots. Without Check In, Pick Up and Drop Off timestamps the odds are poor.</td></tr>
+                        <tr><td>Truck ordered not used</td><td>About $175 for a late cancellation by Amazon; sources disagree on whether the cutoff is two or four hours.</td><td>A Payments case right after the cancellation with the check-in time or the time the truck left for the facility.</td></tr>
+                        <tr><td>Layover</td><td>Possible when a trip is cancelled after the driver arrives and he has to stay overnight. Amounts are not published.</td><td>A case with the timeline and photos or receipts.</td></tr>
+                        <tr><td>Chargebacks</td><td>No public information. Relay's main penalty is not money, it is your score.</td><td>—</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>What a contract week actually earns</h3>
+            <p class="section-text">
+                Three thirty-seven-hour blocks a week, one solo driver, sleeper tractor. The numbers are illustrative, the
+                structure is the real thing.
+            </p>
+            <div class="glass-card">
+                <div class="ar-calc" style="grid-template-columns:repeat(3,1fr)">
+                    <div><label for="bcBid">Price per block, $</label><input id="bcBid" type="number" value="2100" min="0"></div>
+                    <div><label for="bcN">Blocks per week</label><input id="bcN" type="number" value="3" min="1" max="7"></div>
+                    <div><label for="bcMiles">Loaded miles per block</label><input id="bcMiles" type="number" value="900" min="0"></div>
+                    <div><label for="bcDead">Empty miles per block</label><input id="bcDead" type="number" value="120" min="0"></div>
+                    <div><label for="bcCost">Truck cost, $ per mile</label><input id="bcCost" type="number" value="1.25" min="0" step="0.05"></div>
+                    <div><label for="bcDriver">Driver, % of revenue</label><input id="bcDriver" type="number" value="28" min="0" max="100"></div>
+                </div>
+                <div class="ar-out">
+                    <div><div class="v">$<span id="bcRev">0</span></div><div class="l">weekly revenue</div></div>
+                    <div><div class="v"><span id="bcMi">0</span></div><div class="l">total miles</div></div>
+                    <div><div class="v">−$<span id="bcExp">0</span></div><div class="l">truck cost</div></div>
+                    <div><div class="v">−$<span id="bcDrv">0</span></div><div class="l">driver</div></div>
+                    <div><div class="v" style="color:var(--success)">$<span id="bcProf">0</span></div><div class="l">weekly profit</div></div>
+                    <div><div class="v">$<span id="bcRpm">0</span></div><div class="l">per mile, empties included</div></div>
+                </div>
+            </div>
+            <p class="section-text">
+                Notice what happens if Amazon underuses the block and the truck runs seven hundred miles instead of nine hundred:
+                revenue stays the same and cost drops, so profit goes up. That is precisely why experienced carriers prefer
+                contract blocks to the board.
+            </p>
+
+            <h3>Bonus programs</h3>
+            <div class="ar-grid">
+                <div class="ar-card"><div class="ic">🏅</div><h4>Relay Rewards</h4><p>Tiers starting at Basic, recalculated on the fifth of each month from your score, miles and tenure. Bonuses on promotional loads, discounts on fuel, tires and insurance.</p></div>
+                <div class="ar-card"><div class="ic">🛡️</div><h4>Safety Rewards</h4><p>Opt in and earn one to four cents per mile with no collisions, in tiers by annual mileage. Requires an approved dash camera; Amazon pays for the hardware and the first year of subscription. A collision resets the counter.</p></div>
+                <div class="ar-card"><div class="ic">🎁</div><h4>New carrier promos</h4><p>Periodic sign-up bonuses, for example $1,500 for your first seven loads ahead of Prime Day 2026. Terms appear on relay.amazon.com at registration.</p></div>
+            </div>
+            <figure class="ar-fig">
+                <img src="/img/amazon-relay/rewards-grades.webp" alt="Relay Rewards eligibility by performance grade" loading="lazy" width="1000" height="563">
+                <figcaption><strong>What your grade unlocks.</strong> Access to bonuses and programs depends on the performance grade. Source: Amazon Relay blog. © Amazon.</figcaption>
+            </figure>
+            <div class="ar-remember">
+                <b>Remember</b>
+                The rate on the card is final and deadhead is never paid. Money arrives Friday for the previous week, with no fees.
+                Detention and cancellation pay only come through cases, and the dispute window is thirty days.
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="r9">
+        <div class="container">
+            <h2 class="section-title">9. How Amazon scores a carrier</h2>
+
+            <h3>What it is</h3>
+            <p class="section-text">
+                In the broker world your reputation is "people know us". In Relay your reputation is a number from zero to one
+                hundred and a grade from F to A+, recalculated over your last six active weeks. That number decides which loads
+                you see, whether you win auctions and whether you stay in the system at all. A dispatcher who does not look at
+                the scorecard daily is flying blind.
+            </p>
+
+            <h3>The four metrics, and the rule that matters</h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Metric</th><th>What it measures</th><th>What breaks it</th><th>Who owns it</th></tr></thead>
+                    <tbody>
+                        <tr><td>On-time</td><td>Arriving inside the window at every stop, measured by the Check In timestamp.</td><td>Lateness, weighted by duration: 1–60 minutes ×1, 61–240 ×2, 241–600 ×4, 601+ ×8.</td><td>The driver taps on time, the dispatcher plans with slack.</td></tr>
+                        <tr><td>Acceptance</td><td>How much of what you booked you actually hauled.</td><td>Cancellations and expired loads. Blocks: more than 24 hours ×1, under 24 hours or after the start ×4. Contracts: 3+ weeks ×1, closer ×2.</td><td>The dispatcher, entirely.</td></tr>
+                        <tr><td>App usage</td><td>Half the app steps completed (Check In, Pick Up, Drop Off), half location availability on the road.</td><td>Skipped steps, a closed app, battery saver, "forgot to tap".</td><td>Driver plus dispatcher, through phone settings and map checks.</td></tr>
+                        <tr><td>Disruption-free</td><td>No incidents: wrong trailer, swapped driver, yard violations, complaints, damage.</td><td>Incidents recorded by Amazon or the facility.</td><td>Both.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Move the sliders</h3>
+            <p class="section-text">Four metrics, four sliders. The red outline marks the worst one, and that is your score. Below it, what that grade unlocks.</p>
+            <div class="glass-card">
+                <div class="ar-rs">
+                    <div id="rsOntimeBox"><label for="rsOntime"><span>On-time</span><b id="rsOntimeV"></b></label><input id="rsOntime" type="range" min="50" max="100" value="97"></div>
+                    <div id="rsAcceptBox"><label for="rsAccept"><span>Acceptance</span><b id="rsAcceptV"></b></label><input id="rsAccept" type="range" min="50" max="100" value="100"></div>
+                    <div id="rsAppBox"><label for="rsApp"><span>App usage</span><b id="rsAppV"></b></label><input id="rsApp" type="range" min="50" max="100" value="84"></div>
+                    <div id="rsDisrBox"><label for="rsDisr"><span>Disruption-free</span><b id="rsDisrV"></b></label><input id="rsDisr" type="range" min="50" max="100" value="99"></div>
+                </div>
+                <div class="ar-out" style="align-items:center">
+                    <div><div class="v" id="rsScore">0</div><div class="l">your score = the worst metric</div></div>
+                    <div style="flex:1;min-width:240px"><div class="ar-verdict ok" id="rsUnlock" style="margin-top:0"></div></div>
+                </div>
+                <p style="font-size:12px;color:var(--text-soft);margin-top:12px">Grade boundaries come from carrier reports; Amazon does not publish them.</p>
+            </div>
+
+            <figure class="ar-fig">
+                <img src="/img/amazon-relay/performance-how.webp" alt="Amazon diagram of how the performance score is built" loading="lazy" width="1000" height="563">
+                <figcaption><strong>Amazon's own diagram of the four metrics.</strong> Source: Amazon Relay blog. © Amazon.</figcaption>
+            </figure>
+
+            <h3>What each grade unlocks</h3>
+            <div class="ar-table-wrap">
+                <table class="ar-table">
+                    <thead><tr><th>Grade</th><th>What you get</th></tr></thead>
+                    <tbody>
+                        <tr><td>Any</td><td>The load board, Post A Truck and Relay Rewards.</td></tr>
+                        <tr><td>C+ and up</td><td>Plus block auctions (reefer auctions start at B).</td></tr>
+                        <tr><td>B and up</td><td>Plus multi-week contracts.</td></tr>
+                        <tr><td>B+ and up</td><td>Plus early access to new loads and auctions.</td></tr>
+                        <tr><td>A and A+</td><td>Plus price alerts, an edge in auctions and counter-offers on urgent loads through the assistant.</td></tr>
+                        <tr><td>Below C+</td><td>Auctions close and contracts you already hold can be pulled. Lower still, suspension is in view.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="section-text">
+                Amazon does not publish the exact boundaries. Carriers report A from 98%, B from 90%, C from 70%. The score appears
+                after your first ten loads. Cancellations by Amazon do not count. Questionable entries are disputed in the
+                Performance section of the site, not from the app.
+            </p>
+
+            <h3>The second scorecard: safety</h3>
+            <p class="section-text">
+                Next to the performance score sits the safety scorecard. It shows your CSA percentiles and, since 2026, your
+                violation rate on roadside inspections: no more than 35% for drivers and 50% for vehicles. Unlike performance,
+                this cannot be fixed in six weeks: the window is twelve months and the violation rate cannot be appealed. The only
+                levers are clean inspections, which grow the denominator, and DataQ challenges on questionable violations, which
+                shrink the numerator.
+            </p>
+
+            <h3>The dispatcher's daily score routine</h3>
+            <div class="glass-card">
+                <ul class="checklist">
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🌅</span>Morning: the lowest metric and the forecast<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Do not look at the overall number, look at which of the four is currently lowest. That is where the day's attention goes. The forecast shows where things are heading if nothing changes.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">📋</span>Yesterday's new entries<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Every late arrival, skipped step and incident, each with a trip ID. Dispute the questionable ones today, attaching yesterday's support cases.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">📱</span>App usage by driver<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>If the metric is falling, find whose trip is dragging it: the timelines show where location was missing or a step was skipped. Talk to that driver, do not send a blanket "everyone turn the app on".</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🛡️</span>Weekly: the safety scorecard<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>New inspections, percentile movement, violation rate. Challenge a questionable violation through DataQ immediately.</p></div></li>
+                    <li class="checklist-item" onclick="toggleChecklist(this)"><div class="checklist-header"><span class="checklist-icon">🎯</span>Before every booking: "is there a driver right now?"<span class="checklist-arrow">▼</span></div><div class="checklist-body"><p>Acceptance is the one metric the dispatcher controls completely. One expired load a week out of twenty is five percent gone and a grade lost.</p></div></li>
+                </ul>
+            </div>
+            <div class="ar-remember">
+                <b>Remember</b>
+                Your score is the worst of four metrics over six active weeks. Auctions at C+, contracts at B. The safety scorecard
+                runs on a twelve-month window and cannot be appealed. Check both every day.
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="r10">
+        <div class="container">
+            <h2 class="section-title">10. A dispatcher's week with Amazon</h2>
+            <p class="section-text">
+                Everything above, folded into a schedule. Working Relay is a cycle: auctions a week ahead, assignments a day
+                ahead, hour-by-hour control on the day of the block, then paperwork, disputes and the payment check.
+            </p>
+
+            <h3>A week out and earlier</h3>
+            <div class="ar-day">
+                <div class="t">Mon–Tue</div><div class="w"><strong>Auctions.</strong> Check auctions one to six weeks out for your fleet. Price a block against the worst case: full mileage, driver hours, deadhead out and home. Place bids. See which contracts are ending and rebid them.</div>
+                <div class="t">Wed</div><div class="w"><strong>Truck calendar.</strong> Put won blocks, board loads and broker freight into one calendar for next week. Check for overlaps. Decide where to post a truck to fill the gaps.</div>
+                <div class="t">Thu–Fri</div><div class="w"><strong>People and equipment.</strong> Every block needs a driver in Active status and a tractor entered in Relay. Check hours of service: a thirty-seven-hour solo block needs a fresh clock. New drivers must have finished the training videos.</div>
+                <div class="t">Fri</div><div class="w"><strong>Money.</strong> Reconcile last week's payment against the trips. Anything off goes into a payment dispute inside thirty days. Look at the score forecast.</div>
+            </div>
+
+            <h3>Twenty-four hours before a block</h3>
+            <div class="ar-day">
+                <div class="t">−24 h</div><div class="w"><strong>Trips.</strong> Every trip in the block has a driver and a tractor. Open each one: stops, windows, trailer type, live or drop. Red flags: a night delivery station, a busy facility in peak season, an unfamiliar code.</div>
+                <div class="t">−24 h</div><div class="w"><strong>Cancel now if you must.</strong> This is the moment: over twenty-four hours it counts once, under it counts four times. Any doubt about the driver or the truck gets settled here.</div>
+                <div class="t">−12 h</div><div class="w"><strong>The driver's briefing</strong> from the template in part 2: addresses, windows, where to stage, what to photograph, your number.</div>
+                <div class="t">−12 h</div><div class="w"><strong>The driver's phone.</strong> App updated, location Always, charger in the cab. For a new driver, a video call to check the settings together.</div>
+                <div class="t">−2 h</div><div class="w"><strong>Trips again.</strong> Amazon's cancellations show up here before the driver's five-hour alert. If one landed, pull a replacement off the board from the same point.</div>
+            </div>
+
+            <h3>The day of the block, by the clock</h3>
+            <div class="ar-day">
+                <div class="t">Start −1 h</div><div class="w">The driver taps <strong>Begin work</strong>. A dot appears on the tracking map. No dot means a phone call: app, location.</div>
+                <div class="t">Pickup −45 m</div><div class="w">Truck at the facility, on the staging lot. Remind him: <strong>at the gate, tap Check In</strong>.</div>
+                <div class="t">Pickup</div><div class="w">Confirm the Check In timestamp is inside the window on the trip timeline. Then Pick Up, verify trailer ID, inspection, seal. Wait for the seal photo.</div>
+                <div class="t">+30 m</div><div class="w">Still on site? Ask why. <strong>+90 m</strong> open a case "waiting since". <strong>+120 m</strong> open the second one for detention.</div>
+                <div class="t">In transit</div><div class="w">Watch the trip colour on the map. Red means call the driver and open a "running late, new ETA" case. Make sure he has seen the weather alert.</div>
+                <div class="t">Delivery −30 m</div><div class="w">If the block continues, check the trailer status for the next leg. A problem visible now is a case opened now.</div>
+                <div class="t">Delivery</div><div class="w">Check In, Drop Off, Trailer Detach, Check Out, all before the gate. Timeline screenshot from the driver. Pull a return load if the block is done.</div>
+                <div class="t">End</div><div class="w">Is an Amazon trailer still hooked to your truck? If so, open a case before the shift ends. Every trip in the block should show Completed.</div>
+            </div>
+
+            <h3>After the block</h3>
+            <div class="ar-day">
+                <div class="t">+1 day</div><div class="w"><strong>Paperwork.</strong> Proof of delivery present in the trip. Timeline screenshots of any delay filed with the trip. Cases opened for detention, cancellation or layover where there are grounds.</div>
+                <div class="t">+1 day</div><div class="w"><strong>Scorecard.</strong> Any new entries: lateness, a skipped step, lost tracking. Dispute the questionable ones immediately with the day's cases attached.</div>
+                <div class="t">+1–2 days</div><div class="w"><strong>Debrief the driver.</strong> Not "why were you late" but "at which step did we lose the time and what changes". One point at a time.</div>
+                <div class="t">Friday</div><div class="w"><strong>Payment.</strong> Pay week runs Sunday to Saturday, money lands the following Friday. Reconcile the amount against the trips. Detention promised in a case but not paid becomes a payment dispute.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="r11">
+        <div class="container">
+            <h2 class="section-title">11. Relay against broker freight</h2>
+            <div class="pros-cons">
+                <div class="pros">
+                    <h4>✓ FOR RELAY</h4>
+                    <ul>
+                        <li>A direct shipper: no double brokering, no "the broker did not pay".</li>
+                        <li>Weekly payment with no fees and no factoring.</li>
+                        <li>Amazon trailers: power only with no trailer costs of your own.</li>
+                        <li>One-button booking, no calls and no rate confirmations. Reload suggestions out of the delivery point.</li>
+                        <li>Contract blocks: a predictable week, paid for time even when the freight is light.</li>
+                        <li>Steady volume, peaking from October through January and around Prime Day.</li>
+                        <li>Tracking and paperwork inside one app; proof of delivery does not go missing.</li>
+                    </ul>
+                </div>
+                <div class="cons">
+                    <h4>✗ AGAINST</h4>
+                    <ul>
+                        <li>Rates run fifteen to thirty percent under the broker spot market, with no negotiation.</li>
+                        <li>Deadhead is never paid.</li>
+                        <li>Tight windows: thirty to forty-five minutes late already costs score.</li>
+                        <li>Two to four hour queues at peak, capped detention paid only through disputes.</li>
+                        <li>The score is the worst metric, so one weak driver drags the whole company.</li>
+                        <li>The inspection violation rate has no appeal, and suspensions can be formal.</li>
+                        <li>No "guy you know": only cases and support.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="tip-block gold">
+                <div class="tip-icon">🎯</div>
+                <div class="tip-text">
+                    <strong>The mix most small carriers settle on:</strong> twenty to fifty percent of the fleet's work in Relay,
+                    with contract blocks as the skeleton of the week and the board for backhauls and gaps, and the rest in broker
+                    freight at a higher margin. Relay gives stability and cash flow, brokers give the upside. A dispatcher who can
+                    run both is worth more.
+                </div>
+            </div>
+
+            <h3>Glossary</h3>
+            <div class="ar-gl">
+                <div><b>Amazon Relay</b>Amazon's platform for carriers: the site for dispatchers and the app for drivers, at relay.amazon.com.</div>
+                <div><b>MC and DOT numbers</b>Issued by the federal regulator. MC is the authority to haul for hire across state lines, DOT is the company registration number.</div>
+                <div><b>FMCSA</b>The Federal Motor Carrier Safety Administration, whose databases Amazon checks.</div>
+                <div><b>CSA and BASIC</b>The regulator's safety measurement system and its percentile categories. Higher percentile is worse.</div>
+                <div><b>FC, SC, DS</b>Amazon facility types: fulfillment center, sortation center, delivery station.</div>
+                <div><b>Facility code (ONT8, JFK8)</b>Three letters for the nearest airport plus the facility number in that area.</div>
+                <div><b>Power only</b>You supply tractor and driver, Amazon supplies the trailer and the freight.</div>
+                <div><b>Drop and hook</b>Drop the trailer you brought, hook the next one. No waiting to be loaded.</div>
+                <div><b>Live load</b>The driver waits at a door while the trailer is loaded.</div>
+                <div><b>Load board</b>The list of Amazon loads on the Relay site.</div>
+                <div><b>Book now, Bid</b>Book instantly at the posted rate, or offer your own price.</div>
+                <div><b>Post A Truck</b>Advertise an available truck with a minimum rate; the system finds and books the load.</div>
+                <div><b>Block</b>Paid truck time — 13, 37 hours or more — inside which Amazon runs several trips. Paid in full.</div>
+                <div><b>Auction and contract</b>Blocks are auctioned weeks ahead. A won auction becomes a contract: the same blocks every week.</div>
+                <div><b>Trip</b>One load or one leg inside a block, with an ID like T-…</div>
+                <div><b>Gate pass</b>The QR code in the app you show at the entrance scanner.</div>
+                <div><b>Check In, Pick Up, Drop Off</b>The app steps at every facility. Each leaves a timestamp; Check In decides on-time.</div>
+                <div><b>Trailer inspection</b>Mandatory photos of the Amazon trailer in the app before departure: sides, tires, lights, seal.</div>
+                <div><b>Seal</b>The single-use lock on the trailer doors with a number that must match the paperwork. Drivers never touch it.</div>
+                <div><b>Support, ROC</b>Amazon's round-the-clock service: cases on the site, the assistant in the app, a live operator.</div>
+                <div><b>Performance score</b>Zero to one hundred with a grade from F to A+. Equals the worst of four metrics over six active weeks.</div>
+                <div><b>The four metrics</b>On-time, acceptance, app usage, disruption-free.</div>
+                <div><b>Safety scorecard</b>CSA percentiles plus the violation rate on inspections. Twelve-month window, no appeal.</div>
+                <div><b>Detention, TONU, layover</b>Pay for waiting at a facility, for a load cancelled after you rolled, and for a forced overnight. In Relay all three come through cases.</div>
+                <div><b>Trailer interchange</b>The $50,000 insurance line covering somebody else's trailer. Without it Relay will not accept you.</div>
+                <div><b>Relay Rewards, Safety Rewards</b>Bonus programs: tiers by score and tenure, and cents per mile for collision-free driving with a dash camera.</div>
+                <div><b>Plan of action</b>The appeal document after a suspension: what happened, what has been fixed, what changes.</div>
+            </div>
+
+            <h3>Check yourself</h3>
+            <p class="section-desc">Ten questions on the whole guide. The explanation appears as soon as you answer.</p>
+            <div class="quiz-card" id="quizCard">
+                <div id="quizBody">
+                    <div class="quiz-question" id="quizQuestion"></div>
+                    <div class="quiz-options" id="quizOptions"></div>
+                    <div class="quiz-feedback" id="quizFeedback"></div>
+                    <div class="quiz-nav">
+                        <span class="quiz-counter" id="quizCounter"></span>
+                        <button class="quiz-next-btn" id="quizNext" onclick="nextQ()">Next →</button>
+                    </div>
+                </div>
+                <div class="quiz-score" id="quizScore">
+                    <div class="score-number" id="scoreNum"></div>
+                    <p id="scoreTxt"></p>
+                    <button class="quiz-restart-btn" onclick="restartQuiz()">Start over</button>
+                </div>
+            </div>
+
+            <div class="tip-block src" style="margin-top:32px">
+                <div class="tip-icon">📅</div>
+                <div class="tip-text">This guide was written on 3 September 2026 from Amazon Relay's public materials (the FAQ and the relay.amazon.com blog) and from carrier reports. Amazon changes Relay's rules several times a year, so check any figure here against the policies in your own account before you rely on it. Numbers Amazon does not publish — detention, cancellation pay, the support phone number, grade boundaries — are marked in the text as carrier experience.</div>
+            </div>
+        </div>
+    </section>
+
+        <div class="module-navigation">
+            <a href="amazon-relay-3-problems.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Part 3 of 4</span><span class="title">When things go wrong</span></div></a>
+            <a href="brokers.html" class="module-nav-btn next"><div class="text"><span class="label">Related lesson</span><span class="title">💼 Brokers</span></div><span class="icon">→</span></a>
+        </div>
+
+    <script>
+        (function () {
+            const toggle = document.getElementById('navigationToggle');
+            const content = document.getElementById('navigationContent');
+            toggle.addEventListener('click', function () { this.classList.toggle('active'); content.classList.toggle('active'); });
+            function initMobileAccordion() {
+                if (window.innerWidth <= 640) {
+                    document.querySelectorAll('.section-arrow').forEach(a => { a.style.display = 'inline-block'; });
+                    document.querySelectorAll('.nav-section').forEach(function (section, index) {
+                        if (index > 0) section.classList.add('collapsed');
+                        const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                            header.addEventListener('click', function () { section.classList.toggle('collapsed'); });
+                            header.dataset.listenerAdded = 'true';
+                        }
+                    });
+                } else document.querySelectorAll('.section-arrow').forEach(a => { a.style.display = 'none'; });
+            }
+            initMobileAccordion();
+            window.addEventListener('resize', initMobileAccordion);
+        })();
+
+        function toggleChecklist(el) { el.classList.toggle('open'); }
+
+        document.querySelectorAll('.ar-table').forEach(t => {
+            const heads = [...t.querySelectorAll('thead th')].map(th => th.textContent.trim());
+            if (!heads.length) return;
+            t.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => { if (i > 0 && heads[i]) td.setAttribute('data-label', heads[i]); }));
+        });
+
+        (function () {
+            const $ = id => document.getElementById(id);
+            document.querySelectorAll('[data-tabs]').forEach(g => { const name = g.dataset.tabs; g.querySelectorAll('.ar-tab-btn').forEach(b => b.addEventListener('click', () => { g.querySelectorAll('.ar-tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); document.querySelectorAll('[data-pane^="' + name + ':"]').forEach(p => p.classList.toggle('active', p.dataset.pane === name + ':' + b.dataset.tab)); })); });
+            document.querySelectorAll('.ar-check').forEach(box => { const upd = () => { const all = [...box.querySelectorAll('input[type=checkbox]')]; const bad = all.filter(c => !c.checked); const v = box.querySelector('.ar-verdict'); if (!bad.length) { v.className = 'ar-verdict ok'; v.textContent = box.dataset.ok; } else { v.className = 'ar-verdict no'; v.textContent = box.dataset.no + ' ' + bad.map(c => c.parentElement.querySelector('span').textContent.toLowerCase()).join('; ') + '.'; } }; box.addEventListener('change', upd); upd(); });
+            if ($('lcPrice')) { const f = () => { const p = +$('lcPrice').value, m = +$('lcMiles').value, d = +$('lcDead').value, h = +$('lcHours').value; const tot = m + d; const rpm = tot ? p / tot : 0, rph = h ? p / h : 0; $('lcRpm').textContent = rpm.toFixed(2); $('lcRph').textContent = Math.round(rph); const v = $('lcVerdict'); let t, c; if (!p || !tot || !h) { t = 'Fill in every field.'; c = ''; } else if (rph >= 90) { t = 'Good load: over $90 an hour. Take it.'; c = 'ok'; } else if (rph >= 60) { t = 'Average: $60–90 an hour. Take it if nothing better is on the board, and line up a backhaul.'; c = 'mid'; } else { t = 'Weak: under $60 an hour. Keep looking.'; c = 'no'; } v.textContent = t; v.className = 'ar-verdict ' + c; }; ['lcPrice', 'lcMiles', 'lcDead', 'lcHours'].forEach(id => $(id).addEventListener('input', f)); f(); }
+            document.querySelectorAll('.ar-stepper').forEach(st => { const steps = [...st.querySelectorAll('.ar-sstep')]; const dots = st.querySelector('.ar-sdots'); const svg = st.dataset.svg && $(st.dataset.svg); let i = 0; const show = k => { i = k; st.classList.remove('all'); steps.forEach((s, j) => s.classList.toggle('active', j === i)); [...dots.children].forEach((d, j) => { d.classList.toggle('active', j === i); d.classList.toggle('done', j < i); }); st.querySelector('.ar-sprev').disabled = i === 0; st.querySelector('.ar-snext').disabled = i === steps.length - 1; if (svg) svg.querySelectorAll('[data-step]').forEach(g => { const n = +g.dataset.step; g.classList.toggle('on', n === i + 1); g.classList.toggle('done', n < i + 1); }); }; steps.forEach((_, k) => { const d = document.createElement('button'); d.type = 'button'; d.textContent = k + 1; d.addEventListener('click', () => show(k)); dots.appendChild(d); }); st.querySelector('.ar-sprev').addEventListener('click', () => show(i - 1)); st.querySelector('.ar-snext').addEventListener('click', () => show(i + 1)); st.querySelector('.ar-sall').addEventListener('click', () => { st.classList.add('all'); if (svg) svg.querySelectorAll('[data-step]').forEach(g => { g.classList.add('on'); g.classList.remove('done'); }); }); show(0); });
+            if ($('pfBar')) { const bar = $('pfBar'); let place = 'all', sev = 'all'; const items = [...document.querySelectorAll('.ar-problem')]; items.forEach(d => { let h = d.previousElementSibling; while (h && h.tagName !== 'H3') h = h.previousElementSibling; d.dataset.place = h ? h.textContent.trim() : ''; const s = d.querySelector('.sev'); d.dataset.sev = s ? [...s.classList].find(c => ['hi', 'md', 'lo'].includes(c)) : ''; }); const apply = () => { let n = 0; items.forEach(d => { const ok = (place === 'all' || d.dataset.place === place) && (sev === 'all' || d.dataset.sev === sev); d.style.display = ok ? '' : 'none'; if (ok) n++; }); document.querySelectorAll('#r7 > .container > h3').forEach(h => { if (['At the facility', 'Before and after the run', 'Your company account'].includes(h.textContent.trim())) h.style.display = (place === 'all' || h.textContent.trim() === place) ? '' : 'none'; }); $('pfCount').textContent = 'Showing ' + n + ' of ' + items.length + ' situations'; }; bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.place !== undefined) { place = b.dataset.place; bar.querySelectorAll('[data-place]').forEach(x => x.classList.toggle('active', x === b)); } if (b.dataset.sev !== undefined) { sev = b.dataset.sev; bar.querySelectorAll('[data-sev]').forEach(x => x.classList.toggle('active', x === b)); } if (b.dataset.open !== undefined) items.forEach(d => { d.open = b.dataset.open === '1'; }); apply(); }); apply(); }
+            document.querySelectorAll('.ar-scenario').forEach(sc => sc.querySelectorAll('.ar-opt').forEach(b => b.addEventListener('click', () => { if (sc.dataset.done) return; sc.dataset.done = '1'; sc.querySelectorAll('.ar-opt').forEach(x => { x.disabled = true; if (x.dataset.ok) x.classList.add('correct'); }); if (!b.dataset.ok) b.classList.add('wrong'); const f = sc.querySelector('.ar-sfb'); f.textContent = (b.dataset.ok ? '✅ Correct. ' : '❌ No. ') + sc.dataset.explain; f.classList.add('show'); })));
+            if ($('rsOntime')) { const ids = ['rsOntime', 'rsAccept', 'rsApp', 'rsDisr']; const f = () => { const vals = ids.map(id => +$(id).value); ids.forEach((id, k) => { $(id + 'V').textContent = vals[k] + '%'; }); const min = Math.min(...vals); const worst = ids[vals.indexOf(min)]; ids.forEach(id => $(id + 'Box').classList.toggle('min', id === worst)); const g = min >= 99 ? 'A+' : min >= 98 ? 'A' : min >= 95 ? 'B+' : min >= 90 ? 'B' : min >= 85 ? 'C+' : min >= 70 ? 'C' : 'D'; $('rsScore').textContent = min + '% · ' + g; const un = g === 'D' ? 'Board and Post A Truck only. No auctions, contracts get pulled, suspension risk.' : g === 'C' ? 'Board and Post A Truck. Auctions closed, existing contracts at risk.' : g === 'C+' ? 'Board, Post A Truck and block auctions. No contracts yet.' : g === 'B' ? 'Plus multi-week contracts.' : g === 'B+' ? 'Plus early access to new loads and auctions.' : 'Everything: price alerts, an edge in auctions, counter-offers on urgent loads.'; const u = $('rsUnlock'); u.textContent = un; u.className = 'ar-verdict ' + (g === 'D' || g === 'C' ? 'no' : g === 'C+' ? 'mid' : 'ok'); }; ids.forEach(id => $(id).addEventListener('input', f)); f(); }
+            if ($('pdDay')) { const f = () => { const d = +$('pdDay').value; const toSat = 6 - d; const days = toSat + 6; $('pdOut').textContent = 'The pay week closes on Saturday' + (toSat ? ' in ' + toSat + ' day(s)' : ' the same day') + ', money lands the Friday after — in ' + days + ' days.'; }; $('pdDay').addEventListener('change', f); f(); }
+            if ($('bcBid')) { const f = () => { const bid = +$('bcBid').value, n = +$('bcN').value, mi = +$('bcMiles').value, dh = +$('bcDead').value, cost = +$('bcCost').value, dr = +$('bcDriver').value; const rev = bid * n, miles = (mi + dh) * n, exp = miles * cost, drv = rev * dr / 100, prof = rev - exp - drv; $('bcRev').textContent = Math.round(rev).toLocaleString('en-US'); $('bcMi').textContent = Math.round(miles).toLocaleString('en-US'); $('bcExp').textContent = Math.round(exp).toLocaleString('en-US'); $('bcDrv').textContent = Math.round(drv).toLocaleString('en-US'); const p = $('bcProf'); p.textContent = Math.round(prof).toLocaleString('en-US'); p.parentElement.style.color = prof > 0 ? 'var(--success)' : '#ef4444'; $('bcRpm').textContent = miles ? (rev / miles).toFixed(2) : '0'; }; ['bcBid', 'bcN', 'bcMiles', 'bcDead', 'bcCost', 'bcDriver'].forEach(id => $(id).addEventListener('input', f)); f(); }
+            const wk = $('r10'); if (wk) { const c = wk.querySelector('.container'); const heads = [...c.querySelectorAll('h3')]; if (heads.length > 1) { const bar = document.createElement('div'); bar.className = 'ar-tabs'; const panes = heads.map((h, k) => { const pane = document.createElement('div'); pane.className = 'ar-pane' + (k === 0 ? ' active' : ''); const body = h.nextElementSibling; h.parentNode.insertBefore(pane, h); pane.appendChild(h); pane.appendChild(body); const b = document.createElement('button'); b.type = 'button'; b.className = 'ar-tab-btn' + (k === 0 ? ' active' : ''); b.textContent = h.textContent; b.addEventListener('click', () => { bar.querySelectorAll('button').forEach(x => x.classList.remove('active')); b.classList.add('active'); panes.forEach((p, j) => p.classList.toggle('active', j === k)); }); bar.appendChild(b); return pane; }); panes[0].parentNode.insertBefore(bar, panes[0]); } }
+        })();
+    </script>
+    <script>
+        const quizData = [
+            { q: 'How long must an interstate operating authority be active before a carrier can apply to Amazon Relay?', options: ['Right away', '90 days', '180 days', 'One year'], correct: 2, explanation: 'Amazon requires the authority to be active for at least 180 days. An earlier application is rejected automatically.' },
+            { q: 'Which insurance line fails the most applications?', options: ['Cargo $100,000', 'Auto liability $1,000,000', 'Trailer interchange $50,000', 'General liability $1,000,000'], correct: 2, explanation: 'You pull Amazon trailers, so Amazon wants a separate $50,000 trailer interchange line on the certificate. Many policies default to $25,000 or have no such line at all.' },
+            { q: 'What is a "block" in Amazon Relay?', options: ['A blocked account', 'Paid truck time that Amazon fills with several trips', 'A load you cannot refuse', 'A restricted part of the yard'], correct: 1, explanation: 'A block is time, for example 13 hours. You are paid for the whole block even if the freight only filled part of it.' },
+            { q: 'Which portal role does a dispatcher need in order to book loads?', options: ['Dispatcher', 'Administrator', 'Driver', 'Viewer'], correct: 1, explanation: 'The role literally named "Dispatcher" is view-only. Booking, assigning drivers and filing disputes require Administrator.' },
+            { q: 'What does Amazon use to decide whether the driver arrived on time?', options: ['The truck ELD', 'The driver telling the guard', 'The Check In tap in the Relay app', 'The moment the gate opens'], correct: 2, explanation: 'Only the app timestamp counts. Arrive on time and tap 40 minutes later and Amazon sees a 40-minute late arrival.' },
+            { q: 'How is the overall performance score built from the four metrics?', options: ['Average', 'Weighted average favouring on-time', 'The lowest of the four', 'The sum'], correct: 2, explanation: 'Your score equals your worst metric. One weak number drags the whole grade down.' },
+            { q: 'A dispatcher knows a contract block cannot be covered. When is the cancellation cheapest?', options: ['After the block starts', 'Less than 24 hours before', 'More than 24 hours before', 'Timing does not matter'], correct: 2, explanation: 'More than 24 hours out it counts once. Under 24 hours or after the start it counts four times.' },
+            { q: 'A trip is completed on Tuesday. When is it paid?', options: ['Next day', 'This Friday', 'Friday of the following week', 'In 30 days'], correct: 2, explanation: 'The pay week runs Sunday through Saturday and is paid out on the Friday after it closes.' },
+            { q: 'The seal number does not match the paperwork. What should the driver do?', options: ['Break the seal and check the freight', 'Leave anyway, they will sort it out at delivery', 'Stay put, photograph everything, call the dispatcher', 'Ask a yard worker to swap the seal quietly'], correct: 2, explanation: 'Never touch the seal, never leave, photograph everything. The dispatcher opens a support case before the truck moves.' },
+            { q: 'What is included in the all-in rate shown on the Relay board?', options: ['Base rate only, fuel is separate', 'Base rate, fuel surcharge and tolls', 'Base rate plus deadhead to the pickup', 'Base rate plus automatic detention'], correct: 1, explanation: 'All-in means base rate, fuel surcharge and tolls. Deadhead is never paid and detention only comes through a case.' }
+        ];
+        let qIdx = 0, qScore = 0, qAnswered = false;
+        function renderQ() {
+            const q = quizData[qIdx];
+            document.getElementById('quizQuestion').textContent = q.q;
+            document.getElementById('quizCounter').textContent = (qIdx + 1) + ' / ' + quizData.length;
+            document.getElementById('quizFeedback').className = 'quiz-feedback';
+            document.getElementById('quizNext').classList.remove('visible');
+            qAnswered = false;
+            const el = document.getElementById('quizOptions');
+            el.innerHTML = '';
+            q.options.forEach((o, i) => { const btn = document.createElement('button'); btn.className = 'quiz-option'; btn.textContent = o; btn.onclick = () => answerQ(i); el.appendChild(btn); });
+        }
+        function answerQ(i) {
+            if (qAnswered) return; qAnswered = true;
+            const q = quizData[qIdx];
+            document.querySelectorAll('.quiz-option').forEach((b, j) => { b.disabled = true; if (j === q.correct) b.classList.add('correct'); if (j === i && i !== q.correct) b.classList.add('wrong'); });
+            const fb = document.getElementById('quizFeedback');
+            if (i === q.correct) { qScore++; fb.className = 'quiz-feedback visible success'; fb.textContent = '✅ Correct. ' + q.explanation; }
+            else { fb.className = 'quiz-feedback visible error'; fb.textContent = '❌ Not quite. ' + q.explanation; }
+            if (qIdx < quizData.length - 1) document.getElementById('quizNext').classList.add('visible');
+            else setTimeout(showQScore, 1500);
+        }
+        function nextQ() { qIdx++; renderQ(); }
+        function showQScore() {
+            const p = Math.round(qScore / quizData.length * 100);
+            const msg = p === 100 ? 'Perfect. You are ready to dispatch Relay.' : p >= 75 ? 'Strong result. Re-read the sections you missed.' : p >= 50 ? 'Not bad, but go over the material again.' : 'Worth reading the guide once more.';
+            const el = document.getElementById('quizScore');
+            document.getElementById('quizBody').style.display = 'none';
+            document.getElementById('scoreNum').textContent = qScore + '/' + quizData.length;
+            document.getElementById('scoreTxt').textContent = msg;
+            el.classList.add('visible');
+        }
+        function restartQuiz() { qIdx = 0; qScore = 0; document.getElementById('quizBody').style.display = ''; document.getElementById('quizScore').classList.remove('visible'); renderQ(); }
+        document.addEventListener('DOMContentLoaded', renderQ);
+    </script>
+
+    <script src="/lesson-visuals.js?v=3"></script>
+
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Back to top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>
+    <script>
+        (function () {
+            const b = document.getElementById('scrollToTop'); let t;
+            addEventListener('scroll', function () { if (scrollY > 300) { b.classList.add('visible'); r(); } else { b.classList.remove('visible'); b.classList.remove('inactive'); } });
+            function r() { b.classList.remove('inactive'); clearTimeout(t); t = setTimeout(() => b.classList.add('inactive'), 2000); }
+            addEventListener('mousemove', r); addEventListener('touchstart', r);
+            b.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+        })();
+    </script>
+
+<link rel="stylesheet" href="/enhanced-quiz-system.css">
+<script src="/enhanced-quiz-system.en.js"></script>
+</body>
+</html>
