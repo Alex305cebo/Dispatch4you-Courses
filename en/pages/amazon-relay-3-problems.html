@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="/site-protection.en.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="../../css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part 3. When Things Go Wrong | Amazon Relay | Dispatcher Course</title>
+  <link rel="canonical" href="https://dispatch4you.com/en/pages/amazon-relay-3-problems.html">
+    <meta name="description" content="Part 3 of the Amazon Relay guide: 22 problem situations with the dispatcher’s actions, in plain language.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-nav.css?v=9.1">
+    <link rel="stylesheet" href="/shared-styles.css?v=2.2">
+    <link rel="stylesheet" href="/lesson-visuals.css?v=3">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; width: 100%; max-width: 100vw; scroll-behavior: smooth; }
+
+        :root {
+            --primary: #06b6d4;
+            --secondary: #0ea5e9;
+            --accent: #f97316;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0e1a;
+            --bg-darker: #070b14;
+            --text-primary: #ffffff;
+            --text-secondary:#e2e8f0;
+            --text-muted:#94a3b8;
+            --border: rgba(255, 255, 255, 0.15);
+            --amz: #ff9900;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-darker); color: var(--text-primary);
+            line-height: 1.6; overflow-x: hidden; width: 100%; max-width: 100vw; margin: 0; padding: 0;
+        }
+        body::before {
+            content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.15), transparent 50%),
+                        radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(14,165,233,.08), transparent 70%);
+            z-index: -1; pointer-events: none;
+        }
+        .container { max-width: 1100px; margin: 0 auto; padding: 40px 40px; }
+
+        /* HERO */
+        .page-header { padding: 130px 0 70px; text-align: center; }
+        .page-badge {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 20px;
+            background: linear-gradient(135deg, rgba(255,153,0,.15), rgba(14,165,233,.15));
+            border:1px solid var(--tint-brand-4); border-radius: 24px;
+            font-size: 13px; font-weight: 700; color: var(--primary);
+            margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1.5px;
+        }
+        .page-title {
+            font-size: clamp(40px,5vw,64px); font-weight: 900;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 40%, #ff9900 80%, #fbbf24 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 24px; line-height: 1.1;
+        }
+        .page-subtitle { font-size: 20px; color:var(--text-secondary); max-width: 800px; margin: 0 auto; line-height: 1.7; }
+        .hero-stats { display: flex; justify-content: center; gap: 48px; margin-top: 48px; flex-wrap: wrap; }
+        .hero-stat { text-align: center; }
+        .hero-stat-number {
+            font-size: 36px; font-weight: 900;
+            background: linear-gradient(135deg, var(--primary), var(--amz));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero-stat-label { font-size: 13px; color:var(--text-soft); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-top: 4px; }
+
+        /* SECTIONS */
+        .section { padding: 8px 0; }
+        .section-title {
+            font-size: clamp(28px,3vw,38px); font-weight: 900; margin-bottom: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #0ea5e9 50%, #ff9900 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .section-desc { font-size: 17px; color:var(--text-secondary); line-height: 1.8; max-width: 900px; margin-bottom: 40px; }
+        .section-text { font-size: 16px; color:var(--text-secondary); line-height: 1.85; margin-bottom: 20px; max-width: 950px; }
+        .section-text strong { color: var(--text-primary); }
+        .section h3 { font-size: 22px; font-weight: 800; color: var(--text-primary); margin: 36px 0 14px; }
+        .section h4 { font-size: 17px; font-weight: 700; color: var(--text-primary); margin: 24px 0 10px; }
+        .section ul.plain { margin: 0 0 20px 22px; color: var(--text-secondary); font-size: 15px; line-height: 1.8; }
+        .section ul.plain li { margin-bottom: 6px; }
+        .section ul.plain strong { color: var(--text-primary); }
+        .section a { color: var(--primary); }
+
+        /* GLASS CARD */
+        .glass-card {
+            background:var(--glass-03); border:1px solid var(--edge-08);
+            border-radius: 20px; padding: 32px; backdrop-filter: blur(10px); transition: all .35s ease;
+        }
+        .glass-card:hover {
+            border-color:var(--tint-brand-4); background: rgba(6,182,212,.05);
+            transform: translateY(-4px); box-shadow: 0 12px 40px rgba(6,182,212,.1);
+        }
+        .glass-card h3 { margin-top: 0; }
+
+        /* ===== NAVIGATION ===== */
+        .sector-navigation{margin-bottom:30px}.navigation-block{background:var(--glass-03);border:1px solid var(--edge-08);border-radius:20px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 32px rgba(0,0,0,0.1)}.navigation-toggle{width:100%;display:flex;align-items:center;gap:16px;padding:24px 32px;background:var(--glass-03);border:none;cursor:pointer;transition:all 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;overflow:hidden}.navigation-toggle::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,rgba(6,182,212,0.1),rgba(14,165,233,0.05));opacity:0;transition:opacity 0.3s ease}.navigation-toggle:hover::before{opacity:1}.navigation-toggle:hover{background:var(--glass-05);transform:translateY(-2px)}.navigation-toggle.active{background:var(--glass-05)}.navigation-toggle.active::before{opacity:1}.nav-icon{font-size:28px;position:relative;z-index:1;filter:drop-shadow(0 2px 4px rgba(6,182,212,0.3))}.nav-title{flex:1;text-align:left;font-size:20px;font-weight:700;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;position:relative;z-index:1}.nav-arrow{font-size:18px;color:var(--brand-ink);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);position:relative;z-index:1}.navigation-toggle.active .nav-arrow{transform:rotate(180deg)}.navigation-content{max-height:0;overflow:hidden;transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1)}.navigation-content.active{max-height:2000px}.navigation-grid{display:grid;grid-template-columns:2fr 2fr 1.5fr;gap:32px;padding:32px;background:rgba(255,255,255,0.02)}.nav-section{display:flex;flex-direction:column;gap:8px}.section-header{font-size:11px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:var(--brand-ink);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--tint-brand-3)}.section-arrow{display:none}.section-items{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(8,auto);grid-auto-flow:column;gap:8px;counter-reset:nav-counter}.nav-section:last-child .section-items{grid-template-columns:1fr 1fr}.section-items a{padding:10px 12px;color:var(--text-secondary);text-decoration:none;border-radius:10px;font-size:13px;font-weight:500;transition:all 0.2s ease;border:1px solid var(--edge-08);background:linear-gradient(135deg,rgba(6,182,212,0.05),rgba(14,165,233,0.03));display:flex;align-items:center;gap:2px;position:relative;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-height:44px}.section-items a::before{counter-increment:nav-counter;content:counter(nav-counter);font-size:8px;font-weight:600;color:rgba(6,182,212,0.5);min-width:10px;text-align:center;transition:all 0.2s ease;flex-shrink:0;margin-left:-4px}.section-items a::after{content:'';position:absolute;left:0;top:0;height:100%;width:3px;background:linear-gradient(180deg,#06b6d4,#0ea5e9);opacity:0;transition:opacity 0.2s ease}.section-items a:hover{background:linear-gradient(135deg,rgba(6,182,212,0.15),rgba(14,165,233,0.1));color:var(--brand-ink-3);border-color:var(--tint-brand-4);transform:translateX(3px);box-shadow:0 4px 12px rgba(6,182,212,0.2)}.section-items a:hover::before{color:var(--brand-ink)}.section-items a:hover::after{opacity:1}.section-items a.active{background:linear-gradient(135deg,rgba(6,182,212,0.2),rgba(99,102,241,0.15));color:var(--brand-ink-3);border-color:rgba(6,182,212,0.5);font-weight:600;box-shadow:0 0 0 1px rgba(6,182,212,0.2) inset,0 4px 16px rgba(6,182,212,0.25)}.section-items a.active::before{color:var(--brand-ink)}.section-items a.active::after{opacity:1}@media(max-width:1024px){.navigation-grid{grid-template-columns:1fr 1fr;gap:24px}}@media(max-width:640px){.navigation-grid{grid-template-columns:1fr;gap:20px;padding:24px 20px}.section-items{grid-template-columns:1fr 1fr}.section-items a{padding:8px 8px;font-size:11px;white-space:nowrap;min-height:40px;line-height:1.2;gap:6px}.navigation-toggle{padding:18px 20px}.nav-title{font-size:16px}.section-header{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center}.section-header .section-arrow{display:inline-block;font-size:12px;color:var(--brand-ink);transition:transform 0.3s ease;margin-left:8px}.nav-section.collapsed .section-arrow{transform:rotate(-90deg)}.nav-section.collapsed .section-items{display:none}}
+
+
+        /* ===== БЛОКИ УРОКА ===== */
+        .ar-remember, .ar-example, .ar-warn { padding: 18px 22px; border-radius: 14px; margin: 22px 0 8px; font-size: 15px; line-height: 1.75; color: var(--text-secondary); }
+        .ar-remember b, .ar-example b, .ar-warn b { display: block; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+        .ar-remember { background: rgba(16,185,129,.08); border: 1px solid rgba(16,185,129,.3); } .ar-remember b { color: var(--success); }
+        .ar-example { background: rgba(6,182,212,.07); border: 1px solid rgba(6,182,212,.25); } .ar-example b { color: var(--primary); }
+        .ar-warn { background: rgba(255,153,0,.08); border: 1px solid rgba(255,153,0,.35); } .ar-warn b { color: var(--amz); }
+        .ar-warn strong, .ar-example strong, .ar-remember strong { color: var(--text-primary); }
+        .section h4 { font-size: 18px; color: var(--amz); margin: 26px 0 8px; }
+        .ar-map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 8px 0 24px; }
+        .ar-map a { display: block; padding: 14px 14px 12px; border-radius: 14px; background: var(--glass-03); border: 1px solid var(--edge-08); color: var(--text-secondary); text-decoration: none; transition: all .2s; }
+        .ar-map a:hover { border-color: rgba(255,153,0,.4); background: rgba(255,153,0,.06); transform: translateY(-2px); }
+        .ar-map a.on { border-color: rgba(255,153,0,.6); background: rgba(255,153,0,.10); }
+        .ar-map .mn { display: inline-flex; width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; font-size: 12px; font-weight: 800; align-items: center; justify-content: center; margin-bottom: 8px; }
+        .ar-map .mt { display: block; font-size: 14px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .ar-map .md { display: block; font-size: 12px; line-height: 1.5; color: var(--text-soft); }
+        .ar-map a.on .mt { color: var(--amz); }
+        @media (max-width: 1024px) { .ar-map { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 640px) { .ar-map { grid-template-columns: 1fr 1fr; } .ar-map .md { display: none; } }
+
+
+        /* ===== ССЫЛКА НА ВИДЕОУРОК ===== */
+        .ar-video-cta { display:flex; align-items:center; gap:16px; margin:8px 0 26px; padding:18px 22px; border-radius:16px; text-decoration:none;
+            background:linear-gradient(135deg, rgba(255,153,0,.12), rgba(6,182,212,.10)); border:1px solid rgba(255,153,0,.4); transition:all .25s; }
+        .ar-video-cta:hover { border-color:rgba(255,153,0,.7); transform:translateY(-2px); box-shadow:0 10px 30px rgba(255,153,0,.12); }
+        .ar-video-cta .vic { width:46px; height:46px; flex-shrink:0; border-radius:50%; background:linear-gradient(135deg,#06b6d4,#ff9900); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center; padding-left:3px; }
+        .ar-video-cta .vtx { flex:1; min-width:0; }
+        .ar-video-cta .vtx b { display:block; font-size:16px; color:var(--text-primary); margin-bottom:2px; }
+        .ar-video-cta .vtx span { font-size:13.5px; color:var(--text-soft); line-height:1.5; }
+        .ar-video-cta .varr { color:var(--amz); font-size:20px; flex-shrink:0; }
+        /* ===== ИНТЕРАКТИВ ===== */
+        .ar-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+        .ar-tab-btn { padding: 10px 18px; border-radius: 12px; background: var(--glass-05); border: 1px solid var(--edge-10); color: var(--text-secondary); font: 600 14px/1.3 Inter, sans-serif; cursor: pointer; transition: all .2s; }
+        .ar-tab-btn:hover { border-color: rgba(255,153,0,.4); color: var(--text-primary); }
+        .ar-tab-btn.active { background: rgba(255,153,0,.15); border-color: rgba(255,153,0,.55); color: var(--amz); }
+        .ar-pane { display: none; } .ar-pane.active { display: block; animation: fadeIn .3s ease; }
+        .ar-check label { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--glass-05); cursor: pointer; font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+        .ar-check label:last-of-type { border-bottom: none; }
+        .ar-check input { width: 22px; height: 22px; accent-color: #ff9900; flex-shrink: 0; margin-top: 2px; cursor: pointer; }
+        .ar-verdict { margin-top: 14px; padding: 12px 16px; border-radius: 12px; font-weight: 600; font-size: 14.5px; line-height: 1.6; background: var(--glass-05); color: var(--text-secondary); }
+        .ar-verdict.ok { background: rgba(16,185,129,.12); color: var(--success); }
+        .ar-verdict.no { background: rgba(239,68,68,.12); color: #fca5a5; }
+        .ar-verdict.mid { background: rgba(245,158,11,.12); color: #fcd34d; }
+        .ar-calc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .ar-calc label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); margin-bottom: 6px; }
+        .ar-calc input, .ar-calc select { width: 100%; padding: 12px 14px; background: var(--glass-06); border: 1px solid rgba(255,255,255,.12); border-radius: 12px; color: var(--text-primary); font-size: 16px; font-family: inherit; }
+        .ar-calc input:focus, .ar-calc select:focus { outline: none; border-color: var(--amz); box-shadow: 0 0 0 3px rgba(255,153,0,.15); }
+        .ar-out { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 18px; }
+        .ar-out .v { font-size: 30px; font-weight: 900; color: var(--primary); line-height: 1.1; }
+        .ar-out .l { font-size: 11px; color: var(--text-soft); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+        .ar-stepper .ar-sdots { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+        .ar-sdots button { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--edge-10); background: var(--glass-05); color: var(--text-secondary); font: 800 14px Inter, sans-serif; cursor: pointer; }
+        .ar-sdots button.done { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .ar-sdots button.active { background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; border-color: transparent; }
+        .ar-sstep { display: none; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .ar-sstep.active { display: grid; animation: fadeIn .3s ease; }
+        .ar-stepper.all .ar-sstep { display: grid; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--glass-05); }
+        .ar-sstep > div { padding: 16px; border-radius: 12px; background: rgba(255,255,255,.03); font-size: 14.5px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-sstep b { color: var(--text-primary); }
+        .ar-sstep .lbl { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+        .ar-sstep .w .lbl { color: var(--amz); } .ar-sstep .d .lbl { color: var(--primary); }
+        .ar-sbtns { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+        .ar-sbtn { padding: 10px 20px; border-radius: 12px; border: 1px solid var(--edge-10); background: var(--glass-05); color: var(--text-primary); font: 700 14px Inter, sans-serif; cursor: pointer; }
+        .ar-sbtn:disabled { opacity: .35; cursor: default; }
+        .ar-sbtn.ar-snext { background: linear-gradient(135deg, var(--primary), var(--secondary)); border-color: transparent; color: #fff; }
+        svg [data-step] rect { transition: all .3s; }
+        svg [data-step].on rect { stroke: #ff9900; stroke-width: 3; fill: rgba(255,153,0,.22); }
+        svg [data-step].done rect { stroke: rgba(16,185,129,.6); fill: rgba(16,185,129,.12); }
+        .ar-scenario { margin-bottom: 16px; }
+        .ar-sq { font-size: 16px; font-weight: 700; color: var(--text-primary); line-height: 1.55; margin-bottom: 14px; }
+        .ar-opt { display: block; width: 100%; text-align: left; padding: 13px 16px; margin-bottom: 8px; border-radius: 12px; background: var(--glass-05); border: 1px solid var(--edge-10); color: var(--text-secondary); font: 500 14.5px/1.5 Inter, sans-serif; cursor: pointer; transition: all .2s; }
+        .ar-opt:hover:not(:disabled) { border-color: rgba(255,153,0,.45); color: var(--text-primary); }
+        .ar-opt.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.45); color: var(--success); }
+        .ar-opt.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.45); color: #fca5a5; }
+        .ar-opt:disabled { cursor: default; }
+        .ar-sfb { display: none; margin-top: 10px; padding: 12px 16px; border-radius: 12px; background: var(--glass-05); font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+        .ar-sfb.show { display: block; animation: fadeIn .3s ease; }
+        .ar-rs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .ar-rs > div { padding: 14px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); transition: all .2s; }
+        .ar-rs > div.min { border-color: #ef4444; box-shadow: 0 0 0 1px #ef4444 inset; background: rgba(239,68,68,.06); }
+        .ar-rs label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+        .ar-rs label b { color: var(--text-primary); }
+        .ar-rs input[type=range] { width: 100%; accent-color: #ff9900; }
+        @media (max-width: 768px) { .ar-calc, .ar-calc[style] { grid-template-columns: 1fr 1fr !important; } .ar-rs { grid-template-columns: 1fr 1fr; } .ar-sstep, .ar-stepper.all .ar-sstep { grid-template-columns: 1fr; } .ar-out .v { font-size: 24px; } }
+        @media (max-width: 480px) { .ar-calc, .ar-calc[style] { grid-template-columns: 1fr !important; } .ar-rs { grid-template-columns: 1fr; } }
+        /* ===== ОГЛАВЛЕНИЕ ГАЙДА ===== */
+        .ar-toc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 8px 0 32px; }
+        .ar-toc a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); color: var(--text-secondary); text-decoration: none; font-size: 14px; font-weight: 600; transition: all .2s; }
+        .ar-toc a:hover { background: rgba(255,153,0,.08); border-color: rgba(255,153,0,.35); color: var(--text-primary); transform: translateX(3px); }
+        .ar-toc .n { width: 26px; height: 26px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--amz)); color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+        /* ===== ТАБЛИЦЫ ===== */
+        .ar-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 16px 0 28px; border-radius: 16px; }
+        .ar-table { width: 100%; border-collapse: separate; border-spacing: 0 6px; min-width: 640px; }
+        .ar-table thead th { text-align: left; padding: 10px 14px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-soft); white-space: nowrap; }
+        .ar-table tbody tr { background: var(--glass-03); transition: background .2s; }
+        .ar-table tbody tr:hover { background: rgba(6,182,212,.08); }
+        .ar-table td { padding: 12px 14px; font-size: 14px; color: var(--text-secondary); vertical-align: top; line-height: 1.6; }
+        .ar-table td:first-child { border-radius: 12px 0 0 12px; font-weight: 600; color: var(--text-primary); }
+        .ar-table td:last-child { border-radius: 0 12px 12px 0; }
+        .ar-table td strong { color: var(--text-primary); }
+        .ar-table .ok { color: var(--success); font-weight: 700; }
+        .ar-table .no { color: var(--danger); font-weight: 700; }
+        .ar-table .warn { color: var(--warning); font-weight: 700; }
+        .ar-table .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; color: var(--primary); }
+
+        /* ===== БЕЙДЖИ / КОЛЛАУТЫ ===== */
+        .ar-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; vertical-align: middle; }
+        .ar-badge.off { background: rgba(16,185,129,.15); color: var(--success); border: 1px solid rgba(16,185,129,.3); }
+        .ar-badge.third { background: rgba(245,158,11,.15); color: var(--warning); border: 1px solid rgba(245,158,11,.3); }
+        .ar-badge.amz { background: rgba(255,153,0,.15); color: var(--amz); border: 1px solid rgba(255,153,0,.35); }
+        .ar-badge.blue { background: rgba(6,182,212,.15); color: var(--primary); border: 1px solid rgba(6,182,212,.3); }
+        .tip-block { display: flex; gap: 14px; padding: 18px 20px; border-radius: 14px; margin: 18px 0; background: rgba(6,182,212,.07); border: 1px solid rgba(6,182,212,.2); }
+        .tip-block .tip-icon { font-size: 22px; flex-shrink: 0; }
+        .tip-block .tip-text { font-size: 14.5px; color: var(--text-secondary); line-height: 1.75; }
+        .tip-block .tip-text strong { color: var(--text-primary); }
+        .tip-block.warn { background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.25); }
+        .tip-block.gold { background: rgba(255,153,0,.07); border-color: rgba(255,153,0,.3); }
+        .tip-block.src { background: var(--glass-03); border-color: var(--edge-08); }
+        .tip-block.src .tip-text { font-size: 13px; color: var(--text-soft); }
+        .tip-block.src a { color: var(--primary); word-break: break-all; }
+
+        /* ===== СКРИНШОТЫ / МАКЕТЫ ===== */
+        .ar-fig { margin: 22px 0 30px; background: var(--glass-03); border: 1px solid var(--edge-08); border-radius: 18px; overflow: hidden; }
+        .ar-fig img { display: block; width: 100%; height: auto; max-width: 100%; }
+        .ar-fig figcaption { padding: 12px 18px; font-size: 13px; color: var(--text-soft); line-height: 1.6; border-top: 1px solid var(--edge-08); }
+        .ar-fig figcaption strong { color: var(--text-secondary); }
+        .ar-fig.phone { max-width: 360px; }
+        .ar-fig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+        .ar-fig-row .ar-fig { margin: 22px 0 10px; }
+        .ar-mock { margin: 22px 0 30px; background: #0f1524; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; overflow: hidden; font-size: 13px; color: #e2e8f0; }
+        .ar-mock .m-bar { display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: #131b2e; border-bottom: 1px solid rgba(255,255,255,.08); font-size: 12px; color: #94a3b8; }
+        .ar-mock .m-bar i { width: 10px; height: 10px; border-radius: 50%; background: #334155; display: inline-block; }
+        .ar-mock .m-bar i:nth-child(1) { background: #ef4444; } .ar-mock .m-bar i:nth-child(2) { background: #f59e0b; } .ar-mock .m-bar i:nth-child(3) { background: #10b981; }
+        .ar-mock .m-body { padding: 16px; }
+        .ar-mock .m-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,.04); margin-bottom: 8px; flex-wrap: wrap; }
+        .ar-mock .m-row b { color: #fff; }
+        .ar-mock .m-pill { padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(6,182,212,.18); color: #67e8f9; }
+        .ar-mock .m-pill.g { background: rgba(16,185,129,.18); color: #6ee7b7; } .ar-mock .m-pill.o { background: rgba(255,153,0,.2); color: #fbbf24; } .ar-mock .m-pill.r { background: rgba(239,68,68,.2); color: #fca5a5; } .ar-mock .m-pill.gr { background: rgba(148,163,184,.2); color: #cbd5e1; }
+        .ar-mock .m-btn { padding: 8px 16px; border-radius: 8px; background: #ff9900; color: #111; font-weight: 800; font-size: 12px; }
+        .ar-mock .m-btn.sec { background: transparent; border: 1px solid #ff9900; color: #ffb84d; }
+        .ar-mock .m-caption { padding: 10px 16px; font-size: 12px; color: #94a3b8; border-top: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .ar-mock .m-cols4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .ar-mock .m-metric { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.04); text-align: center; }
+        .ar-mock .m-metric .v { font-size: 26px; font-weight: 900; color: #fff; }
+        .ar-mock .m-metric .l { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-top: 4px; }
+        .ar-mock .m-metric.min { outline: 2px solid #ef4444; }
+        .ar-mock .m-qr { width: 120px; height: 120px; margin: 10px auto; background: repeating-conic-gradient(#fff 0 25%, #0f1524 0 50%) 0 0/16px 16px; border: 6px solid #fff; border-radius: 6px; }
+        .ar-mock .m-side { display: grid; grid-template-columns: 170px 1fr; }
+        .ar-mock .m-nav { background: #0b1020; padding: 12px 0; border-right: 1px solid rgba(255,255,255,.08); }
+        .ar-mock .m-nav div { padding: 8px 16px; color: #94a3b8; font-size: 12px; }
+        .ar-mock .m-nav div.on { color: #fff; background: rgba(255,153,0,.15); border-left: 3px solid #ff9900; }
+        @media (max-width: 640px) { .ar-mock .m-side { grid-template-columns: 1fr; } .ar-mock .m-nav { display: flex; flex-wrap: wrap; } .ar-mock .m-cols, .ar-mock .m-cols4 { grid-template-columns: 1fr 1fr; } }
+
+        /* ===== ШАГИ / ЧЕК-ЛИСТ / КАРТОЧКИ ===== */
+        .ar-steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 28px; counter-reset: st; }
+        .ar-step { display: flex; gap: 16px; padding: 18px 20px; border-radius: 14px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-step::before { counter-increment: st; content: counter(st); width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ar-step > div { flex: 1; min-width: 0; }
+        .ar-step h4 { margin: 0 0 6px; font-size: 16px; }
+        .ar-step p { font-size: 14px; color: var(--text-secondary); line-height: 1.75; margin: 0; }
+        .ar-step p + p { margin-top: 8px; }
+        .checklist { list-style: none; }
+        .checklist-item { padding: 14px 0; border-bottom:1px solid var(--glass-05); cursor: pointer; }
+        .checklist-item:last-child { border-bottom: none; }
+        .checklist-header { display: flex; align-items: center; gap: 12px; font-size: 15.5px; font-weight: 600; color: var(--text-primary); transition: color .2s; }
+        .checklist-header:hover { color: var(--primary); }
+        .checklist-icon { font-size: 20px; flex-shrink: 0; }
+        .checklist-arrow { margin-left: auto; font-size: 12px; color:var(--text-soft); transition: transform .3s; }
+        .checklist-item.open .checklist-arrow { transform: rotate(180deg); }
+        .checklist-body { max-height: 0; overflow: hidden; transition: max-height .4s ease; }
+        .checklist-item.open .checklist-body { max-height: 900px; }
+        .checklist-body p { padding: 12px 0 4px 32px; font-size: 14px; color:var(--text-secondary); line-height: 1.8; }
+        .ar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0 28px; }
+        .ar-grid.two { grid-template-columns: 1fr 1fr; }
+        .ar-card { padding: 22px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); }
+        .ar-card .ic { font-size: 30px; margin-bottom: 10px; }
+        .ar-card h4 { margin: 0 0 8px; font-size: 16px; }
+        .ar-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-card.hot { border-color: rgba(255,153,0,.4); background: rgba(255,153,0,.06); }
+        .ar-card.bad { border-color: rgba(239,68,68,.3); background: rgba(239,68,68,.05); }
+        .ar-card.good { border-color: rgba(16,185,129,.3); background: rgba(16,185,129,.05); }
+        .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .pros, .cons { padding: 20px; border-radius: 14px; }
+        .pros { background: rgba(16,185,129,.06); border: 1px solid rgba(16,185,129,.15); }
+        .cons { background: rgba(239,68,68,.06); border: 1px solid rgba(239,68,68,.15); }
+        .pros h4, .cons h4 { margin-top: 0; font-size: 14px; }
+        .pros h4 { color: var(--success); } .cons h4 { color: var(--danger); }
+        .pros ul, .cons ul { list-style: none; }
+        .pros li, .cons li { padding: 6px 0; color: var(--text-secondary); font-size: 14px; display: flex; gap: 10px; line-height: 1.6; }
+        .pros li::before { content: '✓'; color: var(--success); font-weight: 700; } .cons li::before { content: '✗'; color: var(--danger); font-weight: 700; }
+
+        /* ===== ПРОБЛЕМЫ ===== */
+        .ar-problem { margin-bottom: 12px; border-radius: 16px; background: var(--glass-03); border: 1px solid var(--edge-08); overflow: hidden; }
+        .ar-problem summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 15.5px; color: var(--text-primary); }
+        .ar-problem summary::-webkit-details-marker { display: none; }
+        .ar-problem summary .sev { font-size: 10px; padding: 3px 8px; border-radius: 999px; font-weight: 800; letter-spacing: .5px; margin-left: auto; flex-shrink: 0; }
+        .sev.hi { background: rgba(239,68,68,.18); color: #fca5a5; } .sev.md { background: rgba(245,158,11,.18); color: #fcd34d; } .sev.lo { background: rgba(16,185,129,.18); color: #6ee7b7; }
+        .ar-problem[open] summary { border-bottom: 1px solid var(--edge-08); background: rgba(6,182,212,.05); }
+        .ar-problem .pb { padding: 16px 20px 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .ar-problem .pb > div { padding: 14px; border-radius: 12px; background: rgba(255,255,255,.03); font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+        .ar-problem .pb .lbl { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+        .ar-problem .pb .d .lbl { color: var(--primary); } .ar-problem .pb .w .lbl { color: var(--amz); } .ar-problem .pb .c .lbl { color: var(--danger); } .ar-problem .pb .r .lbl { color: var(--success); }
+        .ar-problem .pb .full { grid-column: 1 / -1; }
+
+        /* ===== ДЕНЬ ДИСПЕТЧЕРА ===== */
+        .ar-day { display: grid; grid-template-columns: 110px 1fr; gap: 0 16px; margin: 16px 0 28px; }
+        .ar-day .t { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--primary); padding: 14px 0; text-align: right; border-right: 2px solid var(--tint-brand-3); padding-right: 14px; }
+        .ar-day .w { padding: 12px 0 12px 4px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; border-bottom: 1px solid var(--glass-05); }
+        .ar-day .w strong { color: var(--text-primary); }
+
+        /* ===== SVG ===== */
+        .ar-svg { width: 100%; height: auto; display: block; margin: 16px 0 28px; }
+        .ar-svg text { font-family: 'Inter', sans-serif; }
+
+        /* ===== ГЛОССАРИЙ ===== */
+        .ar-gl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 28px; }
+        .ar-gl div { padding: 14px 16px; border-radius: 12px; background: var(--glass-03); border: 1px solid var(--edge-08); font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+        .ar-gl b { color: var(--amz); display: block; margin-bottom: 4px; font-size: 15px; }
+
+        /* QUIZ */
+        .quiz-card { background: linear-gradient(135deg, rgba(6,182,212,.08), rgba(255,153,0,.05)); border:1px solid var(--tint-brand-3); border-radius: 24px; padding: 40px; }
+        .quiz-question { font-size: 20px; font-weight: 700; color: var(--text-primary); margin-bottom: 24px; line-height: 1.5; }
+        .quiz-options { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; margin-bottom: 20px; }
+        .quiz-option { padding: 16px 20px; background:var(--glass-05); border:1px solid var(--edge-10); border-radius: 14px; color:var(--text-secondary); font-size: 15px; font-weight: 500; cursor: pointer; transition: all .3s; font-family: inherit; text-align: left; }
+        .quiz-option:hover { background:var(--tint-brand-1); border-color:var(--tint-brand-4); color: var(--text-primary); }
+        .quiz-option.correct { background: rgba(16,185,129,.15); border-color: rgba(16,185,129,.4); color: var(--success); }
+        .quiz-option.wrong { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); color: var(--danger); }
+        .quiz-option:disabled { cursor: default; }
+        .quiz-feedback { padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.7; display: none; }
+        .quiz-feedback.visible { display: block; animation: fadeIn .3s ease; }
+        .quiz-feedback.success { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.2); color: var(--success); }
+        .quiz-feedback.error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.2); color: var(--danger); }
+        .quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+        .quiz-counter { font-size: 14px; color:var(--text-soft); font-weight: 600; }
+        .quiz-next-btn { padding: 10px 24px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border: none; border-radius: 10px; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; transition: all .3s; font-family: inherit; display: none; }
+        .quiz-next-btn.visible { display: inline-block; }
+        .quiz-score { text-align: center; padding: 32px; display: none; }
+        .quiz-score.visible { display: block; }
+        .quiz-restart-btn { margin-top: 20px; padding: 12px 28px; background:var(--glass-08); border: 1px solid rgba(255,255,255,.15); border-radius: 12px; color: var(--text-primary); font-size: 14px; font-weight: 600; cursor: pointer; transition: all .3s; font-family: inherit; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+
+        /* ===== МОБИЛЬНАЯ ЧИТАЕМОСТЬ ===== */
+        .ar-svg-wrap { margin: 16px 0 28px; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+        .ar-svg-wrap .ar-svg { margin: 0; }
+        @media (max-width: 640px) {
+            .ar-svg-wrap .ar-svg { min-width: 760px; }
+            .ar-svg-wrap::after { content: '← swipe to scroll the diagram →'; display: block; text-align: center; font-size: 12px; color: var(--text-soft); padding: 6px 0 2px; }
+            .ar-table { min-width: 0; border-spacing: 0; }
+            .ar-table thead { display: none; }
+            .ar-table tbody, .ar-table tr, .ar-table td { display: block; width: 100%; }
+            .ar-table tr { margin-bottom: 10px; border-radius: 14px; padding: 8px 0; border: 1px solid var(--edge-08); }
+            .ar-table td { padding: 6px 14px; border-radius: 0 !important; font-size: 14.5px; }
+            .ar-table td:first-child { padding-top: 12px; font-size: 16px; color: var(--amz); }
+            .ar-table td:last-child { padding-bottom: 12px; }
+            .ar-table td:not(:first-child)[data-label]::before { content: attr(data-label); display: block; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-soft); margin-bottom: 2px; }
+            .ar-mock { font-size: 13.5px; }
+            .ar-mock .m-row { font-size: 13.5px; }
+            .ar-problem summary { font-size: 15px; }
+            .glass-card p[style*="monospace"], .glass-card p[style*="Menlo"] { font-size: 12.5px !important; }
+        }
+        /* RESPONSIVE */
+        @media (max-width: 1024px) { .ar-grid { grid-template-columns: 1fr 1fr; } .ar-toc { grid-template-columns: 1fr 1fr; } }
+        @media (max-width: 768px) {
+            .container { padding: 0 20px; }
+            .page-header { padding: 100px 0 50px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-number { font-size: 28px; }
+            .quiz-options { grid-template-columns: 1fr; }
+            .ar-grid, .ar-grid.two, .ar-gl, .pros-cons, .ar-fig-row, .ar-problem .pb { grid-template-columns: 1fr; }
+            .ar-toc { grid-template-columns: 1fr; }
+            .ar-day { grid-template-columns: 74px 1fr; }
+        }
+        @media (max-width: 480px) { .container { padding: 0 16px; } .hero-stats { flex-direction: column; gap: 16px; } }
+        @media (max-width: 360px) { .container { padding: 0 12px; } .glass-card { padding: 20px; } .quiz-card { padding: 24px; } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-darker); }
+        ::-webkit-scrollbar-thumb { background:var(--tint-brand-4); border-radius: 4px; }
+
+        /* ===== SCROLL TO TOP BUTTON ===== */
+        .scroll-to-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;background:linear-gradient(135deg,#06b6d4,#0ea5e9);border:none;border-radius:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(6,182,212,0.3);transition:all 0.3s cubic-bezier(0.4,0,0.2,1);opacity:0;visibility:hidden;z-index:999}.scroll-to-top.visible{opacity:1;visibility:visible}.scroll-to-top.inactive{opacity:0.2}.scroll-to-top:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(6,182,212,0.4)}.scroll-to-top svg{color:var(--text-primary)}@media(max-width:768px){.scroll-to-top{width:48px;height:48px;bottom:24px;right:24px}}
+
+.module-navigation{display:flex;justify-content:space-between;gap:16px;margin:40px auto 40px;max-width:1100px;padding:0 20px}
+.module-nav-btn{flex:1;display:flex;align-items:center;gap:12px;padding:16px 20px;background:var(--glass-03);border:1px solid var(--edge-08);border-radius:14px;text-decoration:none;color:var(--text-primary);transition:all .3s;position:relative;overflow:hidden}
+.module-nav-btn:hover{background:rgba(6,182,212,.12);border-color:#06b6d4;transform:translateY(-2px)}
+.module-nav-btn.next{justify-content:flex-end}
+.module-nav-btn .icon{font-size:24px;transition:transform .3s}
+.module-nav-btn:hover .icon{transform:translateX(-4px)}
+.module-nav-btn.next:hover .icon{transform:translateX(4px)}
+.module-nav-btn .text{display:flex;flex-direction:column;gap:2px}
+.module-nav-btn .label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.module-nav-btn .title{font-size:15px;font-weight:700;color:var(--text-primary)}
+@media(max-width:768px){.module-navigation{flex-direction:column;gap:12px}}
+    </style>
+    <script type="module" src="/firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="/role-guard.en.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=27"></script>
+
+    <!-- HERO -->
+    <section class="page-header">
+        <div class="container">
+            <div class="page-badge">📦 Amazon Relay guide · part 3 of 4</div>
+            <h1 class="page-title">When things go wrong</h1>
+            <p class="page-subtitle">A reference for the moments when something has already gone wrong. One rule that covers all of them, then 22 situations laid out the same way: what the dispatcher does, what to tell the driver, what it costs you and how to avoid it next time.</p>
+        </div>
+    </section>
+
+    <!-- COURSE NAVIGATION -->
+    <section class="section" style="padding-top: 0; padding-bottom: 30px;">
+        <div class="container">
+            <div class="sector-wrapper sector-navigation">
+                <div class="navigation-block">
+                    <button class="navigation-toggle" id="navigationToggle">
+                        <span class="nav-icon">📚</span>
+                        <span class="nav-title">Course Navigation</span>
+                        <span class="nav-arrow">▼</span>
+                    </button>
+                    <div class="navigation-content" id="navigationContent">
+                        <div class="navigation-grid">
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ SECTIONS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/documentation.html">📚 Course</a>
+                                    <a href="/en/pages/intro.html">📋 Introduction</a>
+                                    <a href="/en/pages/role.html">👤 Role</a>
+                                    <a href="/en/pages/equipment.html">🚛 Truck Types</a>
+                                    <a href="/en/pages/routes.html">🗺 Routes</a>
+                                    <a href="/en/pages/loadboards.html">📡 Load Boards</a>
+                                    <a href="/en/pages/negotiation.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/brokers.html">💼 Brokers</a>
+                                    <a href="/en/pages/docs.html">📄 Documents</a>
+                                    <a href="/en/pages/regulations.html">⚖️ Regulations</a>
+                                    <a href="/en/pages/technology.html">🖥 Technology</a>
+                                    <a href="/en/pages/communication.html">📞 Communication</a>
+                                    <a href="/en/pages/problems.html">⚠️ Problems</a>
+                                    <a href="/en/pages/finances.html">💰 Finances</a>
+                                    <a href="/en/pages/career.html">📈 Career</a>
+                                </div>
+                            </div>
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ MODULES<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/doc-module-1-complete.html">🏭 Introduction</a>
+                                    <a href="/en/pages/doc-module-2-complete.html">⚖️ Regulations</a>
+                                    <a href="/en/pages/doc-module-3-complete.html">🚛 Equipment</a>
+                                    <a href="/en/pages/doc-module-4-complete.html">📡 Load Boards</a>
+                                    <a href="/en/pages/doc-module-5-complete.html">🤝 Negotiation</a>
+                                    <a href="/en/pages/doc-module-6-complete.html">🗺 Routes</a>
+                                    <a href="/en/pages/doc-module-7-complete.html">📄 Documents</a>
+                                    <a href="/en/pages/doc-module-8-complete.html">👥 Drivers</a>
+                                    <a href="/en/pages/doc-module-9-complete.html">📊 CSA Scores</a>
+                                    <a href="/en/pages/doc-module-10-complete.html">💰 Finances</a>
+                                    <a href="/en/pages/doc-module-11-complete.html">🚨 Crises</a>
+                                    <a href="/en/pages/doc-module-12-complete.html">📈 Career</a>
+                                </div>
+                            </div>
+                            <div class="nav-section">
+                                <h4 class="section-header">▪ TOOLS<span class="section-arrow">▼</span></h4>
+                                <div class="section-items">
+                                    <a href="/en/pages/Trainer-Quiz.html">💡 Trainer</a>
+                                    <a href="/en/pages/testing.html">📝 Tests</a>
+                                    <a href="/en/pages/cases.html">🗂 Cases</a>
+                                    <a href="amazon-relay.html" class="active">📦 Amazon Relay</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top:0">A four-part guide</h3>
+            <div class="ar-map">
+                <a href="amazon-relay.html"><span class="mn">1</span><span class="mt">What it is and how to join</span><span class="md">What Relay is and how it differs from a broker. How your company gets in. How to add a driver.</span></a>
+                <a href="amazon-relay-2-loads.html"><span class="mn">2</span><span class="mt">Loads, booking, the run</span><span class="md">The kinds of loads. How a dispatcher books one and assigns a driver. How the driver works a facility.</span></a>
+                <a href="amazon-relay-3-problems.html" class="on"><span class="mn">3</span><span class="mt">When things go wrong</span><span class="md">22 situations at the facility, before and after the run, and with the account. What the dispatcher does in each.</span></a>
+                <a href="amazon-relay-4-money-rating.html"><span class="mn">4</span><span class="mt">Money, score, the week</span><span class="md">How the rate is built and when you get paid. How Amazon scores a carrier. The dispatcher’s week, glossary and quiz.</span></a>
+            </div>
+            <a class="ar-video-cta" href="amazon-relay-video-3.html">
+                <span class="vic">▶</span>
+                <span class="vtx"><b>Watch the video lesson for part 3</b><span>The same material narrated and animated: 24 scenes, 6 chapters</span></span>
+                <span class="varr">→</span>
+            </a>
+            <h3>In this part</h3>
+            <div class="ar-toc">
+                <a href="#r7"><span class="n">7</span>When things go wrong</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="r7">
+        <div class="container">
+            <h2 class="section-title">7. When things go wrong</h2>
+
+            <h3>One rule that covers all of them</h3>
+            <p class="section-text">
+                The driver stops and calls the dispatcher. The dispatcher opens a support case with the trip number and the exact
+                time, while the problem is still happening. The driver then acts only on the instruction that comes back. Every
+                screen and every clock gets captured in a screenshot. A driver improvising almost always costs more than an hour
+                of waiting.
+            </p>
+            <p class="section-text">
+                Below are twenty-two situations, all laid out the same way: what the dispatcher does, what to tell the driver,
+                what it costs. The tag on the right shows how dangerous it is for the company account. Click a situation to open it.
+            </p>
+
+            <div class="glass-card" id="pfBar" style="padding:20px 24px">
+                <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-soft);margin-bottom:8px">Where it happened</div>
+                <div class="ar-tabs" style="margin:0 0 14px"><button type="button" class="ar-tab-btn active" data-place="all">All</button><button type="button" class="ar-tab-btn" data-place="At the facility">At the facility</button><button type="button" class="ar-tab-btn" data-place="Before and after the run">Before and after the run</button><button type="button" class="ar-tab-btn" data-place="Your company account">The account</button></div>
+                <div style="font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text-soft);margin-bottom:8px">How dangerous</div>
+                <div class="ar-tabs" style="margin:0 0 14px"><button type="button" class="ar-tab-btn active" data-sev="all">All</button><button type="button" class="ar-tab-btn" data-sev="hi">🔴 High</button><button type="button" class="ar-tab-btn" data-sev="md">🟡 Medium</button><button type="button" class="ar-tab-btn" data-sev="lo">🟢 Low</button></div>
+                <div class="ar-tabs" style="margin:0"><button type="button" class="ar-tab-btn" data-open="1">Expand all</button><button type="button" class="ar-tab-btn" data-open="0">Collapse all</button></div>
+                <div id="pfCount" style="margin-top:12px;font-size:13px;color:var(--text-soft)"></div>
+            </div>
+
+            <h3>At the facility</h3>
+
+            <details class="ar-problem"><summary>🚫 The trailer is not ready: still being loaded or not in the slot<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Open a case immediately: trip number, slot, check-in time, "trailer not ready". Ask for either a different trailer or written confirmation of the wait with pay. Watch the next stop's window: if the wait kills it, say so in the same case before it happens.</div>
+                <div class="w"><span class="lbl">Driver</span>"Stay in your slot or on the staging lot, do not go hunting for a trailer around the yard. Photograph the empty slot with its number and the app screen. Message me every thirty minutes."</div>
+                <div class="c"><span class="lbl">What it costs</span>A late arrival at the next stop caused by the facility can usually be disputed if the case has timestamps. Detention comes through a separate case after two hours of waiting, per carrier reports, and is not automatic.</div>
+                <div class="r"><span class="lbl">Prevention</span>At facilities where this repeats, build in an extra forty-five minutes. Keep your own facility table with typical wait times.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📭 No empty trailer for the next leg (power only)<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Case: "no empty trailer at [code], next trip [id]". Possible answers from Amazon: wait, bobtail to the next stop, or the trip gets reassigned. Without a written instruction the driver goes nowhere; leaving on his own can be recorded as a refused trip.</div>
+                <div class="w"><span class="lbl">Driver</span>"Ask the yard worker whether there are empties in another zone and write down his name. Do not drive around the yard. Wait for my message."</div>
+                <div class="c"><span class="lbl">What it costs</span>If Amazon reassigns the trip, your score is untouched. If the driver leaves without instruction and the trip expires, the rejection is yours.</div>
+                <div class="r"><span class="lbl">Prevention</span>An hour before the drop, check the trailer status of the next trip in Trips. If it shows unavailable, call support early.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>⏱️ Live load running past two hours<span class="sev lo">LOW</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Ninety minutes after Check In, open a case: "driver waiting since hh:mm at door N". At two hours, open a second one under Payments asking for detention. Collect the Check In screenshot, the time at the door and the departure time. A payment dispute can be filed within thirty days of the trip.</div>
+                <div class="w"><span class="lbl">Driver</span>"Do not close the app. Screenshot the timeline now and again when you pull out. If they move you to another door, photograph the time."</div>
+                <div class="c"><span class="lbl">What it costs</span>Amazon does not publish free time or detention rates. Carriers report roughly two hours free, a capped hourly rate after that, and payment only when the app steps are properly timestamped.</div>
+                <div class="r"><span class="lbl">Prevention</span>Price live loads at busy facilities by the hour, not by the mile. Budget two to three hours on site.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🔒 The seal does not match the paperwork, or it is damaged<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Case immediately, before the truck moves: trip number, trailer number, the seal number on the paperwork and the one on the trailer, photos. Wait for the instruction: reseal by the facility, reissue the paperwork, or swap the trailer.</div>
+                <div class="w"><span class="lbl">Driver</span>"Do not touch the seal. Close-up photo of the seal, the paperwork in the app and the trailer number. Stay where you are until I write."</div>
+                <div class="c"><span class="lbl">What it costs</span>Leaving with a mismatched seal means the cargo integrity question at delivery lands on the carrier. A cargo claim and an incident on the score are both possible. Standing still for an hour is cheaper.</div>
+                <div class="r"><span class="lbl">Prevention</span>Seal verification is part of the trailer inspection in the app. Never skip it.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🛠️ The Amazon trailer is damaged or unsafe<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Confirm the driver captured the damage in the app inspection. Case: "trailer [number] damaged: description, photos". If it is not roadworthy — tire, lights, brakes — demand a replacement rather than accepting "just run it".</div>
+                <div class="w"><span class="lbl">Driver</span>"Every bit of damage goes into the inspection with photos, even small stuff. If it affects safety, do not roll: a roadside inspection violation goes on our record."</div>
+                <div class="c"><span class="lbl">What it costs</span>Damage you did not capture gets charged to you at the drop. Rolling with a defect risks a violation on the vehicle rate, which cannot be appealed.</div>
+                <div class="r"><span class="lbl">Prevention</span>Ten minutes for the inspection every time. Photograph even a clean trailer: that is the proof it was clean.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🚧 No slot or door assigned, the driver is sent in circles<span class="sev lo">LOW</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Case with the check-in time and the current time: "no slot or door assigned". Relay Assistant often clears this in minutes. Log the time in case detention follows.</div>
+                <div class="w"><span class="lbl">Driver</span>"Ask a yard worker, park where you are told, do not take somebody else's slot. Screenshot the in-yard instruction."</div>
+                <div class="c"><span class="lbl">What it costs</span>Usually just time. If it kills the next stop, the case is already open and the late arrival can be disputed.</div>
+                <div class="r"><span class="lbl">Prevention</span>Know the facility: many have an overflow waiting area a new driver will not find on his own.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🌙 The gate is closed during your window (night or weekend)<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Case plus a live operator: "facility closed at scheduled window". Ask for a new appointment and confirmation that the delay is the facility's. If the driver waits until morning, log it for a layover claim.</div>
+                <div class="w"><span class="lbl">Driver</span>"Tap Check In inside the window anyway, even with the gate shut: it proves you were there on time. Photograph the closed gate and the posted hours. Wait on the approved lot."</div>
+                <div class="c"><span class="lbl">What it costs</span>With a Check In inside the window and a case, it is disputable. Without the tap, the late arrival is yours.</div>
+                <div class="r"><span class="lbl">Prevention</span>Put gate hours into your facility table. For night delivery stations, confirm through the app assistant ahead of time.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📵 Check In will not register: no signal, frozen app, or he forgot<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>If the driver is on site but the tap did not go through, open a case at once: "driver arrived hh:mm, app check-in failed, screenshot attached". The trip timeline shows whether there was a location ping at the facility, and that is your argument. If he simply forgot, have him tap now and file the explanation immediately: minutes are cheaper than an hour.</div>
+                <div class="w"><span class="lbl">Driver</span>"Screenshot the error with the phone clock in frame. Restart the app, check location. If that fails, give the guard the load ID and arrival time and ask him to log it."</div>
+                <div class="c"><span class="lbl">What it costs</span>Without a timestamp, Amazon counts the lateness up to the moment the tap appears: one to sixty minutes counts once, sixty-one to two hundred forty counts double, beyond that four and eight times. Plus a hit to app usage.</div>
+                <div class="r"><span class="lbl">Prevention</span>Driver rule number one. Check a new driver's first three trips on the map: did he arrive and tap?</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🚪 He left the facility without tapping Drop Off or Check Out<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>If he is five or ten minutes away, send him back to tap; the location has to match the facility. If he is far, open a case: "driver departed [code] at hh:mm, drop-off step not completed, trailer [number] left in slot X", with a photo if there is one.</div>
+                <div class="w"><span class="lbl">Driver</span>"Do not start the next stop until I sort this out. Do you have a photo of the trailer in the slot? What time did you leave?"</div>
+                <div class="c"><span class="lbl">What it costs</span>An unfinished step hurts app usage, delays the proof of delivery and can block the next trip until the previous one closes.</div>
+                <div class="r"><span class="lbl">Prevention</span>The taps happen before the truck rolls out of the gate.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🧑‍✈️ The selfie check fails at the facility<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>If it is the same driver — beard, glasses, bad light — open a case asking for a manual review and have him retry in good light. If the man behind the wheel is not the assigned driver, reassign the trip to the actual driver at once (if he is Active) and say so honestly in the case. A swap discovered later is far worse than any late arrival.</div>
+                <div class="w"><span class="lbl">Driver</span>"Take off the cap and glasses, face the light, try again. Do not ask a colleague to show his face: that blocks both of you."</div>
+                <div class="c"><span class="lbl">What it costs</span>An identity mismatch blocks the driver and puts an incident on the carrier. Repeat it and the account gets suspended.</div>
+                <div class="r"><span class="lbl">Prevention</span>Assign the driver who is actually going. Swap drivers only by reassigning the trip in the portal.</div>
+            </div></details>
+
+            <h3>Before and after the run</h3>
+
+            <details class="ar-problem"><summary>⌛ A booked load expired: no driver was assigned in time<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Nothing to save here: an expired load counts as a rejection. If it is still on the board you can rebook and assign immediately, but the first rejection is already recorded.</div>
+                <div class="w"><span class="lbl">Driver</span>—</div>
+                <div class="c"><span class="lbl">What it costs</span>Acceptance drops, and the closer to pickup it happened the harder it hits. Your score is the lowest of four metrics, so one dip in acceptance pulls the whole grade down.</div>
+                <div class="r"><span class="lbl">Prevention</span>Book and assign as one action. No driver right now means no booking; post the truck instead.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>❌ You have to cancel a booked load or block<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Cancel in the portal, as Administrator, as early as possible. Since 2 September 2025: a block cancelled more than twenty-four hours out counts once, under twenty-four hours or after the start counts four times; a contract dropped three or more weeks out counts once, closer than that counts double. Before cancelling, check for a substitute: a second driver, or posting the truck for that slot.</div>
+                <div class="w"><span class="lbl">Driver</span>"Do not cancel anything in the app and do not just ignore the trip. I handle the cancellation."</div>
+                <div class="c"><span class="lbl">What it costs</span>Acceptance drops in proportion to the multiplier. Cancellations by Amazon itself do not count against you.</div>
+                <div class="r"><span class="lbl">Prevention</span>Decide twenty-five hours out, not "we'll see in the morning". Keep a back-up driver for contract blocks.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📦 Amazon cancelled the trip: a day out, five hours out, after arrival<span class="sev lo">LOW</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>No score impact. Check Trips in the morning: cancellations appear there before the driver's five-hour alert. If it is cancelled after the driver reached the facility, open a Payments case: "truck arrived hh:mm, load cancelled at hh:mm" and ask for the truck-ordered-not-used payment. The board offers a replacement out of the same point immediately.</div>
+                <div class="w"><span class="lbl">Driver</span>"Amazon cancelled it, not our fault. Do not leave yet, I am looking for a replacement from where you are. If you already arrived, screenshot the timeline with the Check In."</div>
+                <div class="c"><span class="lbl">What it costs</span>Carrier reports put the payment around $175 for a late cancellation; Amazon does not publish the terms. A partially cancelled block is still paid in full.</div>
+                <div class="r"><span class="lbl">Prevention</span>Do not deadhead two hundred miles for a single board load with no return lined up.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🔁 One truck on two overlapping trips<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Decide right now which trip is real and cancel the other while it is still more than twenty-four hours out, when it counts once instead of four times. If both are already close, check a second driver or tractor; otherwise the cancellation is unavoidable.</div>
+                <div class="w"><span class="lbl">Driver</span>"Your trip is [id], I am removing the other one. Change nothing in the app."</div>
+                <div class="c"><span class="lbl">What it costs</span>One rejection, weighted by how late you cancelled.</div>
+                <div class="r"><span class="lbl">Prevention</span>Keep a truck calendar outside Relay with blocks and board loads, and look at it before every booking.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🌨️ Late because of weather, traffic or a wreck<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>The moment the projected arrival slips past the window, open a case: "running late", the reason, the new ETA, a screenshot of the weather alert from the app or the traffic map. The lateness still counts, but a dispute with documents sometimes lands.</div>
+                <div class="w"><span class="lbl">Driver</span>"Safety beats the window. Screenshot the weather alert from the Relay app. Drive legal, I have already written to support."</div>
+                <div class="c"><span class="lbl">What it costs</span>On-time penalties by duration: one to sixty minutes once, sixty-one to two hundred forty twice, up to six hundred four times, beyond that eight times. Warning early does not change the multiplier but helps the dispute.</div>
+                <div class="r"><span class="lbl">Prevention</span>Weather alerts in the app refresh every ten minutes. The dispatcher checks them before a block starts.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🔧 Truck breakdown during a block or on the way to pickup<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Call a live operator and open a case: "breakdown at [location], trip [id], Amazon trailer attached or not". Options: swap the tractor and reassign in the trip, let support reassign the load, or tow with the Amazon trailer, which only happens with their approval. An Amazon trailer on the shoulder is their property and their instruction.</div>
+                <div class="w"><span class="lbl">Driver</span>"Safe spot, triangles, photos. Do not drop the Amazon trailer without my word. Keep the app open."</div>
+                <div class="c"><span class="lbl">What it costs</span>The disruption-free metric drops and the remaining stops of the block become late or refused. The block is paid for the part performed; the details go through support.</div>
+                <div class="r"><span class="lbl">Prevention</span>A real pre-trip. Tires and brakes cause both breakdowns and inspection violations.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>👮 A DOT inspection during a block<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Case: "DOT inspection in progress at [location], expected delay X". Record the report number. Afterwards read the report: every violation feeds Amazon's violation rate, where an out-of-service item counts double. Dispute questionable violations through DataQ right away, before the numbers are recalculated.</div>
+                <div class="w"><span class="lbl">Driver</span>"Stay calm, papers are in order, do not argue with the officer. Send me a photo of the report."</div>
+                <div class="c"><span class="lbl">What it costs</span>A clean inspection improves the denominator. A dirty one hurts the numerator, and past three inspections over the threshold the account is cut off with no appeal.</div>
+                <div class="r"><span class="lbl">Prevention</span>Annual inspection current, license and medical card in the cab, clean ELD logs, tidy cab. How hard an officer digs often starts with the first impression.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🚚 Changing tractors in the middle of a block<span class="sev lo">LOW</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Reassign the tractor in the trip before the truck reaches the next facility, because the gate reads plates. File a note in support about the mid-block change so there are no questions later.</div>
+                <div class="w"><span class="lbl">Driver</span>"Do not enter the facility until the tractor is changed in the app. Confirm you see the new plate on the trip."</div>
+                <div class="c"><span class="lbl">What it costs</span>Without the update: refused entry, a late arrival, possibly an incident.</div>
+                <div class="r"><span class="lbl">Prevention</span>Enter every company tractor in Relay in advance, not at the moment of the swap.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🅿️ An Amazon trailer is stuck at your yard after the run<span class="sev md">MEDIUM</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>An Amazon trailer should not spend the night at your yard. Open a case straight away: "Amazon trailer [number] at our yard after trip [id], request instruction: return to [code] or next load". Usually they give you a return load or a drop address. While it sits with you, it is your responsibility under trailer interchange.</div>
+                <div class="w"><span class="lbl">Driver</span>"Close the trailer, do not touch the seal, park it in the secured part of the yard, photos all round."</div>
+                <div class="c"><span class="lbl">What it costs</span>Property claims if anything happens to it, and questions from Amazon if the return drags on without a case.</div>
+                <div class="r"><span class="lbl">Prevention</span>When planning a block, check how it ends: with a drop at a facility or with a trailer still hooked.</div>
+            </div></details>
+
+            <h3>Your company account</h3>
+
+            <details class="ar-problem"><summary>🛡️ Insurance lapsed or renewed wrong: the account is frozen<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Call the agent: a new certificate with every required line, today. Case in support: "insurance renewed, certificate sent to the vendor at hh:mm, please expedite". Booked loads dropped by the freeze can be counted as rejections, so ask for a review in the same case.</div>
+                <div class="w"><span class="lbl">Driver</span>"We are down for one to three days. Do not watch the board, it is locked for us."</div>
+                <div class="c"><span class="lbl">What it costs</span>Lost revenue for every frozen day, possible rejections on the dropped loads, and lost contracts if the freeze runs long.</div>
+                <div class="r"><span class="lbl">Prevention</span>A reminder fourteen days before the policy expires, and Relay's requirements sent to the agent in writing so every renewal carries the right lines.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>📉 The score fell below C+: auctions gone, contracts at risk<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Open Scorecard and find the lowest of the four metrics: that number is your score. Work on that one specifically. On-time means earlier departures and timely check-ins; acceptance means booking less and letting nothing expire; app usage means working with drivers on location settings; disruption-free means reviewing incidents. Dispute questionable entries in the portal, not in the app. The window is the last six active weeks, so six clean weeks fully refresh the picture.</div>
+                <div class="w"><span class="lbl">Driver</span>Be specific: "our app usage slipped. For two weeks: app stays open, every step gets tapped. I will check every trip."</div>
+                <div class="c"><span class="lbl">What it costs</span>Below C+ the auctions close and contracts you already hold can be pulled. Lower still and part of the board disappears, with suspension in view.</div>
+                <div class="r"><span class="lbl">Prevention</span>Look at the lowest metric daily. Do not wait for a letter from Amazon.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>⛔ The account is suspended<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Read the reason in the letter: safety numbers over the threshold, an insurance lapse, a no-show, load hopping, multiple accounts, low score. Most reasons can be appealed through Support Center with a plan of action: what happened, what has been fixed, what changes going forward, with documents. The inspection violation rate has no appeal; you wait for old inspections to roll out of the twelve-month window and collect clean ones.</div>
+                <div class="w"><span class="lbl">Driver</span>Be honest about the timeline. If the cause is a specific driver, the owner decides what happens next.</div>
+                <div class="c"><span class="lbl">What it costs</span>Anything from a few weeks of downtime to permanent removal.</div>
+                <div class="r"><span class="lbl">Prevention</span>Everything above. And never open a second account for "another company" with the same people: it gets found and both are closed.</div>
+            </div></details>
+
+            <details class="ar-problem"><summary>🎭 A call "from Amazon Relay" asking for your login, or selling accounts<span class="sev hi">HIGH</span></summary><div class="pb">
+                <div class="d"><span class="lbl">Dispatcher</span>Amazon does not call asking you to read out a password and does not sell accounts. Tell them nothing and forward the details to relay-network-reports@amazon.com. If somebody in the company already shared access, change the password, revoke access in the portal and open a case.</div>
+                <div class="w"><span class="lbl">Driver</span>"Never read out the code from a Relay text and never install a 'second app' because someone on the phone asked you to."</div>
+                <div class="c"><span class="lbl">What it costs</span>Somebody else's loads under your MC number, somebody else's drivers under your account, and suspension for fraud.</div>
+                <div class="r"><span class="lbl">Prevention</span>A personal login for every employee and two-factor sign-in on the company account.</div>
+            </div></details>
+
+            <h3>Try it yourself</h3>
+            <p class="section-text">Three situations from practice. Pick an answer and the explanation appears at once.</p>
+            <div class="glass-card ar-scenario" data-explain="Check In is tapped the moment you reach the gate, and the later it lands the bigger the recorded delay. The conversation with the guard comes after.">
+                <p class="ar-sq">1. The driver reaches the gate at 22:10, the window runs to 23:00. The guard asks him to wait and walks away. What should he do right now?</p>
+                <button type="button" class="ar-opt">Wait for the guard, then tap Check In</button>
+                <button type="button" class="ar-opt" data-ok="1">Tap Check In immediately, sort out the guard afterwards</button>
+                <button type="button" class="ar-opt">Call the dispatcher and ask what to do</button>
+                <div class="ar-sfb"></div>
+            </div>
+            <div class="glass-card ar-scenario" data-explain="Cancelling a block more than twenty-four hours out counts once; under twenty-four hours it counts four times. Decide now and keep looking for cover in parallel, not instead.">
+                <p class="ar-sq">2. Tuesday, 3 pm. The driver assigned to Wednesday's 2 pm block is sick and there is no replacement yet. What does the dispatcher do?</p>
+                <button type="button" class="ar-opt">Wait until Wednesday morning in case he recovers</button>
+                <button type="button" class="ar-opt">Ask the driver to cancel the trip in the app</button>
+                <button type="button" class="ar-opt" data-ok="1">Hunt for cover until 2 pm Tuesday and, failing that, cancel the block now while it is more than a day out</button>
+                <div class="ar-sfb"></div>
+            </div>
+            <div class="glass-card ar-scenario" data-explain="You never touch the seal and never leave with a mismatched one. A case before departure is the only correct path, even if it costs an hour.">
+                <p class="ar-sq">3. During the inspection the seal number differs from the paperwork by one digit. The delivery window is two hours away and the run takes ninety minutes. What now?</p>
+                <button type="button" class="ar-opt">Go: one digit, obviously a typo</button>
+                <button type="button" class="ar-opt" data-ok="1">Stay put, photograph the seal and the paperwork, dispatcher opens a case and waits for the instruction</button>
+                <button type="button" class="ar-opt">Ask the facility to hang a new seal with the right number</button>
+                <div class="ar-sfb"></div>
+            </div>
+
+            <div class="ar-remember">
+                <b>Remember</b>
+                The driver stops and calls. The dispatcher writes with the trip number and the exact time while the problem is
+                still live. Cancellations happen as early as possible and only in the portal. The most dangerous things for the
+                company: expired loads, a swapped driver, leaving with the wrong seal and an insurance lapse.
+            </div>
+        </div>
+    </section>
+
+        <div class="module-navigation">
+            <a href="amazon-relay-2-loads.html" class="module-nav-btn"><span class="icon">←</span><div class="text"><span class="label">Part 2 of 4</span><span class="title">Loads, booking, the run</span></div></a>
+            <a href="amazon-relay-4-money-rating.html" class="module-nav-btn next"><div class="text"><span class="label">Part 4 of 4</span><span class="title">Money, score, the week</span></div><span class="icon">→</span></a>
+        </div>
+
+    <script>
+        (function () {
+            const toggle = document.getElementById('navigationToggle');
+            const content = document.getElementById('navigationContent');
+            toggle.addEventListener('click', function () { this.classList.toggle('active'); content.classList.toggle('active'); });
+            function initMobileAccordion() {
+                if (window.innerWidth <= 640) {
+                    document.querySelectorAll('.section-arrow').forEach(a => { a.style.display = 'inline-block'; });
+                    document.querySelectorAll('.nav-section').forEach(function (section, index) {
+                        if (index > 0) section.classList.add('collapsed');
+                        const header = section.querySelector('.section-header');
+                        if (header && !header.dataset.listenerAdded) {
+                            header.addEventListener('click', function () { section.classList.toggle('collapsed'); });
+                            header.dataset.listenerAdded = 'true';
+                        }
+                    });
+                } else document.querySelectorAll('.section-arrow').forEach(a => { a.style.display = 'none'; });
+            }
+            initMobileAccordion();
+            window.addEventListener('resize', initMobileAccordion);
+        })();
+
+        function toggleChecklist(el) { el.classList.toggle('open'); }
+
+        document.querySelectorAll('.ar-table').forEach(t => {
+            const heads = [...t.querySelectorAll('thead th')].map(th => th.textContent.trim());
+            if (!heads.length) return;
+            t.querySelectorAll('tbody tr').forEach(tr => [...tr.children].forEach((td, i) => { if (i > 0 && heads[i]) td.setAttribute('data-label', heads[i]); }));
+        });
+
+        (function () {
+            const $ = id => document.getElementById(id);
+            document.querySelectorAll('[data-tabs]').forEach(g => { const name = g.dataset.tabs; g.querySelectorAll('.ar-tab-btn').forEach(b => b.addEventListener('click', () => { g.querySelectorAll('.ar-tab-btn').forEach(x => x.classList.remove('active')); b.classList.add('active'); document.querySelectorAll('[data-pane^="' + name + ':"]').forEach(p => p.classList.toggle('active', p.dataset.pane === name + ':' + b.dataset.tab)); })); });
+            document.querySelectorAll('.ar-check').forEach(box => { const upd = () => { const all = [...box.querySelectorAll('input[type=checkbox]')]; const bad = all.filter(c => !c.checked); const v = box.querySelector('.ar-verdict'); if (!bad.length) { v.className = 'ar-verdict ok'; v.textContent = box.dataset.ok; } else { v.className = 'ar-verdict no'; v.textContent = box.dataset.no + ' ' + bad.map(c => c.parentElement.querySelector('span').textContent.toLowerCase()).join('; ') + '.'; } }; box.addEventListener('change', upd); upd(); });
+            if ($('lcPrice')) { const f = () => { const p = +$('lcPrice').value, m = +$('lcMiles').value, d = +$('lcDead').value, h = +$('lcHours').value; const tot = m + d; const rpm = tot ? p / tot : 0, rph = h ? p / h : 0; $('lcRpm').textContent = rpm.toFixed(2); $('lcRph').textContent = Math.round(rph); const v = $('lcVerdict'); let t, c; if (!p || !tot || !h) { t = 'Fill in every field.'; c = ''; } else if (rph >= 90) { t = 'Good load: over $90 an hour. Take it.'; c = 'ok'; } else if (rph >= 60) { t = 'Average: $60–90 an hour. Take it if nothing better is on the board, and line up a backhaul.'; c = 'mid'; } else { t = 'Weak: under $60 an hour. Keep looking.'; c = 'no'; } v.textContent = t; v.className = 'ar-verdict ' + c; }; ['lcPrice', 'lcMiles', 'lcDead', 'lcHours'].forEach(id => $(id).addEventListener('input', f)); f(); }
+            document.querySelectorAll('.ar-stepper').forEach(st => { const steps = [...st.querySelectorAll('.ar-sstep')]; const dots = st.querySelector('.ar-sdots'); const svg = st.dataset.svg && $(st.dataset.svg); let i = 0; const show = k => { i = k; st.classList.remove('all'); steps.forEach((s, j) => s.classList.toggle('active', j === i)); [...dots.children].forEach((d, j) => { d.classList.toggle('active', j === i); d.classList.toggle('done', j < i); }); st.querySelector('.ar-sprev').disabled = i === 0; st.querySelector('.ar-snext').disabled = i === steps.length - 1; if (svg) svg.querySelectorAll('[data-step]').forEach(g => { const n = +g.dataset.step; g.classList.toggle('on', n === i + 1); g.classList.toggle('done', n < i + 1); }); }; steps.forEach((_, k) => { const d = document.createElement('button'); d.type = 'button'; d.textContent = k + 1; d.addEventListener('click', () => show(k)); dots.appendChild(d); }); st.querySelector('.ar-sprev').addEventListener('click', () => show(i - 1)); st.querySelector('.ar-snext').addEventListener('click', () => show(i + 1)); st.querySelector('.ar-sall').addEventListener('click', () => { st.classList.add('all'); if (svg) svg.querySelectorAll('[data-step]').forEach(g => { g.classList.add('on'); g.classList.remove('done'); }); }); show(0); });
+            if ($('pfBar')) { const bar = $('pfBar'); let place = 'all', sev = 'all'; const items = [...document.querySelectorAll('.ar-problem')]; items.forEach(d => { let h = d.previousElementSibling; while (h && h.tagName !== 'H3') h = h.previousElementSibling; d.dataset.place = h ? h.textContent.trim() : ''; const s = d.querySelector('.sev'); d.dataset.sev = s ? [...s.classList].find(c => ['hi', 'md', 'lo'].includes(c)) : ''; }); const apply = () => { let n = 0; items.forEach(d => { const ok = (place === 'all' || d.dataset.place === place) && (sev === 'all' || d.dataset.sev === sev); d.style.display = ok ? '' : 'none'; if (ok) n++; }); document.querySelectorAll('#r7 > .container > h3').forEach(h => { if (['At the facility', 'Before and after the run', 'Your company account'].includes(h.textContent.trim())) h.style.display = (place === 'all' || h.textContent.trim() === place) ? '' : 'none'; }); $('pfCount').textContent = 'Showing ' + n + ' of ' + items.length + ' situations'; }; bar.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.place !== undefined) { place = b.dataset.place; bar.querySelectorAll('[data-place]').forEach(x => x.classList.toggle('active', x === b)); } if (b.dataset.sev !== undefined) { sev = b.dataset.sev; bar.querySelectorAll('[data-sev]').forEach(x => x.classList.toggle('active', x === b)); } if (b.dataset.open !== undefined) items.forEach(d => { d.open = b.dataset.open === '1'; }); apply(); }); apply(); }
+            document.querySelectorAll('.ar-scenario').forEach(sc => sc.querySelectorAll('.ar-opt').forEach(b => b.addEventListener('click', () => { if (sc.dataset.done) return; sc.dataset.done = '1'; sc.querySelectorAll('.ar-opt').forEach(x => { x.disabled = true; if (x.dataset.ok) x.classList.add('correct'); }); if (!b.dataset.ok) b.classList.add('wrong'); const f = sc.querySelector('.ar-sfb'); f.textContent = (b.dataset.ok ? '✅ Correct. ' : '❌ No. ') + sc.dataset.explain; f.classList.add('show'); })));
+            if ($('rsOntime')) { const ids = ['rsOntime', 'rsAccept', 'rsApp', 'rsDisr']; const f = () => { const vals = ids.map(id => +$(id).value); ids.forEach((id, k) => { $(id + 'V').textContent = vals[k] + '%'; }); const min = Math.min(...vals); const worst = ids[vals.indexOf(min)]; ids.forEach(id => $(id + 'Box').classList.toggle('min', id === worst)); const g = min >= 99 ? 'A+' : min >= 98 ? 'A' : min >= 95 ? 'B+' : min >= 90 ? 'B' : min >= 85 ? 'C+' : min >= 70 ? 'C' : 'D'; $('rsScore').textContent = min + '% · ' + g; const un = g === 'D' ? 'Board and Post A Truck only. No auctions, contracts get pulled, suspension risk.' : g === 'C' ? 'Board and Post A Truck. Auctions closed, existing contracts at risk.' : g === 'C+' ? 'Board, Post A Truck and block auctions. No contracts yet.' : g === 'B' ? 'Plus multi-week contracts.' : g === 'B+' ? 'Plus early access to new loads and auctions.' : 'Everything: price alerts, an edge in auctions, counter-offers on urgent loads.'; const u = $('rsUnlock'); u.textContent = un; u.className = 'ar-verdict ' + (g === 'D' || g === 'C' ? 'no' : g === 'C+' ? 'mid' : 'ok'); }; ids.forEach(id => $(id).addEventListener('input', f)); f(); }
+            if ($('pdDay')) { const f = () => { const d = +$('pdDay').value; const toSat = 6 - d; const days = toSat + 6; $('pdOut').textContent = 'The pay week closes on Saturday' + (toSat ? ' in ' + toSat + ' day(s)' : ' the same day') + ', money lands the Friday after — in ' + days + ' days.'; }; $('pdDay').addEventListener('change', f); f(); }
+            if ($('bcBid')) { const f = () => { const bid = +$('bcBid').value, n = +$('bcN').value, mi = +$('bcMiles').value, dh = +$('bcDead').value, cost = +$('bcCost').value, dr = +$('bcDriver').value; const rev = bid * n, miles = (mi + dh) * n, exp = miles * cost, drv = rev * dr / 100, prof = rev - exp - drv; $('bcRev').textContent = Math.round(rev).toLocaleString('en-US'); $('bcMi').textContent = Math.round(miles).toLocaleString('en-US'); $('bcExp').textContent = Math.round(exp).toLocaleString('en-US'); $('bcDrv').textContent = Math.round(drv).toLocaleString('en-US'); const p = $('bcProf'); p.textContent = Math.round(prof).toLocaleString('en-US'); p.parentElement.style.color = prof > 0 ? 'var(--success)' : '#ef4444'; $('bcRpm').textContent = miles ? (rev / miles).toFixed(2) : '0'; }; ['bcBid', 'bcN', 'bcMiles', 'bcDead', 'bcCost', 'bcDriver'].forEach(id => $(id).addEventListener('input', f)); f(); }
+            const wk = $('r10'); if (wk) { const c = wk.querySelector('.container'); const heads = [...c.querySelectorAll('h3')]; if (heads.length > 1) { const bar = document.createElement('div'); bar.className = 'ar-tabs'; const panes = heads.map((h, k) => { const pane = document.createElement('div'); pane.className = 'ar-pane' + (k === 0 ? ' active' : ''); const body = h.nextElementSibling; h.parentNode.insertBefore(pane, h); pane.appendChild(h); pane.appendChild(body); const b = document.createElement('button'); b.type = 'button'; b.className = 'ar-tab-btn' + (k === 0 ? ' active' : ''); b.textContent = h.textContent; b.addEventListener('click', () => { bar.querySelectorAll('button').forEach(x => x.classList.remove('active')); b.classList.add('active'); panes.forEach((p, j) => p.classList.toggle('active', j === k)); }); bar.appendChild(b); return pane; }); panes[0].parentNode.insertBefore(bar, panes[0]); } }
+        })();
+    </script>
+
+    <script src="/lesson-visuals.js?v=3"></script>
+
+    <button class="scroll-to-top" id="scrollToTop" aria-label="Back to top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>
+    <script>
+        (function () {
+            const b = document.getElementById('scrollToTop'); let t;
+            addEventListener('scroll', function () { if (scrollY > 300) { b.classList.add('visible'); r(); } else { b.classList.remove('visible'); b.classList.remove('inactive'); } });
+            function r() { b.classList.remove('inactive'); clearTimeout(t); t = setTimeout(() => b.classList.add('inactive'), 2000); }
+            addEventListener('mousemove', r); addEventListener('touchstart', r);
+            b.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+        })();
+    </script>
+
+</body>
+</html>

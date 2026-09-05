@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="/site-protection.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="/css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video lesson: Amazon Relay, part 4 | Dispatcher Course</title>
+  <link rel="canonical" href="https://dispatch4you.com/en/pages/amazon-relay-video-4.html">
+    <meta name="description" content="A narrated video lesson: the rate and the payouts, accessorials, the four score metrics and the dispatcher week. 10 minutes, 22 scenes.">
+    <meta property="og:type" content="video.other">
+    <meta property="og:site_name" content="Dispatch4You">
+    <meta property="og:title" content="Video lesson: Amazon Relay, part 4 — money and the score">
+    <meta property="og:description" content="10:28 with narration and subtitles: the rate and the payouts, accessorials, the four score metrics and the dispatcher week.">
+    <meta property="og:url" content="https://dispatch4you.com/en/pages/amazon-relay-video-4.html">
+    <meta property="og:image" content="https://dispatch4you.com/img/amazon-relay/og-video-en-4.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Video lesson: Amazon Relay, part 4 — money and the score">
+    <meta name="twitter:image" content="https://dispatch4you.com/img/amazon-relay/og-video-en-4.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-nav.css?v=8.7">
+    <link rel="stylesheet" href="/shared-styles.css?v=2.2">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; scroll-behavior: smooth; }
+        :root { --primary:#06b6d4; --secondary:#0ea5e9; --amz:#ff9900; --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+                --bg-darker:#070b14; --text-primary:#fff; --text-secondary:#e2e8f0; --text-muted:#94a3b8; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg-darker); color:var(--text-primary); line-height:1.6; overflow-x:hidden; }
+        body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.13), transparent 50%), radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%); }
+        .container { max-width:1400px; margin:0 auto; padding:0 24px; }
+        .vhead { padding:74px 0 8px; display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap; }
+        .vbadge { display:inline-block; padding:8px 18px; border-radius:24px; background:linear-gradient(135deg,rgba(255,153,0,.15),rgba(14,165,233,.15)); border:1px solid rgba(255,153,0,.35); color:var(--amz); font-size:11px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; margin-bottom:0; }
+        .vtitle { font-size:clamp(18px,2vw,25px); font-weight:900; line-height:1.2; margin-bottom:0;
+            background:linear-gradient(135deg,#06b6d4,#0ea5e9 45%,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .vsub { font-size:13px; color:var(--text-muted); }
+        .vdone { padding:5px 12px; border-radius:99px; background:rgba(16,185,129,.16); border:1px solid rgba(16,185,129,.4); color:#6ee7b7; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .pres { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.16); color:#fff; font:600 calc(var(--u)*1.3)/1 Inter,sans-serif; cursor:pointer; }
+        .pres:hover { background:rgba(255,255,255,.13); }
+
+        /* ===== ПЛЕЕР ===== */
+        .player { --chrome:330px; max-width:min(1320px, calc((100dvh - var(--chrome)) * 16 / 9)); margin:0 auto; scroll-margin-top:74px; }
+        .stage { position:relative; width:100%; aspect-ratio:16/9; background:#080d18; border:1px solid rgba(255,255,255,.10); border-radius:18px; overflow:hidden; --u:11px; }
+        .pbox { position:relative; }
+        .pbox:fullscreen, .pbox.fsfake { background:#000; display:flex; align-items:center; justify-content:center; max-width:none; }
+        .pbox.fsfake { position:fixed; inset:0; z-index:9999; }
+        .pbox:fullscreen .stage, .pbox.fsfake .stage { width:100vw; height:100dvh; max-width:none; aspect-ratio:auto; border-radius:0; border:none; }
+        .pbox:fullscreen .bar-wrap, .pbox.fsfake .bar-wrap { position:absolute; left:0; right:0; bottom:0; margin:0; padding:16px 22px 18px; background:linear-gradient(transparent, rgba(0,0,0,.82)); z-index:30; transition:opacity .35s; }
+        .pbox:fullscreen.idle .bar-wrap, .pbox.fsfake.idle .bar-wrap { opacity:0; pointer-events:none; }
+        .pbox:fullscreen.idle, .pbox.fsfake.idle { cursor:none; }
+        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--u)*7.4); }
+        .pbox:fullscreen.idle .subs, .pbox.fsfake.idle .subs { bottom:calc(var(--u)*2.6); }
+        .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*7.6); }
+        .scene.live { display:flex; }
+        .scene-cap { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); margin-bottom:calc(var(--u)*2.2); flex-shrink:0; }
+        .sc-ch { font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .sc-tt { font-size:calc(var(--u)*1.45); color:var(--text-muted); }
+        .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.5); min-height:0; }
+        [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
+        [data-at].on { opacity:1; transform:none; }
+        g[data-at], text[data-at], path[data-at] { transform:none !important; }
+
+        /* блоки сцен */
+        .sc-title { text-align:center; }
+        .sc-title .kicker { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*1.6); }
+        .sc-title .big { font-size:calc(var(--u)*6.2); font-weight:900; line-height:1.08; letter-spacing:-.02em; }
+        .sc-title.small .big { font-size:calc(var(--u)*4.6); }
+        .sc-title .accent { background:linear-gradient(135deg,#06b6d4,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .chips { display:flex; gap:calc(var(--u)*1); justify-content:center; margin-top:calc(var(--u)*2.6); flex-wrap:wrap; }
+        .chip { display:flex; align-items:center; gap:calc(var(--u)*.7); padding:calc(var(--u)*.9) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .chip i { width:calc(var(--u)*2); height:calc(var(--u)*2); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,var(--primary),var(--amz)); display:flex; align-items:center; justify-content:center; font-style:normal; font-weight:800; font-size:calc(var(--u)*1.1); color:#fff; }
+
+        .sc-cols3 { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.6); }
+        .sc-cols3.tight { margin-top:calc(var(--u)*2.4); }
+        .ccard { padding:calc(var(--u)*2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.4); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .ccard.need { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .ccard .ic { font-size:calc(var(--u)*2.6); margin-bottom:calc(var(--u)*.7); }
+        .ccard .cnum { font-size:calc(var(--u)*3.1); font-weight:900; background:linear-gradient(135deg,var(--primary),var(--amz)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .ccard .clab { font-size:calc(var(--u)*1.28); color:var(--text-muted); margin-top:calc(var(--u)*.4); }
+        .sc-arrow { text-align:center; font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; }
+        .sc-relay { display:flex; justify-content:center; }
+        .rbox { padding:calc(var(--u)*1.8) calc(var(--u)*3); border-radius:calc(var(--u)*1.4); background:linear-gradient(135deg,rgba(6,182,212,.16),rgba(255,153,0,.14)); border:1px solid rgba(255,153,0,.4); text-align:center; }
+        .rbox .rt { font-size:calc(var(--u)*2.6); font-weight:900; }
+        .rbox .rs { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.3); }
+
+        .sc-vs { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .vs-head { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); padding:0 calc(var(--u)*1.4); }
+        .vs-head .vh { font-size:calc(var(--u)*1.5); font-weight:800; }
+        .vs-head .vh:first-child { grid-column:2; color:var(--text-muted); }
+        .vs-head .vh.b { color:var(--amz); }
+        .vs-row { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); }
+        .vs-row .vl { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .vs-row .va { font-size:calc(var(--u)*1.42); color:var(--text-secondary); }
+        .vs-row .vb { font-size:calc(var(--u)*1.42); color:var(--amz); font-weight:600; }
+
+        .sc-days { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.6); }
+        .day { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .day.b { border-color:rgba(255,153,0,.4); background:rgba(255,153,0,.06); }
+        .day .dh { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .day .dstep { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.42) 0; border-bottom:1px solid rgba(255,255,255,.06); }
+        .day .dtime { margin-top:calc(var(--u)*.9); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .day .dtime.ok { color:var(--success); }
+
+        .sc-who { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .who { padding:calc(var(--u)*1.7) calc(var(--u)*1.2); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .who.hi { border-color:rgba(6,182,212,.45); background:rgba(6,182,212,.08); }
+        .who .wic { font-size:calc(var(--u)*2.8); }
+        .who .wn { font-size:calc(var(--u)*1.75); font-weight:800; margin:calc(var(--u)*.5) 0 calc(var(--u)*.3); }
+        .who .wd { font-size:calc(var(--u)*1.18); color:var(--text-muted); line-height:1.45; }
+
+        .sc-svg { width:100%; height:auto; max-height:100%; }
+        .svgt { fill:#e2e8f0; font-size:15px; font-family:'Inter',sans-serif; }
+        .svgt.b { fill:#fff; font-size:19px; font-weight:800; }
+        .svgt.s { fill:#94a3b8; font-size:14px; }
+        .svgt.o { font-size:20px; } .svgt.g { font-size:20px; }
+        .truck-anim { transform:translateX(0); }
+        .truck-anim.on { animation:driveAcross 7.5s cubic-bezier(.4,0,.5,1) .3s forwards; }
+        @keyframes driveAcross { to { transform:translateX(490px); } }
+
+        .sc-code { text-align:center; }
+        .codebig { font-size:calc(var(--u)*7); font-weight:900; letter-spacing:.02em; }
+        .codebig .letters { color:var(--primary); }
+        .codebig .digit { color:var(--amz); }
+        .codelegend { display:flex; justify-content:center; gap:calc(var(--u)*3); margin-top:calc(var(--u)*1.2); }
+        .cl { display:flex; align-items:center; gap:calc(var(--u)*.8); }
+        .cll { font-size:calc(var(--u)*1.7); font-weight:900; color:var(--primary); }
+        .cll.d { color:var(--amz); }
+        .clt { font-size:calc(var(--u)*1.28); color:var(--text-muted); }
+        .codeex { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.2); margin-top:calc(var(--u)*2.2); }
+        .ce { padding:calc(var(--u)*1.2); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ce b { display:block; font-size:calc(var(--u)*1.9); color:#fff; }
+        .ce span { font-size:calc(var(--u)*1.2); color:var(--text-muted); }
+
+        .sc-req { display:flex; flex-direction:column; gap:calc(var(--u)*1.4); }
+        .req { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .req .rn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .req .rb { flex:1; min-width:0; }
+        .req .rt { font-size:calc(var(--u)*1.75); font-weight:800; }
+        .req .rv { font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; margin-top:calc(var(--u)*.2); }
+        .req .rx { font-size:calc(var(--u)*1.25); color:var(--text-muted); margin-top:calc(var(--u)*.55); }
+        .tag { display:inline-block; padding:calc(var(--u)*.25) calc(var(--u)*.8); border-radius:99px; background:rgba(255,153,0,.18); color:var(--amz); font-size:calc(var(--u)*1); font-weight:800; text-transform:uppercase; letter-spacing:.06em; vertical-align:middle; margin-left:calc(var(--u)*.6); }
+        .pills { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; margin-top:calc(var(--u)*.7); }
+        .pillrow { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; align-items:center; margin-top:calc(var(--u)*.6); }
+        .plab { font-size:calc(var(--u)*1.25); font-weight:800; min-width:calc(var(--u)*9); }
+        .plab.ok { color:#6ee7b7; } .plab.no { color:#fca5a5; }
+        .pill { padding:calc(var(--u)*.5) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:700; }
+        .pill.ok { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.35); }
+        .pill.no { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); text-decoration:line-through; }
+        .bars { display:flex; flex-direction:column; gap:calc(var(--u)*.55); margin-top:calc(var(--u)*.7); }
+        .bar { display:grid; grid-template-columns:auto 1fr auto; gap:calc(var(--u)*1); align-items:center; }
+        .bar .bl { font-size:calc(var(--u)*1.25); color:var(--text-secondary); min-width:calc(var(--u)*16); }
+        .bar .bt { height:calc(var(--u)*.9); border-radius:99px; background:rgba(255,255,255,.08); position:relative; overflow:hidden; }
+        .bar .bt i { position:absolute; inset:0 auto 0 0; width:var(--w); background:linear-gradient(90deg,var(--primary),var(--amz)); border-radius:99px; }
+        .bar .bv { font-size:calc(var(--u)*1.3); font-weight:800; color:var(--amz); }
+        .formula { margin-top:calc(var(--u)*.8); padding:calc(var(--u)*.9) calc(var(--u)*1.2); border-radius:calc(var(--u)*.8); background:rgba(6,182,212,.09); border:1px solid rgba(6,182,212,.28); font-size:calc(var(--u)*1.25); color:var(--text-secondary); }
+
+        .sc-eq { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .eq { padding:calc(var(--u)*1.5) calc(var(--u)*1.1); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .eq .eic { font-size:calc(var(--u)*2.6); }
+        .eq .en { font-size:calc(var(--u)*1.55); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.2); }
+        .eq .ed { font-size:calc(var(--u)*1.15); color:var(--text-muted); line-height:1.45; }
+        .sc-two { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+
+        .sc-ins { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ins { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+        .ins.hot { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.5); }
+        .ins .il { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ins .il .sub { display:block; font-size:calc(var(--u)*1.1); color:var(--amz); }
+        .ins .iv { font-size:calc(var(--u)*1.75); font-weight:900; color:#fff; white-space:nowrap; }
+        .ins.hot .iv { color:var(--amz); }
+
+        .sc-flow { display:flex; align-items:stretch; gap:calc(var(--u)*1); }
+        .fw { flex:1; padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .fw .fi { font-size:calc(var(--u)*2.3); }
+        .fw .ft { font-size:calc(var(--u)*1.25); color:var(--text-secondary); margin-top:calc(var(--u)*.4); line-height:1.45; }
+        .fa { display:flex; align-items:center; color:var(--amz); font-size:calc(var(--u)*2); }
+
+        .sc-case { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .sc-case .ch { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.9); }
+        .sc-case .cline { font-size:calc(var(--u)*1.38); color:var(--text-secondary); padding:calc(var(--u)*.34) 0 calc(var(--u)*.34) calc(var(--u)*1.6); position:relative; }
+        .sc-case .cline::before { content:'•'; position:absolute; left:0; color:var(--text-muted); }
+        .sc-case .cline.bad { color:#fca5a5; } .sc-case .cline.bad::before { content:'✕'; color:#fca5a5; font-size:.85em; }
+        .sc-case .cline.good { color:#6ee7b7; } .sc-case .cline.good::before { content:'✓'; color:#6ee7b7; }
+        .sc-case .cfoot { margin-top:calc(var(--u)*.9); padding-top:calc(var(--u)*.9); border-top:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.35); color:var(--amz); font-weight:600; }
+
+        .sc-roles { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .role { position:relative; padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .role.best { border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.08); }
+        .role.trap { border-color:rgba(239,68,68,.45); background:rgba(239,68,68,.07); }
+        .rbadge { position:absolute; top:calc(var(--u)*-.9); left:calc(var(--u)*1.2); padding:calc(var(--u)*.3) calc(var(--u)*.9); border-radius:99px; background:#10b981; color:#04231a; font-size:calc(var(--u)*1); font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+        .rbadge.trap { background:#ef4444; color:#2a0505; }
+        .role .rname { font-size:calc(var(--u)*1.8); font-weight:800; }
+        .role .rwho { font-size:calc(var(--u)*1.2); color:var(--amz); margin:calc(var(--u)*.2) 0 calc(var(--u)*.6); }
+        .role .rcan { font-size:calc(var(--u)*1.25); color:var(--text-muted); line-height:1.5; }
+
+        .sc-steps { display:flex; flex-direction:column; gap:calc(var(--u)*1.3); }
+        .st { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .st.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .st .sn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .st .sb { flex:1; min-width:0; }
+        .sc-steps .stt { font-size:calc(var(--u)*1.7); font-weight:800; }
+        .st .std { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.35); line-height:1.5; }
+        .st .std.dim { color:var(--text-muted); }
+        .toggles { display:flex; flex-direction:column; gap:calc(var(--u)*.6); margin-top:calc(var(--u)*.9); }
+        .tg { display:grid; grid-template-columns:calc(var(--u)*16) auto 1fr; gap:calc(var(--u)*1); align-items:center; }
+        .tgl { font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .tgv { padding:calc(var(--u)*.4) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:800; text-align:center; }
+        .tgv.on { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .tgv.off { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); }
+        .tgn { font-size:calc(var(--u)*1.15); color:var(--text-muted); }
+
+        .sc-yesno { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.5); }
+        .sc-yesno .col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .sc-yesno .col.yes { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .sc-yesno .col.no { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .sc-yesno .colh { font-size:calc(var(--u)*1.55); font-weight:800; margin-bottom:calc(var(--u)*.8); }
+        .sc-yesno .col.yes .colh { color:#6ee7b7; } .sc-yesno .col.no .colh { color:#fca5a5; }
+        .sc-yesno .li { font-size:calc(var(--u)*1.32); color:var(--text-secondary); padding:calc(var(--u)*.35) 0 calc(var(--u)*.35) calc(var(--u)*1.7); position:relative; }
+        .sc-yesno .col.yes .li::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .sc-yesno .col.no .li::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-yesno .lin { margin-top:calc(var(--u)*.8); font-size:calc(var(--u)*1.25); color:var(--amz); }
+
+        .sc-status { display:flex; align-items:center; justify-content:center; gap:calc(var(--u)*1.4); }
+        .sc-status .stt { padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:99px; font-size:calc(var(--u)*1.6); font-weight:800; }
+        .sc-status .stt.pending { background:rgba(245,158,11,.16); color:#fcd34d; border:1px solid rgba(245,158,11,.4); }
+        .sc-status .stt.active { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .sc-status .arr { color:var(--text-muted); font-size:calc(var(--u)*1.8); }
+
+        .sc-sum { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sumh { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--amz); }
+        .sumline { font-size:calc(var(--u)*1.5); color:var(--text-secondary); padding:calc(var(--u)*.9) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid var(--primary); line-height:1.5; }
+        .sumline b { color:#fff; }
+        .nextup { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(255,153,0,.12)); border:1px solid rgba(255,153,0,.35); }
+        .nextup .nl { display:block; font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .nextup .nt { font-size:calc(var(--u)*1.5); color:#fff; }
+
+        .sc-note { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); font-size:calc(var(--u)*1.4); color:var(--text-secondary); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
+        .sc-note.warn { background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.35); color:#fcd34d; }
+        .sc-note.ok { background:rgba(16,185,129,.10); border-color:rgba(16,185,129,.35); color:#6ee7b7; }
+        .sc-note.danger { background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.38); color:#fca5a5; }
+        .sc-note.big { font-size:calc(var(--u)*1.6); font-weight:600; text-align:center; }
+
+        /* заставка и кнопка старта */
+        .poster { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u)*1.6); background:linear-gradient(160deg,#0a1120,#0e1830); cursor:pointer; }
+        .poster.hide { display:none; }
+        .poster .pt { font-size:calc(var(--u)*3.4); font-weight:900; text-align:center; line-height:1.15; }
+        .poster .ps { font-size:calc(var(--u)*1.5); color:var(--text-muted); }
+        .bigplay { width:calc(var(--u)*7); height:calc(var(--u)*7); border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--amz)); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 calc(var(--u)*.8) calc(var(--u)*3) rgba(6,182,212,.35); transition:transform .2s; }
+        .bigplay:hover { transform:scale(1.06); }
+        .bigplay svg { width:calc(var(--u)*2.6); height:calc(var(--u)*2.6); fill:#fff; margin-left:calc(var(--u)*.3); }
+
+        /* субтитры */
+        .subs { position:absolute; left:0; right:0; bottom:calc(var(--u)*2.4); display:flex; justify-content:center; padding:0 calc(var(--u)*4); z-index:6; pointer-events:none; transition:bottom .35s ease; }
+        .subs.off { display:none; }
+        .subs .stx { max-width:88%; background:rgba(6,10,20,.86); padding:calc(var(--u)*.75) calc(var(--u)*1.5); border-radius:calc(var(--u)*.7); text-align:center; text-wrap:balance; }
+        .subs .stx { font-size:max(15px, calc(var(--u)*1.9)); line-height:1.42; color:#fff; font-weight:500; }
+        .subs.below { position:static; padding:0; margin-top:10px; }
+        .subs.below .stx { width:100%; max-width:none; text-align:left; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); border-left:3px solid var(--amz); border-radius:12px; padding:11px 14px; font-size:15px; line-height:1.55; color:var(--text-secondary); }
+
+        /* управление */
+        .bar-wrap { margin-top:12px; }
+        .track { position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.09); cursor:pointer; }
+        .track .fill { position:absolute; inset:0 auto 0 0; width:0; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--amz)); }
+        .track .knob { position:absolute; top:50%; left:0; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+        .track i { position:absolute; top:0; width:2px; height:100%; background:rgba(255,255,255,.35); }
+        .ctrls { display:flex; align-items:center; gap:9px; margin-top:10px; flex-wrap:wrap; }
+        .cbtn { display:flex; align-items:center; justify-content:center; gap:7px; height:44px; min-width:44px; padding:0 14px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--text-primary); font:600 14px Inter,sans-serif; cursor:pointer; transition:all .2s; }
+        .cbtn:hover { background:rgba(255,153,0,.14); border-color:rgba(255,153,0,.4); }
+        .cbtn.main { background:linear-gradient(135deg,var(--primary),var(--secondary)); border-color:transparent; }
+        .cbtn svg { width:18px; height:18px; fill:currentColor; }
+        .ctime { font:700 14px ui-monospace,Menlo,Consolas,monospace; color:var(--text-muted); margin-left:4px; }
+        .spacer { flex:1; }
+        .cbtn.small { height:38px; font-size:13px; padding:0 12px; }
+        .cbtn.fs { height:44px; padding:0 16px; font-size:14px; font-weight:800; background:rgba(255,153,0,.16); border-color:rgba(255,153,0,.55); color:#ffb648; animation:fsPulse 2.4s ease-out 1.2s 3; }
+        .cbtn.fs:hover { background:rgba(255,153,0,.26); border-color:rgba(255,153,0,.9); color:#fff; }
+        .cbtn.fs svg { width:17px; height:17px; }
+        @keyframes fsPulse { 0% { box-shadow:0 0 0 0 rgba(255,153,0,.5); } 70% { box-shadow:0 0 0 11px rgba(255,153,0,0); } 100% { box-shadow:0 0 0 0 rgba(255,153,0,0); } }
+        @media (prefers-reduced-motion:reduce) { .cbtn.fs { animation:none; } }
+
+        /* главы */
+        .chapters { margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+        .chap { display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); cursor:pointer; text-align:left; transition:all .2s; font-family:inherit; }
+        .chap:hover { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .chap.on { border-color:var(--amz); background:rgba(255,153,0,.11); }
+        .chap-t { font:800 12px ui-monospace,Menlo,Consolas,monospace; color:var(--amz); }
+        .chap-n { font-size:15px; font-weight:700; color:#fff; }
+        .chap-d { font-size:12.5px; color:var(--text-muted); }
+
+        .after { margin:44px auto 60px; max-width:1100px; }
+        .after h2 { font-size:22px; font-weight:800; margin-bottom:14px; }
+        .after-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+        .after-grid a { display:block; padding:16px 18px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-decoration:none; color:var(--text-secondary); transition:all .2s; }
+        .after-grid a:hover { border-color:rgba(6,182,212,.5); background:rgba(6,182,212,.08); color:#fff; }
+        .after-grid b { display:block; color:#fff; font-size:15px; margin-bottom:3px; }
+        .after-grid span { font-size:13px; color:var(--text-muted); }
+
+
+
+
+        /* ===== БЛОКИ ЧАСТИ 4 ===== */
+        .sc-money { display:flex; flex-direction:column; gap:calc(var(--u)*.6); }
+        .mn { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid rgba(255,255,255,.2); }
+        .mn.in { border-left-color:#10b981; } .mn.out { border-left-color:#ef4444; background:rgba(239,68,68,.07); } .mn.plus { border-left-color:#ff9900; background:rgba(255,153,0,.08); }
+        .mn-t { font-size:calc(var(--u)*1.55); font-weight:700; color:#fff; min-width:calc(var(--u)*18); }
+        .mn-d { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .sc-three-c { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .tc { padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .tc-i { font-size:calc(var(--u)*2.6); } .tc-t { font-size:calc(var(--u)*1.6); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.25); }
+        .tc-d { font-size:calc(var(--u)*1.2); color:var(--text-muted); line-height:1.45; }
+        .sc-pay { display:flex; flex-direction:column; align-items:stretch; gap:calc(var(--u)*.5); }
+        .pw { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.3) calc(var(--u)*1.7); border-radius:calc(var(--u)*1.1); background:rgba(6,182,212,.10); border:1px solid rgba(6,182,212,.3); }
+        .pw.pay { background:rgba(255,153,0,.12); border-color:rgba(255,153,0,.45); }
+        .pw.arrow { background:none; border:none; justify-content:center; padding:0; color:var(--amz); font-size:calc(var(--u)*2); }
+        .pw-l { font-size:calc(var(--u)*1.3); color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+        .pw-v { font-size:calc(var(--u)*1.75); font-weight:800; color:#fff; }
+        .sc-table.pay4 .tr { grid-template-columns:1.1fr 1.3fr 1.5fr; }
+        .sc-metrics { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.1); }
+        .mt { padding:calc(var(--u)*1.4) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .mt-n { font-size:calc(var(--u)*1.75); font-weight:800; color:var(--amz); }
+        .mt-d { font-size:calc(var(--u)*1.3); color:var(--text-secondary); line-height:1.5; margin-top:calc(var(--u)*.25); }
+        .sc-min { display:flex; flex-direction:column; gap:calc(var(--u)*1); }
+        .mn4 { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1); }
+        .m4 { padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .m4.worst { border-color:#ef4444; background:rgba(239,68,68,.10); box-shadow:0 0 0 1px #ef4444 inset; }
+        .m4-v { font-size:calc(var(--u)*2.6); font-weight:900; color:#fff; }
+        .m4-l { font-size:calc(var(--u)*1.15); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:calc(var(--u)*.2); }
+        .min-res { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); padding:calc(var(--u)*1.2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(239,68,68,.09); border:1px solid rgba(239,68,68,.35); }
+        .min-l { font-size:calc(var(--u)*1.3); color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+        .min-v { font-size:calc(var(--u)*2.4); font-weight:900; color:#fca5a5; }
+        .min-x { font-size:calc(var(--u)*1.3); color:#fca5a5; }
+        .sc-ladder { display:flex; flex-direction:column; gap:calc(var(--u)*.6); }
+        .ld { display:flex; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ld.bad { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.35); }
+        .ld-g { min-width:calc(var(--u)*10); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .ld-g.cp { color:#fcd34d; } .ld-g.b { color:#67e8f9; } .ld-g.a { color:#6ee7b7; } .ld-g.low { color:#fca5a5; }
+        .ld-t { font-size:calc(var(--u)*1.4); color:var(--text-secondary); }
+        .sc-week { display:flex; flex-direction:column; gap:calc(var(--u)*.65); }
+        .sc-week.tight { gap:calc(var(--u)*.5); }
+        .wd { display:flex; gap:calc(var(--u)*1.4); align-items:flex-start; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .wd.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .wd-d { min-width:calc(var(--u)*8.5); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:calc(var(--u)*1.3); font-weight:800; color:var(--primary); }
+        .wd-t { font-size:calc(var(--u)*1.28); color:var(--text-muted); line-height:1.5; }
+        .wd-t b { display:block; font-size:calc(var(--u)*1.5); color:#fff; margin-bottom:calc(var(--u)*.15); }
+        .sc-vs2 { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); }
+        .vs-col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.2); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .vs-col.ok { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .vs-col.bad { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .vs-h { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*.7); }
+        .vs-col.ok .vs-h { color:#6ee7b7; } .vs-col.bad .vs-h { color:#fca5a5; }
+        .vs-i { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.32) 0 calc(var(--u)*.32) calc(var(--u)*1.7); position:relative; line-height:1.45; }
+        .vs-col.ok .vs-i::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .vs-col.bad .vs-i::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-final { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .fp { display:flex; gap:calc(var(--u)*1.3); align-items:center; padding:calc(var(--u)*1.25) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .fp.hot { border-color:rgba(255,153,0,.5); background:rgba(255,153,0,.09); }
+        .fp-n { width:calc(var(--u)*3); height:calc(var(--u)*3); flex-shrink:0; border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--amz)); color:#fff; font-size:calc(var(--u)*1.5); font-weight:900; display:flex; align-items:center; justify-content:center; }
+        .fp-t { font-size:calc(var(--u)*1.4); color:var(--text-secondary); line-height:1.5; }
+        @media (max-width:900px) { .sc-three-c, .sc-metrics, .mn4, .sc-vs2 { grid-template-columns:1fr 1fr; }
+          .mn, .pw, .ld, .wd, .min-res { flex-direction:column; align-items:flex-start; gap:calc(var(--u)*.3); } }
+        /* ===== БЛОКИ ЧАСТИ 3 ===== */
+        .sc-sit { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sit-cols { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+        .sit-c { padding:calc(var(--u)*1.3) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.4); color:var(--text-secondary); line-height:1.55; }
+        .sit-c .lbl, .sit-risk .lbl, .sit-prev .lbl { display:block; font-size:calc(var(--u)*1.1); font-weight:800; letter-spacing:.09em; text-transform:uppercase; margin-bottom:calc(var(--u)*.4); }
+        .sit-c.d { border-color:rgba(6,182,212,.35); } .sit-c.d .lbl { color:var(--primary); }
+        .sit-c.w { border-color:rgba(255,153,0,.35); } .sit-c.w .lbl { color:var(--amz); }
+        .sit-risk { padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); font-size:calc(var(--u)*1.35); line-height:1.55; }
+        .sit-risk.hi { background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.38); color:#fca5a5; }
+        .sit-risk.md { background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.35); color:#fcd34d; }
+        .sit-risk.lo { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); color:#6ee7b7; }
+        .sit-risk .lbl { color:inherit; opacity:.85; }
+        .sit-prev { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:var(--glass-03); border:1px solid var(--edge-08); font-size:calc(var(--u)*1.3); color:var(--text-muted); line-height:1.5; }
+        .sit-prev .lbl { color:var(--text-soft); }
+        .sc-rule { display:flex; flex-direction:column; gap:calc(var(--u)*.9); }
+        .rl { display:flex; gap:calc(var(--u)*1.3); align-items:flex-start; padding:calc(var(--u)*1.35) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .rl-n { width:calc(var(--u)*3); height:calc(var(--u)*3); flex-shrink:0; border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--amz)); color:#fff; font-size:calc(var(--u)*1.6); font-weight:900; display:flex; align-items:center; justify-content:center; }
+        .rl-t { font-size:calc(var(--u)*1.32); color:var(--text-muted); line-height:1.5; }
+        .rl-t b { display:block; font-size:calc(var(--u)*1.65); color:#fff; margin-bottom:calc(var(--u)*.2); }
+        .sc-fine { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .fn { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .fn-w { font-size:calc(var(--u)*1.5); color:var(--text-secondary); }
+        .fn-x { font-size:calc(var(--u)*2.1); font-weight:900; }
+        .fn-x.ok { color:#6ee7b7; } .fn-x.mid { color:#fcd34d; } .fn-x.bad { color:#fca5a5; }
+        .sc-two-sit { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.3); }
+        .ts { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ts-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*.6); }
+        .ts-b { font-size:calc(var(--u)*1.32); color:var(--text-secondary); line-height:1.55; }
+        .sc-quiz { display:flex; flex-direction:column; gap:calc(var(--u)*1); }
+        .qz { padding:calc(var(--u)*1.4) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .qz-q { font-size:calc(var(--u)*1.5); font-weight:700; color:#fff; }
+        .qz-a { margin-top:calc(var(--u)*.6); padding-left:calc(var(--u)*2); font-size:calc(var(--u)*1.4); color:#6ee7b7; position:relative; }
+        .qz-a::before { content:'✓'; position:absolute; left:0; font-weight:800; }
+        @media (max-width:900px) { .sit-cols, .sc-two-sit { grid-template-columns:1fr; } .fn { flex-direction:column; align-items:flex-start; gap:calc(var(--u)*.3); } }
+        /* ===== БЛОКИ ЧАСТИ 2 ===== */
+        .sc-cols3.four { grid-template-columns:repeat(4,1fr); }
+        .ccard .cnote { font-size:calc(var(--u)*1.1); color:var(--amz); margin-top:calc(var(--u)*.4); }
+        .sc-shot { display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*.7); min-height:0; margin:0; }
+        .sc-shot img { max-width:100%; max-height:calc(var(--u)*30); object-fit:contain; border-radius:calc(var(--u)*.9); border:1px solid rgba(255,255,255,.14); background:#0b1120; }
+        .sc-shot .cap { font-size:calc(var(--u)*1.12); color:var(--text-muted); text-align:center; line-height:1.4; }
+        .sc-shots { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); min-height:0; }
+        .sc-shots .sc-shot img { max-height:calc(var(--u)*24); }
+        .sc-block { display:flex; justify-content:center; }
+        .blk { width:100%; padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .blk-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .blk-bar { display:flex; gap:calc(var(--u)*.3); height:calc(var(--u)*4.4); }
+        .seg { width:var(--w); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,rgba(6,182,212,.55),rgba(14,165,233,.4)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.2); font-weight:700; color:#fff; }
+        .seg.free { background:repeating-linear-gradient(45deg,rgba(255,255,255,.07),rgba(255,255,255,.07) 8px,rgba(255,255,255,.03) 8px,rgba(255,255,255,.03) 16px); color:var(--text-muted); font-weight:600; }
+        .blk-f { margin-top:calc(var(--u)*1); font-size:calc(var(--u)*1.5); font-weight:700; color:var(--success); }
+        .sc-table { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .sc-table .tr { display:grid; grid-template-columns:1.1fr 1fr 1fr 1.8fr; gap:calc(var(--u)*1); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .sc-table .tr.th { background:none; padding-top:0; padding-bottom:calc(var(--u)*.3); font-size:calc(var(--u)*1.2); color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+        .sc-table .ok { color:#6ee7b7; font-weight:700; } .sc-table .warn { color:#fcd34d; font-weight:700; }
+        .sc-choice { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ch-row { display:grid; grid-template-columns:1.3fr auto 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ch-if { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ch-arr { color:var(--amz); font-size:calc(var(--u)*1.7); }
+        .ch-do { font-size:calc(var(--u)*1.55); font-weight:800; color:var(--amz); }
+        .sc-load { display:flex; flex-direction:column; gap:calc(var(--u)*.5); }
+        .ld-row { display:grid; grid-template-columns:calc(var(--u)*16) 1fr; gap:calc(var(--u)*1.2); align-items:baseline; padding:calc(var(--u)*.95) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ld-row.big { background:rgba(255,153,0,.10); border:1px solid rgba(255,153,0,.4); }
+        .ld-l { font-size:calc(var(--u)*1.22); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .ld-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ld-v b { color:#fff; }
+        .ld-money { font-size:calc(var(--u)*2.2); color:var(--amz) !important; }
+        .ld-warn { color:#fcd34d; }
+        .sc-calc { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .cl-row { display:grid; grid-template-columns:calc(var(--u)*12) 1fr calc(var(--u)*17); gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .cl-row.res { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); }
+        .cl-l { font-size:calc(var(--u)*1.2); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .cl-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .cl-v.dim { color:var(--text-muted); text-decoration:line-through; }
+        .cl-x { font-size:calc(var(--u)*1.25); color:var(--amz); text-align:right; }
+        .cl-x.ok { color:#6ee7b7; }
+        .sc-dont { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .dn { display:flex; gap:calc(var(--u)*1.2); align-items:flex-start; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.25); }
+        .dn-x { color:#fca5a5; font-size:calc(var(--u)*1.7); font-weight:800; line-height:1; }
+        .dn-t { font-size:calc(var(--u)*1.3); color:var(--text-secondary); line-height:1.5; }
+        .dn-t b { display:block; color:#fff; font-size:calc(var(--u)*1.45); margin-bottom:calc(var(--u)*.2); }
+        .sc-msg { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .msg-h { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.8); }
+        .msg-b { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:calc(var(--u)*1.22); line-height:1.7; color:var(--text-secondary); white-space:pre-wrap; }
+        .sc-three { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1); }
+        .sc-note.gold { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.4); color:#fcd34d; }
+        @media (max-width:900px) { .sc-cols3.four { grid-template-columns:1fr 1fr; } .sc-shots, .sc-three { grid-template-columns:1fr; }
+          .sc-table .tr { grid-template-columns:1fr 1fr; } .ch-row { grid-template-columns:1fr; gap:calc(var(--u)*.3); } .ch-arr { display:none; }
+          .ld-row, .cl-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); } .cl-x { text-align:left; } }
+        @media (max-width:900px) {
+            .vhead { padding:78px 0 6px; gap:8px; }
+            .player { --chrome:250px; }
+            .sc-who, .sc-eq { grid-template-columns:1fr 1fr; }
+            .sc-roles, .sc-cols3, .codeex { grid-template-columns:1fr; gap:calc(var(--u)*.9); }
+            .sc-days, .sc-yesno, .sc-two { grid-template-columns:1fr; }
+            .vs-head { display:none; }
+            .vs-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); padding:calc(var(--u)*.95) calc(var(--u)*1.3); }
+            .vs-row .vl { font-size:calc(var(--u)*1.5); color:#fff; font-weight:700; }
+            .vs-row .va::before { content:'Broker: '; color:var(--text-muted); }
+            .vs-row .vb::before { content:'Relay: '; color:var(--amz); font-weight:800; }
+            .sc-flow { flex-direction:column; } .fa { justify-content:center; transform:rotate(90deg); }
+            .scene { padding-bottom:calc(var(--u)*4); }
+            .subs .stx { font-size:15px; }
+        }
+        @media (max-width:600px) { .container { padding:0 14px; } .ctrls { gap:7px; } .cbtn { padding:0 10px; font-size:13px; } }
+    </style>
+    <script type="module" src="/firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="/role-guard.en.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=27"></script>
+
+    <div class="container">
+      <div class="vhead">
+        <span class="vbadge">🎬 Part 4 of 4</span>
+        <h1 class="vtitle">Money and the score</h1>
+        <span class="vdone" id="vdone" hidden>✓ Watched</span>
+        <span class="vsub">10:28 · 22 scenes · narration and subtitles · 5 chapters</span>
+      </div>
+
+      <div class="player">
+        <div class="pbox" id="pbox">
+        <div class="stage" id="stage">
+          <div class="scene" data-i="0">
+      <div class="scene-cap"><span class="sc-ch">Introduction</span><span class="sc-tt">Money and the score</span></div>
+      <div class="scene-body"><div class="sc-title">
+  <div class="kicker" data-at="0">Dispatcher course · part 4 of 4</div>
+  <h1 class="big" data-at="0">Money<br><span class="accent">and the score</span></h1>
+  <div class="chips" data-at="1">
+    <span class="chip"><i>1</i> How they pay</span>
+    <span class="chip"><i>2</i> How they score you</span>
+    <span class="chip"><i>3</i> The dispatcher’s week</span>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="1">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. How they pay</span><span class="sc-tt">What the rate is made of</span></div>
+      <div class="scene-body"><div class="sc-money">
+  <div class="mn in" data-at="1"><span class="mn-t">Base rate</span><span class="mn-d">by lane, demand and urgency</span></div>
+  <div class="mn in" data-at="1"><span class="mn-t">Fuel surcharge</span><span class="mn-d">already inside, never shown separately</span></div>
+  <div class="mn in" data-at="1"><span class="mn-t">Tolls</span><span class="mn-d">inside, no receipts to collect</span></div>
+  <div class="mn out" data-at="2"><span class="mn-t">Deadhead</span><span class="mn-d">never paid</span></div>
+  <div class="mn plus" data-at="3"><span class="mn-t">A block</span><span class="mn-d">paid in full for the time, even if the hours went unused</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="2">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. How they pay</span><span class="sc-tt">No negotiation, with three exceptions</span></div>
+      <div class="scene-body"><div class="sc-three-c">
+  <div class="tc" data-at="1"><div class="tc-i">🚚</div><div class="tc-t">Your truck on the board</div><div class="tc-d">you set the minimum per mile</div></div>
+  <div class="tc" data-at="2"><div class="tc-i">🔨</div><div class="tc-t">The auction</div><div class="tc-d">you name the price for a block</div></div>
+  <div class="tc" data-at="3"><div class="tc-i">🤖</div><div class="tc-t">The assistant in the app</div><div class="tc-d">a premium on an urgent load if your score is high</div></div>
+</div>
+<div class="sc-note danger" data-at="4">Asking support to raise the rate is pointless — there is no mechanism</div></div>
+    </div>
+    <div class="scene" data-i="3">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. How they pay</span><span class="sc-tt">When the money arrives</span></div>
+      <div class="scene-body"><div class="sc-pay">
+  <div class="pw" data-at="0"><span class="pw-l">The pay week</span><span class="pw-v">Sunday → Saturday</span></div>
+  <div class="pw arrow" data-at="1">↓</div>
+  <div class="pw pay" data-at="1"><span class="pw-l">Money in the account</span><span class="pw-v">the following Friday</span></div>
+  <div class="sc-two" style="margin-top:calc(var(--u)*1)">
+    <div class="sc-note" data-at="2">Finished Saturday — money in 6 days</div>
+    <div class="sc-note" data-at="2">Finished Sunday — in 12 days</div>
+  </div>
+  <div class="sc-note ok" data-at="3">No fees. Factoring is unnecessary: a percentage for money that is coming on Friday</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="4">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. How they pay</span><span class="sc-tt">Extras: detention, cancellation, layover</span></div>
+      <div class="scene-body"><div class="sc-table pay4">
+  <div class="tr th" data-at="0"><span>What for</span><span>What carriers report</span><span>How to get it</span></div>
+  <div class="tr" data-at="2"><span><b>Detention</b></span><span>2 hours free, then hourly with a cap</span><span>a case while you wait + a payment dispute</span></div>
+  <div class="tr" data-at="3"><span><b>Cancelled load</b></span><span>around $175 for a late cancellation</span><span>a case right after the cancellation</span></div>
+  <div class="tr" data-at="3"><span><b>Forced overnight</b></span><span>amounts not published</span><span>a case with the timeline and photos</span></div>
+</div>
+<div class="sc-note danger big" data-at="4">Almost nothing is credited automatically. No timed case — no money</div></div>
+    </div>
+    <div class="scene" data-i="5">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. How they pay</span><span class="sc-tt">A contract week, in numbers</span></div>
+      <div class="scene-body"><div class="sc-calc">
+  <div class="cl-row" data-at="1"><span class="cl-l">Revenue</span><span class="cl-v">$2,100 a block × 3 blocks</span><span class="cl-x">$6,300</span></div>
+  <div class="cl-row" data-at="2"><span class="cl-l">Mileage</span><span class="cl-v">(900 loaded + 120 empty) × 3</span><span class="cl-x">3,060 miles</span></div>
+  <div class="cl-row" data-at="3"><span class="cl-l">Truck</span><span class="cl-v">$1.25 a mile × 3,060</span><span class="cl-x">−$3,825</span></div>
+  <div class="cl-row" data-at="3"><span class="cl-l">Driver</span><span class="cl-v">28% of revenue</span><span class="cl-x">−$1,764</span></div>
+  <div class="cl-row res" data-at="4"><span class="cl-l">Profit</span><span class="cl-v"><b class="ld-money">$711</b> a week per truck</span><span class="cl-x ok">$2.06 a mile</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="6">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. How they pay</span><span class="sc-tt">Bonuses</span></div>
+      <div class="scene-body"><div class="sc-two-sit">
+  <div class="ts" data-at="1"><div class="ts-h">🏅 Tiers by score</div><div class="ts-b">Premiums on selected loads, discounts on fuel, tires and insurance. Recalculated on the 5th of each month</div></div>
+  <div class="ts" data-at="2"><div class="ts-h">🛡️ Collision-free driving</div><div class="ts-b">1 to 4 cents a mile with a partner dash camera. Hardware and the first year of subscription on Amazon</div></div>
+</div>
+<div class="sc-note warn" data-at="3">A collision resets the counter: you go back to the first tier</div></div>
+    </div>
+    <div class="scene" data-i="7">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. How they score you</span><span class="sc-tt">Chapter 2. The carrier score</span></div>
+      <div class="scene-body"><div class="sc-title small">
+  <div class="kicker" data-at="0">Chapter 2</div>
+  <h1 class="big" data-at="0">The carrier<br><span class="accent">score</span></h1>
+  <div class="sc-cols3 tight">
+    <div class="ccard" data-at="2"><div class="cnum">6</div><div class="clab">weeks in the calculation</div></div>
+    <div class="ccard" data-at="2"><div class="cnum">10</div><div class="clab">loads before the first score</div></div>
+    <div class="ccard need" data-at="3"><div class="ic">🔑</div><div class="clab">decides which loads you see</div></div>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="8">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. How they score you</span><span class="sc-tt">The four metrics</span></div>
+      <div class="scene-body"><div class="sc-metrics">
+  <div class="mt" data-at="1"><div class="mt-n">On-time</div><div class="mt-d">arriving inside the window at every stop, by the app timestamp</div></div>
+  <div class="mt" data-at="2"><div class="mt-n">Acceptance</div><div class="mt-d">the share of what you booked that you actually hauled</div></div>
+  <div class="mt" data-at="3"><div class="mt-n">App usage</div><div class="mt-d">50% the steps, 50% location on the road</div></div>
+  <div class="mt" data-at="4"><div class="mt-n">Disruption-free</div><div class="mt-d">the wrong trailer, a substituted driver, yard violations, damage</div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="9">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. How they score you</span><span class="sc-tt">The main rule of the score</span></div>
+      <div class="scene-body"><div class="sc-min">
+  <div class="mn4">
+    <div class="m4" data-at="1"><div class="m4-v">97%</div><div class="m4-l">On-time</div></div>
+    <div class="m4" data-at="1"><div class="m4-v">100%</div><div class="m4-l">Acceptance</div></div>
+    <div class="m4 worst" data-at="2"><div class="m4-v">84%</div><div class="m4-l">App usage</div></div>
+    <div class="m4" data-at="1"><div class="m4-v">99%</div><div class="m4-l">Disruption-free</div></div>
+  </div>
+  <div class="min-res" data-at="2"><span class="min-l">Your score</span><span class="min-v">84%</span><span class="min-x">= the worst metric, not the average</span></div>
+</div>
+<div class="sc-note danger big" data-at="3">Look every day at the worst metric, not at the overall number</div></div>
+    </div>
+    <div class="scene" data-i="10">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. How they score you</span><span class="sc-tt">What the grade unlocks</span></div>
+      <div class="scene-body"><div class="sc-ladder">
+  <div class="ld" data-at="1"><span class="ld-g">any</span><span class="ld-t">the load board, your truck on the board, bonuses</span></div>
+  <div class="ld" data-at="2"><span class="ld-g cp">C+</span><span class="ld-t">plus the block auctions</span></div>
+  <div class="ld" data-at="2"><span class="ld-g b">B</span><span class="ld-t">plus the weekly contracts</span></div>
+  <div class="ld" data-at="3"><span class="ld-g a">A · A+</span><span class="ld-t">early access to loads, price alerts, an edge in auctions</span></div>
+  <div class="ld bad" data-at="4"><span class="ld-g low">below C+</span><span class="ld-t">auctions closed, won contracts can be pulled</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="11">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. How they score you</span><span class="sc-tt">The second score: safety</span></div>
+      <div class="scene-body"><div class="sc-two-sit">
+  <div class="ts" data-at="1"><div class="ts-h">📊 Performance score</div><div class="ts-b">A six-week window. Six clean weeks refresh the picture completely</div></div>
+  <div class="ts bad" data-at="3"><div class="ts-h">🛡️ Safety score</div><div class="ts-b">A twelve-month window. The violation rate cannot be appealed: drivers ≤35%, vehicles ≤50%</div></div>
+</div>
+<div class="sc-note warn" data-at="4">Only clean inspections and challenging mistaken violations with the regulator help</div></div>
+    </div>
+    <div class="scene" data-i="12">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. How they score you</span><span class="sc-tt">The daily score routine</span></div>
+      <div class="scene-body"><div class="sc-rule">
+  <div class="rl" data-at="1"><span class="rl-n">1</span><span class="rl-t"><b>Morning — the worst metric and the forecast</b>Not the overall number, the weakest of the four</span></div>
+  <div class="rl" data-at="2"><span class="rl-n">2</span><span class="rl-t"><b>Yesterday’s new entries</b>Dispute the questionable ones today, attaching yesterday’s cases</span></div>
+  <div class="rl" data-at="3"><span class="rl-n">3</span><span class="rl-t"><b>Find the specific driver</b>A conversation with the one whose trip is dragging the metric</span></div>
+  <div class="rl" data-at="4"><span class="rl-n">4</span><span class="rl-t"><b>Before every booking</b>“Is there a driver right now?”</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="13">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The dispatcher’s week</span><span class="sc-tt">Chapter 3. The dispatcher’s week</span></div>
+      <div class="scene-body"><div class="sc-title small">
+  <div class="kicker" data-at="0">Chapter 3</div>
+  <h1 class="big" data-at="0">The dispatcher’s<br><span class="accent">week</span></h1>
+  <div class="chips" data-at="1">
+    <span class="chip">a week ahead — auctions</span>
+    <span class="chip">a day ahead — assignments</span>
+    <span class="chip">on the day — control</span>
+    <span class="chip">afterwards — the money</span>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="14">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The dispatcher’s week</span><span class="sc-tt">Start of the week: auctions and the calendar</span></div>
+      <div class="scene-body"><div class="sc-week">
+  <div class="wd" data-at="0"><span class="wd-d">Mon–Tue</span><span class="wd-t"><b>Auctions</b>Blocks 1–6 weeks out. Price the worst case: full mileage, driver hours, deadhead</span></div>
+  <div class="wd" data-at="2"><span class="wd-d">Wed</span><span class="wd-t"><b>Truck calendar</b>Blocks, one-off loads and broker freight in one table. Check for overlaps</span></div>
+  <div class="wd" data-at="3"><span class="wd-d">Thu–Fri</span><span class="wd-t"><b>People and equipment</b>Driver “Active”, tractor entered, hours of service fresh</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="15">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The dispatcher’s week</span><span class="sc-tt">Twenty-four hours before the block</span></div>
+      <div class="scene-body"><div class="sc-week">
+  <div class="wd" data-at="1"><span class="wd-d">−24 h</span><span class="wd-t"><b>Trips assigned</b>Open each one: stops, windows, trailer type, live or drop and hook</span></div>
+  <div class="wd hot" data-at="2"><span class="wd-d">−24 h</span><span class="wd-t"><b>The decision to hand back</b>Right now: over a day out the penalty is four times smaller</span></div>
+  <div class="wd" data-at="3"><span class="wd-d">−12 h</span><span class="wd-t"><b>The driver’s message and phone</b>The plan for the run, location “Always”, a charger in the cab</span></div>
+  <div class="wd" data-at="4"><span class="wd-d">−2 h</span><span class="wd-t"><b>Trips once more</b>Amazon’s cancellations appear before the driver’s notification</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="16">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The dispatcher’s week</span><span class="sc-tt">Block day by the clock</span></div>
+      <div class="scene-body"><div class="sc-week tight">
+  <div class="wd" data-at="1"><span class="wd-d">−1 h</span><span class="wd-t"><b>“Begin work”</b>A dot on the map. No dot — call immediately</span></div>
+  <div class="wd" data-at="2"><span class="wd-d">−45 min</span><span class="wd-t"><b>Truck at the facility</b>Remind him: reach the gate — tap Check In</span></div>
+  <div class="wd" data-at="3"><span class="wd-d">pickup</span><span class="wd-t"><b>Timestamp in the window, seal photo</b>Check the trip timeline</span></div>
+  <div class="wd hot" data-at="4"><span class="wd-d">+90 min</span><span class="wd-t"><b>A case about the wait</b>At two hours, a second one about detention</span></div>
+  <div class="wd" data-at="5"><span class="wd-d">end</span><span class="wd-t"><b>Every trip completed</b>No Amazon trailer left with the driver</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="17">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The dispatcher’s week</span><span class="sc-tt">After the block, and on Friday</span></div>
+      <div class="scene-body"><div class="sc-week">
+  <div class="wd" data-at="1"><span class="wd-d">+1 day</span><span class="wd-t"><b>Paperwork</b>Proof of delivery in place, delay screenshots filed, cases opened for detention</span></div>
+  <div class="wd" data-at="2"><span class="wd-d">+1 day</span><span class="wd-t"><b>The score</b>New entries; dispute the questionable ones at once</span></div>
+  <div class="wd" data-at="3"><span class="wd-d">+1–2 days</span><span class="wd-t"><b>Debrief the driver</b>Not “why were you late” but where the time went. One point at a time</span></div>
+  <div class="wd hot" data-at="4"><span class="wd-d">Friday</span><span class="wd-t"><b>Reconcile the payment</b>Detention promised and not paid — a payment dispute, 30-day window</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="18">
+      <div class="scene-cap"><span class="sc-ch">Course wrap-up</span><span class="sc-tt">Relay against brokers</span></div>
+      <div class="scene-body"><div class="sc-vs2">
+  <div class="vs-col ok" data-at="1"><div class="vs-h">For Relay</div>
+    <div class="vs-i">a direct customer, no middleman</div><div class="vs-i">payment every Friday, no fees</div>
+    <div class="vs-i">Amazon trailers, none of your own needed</div><div class="vs-i">booking with one button</div><div class="vs-i">a predictable week on a contract</div></div>
+  <div class="vs-col bad" data-at="2"><div class="vs-h">Against</div>
+    <div class="vs-i">rates 15–30% under the market</div><div class="vs-i">no negotiation</div>
+    <div class="vs-i">tight windows and queues in season</div><div class="vs-i">detention only through cases</div><div class="vs-i">the score is your worst metric</div></div>
+</div>
+<div class="sc-note gold" data-at="3">The working mix: 20–50% of your work in Relay, the rest with brokers</div></div>
+    </div>
+    <div class="scene" data-i="19">
+      <div class="scene-cap"><span class="sc-ch">Course wrap-up</span><span class="sc-tt">Part four in summary</span></div>
+      <div class="scene-body"><div class="sc-sum">
+  <div class="sumh" data-at="0">Remember from part 4</div>
+  <div class="sumline" data-at="1"><b>The rate is final.</b> Fuel and tolls inside, deadhead unpaid, a block paid in full for the time</div>
+  <div class="sumline" data-at="2"><b>Money on Friday</b> for the week from Sunday to Saturday, with no fees</div>
+  <div class="sumline" data-at="3"><b>Accessorials only through a case.</b> No timed case — no money</div>
+  <div class="sumline" data-at="4"><b>The score = the worst of four</b> over 6 weeks. Safety runs over a year, with no appeal</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="20">
+      <div class="scene-cap"><span class="sc-ch">Course wrap-up</span><span class="sc-tt">What you can do now</span></div>
+      <div class="scene-body"><div class="sc-final">
+  <div class="fp" data-at="1"><span class="fp-n">1</span><span class="fp-t">How Amazon differs from a broker. How the company and the driver get onboarded</span></div>
+  <div class="fp" data-at="2"><span class="fp-n">2</span><span class="fp-t">How to choose a load, read the card, count dollars per hour, assign the driver</span></div>
+  <div class="fp" data-at="3"><span class="fp-n">3</span><span class="fp-t">What happens at the facility step by step and what to do in 22 problem situations</span></div>
+  <div class="fp" data-at="4"><span class="fp-n">4</span><span class="fp-t">How the money and the score work and what to look at every working day</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="21">
+      <div class="scene-cap"><span class="sc-ch">Course wrap-up</span><span class="sc-tt">What to do next</span></div>
+      <div class="scene-body"><div class="sc-final">
+  <div class="fp" data-at="1"><span class="fp-n">📖</span><span class="fp-t">The text parts: the same topics in more detail, with tables, calculators and practice tools</span></div>
+  <div class="fp" data-at="2"><span class="fp-n">📅</span><span class="fp-t">Set up a truck calendar outside Relay and your own facility table</span></div>
+  <div class="fp hot" data-at="3"><span class="fp-n">⭐</span><span class="fp-t">The main rule of the course: the winner is not whoever presses buttons fastest, but whoever records the time and writes in on time</span></div>
+</div>
+<div class="sc-note ok big" data-at="4">Good luck out there</div></div>
+    </div>
+          <div class="subs" id="subs"><span class="stx" id="subtext">Press Watch to start the lesson with sound.</span></div>
+          <div class="poster" id="poster">
+            <div class="pt">Money<br>and the score</div>
+            <button class="bigplay" id="bigplay" aria-label="Watch"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+            <div class="ps" id="posterSub">Part 4 of 4 · 10:28 · with sound</div>
+            <button class="pres" id="pres" hidden type="button">Start over</button>
+          </div>
+        </div>
+
+        <div class="bar-wrap">
+          <div class="track" id="track"><div class="fill" id="fill"></div><i style="left:2.90%"></i><i style="left:31.58%"></i><i style="left:57.36%"></i><i style="left:81.45%"></i><div class="knob" id="knob"></div></div>
+          <div class="ctrls">
+            <button class="cbtn main" id="play" aria-label="Play"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span id="playLabel">Watch</span></button>
+            <button class="cbtn" id="prev" aria-label="Previous scene"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+            <button class="cbtn" id="next" aria-label="Next scene"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+            <span class="ctime"><span id="tcur">0:00</span> / 10:28</span>
+            <span class="spacer"></span>
+            <button class="cbtn small" id="rate">1×</button>
+            <button class="cbtn small" id="cc">Subtitles on</button>
+            <button class="cbtn fs" id="fs" aria-label="Fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-5v-2h3z"/></svg><span id="fsLabel">Fullscreen</span></button>
+          </div>
+        </div>
+        </div>
+
+        <div class="chapters" id="chapters">
+          <button type="button" class="chap" data-t="0.00" data-ci="0">
+        <span class="chap-t">0:00</span>
+        <span class="chap-n">Introduction</span>
+        <span class="chap-d">1 scene · 0:18</span>
+      </button>
+      <button type="button" class="chap" data-t="18.22" data-ci="1">
+        <span class="chap-t">0:18</span>
+        <span class="chap-n">Chapter 1. How they pay</span>
+        <span class="chap-d">6 scenes · 3:00</span>
+      </button>
+      <button type="button" class="chap" data-t="198.33" data-ci="2">
+        <span class="chap-t">3:18</span>
+        <span class="chap-n">Chapter 2. How they score you</span>
+        <span class="chap-d">6 scenes · 2:42</span>
+      </button>
+      <button type="button" class="chap" data-t="360.20" data-ci="3">
+        <span class="chap-t">6:00</span>
+        <span class="chap-n">Chapter 3. The dispatcher’s week</span>
+        <span class="chap-d">5 scenes · 2:31</span>
+      </button>
+      <button type="button" class="chap" data-t="511.52" data-ci="4">
+        <span class="chap-t">8:32</span>
+        <span class="chap-n">Course wrap-up</span>
+        <span class="chap-d">4 scenes · 1:56</span>
+      </button>
+        </div>
+      </div>
+
+      <div class="after">
+        <h2>After the video</h2>
+        <div class="after-grid">
+          <a href="amazon-relay-4-money-rating.html"><b>Part 4 in text</b><span>payout and profit calculators, the score simulator, the glossary, the quiz</span></a>
+          <a href="amazon-relay-video.html"><b>Video lesson, part 1</b><span>what Relay is and how to join</span></a>
+          <a href="amazon-relay-video-2.html"><b>Video lesson, part 2</b><span>loads, booking and the run</span></a>
+          <a href="amazon-relay-video-3.html"><b>Video lesson, part 3</b><span>22 problem situations</span></a>
+        </div>
+      </div>
+    </div>
+
+    <audio id="track-audio" src="/audio/relay-video/en-part4.mp3" preload="auto"></audio>
+
+<script>
+(function () {
+  var CUES = [{"s":"s01","i":0,"t":0,"x":"Amazon Relay for dispatchers. Part four, the last one: money and the score."},{"s":"s01","i":1,"t":5.72,"x":"We will cover what the rate is made of, when the money arrives, what earns extra pay, and which metrics Amazon judges a carrier by."},{"s":"s01","i":2,"t":13.336,"x":"At the end we will fold all of it into the dispatcher’s working week."},{"s":"s02","i":0,"t":18.218,"x":"Start with the rate. The load card shows one figure, and everything is already inside it."},{"s":"s02","i":1,"t":23.818,"x":"The base rate, which Amazon sets by lane and by demand. The fuel surcharge. The tolls."},{"s":"s02","i":2,"t":30.21,"x":"What is not inside is deadhead. The drive to the facility and back is never paid."},{"s":"s02","i":3,"t":35.474,"x":"And one more thing: a block is paid in full for the time, even if Amazon did not use all the hours."},{"s":"s03","i":0,"t":42.468,"x":"There is nobody to haggle with in Relay: the system sets the price."},{"s":"s03","i":1,"t":46.796,"x":"There are exactly three exceptions. First, your truck on the board, where you set the minimum rate per mile yourself."},{"s":"s03","i":2,"t":53.884,"x":"Second, the auction, where you name your price for a block."},{"s":"s03","i":3,"t":57.708,"x":"Third, the assistant in the app: for carriers with a high score it sometimes offers to raise the rate on an urgent load."},{"s":"s03","i":4,"t":65.012,"x":"Calling support to ask for more money is pointless; the mechanism does not exist."},{"s":"s04","i":0,"t":71.022,"x":"Now the main difference from brokers. The pay week runs from Sunday to Saturday."},{"s":"s04","i":1,"t":75.686,"x":"The money for every trip in that week arrives the following Friday."},{"s":"s04","i":2,"t":79.846,"x":"A trip finished on Saturday night is paid in six days. One finished on Sunday morning takes twelve."},{"s":"s04","i":3,"t":86.142,"x":"There are no fees for anything: not for registration, not for booking, not for the payout. Factoring is unnecessary: paying a percentage for money that is coming on Friday anyway makes no sense."},{"s":"s05","i":0,"t":99.376,"x":"Beyond the rate there are accessorials, and this is where it gets unpleasant."},{"s":"s05","i":1,"t":103.8,"x":"Amazon does not publish the free waiting time, the detention rate, or the compensation for a cancelled load."},{"s":"s05","i":2,"t":110.312,"x":"From carrier experience: the first two hours of waiting are free, beyond that it is paid through a case and with a cap on the amount."},{"s":"s05","i":3,"t":117.952,"x":"For a load cancelled after you rolled, people quote about one hundred and seventy-five dollars. For a forced overnight, through a case."},{"s":"s05","i":4,"t":125.952,"x":"Almost nothing is credited automatically. No timed case, no money."},{"s":"s06","i":0,"t":131.194,"x":"Let us work out a real contract week so it is clear where the profit comes from."},{"s":"s06","i":1,"t":135.834,"x":"Three blocks of thirty-seven hours, the winning price two thousand one hundred dollars a block. Revenue six thousand three hundred."},{"s":"s06","i":2,"t":143.954,"x":"Mileage: nine hundred loaded miles per block plus one hundred and twenty empty. Three thousand and sixty miles for the week."},{"s":"s06","i":3,"t":151.714,"x":"Truck cost at a dollar twenty-five a mile is three thousand eight hundred and twenty-five. The driver at twenty-eight percent of revenue is one thousand seven hundred and sixty-four."},{"s":"s06","i":4,"t":161.754,"x":"That leaves seven hundred and eleven dollars of profit from one truck for the week. And the real rate works out at two dollars and six cents a mile."},{"s":"s07","i":0,"t":170.308,"x":"There are two bonus programs."},{"s":"s07","i":1,"t":172.476,"x":"The first is tiers by score and tenure: premiums on selected loads, discounts on fuel, tires and insurance. The tier is recalculated on the fifth of each month."},{"s":"s07","i":2,"t":183.116,"x":"The second is for collision-free driving: one to four cents a mile if you fit a dash camera from one of Amazon’s partners. Amazon pays for the hardware and the first year of subscription."},{"s":"s07","i":3,"t":193.732,"x":"A collision resets the counter and puts you back on the first tier."},{"s":"s08","i":0,"t":198.326,"x":"Chapter two: how Amazon scores a carrier."},{"s":"s08","i":1,"t":201.55,"x":"With brokers your reputation is “people know us”. In Relay your reputation is a number from zero to one hundred and a letter from F to A plus."},{"s":"s08","i":2,"t":210.63,"x":"It is calculated over your last six weeks with loads in them. The first score appears after ten loads."},{"s":"s08","i":3,"t":216.686,"x":"That number decides which loads you see, whether you win an auction, and whether you stay in the system at all."},{"s":"s09","i":0,"t":223.296,"x":"There are four metrics."},{"s":"s09","i":1,"t":225.056,"x":"On-time: did the driver arrive inside the window at every stop. It is measured by the timestamp in the app."},{"s":"s09","i":2,"t":231.952,"x":"Acceptance: what share of what you booked you actually hauled."},{"s":"s09","i":3,"t":235.512,"x":"App usage: half the completed steps, half the availability of location on the road."},{"s":"s09","i":4,"t":241.136,"x":"Disruption-free: whether there were incidents — the wrong trailer, a substituted driver, yard violations, damage."},{"s":"s10","i":0,"t":249.258,"x":"And now the main rule, which many people learn too late."},{"s":"s10","i":1,"t":252.65,"x":"The overall score is not the average of the four metrics. It is the worst of them."},{"s":"s10","i":2,"t":257.386,"x":"Three metrics at ninety-nine percent and app usage at eighty-four give you a score of eighty-four."},{"s":"s10","i":3,"t":263.298,"x":"So every day you look not at the overall number but at the worst metric, and you work on that one specifically."},{"s":"s11","i":0,"t":270.052,"x":"What does the score give you in practice?"},{"s":"s11","i":1,"t":272.484,"x":"At any score you have the load board, your truck on the board and the bonus program."},{"s":"s11","i":2,"t":277.316,"x":"From C plus upward the block auctions open. From B upward, the weekly contracts."},{"s":"s11","i":3,"t":282.94,"x":"Higher still: early access to new loads, price alerts and an edge in auctions."},{"s":"s11","i":4,"t":288.804,"x":"And below C plus the auctions close, and contracts you have already won can be pulled."},{"s":"s12","i":0,"t":294.55,"x":"Next to the performance score there is a second one: safety."},{"s":"s12","i":1,"t":298.254,"x":"It shows your percentiles in the regulator’s system and, from twenty twenty-six, your violation rate on roadside inspections."},{"s":"s12","i":2,"t":305.966,"x":"No more than thirty-five percent for drivers, no more than fifty for vehicles."},{"s":"s12","i":3,"t":310.774,"x":"The key difference: the performance score can be repaired in six weeks, while this one is calculated over a year, and the violation rate cannot be appealed."},{"s":"s12","i":4,"t":319.902,"x":"The only things that help are clean inspections and challenging mistaken violations with the regulator in time."},{"s":"s13","i":0,"t":326.656,"x":"What does the dispatcher do about the score every day?"},{"s":"s13","i":1,"t":329.832,"x":"In the morning he opens the scorecard, finds the worst metric and looks at the forecast: where this goes if nothing changes."},{"s":"s13","i":2,"t":337.256,"x":"He checks yesterday’s new entries: every late arrival, skipped step and incident. Questionable ones he disputes the same day, attaching yesterday’s cases."},{"s":"s13","i":3,"t":347.248,"x":"If app usage has slipped, he finds whose trip is dragging it down and talks to that driver, rather than messaging everybody."},{"s":"s13","i":4,"t":354.432,"x":"And before every booking he answers one question for himself: is there a driver right now."},{"s":"s14","i":0,"t":360.202,"x":"Chapter three, the last one: let us fold everything into a working schedule."},{"s":"s14","i":1,"t":365.442,"x":"Working with Relay is a cycle. A week ahead, the auctions. A day ahead, the assignments. On block day, hour-by-hour control. Afterwards, the paperwork and the money."},{"s":"s15","i":0,"t":377.188,"x":"Monday and Tuesday are the auctions. Look at blocks one to six weeks ahead for your fleet."},{"s":"s15","i":1,"t":382.812,"x":"Price a block against the worst case: full mileage, the driver’s hours, deadhead out and home. Place the bid."},{"s":"s15","i":2,"t":389.78,"x":"Wednesday is the truck calendar. Put won blocks, one-off loads and broker freight into one table and check for overlaps."},{"s":"s15","i":3,"t":397.732,"x":"Thursday and Friday are people and equipment. Every block needs a driver marked Active and a tractor entered in the system. And the driver’s hours have to be fresh."},{"s":"s16","i":0,"t":407.798,"x":"Twenty-four hours before the block, four checks."},{"s":"s16","i":1,"t":410.998,"x":"Every trip has a driver and a tractor. Open each one: stops, windows, trailer type, live load or drop and hook."},{"s":"s16","i":2,"t":419.406,"x":"The decision to hand a load back, if one is needed at all, is made right now: over a day out the penalty is four times smaller."},{"s":"s16","i":3,"t":427.406,"x":"The driver gets the message with the plan, and his phone has been checked for location and a charger."},{"s":"s16","i":4,"t":433.006,"x":"And a couple of hours before the start, look at the trips again: Amazon’s cancellations show up for us before the notification reaches the driver."},{"s":"s17","i":0,"t":441.704,"x":"Block day runs by the clock."},{"s":"s17","i":1,"t":443.896,"x":"An hour before the start the driver taps Begin work and a dot appears on the map. No dot means a phone call right away."},{"s":"s17","i":2,"t":450.624,"x":"Forty-five minutes before the window the truck is at the facility, and we remind him: reach the gate, tap Check In."},{"s":"s17","i":3,"t":457.376,"x":"Then we confirm the timestamp landed inside the window, wait for the seal photo and watch the trip’s colour on the map."},{"s":"s17","i":4,"t":464.32,"x":"After an hour and a half of waiting we open the first case, after two hours the second one, about detention."},{"s":"s17","i":5,"t":471.192,"x":"At the end of the day we check: every trip completed, no Amazon trailer left hooked to our truck."},{"s":"s18","i":0,"t":477.634,"x":"After the block come the paperwork and the score."},{"s":"s18","i":1,"t":480.762,"x":"Check that the proof of delivery is there, file the screenshots of any delay with the trip, and open cases for detention where there are grounds."},{"s":"s18","i":2,"t":488.858,"x":"Look at whether new entries have appeared on the scorecard, and dispute the questionable ones immediately."},{"s":"s18","i":3,"t":494.842,"x":"With the driver, go through not “why were you late” but at which step the time was lost and what changes. One point at a time."},{"s":"s18","i":4,"t":502.65,"x":"And on Friday reconcile the payment against the trips. Detention promised in a case but never credited is grounds for a payment dispute."},{"s":"s19","i":0,"t":511.516,"x":"What is left is to compare Relay with broker freight honestly."},{"s":"s19","i":1,"t":515.076,"x":"For Relay: a direct customer with no middleman, payment every Friday with no fees, Amazon’s trailers, booking with one button and a predictable week on a contract."},{"s":"s19","i":2,"t":526.004,"x":"Against: rates fifteen to thirty percent under the market, no negotiation, tight windows, queues in season, detention that has to be prised out through cases, and a score equal to your worst metric."},{"s":"s19","i":3,"t":538.492,"x":"That is why most small carriers keep twenty to fifty percent of their work in Relay and take the rest from brokers."},{"s":"s20","i":0,"t":545.414,"x":"This part in summary."},{"s":"s20","i":1,"t":547.006,"x":"The rate is final and includes fuel and tolls, deadhead is not paid, and a block is paid in full for the time."},{"s":"s20","i":2,"t":553.926,"x":"The money arrives on Friday for the week from Sunday to Saturday, with no fees."},{"s":"s20","i":3,"t":558.854,"x":"Accessorials are almost never credited on their own: no case with exact times, no money."},{"s":"s20","i":4,"t":565.222,"x":"The score equals the worst of the four metrics over six weeks. The safety score runs over a year and cannot be appealed."},{"s":"s21","i":0,"t":573.08,"x":"That is the end of the four-part course. Let us gather up what you can do now."},{"s":"s21","i":1,"t":577.48,"x":"You understand how Amazon differs from a broker, and you know how the company and the driver get onto Relay."},{"s":"s21","i":2,"t":583.8,"x":"You can choose how to get a load, read the card, work out the dollars per hour and assign the driver properly."},{"s":"s21","i":3,"t":590.168,"x":"You know what happens at the facility step by step, and what to do in twenty-two problem situations."},{"s":"s21","i":4,"t":595.96,"x":"And you understand how the money and the score work, and exactly what to look at every working day."},{"s":"s22","i":0,"t":602.066,"x":"What next?"},{"s":"s22","i":1,"t":603.37,"x":"Open the text parts: the same topics in more detail, with tables, calculators and practice tools."},{"s":"s22","i":2,"t":609.93,"x":"Set up two things today: a truck calendar outside Relay and your own facility table with waiting times and gate hours."},{"s":"s22","i":3,"t":617.45,"x":"And remember the main rule of the whole course: in Relay the winner is not whoever presses buttons fastest, but whoever records the time and writes in on time."},{"s":"s22","i":4,"t":626.89,"x":"Good luck out there."}];
+  var SC = [{"id":"s01","t":0,"e":18.218},{"id":"s02","t":18.218,"e":42.468},{"id":"s03","t":42.468,"e":71.022},{"id":"s04","t":71.022,"e":99.376},{"id":"s05","t":99.376,"e":131.194},{"id":"s06","t":131.194,"e":170.308},{"id":"s07","t":170.308,"e":198.326},{"id":"s08","t":198.326,"e":223.296},{"id":"s09","t":223.296,"e":249.258},{"id":"s10","t":249.258,"e":270.052},{"id":"s11","t":270.052,"e":294.55},{"id":"s12","t":294.55,"e":326.656},{"id":"s13","t":326.656,"e":360.202},{"id":"s14","t":360.202,"e":377.188},{"id":"s15","t":377.188,"e":407.798},{"id":"s16","t":407.798,"e":441.704},{"id":"s17","t":441.704,"e":477.634},{"id":"s18","t":477.634,"e":511.516},{"id":"s19","t":511.516,"e":545.414},{"id":"s20","t":545.414,"e":573.08},{"id":"s21","t":573.08,"e":602.066},{"id":"s22","t":602.066,"e":627.99}];
+  var CH = [{"t":0,"e":18.218},{"t":18.218,"e":198.326},{"t":198.326,"e":360.202},{"t":360.202,"e":511.516},{"t":511.516,"e":627.99}];
+  var TOTAL = 627.99;
+  var a = document.getElementById('track-audio'), stage = document.getElementById('stage');
+  var scenes = [].slice.call(stage.querySelectorAll('.scene'));
+  var cur = -1, curCue = -1, subsOn = true, rates = [1, 1.25, 1.5, 0.75], ri = 0;
+
+  function unit() { var w = stage.clientWidth, h = stage.clientHeight; stage.style.setProperty('--u', Math.min(w / 100, h / 56.25) + 'px'); }
+  var player = document.querySelector('.player'), pbox = document.getElementById('pbox');
+  function isFS() { return document.fullscreenElement === pbox || pbox.classList.contains('fsfake'); }
+  var subsEl = document.getElementById('subs');
+  function placeSubs() {
+    var wantBelow = window.innerWidth < 760 && !isFS();
+    if (wantBelow && subsEl.parentElement !== pbox) { pbox.insertBefore(subsEl, pbox.querySelector('.bar-wrap')); subsEl.classList.add('below'); }
+    else if (!wantBelow && subsEl.parentElement !== stage) { stage.appendChild(subsEl); subsEl.classList.remove('below'); }
+  }
+  function fit() {
+    placeSubs();
+    if (isFS()) { player.style.maxWidth = ''; unit(); return; }
+    player.style.maxWidth = '';
+    var top = player.getBoundingClientRect().top + (window.scrollY || 0);
+    var below = document.querySelector('.bar-wrap').offsetHeight + (subsEl.classList.contains('below') ? subsEl.offsetHeight + 10 : 0) + 20;
+    var avail = window.innerHeight - top - below - 24;
+    player.style.maxWidth = Math.max(300, Math.min(1320, avail * 16 / 9)) + 'px';
+    var over = document.querySelector('.ctrls').getBoundingClientRect().bottom - window.innerHeight + 14;
+    if (over > 0) player.style.maxWidth = Math.max(300, parseFloat(player.style.maxWidth) - over * 16 / 9) + 'px';
+    unit();
+  }
+  var fitT, lastVP = '';
+  function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fit, 80); }
+  function onViewport() { var v = window.innerWidth + 'x' + window.innerHeight; if (v === lastVP) return; lastVP = v; scheduleFit(); }
+  fit(); lastVP = window.innerWidth + 'x' + window.innerHeight;
+  addEventListener('resize', scheduleFit); addEventListener('orientationchange', scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(onViewport).observe(document.documentElement);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleFit);
+  addEventListener('load', scheduleFit); document.fonts && document.fonts.ready.then(scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(unit).observe(stage);
+
+  function cueAt(t) { var lo = 0, hi = CUES.length - 1, r = 0; while (lo <= hi) { var m = (lo + hi) >> 1; if (CUES[m].t <= t) { r = m; lo = m + 1; } else hi = m - 1; } return r; }
+  function sceneAt(t) { for (var i = SC.length - 1; i >= 0; i--) if (t >= SC[i].t - 0.05) return i; return 0; }
+
+  function showScene(i) {
+    if (i === cur) return;
+    if (cur >= 0) { scenes[cur].classList.remove('live'); scenes[cur].querySelectorAll('[data-at]').forEach(function (el) { el.classList.remove('on'); }); }
+    cur = i; scenes[i].classList.add('live');
+    var ci = CH.findIndex(function (c, k) { return SC[i].t >= c.t - 0.05 && (k === CH.length - 1 || SC[i].t < CH[k + 1].t - 0.05); });
+    document.querySelectorAll('.chap').forEach(function (b, k) { b.classList.toggle('on', k === ci); });
+  }
+  function reveal(sceneIdx, lineIdx) {
+    scenes[sceneIdx].querySelectorAll('[data-at]').forEach(function (el) {
+      el.classList.toggle('on', +el.getAttribute('data-at') <= lineIdx);
+    });
+  }
+  function paint() {
+    var t = a.currentTime;
+    var si = sceneAt(t); showScene(si);
+    var ci = cueAt(t);
+    if (ci !== curCue) { curCue = ci; document.getElementById('subtext').textContent = CUES[ci].x; }
+    reveal(si, CUES[ci].s === SC[si].id ? CUES[ci].i : 0);
+    var p = Math.min(100, t / TOTAL * 100);
+    document.getElementById('fill').style.width = p + '%';
+    document.getElementById('knob').style.left = p + '%';
+    document.getElementById('tcur').textContent = fmt(t);
+    if (!a.paused && Date.now() - lastSave > 5000) saveState();
+    if (t > TOTAL * 0.95) markDone();
+  }
+  function fmt(s) { s = Math.max(0, s); return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'); }
+
+  var raf;
+  function loop() { paint(); if (!a.paused) raf = requestAnimationFrame(loop); }
+  a.addEventListener('play', function () { setPlay(true); loop(); if (isFS()) armIdle(); });
+  a.addEventListener('pause', function () { setPlay(false); cancelAnimationFrame(raf); });
+  a.addEventListener('seeked', paint);
+  a.addEventListener('ended', function () { setPlay(false); });
+
+  function setPlay(on) {
+    document.getElementById('playIcon').innerHTML = on ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    document.getElementById('playLabel').textContent = on ? 'Pause' : (a.currentTime > 0 ? 'Resume' : 'Watch');
+  }
+  function start() {
+    document.getElementById('poster').classList.add('hide');
+    if (resumeAt && a.currentTime < 1) { a.currentTime = resumeAt; resumeAt = 0; paint(); }
+    document.querySelector('.player').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    a.play();
+  }
+  document.getElementById('bigplay').onclick = start;
+  document.getElementById('poster').onclick = start;
+  document.getElementById('play').onclick = function () { if (a.paused) start(); else a.pause(); };
+  document.getElementById('prev').onclick = function () { var i = sceneAt(a.currentTime); if (a.currentTime - SC[i].t < 1.2 && i > 0) i--; a.currentTime = SC[i].t; paint(); };
+  document.getElementById('next').onclick = function () { var i = sceneAt(a.currentTime); if (i < SC.length - 1) { a.currentTime = SC[i + 1].t; paint(); } };
+  document.getElementById('track').onclick = function (e) {
+    var r = this.getBoundingClientRect();
+    a.currentTime = Math.min(TOTAL - 0.1, Math.max(0, (e.clientX - r.left) / r.width * TOTAL));
+    document.getElementById('poster').classList.add('hide'); paint();
+  };
+  document.querySelectorAll('.chap').forEach(function (b) {
+    b.onclick = function () { document.getElementById('poster').classList.add('hide'); a.currentTime = +b.dataset.t; paint(); if (a.paused) a.play(); };
+  });
+  document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
+  document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Subtitles on' : 'Subtitles off'; fit(); };
+  var fsBtn = document.getElementById('fs'), idleT;
+  function syncFS() { document.getElementById('fsLabel').textContent = isFS() ? 'Exit fullscreen' : 'Fullscreen'; fit(); }
+  function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); idleT = setTimeout(function () { if (isFS() && !a.paused) pbox.classList.add('idle'); }, 2600); }
+  function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; syncFS(); armIdle(); }
+  function fakeOff() { pbox.classList.remove('fsfake', 'idle'); document.body.style.overflow = ''; syncFS(); }
+  fsBtn.onclick = function () {
+    if (pbox.classList.contains('fsfake')) return fakeOff();
+    if (document.fullscreenElement) return document.exitFullscreen();
+    var p;
+    try { p = pbox.requestFullscreen && pbox.requestFullscreen(); } catch (e) { p = null; }
+    if (p && p.catch) p.catch(fakeOn);
+    if (!pbox.requestFullscreen) fakeOn();
+    setTimeout(function () { if (!document.fullscreenElement) fakeOn(); }, 400);
+  };
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) pbox.classList.remove('idle'); else armIdle(); syncFS(); });
+  pbox.addEventListener('mousemove', function () { if (isFS()) armIdle(); });
+  pbox.addEventListener('touchstart', function () { if (isFS()) armIdle(); }, { passive: true });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && pbox.classList.contains('fsfake')) fakeOff(); });
+  document.addEventListener('keydown', function (e) {
+    if (/INPUT|TEXTAREA/.test((e.target.tagName || ''))) return;
+    if (e.code === 'Space') { e.preventDefault(); a.paused ? start() : a.pause(); }
+    if (e.code === 'ArrowRight') { a.currentTime = Math.min(TOTAL - .1, a.currentTime + 10); paint(); }
+    if (e.code === 'ArrowLeft') { a.currentTime = Math.max(0, a.currentTime - 10); paint(); }
+  });
+  // память просмотра: место остановки и отметка «просмотрено»
+  var SKEY = 'relay-video-en-part4', saved = null, doneFlag = false, lastSave = 0;
+  try { saved = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { saved = null; }
+  if (saved && saved.done) doneFlag = true;
+  function saveState() {
+    try { localStorage.setItem(SKEY, JSON.stringify({ t: Math.floor(a.currentTime), done: doneFlag })); } catch (e) {}
+    lastSave = Date.now();
+  }
+  function markDone() { if (doneFlag) return; doneFlag = true; document.getElementById('vdone').hidden = false; saveState(); }
+  if (doneFlag) document.getElementById('vdone').hidden = false;
+  var resumeAt = 0;
+  if (saved && saved.t > 25 && saved.t < TOTAL - 20) {
+    resumeAt = saved.t;
+    document.getElementById('posterSub').textContent = 'Resume from ' + fmt(resumeAt) + ' · part 4 of 4 · ' + fmt(TOTAL);
+    var pres = document.getElementById('pres');
+    pres.hidden = false;
+    pres.onclick = function (e) { e.stopPropagation(); resumeAt = 0; a.currentTime = 0; paint(); start(); };
+  }
+  a.addEventListener('pause', saveState);
+  a.addEventListener('ended', markDone);
+  addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) saveState(); });
+
+  showScene(0); reveal(0, -1); setPlay(false);
+})();
+</script>
+
+    <link rel="stylesheet" href="/enhanced-quiz-system.css">
+</body>
+</html>

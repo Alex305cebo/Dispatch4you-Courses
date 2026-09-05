@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="/site-protection.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="/css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video lesson: Amazon Relay, part 2 | Dispatcher Course</title>
+  <link rel="canonical" href="https://dispatch4you.com/en/pages/amazon-relay-video-2.html">
+    <meta name="description" content="A narrated video lesson: the kinds of loads, how to book them and what the driver does at the facility. 10 minutes, 23 scenes.">
+    <meta property="og:type" content="video.other">
+    <meta property="og:site_name" content="Dispatch4You">
+    <meta property="og:title" content="Video lesson: Amazon Relay, part 2 — loads and the run">
+    <meta property="og:description" content="10:16 with narration and subtitles: the kinds of loads, how to book them and what the driver does at the facility.">
+    <meta property="og:url" content="https://dispatch4you.com/en/pages/amazon-relay-video-2.html">
+    <meta property="og:image" content="https://dispatch4you.com/img/amazon-relay/og-video-en-2.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Video lesson: Amazon Relay, part 2 — loads and the run">
+    <meta name="twitter:image" content="https://dispatch4you.com/img/amazon-relay/og-video-en-2.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-nav.css?v=8.7">
+    <link rel="stylesheet" href="/shared-styles.css?v=2.2">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; scroll-behavior: smooth; }
+        :root { --primary:#06b6d4; --secondary:#0ea5e9; --amz:#ff9900; --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+                --bg-darker:#070b14; --text-primary:#fff; --text-secondary:#e2e8f0; --text-muted:#94a3b8; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg-darker); color:var(--text-primary); line-height:1.6; overflow-x:hidden; }
+        body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.13), transparent 50%), radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%); }
+        .container { max-width:1400px; margin:0 auto; padding:0 24px; }
+        .vhead { padding:74px 0 8px; display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap; }
+        .vbadge { display:inline-block; padding:8px 18px; border-radius:24px; background:linear-gradient(135deg,rgba(255,153,0,.15),rgba(14,165,233,.15)); border:1px solid rgba(255,153,0,.35); color:var(--amz); font-size:11px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; margin-bottom:0; }
+        .vtitle { font-size:clamp(18px,2vw,25px); font-weight:900; line-height:1.2; margin-bottom:0;
+            background:linear-gradient(135deg,#06b6d4,#0ea5e9 45%,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .vsub { font-size:13px; color:var(--text-muted); }
+        .vdone { padding:5px 12px; border-radius:99px; background:rgba(16,185,129,.16); border:1px solid rgba(16,185,129,.4); color:#6ee7b7; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .pres { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.16); color:#fff; font:600 calc(var(--u)*1.3)/1 Inter,sans-serif; cursor:pointer; }
+        .pres:hover { background:rgba(255,255,255,.13); }
+
+        /* ===== ПЛЕЕР ===== */
+        .player { --chrome:330px; max-width:min(1320px, calc((100dvh - var(--chrome)) * 16 / 9)); margin:0 auto; scroll-margin-top:74px; }
+        .stage { position:relative; width:100%; aspect-ratio:16/9; background:#080d18; border:1px solid rgba(255,255,255,.10); border-radius:18px; overflow:hidden; --u:11px; }
+        .pbox { position:relative; }
+        .pbox:fullscreen, .pbox.fsfake { background:#000; display:flex; align-items:center; justify-content:center; max-width:none; }
+        .pbox.fsfake { position:fixed; inset:0; z-index:9999; }
+        .pbox:fullscreen .stage, .pbox.fsfake .stage { width:100vw; height:100dvh; max-width:none; aspect-ratio:auto; border-radius:0; border:none; }
+        .pbox:fullscreen .bar-wrap, .pbox.fsfake .bar-wrap { position:absolute; left:0; right:0; bottom:0; margin:0; padding:16px 22px 18px; background:linear-gradient(transparent, rgba(0,0,0,.82)); z-index:30; transition:opacity .35s; }
+        .pbox:fullscreen.idle .bar-wrap, .pbox.fsfake.idle .bar-wrap { opacity:0; pointer-events:none; }
+        .pbox:fullscreen.idle, .pbox.fsfake.idle { cursor:none; }
+        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--u)*7.4); }
+        .pbox:fullscreen.idle .subs, .pbox.fsfake.idle .subs { bottom:calc(var(--u)*2.6); }
+        .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*7.6); }
+        .scene.live { display:flex; }
+        .scene-cap { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); margin-bottom:calc(var(--u)*2.2); flex-shrink:0; }
+        .sc-ch { font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .sc-tt { font-size:calc(var(--u)*1.45); color:var(--text-muted); }
+        .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.5); min-height:0; }
+        [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
+        [data-at].on { opacity:1; transform:none; }
+        g[data-at], text[data-at], path[data-at] { transform:none !important; }
+
+        /* блоки сцен */
+        .sc-title { text-align:center; }
+        .sc-title .kicker { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*1.6); }
+        .sc-title .big { font-size:calc(var(--u)*6.2); font-weight:900; line-height:1.08; letter-spacing:-.02em; }
+        .sc-title.small .big { font-size:calc(var(--u)*4.6); }
+        .sc-title .accent { background:linear-gradient(135deg,#06b6d4,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .chips { display:flex; gap:calc(var(--u)*1); justify-content:center; margin-top:calc(var(--u)*2.6); flex-wrap:wrap; }
+        .chip { display:flex; align-items:center; gap:calc(var(--u)*.7); padding:calc(var(--u)*.9) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .chip i { width:calc(var(--u)*2); height:calc(var(--u)*2); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,var(--primary),var(--amz)); display:flex; align-items:center; justify-content:center; font-style:normal; font-weight:800; font-size:calc(var(--u)*1.1); color:#fff; }
+
+        .sc-cols3 { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.6); }
+        .sc-cols3.tight { margin-top:calc(var(--u)*2.4); }
+        .ccard { padding:calc(var(--u)*2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.4); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .ccard.need { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .ccard .ic { font-size:calc(var(--u)*2.6); margin-bottom:calc(var(--u)*.7); }
+        .ccard .cnum { font-size:calc(var(--u)*3.1); font-weight:900; background:linear-gradient(135deg,var(--primary),var(--amz)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .ccard .clab { font-size:calc(var(--u)*1.28); color:var(--text-muted); margin-top:calc(var(--u)*.4); }
+        .sc-arrow { text-align:center; font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; }
+        .sc-relay { display:flex; justify-content:center; }
+        .rbox { padding:calc(var(--u)*1.8) calc(var(--u)*3); border-radius:calc(var(--u)*1.4); background:linear-gradient(135deg,rgba(6,182,212,.16),rgba(255,153,0,.14)); border:1px solid rgba(255,153,0,.4); text-align:center; }
+        .rbox .rt { font-size:calc(var(--u)*2.6); font-weight:900; }
+        .rbox .rs { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.3); }
+
+        .sc-vs { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .vs-head { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); padding:0 calc(var(--u)*1.4); }
+        .vs-head .vh { font-size:calc(var(--u)*1.5); font-weight:800; }
+        .vs-head .vh:first-child { grid-column:2; color:var(--text-muted); }
+        .vs-head .vh.b { color:var(--amz); }
+        .vs-row { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); }
+        .vs-row .vl { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .vs-row .va { font-size:calc(var(--u)*1.42); color:var(--text-secondary); }
+        .vs-row .vb { font-size:calc(var(--u)*1.42); color:var(--amz); font-weight:600; }
+
+        .sc-days { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.6); }
+        .day { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .day.b { border-color:rgba(255,153,0,.4); background:rgba(255,153,0,.06); }
+        .day .dh { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .day .dstep { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.42) 0; border-bottom:1px solid rgba(255,255,255,.06); }
+        .day .dtime { margin-top:calc(var(--u)*.9); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .day .dtime.ok { color:var(--success); }
+
+        .sc-who { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .who { padding:calc(var(--u)*1.7) calc(var(--u)*1.2); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .who.hi { border-color:rgba(6,182,212,.45); background:rgba(6,182,212,.08); }
+        .who .wic { font-size:calc(var(--u)*2.8); }
+        .who .wn { font-size:calc(var(--u)*1.75); font-weight:800; margin:calc(var(--u)*.5) 0 calc(var(--u)*.3); }
+        .who .wd { font-size:calc(var(--u)*1.18); color:var(--text-muted); line-height:1.45; }
+
+        .sc-svg { width:100%; height:auto; max-height:100%; }
+        .svgt { fill:#e2e8f0; font-size:15px; font-family:'Inter',sans-serif; }
+        .svgt.b { fill:#fff; font-size:19px; font-weight:800; }
+        .svgt.s { fill:#94a3b8; font-size:14px; }
+        .svgt.o { font-size:20px; } .svgt.g { font-size:20px; }
+        .truck-anim { transform:translateX(0); }
+        .truck-anim.on { animation:driveAcross 7.5s cubic-bezier(.4,0,.5,1) .3s forwards; }
+        @keyframes driveAcross { to { transform:translateX(490px); } }
+
+        .sc-code { text-align:center; }
+        .codebig { font-size:calc(var(--u)*7); font-weight:900; letter-spacing:.02em; }
+        .codebig .letters { color:var(--primary); }
+        .codebig .digit { color:var(--amz); }
+        .codelegend { display:flex; justify-content:center; gap:calc(var(--u)*3); margin-top:calc(var(--u)*1.2); }
+        .cl { display:flex; align-items:center; gap:calc(var(--u)*.8); }
+        .cll { font-size:calc(var(--u)*1.7); font-weight:900; color:var(--primary); }
+        .cll.d { color:var(--amz); }
+        .clt { font-size:calc(var(--u)*1.28); color:var(--text-muted); }
+        .codeex { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.2); margin-top:calc(var(--u)*2.2); }
+        .ce { padding:calc(var(--u)*1.2); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ce b { display:block; font-size:calc(var(--u)*1.9); color:#fff; }
+        .ce span { font-size:calc(var(--u)*1.2); color:var(--text-muted); }
+
+        .sc-req { display:flex; flex-direction:column; gap:calc(var(--u)*1.4); }
+        .req { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .req .rn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .req .rb { flex:1; min-width:0; }
+        .req .rt { font-size:calc(var(--u)*1.75); font-weight:800; }
+        .req .rv { font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; margin-top:calc(var(--u)*.2); }
+        .req .rx { font-size:calc(var(--u)*1.25); color:var(--text-muted); margin-top:calc(var(--u)*.55); }
+        .tag { display:inline-block; padding:calc(var(--u)*.25) calc(var(--u)*.8); border-radius:99px; background:rgba(255,153,0,.18); color:var(--amz); font-size:calc(var(--u)*1); font-weight:800; text-transform:uppercase; letter-spacing:.06em; vertical-align:middle; margin-left:calc(var(--u)*.6); }
+        .pills { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; margin-top:calc(var(--u)*.7); }
+        .pillrow { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; align-items:center; margin-top:calc(var(--u)*.6); }
+        .plab { font-size:calc(var(--u)*1.25); font-weight:800; min-width:calc(var(--u)*9); }
+        .plab.ok { color:#6ee7b7; } .plab.no { color:#fca5a5; }
+        .pill { padding:calc(var(--u)*.5) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:700; }
+        .pill.ok { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.35); }
+        .pill.no { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); text-decoration:line-through; }
+        .bars { display:flex; flex-direction:column; gap:calc(var(--u)*.55); margin-top:calc(var(--u)*.7); }
+        .bar { display:grid; grid-template-columns:auto 1fr auto; gap:calc(var(--u)*1); align-items:center; }
+        .bar .bl { font-size:calc(var(--u)*1.25); color:var(--text-secondary); min-width:calc(var(--u)*16); }
+        .bar .bt { height:calc(var(--u)*.9); border-radius:99px; background:rgba(255,255,255,.08); position:relative; overflow:hidden; }
+        .bar .bt i { position:absolute; inset:0 auto 0 0; width:var(--w); background:linear-gradient(90deg,var(--primary),var(--amz)); border-radius:99px; }
+        .bar .bv { font-size:calc(var(--u)*1.3); font-weight:800; color:var(--amz); }
+        .formula { margin-top:calc(var(--u)*.8); padding:calc(var(--u)*.9) calc(var(--u)*1.2); border-radius:calc(var(--u)*.8); background:rgba(6,182,212,.09); border:1px solid rgba(6,182,212,.28); font-size:calc(var(--u)*1.25); color:var(--text-secondary); }
+
+        .sc-eq { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .eq { padding:calc(var(--u)*1.5) calc(var(--u)*1.1); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .eq .eic { font-size:calc(var(--u)*2.6); }
+        .eq .en { font-size:calc(var(--u)*1.55); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.2); }
+        .eq .ed { font-size:calc(var(--u)*1.15); color:var(--text-muted); line-height:1.45; }
+        .sc-two { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+
+        .sc-ins { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ins { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+        .ins.hot { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.5); }
+        .ins .il { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ins .il .sub { display:block; font-size:calc(var(--u)*1.1); color:var(--amz); }
+        .ins .iv { font-size:calc(var(--u)*1.75); font-weight:900; color:#fff; white-space:nowrap; }
+        .ins.hot .iv { color:var(--amz); }
+
+        .sc-flow { display:flex; align-items:stretch; gap:calc(var(--u)*1); }
+        .fw { flex:1; padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .fw .fi { font-size:calc(var(--u)*2.3); }
+        .fw .ft { font-size:calc(var(--u)*1.25); color:var(--text-secondary); margin-top:calc(var(--u)*.4); line-height:1.45; }
+        .fa { display:flex; align-items:center; color:var(--amz); font-size:calc(var(--u)*2); }
+
+        .sc-case { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .sc-case .ch { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.9); }
+        .sc-case .cline { font-size:calc(var(--u)*1.38); color:var(--text-secondary); padding:calc(var(--u)*.34) 0 calc(var(--u)*.34) calc(var(--u)*1.6); position:relative; }
+        .sc-case .cline::before { content:'•'; position:absolute; left:0; color:var(--text-muted); }
+        .sc-case .cline.bad { color:#fca5a5; } .sc-case .cline.bad::before { content:'✕'; color:#fca5a5; font-size:.85em; }
+        .sc-case .cline.good { color:#6ee7b7; } .sc-case .cline.good::before { content:'✓'; color:#6ee7b7; }
+        .sc-case .cfoot { margin-top:calc(var(--u)*.9); padding-top:calc(var(--u)*.9); border-top:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.35); color:var(--amz); font-weight:600; }
+
+        .sc-roles { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .role { position:relative; padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .role.best { border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.08); }
+        .role.trap { border-color:rgba(239,68,68,.45); background:rgba(239,68,68,.07); }
+        .rbadge { position:absolute; top:calc(var(--u)*-.9); left:calc(var(--u)*1.2); padding:calc(var(--u)*.3) calc(var(--u)*.9); border-radius:99px; background:#10b981; color:#04231a; font-size:calc(var(--u)*1); font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+        .rbadge.trap { background:#ef4444; color:#2a0505; }
+        .role .rname { font-size:calc(var(--u)*1.8); font-weight:800; }
+        .role .rwho { font-size:calc(var(--u)*1.2); color:var(--amz); margin:calc(var(--u)*.2) 0 calc(var(--u)*.6); }
+        .role .rcan { font-size:calc(var(--u)*1.25); color:var(--text-muted); line-height:1.5; }
+
+        .sc-steps { display:flex; flex-direction:column; gap:calc(var(--u)*1.3); }
+        .st { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .st.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .st .sn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .st .sb { flex:1; min-width:0; }
+        .sc-steps .stt { font-size:calc(var(--u)*1.7); font-weight:800; }
+        .st .std { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.35); line-height:1.5; }
+        .st .std.dim { color:var(--text-muted); }
+        .toggles { display:flex; flex-direction:column; gap:calc(var(--u)*.6); margin-top:calc(var(--u)*.9); }
+        .tg { display:grid; grid-template-columns:calc(var(--u)*16) auto 1fr; gap:calc(var(--u)*1); align-items:center; }
+        .tgl { font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .tgv { padding:calc(var(--u)*.4) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:800; text-align:center; }
+        .tgv.on { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .tgv.off { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); }
+        .tgn { font-size:calc(var(--u)*1.15); color:var(--text-muted); }
+
+        .sc-yesno { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.5); }
+        .sc-yesno .col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .sc-yesno .col.yes { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .sc-yesno .col.no { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .sc-yesno .colh { font-size:calc(var(--u)*1.55); font-weight:800; margin-bottom:calc(var(--u)*.8); }
+        .sc-yesno .col.yes .colh { color:#6ee7b7; } .sc-yesno .col.no .colh { color:#fca5a5; }
+        .sc-yesno .li { font-size:calc(var(--u)*1.32); color:var(--text-secondary); padding:calc(var(--u)*.35) 0 calc(var(--u)*.35) calc(var(--u)*1.7); position:relative; }
+        .sc-yesno .col.yes .li::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .sc-yesno .col.no .li::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-yesno .lin { margin-top:calc(var(--u)*.8); font-size:calc(var(--u)*1.25); color:var(--amz); }
+
+        .sc-status { display:flex; align-items:center; justify-content:center; gap:calc(var(--u)*1.4); }
+        .sc-status .stt { padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:99px; font-size:calc(var(--u)*1.6); font-weight:800; }
+        .sc-status .stt.pending { background:rgba(245,158,11,.16); color:#fcd34d; border:1px solid rgba(245,158,11,.4); }
+        .sc-status .stt.active { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .sc-status .arr { color:var(--text-muted); font-size:calc(var(--u)*1.8); }
+
+        .sc-sum { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sumh { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--amz); }
+        .sumline { font-size:calc(var(--u)*1.5); color:var(--text-secondary); padding:calc(var(--u)*.9) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid var(--primary); line-height:1.5; }
+        .sumline b { color:#fff; }
+        .nextup { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(255,153,0,.12)); border:1px solid rgba(255,153,0,.35); }
+        .nextup .nl { display:block; font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .nextup .nt { font-size:calc(var(--u)*1.5); color:#fff; }
+
+        .sc-note { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); font-size:calc(var(--u)*1.4); color:var(--text-secondary); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
+        .sc-note.warn { background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.35); color:#fcd34d; }
+        .sc-note.ok { background:rgba(16,185,129,.10); border-color:rgba(16,185,129,.35); color:#6ee7b7; }
+        .sc-note.danger { background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.38); color:#fca5a5; }
+        .sc-note.big { font-size:calc(var(--u)*1.6); font-weight:600; text-align:center; }
+
+        /* заставка и кнопка старта */
+        .poster { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u)*1.6); background:linear-gradient(160deg,#0a1120,#0e1830); cursor:pointer; }
+        .poster.hide { display:none; }
+        .poster .pt { font-size:calc(var(--u)*3.4); font-weight:900; text-align:center; line-height:1.15; }
+        .poster .ps { font-size:calc(var(--u)*1.5); color:var(--text-muted); }
+        .bigplay { width:calc(var(--u)*7); height:calc(var(--u)*7); border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--amz)); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 calc(var(--u)*.8) calc(var(--u)*3) rgba(6,182,212,.35); transition:transform .2s; }
+        .bigplay:hover { transform:scale(1.06); }
+        .bigplay svg { width:calc(var(--u)*2.6); height:calc(var(--u)*2.6); fill:#fff; margin-left:calc(var(--u)*.3); }
+
+        /* субтитры */
+        .subs { position:absolute; left:0; right:0; bottom:calc(var(--u)*2.4); display:flex; justify-content:center; padding:0 calc(var(--u)*4); z-index:6; pointer-events:none; transition:bottom .35s ease; }
+        .subs.off { display:none; }
+        .subs .stx { max-width:88%; background:rgba(6,10,20,.86); padding:calc(var(--u)*.75) calc(var(--u)*1.5); border-radius:calc(var(--u)*.7); text-align:center; text-wrap:balance; }
+        .subs .stx { font-size:max(15px, calc(var(--u)*1.9)); line-height:1.42; color:#fff; font-weight:500; }
+        .subs.below { position:static; padding:0; margin-top:10px; }
+        .subs.below .stx { width:100%; max-width:none; text-align:left; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); border-left:3px solid var(--amz); border-radius:12px; padding:11px 14px; font-size:15px; line-height:1.55; color:var(--text-secondary); }
+
+        /* управление */
+        .bar-wrap { margin-top:12px; }
+        .track { position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.09); cursor:pointer; }
+        .track .fill { position:absolute; inset:0 auto 0 0; width:0; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--amz)); }
+        .track .knob { position:absolute; top:50%; left:0; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+        .track i { position:absolute; top:0; width:2px; height:100%; background:rgba(255,255,255,.35); }
+        .ctrls { display:flex; align-items:center; gap:9px; margin-top:10px; flex-wrap:wrap; }
+        .cbtn { display:flex; align-items:center; justify-content:center; gap:7px; height:44px; min-width:44px; padding:0 14px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--text-primary); font:600 14px Inter,sans-serif; cursor:pointer; transition:all .2s; }
+        .cbtn:hover { background:rgba(255,153,0,.14); border-color:rgba(255,153,0,.4); }
+        .cbtn.main { background:linear-gradient(135deg,var(--primary),var(--secondary)); border-color:transparent; }
+        .cbtn svg { width:18px; height:18px; fill:currentColor; }
+        .ctime { font:700 14px ui-monospace,Menlo,Consolas,monospace; color:var(--text-muted); margin-left:4px; }
+        .spacer { flex:1; }
+        .cbtn.small { height:38px; font-size:13px; padding:0 12px; }
+        .cbtn.fs { height:44px; padding:0 16px; font-size:14px; font-weight:800; background:rgba(255,153,0,.16); border-color:rgba(255,153,0,.55); color:#ffb648; animation:fsPulse 2.4s ease-out 1.2s 3; }
+        .cbtn.fs:hover { background:rgba(255,153,0,.26); border-color:rgba(255,153,0,.9); color:#fff; }
+        .cbtn.fs svg { width:17px; height:17px; }
+        @keyframes fsPulse { 0% { box-shadow:0 0 0 0 rgba(255,153,0,.5); } 70% { box-shadow:0 0 0 11px rgba(255,153,0,0); } 100% { box-shadow:0 0 0 0 rgba(255,153,0,0); } }
+        @media (prefers-reduced-motion:reduce) { .cbtn.fs { animation:none; } }
+
+        /* главы */
+        .chapters { margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+        .chap { display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); cursor:pointer; text-align:left; transition:all .2s; font-family:inherit; }
+        .chap:hover { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .chap.on { border-color:var(--amz); background:rgba(255,153,0,.11); }
+        .chap-t { font:800 12px ui-monospace,Menlo,Consolas,monospace; color:var(--amz); }
+        .chap-n { font-size:15px; font-weight:700; color:#fff; }
+        .chap-d { font-size:12.5px; color:var(--text-muted); }
+
+        .after { margin:44px auto 60px; max-width:1100px; }
+        .after h2 { font-size:22px; font-weight:800; margin-bottom:14px; }
+        .after-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+        .after-grid a { display:block; padding:16px 18px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-decoration:none; color:var(--text-secondary); transition:all .2s; }
+        .after-grid a:hover { border-color:rgba(6,182,212,.5); background:rgba(6,182,212,.08); color:#fff; }
+        .after-grid b { display:block; color:#fff; font-size:15px; margin-bottom:3px; }
+        .after-grid span { font-size:13px; color:var(--text-muted); }
+
+
+
+
+        /* ===== БЛОКИ ЧАСТИ 4 ===== */
+        .sc-money { display:flex; flex-direction:column; gap:calc(var(--u)*.6); }
+        .mn { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid rgba(255,255,255,.2); }
+        .mn.in { border-left-color:#10b981; } .mn.out { border-left-color:#ef4444; background:rgba(239,68,68,.07); } .mn.plus { border-left-color:#ff9900; background:rgba(255,153,0,.08); }
+        .mn-t { font-size:calc(var(--u)*1.55); font-weight:700; color:#fff; min-width:calc(var(--u)*18); }
+        .mn-d { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .sc-three-c { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .tc { padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .tc-i { font-size:calc(var(--u)*2.6); } .tc-t { font-size:calc(var(--u)*1.6); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.25); }
+        .tc-d { font-size:calc(var(--u)*1.2); color:var(--text-muted); line-height:1.45; }
+        .sc-pay { display:flex; flex-direction:column; align-items:stretch; gap:calc(var(--u)*.5); }
+        .pw { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.3) calc(var(--u)*1.7); border-radius:calc(var(--u)*1.1); background:rgba(6,182,212,.10); border:1px solid rgba(6,182,212,.3); }
+        .pw.pay { background:rgba(255,153,0,.12); border-color:rgba(255,153,0,.45); }
+        .pw.arrow { background:none; border:none; justify-content:center; padding:0; color:var(--amz); font-size:calc(var(--u)*2); }
+        .pw-l { font-size:calc(var(--u)*1.3); color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+        .pw-v { font-size:calc(var(--u)*1.75); font-weight:800; color:#fff; }
+        .sc-table.pay4 .tr { grid-template-columns:1.1fr 1.3fr 1.5fr; }
+        .sc-metrics { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.1); }
+        .mt { padding:calc(var(--u)*1.4) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .mt-n { font-size:calc(var(--u)*1.75); font-weight:800; color:var(--amz); }
+        .mt-d { font-size:calc(var(--u)*1.3); color:var(--text-secondary); line-height:1.5; margin-top:calc(var(--u)*.25); }
+        .sc-min { display:flex; flex-direction:column; gap:calc(var(--u)*1); }
+        .mn4 { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1); }
+        .m4 { padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .m4.worst { border-color:#ef4444; background:rgba(239,68,68,.10); box-shadow:0 0 0 1px #ef4444 inset; }
+        .m4-v { font-size:calc(var(--u)*2.6); font-weight:900; color:#fff; }
+        .m4-l { font-size:calc(var(--u)*1.15); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:calc(var(--u)*.2); }
+        .min-res { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); padding:calc(var(--u)*1.2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(239,68,68,.09); border:1px solid rgba(239,68,68,.35); }
+        .min-l { font-size:calc(var(--u)*1.3); color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+        .min-v { font-size:calc(var(--u)*2.4); font-weight:900; color:#fca5a5; }
+        .min-x { font-size:calc(var(--u)*1.3); color:#fca5a5; }
+        .sc-ladder { display:flex; flex-direction:column; gap:calc(var(--u)*.6); }
+        .ld { display:flex; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ld.bad { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.35); }
+        .ld-g { min-width:calc(var(--u)*10); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .ld-g.cp { color:#fcd34d; } .ld-g.b { color:#67e8f9; } .ld-g.a { color:#6ee7b7; } .ld-g.low { color:#fca5a5; }
+        .ld-t { font-size:calc(var(--u)*1.4); color:var(--text-secondary); }
+        .sc-week { display:flex; flex-direction:column; gap:calc(var(--u)*.65); }
+        .sc-week.tight { gap:calc(var(--u)*.5); }
+        .wd { display:flex; gap:calc(var(--u)*1.4); align-items:flex-start; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .wd.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .wd-d { min-width:calc(var(--u)*8.5); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:calc(var(--u)*1.3); font-weight:800; color:var(--primary); }
+        .wd-t { font-size:calc(var(--u)*1.28); color:var(--text-muted); line-height:1.5; }
+        .wd-t b { display:block; font-size:calc(var(--u)*1.5); color:#fff; margin-bottom:calc(var(--u)*.15); }
+        .sc-vs2 { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); }
+        .vs-col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.2); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .vs-col.ok { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .vs-col.bad { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .vs-h { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*.7); }
+        .vs-col.ok .vs-h { color:#6ee7b7; } .vs-col.bad .vs-h { color:#fca5a5; }
+        .vs-i { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.32) 0 calc(var(--u)*.32) calc(var(--u)*1.7); position:relative; line-height:1.45; }
+        .vs-col.ok .vs-i::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .vs-col.bad .vs-i::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-final { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .fp { display:flex; gap:calc(var(--u)*1.3); align-items:center; padding:calc(var(--u)*1.25) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .fp.hot { border-color:rgba(255,153,0,.5); background:rgba(255,153,0,.09); }
+        .fp-n { width:calc(var(--u)*3); height:calc(var(--u)*3); flex-shrink:0; border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--amz)); color:#fff; font-size:calc(var(--u)*1.5); font-weight:900; display:flex; align-items:center; justify-content:center; }
+        .fp-t { font-size:calc(var(--u)*1.4); color:var(--text-secondary); line-height:1.5; }
+        @media (max-width:900px) { .sc-three-c, .sc-metrics, .mn4, .sc-vs2 { grid-template-columns:1fr 1fr; }
+          .mn, .pw, .ld, .wd, .min-res { flex-direction:column; align-items:flex-start; gap:calc(var(--u)*.3); } }
+        /* ===== БЛОКИ ЧАСТИ 3 ===== */
+        .sc-sit { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sit-cols { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+        .sit-c { padding:calc(var(--u)*1.3) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.4); color:var(--text-secondary); line-height:1.55; }
+        .sit-c .lbl, .sit-risk .lbl, .sit-prev .lbl { display:block; font-size:calc(var(--u)*1.1); font-weight:800; letter-spacing:.09em; text-transform:uppercase; margin-bottom:calc(var(--u)*.4); }
+        .sit-c.d { border-color:rgba(6,182,212,.35); } .sit-c.d .lbl { color:var(--primary); }
+        .sit-c.w { border-color:rgba(255,153,0,.35); } .sit-c.w .lbl { color:var(--amz); }
+        .sit-risk { padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); font-size:calc(var(--u)*1.35); line-height:1.55; }
+        .sit-risk.hi { background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.38); color:#fca5a5; }
+        .sit-risk.md { background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.35); color:#fcd34d; }
+        .sit-risk.lo { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); color:#6ee7b7; }
+        .sit-risk .lbl { color:inherit; opacity:.85; }
+        .sit-prev { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:var(--glass-03); border:1px solid var(--edge-08); font-size:calc(var(--u)*1.3); color:var(--text-muted); line-height:1.5; }
+        .sit-prev .lbl { color:var(--text-soft); }
+        .sc-rule { display:flex; flex-direction:column; gap:calc(var(--u)*.9); }
+        .rl { display:flex; gap:calc(var(--u)*1.3); align-items:flex-start; padding:calc(var(--u)*1.35) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .rl-n { width:calc(var(--u)*3); height:calc(var(--u)*3); flex-shrink:0; border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--amz)); color:#fff; font-size:calc(var(--u)*1.6); font-weight:900; display:flex; align-items:center; justify-content:center; }
+        .rl-t { font-size:calc(var(--u)*1.32); color:var(--text-muted); line-height:1.5; }
+        .rl-t b { display:block; font-size:calc(var(--u)*1.65); color:#fff; margin-bottom:calc(var(--u)*.2); }
+        .sc-fine { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .fn { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .fn-w { font-size:calc(var(--u)*1.5); color:var(--text-secondary); }
+        .fn-x { font-size:calc(var(--u)*2.1); font-weight:900; }
+        .fn-x.ok { color:#6ee7b7; } .fn-x.mid { color:#fcd34d; } .fn-x.bad { color:#fca5a5; }
+        .sc-two-sit { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.3); }
+        .ts { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ts-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*.6); }
+        .ts-b { font-size:calc(var(--u)*1.32); color:var(--text-secondary); line-height:1.55; }
+        .sc-quiz { display:flex; flex-direction:column; gap:calc(var(--u)*1); }
+        .qz { padding:calc(var(--u)*1.4) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .qz-q { font-size:calc(var(--u)*1.5); font-weight:700; color:#fff; }
+        .qz-a { margin-top:calc(var(--u)*.6); padding-left:calc(var(--u)*2); font-size:calc(var(--u)*1.4); color:#6ee7b7; position:relative; }
+        .qz-a::before { content:'✓'; position:absolute; left:0; font-weight:800; }
+        @media (max-width:900px) { .sit-cols, .sc-two-sit { grid-template-columns:1fr; } .fn { flex-direction:column; align-items:flex-start; gap:calc(var(--u)*.3); } }
+        /* ===== БЛОКИ ЧАСТИ 2 ===== */
+        .sc-cols3.four { grid-template-columns:repeat(4,1fr); }
+        .ccard .cnote { font-size:calc(var(--u)*1.1); color:var(--amz); margin-top:calc(var(--u)*.4); }
+        .sc-shot { display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*.7); min-height:0; margin:0; }
+        .sc-shot img { max-width:100%; max-height:calc(var(--u)*30); object-fit:contain; border-radius:calc(var(--u)*.9); border:1px solid rgba(255,255,255,.14); background:#0b1120; }
+        .sc-shot .cap { font-size:calc(var(--u)*1.12); color:var(--text-muted); text-align:center; line-height:1.4; }
+        .sc-shots { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); min-height:0; }
+        .sc-shots .sc-shot img { max-height:calc(var(--u)*24); }
+        .sc-block { display:flex; justify-content:center; }
+        .blk { width:100%; padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .blk-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .blk-bar { display:flex; gap:calc(var(--u)*.3); height:calc(var(--u)*4.4); }
+        .seg { width:var(--w); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,rgba(6,182,212,.55),rgba(14,165,233,.4)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.2); font-weight:700; color:#fff; }
+        .seg.free { background:repeating-linear-gradient(45deg,rgba(255,255,255,.07),rgba(255,255,255,.07) 8px,rgba(255,255,255,.03) 8px,rgba(255,255,255,.03) 16px); color:var(--text-muted); font-weight:600; }
+        .blk-f { margin-top:calc(var(--u)*1); font-size:calc(var(--u)*1.5); font-weight:700; color:var(--success); }
+        .sc-table { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .sc-table .tr { display:grid; grid-template-columns:1.1fr 1fr 1fr 1.8fr; gap:calc(var(--u)*1); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .sc-table .tr.th { background:none; padding-top:0; padding-bottom:calc(var(--u)*.3); font-size:calc(var(--u)*1.2); color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+        .sc-table .ok { color:#6ee7b7; font-weight:700; } .sc-table .warn { color:#fcd34d; font-weight:700; }
+        .sc-choice { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ch-row { display:grid; grid-template-columns:1.3fr auto 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ch-if { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ch-arr { color:var(--amz); font-size:calc(var(--u)*1.7); }
+        .ch-do { font-size:calc(var(--u)*1.55); font-weight:800; color:var(--amz); }
+        .sc-load { display:flex; flex-direction:column; gap:calc(var(--u)*.5); }
+        .ld-row { display:grid; grid-template-columns:calc(var(--u)*16) 1fr; gap:calc(var(--u)*1.2); align-items:baseline; padding:calc(var(--u)*.95) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ld-row.big { background:rgba(255,153,0,.10); border:1px solid rgba(255,153,0,.4); }
+        .ld-l { font-size:calc(var(--u)*1.22); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .ld-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ld-v b { color:#fff; }
+        .ld-money { font-size:calc(var(--u)*2.2); color:var(--amz) !important; }
+        .ld-warn { color:#fcd34d; }
+        .sc-calc { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .cl-row { display:grid; grid-template-columns:calc(var(--u)*12) 1fr calc(var(--u)*17); gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .cl-row.res { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); }
+        .cl-l { font-size:calc(var(--u)*1.2); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .cl-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .cl-v.dim { color:var(--text-muted); text-decoration:line-through; }
+        .cl-x { font-size:calc(var(--u)*1.25); color:var(--amz); text-align:right; }
+        .cl-x.ok { color:#6ee7b7; }
+        .sc-dont { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .dn { display:flex; gap:calc(var(--u)*1.2); align-items:flex-start; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.25); }
+        .dn-x { color:#fca5a5; font-size:calc(var(--u)*1.7); font-weight:800; line-height:1; }
+        .dn-t { font-size:calc(var(--u)*1.3); color:var(--text-secondary); line-height:1.5; }
+        .dn-t b { display:block; color:#fff; font-size:calc(var(--u)*1.45); margin-bottom:calc(var(--u)*.2); }
+        .sc-msg { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .msg-h { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.8); }
+        .msg-b { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:calc(var(--u)*1.22); line-height:1.7; color:var(--text-secondary); white-space:pre-wrap; }
+        .sc-three { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1); }
+        .sc-note.gold { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.4); color:#fcd34d; }
+        @media (max-width:900px) { .sc-cols3.four { grid-template-columns:1fr 1fr; } .sc-shots, .sc-three { grid-template-columns:1fr; }
+          .sc-table .tr { grid-template-columns:1fr 1fr; } .ch-row { grid-template-columns:1fr; gap:calc(var(--u)*.3); } .ch-arr { display:none; }
+          .ld-row, .cl-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); } .cl-x { text-align:left; } }
+        @media (max-width:900px) {
+            .vhead { padding:78px 0 6px; gap:8px; }
+            .player { --chrome:250px; }
+            .sc-who, .sc-eq { grid-template-columns:1fr 1fr; }
+            .sc-roles, .sc-cols3, .codeex { grid-template-columns:1fr; gap:calc(var(--u)*.9); }
+            .sc-days, .sc-yesno, .sc-two { grid-template-columns:1fr; }
+            .vs-head { display:none; }
+            .vs-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); padding:calc(var(--u)*.95) calc(var(--u)*1.3); }
+            .vs-row .vl { font-size:calc(var(--u)*1.5); color:#fff; font-weight:700; }
+            .vs-row .va::before { content:'Broker: '; color:var(--text-muted); }
+            .vs-row .vb::before { content:'Relay: '; color:var(--amz); font-weight:800; }
+            .sc-flow { flex-direction:column; } .fa { justify-content:center; transform:rotate(90deg); }
+            .scene { padding-bottom:calc(var(--u)*4); }
+            .subs .stx { font-size:15px; }
+        }
+        @media (max-width:600px) { .container { padding:0 14px; } .ctrls { gap:7px; } .cbtn { padding:0 10px; font-size:13px; } }
+    </style>
+    <script type="module" src="/firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="/role-guard.en.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=27"></script>
+
+    <div class="container">
+      <div class="vhead">
+        <span class="vbadge">🎬 Part 2 of 4</span>
+        <h1 class="vtitle">Loads, booking and the run</h1>
+        <span class="vdone" id="vdone" hidden>✓ Watched</span>
+        <span class="vsub">10:16 · 23 scenes · narration and subtitles · 5 chapters</span>
+      </div>
+
+      <div class="player">
+        <div class="pbox" id="pbox">
+        <div class="stage" id="stage">
+          <div class="scene" data-i="0">
+      <div class="scene-cap"><span class="sc-ch">Introduction</span><span class="sc-tt">Loads, booking and the run</span></div>
+      <div class="scene-body"><div class="sc-title">
+  <div class="kicker" data-at="0">Dispatcher course · part 2 of 4</div>
+  <h1 class="big" data-at="0">Loads, booking<br><span class="accent">and the run</span></h1>
+  <div class="chips" data-at="1">
+    <span class="chip"><i>1</i> The kinds of loads</span>
+    <span class="chip"><i>2</i> How to take a load</span>
+    <span class="chip"><i>3</i> The driver at the facility</span>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="1">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. The kinds of loads</span><span class="sc-tt">Four ways to get a load</span></div>
+      <div class="scene-body"><div class="sc-cols3 four">
+  <div class="ccard" data-at="1"><div class="ic">📋</div><div class="cnum">1</div><div class="clab">A load off the board</div><div class="cnote">open right away</div></div>
+  <div class="ccard" data-at="1"><div class="ic">🚚</div><div class="cnum">2</div><div class="clab">Your truck on the board</div><div class="cnote">open right away</div></div>
+  <div class="ccard need" data-at="2"><div class="ic">🔨</div><div class="cnum">3</div><div class="clab">The block auction</div><div class="cnote">needs a score</div></div>
+  <div class="ccard need" data-at="2"><div class="ic">📅</div><div class="cnum">4</div><div class="clab">The weekly contract</div><div class="cnote">needs a score</div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="2">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. The kinds of loads</span><span class="sc-tt">A load off the board</span></div>
+      <div class="scene-body"><figure class="sc-shot" data-at="0">
+  <img src="/img/amazon-relay/loadboard-web.webp" alt="The Amazon Relay load board">
+  <figcaption class="cap">The load board on the Relay site. Source: the official Amazon Relay blog</figcaption>
+</figure>
+<div class="sc-two">
+  <div class="sc-note ok" data-at="2">Book now — the load is yours immediately</div>
+  <div class="sc-note" data-at="3">Bid — Amazon picks by the deadline</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="3">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. The kinds of loads</span><span class="sc-tt">Your truck on the board</span></div>
+      <div class="scene-body"><figure class="sc-shot" data-at="0">
+  <img src="/img/amazon-relay/post-a-truck.webp" alt="The Post A Truck screen in Amazon Relay">
+  <figcaption class="cap">Place, time and a minimum rate. On the right the system rates your chance of a match. Source: the Amazon Relay blog</figcaption>
+</figure>
+<div class="sc-note warn" data-at="3">The system books on its own — backing out afterwards costs score</div></div>
+    </div>
+    <div class="scene" data-i="4">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. The kinds of loads</span><span class="sc-tt">A block: you are selling time</span></div>
+      <div class="scene-body"><div class="sc-block">
+  <div class="blk" data-at="1">
+    <div class="blk-h">A 13-hour block, Saturday</div>
+    <div class="blk-bar">
+      <span class="seg" data-at="2" style="--w:26%">run 1</span>
+      <span class="seg" data-at="2" style="--w:22%">run 2</span>
+      <span class="seg" data-at="2" style="--w:14%">run 3</span>
+      <span class="seg free" data-at="3" style="--w:38%">time unused</span>
+    </div>
+    <div class="blk-f" data-at="3">Paid for all 13 hours</div>
+  </div>
+</div>
+<div class="sc-note" data-at="4">“Tour” is a drivers’ word. It is not in Amazon’s documents</div></div>
+    </div>
+    <div class="scene" data-i="5">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. The kinds of loads</span><span class="sc-tt">The kinds of blocks</span></div>
+      <div class="scene-body"><div class="sc-table">
+  <div class="tr th" data-at="0"><span>Block</span><span>Per week</span><span>Sleeps</span><span>Who it suits</span></div>
+  <div class="tr" data-at="1"><span><b>13 hours</b></span><span>5 blocks</span><span class="ok">at home</span><span>a day locally, any cab</span></div>
+  <div class="tr" data-at="2"><span><b>37 hours</b></span><span>3 blocks</span><span class="warn">in the cab</span><span>needs a sleeper</span></div>
+  <div class="tr" data-at="2"><span><b>4–5 days</b></span><span>1 block</span><span class="warn">in the cab</span><span>long lanes, sleeper</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="6">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. The kinds of loads</span><span class="sc-tt">The auction and the contract</span></div>
+      <div class="scene-body"><div class="sc-shots">
+  <figure class="sc-shot" data-at="0"><img src="/img/amazon-relay/contracts.webp" alt="The contracts section in Amazon Relay"><figcaption class="cap">Auctions and the contracts you have won. Source: the Amazon Relay blog</figcaption></figure>
+  <figure class="sc-shot" data-at="2"><img src="/img/amazon-relay/auction-bid.webp" alt="Placing an auction bid in the Amazon Relay app"><figcaption class="cap">A bid: the leading price and the time left are both visible</figcaption></figure>
+</div>
+<div class="sc-note gold" data-at="2">The winner is not the lowest price but the price together with the carrier’s score</div></div>
+    </div>
+    <div class="scene" data-i="7">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. The kinds of loads</span><span class="sc-tt">Choosing for your own situation</span></div>
+      <div class="scene-body"><div class="sc-choice">
+  <div class="ch-row" data-at="1"><span class="ch-if">The truck is empty now</span><span class="ch-arr">→</span><span class="ch-do">A load off the board</span></div>
+  <div class="ch-row" data-at="2"><span class="ch-if">It frees up tomorrow at 14:00</span><span class="ch-arr">→</span><span class="ch-do">Your truck on the board</span></div>
+  <div class="ch-row" data-at="3"><span class="ch-if">You need a steady week</span><span class="ch-arr">→</span><span class="ch-do">The block auction</span></div>
+  <div class="ch-row" data-at="3"><span class="ch-if">Two trucks and a plan for the month</span><span class="ch-arr">→</span><span class="ch-do">A weekly contract</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="8">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Taking a load</span><span class="sc-tt">Chapter 2. How the dispatcher takes a load</span></div>
+      <div class="scene-body"><div class="sc-title small">
+  <div class="kicker" data-at="0">Chapter 2</div>
+  <h1 class="big" data-at="0">How the dispatcher<br><span class="accent">takes a load</span></h1>
+  <div class="sc-cols3 tight">
+    <div class="ccard" data-at="1"><div class="cnum">1</div><div class="clab">read the card</div></div>
+    <div class="ccard" data-at="1"><div class="cnum">2</div><div class="clab">do the maths</div></div>
+    <div class="ccard" data-at="1"><div class="cnum">3</div><div class="clab">book it and assign the driver</div></div>
+  </div>
+  <div class="sc-note danger" data-at="2">A load with no driver gets pulled and recorded as a refusal</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="9">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Taking a load</span><span class="sc-tt">Reading the load card</span></div>
+      <div class="scene-body"><div class="sc-load">
+  <div class="ld-row" data-at="1"><span class="ld-l">From → to</span><span class="ld-v"><b>CDW5</b> Carteret, New Jersey → <b>JFK8</b> Staten Island, New York</span></div>
+  <div class="ld-row" data-at="1"><span class="ld-l">Miles</span><span class="ld-v">38 · the load only, the drive to the facility does not count</span></div>
+  <div class="ld-row" data-at="2"><span class="ld-l">Pick up</span><span class="ld-v">Thursday, 22:00–23:00 · <span class="ld-warn">a one-hour window</span></span></div>
+  <div class="ld-row" data-at="2"><span class="ld-l">Deliver</span><span class="ld-v">Friday, 02:30</span></div>
+  <div class="ld-row" data-at="3"><span class="ld-l">Trailer</span><span class="ld-v">53 feet, an Amazon trailer · drop and hook</span></div>
+  <div class="ld-row big" data-at="4"><span class="ld-l">Rate</span><span class="ld-v"><b class="ld-money">$412</b> all in: fuel and tolls are inside</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="10">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Taking a load</span><span class="sc-tt">Working out the dollars per hour</span></div>
+      <div class="scene-body"><div class="sc-calc">
+  <div class="cl-row" data-at="0"><span class="cl-l">On the card</span><span class="cl-v dim">$412 ÷ 38 miles = $10.84 a mile</span><span class="cl-x">not how to count it</span></div>
+  <div class="cl-row" data-at="1"><span class="cl-l">All miles</span><span class="cl-v">17 empty + 38 loaded + 20 home = <b>75 miles</b></span><span class="cl-x">$5.49 a mile</span></div>
+  <div class="cl-row" data-at="2"><span class="cl-l">All time</span><span class="cl-v">40 min + 30 min + 1 h 20 min + 30 min + 40 min = <b>3 h 40 min</b></span><span class="cl-x"></span></div>
+  <div class="cl-row res" data-at="3"><span class="cl-l">Per hour</span><span class="cl-v"><b class="ld-money">$110</b> an hour</span><span class="cl-x ok">a good night run</span></div>
+</div>
+<div class="sc-note gold" data-at="4">Count dollars per hour over the whole loop, not the rate per mile on the card</div></div>
+    </div>
+    <div class="scene" data-i="11">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Taking a load</span><span class="sc-tt">What Relay pays</span></div>
+      <div class="scene-body"><div class="bars">
+  <div class="bar" data-at="1"><span class="bl">under 75 miles</span><span class="bt"><i style="--w:100%"></i></span><span class="bv">$2.50–4.00</span></div>
+  <div class="bar" data-at="1"><span class="bl">75–200 miles</span><span class="bt"><i style="--w:75%"></i></span><span class="bv">$2.25–3.00</span></div>
+  <div class="bar" data-at="1"><span class="bl">200–500 miles</span><span class="bt"><i style="--w:62%"></i></span><span class="bv">$2.10–2.75</span></div>
+  <div class="bar" data-at="1"><span class="bl">over 500 miles</span><span class="bt"><i style="--w:50%"></i></span><span class="bv">$1.85–2.50</span></div>
+</div>
+<div class="sc-note warn" data-at="2">Carrier reports, not Amazon. 15–30% under the broker market, but higher in autumn and at the holidays</div></div>
+    </div>
+    <div class="scene" data-i="12">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Taking a load</span><span class="sc-tt">Booking it and assigning the driver</span></div>
+      <div class="scene-body"><div class="sc-steps">
+  <div class="st" data-at="1"><div class="sn">1</div><div class="sb"><div class="stt">Book now</div><div class="std">The load lands in the trips section. No confirmation will arrive by email</div></div></div>
+  <div class="st" data-at="2"><div class="sn">2</div><div class="sb"><div class="stt">Assign the driver and the tractor</div><div class="std">Only drivers marked “Active” appear in the list</div></div></div>
+  <div class="st" data-at="3"><div class="sn">3</div><div class="sb"><div class="stt">Check the tractor number</div><div class="std">The gate reads plates. A mismatch keeps him out</div></div></div>
+  <div class="st" data-at="4"><div class="sn">4</div><div class="sb"><div class="stt">Look at the backhaul</div><div class="std">The site suggests loads out of the delivery point — killing empty miles</div></div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="13">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Taking a load</span><span class="sc-tt">The message to the driver</span></div>
+      <div class="scene-body"><div class="sc-msg" data-at="2">
+  <div class="msg-h">The message to the driver before the run</div>
+  <div class="msg-b">Sergey, this is Thursday’s run. Facility CDW5 in Carteret, window 22:00–23:00.
+Get there by 21:15, park on the staging lot to the right of the entrance, do not approach the gate before 21:45.
+The moment you join the gate queue, tap Check In in the app.
+Amazon trailer, drop and hook. Do the trailer inspection: photos from every side, the seal, the tires.
+If the seal number does not match the document, do not leave — call me.
+Then JFK8 on Staten Island by 02:30, the toll bridges are already in the rate. I am reachable all night.</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="14">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Taking a load</span><span class="sc-tt">What you must not do</span></div>
+      <div class="scene-body"><div class="sc-dont">
+  <div class="dn" data-at="1"><span class="dn-x">✕</span><span class="dn-t"><b>Booking “just in case”</b>A load with no driver gets pulled and recorded as a refusal</span></div>
+  <div class="dn" data-at="2"><span class="dn-x">✕</span><span class="dn-t"><b>Putting one truck on two trips at once</b>You hand one back at the full penalty. Keep your own calendar</span></div>
+  <div class="dn" data-at="3"><span class="dn-x">✕</span><span class="dn-t"><b>Bidding on a load you cannot haul</b>An accepted bid is a commitment</span></div>
+  <div class="dn" data-at="4"><span class="dn-x">✕</span><span class="dn-t"><b>Asking for a higher rate</b>Relay has no such mechanism</span></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="15">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver at the facility</span><span class="sc-tt">Chapter 3. What makes an Amazon facility different</span></div>
+      <div class="scene-body"><div class="sc-title small">
+  <div class="kicker" data-at="0">Chapter 3</div>
+  <h1 class="big" data-at="0">The driver<br><span class="accent">at an Amazon facility</span></h1>
+  <div class="sc-cols3 tight">
+    <div class="ccard" data-at="2"><div class="ic">📱</div><div class="clab">the gate opens on a code from the app</div></div>
+    <div class="ccard" data-at="2"><div class="ic">🖥️</div><div class="clab">instructions on screens</div></div>
+    <div class="ccard" data-at="2"><div class="ic">📡</div><div class="clab">sensors check the trailer on the way out</div></div>
+  </div>
+  <div class="sc-note gold" data-at="3">Every tap in the app is a timestamp. It is both the score and your evidence</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="16">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver at the facility</span><span class="sc-tt">The approach and the gate</span></div>
+      <div class="scene-body"><figure class="sc-shot" data-at="0">
+  <img src="/img/amazon-relay/app-trip-steps.webp" alt="Amazon Relay app screens: check in, pick up, drop off">
+  <figcaption class="cap">On the left Check In with the gate code, in the middle the pick-up, on the right the drop-off. Source: the Amazon Relay blog</figcaption>
+</figure>
+<div class="sc-note danger big" data-at="3">The Check In timestamp decides whether you were on time. Reach the gate — tap it</div></div>
+    </div>
+    <div class="scene" data-i="17">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver at the facility</span><span class="sc-tt">The yard and the trailer</span></div>
+      <div class="scene-body"><div class="sc-steps">
+  <div class="st" data-at="0"><div class="sn">3</div><div class="sb"><div class="stt">The yard</div><div class="std">The door or spot number is on the screen at the entrance and in the app</div><div class="std dim" data-at="1">By the markings, no faster than 10 mph, no parking in other spots. Yards are on camera</div></div></div>
+  <div class="st hot" data-at="2"><div class="sn">4</div><div class="sb"><div class="stt">The trailer and the inspection</div><div class="std">Drop the one you brought, find the right one, check the number</div><div class="std dim" data-at="3">Inspection in the app: photos from every side, tires, lights, doors, seal</div></div></div>
+</div>
+<div class="sc-note danger" data-at="3">Damage not photographed at the inspection will be charged to you at the next facility</div></div>
+    </div>
+    <div class="scene" data-i="18">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver at the facility</span><span class="sc-tt">The seal and the exit</span></div>
+      <div class="scene-body"><div class="sc-steps">
+  <div class="st hot" data-at="0"><div class="sn">5</div><div class="sb"><div class="stt">The seal</div><div class="std">The number on the seal = the number in the document in the app</div><div class="std dim" data-at="1">A mismatch means stop and call the dispatcher. Never break a seal</div></div></div>
+  <div class="st" data-at="2"><div class="sn">6</div><div class="sb"><div class="stt">The exit</div><div class="std">Drop Off and Check Out — before leaving the gate</div><div class="std dim" data-at="3">Sensors verify the trailer, the paperwork generates itself</div></div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="19">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver at the facility</span><span class="sc-tt">What the dispatcher is doing meanwhile</span></div>
+      <div class="scene-body"><figure class="sc-shot" data-at="0">
+  <img src="/img/amazon-relay/tracking-map.webp" alt="The truck map in the Amazon Relay web portal">
+  <figcaption class="cap">The trip map: the dot refreshes every half minute, red means a projected delay. Source: the Amazon Relay blog</figcaption>
+</figure>
+<div class="sc-note warn" data-at="3">Your own tracker does not replace the app — Amazon counts only the app</div></div>
+    </div>
+    <div class="scene" data-i="20">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver at the facility</span><span class="sc-tt">Where to write when something is wrong</span></div>
+      <div class="scene-body"><figure class="sc-shot" data-at="2">
+  <img src="/img/amazon-relay/app-support.webp" alt="The support screen in the driver app">
+  <figcaption class="cap">Support in the driver’s app. Show him this screen before his first load. Source: the Amazon Relay blog</figcaption>
+</figure>
+<div class="sc-three">
+  <div class="sc-note" data-at="1">A case on the site — for everything that is not on fire</div>
+  <div class="sc-note" data-at="2">The assistant in the app — the driver at the facility</div>
+  <div class="sc-note ok" data-at="3">A live operator — a trip at risk right now</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="21">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver at the facility</span><span class="sc-tt">How to write a case, and one real example</span></div>
+      <div class="scene-body"><div class="sc-msg" data-at="1">
+  <div class="msg-h">What a case must contain</div>
+  <div class="msg-b">The trip number and the load number
+The driver’s name and the tractor number
+The facility code and which stop it is
+What happened, with exact times: “arrived 02:21, the spot was empty, an employee confirmed at 02:50, still waiting, it is now 03:40”
+What you are asking for: an instruction for the driver, detention pay, a new appointment time
+Attachments: a screenshot of the app, a photo of the spot, the name of the facility employee</div>
+</div>
+<div class="sc-case" data-at="2">
+  <div class="ch">A case from practice</div>
+  <div class="cline bad" data-at="2">Wrote the next day, “we waited a long time yesterday” — detention not confirmed</div>
+  <div class="cline good" data-at="3">Wrote after 1.5 hours of waiting with screenshots — detention paid</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="22">
+      <div class="scene-cap"><span class="sc-ch">Wrap-up</span><span class="sc-tt">Part two in summary</span></div>
+      <div class="scene-body"><div class="sc-sum">
+  <div class="sumh" data-at="0">Remember from part 2</div>
+  <div class="sumline" data-at="1"><b>The board and your truck — right away.</b> The auction and the contract — once you have the score</div>
+  <div class="sumline" data-at="2"><b>A block is time, not a load.</b> You are paid for every hour of the block</div>
+  <div class="sumline" data-at="3"><b>Count dollars per hour over the whole loop.</b> Book only when the driver exists</div>
+  <div class="sumline" data-at="4"><b>At the facility: Check In at once and photograph the trailer.</b> That is the score and your defence</div>
+  <div class="nextup" data-at="5"><span class="nl">Next, part 3</span><span class="nt">22 problem situations: what to do when something has gone wrong</span></div>
+</div></div>
+    </div>
+          <div class="subs" id="subs"><span class="stx" id="subtext">Press Watch to start the lesson with sound.</span></div>
+          <div class="poster" id="poster">
+            <div class="pt">Loads, booking<br>and the run</div>
+            <button class="bigplay" id="bigplay" aria-label="Watch"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+            <div class="ps" id="posterSub">Part 2 of 4 · 10:16 · with sound</div>
+            <button class="pres" id="pres" hidden type="button">Start over</button>
+          </div>
+        </div>
+
+        <div class="bar-wrap">
+          <div class="track" id="track"><div class="fill" id="fill"></div><i style="left:2.17%"></i><i style="left:28.65%"></i><i style="left:58.95%"></i><i style="left:94.54%"></i><div class="knob" id="knob"></div></div>
+          <div class="ctrls">
+            <button class="cbtn main" id="play" aria-label="Play"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span id="playLabel">Watch</span></button>
+            <button class="cbtn" id="prev" aria-label="Previous scene"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+            <button class="cbtn" id="next" aria-label="Next scene"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+            <span class="ctime"><span id="tcur">0:00</span> / 10:16</span>
+            <span class="spacer"></span>
+            <button class="cbtn small" id="rate">1×</button>
+            <button class="cbtn small" id="cc">Subtitles on</button>
+            <button class="cbtn fs" id="fs" aria-label="Fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-5v-2h3z"/></svg><span id="fsLabel">Fullscreen</span></button>
+          </div>
+        </div>
+        </div>
+
+        <div class="chapters" id="chapters">
+          <button type="button" class="chap" data-t="0.00" data-ci="0">
+        <span class="chap-t">0:00</span>
+        <span class="chap-n">Introduction</span>
+        <span class="chap-d">1 scene · 0:13</span>
+      </button>
+      <button type="button" class="chap" data-t="13.39" data-ci="1">
+        <span class="chap-t">0:13</span>
+        <span class="chap-n">Chapter 1. The kinds of loads</span>
+        <span class="chap-d">7 scenes · 2:43</span>
+      </button>
+      <button type="button" class="chap" data-t="176.62" data-ci="2">
+        <span class="chap-t">2:57</span>
+        <span class="chap-n">Chapter 2. Taking a load</span>
+        <span class="chap-d">7 scenes · 3:07</span>
+      </button>
+      <button type="button" class="chap" data-t="363.39" data-ci="3">
+        <span class="chap-t">6:03</span>
+        <span class="chap-n">Chapter 3. The driver at the facility</span>
+        <span class="chap-d">7 scenes · 3:39</span>
+      </button>
+      <button type="button" class="chap" data-t="582.80" data-ci="4">
+        <span class="chap-t">9:43</span>
+        <span class="chap-n">Wrap-up</span>
+        <span class="chap-d">1 scene · 0:34</span>
+      </button>
+        </div>
+      </div>
+
+      <div class="after">
+        <h2>After the video</h2>
+        <div class="after-grid">
+          <a href="amazon-relay-2-loads.html"><b>Part 2 in text</b><span>the load card, the hourly-rate calculator, the facility step by step</span></a>
+          <a href="amazon-relay-video.html"><b>Video lesson, part 1</b><span>what Relay is and how to join</span></a>
+          <a href="amazon-relay-video-3.html"><b>Video lesson, part 3</b><span>22 problem situations</span></a>
+          <a href="amazon-relay-video-4.html"><b>Video lesson, part 4</b><span>money, score, the week</span></a>
+        </div>
+      </div>
+    </div>
+
+    <audio id="track-audio" src="/audio/relay-video/en-part2.mp3" preload="auto"></audio>
+
+<script>
+(function () {
+  var CUES = [{"s":"s01","i":0,"t":0,"x":"Amazon Relay for dispatchers. Part two: loads, booking and the run."},{"s":"s01","i":1,"t":5.6,"x":"We will cover the kinds of loads Relay has, how the dispatcher takes them, and what happens to the driver at an Amazon facility."},{"s":"s02","i":0,"t":13.386,"x":"In Relay there are four ways to get a load."},{"s":"s02","i":1,"t":16.202,"x":"The first two are open the moment you register: take a load off the board, or post your truck to the board."},{"s":"s02","i":2,"t":22.186,"x":"The other two open once the company has a good score: the block auction and the weekly contract."},{"s":"s02","i":3,"t":27.834,"x":"We will go through each in turn, starting with the simplest."},{"s":"s03","i":0,"t":32.068,"x":"Amazon posts loads in a list that looks like the load board you already know."},{"s":"s03","i":1,"t":36.948,"x":"You see where the run goes from and to, when to pick it up and what it pays. The price is final: fuel and tolls are already inside."},{"s":"s03","i":2,"t":45.092,"x":"Press Book now and the load is yours. Nobody to call, no confirmation arriving by email."},{"s":"s03","i":3,"t":51.484,"x":"Some loads carry Bid instead of that button: you name your own price and Amazon picks the best offer."},{"s":"s04","i":0,"t":57.854,"x":"The second way works the other way round: you do not look for a load, the load looks for you."},{"s":"s04","i":1,"t":63.502,"x":"You state where the truck is, when it is free, which trailer, one driver or two."},{"s":"s04","i":2,"t":68.766,"x":"And most importantly the minimum rate per mile you are willing to run for."},{"s":"s04","i":3,"t":73.166,"x":"The system then finds a suitable load and books it for you. Remember: it books without asking you, and that is already a commitment."},{"s":"s05","i":0,"t":81.624,"x":"The third way works differently. A block is not a load, it is time."},{"s":"s05","i":1,"t":86,"x":"You sell Amazon, say, thirteen hours of your truck on a Saturday."},{"s":"s05","i":2,"t":90.424,"x":"What exactly gets hauled in those hours Amazon decides itself and shows the driver in the app. Usually two to four short runs between facilities."},{"s":"s05","i":3,"t":99.048,"x":"You are paid for all thirteen hours, even if there was only enough freight for eight."},{"s":"s05","i":4,"t":103.928,"x":"Drivers call the chain of runs inside a block a tour, but that word appears nowhere in Amazon’s documents."},{"s":"s06","i":0,"t":111.426,"x":"Blocks differ in length and in whether the driver sleeps at home."},{"s":"s06","i":1,"t":115.13,"x":"Five day blocks of thirteen hours is the most common shape for a small company: the driver is home every evening."},{"s":"s06","i":2,"t":122.122,"x":"Three blocks of thirty-seven hours, and long blocks of four to five days, need a sleeper tractor."},{"s":"s07","i":0,"t":128.588,"x":"Blocks are sold at auction."},{"s":"s07","i":1,"t":130.468,"x":"Amazon puts up, say, five thirteen-hour blocks around Dallas six weeks ahead."},{"s":"s07","i":2,"t":135.612,"x":"Carriers name their price per block. The winner is not the lowest price but the combination of price and the company’s score."},{"s":"s07","i":3,"t":142.892,"x":"A won auction becomes a contract: the same blocks on the same lanes every week."},{"s":"s07","i":4,"t":148.132,"x":"For a small company that is the most comfortable option: the driver knows his schedule a month ahead and the money comes in steadily."},{"s":"s08","i":0,"t":156.086,"x":"How do you choose? Look at your own situation."},{"s":"s08","i":1,"t":159.046,"x":"The truck is sitting empty right now — take a load off the board."},{"s":"s08","i":2,"t":162.774,"x":"The truck frees up tomorrow at a known hour and you have no time to watch the board — post the truck with your minimum rate."},{"s":"s08","i":3,"t":169.358,"x":"You want a predictable week and you already have the score — go to the auction for blocks, and from there to a contract."},{"s":"s09","i":0,"t":176.616,"x":"Chapter two: how the dispatcher takes a load."},{"s":"s09","i":1,"t":179.84,"x":"It is three actions in a row: read the card, do the maths, press the button and assign the driver immediately."},{"s":"s09","i":2,"t":187.048,"x":"That word immediately is the important one. A booked load with no driver gets pulled by Amazon after a while, and it counts as your refusal."},{"s":"s10","i":0,"t":195.842,"x":"Take an ordinary card."},{"s":"s10","i":1,"t":197.626,"x":"From and to: a facility in New Jersey to a facility in New York, thirty-eight miles."},{"s":"s10","i":2,"t":203.826,"x":"Pick up on Thursday between ten and eleven at night. The window is one hour."},{"s":"s10","i":3,"t":208.898,"x":"An Amazon trailer, drop and hook: no waiting to be loaded."},{"s":"s10","i":4,"t":213.034,"x":"The rate is four hundred and twelve dollars, all in. That is the final figure."},{"s":"s11","i":0,"t":218.276,"x":"The rate per mile on the card is deceptive. Four hundred and twelve dollars for thirty-eight miles is almost eleven dollars a mile, but you cannot count it that way."},{"s":"s11","i":1,"t":227.404,"x":"The truck will actually run more: seventeen miles to the facility, thirty-eight with the load and twenty back to the yard. Seventy-five miles in all."},{"s":"s11","i":2,"t":236.508,"x":"Now the time: forty minutes to the facility, half an hour on site, an hour twenty on the road, half an hour at the second facility and forty minutes home. About three hours forty."},{"s":"s11","i":3,"t":247.292,"x":"So the truck earned roughly one hundred and ten dollars an hour. For a short night run that is excellent."},{"s":"s11","i":4,"t":253.132,"x":"Remember the formula: divide the rate by all the miles, empties included, and separately by all the hours, time on site included. The second number matters more."},{"s":"s12","i":0,"t":264.11,"x":"Amazon does not publish exact rates, but carriers quote these ranges for twenty twenty-five and twenty twenty-six."},{"s":"s12","i":1,"t":271.174,"x":"On short runs under seventy-five miles, two dollars fifty to four dollars a mile. On medium ones, two to three. On long ones, one eighty-five to two fifty."},{"s":"s12","i":2,"t":281.622,"x":"That is about fifteen to thirty percent below the broker market. In return, prices climb noticeably in the autumn and before the holidays."},{"s":"s13","i":0,"t":290.584,"x":"You have decided to take it. Four actions follow, one after another."},{"s":"s13","i":1,"t":294.792,"x":"You press Book now. The load appears in the trips section, with nothing to wait for."},{"s":"s13","i":2,"t":299.936,"x":"You assign the driver and the tractor immediately. Only drivers marked Active will be in the list."},{"s":"s13","i":3,"t":306.064,"x":"You check the tractor number: the cameras at the gate read plates, and a mismatch keeps the driver out."},{"s":"s13","i":4,"t":311.952,"x":"And you look for a backhaul. The site suggests loads out of the delivery point right away — the cheapest way to kill empty miles."},{"s":"s14","i":0,"t":319.882,"x":"The app will show the driver the addresses and the times, but not your thinking."},{"s":"s14","i":1,"t":324.522,"x":"Where to stage before the gate opens, what to photograph, who to call if something goes wrong."},{"s":"s14","i":2,"t":329.786,"x":"A short message with the plan saves two night-time phone calls. Here is the template."},{"s":"s15","i":0,"t":335.268,"x":"Now the mistakes that cost real money."},{"s":"s15","i":1,"t":337.724,"x":"Do not book just in case: a load with no driver gets pulled and recorded as a refusal."},{"s":"s15","i":2,"t":343.612,"x":"Do not put one truck on two trips at the same time. The system may let it through, and then you have to hand one back at the full penalty. Keep your own truck calendar."},{"s":"s15","i":3,"t":352.572,"x":"Do not bid on a load you cannot haul: an accepted bid is exactly the same commitment."},{"s":"s15","i":4,"t":358.172,"x":"And do not call support asking for more money. That mechanism does not exist."},{"s":"s16","i":0,"t":363.39,"x":"Chapter three: the driver at the facility."},{"s":"s16","i":1,"t":366.374,"x":"An Amazon facility is not an ordinary warehouse where a guard writes your plate into a notebook."},{"s":"s16","i":2,"t":372.334,"x":"The gate opens on a code from the app, instructions come up on screens, and on the way out sensors check that the right trailer is leaving."},{"s":"s16","i":3,"t":379.83,"x":"Every action the driver takes in the app leaves a timestamp. Amazon uses those timestamps to decide whether you were on time, and you use them to prove how long you waited."},{"s":"s17","i":0,"t":390.136,"x":"Step one. The driver arrives thirty to forty-five minutes before the window and waits on the permitted lot."},{"s":"s17","i":1,"t":396.48,"x":"The tractor and the trailer are already entered in the app, so he already has a gate pass with a code."},{"s":"s17","i":2,"t":402.2,"x":"Step two, the most important one. He reaches the gate and taps Check In right away."},{"s":"s17","i":3,"t":407.44,"x":"That one timestamp decides whether you were on time. Arriving at ten oh five and tapping at ten forty after a chat with the guard reads to Amazon as thirty-five minutes late."},{"s":"s18","i":0,"t":417.698,"x":"Step three: the yard. On the screen at the entrance, or in the app, the driver sees the door number or the number of the spot where his trailer stands."},{"s":"s18","i":1,"t":426.922,"x":"He drives the yard by the markings, usually no faster than ten miles an hour, and does not park in other people’s spots. Yards are on camera."},{"s":"s18","i":2,"t":435.234,"x":"Step four: the trailer. He drops the one he brought, finds the right one, checks the number and does the inspection in the app."},{"s":"s18","i":3,"t":442.898,"x":"The inspection is photos from every side, tires, lights, doors and the seal. A scratch the driver does not photograph now becomes yours at the next facility."},{"s":"s19","i":0,"t":453.636,"x":"Step five: the seal. Its number must match the number in the document inside the app."},{"s":"s19","i":1,"t":459.38,"x":"The driver never breaks a seal. If it does not match, he stays where he is and calls the dispatcher. An hour of waiting is cheaper than an argument about cargo integrity."},{"s":"s19","i":2,"t":469.516,"x":"Step six: the exit. Drop Off and Check Out are tapped before leaving the gate, not out on the highway."},{"s":"s19","i":3,"t":476.004,"x":"At the exit, sensors verify that the right trailer is leaving. The delivery paperwork is generated automatically; there is nothing to email anywhere."},{"s":"s20","i":0,"t":485.59,"x":"While the driver is at the facility, the dispatcher watches the map."},{"s":"s20","i":1,"t":489.798,"x":"The truck’s dot refreshes every half minute from the app’s location. If the app is closed or location is off there is no dot, and Amazon counts the carrier as untracked."},{"s":"s20","i":2,"t":499.862,"x":"A trip that is projected to run late is highlighted in red. That is the signal to call the driver and open a case in advance, not afterwards."},{"s":"s20","i":3,"t":508.654,"x":"You may use your own tracker, but it does not replace the app: Amazon counts only the app."},{"s":"s21","i":0,"t":514.712,"x":"Amazon has no “your guy” to call. It has round-the-clock support, reachable three ways."},{"s":"s21","i":1,"t":520.216,"x":"First: the support center on the site. You open a case and the thread is kept. That is for everything that is not on fire."},{"s":"s21","i":2,"t":527.736,"x":"Second: the assistant in the driver’s app. It answers routine questions and opens a case itself. Faster than a call while the driver is standing at the facility."},{"s":"s21","i":3,"t":537.416,"x":"Third: a live operator. You are put through when a trip is at risk right now: a breakdown, the driver not being let in, a trailer that cannot be found."},{"s":"s22","i":0,"t":547.818,"x":"A case is written while the problem is still happening, not the next day."},{"s":"s22","i":1,"t":552.146,"x":"It must contain: the trip number, the driver’s name and the tractor number, the facility code, what happened with exact times, and what you are asking for."},{"s":"s22","i":2,"t":561.298,"x":"A real case. A driver sat three hours on a live load. The dispatcher wrote the next day, “we waited a long time yesterday” — the detention was not confirmed."},{"s":"s22","i":3,"t":571.218,"x":"The second time, the same dispatcher wrote after an hour and a half of waiting, attached a screenshot of the check-in timestamp, and added the departure time once the truck left. The detention was paid."},{"s":"s23","i":0,"t":582.796,"x":"Let us sum up."},{"s":"s23","i":1,"t":584.148,"x":"A load off the board and your truck on the board are open right away; the auction and the contract need a score."},{"s":"s23","i":2,"t":590.66,"x":"A block is paid time, not a load: you are paid for all the hours even when there was less freight."},{"s":"s23","i":3,"t":596.764,"x":"Count dollars per hour over the whole loop, not the rate per mile on the card. Book only when the driver exists right now."},{"s":"s23","i":4,"t":603.732,"x":"At the facility everything turns on tapping Check In the moment you reach the gate, and on the trailer inspection with photos."},{"s":"s23","i":5,"t":610.628,"x":"In part three we will go through twenty-two problem situations: what to do when something has gone wrong."}];
+  var SC = [{"id":"s01","t":0,"e":13.386},{"id":"s02","t":13.386,"e":32.068},{"id":"s03","t":32.068,"e":57.854},{"id":"s04","t":57.854,"e":81.624},{"id":"s05","t":81.624,"e":111.426},{"id":"s06","t":111.426,"e":128.588},{"id":"s07","t":128.588,"e":156.086},{"id":"s08","t":156.086,"e":176.616},{"id":"s09","t":176.616,"e":195.842},{"id":"s10","t":195.842,"e":218.276},{"id":"s11","t":218.276,"e":264.11},{"id":"s12","t":264.11,"e":290.584},{"id":"s13","t":290.584,"e":319.882},{"id":"s14","t":319.882,"e":335.268},{"id":"s15","t":335.268,"e":363.39},{"id":"s16","t":363.39,"e":390.136},{"id":"s17","t":390.136,"e":417.698},{"id":"s18","t":417.698,"e":453.636},{"id":"s19","t":453.636,"e":485.59},{"id":"s20","t":485.59,"e":514.712},{"id":"s21","t":514.712,"e":547.818},{"id":"s22","t":547.818,"e":582.796},{"id":"s23","t":582.796,"e":616.48}];
+  var CH = [{"t":0,"e":13.386},{"t":13.386,"e":176.616},{"t":176.616,"e":363.39},{"t":363.39,"e":582.796},{"t":582.796,"e":616.48}];
+  var TOTAL = 616.48;
+  var a = document.getElementById('track-audio'), stage = document.getElementById('stage');
+  var scenes = [].slice.call(stage.querySelectorAll('.scene'));
+  var cur = -1, curCue = -1, subsOn = true, rates = [1, 1.25, 1.5, 0.75], ri = 0;
+
+  function unit() { var w = stage.clientWidth, h = stage.clientHeight; stage.style.setProperty('--u', Math.min(w / 100, h / 56.25) + 'px'); }
+  var player = document.querySelector('.player'), pbox = document.getElementById('pbox');
+  function isFS() { return document.fullscreenElement === pbox || pbox.classList.contains('fsfake'); }
+  var subsEl = document.getElementById('subs');
+  function placeSubs() {
+    var wantBelow = window.innerWidth < 760 && !isFS();
+    if (wantBelow && subsEl.parentElement !== pbox) { pbox.insertBefore(subsEl, pbox.querySelector('.bar-wrap')); subsEl.classList.add('below'); }
+    else if (!wantBelow && subsEl.parentElement !== stage) { stage.appendChild(subsEl); subsEl.classList.remove('below'); }
+  }
+  function fit() {
+    placeSubs();
+    if (isFS()) { player.style.maxWidth = ''; unit(); return; }
+    player.style.maxWidth = '';
+    var top = player.getBoundingClientRect().top + (window.scrollY || 0);
+    var below = document.querySelector('.bar-wrap').offsetHeight + (subsEl.classList.contains('below') ? subsEl.offsetHeight + 10 : 0) + 20;
+    var avail = window.innerHeight - top - below - 24;
+    player.style.maxWidth = Math.max(300, Math.min(1320, avail * 16 / 9)) + 'px';
+    var over = document.querySelector('.ctrls').getBoundingClientRect().bottom - window.innerHeight + 14;
+    if (over > 0) player.style.maxWidth = Math.max(300, parseFloat(player.style.maxWidth) - over * 16 / 9) + 'px';
+    unit();
+  }
+  var fitT, lastVP = '';
+  function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fit, 80); }
+  function onViewport() { var v = window.innerWidth + 'x' + window.innerHeight; if (v === lastVP) return; lastVP = v; scheduleFit(); }
+  fit(); lastVP = window.innerWidth + 'x' + window.innerHeight;
+  addEventListener('resize', scheduleFit); addEventListener('orientationchange', scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(onViewport).observe(document.documentElement);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleFit);
+  addEventListener('load', scheduleFit); document.fonts && document.fonts.ready.then(scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(unit).observe(stage);
+
+  function cueAt(t) { var lo = 0, hi = CUES.length - 1, r = 0; while (lo <= hi) { var m = (lo + hi) >> 1; if (CUES[m].t <= t) { r = m; lo = m + 1; } else hi = m - 1; } return r; }
+  function sceneAt(t) { for (var i = SC.length - 1; i >= 0; i--) if (t >= SC[i].t - 0.05) return i; return 0; }
+
+  function showScene(i) {
+    if (i === cur) return;
+    if (cur >= 0) { scenes[cur].classList.remove('live'); scenes[cur].querySelectorAll('[data-at]').forEach(function (el) { el.classList.remove('on'); }); }
+    cur = i; scenes[i].classList.add('live');
+    var ci = CH.findIndex(function (c, k) { return SC[i].t >= c.t - 0.05 && (k === CH.length - 1 || SC[i].t < CH[k + 1].t - 0.05); });
+    document.querySelectorAll('.chap').forEach(function (b, k) { b.classList.toggle('on', k === ci); });
+  }
+  function reveal(sceneIdx, lineIdx) {
+    scenes[sceneIdx].querySelectorAll('[data-at]').forEach(function (el) {
+      el.classList.toggle('on', +el.getAttribute('data-at') <= lineIdx);
+    });
+  }
+  function paint() {
+    var t = a.currentTime;
+    var si = sceneAt(t); showScene(si);
+    var ci = cueAt(t);
+    if (ci !== curCue) { curCue = ci; document.getElementById('subtext').textContent = CUES[ci].x; }
+    reveal(si, CUES[ci].s === SC[si].id ? CUES[ci].i : 0);
+    var p = Math.min(100, t / TOTAL * 100);
+    document.getElementById('fill').style.width = p + '%';
+    document.getElementById('knob').style.left = p + '%';
+    document.getElementById('tcur').textContent = fmt(t);
+    if (!a.paused && Date.now() - lastSave > 5000) saveState();
+    if (t > TOTAL * 0.95) markDone();
+  }
+  function fmt(s) { s = Math.max(0, s); return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'); }
+
+  var raf;
+  function loop() { paint(); if (!a.paused) raf = requestAnimationFrame(loop); }
+  a.addEventListener('play', function () { setPlay(true); loop(); if (isFS()) armIdle(); });
+  a.addEventListener('pause', function () { setPlay(false); cancelAnimationFrame(raf); });
+  a.addEventListener('seeked', paint);
+  a.addEventListener('ended', function () { setPlay(false); });
+
+  function setPlay(on) {
+    document.getElementById('playIcon').innerHTML = on ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    document.getElementById('playLabel').textContent = on ? 'Pause' : (a.currentTime > 0 ? 'Resume' : 'Watch');
+  }
+  function start() {
+    document.getElementById('poster').classList.add('hide');
+    if (resumeAt && a.currentTime < 1) { a.currentTime = resumeAt; resumeAt = 0; paint(); }
+    document.querySelector('.player').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    a.play();
+  }
+  document.getElementById('bigplay').onclick = start;
+  document.getElementById('poster').onclick = start;
+  document.getElementById('play').onclick = function () { if (a.paused) start(); else a.pause(); };
+  document.getElementById('prev').onclick = function () { var i = sceneAt(a.currentTime); if (a.currentTime - SC[i].t < 1.2 && i > 0) i--; a.currentTime = SC[i].t; paint(); };
+  document.getElementById('next').onclick = function () { var i = sceneAt(a.currentTime); if (i < SC.length - 1) { a.currentTime = SC[i + 1].t; paint(); } };
+  document.getElementById('track').onclick = function (e) {
+    var r = this.getBoundingClientRect();
+    a.currentTime = Math.min(TOTAL - 0.1, Math.max(0, (e.clientX - r.left) / r.width * TOTAL));
+    document.getElementById('poster').classList.add('hide'); paint();
+  };
+  document.querySelectorAll('.chap').forEach(function (b) {
+    b.onclick = function () { document.getElementById('poster').classList.add('hide'); a.currentTime = +b.dataset.t; paint(); if (a.paused) a.play(); };
+  });
+  document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
+  document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Subtitles on' : 'Subtitles off'; fit(); };
+  var fsBtn = document.getElementById('fs'), idleT;
+  function syncFS() { document.getElementById('fsLabel').textContent = isFS() ? 'Exit fullscreen' : 'Fullscreen'; fit(); }
+  function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); idleT = setTimeout(function () { if (isFS() && !a.paused) pbox.classList.add('idle'); }, 2600); }
+  function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; syncFS(); armIdle(); }
+  function fakeOff() { pbox.classList.remove('fsfake', 'idle'); document.body.style.overflow = ''; syncFS(); }
+  fsBtn.onclick = function () {
+    if (pbox.classList.contains('fsfake')) return fakeOff();
+    if (document.fullscreenElement) return document.exitFullscreen();
+    var p;
+    try { p = pbox.requestFullscreen && pbox.requestFullscreen(); } catch (e) { p = null; }
+    if (p && p.catch) p.catch(fakeOn);
+    if (!pbox.requestFullscreen) fakeOn();
+    setTimeout(function () { if (!document.fullscreenElement) fakeOn(); }, 400);
+  };
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) pbox.classList.remove('idle'); else armIdle(); syncFS(); });
+  pbox.addEventListener('mousemove', function () { if (isFS()) armIdle(); });
+  pbox.addEventListener('touchstart', function () { if (isFS()) armIdle(); }, { passive: true });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && pbox.classList.contains('fsfake')) fakeOff(); });
+  document.addEventListener('keydown', function (e) {
+    if (/INPUT|TEXTAREA/.test((e.target.tagName || ''))) return;
+    if (e.code === 'Space') { e.preventDefault(); a.paused ? start() : a.pause(); }
+    if (e.code === 'ArrowRight') { a.currentTime = Math.min(TOTAL - .1, a.currentTime + 10); paint(); }
+    if (e.code === 'ArrowLeft') { a.currentTime = Math.max(0, a.currentTime - 10); paint(); }
+  });
+  // память просмотра: место остановки и отметка «просмотрено»
+  var SKEY = 'relay-video-en-part2', saved = null, doneFlag = false, lastSave = 0;
+  try { saved = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { saved = null; }
+  if (saved && saved.done) doneFlag = true;
+  function saveState() {
+    try { localStorage.setItem(SKEY, JSON.stringify({ t: Math.floor(a.currentTime), done: doneFlag })); } catch (e) {}
+    lastSave = Date.now();
+  }
+  function markDone() { if (doneFlag) return; doneFlag = true; document.getElementById('vdone').hidden = false; saveState(); }
+  if (doneFlag) document.getElementById('vdone').hidden = false;
+  var resumeAt = 0;
+  if (saved && saved.t > 25 && saved.t < TOTAL - 20) {
+    resumeAt = saved.t;
+    document.getElementById('posterSub').textContent = 'Resume from ' + fmt(resumeAt) + ' · part 2 of 4 · ' + fmt(TOTAL);
+    var pres = document.getElementById('pres');
+    pres.hidden = false;
+    pres.onclick = function (e) { e.stopPropagation(); resumeAt = 0; a.currentTime = 0; paint(); start(); };
+  }
+  a.addEventListener('pause', saveState);
+  a.addEventListener('ended', markDone);
+  addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) saveState(); });
+
+  showScene(0); reveal(0, -1); setPlay(false);
+})();
+</script>
+
+    <link rel="stylesheet" href="/enhanced-quiz-system.css">
+</body>
+</html>

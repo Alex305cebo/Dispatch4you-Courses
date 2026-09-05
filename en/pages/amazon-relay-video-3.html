@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en" style="background:var(--surface-base)">
+
+<head>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script src="/site-protection.js"></script>
+    <meta charset="UTF-8">
+  <meta name="color-scheme" content="dark light">
+  <script>/*d4y-theme-boot*/(function(){try{var s=localStorage.getItem('d4y-theme');var a=(localStorage.getItem('user_role')||'').toLowerCase()==='superuser';document.documentElement.setAttribute('data-theme',(s==='light'&&a)?'light':'dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();</script>
+  <link rel="stylesheet" href="/css/tokens.css?v=38">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video lesson: Amazon Relay, part 3 | Dispatcher Course</title>
+  <link rel="canonical" href="https://dispatch4you.com/en/pages/amazon-relay-video-3.html">
+    <meta name="description" content="A narrated video lesson: 22 problem situations and what the dispatcher does in each. 10 minutes, 24 scenes.">
+    <meta property="og:type" content="video.other">
+    <meta property="og:site_name" content="Dispatch4You">
+    <meta property="og:title" content="Video lesson: Amazon Relay, part 3 — problem situations">
+    <meta property="og:description" content="10:03 with narration and subtitles: 22 problem situations and what the dispatcher does in each.">
+    <meta property="og:url" content="https://dispatch4you.com/en/pages/amazon-relay-video-3.html">
+    <meta property="og:image" content="https://dispatch4you.com/img/amazon-relay/og-video-en-3.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Video lesson: Amazon Relay, part 3 — problem situations">
+    <meta name="twitter:image" content="https://dispatch4you.com/img/amazon-relay/og-video-en-3.jpg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/shared-nav.css?v=8.7">
+    <link rel="stylesheet" href="/shared-styles.css?v=2.2">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { overflow-x: hidden; scroll-behavior: smooth; }
+        :root { --primary:#06b6d4; --secondary:#0ea5e9; --amz:#ff9900; --success:#10b981; --warning:#f59e0b; --danger:#ef4444;
+                --bg-darker:#070b14; --text-primary:#fff; --text-secondary:#e2e8f0; --text-muted:#94a3b8; }
+        body { font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg-darker); color:var(--text-primary); line-height:1.6; overflow-x:hidden; }
+        body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none;
+            background: radial-gradient(circle at 15% 25%, rgba(6,182,212,.13), transparent 50%), radial-gradient(circle at 85% 75%, rgba(255,153,0,.10), transparent 50%); }
+        .container { max-width:1400px; margin:0 auto; padding:0 24px; }
+        .vhead { padding:74px 0 8px; display:flex; align-items:center; justify-content:center; gap:13px; flex-wrap:wrap; }
+        .vbadge { display:inline-block; padding:8px 18px; border-radius:24px; background:linear-gradient(135deg,rgba(255,153,0,.15),rgba(14,165,233,.15)); border:1px solid rgba(255,153,0,.35); color:var(--amz); font-size:11px; font-weight:800; letter-spacing:1.4px; text-transform:uppercase; margin-bottom:0; }
+        .vtitle { font-size:clamp(18px,2vw,25px); font-weight:900; line-height:1.2; margin-bottom:0;
+            background:linear-gradient(135deg,#06b6d4,#0ea5e9 45%,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .vsub { font-size:13px; color:var(--text-muted); }
+        .vdone { padding:5px 12px; border-radius:99px; background:rgba(16,185,129,.16); border:1px solid rgba(16,185,129,.4); color:#6ee7b7; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+        .pres { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.16); color:#fff; font:600 calc(var(--u)*1.3)/1 Inter,sans-serif; cursor:pointer; }
+        .pres:hover { background:rgba(255,255,255,.13); }
+
+        /* ===== ПЛЕЕР ===== */
+        .player { --chrome:330px; max-width:min(1320px, calc((100dvh - var(--chrome)) * 16 / 9)); margin:0 auto; scroll-margin-top:74px; }
+        .stage { position:relative; width:100%; aspect-ratio:16/9; background:#080d18; border:1px solid rgba(255,255,255,.10); border-radius:18px; overflow:hidden; --u:11px; }
+        .pbox { position:relative; }
+        .pbox:fullscreen, .pbox.fsfake { background:#000; display:flex; align-items:center; justify-content:center; max-width:none; }
+        .pbox.fsfake { position:fixed; inset:0; z-index:9999; }
+        .pbox:fullscreen .stage, .pbox.fsfake .stage { width:100vw; height:100dvh; max-width:none; aspect-ratio:auto; border-radius:0; border:none; }
+        .pbox:fullscreen .bar-wrap, .pbox.fsfake .bar-wrap { position:absolute; left:0; right:0; bottom:0; margin:0; padding:16px 22px 18px; background:linear-gradient(transparent, rgba(0,0,0,.82)); z-index:30; transition:opacity .35s; }
+        .pbox:fullscreen.idle .bar-wrap, .pbox.fsfake.idle .bar-wrap { opacity:0; pointer-events:none; }
+        .pbox:fullscreen.idle, .pbox.fsfake.idle { cursor:none; }
+        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--u)*7.4); }
+        .pbox:fullscreen.idle .subs, .pbox.fsfake.idle .subs { bottom:calc(var(--u)*2.6); }
+        .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*7.6); }
+        .scene.live { display:flex; }
+        .scene-cap { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); margin-bottom:calc(var(--u)*2.2); flex-shrink:0; }
+        .sc-ch { font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .sc-tt { font-size:calc(var(--u)*1.45); color:var(--text-muted); }
+        .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.5); min-height:0; }
+        [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
+        [data-at].on { opacity:1; transform:none; }
+        g[data-at], text[data-at], path[data-at] { transform:none !important; }
+
+        /* блоки сцен */
+        .sc-title { text-align:center; }
+        .sc-title .kicker { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*1.6); }
+        .sc-title .big { font-size:calc(var(--u)*6.2); font-weight:900; line-height:1.08; letter-spacing:-.02em; }
+        .sc-title.small .big { font-size:calc(var(--u)*4.6); }
+        .sc-title .accent { background:linear-gradient(135deg,#06b6d4,#ff9900); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .chips { display:flex; gap:calc(var(--u)*1); justify-content:center; margin-top:calc(var(--u)*2.6); flex-wrap:wrap; }
+        .chip { display:flex; align-items:center; gap:calc(var(--u)*.7); padding:calc(var(--u)*.9) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.10); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .chip i { width:calc(var(--u)*2); height:calc(var(--u)*2); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,var(--primary),var(--amz)); display:flex; align-items:center; justify-content:center; font-style:normal; font-weight:800; font-size:calc(var(--u)*1.1); color:#fff; }
+
+        .sc-cols3 { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.6); }
+        .sc-cols3.tight { margin-top:calc(var(--u)*2.4); }
+        .ccard { padding:calc(var(--u)*2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.4); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .ccard.need { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .ccard .ic { font-size:calc(var(--u)*2.6); margin-bottom:calc(var(--u)*.7); }
+        .ccard .cnum { font-size:calc(var(--u)*3.1); font-weight:900; background:linear-gradient(135deg,var(--primary),var(--amz)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .ccard .clab { font-size:calc(var(--u)*1.28); color:var(--text-muted); margin-top:calc(var(--u)*.4); }
+        .sc-arrow { text-align:center; font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; }
+        .sc-relay { display:flex; justify-content:center; }
+        .rbox { padding:calc(var(--u)*1.8) calc(var(--u)*3); border-radius:calc(var(--u)*1.4); background:linear-gradient(135deg,rgba(6,182,212,.16),rgba(255,153,0,.14)); border:1px solid rgba(255,153,0,.4); text-align:center; }
+        .rbox .rt { font-size:calc(var(--u)*2.6); font-weight:900; }
+        .rbox .rs { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.3); }
+
+        .sc-vs { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .vs-head { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); padding:0 calc(var(--u)*1.4); }
+        .vs-head .vh { font-size:calc(var(--u)*1.5); font-weight:800; }
+        .vs-head .vh:first-child { grid-column:2; color:var(--text-muted); }
+        .vs-head .vh.b { color:var(--amz); }
+        .vs-row { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); }
+        .vs-row .vl { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .vs-row .va { font-size:calc(var(--u)*1.42); color:var(--text-secondary); }
+        .vs-row .vb { font-size:calc(var(--u)*1.42); color:var(--amz); font-weight:600; }
+
+        .sc-days { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.6); }
+        .day { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .day.b { border-color:rgba(255,153,0,.4); background:rgba(255,153,0,.06); }
+        .day .dh { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .day .dstep { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.42) 0; border-bottom:1px solid rgba(255,255,255,.06); }
+        .day .dtime { margin-top:calc(var(--u)*.9); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .day .dtime.ok { color:var(--success); }
+
+        .sc-who { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .who { padding:calc(var(--u)*1.7) calc(var(--u)*1.2); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .who.hi { border-color:rgba(6,182,212,.45); background:rgba(6,182,212,.08); }
+        .who .wic { font-size:calc(var(--u)*2.8); }
+        .who .wn { font-size:calc(var(--u)*1.75); font-weight:800; margin:calc(var(--u)*.5) 0 calc(var(--u)*.3); }
+        .who .wd { font-size:calc(var(--u)*1.18); color:var(--text-muted); line-height:1.45; }
+
+        .sc-svg { width:100%; height:auto; max-height:100%; }
+        .svgt { fill:#e2e8f0; font-size:15px; font-family:'Inter',sans-serif; }
+        .svgt.b { fill:#fff; font-size:19px; font-weight:800; }
+        .svgt.s { fill:#94a3b8; font-size:14px; }
+        .svgt.o { font-size:20px; } .svgt.g { font-size:20px; }
+        .truck-anim { transform:translateX(0); }
+        .truck-anim.on { animation:driveAcross 7.5s cubic-bezier(.4,0,.5,1) .3s forwards; }
+        @keyframes driveAcross { to { transform:translateX(490px); } }
+
+        .sc-code { text-align:center; }
+        .codebig { font-size:calc(var(--u)*7); font-weight:900; letter-spacing:.02em; }
+        .codebig .letters { color:var(--primary); }
+        .codebig .digit { color:var(--amz); }
+        .codelegend { display:flex; justify-content:center; gap:calc(var(--u)*3); margin-top:calc(var(--u)*1.2); }
+        .cl { display:flex; align-items:center; gap:calc(var(--u)*.8); }
+        .cll { font-size:calc(var(--u)*1.7); font-weight:900; color:var(--primary); }
+        .cll.d { color:var(--amz); }
+        .clt { font-size:calc(var(--u)*1.28); color:var(--text-muted); }
+        .codeex { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.2); margin-top:calc(var(--u)*2.2); }
+        .ce { padding:calc(var(--u)*1.2); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ce b { display:block; font-size:calc(var(--u)*1.9); color:#fff; }
+        .ce span { font-size:calc(var(--u)*1.2); color:var(--text-muted); }
+
+        .sc-req { display:flex; flex-direction:column; gap:calc(var(--u)*1.4); }
+        .req { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .req .rn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .req .rb { flex:1; min-width:0; }
+        .req .rt { font-size:calc(var(--u)*1.75); font-weight:800; }
+        .req .rv { font-size:calc(var(--u)*1.5); color:var(--amz); font-weight:700; margin-top:calc(var(--u)*.2); }
+        .req .rx { font-size:calc(var(--u)*1.25); color:var(--text-muted); margin-top:calc(var(--u)*.55); }
+        .tag { display:inline-block; padding:calc(var(--u)*.25) calc(var(--u)*.8); border-radius:99px; background:rgba(255,153,0,.18); color:var(--amz); font-size:calc(var(--u)*1); font-weight:800; text-transform:uppercase; letter-spacing:.06em; vertical-align:middle; margin-left:calc(var(--u)*.6); }
+        .pills { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; margin-top:calc(var(--u)*.7); }
+        .pillrow { display:flex; gap:calc(var(--u)*.7); flex-wrap:wrap; align-items:center; margin-top:calc(var(--u)*.6); }
+        .plab { font-size:calc(var(--u)*1.25); font-weight:800; min-width:calc(var(--u)*9); }
+        .plab.ok { color:#6ee7b7; } .plab.no { color:#fca5a5; }
+        .pill { padding:calc(var(--u)*.5) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:700; }
+        .pill.ok { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.35); }
+        .pill.no { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); text-decoration:line-through; }
+        .bars { display:flex; flex-direction:column; gap:calc(var(--u)*.55); margin-top:calc(var(--u)*.7); }
+        .bar { display:grid; grid-template-columns:auto 1fr auto; gap:calc(var(--u)*1); align-items:center; }
+        .bar .bl { font-size:calc(var(--u)*1.25); color:var(--text-secondary); min-width:calc(var(--u)*16); }
+        .bar .bt { height:calc(var(--u)*.9); border-radius:99px; background:rgba(255,255,255,.08); position:relative; overflow:hidden; }
+        .bar .bt i { position:absolute; inset:0 auto 0 0; width:var(--w); background:linear-gradient(90deg,var(--primary),var(--amz)); border-radius:99px; }
+        .bar .bv { font-size:calc(var(--u)*1.3); font-weight:800; color:var(--amz); }
+        .formula { margin-top:calc(var(--u)*.8); padding:calc(var(--u)*.9) calc(var(--u)*1.2); border-radius:calc(var(--u)*.8); background:rgba(6,182,212,.09); border:1px solid rgba(6,182,212,.28); font-size:calc(var(--u)*1.25); color:var(--text-secondary); }
+
+        .sc-eq { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1.3); }
+        .eq { padding:calc(var(--u)*1.5) calc(var(--u)*1.1); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .eq .eic { font-size:calc(var(--u)*2.6); }
+        .eq .en { font-size:calc(var(--u)*1.55); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.2); }
+        .eq .ed { font-size:calc(var(--u)*1.15); color:var(--text-muted); line-height:1.45; }
+        .sc-two { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+
+        .sc-ins { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ins { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); }
+        .ins.hot { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.5); }
+        .ins .il { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ins .il .sub { display:block; font-size:calc(var(--u)*1.1); color:var(--amz); }
+        .ins .iv { font-size:calc(var(--u)*1.75); font-weight:900; color:#fff; white-space:nowrap; }
+        .ins.hot .iv { color:var(--amz); }
+
+        .sc-flow { display:flex; align-items:stretch; gap:calc(var(--u)*1); }
+        .fw { flex:1; padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .fw .fi { font-size:calc(var(--u)*2.3); }
+        .fw .ft { font-size:calc(var(--u)*1.25); color:var(--text-secondary); margin-top:calc(var(--u)*.4); line-height:1.45; }
+        .fa { display:flex; align-items:center; color:var(--amz); font-size:calc(var(--u)*2); }
+
+        .sc-case { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .sc-case .ch { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.9); }
+        .sc-case .cline { font-size:calc(var(--u)*1.38); color:var(--text-secondary); padding:calc(var(--u)*.34) 0 calc(var(--u)*.34) calc(var(--u)*1.6); position:relative; }
+        .sc-case .cline::before { content:'•'; position:absolute; left:0; color:var(--text-muted); }
+        .sc-case .cline.bad { color:#fca5a5; } .sc-case .cline.bad::before { content:'✕'; color:#fca5a5; font-size:.85em; }
+        .sc-case .cline.good { color:#6ee7b7; } .sc-case .cline.good::before { content:'✓'; color:#6ee7b7; }
+        .sc-case .cfoot { margin-top:calc(var(--u)*.9); padding-top:calc(var(--u)*.9); border-top:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.35); color:var(--amz); font-weight:600; }
+
+        .sc-roles { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .role { position:relative; padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .role.best { border-color:rgba(16,185,129,.5); background:rgba(16,185,129,.08); }
+        .role.trap { border-color:rgba(239,68,68,.45); background:rgba(239,68,68,.07); }
+        .rbadge { position:absolute; top:calc(var(--u)*-.9); left:calc(var(--u)*1.2); padding:calc(var(--u)*.3) calc(var(--u)*.9); border-radius:99px; background:#10b981; color:#04231a; font-size:calc(var(--u)*1); font-weight:900; text-transform:uppercase; letter-spacing:.06em; }
+        .rbadge.trap { background:#ef4444; color:#2a0505; }
+        .role .rname { font-size:calc(var(--u)*1.8); font-weight:800; }
+        .role .rwho { font-size:calc(var(--u)*1.2); color:var(--amz); margin:calc(var(--u)*.2) 0 calc(var(--u)*.6); }
+        .role .rcan { font-size:calc(var(--u)*1.25); color:var(--text-muted); line-height:1.5; }
+
+        .sc-steps { display:flex; flex-direction:column; gap:calc(var(--u)*1.3); }
+        .st { display:flex; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .st.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .st .sn { width:calc(var(--u)*3.2); height:calc(var(--u)*3.2); border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--secondary)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.7); font-weight:900; flex-shrink:0; }
+        .st .sb { flex:1; min-width:0; }
+        .sc-steps .stt { font-size:calc(var(--u)*1.7); font-weight:800; }
+        .st .std { font-size:calc(var(--u)*1.3); color:var(--text-secondary); margin-top:calc(var(--u)*.35); line-height:1.5; }
+        .st .std.dim { color:var(--text-muted); }
+        .toggles { display:flex; flex-direction:column; gap:calc(var(--u)*.6); margin-top:calc(var(--u)*.9); }
+        .tg { display:grid; grid-template-columns:calc(var(--u)*16) auto 1fr; gap:calc(var(--u)*1); align-items:center; }
+        .tgl { font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .tgv { padding:calc(var(--u)*.4) calc(var(--u)*1.1); border-radius:99px; font-size:calc(var(--u)*1.25); font-weight:800; text-align:center; }
+        .tgv.on { background:rgba(16,185,129,.18); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .tgv.off { background:rgba(239,68,68,.16); color:#fca5a5; border:1px solid rgba(239,68,68,.35); }
+        .tgn { font-size:calc(var(--u)*1.15); color:var(--text-muted); }
+
+        .sc-yesno { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.5); }
+        .sc-yesno .col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .sc-yesno .col.yes { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .sc-yesno .col.no { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .sc-yesno .colh { font-size:calc(var(--u)*1.55); font-weight:800; margin-bottom:calc(var(--u)*.8); }
+        .sc-yesno .col.yes .colh { color:#6ee7b7; } .sc-yesno .col.no .colh { color:#fca5a5; }
+        .sc-yesno .li { font-size:calc(var(--u)*1.32); color:var(--text-secondary); padding:calc(var(--u)*.35) 0 calc(var(--u)*.35) calc(var(--u)*1.7); position:relative; }
+        .sc-yesno .col.yes .li::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .sc-yesno .col.no .li::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-yesno .lin { margin-top:calc(var(--u)*.8); font-size:calc(var(--u)*1.25); color:var(--amz); }
+
+        .sc-status { display:flex; align-items:center; justify-content:center; gap:calc(var(--u)*1.4); }
+        .sc-status .stt { padding:calc(var(--u)*.7) calc(var(--u)*1.8); border-radius:99px; font-size:calc(var(--u)*1.6); font-weight:800; }
+        .sc-status .stt.pending { background:rgba(245,158,11,.16); color:#fcd34d; border:1px solid rgba(245,158,11,.4); }
+        .sc-status .stt.active { background:rgba(16,185,129,.16); color:#6ee7b7; border:1px solid rgba(16,185,129,.4); }
+        .sc-status .arr { color:var(--text-muted); font-size:calc(var(--u)*1.8); }
+
+        .sc-sum { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sumh { font-size:calc(var(--u)*1.3); font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--amz); }
+        .sumline { font-size:calc(var(--u)*1.5); color:var(--text-secondary); padding:calc(var(--u)*.9) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid var(--primary); line-height:1.5; }
+        .sumline b { color:#fff; }
+        .nextup { margin-top:calc(var(--u)*.6); padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(255,153,0,.12)); border:1px solid rgba(255,153,0,.35); }
+        .nextup .nl { display:block; font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
+        .nextup .nt { font-size:calc(var(--u)*1.5); color:#fff; }
+
+        .sc-note { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); font-size:calc(var(--u)*1.4); color:var(--text-secondary); background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); }
+        .sc-note.warn { background:rgba(245,158,11,.10); border-color:rgba(245,158,11,.35); color:#fcd34d; }
+        .sc-note.ok { background:rgba(16,185,129,.10); border-color:rgba(16,185,129,.35); color:#6ee7b7; }
+        .sc-note.danger { background:rgba(239,68,68,.10); border-color:rgba(239,68,68,.38); color:#fca5a5; }
+        .sc-note.big { font-size:calc(var(--u)*1.6); font-weight:600; text-align:center; }
+
+        /* заставка и кнопка старта */
+        .poster { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u)*1.6); background:linear-gradient(160deg,#0a1120,#0e1830); cursor:pointer; }
+        .poster.hide { display:none; }
+        .poster .pt { font-size:calc(var(--u)*3.4); font-weight:900; text-align:center; line-height:1.15; }
+        .poster .ps { font-size:calc(var(--u)*1.5); color:var(--text-muted); }
+        .bigplay { width:calc(var(--u)*7); height:calc(var(--u)*7); border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--amz)); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 calc(var(--u)*.8) calc(var(--u)*3) rgba(6,182,212,.35); transition:transform .2s; }
+        .bigplay:hover { transform:scale(1.06); }
+        .bigplay svg { width:calc(var(--u)*2.6); height:calc(var(--u)*2.6); fill:#fff; margin-left:calc(var(--u)*.3); }
+
+        /* субтитры */
+        .subs { position:absolute; left:0; right:0; bottom:calc(var(--u)*2.4); display:flex; justify-content:center; padding:0 calc(var(--u)*4); z-index:6; pointer-events:none; transition:bottom .35s ease; }
+        .subs.off { display:none; }
+        .subs .stx { max-width:88%; background:rgba(6,10,20,.86); padding:calc(var(--u)*.75) calc(var(--u)*1.5); border-radius:calc(var(--u)*.7); text-align:center; text-wrap:balance; }
+        .subs .stx { font-size:max(15px, calc(var(--u)*1.9)); line-height:1.42; color:#fff; font-weight:500; }
+        .subs.below { position:static; padding:0; margin-top:10px; }
+        .subs.below .stx { width:100%; max-width:none; text-align:left; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); border-left:3px solid var(--amz); border-radius:12px; padding:11px 14px; font-size:15px; line-height:1.55; color:var(--text-secondary); }
+
+        /* управление */
+        .bar-wrap { margin-top:12px; }
+        .track { position:relative; height:8px; border-radius:99px; background:rgba(255,255,255,.09); cursor:pointer; }
+        .track .fill { position:absolute; inset:0 auto 0 0; width:0; border-radius:99px; background:linear-gradient(90deg,var(--primary),var(--amz)); }
+        .track .knob { position:absolute; top:50%; left:0; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.5); }
+        .track i { position:absolute; top:0; width:2px; height:100%; background:rgba(255,255,255,.35); }
+        .ctrls { display:flex; align-items:center; gap:9px; margin-top:10px; flex-wrap:wrap; }
+        .cbtn { display:flex; align-items:center; justify-content:center; gap:7px; height:44px; min-width:44px; padding:0 14px; border-radius:12px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); color:var(--text-primary); font:600 14px Inter,sans-serif; cursor:pointer; transition:all .2s; }
+        .cbtn:hover { background:rgba(255,153,0,.14); border-color:rgba(255,153,0,.4); }
+        .cbtn.main { background:linear-gradient(135deg,var(--primary),var(--secondary)); border-color:transparent; }
+        .cbtn svg { width:18px; height:18px; fill:currentColor; }
+        .ctime { font:700 14px ui-monospace,Menlo,Consolas,monospace; color:var(--text-muted); margin-left:4px; }
+        .spacer { flex:1; }
+        .cbtn.small { height:38px; font-size:13px; padding:0 12px; }
+        .cbtn.fs { height:44px; padding:0 16px; font-size:14px; font-weight:800; background:rgba(255,153,0,.16); border-color:rgba(255,153,0,.55); color:#ffb648; animation:fsPulse 2.4s ease-out 1.2s 3; }
+        .cbtn.fs:hover { background:rgba(255,153,0,.26); border-color:rgba(255,153,0,.9); color:#fff; }
+        .cbtn.fs svg { width:17px; height:17px; }
+        @keyframes fsPulse { 0% { box-shadow:0 0 0 0 rgba(255,153,0,.5); } 70% { box-shadow:0 0 0 11px rgba(255,153,0,0); } 100% { box-shadow:0 0 0 0 rgba(255,153,0,0); } }
+        @media (prefers-reduced-motion:reduce) { .cbtn.fs { animation:none; } }
+
+        /* главы */
+        .chapters { margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
+        .chap { display:flex; flex-direction:column; align-items:flex-start; gap:3px; padding:14px 16px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); cursor:pointer; text-align:left; transition:all .2s; font-family:inherit; }
+        .chap:hover { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .chap.on { border-color:var(--amz); background:rgba(255,153,0,.11); }
+        .chap-t { font:800 12px ui-monospace,Menlo,Consolas,monospace; color:var(--amz); }
+        .chap-n { font-size:15px; font-weight:700; color:#fff; }
+        .chap-d { font-size:12.5px; color:var(--text-muted); }
+
+        .after { margin:44px auto 60px; max-width:1100px; }
+        .after h2 { font-size:22px; font-weight:800; margin-bottom:14px; }
+        .after-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; }
+        .after-grid a { display:block; padding:16px 18px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-decoration:none; color:var(--text-secondary); transition:all .2s; }
+        .after-grid a:hover { border-color:rgba(6,182,212,.5); background:rgba(6,182,212,.08); color:#fff; }
+        .after-grid b { display:block; color:#fff; font-size:15px; margin-bottom:3px; }
+        .after-grid span { font-size:13px; color:var(--text-muted); }
+
+
+
+
+        /* ===== БЛОКИ ЧАСТИ 4 ===== */
+        .sc-money { display:flex; flex-direction:column; gap:calc(var(--u)*.6); }
+        .mn { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); border-left:calc(var(--u)*.3) solid rgba(255,255,255,.2); }
+        .mn.in { border-left-color:#10b981; } .mn.out { border-left-color:#ef4444; background:rgba(239,68,68,.07); } .mn.plus { border-left-color:#ff9900; background:rgba(255,153,0,.08); }
+        .mn-t { font-size:calc(var(--u)*1.55); font-weight:700; color:#fff; min-width:calc(var(--u)*18); }
+        .mn-d { font-size:calc(var(--u)*1.3); color:var(--text-muted); }
+        .sc-three-c { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1.3); }
+        .tc { padding:calc(var(--u)*1.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .tc-i { font-size:calc(var(--u)*2.6); } .tc-t { font-size:calc(var(--u)*1.6); font-weight:800; margin:calc(var(--u)*.4) 0 calc(var(--u)*.25); }
+        .tc-d { font-size:calc(var(--u)*1.2); color:var(--text-muted); line-height:1.45; }
+        .sc-pay { display:flex; flex-direction:column; align-items:stretch; gap:calc(var(--u)*.5); }
+        .pw { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.3) calc(var(--u)*1.7); border-radius:calc(var(--u)*1.1); background:rgba(6,182,212,.10); border:1px solid rgba(6,182,212,.3); }
+        .pw.pay { background:rgba(255,153,0,.12); border-color:rgba(255,153,0,.45); }
+        .pw.arrow { background:none; border:none; justify-content:center; padding:0; color:var(--amz); font-size:calc(var(--u)*2); }
+        .pw-l { font-size:calc(var(--u)*1.3); color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+        .pw-v { font-size:calc(var(--u)*1.75); font-weight:800; color:#fff; }
+        .sc-table.pay4 .tr { grid-template-columns:1.1fr 1.3fr 1.5fr; }
+        .sc-metrics { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.1); }
+        .mt { padding:calc(var(--u)*1.4) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .mt-n { font-size:calc(var(--u)*1.75); font-weight:800; color:var(--amz); }
+        .mt-d { font-size:calc(var(--u)*1.3); color:var(--text-secondary); line-height:1.5; margin-top:calc(var(--u)*.25); }
+        .sc-min { display:flex; flex-direction:column; gap:calc(var(--u)*1); }
+        .mn4 { display:grid; grid-template-columns:repeat(4,1fr); gap:calc(var(--u)*1); }
+        .m4 { padding:calc(var(--u)*1.4); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); text-align:center; }
+        .m4.worst { border-color:#ef4444; background:rgba(239,68,68,.10); box-shadow:0 0 0 1px #ef4444 inset; }
+        .m4-v { font-size:calc(var(--u)*2.6); font-weight:900; color:#fff; }
+        .m4-l { font-size:calc(var(--u)*1.15); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; margin-top:calc(var(--u)*.2); }
+        .min-res { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); padding:calc(var(--u)*1.2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(239,68,68,.09); border:1px solid rgba(239,68,68,.35); }
+        .min-l { font-size:calc(var(--u)*1.3); color:var(--text-muted); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+        .min-v { font-size:calc(var(--u)*2.4); font-weight:900; color:#fca5a5; }
+        .min-x { font-size:calc(var(--u)*1.3); color:#fca5a5; }
+        .sc-ladder { display:flex; flex-direction:column; gap:calc(var(--u)*.6); }
+        .ld { display:flex; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.15) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ld.bad { background:rgba(239,68,68,.08); border-color:rgba(239,68,68,.35); }
+        .ld-g { min-width:calc(var(--u)*10); font-size:calc(var(--u)*1.7); font-weight:900; color:var(--text-muted); }
+        .ld-g.cp { color:#fcd34d; } .ld-g.b { color:#67e8f9; } .ld-g.a { color:#6ee7b7; } .ld-g.low { color:#fca5a5; }
+        .ld-t { font-size:calc(var(--u)*1.4); color:var(--text-secondary); }
+        .sc-week { display:flex; flex-direction:column; gap:calc(var(--u)*.65); }
+        .sc-week.tight { gap:calc(var(--u)*.5); }
+        .wd { display:flex; gap:calc(var(--u)*1.4); align-items:flex-start; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .wd.hot { border-color:rgba(255,153,0,.45); background:rgba(255,153,0,.07); }
+        .wd-d { min-width:calc(var(--u)*8.5); font-family:ui-monospace,Menlo,Consolas,monospace; font-size:calc(var(--u)*1.3); font-weight:800; color:var(--primary); }
+        .wd-t { font-size:calc(var(--u)*1.28); color:var(--text-muted); line-height:1.5; }
+        .wd-t b { display:block; font-size:calc(var(--u)*1.5); color:#fff; margin-bottom:calc(var(--u)*.15); }
+        .sc-vs2 { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); }
+        .vs-col { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.2); border:1px solid rgba(255,255,255,.09); background:rgba(255,255,255,.04); }
+        .vs-col.ok { border-color:rgba(16,185,129,.35); background:rgba(16,185,129,.06); }
+        .vs-col.bad { border-color:rgba(239,68,68,.32); background:rgba(239,68,68,.05); }
+        .vs-h { font-size:calc(var(--u)*1.6); font-weight:800; margin-bottom:calc(var(--u)*.7); }
+        .vs-col.ok .vs-h { color:#6ee7b7; } .vs-col.bad .vs-h { color:#fca5a5; }
+        .vs-i { font-size:calc(var(--u)*1.3); color:var(--text-secondary); padding:calc(var(--u)*.32) 0 calc(var(--u)*.32) calc(var(--u)*1.7); position:relative; line-height:1.45; }
+        .vs-col.ok .vs-i::before { content:'✓'; position:absolute; left:0; color:#6ee7b7; }
+        .vs-col.bad .vs-i::before { content:'✕'; position:absolute; left:0; color:#fca5a5; font-size:.85em; }
+        .sc-final { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .fp { display:flex; gap:calc(var(--u)*1.3); align-items:center; padding:calc(var(--u)*1.25) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .fp.hot { border-color:rgba(255,153,0,.5); background:rgba(255,153,0,.09); }
+        .fp-n { width:calc(var(--u)*3); height:calc(var(--u)*3); flex-shrink:0; border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--amz)); color:#fff; font-size:calc(var(--u)*1.5); font-weight:900; display:flex; align-items:center; justify-content:center; }
+        .fp-t { font-size:calc(var(--u)*1.4); color:var(--text-secondary); line-height:1.5; }
+        @media (max-width:900px) { .sc-three-c, .sc-metrics, .mn4, .sc-vs2 { grid-template-columns:1fr 1fr; }
+          .mn, .pw, .ld, .wd, .min-res { flex-direction:column; align-items:flex-start; gap:calc(var(--u)*.3); } }
+        /* ===== БЛОКИ ЧАСТИ 3 ===== */
+        .sc-sit { display:flex; flex-direction:column; gap:calc(var(--u)*.8); }
+        .sit-cols { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.2); }
+        .sit-c { padding:calc(var(--u)*1.3) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.4); color:var(--text-secondary); line-height:1.55; }
+        .sit-c .lbl, .sit-risk .lbl, .sit-prev .lbl { display:block; font-size:calc(var(--u)*1.1); font-weight:800; letter-spacing:.09em; text-transform:uppercase; margin-bottom:calc(var(--u)*.4); }
+        .sit-c.d { border-color:rgba(6,182,212,.35); } .sit-c.d .lbl { color:var(--primary); }
+        .sit-c.w { border-color:rgba(255,153,0,.35); } .sit-c.w .lbl { color:var(--amz); }
+        .sit-risk { padding:calc(var(--u)*1.2) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); font-size:calc(var(--u)*1.35); line-height:1.55; }
+        .sit-risk.hi { background:rgba(239,68,68,.10); border:1px solid rgba(239,68,68,.38); color:#fca5a5; }
+        .sit-risk.md { background:rgba(245,158,11,.10); border:1px solid rgba(245,158,11,.35); color:#fcd34d; }
+        .sit-risk.lo { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); color:#6ee7b7; }
+        .sit-risk .lbl { color:inherit; opacity:.85; }
+        .sit-prev { padding:calc(var(--u)*1.1) calc(var(--u)*1.5); border-radius:calc(var(--u)*1.1); background:var(--glass-03); border:1px solid var(--edge-08); font-size:calc(var(--u)*1.3); color:var(--text-muted); line-height:1.5; }
+        .sit-prev .lbl { color:var(--text-soft); }
+        .sc-rule { display:flex; flex-direction:column; gap:calc(var(--u)*.9); }
+        .rl { display:flex; gap:calc(var(--u)*1.3); align-items:flex-start; padding:calc(var(--u)*1.35) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .rl-n { width:calc(var(--u)*3); height:calc(var(--u)*3); flex-shrink:0; border-radius:calc(var(--u)*.9); background:linear-gradient(135deg,var(--primary),var(--amz)); color:#fff; font-size:calc(var(--u)*1.6); font-weight:900; display:flex; align-items:center; justify-content:center; }
+        .rl-t { font-size:calc(var(--u)*1.32); color:var(--text-muted); line-height:1.5; }
+        .rl-t b { display:block; font-size:calc(var(--u)*1.65); color:#fff; margin-bottom:calc(var(--u)*.2); }
+        .sc-fine { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .fn { display:flex; justify-content:space-between; align-items:center; gap:calc(var(--u)*1.4); padding:calc(var(--u)*1.2) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .fn-w { font-size:calc(var(--u)*1.5); color:var(--text-secondary); }
+        .fn-x { font-size:calc(var(--u)*2.1); font-weight:900; }
+        .fn-x.ok { color:#6ee7b7; } .fn-x.mid { color:#fcd34d; } .fn-x.bad { color:#fca5a5; }
+        .sc-two-sit { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.3); }
+        .ts { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.2); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .ts-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*.6); }
+        .ts-b { font-size:calc(var(--u)*1.32); color:var(--text-secondary); line-height:1.55; }
+        .sc-quiz { display:flex; flex-direction:column; gap:calc(var(--u)*1); }
+        .qz { padding:calc(var(--u)*1.4) calc(var(--u)*1.6); border-radius:calc(var(--u)*1.2); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .qz-q { font-size:calc(var(--u)*1.5); font-weight:700; color:#fff; }
+        .qz-a { margin-top:calc(var(--u)*.6); padding-left:calc(var(--u)*2); font-size:calc(var(--u)*1.4); color:#6ee7b7; position:relative; }
+        .qz-a::before { content:'✓'; position:absolute; left:0; font-weight:800; }
+        @media (max-width:900px) { .sit-cols, .sc-two-sit { grid-template-columns:1fr; } .fn { flex-direction:column; align-items:flex-start; gap:calc(var(--u)*.3); } }
+        /* ===== БЛОКИ ЧАСТИ 2 ===== */
+        .sc-cols3.four { grid-template-columns:repeat(4,1fr); }
+        .ccard .cnote { font-size:calc(var(--u)*1.1); color:var(--amz); margin-top:calc(var(--u)*.4); }
+        .sc-shot { display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*.7); min-height:0; margin:0; }
+        .sc-shot img { max-width:100%; max-height:calc(var(--u)*30); object-fit:contain; border-radius:calc(var(--u)*.9); border:1px solid rgba(255,255,255,.14); background:#0b1120; }
+        .sc-shot .cap { font-size:calc(var(--u)*1.12); color:var(--text-muted); text-align:center; line-height:1.4; }
+        .sc-shots { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); min-height:0; }
+        .sc-shots .sc-shot img { max-height:calc(var(--u)*24); }
+        .sc-block { display:flex; justify-content:center; }
+        .blk { width:100%; padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
+        .blk-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*1); }
+        .blk-bar { display:flex; gap:calc(var(--u)*.3); height:calc(var(--u)*4.4); }
+        .seg { width:var(--w); border-radius:calc(var(--u)*.6); background:linear-gradient(135deg,rgba(6,182,212,.55),rgba(14,165,233,.4)); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.2); font-weight:700; color:#fff; }
+        .seg.free { background:repeating-linear-gradient(45deg,rgba(255,255,255,.07),rgba(255,255,255,.07) 8px,rgba(255,255,255,.03) 8px,rgba(255,255,255,.03) 16px); color:var(--text-muted); font-weight:600; }
+        .blk-f { margin-top:calc(var(--u)*1); font-size:calc(var(--u)*1.5); font-weight:700; color:var(--success); }
+        .sc-table { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .sc-table .tr { display:grid; grid-template-columns:1.1fr 1fr 1fr 1.8fr; gap:calc(var(--u)*1); align-items:center; padding:calc(var(--u)*1.05) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.035); font-size:calc(var(--u)*1.35); color:var(--text-secondary); }
+        .sc-table .tr.th { background:none; padding-top:0; padding-bottom:calc(var(--u)*.3); font-size:calc(var(--u)*1.2); color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+        .sc-table .ok { color:#6ee7b7; font-weight:700; } .sc-table .warn { color:#fcd34d; font-weight:700; }
+        .sc-choice { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .ch-row { display:grid; grid-template-columns:1.3fr auto 1fr; gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ch-if { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ch-arr { color:var(--amz); font-size:calc(var(--u)*1.7); }
+        .ch-do { font-size:calc(var(--u)*1.55); font-weight:800; color:var(--amz); }
+        .sc-load { display:flex; flex-direction:column; gap:calc(var(--u)*.5); }
+        .ld-row { display:grid; grid-template-columns:calc(var(--u)*16) 1fr; gap:calc(var(--u)*1.2); align-items:baseline; padding:calc(var(--u)*.95) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .ld-row.big { background:rgba(255,153,0,.10); border:1px solid rgba(255,153,0,.4); }
+        .ld-l { font-size:calc(var(--u)*1.22); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .ld-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .ld-v b { color:#fff; }
+        .ld-money { font-size:calc(var(--u)*2.2); color:var(--amz) !important; }
+        .ld-warn { color:#fcd34d; }
+        .sc-calc { display:flex; flex-direction:column; gap:calc(var(--u)*.55); }
+        .cl-row { display:grid; grid-template-columns:calc(var(--u)*12) 1fr calc(var(--u)*17); gap:calc(var(--u)*1.2); align-items:center; padding:calc(var(--u)*1) calc(var(--u)*1.4); border-radius:calc(var(--u)*1); background:rgba(255,255,255,.04); }
+        .cl-row.res { background:rgba(16,185,129,.10); border:1px solid rgba(16,185,129,.35); }
+        .cl-l { font-size:calc(var(--u)*1.2); color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+        .cl-v { font-size:calc(var(--u)*1.45); color:var(--text-secondary); }
+        .cl-v.dim { color:var(--text-muted); text-decoration:line-through; }
+        .cl-x { font-size:calc(var(--u)*1.25); color:var(--amz); text-align:right; }
+        .cl-x.ok { color:#6ee7b7; }
+        .sc-dont { display:flex; flex-direction:column; gap:calc(var(--u)*.7); }
+        .dn { display:flex; gap:calc(var(--u)*1.2); align-items:flex-start; padding:calc(var(--u)*1.15) calc(var(--u)*1.5); border-radius:calc(var(--u)*1); background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.25); }
+        .dn-x { color:#fca5a5; font-size:calc(var(--u)*1.7); font-weight:800; line-height:1; }
+        .dn-t { font-size:calc(var(--u)*1.3); color:var(--text-secondary); line-height:1.5; }
+        .dn-t b { display:block; color:#fff; font-size:calc(var(--u)*1.45); margin-bottom:calc(var(--u)*.2); }
+        .sc-msg { padding:calc(var(--u)*1.5); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
+        .msg-h { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.8); }
+        .msg-b { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:calc(var(--u)*1.22); line-height:1.7; color:var(--text-secondary); white-space:pre-wrap; }
+        .sc-three { display:grid; grid-template-columns:repeat(3,1fr); gap:calc(var(--u)*1); }
+        .sc-note.gold { background:rgba(255,153,0,.10); border-color:rgba(255,153,0,.4); color:#fcd34d; }
+        @media (max-width:900px) { .sc-cols3.four { grid-template-columns:1fr 1fr; } .sc-shots, .sc-three { grid-template-columns:1fr; }
+          .sc-table .tr { grid-template-columns:1fr 1fr; } .ch-row { grid-template-columns:1fr; gap:calc(var(--u)*.3); } .ch-arr { display:none; }
+          .ld-row, .cl-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); } .cl-x { text-align:left; } }
+        @media (max-width:900px) {
+            .vhead { padding:78px 0 6px; gap:8px; }
+            .player { --chrome:250px; }
+            .sc-who, .sc-eq { grid-template-columns:1fr 1fr; }
+            .sc-roles, .sc-cols3, .codeex { grid-template-columns:1fr; gap:calc(var(--u)*.9); }
+            .sc-days, .sc-yesno, .sc-two { grid-template-columns:1fr; }
+            .vs-head { display:none; }
+            .vs-row { grid-template-columns:1fr; gap:calc(var(--u)*.2); padding:calc(var(--u)*.95) calc(var(--u)*1.3); }
+            .vs-row .vl { font-size:calc(var(--u)*1.5); color:#fff; font-weight:700; }
+            .vs-row .va::before { content:'Broker: '; color:var(--text-muted); }
+            .vs-row .vb::before { content:'Relay: '; color:var(--amz); font-weight:800; }
+            .sc-flow { flex-direction:column; } .fa { justify-content:center; transform:rotate(90deg); }
+            .scene { padding-bottom:calc(var(--u)*4); }
+            .subs .stx { font-size:15px; }
+        }
+        @media (max-width:600px) { .container { padding:0 14px; } .ctrls { gap:7px; } .cbtn { padding:0 10px; font-size:13px; } }
+    </style>
+    <script type="module" src="/firebase-auth-init.js?v=4.0"></script>
+</head>
+
+<body>
+    <script src="/role-guard.en.js"></script>
+    <div id="nav-placeholder"></div>
+    <script src="/nav-loader.js?v=27"></script>
+
+    <div class="container">
+      <div class="vhead">
+        <span class="vbadge">🎬 Part 3 of 4</span>
+        <h1 class="vtitle">When something goes wrong</h1>
+        <span class="vdone" id="vdone" hidden>✓ Watched</span>
+        <span class="vsub">10:03 · 24 scenes · narration and subtitles · 6 chapters</span>
+      </div>
+
+      <div class="player">
+        <div class="pbox" id="pbox">
+        <div class="stage" id="stage">
+          <div class="scene" data-i="0">
+      <div class="scene-cap"><span class="sc-ch">Introduction</span><span class="sc-tt">When something goes wrong</span></div>
+      <div class="scene-body"><div class="sc-title">
+  <div class="kicker" data-at="0">Dispatcher course · part 3 of 4</div>
+  <h1 class="big" data-at="0">When something<br><span class="accent">goes wrong</span></h1>
+  <div class="chips" data-at="1">
+    <span class="chip"><i>10</i> at the facility</span>
+    <span class="chip"><i>6</i> before and after the run</span>
+    <span class="chip"><i>4</i> with the account</span>
+  </div>
+</div></div>
+    </div>
+    <div class="scene" data-i="1">
+      <div class="scene-cap"><span class="sc-ch">Introduction</span><span class="sc-tt">One rule for every case</span></div>
+      <div class="scene-body"><div class="sc-rule">
+  <div class="rl" data-at="1"><span class="rl-n">1</span><span class="rl-t"><b>The driver stops and calls</b>He does not decide for himself and does not leave</span></div>
+  <div class="rl" data-at="2"><span class="rl-n">2</span><span class="rl-t"><b>The dispatcher opens a case at once</b>While it is happening: trip number, time, what occurred</span></div>
+  <div class="rl" data-at="3"><span class="rl-n">3</span><span class="rl-t"><b>Act on the answer</b>Screenshots of the app and the clock go into the thread</span></div>
+</div>
+<div class="sc-note danger big" data-at="4">A driver improvising costs more than an hour of waiting</div></div>
+    </div>
+    <div class="scene" data-i="2">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">The trailer is not ready</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>A case at once: trip number, spot number, arrival time. Ask for another trailer or for the wait to be confirmed</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Stay put, do not go hunting the trailer around the yard. Photo of the empty spot and of the screen. A message every 30 minutes”</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">What it costs · risk medium</span>Being late to the next stop through the facility’s fault can be disputed if a timed case exists. Detention needs its own case</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>At facilities where this keeps happening, build in an extra 45 minutes</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="3">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">No empty trailer</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>A case: “no empty trailer at the facility, the next trip is such-and-such”. Wait for a written answer</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Ask the yard staff whether there are empties in another zone, write down the name. Do not cruise the yard yourself”</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">What it costs · risk medium</span>Reassigned through Amazon’s fault and your score is untouched. Leave without instruction and lose the trip, and the refusal is yours</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Check the next trip’s trailer status an hour before the drop</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="4">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">Waiting more than two hours</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>At 1.5 hours, a case: “waiting since…”. At 2 hours, a second one about detention. Payment disputes: 30 days</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Do not close the app. A screenshot of the trip timeline now and again when you leave”</div>
+  </div>
+  <div class="sit-risk lo" data-at="2"><span class="lbl">What it costs · risk low</span>Amazon publishes no official amounts. Carriers report: two hours free, anything beyond it through a case</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>In peak season, price a live load by time, not by miles</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="5">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">The seal does not match</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>A case immediately, before departure: trip number, trailer number, the seal number on the document and on the trailer, photos</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Do not touch the seal. Close-up photos of the seal, the document and the trailer number. Stay put until I write back”</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>Leaving with the wrong seal puts the cargo-integrity question on you, with a possible claim and a recorded incident</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Checking the seal is part of the trailer inspection. Never skip it</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="6">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">The trailer is damaged</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Check the damage is in the inspection. A case with photos. Not roadworthy — demand a replacement trailer</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Every bit of damage goes into the inspection with a photo, even small ones. If it affects safety, do not leave”</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">What it costs · risk medium</span>Damage you did not record is charged to you. Running unroadworthy means a violation at inspection, and that cannot be appealed</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Ten minutes for the inspection every time, even on a clean trailer</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="7">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">No spot or door assigned</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>A case with the arrival time and the current time. The assistant in the app is the fastest route</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Ask the yard staff, park where they say, do not take another spot. Screenshot the instruction”</div>
+  </div>
+  <div class="sit-risk lo" data-at="2"><span class="lbl">What it costs · risk low</span>Usually only lost time. If it breaks the next stop, the case already exists and the delay can be disputed</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Know the facility: many have a separate staging area</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="8">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">The gate is shut at the appointed time</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>A case and a live operator: ask for a new window and for the facility’s fault to be recorded. Waiting till morning — document it for pay</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Tap Check In inside the window regardless. Photo of the closed gate and the hours sign. Wait on a permitted lot”</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">What it costs · risk medium</span>With a timestamp inside the window and a case, it is disputable. Without the timestamp the lateness is yours</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Put gate hours into your own facility table</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="9">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">The app would not take the check-in</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>A case immediately with the error screenshot. The trip timeline shows the location at the facility — that is the argument</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Screenshot the error with the clock in frame. Restart the app, check location. Give the guard the load number and the time”</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>Lateness is counted to the moment the timestamp appears: under an hour is the normal penalty, under four it doubles, beyond that more</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>The driver’s rule number one: reach the gate — tap it</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="10">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">He left without tapping Drop Off</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Close by — bring him back and tap it. Far — a case: departure time, trailer number, the spot, photos</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Do not start the next stop until I sort this out. What time did you leave? Do you have a photo of the trailer in its spot?”</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">What it costs · risk medium</span>An unfinished step costs app-usage score, delays the delivery document, and the next trip may not open</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>The buttons are tapped before leaving the gate</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="11">
+      <div class="scene-cap"><span class="sc-ch">Chapter 1. At the facility</span><span class="sc-tt">The selfie fails verification</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Same driver — a case asking for a manual check. Different driver — reassign the trip immediately and state it</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Take the cap and glasses off, face the light, try again. Do not ask a colleague to stand in”</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>An identity mismatch blocks the driver and is recorded against the company; a repeat switches the account off</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Assign in the system the person who is actually going</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="12">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Before and after the run</span><span class="sc-tt">The load expired with no driver</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Cannot be fixed. If the load is still on the board, book it again and assign at once — but the first refusal is already recorded</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>—</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>Acceptance falls. The closer to pickup this happened, the harder it hits the score</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>No driver right now — do not book; post your truck to the board instead</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="13">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Before and after the run</span><span class="sc-tt">You need to give a load back</span></div>
+      <div class="scene-body"><div class="sc-fine">
+  <div class="fn" data-at="1"><span class="fn-w">Block, more than 24 hours before the start</span><span class="fn-x ok">×1</span></div>
+  <div class="fn" data-at="2"><span class="fn-w">Block, under 24 hours or after the start</span><span class="fn-x bad">×4</span></div>
+  <div class="fn" data-at="2"><span class="fn-w">Contract, 3 weeks out or more</span><span class="fn-x ok">×1</span></div>
+  <div class="fn" data-at="2"><span class="fn-w">Contract, closer than three weeks</span><span class="fn-x mid">×2</span></div>
+</div>
+<div class="sc-note danger big" data-at="3">Decide 25 hours out, not “let us look in the morning”</div></div>
+    </div>
+    <div class="scene" data-i="14">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Before and after the run</span><span class="sc-tt">Amazon cancelled the trip</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>The score is untouched. Check trips in the morning. Cancelled after arrival — a case under payments</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“This is not on us. Do not leave, I am looking for a replacement out of this point. If you arrived, send me a screenshot of the timeline”</div>
+  </div>
+  <div class="sit-risk lo" data-at="2"><span class="lbl">What it costs · risk low</span>Carriers report about $175 for a late cancellation. A partly cancelled block is still paid in full</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Do not run 200 empty miles for a single load with no backhaul</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="15">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Before and after the run</span><span class="sc-tt">One truck on two trips</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Decide at once which trip is real and hand the second back today — while the start is more than 24 hours away</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Your trip is such-and-such, I am taking the second one off. Change nothing in the app”</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>One refusal at the penalty for its timing. Tomorrow the same refusal costs four times more</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>A truck calendar outside Relay, checked before every booking</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="16">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Before and after the run</span><span class="sc-tt">Late because of weather or traffic</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>A case as soon as the ETA slips past the window: reason, new time, screenshot of the weather alert or the traffic</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Safety beats the window. Drive legally, I have already written to support”</div>
+  </div>
+  <div class="sit-risk md" data-at="2"><span class="lbl">What it costs · risk medium</span>The penalty scales with duration: under an hour ordinary, under four double, beyond that four and eight times</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Weather alerts in the app refresh every 10 minutes — check them before the start</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="17">
+      <div class="scene-cap"><span class="sc-ch">Chapter 2. Before and after the run</span><span class="sc-tt">A breakdown and a roadside inspection</span></div>
+      <div class="scene-body"><div class="sc-two-sit">
+  <div class="ts" data-at="1"><div class="ts-h">🔧 Breakdown</div><div class="ts-b">A live operator and a case. Do not unhook the Amazon trailer without being told. The options: a replacement tractor, reassigning the load, a tow by agreement</div></div>
+  <div class="ts" data-at="2"><div class="ts-h">👮 Roadside inspection</div><div class="ts-b">A case with the expected delay, write down the report number. Every violation goes into the company’s numbers</div></div>
+</div>
+<div class="sc-note warn" data-at="3">Challenge questionable violations with the regulator at once, before the numbers are recalculated</div></div>
+    </div>
+    <div class="scene" data-i="18">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The company account</span><span class="sc-tt">The insurance lapsed</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>To the agent: a new certificate with every line, today. A case: “insurance renewed, document sent, please expedite”</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“One to three days off, the board is blocked for us”</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>Lost revenue for the idle days, possible refusals on the loads that fell off, lost contracts if the freeze drags on</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>A reminder 14 days before the policy ends and the list of requirements to the agent in writing</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="19">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The company account</span><span class="sc-tt">The score dropped below the line</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Find the worst of the four metrics and work on it specifically. Questionable entries — dispute on the site, not in the app</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>Be specific: “Our app-usage metric has slipped. For two weeks: app open, every step tapped”</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>Below the line the auctions disappear, won contracts can be pulled, and beyond that comes the risk of suspension</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Look at the worst metric every day rather than waiting for a letter from Amazon</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="20">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The company account</span><span class="sc-tt">The account was switched off</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Read the reason. Appeal through support with a plan: what happened, what is fixed, the measures going forward</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>Be honest about the timeline. If the cause is one specific driver, the decision belongs to the owner</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>Downtime from a few weeks to a permanent shutdown</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>Never open a second account for the same team: both get found and closed</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="21">
+      <div class="scene-cap"><span class="sc-ch">Chapter 3. The company account</span><span class="sc-tt">A call “from Amazon Relay”</span></div>
+      <div class="scene-body"><div class="sc-sit">
+  <div class="sit-cols">
+    <div class="sit-c d" data-at="0"><span class="lbl">The dispatcher</span>Say nothing. Details to relay-network-reports@amazon.com. Access already shared — change the password and revoke permissions</div>
+    <div class="sit-c w" data-at="1"><span class="lbl">To the driver</span>“Never read out a code from a text message and never install a second app because a caller asked you to”</div>
+  </div>
+  <div class="sit-risk hi" data-at="2"><span class="lbl">What it costs · risk high</span>Somebody else’s loads under your number, somebody else’s drivers under your account, a shutdown for fraud</div>
+  <div class="sit-prev" data-at="2"><span class="lbl">How to prevent it</span>A personal login for every employee and two-step sign-in</div>
+</div></div>
+    </div>
+    <div class="scene" data-i="22">
+      <div class="scene-cap"><span class="sc-ch">Check yourself</span><span class="sc-tt">Three questions to check</span></div>
+      <div class="scene-body"><div class="sc-quiz">
+  <div class="qz" data-at="1"><div class="qz-q">The guard asks him to wait. What does he do right now?</div><div class="qz-a" data-at="2">Tap Check In immediately, sort it out afterwards</div></div>
+  <div class="qz" data-at="3"><div class="qz-q">Tomorrow’s block driver is ill, no replacement</div><div class="qz-a" data-at="4">Hand it back today, while the start is over 24 hours away</div></div>
+  <div class="qz" data-at="5"><div class="qz-q">The seal differs by one digit, delivery in 2 hours</div><div class="qz-a" data-at="6">Stand still and wait for support, do not leave</div></div>
+</div></div>
+    </div>
+    <div class="scene" data-i="23">
+      <div class="scene-cap"><span class="sc-ch">Wrap-up</span><span class="sc-tt">Part three in summary</span></div>
+      <div class="scene-body"><div class="sc-sum">
+  <div class="sumh" data-at="0">Remember from part 3</div>
+  <div class="sumline" data-at="1"><b>The driver stops and calls, the dispatcher writes at once.</b> Times and screenshots are your defence</div>
+  <div class="sumline" data-at="2"><b>The most dangerous:</b> an expired load, a substituted driver, the wrong seal, a lapse in insurance</div>
+  <div class="sumline" data-at="3"><b>Give a load back as early as possible.</b> Today and tomorrow differ by a factor of four</div>
+  <div class="nextup" data-at="4"><span class="nl">Next, part 4</span><span class="nt">Money and the score: the rate, Friday payouts, the four metrics and the dispatcher’s week</span></div>
+</div></div>
+    </div>
+          <div class="subs" id="subs"><span class="stx" id="subtext">Press Watch to start the lesson with sound.</span></div>
+          <div class="poster" id="poster">
+            <div class="pt">When something<br>goes wrong</div>
+            <button class="bigplay" id="bigplay" aria-label="Watch"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+            <div class="ps" id="posterSub">Part 3 of 4 · 10:03 · with sound</div>
+            <button class="pres" id="pres" hidden type="button">Start over</button>
+          </div>
+        </div>
+
+        <div class="bar-wrap">
+          <div class="track" id="track"><div class="fill" id="fill"></div><i style="left:8.51%"></i><i style="left:45.79%"></i><i style="left:68.27%"></i><i style="left:85.37%"></i><i style="left:94.60%"></i><div class="knob" id="knob"></div></div>
+          <div class="ctrls">
+            <button class="cbtn main" id="play" aria-label="Play"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span id="playLabel">Watch</span></button>
+            <button class="cbtn" id="prev" aria-label="Previous scene"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
+            <button class="cbtn" id="next" aria-label="Next scene"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
+            <span class="ctime"><span id="tcur">0:00</span> / 10:03</span>
+            <span class="spacer"></span>
+            <button class="cbtn small" id="rate">1×</button>
+            <button class="cbtn small" id="cc">Subtitles on</button>
+            <button class="cbtn fs" id="fs" aria-label="Fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-5v-2h3z"/></svg><span id="fsLabel">Fullscreen</span></button>
+          </div>
+        </div>
+        </div>
+
+        <div class="chapters" id="chapters">
+          <button type="button" class="chap" data-t="0.00" data-ci="0">
+        <span class="chap-t">0:00</span>
+        <span class="chap-n">Introduction</span>
+        <span class="chap-d">2 scenes · 0:51</span>
+      </button>
+      <button type="button" class="chap" data-t="51.28" data-ci="1">
+        <span class="chap-t">0:51</span>
+        <span class="chap-n">Chapter 1. At the facility</span>
+        <span class="chap-d">10 scenes · 3:45</span>
+      </button>
+      <button type="button" class="chap" data-t="276.01" data-ci="2">
+        <span class="chap-t">4:36</span>
+        <span class="chap-n">Chapter 2. Before and after the run</span>
+        <span class="chap-d">6 scenes · 2:16</span>
+      </button>
+      <button type="button" class="chap" data-t="411.52" data-ci="3">
+        <span class="chap-t">6:52</span>
+        <span class="chap-n">Chapter 3. The company account</span>
+        <span class="chap-d">4 scenes · 1:43</span>
+      </button>
+      <button type="button" class="chap" data-t="514.56" data-ci="4">
+        <span class="chap-t">8:35</span>
+        <span class="chap-n">Check yourself</span>
+        <span class="chap-d">1 scene · 0:56</span>
+      </button>
+      <button type="button" class="chap" data-t="570.20" data-ci="5">
+        <span class="chap-t">9:30</span>
+        <span class="chap-n">Wrap-up</span>
+        <span class="chap-d">1 scene · 0:33</span>
+      </button>
+        </div>
+      </div>
+
+      <div class="after">
+        <h2>After the video</h2>
+        <div class="after-grid">
+          <a href="amazon-relay-3-problems.html"><b>Part 3 in text</b><span>all 22 situations with a filter and practice scenarios</span></a>
+          <a href="amazon-relay-video.html"><b>Video lesson, part 1</b><span>what Relay is and how to join</span></a>
+          <a href="amazon-relay-video-2.html"><b>Video lesson, part 2</b><span>loads, booking and the run</span></a>
+          <a href="amazon-relay-video-4.html"><b>Video lesson, part 4</b><span>money, score, the week</span></a>
+        </div>
+      </div>
+    </div>
+
+    <audio id="track-audio" src="/audio/relay-video/en-part3.mp3" preload="auto"></audio>
+
+<script>
+(function () {
+  var CUES = [{"s":"s01","i":0,"t":0,"x":"Amazon Relay for dispatchers. Part three: what to do when something has gone wrong."},{"s":"s01","i":1,"t":5.456,"x":"We will go through twenty-two situations: ten at the facility, six before and after the run, and four with the company account."},{"s":"s01","i":2,"t":13.456,"x":"For each one: what the dispatcher does, what he tells the driver, and what it costs."},{"s":"s02","i":0,"t":19.202,"x":"First, the rule that works in every one of these situations."},{"s":"s02","i":1,"t":23.386,"x":"The driver stops and calls the dispatcher. He does not decide for himself, does not drive off, does not argue with facility staff."},{"s":"s02","i":2,"t":31.458,"x":"The dispatcher opens a case while the problem is still happening: the trip number, the exact time, what occurred."},{"s":"s02","i":3,"t":38.306,"x":"The driver acts only on the instruction that comes back. Everything visible on the screen and on the clock is captured in screenshots."},{"s":"s02","i":4,"t":46.21,"x":"A driver improvising almost always costs more than an hour of waiting."},{"s":"s03","i":0,"t":51.284,"x":"Situation one. You arrive and the trailer you need is still being loaded, or it is not in its spot."},{"s":"s03","i":1,"t":57.316,"x":"The dispatcher opens a case immediately: trip number, spot number, arrival time. He asks either for another trailer or for confirmation that the wait is on the clock."},{"s":"s03","i":2,"t":67.524,"x":"The driver stays in his spot, photographs the empty spot with its number and the app screen, and messages the dispatcher every half hour."},{"s":"s04","i":0,"t":76.414,"x":"Two. At the drop there is no empty trailer for the next run."},{"s":"s04","i":1,"t":80.334,"x":"The dispatcher opens a case and waits for a written answer: wait, run without a trailer, or the trip gets reassigned."},{"s":"s04","i":2,"t":87.662,"x":"Without an answer the driver goes nowhere: leaving on his own decision can be recorded as a refusal of the trip."},{"s":"s05","i":0,"t":94.992,"x":"Three. A live load drags past two hours."},{"s":"s05","i":1,"t":98.24,"x":"After an hour and a half the dispatcher opens the first case: the driver has been waiting since such a time. At two hours, a second one, this time about detention pay."},{"s":"s05","i":2,"t":108.4,"x":"Collect the screenshots: the check-in timestamp, the time at the door, the departure time. A payment dispute has a thirty-day window."},{"s":"s06","i":0,"t":117.05,"x":"Four, and this one is dangerous. The seal number does not match the document, or the seal is damaged."},{"s":"s06","i":1,"t":123.49,"x":"The dispatcher opens a case immediately, before departure, with photos and both numbers."},{"s":"s06","i":2,"t":129.522,"x":"The driver does not touch the seal and does not leave. Leaving with the wrong seal means that at the unload, the question about cargo integrity comes to you."},{"s":"s07","i":0,"t":138.82,"x":"Five. The Amazon trailer is damaged: a tire, a light, the doors, the floor."},{"s":"s07","i":1,"t":145.044,"x":"The dispatcher checks that the driver captured the damage in the inspection and opens a case with the photos."},{"s":"s07","i":2,"t":151.028,"x":"If the trailer is not roadworthy, demand a replacement rather than accepting “just run it”: a violation at a roadside inspection lands in the company’s numbers."},{"s":"s08","i":0,"t":160.998,"x":"Six. The driver has not been given a spot or a door and is being sent round the yard."},{"s":"s08","i":1,"t":166.598,"x":"The dispatcher opens a case with the arrival time and the current time. The assistant in the app often settles this in minutes."},{"s":"s08","i":2,"t":174.07,"x":"The driver parks where the yard staff tell him and does not take other people’s spots."},{"s":"s09","i":0,"t":179.36,"x":"Seven. You arrive inside your window and the facility is shut: night or a weekend."},{"s":"s09","i":1,"t":185.32,"x":"The dispatcher opens a case and asks for a live operator: you need a new time and confirmation that the delay is not your fault."},{"s":"s09","i":2,"t":193.104,"x":"The driver taps Check In inside his window anyway: that proves he was there on time. And he photographs the closed gate with the opening-hours sign."},{"s":"s10","i":0,"t":202.066,"x":"Eight, and this one hits the score hardest. The driver is there but the check-in will not go through: no signal, the app froze, or he simply forgot."},{"s":"s10","i":1,"t":210.978,"x":"The dispatcher opens a case immediately: the driver arrived at such a time, the check-in failed, screenshot attached."},{"s":"s10","i":2,"t":218.306,"x":"The trip timeline shows whether his location was at the facility — that is your main argument."},{"s":"s10","i":3,"t":223.618,"x":"If he simply forgot, tap it now and write the explanation straight away: a gap of minutes is far better than one of an hour."},{"s":"s11","i":0,"t":231.5,"x":"Nine. The driver left the facility without completing the drop-off step."},{"s":"s11","i":1,"t":236.14,"x":"If he is five or ten minutes away, bring him back and tap it — the location has to match the facility."},{"s":"s11","i":2,"t":242.508,"x":"If he is far, open a case: when he left, where he left the trailer, photos if there are any."},{"s":"s12","i":0,"t":249.238,"x":"Ten. The app does not recognise the driver from his selfie."},{"s":"s12","i":1,"t":253.302,"x":"If it really is the same driver — a beard, glasses, bad light — open a case and ask for a manual check."},{"s":"s12","i":2,"t":260.414,"x":"If the person behind the wheel is not the one assigned, reassign the trip to the actual driver immediately and say so honestly."},{"s":"s12","i":3,"t":268.102,"x":"A substitution that surfaces later is more dangerous than any delay: both the driver and the company get blocked."},{"s":"s13","i":0,"t":276.008,"x":"Chapter two: what happens before and after the run. The first situation — a booked load expired because no driver was assigned to it in time."},{"s":"s13","i":1,"t":284.8,"x":"There is nothing left to fix here: an expired load counts as your refusal."},{"s":"s13","i":2,"t":289.656,"x":"The rule is simple: booking and assigning a driver are one action, not two different days."},{"s":"s14","i":0,"t":295.978,"x":"Two. You realise you cannot haul it and have to give it back."},{"s":"s14","i":1,"t":299.946,"x":"Only a dispatcher with administrator rights can do it, and it is done as early as possible."},{"s":"s14","i":2,"t":305.546,"x":"Handing a block back more than a day ahead is the ordinary penalty. Under a day, or after it has started, it is four times that. A contract three weeks out is ordinary; closer, it doubles."},{"s":"s14","i":3,"t":317.578,"x":"So the decision to give a load back is made today, not “let us look in the morning”."},{"s":"s15","i":0,"t":323.156,"x":"Three. Amazon cancelled the trip itself."},{"s":"s15","i":1,"t":326.332,"x":"This does not touch your score at all. Check the trips section in the morning: cancellations show up there before the notification reaches the driver."},{"s":"s15","i":2,"t":334.452,"x":"If it was cancelled after the driver had already arrived, open a case under payments and ask for compensation for the wasted run."},{"s":"s16","i":0,"t":342.646,"x":"Four. One truck has ended up on two trips at the same time by accident."},{"s":"s16","i":1,"t":347.334,"x":"Decide at once which trip is real and hand the second one back right now, while it is still more than a day away."},{"s":"s16","i":2,"t":353.87,"x":"Tomorrow that same refusal costs four times as much."},{"s":"s17","i":0,"t":358.152,"x":"Five. The driver is running late because of weather, a crash or traffic."},{"s":"s17","i":1,"t":363.2,"x":"As soon as the projected arrival slips past the window, the dispatcher opens a case: the reason, the new time, a screenshot of the weather alert or the traffic map."},{"s":"s17","i":2,"t":373.72,"x":"The lateness will still be recorded, but a dispute with documents sometimes goes through. And above all, safety beats the window."},{"s":"s18","i":0,"t":381.89,"x":"Situations six and seven belong together: a tractor breakdown and a roadside inspection."},{"s":"s18","i":1,"t":387.946,"x":"For a breakdown, a live operator and a case. The driver does not unhook the Amazon trailer without being told: it is their property and their instruction."},{"s":"s18","i":2,"t":397.578,"x":"For an inspection, write down the report number and check it afterwards: every violation goes into the company’s numbers, and those cannot be appealed."},{"s":"s18","i":3,"t":406.106,"x":"Questionable violations are challenged with the regulator immediately, not later."},{"s":"s19","i":0,"t":411.516,"x":"Chapter three: situations with the company account. The first — the insurance lapsed or was renewed wrongly, and the account is frozen."},{"s":"s19","i":1,"t":419.996,"x":"Call the agent: a new certificate with every line on it, today. Write to support that the insurance is renewed and the document has been sent."},{"s":"s19","i":2,"t":428.356,"x":"Booked loads that fell off during the freeze can be counted as refusals — ask for them to be reviewed in the same case."},{"s":"s20","i":0,"t":435.926,"x":"Two. The score has dropped, the auctions are gone and the contracts are at risk."},{"s":"s20","i":1,"t":441.214,"x":"Open the scorecard and find the worst of the four metrics: that one is your score."},{"s":"s20","i":2,"t":446.262,"x":"Then work on that metric specifically, and dispute questionable entries on the site."},{"s":"s20","i":3,"t":451.286,"x":"The window is the last six weeks with loads, so six clean weeks refresh the picture completely."},{"s":"s21","i":0,"t":457.656,"x":"Three, the hardest one. The company has been switched off from Relay."},{"s":"s21","i":1,"t":461.816,"x":"Read the letter with the reason: safety numbers, a lapse in insurance, a no-show, mass refusals in favour of better-paying loads, multiple accounts."},{"s":"s21","i":2,"t":471.688,"x":"Most reasons can be appealed through support with a plan of action: what happened, what has already been done, what changes going forward."},{"s":"s21","i":3,"t":479.568,"x":"The violation rate on inspections has no appeal: you can only wait for the old inspections to fall out of the twelve-month window."},{"s":"s22","i":0,"t":487.642,"x":"Four. Somebody calls “from Amazon Relay” and asks for your login, or offers to sell you an account or dispatch services with guaranteed loads."},{"s":"s22","i":1,"t":497.058,"x":"Amazon does not call asking you to read out a password, and it does not sell accounts."},{"s":"s22","i":2,"t":502.01,"x":"Tell them nothing, and forward the details to the official address for reporting fraud."},{"s":"s22","i":3,"t":507.082,"x":"If somebody in the company has already shared access — change the password, revoke the permissions and write to support."},{"s":"s23","i":0,"t":514.556,"x":"Let us see how this works in practice. Three short questions, the answer appears right away."},{"s":"s23","i":1,"t":520.06,"x":"One. The driver reached the gate at ten past ten, the window runs to eleven. The guard asks him to wait and walks off. What does he do right now?"},{"s":"s23","i":2,"t":529.188,"x":"Tap Check In immediately and sort the guard out afterwards. The timestamp belongs to the moment you arrive, and the later it appears the greater the lateness."},{"s":"s23","i":3,"t":538.196,"x":"Two. Tuesday, three in the afternoon. The driver for tomorrow’s block is ill and there is no replacement. What does the dispatcher do?"},{"s":"s23","i":4,"t":546.34,"x":"He looks for a replacement and, failing that, hands the block back today — while the start is more than a day away and the penalty is four times smaller."},{"s":"s23","i":5,"t":555.492,"x":"Three. The seal number differs from the document by one digit and delivery is in two hours. What now?"},{"s":"s23","i":6,"t":562.22,"x":"Stand still, take photos and wait for support to answer. You do not leave with the wrong seal even to save the appointment."},{"s":"s24","i":0,"t":570.198,"x":"Let us sum up."},{"s":"s24","i":1,"t":571.55,"x":"The driver stops and calls, the dispatcher writes to support while the problem is still happening, and everything is captured with times and screenshots."},{"s":"s24","i":2,"t":579.958,"x":"The most dangerous things for the company: expired loads, a substituted driver, leaving with the wrong seal, and a lapse in insurance."},{"s":"s24","i":3,"t":588.462,"x":"Hand a load back as early as you can: the difference between today and tomorrow is a fourfold penalty."},{"s":"s24","i":4,"t":594.782,"x":"In part four we take on money and the score: how the rate is built, when the payouts land, and which metrics Amazon judges a carrier by."}];
+  var SC = [{"id":"s01","t":0,"e":19.202},{"id":"s02","t":19.202,"e":51.284},{"id":"s03","t":51.284,"e":76.414},{"id":"s04","t":76.414,"e":94.992},{"id":"s05","t":94.992,"e":117.05},{"id":"s06","t":117.05,"e":138.82},{"id":"s07","t":138.82,"e":160.998},{"id":"s08","t":160.998,"e":179.36},{"id":"s09","t":179.36,"e":202.066},{"id":"s10","t":202.066,"e":231.5},{"id":"s11","t":231.5,"e":249.238},{"id":"s12","t":249.238,"e":276.008},{"id":"s13","t":276.008,"e":295.978},{"id":"s14","t":295.978,"e":323.156},{"id":"s15","t":323.156,"e":342.646},{"id":"s16","t":342.646,"e":358.152},{"id":"s17","t":358.152,"e":381.89},{"id":"s18","t":381.89,"e":411.516},{"id":"s19","t":411.516,"e":435.926},{"id":"s20","t":435.926,"e":457.656},{"id":"s21","t":457.656,"e":487.642},{"id":"s22","t":487.642,"e":514.556},{"id":"s23","t":514.556,"e":570.198},{"id":"s24","t":570.198,"e":602.77}];
+  var CH = [{"t":0,"e":51.284},{"t":51.284,"e":276.008},{"t":276.008,"e":411.516},{"t":411.516,"e":514.556},{"t":514.556,"e":570.198},{"t":570.198,"e":602.77}];
+  var TOTAL = 602.77;
+  var a = document.getElementById('track-audio'), stage = document.getElementById('stage');
+  var scenes = [].slice.call(stage.querySelectorAll('.scene'));
+  var cur = -1, curCue = -1, subsOn = true, rates = [1, 1.25, 1.5, 0.75], ri = 0;
+
+  function unit() { var w = stage.clientWidth, h = stage.clientHeight; stage.style.setProperty('--u', Math.min(w / 100, h / 56.25) + 'px'); }
+  var player = document.querySelector('.player'), pbox = document.getElementById('pbox');
+  function isFS() { return document.fullscreenElement === pbox || pbox.classList.contains('fsfake'); }
+  var subsEl = document.getElementById('subs');
+  function placeSubs() {
+    var wantBelow = window.innerWidth < 760 && !isFS();
+    if (wantBelow && subsEl.parentElement !== pbox) { pbox.insertBefore(subsEl, pbox.querySelector('.bar-wrap')); subsEl.classList.add('below'); }
+    else if (!wantBelow && subsEl.parentElement !== stage) { stage.appendChild(subsEl); subsEl.classList.remove('below'); }
+  }
+  function fit() {
+    placeSubs();
+    if (isFS()) { player.style.maxWidth = ''; unit(); return; }
+    player.style.maxWidth = '';
+    var top = player.getBoundingClientRect().top + (window.scrollY || 0);
+    var below = document.querySelector('.bar-wrap').offsetHeight + (subsEl.classList.contains('below') ? subsEl.offsetHeight + 10 : 0) + 20;
+    var avail = window.innerHeight - top - below - 24;
+    player.style.maxWidth = Math.max(300, Math.min(1320, avail * 16 / 9)) + 'px';
+    var over = document.querySelector('.ctrls').getBoundingClientRect().bottom - window.innerHeight + 14;
+    if (over > 0) player.style.maxWidth = Math.max(300, parseFloat(player.style.maxWidth) - over * 16 / 9) + 'px';
+    unit();
+  }
+  var fitT, lastVP = '';
+  function scheduleFit() { clearTimeout(fitT); fitT = setTimeout(fit, 80); }
+  function onViewport() { var v = window.innerWidth + 'x' + window.innerHeight; if (v === lastVP) return; lastVP = v; scheduleFit(); }
+  fit(); lastVP = window.innerWidth + 'x' + window.innerHeight;
+  addEventListener('resize', scheduleFit); addEventListener('orientationchange', scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(onViewport).observe(document.documentElement);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', scheduleFit);
+  addEventListener('load', scheduleFit); document.fonts && document.fonts.ready.then(scheduleFit);
+  if (window.ResizeObserver) new ResizeObserver(unit).observe(stage);
+
+  function cueAt(t) { var lo = 0, hi = CUES.length - 1, r = 0; while (lo <= hi) { var m = (lo + hi) >> 1; if (CUES[m].t <= t) { r = m; lo = m + 1; } else hi = m - 1; } return r; }
+  function sceneAt(t) { for (var i = SC.length - 1; i >= 0; i--) if (t >= SC[i].t - 0.05) return i; return 0; }
+
+  function showScene(i) {
+    if (i === cur) return;
+    if (cur >= 0) { scenes[cur].classList.remove('live'); scenes[cur].querySelectorAll('[data-at]').forEach(function (el) { el.classList.remove('on'); }); }
+    cur = i; scenes[i].classList.add('live');
+    var ci = CH.findIndex(function (c, k) { return SC[i].t >= c.t - 0.05 && (k === CH.length - 1 || SC[i].t < CH[k + 1].t - 0.05); });
+    document.querySelectorAll('.chap').forEach(function (b, k) { b.classList.toggle('on', k === ci); });
+  }
+  function reveal(sceneIdx, lineIdx) {
+    scenes[sceneIdx].querySelectorAll('[data-at]').forEach(function (el) {
+      el.classList.toggle('on', +el.getAttribute('data-at') <= lineIdx);
+    });
+  }
+  function paint() {
+    var t = a.currentTime;
+    var si = sceneAt(t); showScene(si);
+    var ci = cueAt(t);
+    if (ci !== curCue) { curCue = ci; document.getElementById('subtext').textContent = CUES[ci].x; }
+    reveal(si, CUES[ci].s === SC[si].id ? CUES[ci].i : 0);
+    var p = Math.min(100, t / TOTAL * 100);
+    document.getElementById('fill').style.width = p + '%';
+    document.getElementById('knob').style.left = p + '%';
+    document.getElementById('tcur').textContent = fmt(t);
+    if (!a.paused && Date.now() - lastSave > 5000) saveState();
+    if (t > TOTAL * 0.95) markDone();
+  }
+  function fmt(s) { s = Math.max(0, s); return Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0'); }
+
+  var raf;
+  function loop() { paint(); if (!a.paused) raf = requestAnimationFrame(loop); }
+  a.addEventListener('play', function () { setPlay(true); loop(); if (isFS()) armIdle(); });
+  a.addEventListener('pause', function () { setPlay(false); cancelAnimationFrame(raf); });
+  a.addEventListener('seeked', paint);
+  a.addEventListener('ended', function () { setPlay(false); });
+
+  function setPlay(on) {
+    document.getElementById('playIcon').innerHTML = on ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
+    document.getElementById('playLabel').textContent = on ? 'Pause' : (a.currentTime > 0 ? 'Resume' : 'Watch');
+  }
+  function start() {
+    document.getElementById('poster').classList.add('hide');
+    if (resumeAt && a.currentTime < 1) { a.currentTime = resumeAt; resumeAt = 0; paint(); }
+    document.querySelector('.player').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    a.play();
+  }
+  document.getElementById('bigplay').onclick = start;
+  document.getElementById('poster').onclick = start;
+  document.getElementById('play').onclick = function () { if (a.paused) start(); else a.pause(); };
+  document.getElementById('prev').onclick = function () { var i = sceneAt(a.currentTime); if (a.currentTime - SC[i].t < 1.2 && i > 0) i--; a.currentTime = SC[i].t; paint(); };
+  document.getElementById('next').onclick = function () { var i = sceneAt(a.currentTime); if (i < SC.length - 1) { a.currentTime = SC[i + 1].t; paint(); } };
+  document.getElementById('track').onclick = function (e) {
+    var r = this.getBoundingClientRect();
+    a.currentTime = Math.min(TOTAL - 0.1, Math.max(0, (e.clientX - r.left) / r.width * TOTAL));
+    document.getElementById('poster').classList.add('hide'); paint();
+  };
+  document.querySelectorAll('.chap').forEach(function (b) {
+    b.onclick = function () { document.getElementById('poster').classList.add('hide'); a.currentTime = +b.dataset.t; paint(); if (a.paused) a.play(); };
+  });
+  document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
+  document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Subtitles on' : 'Subtitles off'; fit(); };
+  var fsBtn = document.getElementById('fs'), idleT;
+  function syncFS() { document.getElementById('fsLabel').textContent = isFS() ? 'Exit fullscreen' : 'Fullscreen'; fit(); }
+  function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); idleT = setTimeout(function () { if (isFS() && !a.paused) pbox.classList.add('idle'); }, 2600); }
+  function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; syncFS(); armIdle(); }
+  function fakeOff() { pbox.classList.remove('fsfake', 'idle'); document.body.style.overflow = ''; syncFS(); }
+  fsBtn.onclick = function () {
+    if (pbox.classList.contains('fsfake')) return fakeOff();
+    if (document.fullscreenElement) return document.exitFullscreen();
+    var p;
+    try { p = pbox.requestFullscreen && pbox.requestFullscreen(); } catch (e) { p = null; }
+    if (p && p.catch) p.catch(fakeOn);
+    if (!pbox.requestFullscreen) fakeOn();
+    setTimeout(function () { if (!document.fullscreenElement) fakeOn(); }, 400);
+  };
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) pbox.classList.remove('idle'); else armIdle(); syncFS(); });
+  pbox.addEventListener('mousemove', function () { if (isFS()) armIdle(); });
+  pbox.addEventListener('touchstart', function () { if (isFS()) armIdle(); }, { passive: true });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && pbox.classList.contains('fsfake')) fakeOff(); });
+  document.addEventListener('keydown', function (e) {
+    if (/INPUT|TEXTAREA/.test((e.target.tagName || ''))) return;
+    if (e.code === 'Space') { e.preventDefault(); a.paused ? start() : a.pause(); }
+    if (e.code === 'ArrowRight') { a.currentTime = Math.min(TOTAL - .1, a.currentTime + 10); paint(); }
+    if (e.code === 'ArrowLeft') { a.currentTime = Math.max(0, a.currentTime - 10); paint(); }
+  });
+  // память просмотра: место остановки и отметка «просмотрено»
+  var SKEY = 'relay-video-en-part3', saved = null, doneFlag = false, lastSave = 0;
+  try { saved = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { saved = null; }
+  if (saved && saved.done) doneFlag = true;
+  function saveState() {
+    try { localStorage.setItem(SKEY, JSON.stringify({ t: Math.floor(a.currentTime), done: doneFlag })); } catch (e) {}
+    lastSave = Date.now();
+  }
+  function markDone() { if (doneFlag) return; doneFlag = true; document.getElementById('vdone').hidden = false; saveState(); }
+  if (doneFlag) document.getElementById('vdone').hidden = false;
+  var resumeAt = 0;
+  if (saved && saved.t > 25 && saved.t < TOTAL - 20) {
+    resumeAt = saved.t;
+    document.getElementById('posterSub').textContent = 'Resume from ' + fmt(resumeAt) + ' · part 3 of 4 · ' + fmt(TOTAL);
+    var pres = document.getElementById('pres');
+    pres.hidden = false;
+    pres.onclick = function (e) { e.stopPropagation(); resumeAt = 0; a.currentTime = 0; paint(); start(); };
+  }
+  a.addEventListener('pause', saveState);
+  a.addEventListener('ended', markDone);
+  addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) saveState(); });
+
+  showScene(0); reveal(0, -1); setPlay(false);
+})();
+</script>
+
+    <link rel="stylesheet" href="/enhanced-quiz-system.css">
+</body>
+</html>
