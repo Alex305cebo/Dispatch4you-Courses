@@ -35,13 +35,21 @@
         /* ===== ПЛЕЕР ===== */
         .player { --chrome:330px; max-width:min(1320px, calc((100dvh - var(--chrome)) * 16 / 9)); margin:0 auto; scroll-margin-top:74px; }
         .stage { position:relative; width:100%; aspect-ratio:16/9; background:#080d18; border:1px solid rgba(255,255,255,.10); border-radius:18px; overflow:hidden; --u:11px; }
-        .stage:fullscreen { border-radius:0; border:none; max-width:none; width:100vw; height:100dvh; aspect-ratio:auto; }
-        .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.4) calc(var(--u)*5) calc(var(--u)*4); }
+        .pbox { position:relative; }
+        .pbox:fullscreen, .pbox.fsfake { background:#000; display:flex; align-items:center; justify-content:center; max-width:none; }
+        .pbox.fsfake { position:fixed; inset:0; z-index:9999; }
+        .pbox:fullscreen .stage, .pbox.fsfake .stage { width:100vw; height:100dvh; max-width:none; aspect-ratio:auto; border-radius:0; border:none; }
+        .pbox:fullscreen .bar-wrap, .pbox.fsfake .bar-wrap { position:absolute; left:0; right:0; bottom:0; margin:0; padding:16px 22px 18px; background:linear-gradient(transparent, rgba(0,0,0,.82)); z-index:30; transition:opacity .35s; }
+        .pbox:fullscreen.idle .bar-wrap, .pbox.fsfake.idle .bar-wrap { opacity:0; pointer-events:none; }
+        .pbox:fullscreen.idle, .pbox.fsfake.idle { cursor:none; }
+        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--u)*7.4); }
+        .pbox:fullscreen.idle .subs, .pbox.fsfake.idle .subs { bottom:calc(var(--u)*2.6); }
+        .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*7.6); }
         .scene.live { display:flex; }
         .scene-cap { display:flex; align-items:baseline; gap:calc(var(--u)*1.2); margin-bottom:calc(var(--u)*2.2); flex-shrink:0; }
         .sc-ch { font-size:calc(var(--u)*1.15); font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--amz); }
         .sc-tt { font-size:calc(var(--u)*1.45); color:var(--text-muted); }
-        .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.8); min-height:0; }
+        .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.5); min-height:0; }
         [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
         [data-at].on { opacity:1; transform:none; }
         g[data-at], text[data-at], path[data-at] { transform:none !important; }
@@ -163,7 +171,7 @@
 
         .sc-case { padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(6,182,212,.07); border:1px solid rgba(6,182,212,.28); }
         .sc-case .ch { font-size:calc(var(--u)*1.2); font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--primary); margin-bottom:calc(var(--u)*.9); }
-        .sc-case .cline { font-size:calc(var(--u)*1.42); color:var(--text-secondary); padding:calc(var(--u)*.45) 0 calc(var(--u)*.45) calc(var(--u)*1.6); position:relative; }
+        .sc-case .cline { font-size:calc(var(--u)*1.38); color:var(--text-secondary); padding:calc(var(--u)*.34) 0 calc(var(--u)*.34) calc(var(--u)*1.6); position:relative; }
         .sc-case .cline::before { content:'•'; position:absolute; left:0; color:var(--text-muted); }
         .sc-case .cline.bad { color:#fca5a5; } .sc-case .cline.bad::before { content:'✕'; color:#fca5a5; font-size:.85em; }
         .sc-case .cline.good { color:#6ee7b7; } .sc-case .cline.good::before { content:'✓'; color:#6ee7b7; }
@@ -227,7 +235,7 @@
         .sc-note.big { font-size:calc(var(--u)*1.6); font-weight:600; text-align:center; }
 
         /* заставка и кнопка старта */
-        .poster { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u)*1.6); background:linear-gradient(160deg,#0a1120,#0e1830); z-index:5; cursor:pointer; }
+        .poster { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:calc(var(--u)*1.6); background:linear-gradient(160deg,#0a1120,#0e1830); cursor:pointer; }
         .poster.hide { display:none; }
         .poster .pt { font-size:calc(var(--u)*3.4); font-weight:900; text-align:center; line-height:1.15; }
         .poster .ps { font-size:calc(var(--u)*1.5); color:var(--text-muted); }
@@ -236,10 +244,12 @@
         .bigplay svg { width:calc(var(--u)*2.6); height:calc(var(--u)*2.6); fill:#fff; margin-left:calc(var(--u)*.3); }
 
         /* субтитры */
-        .subs { margin-top:12px; min-height:60px; padding:12px 18px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-left:3px solid var(--amz); display:flex; gap:14px; align-items:flex-start; }
+        .subs { position:absolute; left:0; right:0; bottom:calc(var(--u)*2.4); display:flex; justify-content:center; padding:0 calc(var(--u)*4); z-index:6; pointer-events:none; transition:bottom .35s ease; }
         .subs.off { display:none; }
-        .subs .sic { font-size:18px; flex-shrink:0; opacity:.7; }
-        .subs .stx { font-size:16px; line-height:1.6; color:var(--text-secondary); }
+        .subs .stx { max-width:88%; background:rgba(6,10,20,.86); padding:calc(var(--u)*.75) calc(var(--u)*1.5); border-radius:calc(var(--u)*.7); text-align:center; text-wrap:balance; }
+        .subs .stx { font-size:max(15px, calc(var(--u)*1.9)); line-height:1.42; color:#fff; font-weight:500; }
+        .subs.below { position:static; padding:0; margin-top:10px; }
+        .subs.below .stx { width:100%; max-width:none; text-align:left; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); border-left:3px solid var(--amz); border-radius:12px; padding:11px 14px; font-size:15px; line-height:1.55; color:var(--text-secondary); }
 
         /* управление */
         .bar-wrap { margin-top:12px; }
@@ -285,6 +295,7 @@
             .vs-row .va::before { content:'Брокер: '; color:var(--text-muted); }
             .vs-row .vb::before { content:'Relay: '; color:var(--amz); font-weight:800; }
             .sc-flow { flex-direction:column; } .fa { justify-content:center; transform:rotate(90deg); }
+            .scene { padding-bottom:calc(var(--u)*4); }
             .subs .stx { font-size:15px; }
         }
         @media (max-width:600px) { .container { padding:0 14px; } .ctrls { gap:7px; } .cbtn { padding:0 10px; font-size:13px; } }
@@ -305,6 +316,7 @@
       </div>
 
       <div class="player">
+        <div class="pbox" id="pbox">
         <div class="stage" id="stage">
           <div class="scene" data-i="0">
       <div class="scene-cap"><span class="sc-ch">Вступление</span><span class="sc-tt">Amazon Relay для диспетчера</span></div>
@@ -607,14 +619,13 @@
   <div class="nextup" data-at="5"><span class="nl">Дальше, часть 2</span><span class="nt">Какие бывают грузы, как бронировать и как водитель проходит склад</span></div>
 </div></div>
     </div>
+          <div class="subs" id="subs"><span class="stx" id="subtext">Нажмите «Смотреть», чтобы запустить урок со звуком.</span></div>
           <div class="poster" id="poster">
             <div class="pt">Amazon Relay<br>для диспетчера</div>
             <button class="bigplay" id="bigplay" aria-label="Смотреть"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
             <div class="ps">Часть 1 из 4 · 11:13 · со звуком</div>
           </div>
         </div>
-
-        <div class="subs" id="subs"><span class="sic">🎙️</span><span class="stx" id="subtext">Нажмите «Смотреть», чтобы запустить урок со звуком.</span></div>
 
         <div class="bar-wrap">
           <div class="track" id="track"><div class="fill" id="fill"></div><i style="left:2.36%"></i><i style="left:33.77%"></i><i style="left:72.51%"></i><i style="left:94.87%"></i><div class="knob" id="knob"></div></div>
@@ -628,6 +639,7 @@
             <button class="cbtn small" id="cc">Субтитры вкл</button>
             <button class="cbtn small" id="fs">Во весь экран</button>
           </div>
+        </div>
         </div>
 
         <div class="chapters" id="chapters">
@@ -682,13 +694,21 @@
   var scenes = [].slice.call(stage.querySelectorAll('.scene'));
   var cur = -1, curCue = -1, subsOn = true, rates = [1, 1.25, 1.5, 0.75], ri = 0;
 
-  function unit() { stage.style.setProperty('--u', (stage.clientWidth / 100) + 'px'); }
-  var player = document.querySelector('.player');
+  function unit() { var w = stage.clientWidth, h = stage.clientHeight; stage.style.setProperty('--u', Math.min(w / 100, h / 56.25) + 'px'); }
+  var player = document.querySelector('.player'), pbox = document.getElementById('pbox');
+  function isFS() { return document.fullscreenElement === pbox || pbox.classList.contains('fsfake'); }
+  var subsEl = document.getElementById('subs');
+  function placeSubs() {
+    var wantBelow = window.innerWidth < 760 && !isFS();
+    if (wantBelow && subsEl.parentElement !== pbox) { pbox.insertBefore(subsEl, pbox.querySelector('.bar-wrap')); subsEl.classList.add('below'); }
+    else if (!wantBelow && subsEl.parentElement !== stage) { stage.appendChild(subsEl); subsEl.classList.remove('below'); }
+  }
   function fit() {
-    if (document.fullscreenElement) { player.style.maxWidth = ''; unit(); return; }
+    placeSubs();
+    if (isFS()) { player.style.maxWidth = ''; unit(); return; }
     player.style.maxWidth = '';
     var top = player.getBoundingClientRect().top + (window.scrollY || 0);
-    var below = document.getElementById('subs').offsetHeight + document.querySelector('.bar-wrap').offsetHeight + 20;
+    var below = document.querySelector('.bar-wrap').offsetHeight + (subsEl.classList.contains('below') ? subsEl.offsetHeight + 10 : 0) + 20;
     var avail = window.innerHeight - top - below - 24;
     player.style.maxWidth = Math.max(300, Math.min(1320, avail * 16 / 9)) + 'px';
     var over = document.querySelector('.ctrls').getBoundingClientRect().bottom - window.innerHeight + 14;
@@ -735,7 +755,7 @@
 
   var raf;
   function loop() { paint(); if (!a.paused) raf = requestAnimationFrame(loop); }
-  a.addEventListener('play', function () { setPlay(true); loop(); });
+  a.addEventListener('play', function () { setPlay(true); loop(); if (isFS()) armIdle(); });
   a.addEventListener('pause', function () { setPlay(false); cancelAnimationFrame(raf); });
   a.addEventListener('seeked', paint);
   a.addEventListener('ended', function () { setPlay(false); });
@@ -760,13 +780,24 @@
   });
   document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
   document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Субтитры вкл' : 'Субтитры выкл'; fit(); };
-  document.getElementById('fs').onclick = function () {
-    if (document.fullscreenElement) document.exitFullscreen();
-    else if (stage.requestFullscreen) stage.requestFullscreen();
+  var fsBtn = document.getElementById('fs'), idleT;
+  function syncFS() { fsBtn.textContent = isFS() ? 'Свернуть' : 'Во весь экран'; fit(); }
+  function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); idleT = setTimeout(function () { if (isFS() && !a.paused) pbox.classList.add('idle'); }, 2600); }
+  function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; syncFS(); armIdle(); }
+  function fakeOff() { pbox.classList.remove('fsfake', 'idle'); document.body.style.overflow = ''; syncFS(); }
+  fsBtn.onclick = function () {
+    if (pbox.classList.contains('fsfake')) return fakeOff();
+    if (document.fullscreenElement) return document.exitFullscreen();
+    var p;
+    try { p = pbox.requestFullscreen && pbox.requestFullscreen(); } catch (e) { p = null; }
+    if (p && p.catch) p.catch(fakeOn);
+    if (!pbox.requestFullscreen) fakeOn();
+    setTimeout(function () { if (!document.fullscreenElement) fakeOn(); }, 400);
   };
-  document.addEventListener('fullscreenchange', function () {
-    document.getElementById('fs').textContent = document.fullscreenElement ? 'Свернуть' : 'Во весь экран'; fit();
-  });
+  document.addEventListener('fullscreenchange', function () { if (!document.fullscreenElement) pbox.classList.remove('idle'); else armIdle(); syncFS(); });
+  pbox.addEventListener('mousemove', function () { if (isFS()) armIdle(); });
+  pbox.addEventListener('touchstart', function () { if (isFS()) armIdle(); }, { passive: true });
+  addEventListener('keydown', function (e) { if (e.key === 'Escape' && pbox.classList.contains('fsfake')) fakeOff(); });
   document.addEventListener('keydown', function (e) {
     if (/INPUT|TEXTAREA/.test((e.target.tagName || ''))) return;
     if (e.code === 'Space') { e.preventDefault(); a.paused ? start() : a.pause(); }
