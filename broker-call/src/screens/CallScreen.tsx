@@ -10,7 +10,7 @@ import { laneLabel, equipmentLabel } from '../data/loads'
 import { useT } from '../i18n/useT'
 import type { TranslationKey } from '../i18n'
 import { ToolCard } from '../components/ToolCard'
-import { callHints, currentHint } from '../call/hints'
+import { callHints, currentHint, TRAINEE } from '../call/hints'
 
 /**
  * Экран звонка.
@@ -60,6 +60,8 @@ export function CallScreen() {
         </div>
 
         <CallHints />
+
+        <YourCard />
 
         <LoadBoard />
 
@@ -133,6 +135,37 @@ export function CallScreen() {
               </li>
             ))}
         </ul>
+      </div>
+    )
+  }
+
+  /**
+   * Кто звонит. Брокер спрашивает MC, трейлер, водителя, номера трака и
+   * трейлера, телефон и почту — а студент этого не знает, потому что это не его
+   * компания. Раньше цифры лежали внутри подсказок и показывались только на
+   * «своём» шаге; брокер же спрашивает, когда хочет. Карточка висит весь звонок.
+   */
+  function YourCard() {
+    const rows: [string, string][] = [
+      [t('you.company'), `${TRAINEE.company} · MC ${TRAINEE.mc}`],
+      [t('you.trailer'), equipmentLabel(load)],
+      [t('you.driver'), `${TRAINEE.driver} · ${t('you.near')} ${load.origin.city}`],
+      [t('you.truck'), `${TRAINEE.truck} / ${TRAINEE.trailer}`],
+      [t('you.cell'), TRAINEE.cell],
+      [t('you.email'), TRAINEE.email],
+    ]
+    return (
+      <div className="call-you">
+        <div className="call-board-head">
+          <span>{t('you.title')}</span>
+          <span>{TRAINEE.name}</span>
+        </div>
+        {rows.map(([key, value]) => (
+          <div className="call-board-row" key={key}>
+            <span className="call-board-key">{key}</span>
+            <span className="call-board-val mono">{value}</span>
+          </div>
+        ))}
       </div>
     )
   }

@@ -26,6 +26,23 @@ import { createRng } from './rng'
  * отказ по причинам, которых студент ещё не понимает. */
 export const TRAINEE_MC = '445566'
 
+/**
+ * Кто такой студент на этом звонке — одна карточка, из которой берут и
+ * подсказки, и панель «Ваши данные» на экране. Брокер спрашивает MC, водителя,
+ * номера трака и трейлера, телефон и почту — отвечать по памяти на первом
+ * звонке нечем, а искать это по подсказкам, пока брокер ждёт, некогда.
+ */
+export const TRAINEE = {
+  name: 'Alex',
+  company: 'Star Transport',
+  mc: TRAINEE_MC,
+  driver: 'Juan Lopez',
+  truck: '1705',
+  trailer: '1184',
+  cell: '864-555-0142',
+  email: 'dispatch@startransport.com',
+} as const
+
 export interface Hint {
   id: HintId
   /** Уже сделано — брокер это записал. */
@@ -78,10 +95,10 @@ export function callHints(setup: CallSetup, state: CallState | null): Hint[] {
       done: Boolean(f?.carrier),
       title: 'Представьтесь и назовите MC',
       say: rng.pick([
-        `Hi, this is dispatch with Star Transport, MC ${TRAINEE_MC} — calling on load ${load.ref}.`,
-        `Hey, Star Transport here, MC ${TRAINEE_MC}. I'm calling on ${load.ref}, is it still available?`,
-        `Good morning — Star Transport, MC ${TRAINEE_MC}. Calling about your ${laneLabel(load)} load.`,
-        `This is Alex at Star Transport, MC ${TRAINEE_MC}. Got a truck for load ${load.ref}.`,
+        `Hi, this is dispatch with ${TRAINEE.company}, MC ${TRAINEE.mc} — calling on load ${load.ref}.`,
+        `Hey, ${TRAINEE.company} here, MC ${TRAINEE.mc}. I'm calling on ${load.ref}, is it still available?`,
+        `Good morning — ${TRAINEE.company}, MC ${TRAINEE.mc}. Calling about your ${laneLabel(load)} load.`,
+        `This is ${TRAINEE.name} at ${TRAINEE.company}, MC ${TRAINEE.mc}. Got a truck for load ${load.ref}.`,
       ]),
     },
     {
@@ -129,8 +146,8 @@ export function callHints(setup: CallSetup, state: CallState | null): Hint[] {
       done: bookingDone,
       title: 'Данные для букинга и почта под rate con',
       say: rng.pick([
-        `Driver is Juan Lopez, truck 1705, trailer 1184, cell 864-555-0142 — send the rate con to dispatch@startransport.com.`,
-        `Juan Lopez driving, truck 1705, trailer 1184. His cell is 864-555-0142, rate con to dispatch@startransport.com.`,
+        `Driver is ${TRAINEE.driver}, truck ${TRAINEE.truck}, trailer ${TRAINEE.trailer}, cell ${TRAINEE.cell} — send the rate con to ${TRAINEE.email}.`,
+        `${TRAINEE.driver} driving, truck ${TRAINEE.truck}, trailer ${TRAINEE.trailer}. His cell is ${TRAINEE.cell}, rate con to ${TRAINEE.email}.`,
       ]),
     },
   ]
