@@ -23,10 +23,13 @@
        React-приложение /broker-call/ во фрейме на весь остаток экрана.
        Прежняя версия (4000 строк на странице, Whisper + браузерный голос)
        заменена целиком; ссылки на этот адрес по сайту остались рабочими. */
-    html, body { height: 100%; margin: 0; }
-    body { display: flex; flex-direction: column; height: 100dvh; overflow: hidden; background: var(--surface-base, #050a12); }
-    #nav-placeholder { flex: 0 0 auto; }
-    #trainer { flex: 1 1 auto; width: 100%; border: 0; display: block; min-height: 0; background: #0b0d10; }
+    html, body { height: 100%; margin: 0; overflow: hidden; background: var(--surface-base, #050a12); }
+    /* Фрейм прибит к экрану под меню. Раскладка через flex не работала:
+       nav-loader ставит body padding-top под фиксированное меню и вставляет
+       в body футер на 578px — фрейму оставалось 13px. Отступ сверху берётся
+       из того же padding-top, что выставило меню (см. скрипт ниже). */
+    #trainer { position: fixed; top: var(--nav-h, 64px); left: 0; right: 0; bottom: 0; width: 100%; height: auto; border: 0; display: block; background: #0b0d10; }
+    #site-footer-injected { display: none !important; }
   </style>
 </head>
 <body>
@@ -34,6 +37,18 @@
   <iframe id="trainer" src="/broker-call/?lang=en" title="Broker Call" allow="microphone; autoplay" allowfullscreen></iframe>
 
   <script src="/nav-loader.js?v=27"></script>
+  <script>
+  // Высота меню = padding-top, который nav-loader выставляет body. Меню
+  // подгружается асинхронно, поэтому перечитываем несколько раз и на resize.
+  (function () {
+    function fit() {
+      var pt = parseFloat(getComputedStyle(document.body).paddingTop) || 0;
+      document.documentElement.style.setProperty('--nav-h', pt + 'px');
+    }
+    fit(); setTimeout(fit, 300); setTimeout(fit, 1500); setTimeout(fit, 4000);
+    window.addEventListener('resize', fit);
+  })();
+  </script>
   <script>
   // XP за звонок приходит из тренажёра сообщением — сам он про xp-system не знает.
   (function () {
