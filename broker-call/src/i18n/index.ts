@@ -197,6 +197,14 @@ const STORAGE_KEY = 'broker-call:lang'
  * отрисовки: белый экран вместо тренажёра.
  */
 export function detectLang(): Lang {
+  // Страница-оболочка сайта (/pages/ai-broker-chat.html и её /en/ близнец)
+  // открывает тренажёр во фрейме и передаёт свой язык явно.
+  try {
+    const fromUrl = new URLSearchParams(location.search).get('lang')
+    if (fromUrl === 'ru' || fromUrl === 'en') return fromUrl
+  } catch {
+    // location недоступен (тесты) — идём дальше.
+  }
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved === 'ru' || saved === 'en') return saved

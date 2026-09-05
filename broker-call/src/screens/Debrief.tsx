@@ -48,6 +48,15 @@ export function Debrief() {
     if (!setup || !metrics || !machine) return
     recordAttempt(CALL_KEY, metrics.overall)
 
+    // Сайт открывает тренажёр во фрейме и начисляет XP за звонок сам
+    // (xp-system.js живёт там). Только своему origin — чужой странице ни к чему.
+    if (window.parent !== window) {
+      window.parent.postMessage(
+        { type: 'broker-call:done', score: metrics.overall, ended: machine.getState().facts.endReason },
+        location.origin,
+      )
+    }
+
     let cancelled = false
     fetch(endpoint('debrief'), {
       method: 'POST',
