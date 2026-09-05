@@ -71,7 +71,7 @@ import type { BrokerStyle } from '../types'
  * одинаковым.
  */
 export const PICKUP_CUE =
-  '[Your desk phone just rang and you picked up. A dispatcher is on the line — you do not know yet what they want. Answer the phone the way you always do, in your own words, and keep it short.]'
+  '[Your desk phone just rang and you picked up. A dispatcher is on the line — you do not know yet what they want. Answer it like a business line: your company and your name, then let them talk — "Keystone Logistics, this is Sal", "Apex Freight, Mike speaking". One line, in your own words. Never open with "what do you need" or "what do you want" — that is not how a broker answers a phone, however busy he is.]'
 
 export interface TransportDeps {
   /** Сид звонка. По нему сервер собирает того же брокера и тот же груз. */
