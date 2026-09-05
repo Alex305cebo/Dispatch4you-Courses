@@ -32,7 +32,7 @@ export function installDevPreview(): void {
       { kind: 'speech', id: 'd1', role: 'dispatcher', text: `Hi, this is Alex with Star Transport, MC 445566. I'm calling on your load ${setup.load.ref}, is it still available?`, draft: false },
       { kind: 'tool', id: 't1', name: 'lookup_carrier', status: 'done', result: { ok: true } },
       { kind: 'speech', id: 'b2', role: 'broker', text: `Yeah, it's open. What are you running, and where's your driver right now?`, draft: false },
-      { kind: 'speech', id: 'd2', role: 'dispatcher', text: `We run a fifty-three foot dry van, he's unloading about forty miles from`, draft: true },
+      { kind: 'speech', id: 'd2', role: 'dispatcher', text: "", draft: true },
     ],
   })
 }

@@ -332,7 +332,9 @@ function ErrorBar({ raw }: { raw: string }) {
  */
 function Turn({ item, active }: { item: SpeechItem; active: boolean }) {
   const t = useT()
-  const words = useMemo(() => item.text.split(/(\s+)/), [item.text])
+  // Пустой черновик — студент заговорил, расшифровка ещё в пути.
+  const shown = item.text || (item.draft ? t('call.hearing') : '')
+  const words = useMemo(() => shown.split(/(\s+)/), [shown])
   const wordCount = useMemo(() => words.filter((w) => w.trim()).length, [words])
   const revealed = useWordReveal(item, wordCount)
 

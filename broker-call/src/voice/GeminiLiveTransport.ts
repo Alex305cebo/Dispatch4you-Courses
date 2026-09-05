@@ -345,6 +345,10 @@ export class GeminiLiveTransport implements VoiceTransport {
       // заменяется целой строкой.
       if (this.partial.trim()) {
         this.deps.emit({ type: 'user_final', text: normalizeTranscript(this.partial).trim() })
+      } else {
+        // Пузырь открылся по местному детектору, а расшифровки не пришло —
+        // шум, не речь. Пустой пузырь в ленте не оставляем.
+        this.deps.emit({ type: 'user_dropped', reason: 'empty' })
       }
       this.partial = ''
     }

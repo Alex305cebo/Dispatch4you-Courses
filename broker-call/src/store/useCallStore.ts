@@ -259,7 +259,14 @@ function buildCandidates(config: ServerConfig, deps: TransportDeps): Candidate[]
 function applyEvent(set: Set, get: Get, event: VoiceEvent): void {
   switch (event.type) {
     case 'user_speech_start':
-      set({ line: 'listening' })
+      // Пузырь появляется в ту же секунду, когда студент заговорил. Gemini
+      // отдаёт расшифровку только по концу фразы — без пузыря десять секунд
+      // речи выглядели так, будто тебя не слышат («не видно, что я
+      // наговариваю»). Текст заполнится, когда придёт.
+      set((s) => ({
+        line: 'listening',
+        feed: s.feed.some((i) => i.kind === 'speech' && i.draft) ? s.feed : upsertDraft(s.feed, ''),
+      }))
       break
 
     case 'user_partial':
