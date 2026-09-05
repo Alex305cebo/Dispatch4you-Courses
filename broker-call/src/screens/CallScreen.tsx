@@ -46,26 +46,34 @@ export function CallScreen() {
   return (
     <div className="call">
       <aside className="call-side">
-        <Orb state={line} level={micLevel} />
+        {/* Две группы: на телефоне и узком десктопе обёртки прозрачны
+            (display: contents) и всё лежит одной колонкой, на широком экране
+            они становятся двумя колонками — иначе борд уезжал под сгиб, а
+            справа пустовала половина монитора. */}
+        <div className="call-side-col">
+          <Orb state={line} level={micLevel} />
 
-        <div className="call-id">
-          <div className="call-name">{broker.name}</div>
-          <div className="call-company">{broker.company}</div>
+          <div className="call-id">
+            <div className="call-name">{broker.name}</div>
+            <div className="call-company">{broker.company}</div>
+          </div>
+
+          <div className="call-status" data-state={line}>
+            <span className="dot" />
+            <span className="label-text">{t(LINE_LABEL[line])}</span>
+            <CallTimer startedAt={startedAt} />
+          </div>
+
+          <CallHints />
         </div>
 
-        <div className="call-status" data-state={line}>
-          <span className="dot" />
-          <span className="label-text">{t(LINE_LABEL[line])}</span>
-          <CallTimer startedAt={startedAt} />
+        <div className="call-side-col">
+          <YourCard />
+
+          <LoadBoard />
+
+          <CallFacts />
         </div>
-
-        <CallHints />
-
-        <YourCard />
-
-        <LoadBoard />
-
-        <CallFacts />
 
         <div className="call-side-spacer" />
 

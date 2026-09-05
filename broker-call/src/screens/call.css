@@ -37,6 +37,46 @@
   overflow-y: auto;
 }
 
+/* Обёртки групп по умолчанию прозрачны — вёрстка та же, что без них. */
+.call-side-col {
+  display: contents;
+}
+
+/* Широкий экран: панель в две колонки. Брокер и подсказки слева, данные
+   диспетчера и борд справа — всё влезает без скролла даже при 800px высоты. */
+@media (min-width: 1200px) {
+  .call {
+    grid-template-columns: 620px 1fr;
+  }
+  .call-side {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--s5);
+    align-content: start;
+  }
+  .call-side-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--s3);
+    min-width: 0;
+  }
+  /* Правая колонка начинается вровень с именем, а не с кружком */
+  .call-side-col:nth-child(2) {
+    padding-top: var(--s5);
+  }
+  .call-side-col:nth-child(2) > :first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+  .call-side-spacer {
+    display: none;
+  }
+  .call-end {
+    grid-column: 1 / -1;
+  }
+}
+
 .call-id {
   text-align: center;
 }
@@ -419,26 +459,29 @@
   color: var(--ink);
 }
 
-/* Твои реплики — с отбивкой и тише: на экране главный тот, кого слушаешь */
+/* Твои реплики — с отбивкой и янтарной кромкой. Раньше были «тише» брокера:
+   серым на тёмном, и по отзыву «не видно, что я наговариваю». Свои слова на
+   экране — это и есть тренажёр, они не могут быть бледнее чужих. */
 .turn-dispatcher {
   padding: var(--s3) var(--s5);
-  border-left: 2px solid var(--accent-line);
+  border-left: 3px solid var(--accent);
   border-radius: 0 var(--radius) var(--radius) 0;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(217, 164, 65, 0.07);
   align-self: flex-end;
   max-width: 88%;
 }
 
+.turn-dispatcher .turn-who {
+  color: var(--accent);
+}
+
 .turn-dispatcher .turn-text {
   font-size: var(--text-md);
-  color: var(--ink-soft);
+  color: var(--ink);
   line-height: 1.55;
 }
 
 .turn:not(.turn-active) .turn-text {
-  color: var(--ink-muted);
-}
-.turn-broker:not(.turn-active) .turn-text {
   color: var(--ink-soft);
 }
 
@@ -452,7 +495,7 @@
 }
 
 .turn-draft .turn-text {
-  color: var(--ink-muted);
+  color: var(--ink);
 }
 .turn-draft .turn-text::after {
   content: '';
@@ -642,6 +685,9 @@
     grid-template-rows: auto 1fr;
   }
 
+  /* Шапка не выше половины экрана и скроллится внутри себя. Раньше подсказка,
+     «Ваши данные» и борд занимали весь телефон, а разговор — и своя речь в
+     нём — уезжали под сгиб: «не видно, что я наговариваю». */
   .call-side {
     flex-direction: row;
     align-items: center;
@@ -650,7 +696,8 @@
     padding-top: max(var(--s3), env(safe-area-inset-top));
     border-right: none;
     border-bottom: 1px solid var(--line);
-    overflow: visible;
+    max-height: 45dvh;
+    overflow-y: auto;
     flex-wrap: wrap;
   }
 
@@ -723,6 +770,11 @@
     row-gap: 2px;
     padding-top: var(--s3);
     margin-top: var(--s2);
+  }
+  /* Данные диспетчера в две колонки ломались на четыре строки —
+     «Star Transport · MC 445566» читать по кускам нельзя. Одна колонка. */
+  .call-you {
+    grid-template-columns: 1fr;
   }
   .call-board-head {
     grid-column: 1 / -1;
