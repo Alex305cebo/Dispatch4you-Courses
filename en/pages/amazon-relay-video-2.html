@@ -280,6 +280,11 @@
         .ctime { font:700 14px ui-monospace,Menlo,Consolas,monospace; color:var(--text-muted); margin-left:4px; }
         .spacer { flex:1; }
         .cbtn.small { height:38px; font-size:13px; padding:0 12px; }
+        .cbtn.fs { height:44px; padding:0 16px; font-size:14px; font-weight:800; background:rgba(255,153,0,.16); border-color:rgba(255,153,0,.55); color:#ffb648; animation:fsPulse 2.4s ease-out 1.2s 3; }
+        .cbtn.fs:hover { background:rgba(255,153,0,.26); border-color:rgba(255,153,0,.9); color:#fff; }
+        .cbtn.fs svg { width:17px; height:17px; }
+        @keyframes fsPulse { 0% { box-shadow:0 0 0 0 rgba(255,153,0,.5); } 70% { box-shadow:0 0 0 11px rgba(255,153,0,0); } 100% { box-shadow:0 0 0 0 rgba(255,153,0,0); } }
+        @media (prefers-reduced-motion:reduce) { .cbtn.fs { animation:none; } }
 
         /* главы */
         .chapters { margin-top:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:10px; }
@@ -743,7 +748,7 @@ Attachments: a screenshot of the app, a photo of the spot, the name of the facil
             <span class="spacer"></span>
             <button class="cbtn small" id="rate">1×</button>
             <button class="cbtn small" id="cc">Subtitles on</button>
-            <button class="cbtn small" id="fs">Fullscreen</button>
+            <button class="cbtn fs" id="fs" aria-label="Fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5v2H6v3H4zm11-5h5v5h-2V6h-3V4zM4 15h2v3h3v2H4v-5zm14 3v-3h2v5h-5v-2h3z"/></svg><span id="fsLabel">Fullscreen</span></button>
           </div>
         </div>
         </div>
@@ -894,7 +899,7 @@ Attachments: a screenshot of the app, a photo of the spot, the name of the facil
   document.getElementById('rate').onclick = function () { ri = (ri + 1) % rates.length; a.playbackRate = rates[ri]; this.textContent = rates[ri] + '×'; };
   document.getElementById('cc').onclick = function () { subsOn = !subsOn; document.getElementById('subs').classList.toggle('off', !subsOn); this.textContent = subsOn ? 'Subtitles on' : 'Subtitles off'; fit(); };
   var fsBtn = document.getElementById('fs'), idleT;
-  function syncFS() { fsBtn.textContent = isFS() ? 'Exit fullscreen' : 'Fullscreen'; fit(); }
+  function syncFS() { document.getElementById('fsLabel').textContent = isFS() ? 'Exit fullscreen' : 'Fullscreen'; fit(); }
   function armIdle() { clearTimeout(idleT); pbox.classList.remove('idle'); idleT = setTimeout(function () { if (isFS() && !a.paused) pbox.classList.add('idle'); }, 2600); }
   function fakeOn() { if (pbox.classList.contains('fsfake')) return; pbox.classList.add('fsfake'); document.body.style.overflow = 'hidden'; syncFS(); armIdle(); }
   function fakeOff() { pbox.classList.remove('fsfake', 'idle'); document.body.style.overflow = ''; syncFS(); }
