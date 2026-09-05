@@ -27,6 +27,12 @@ export type GeminiServerEvent =
   | { kind: 'tool_cancel'; ids: string[] }
   /** Сессию скоро закроют на стороне провайдера. */
   | { kind: 'go_away'; leftMs: number }
+  /**
+   * Детектор провайдера: студент заговорил / замолчал. Конец фразы — момент,
+   * когда ход перешёл к брокеру; до первого звука у 3.1 проходит 5–15 секунд,
+   * и без этого события экран все эти секунды показывал «слушаю».
+   */
+  | { kind: 'activity'; state: 'start' | 'end' }
   | { kind: 'error'; message: string }
 
 /** Частота по умолчанию, если провайдер не указал её в mimeType. */
@@ -100,6 +106,12 @@ export function parseServerMessage(raw: string): GeminiServerEvent[] {
   if (cancellation) {
     const ids = Array.isArray(cancellation.ids) ? cancellation.ids.map(String) : []
     events.push({ kind: 'tool_cancel', ids })
+  }
+
+  const activity = asObject(message.voiceActivity)
+  if (activity) {
+    if (activity.type === 'ACTIVITY_START') events.push({ kind: 'activity', state: 'start' })
+    if (activity.type === 'ACTIVITY_END') events.push({ kind: 'activity', state: 'end' })
   }
 
   const goAway = asObject(message.goAway)

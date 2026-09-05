@@ -130,6 +130,16 @@ describe('разбор сообщений Gemini Live', () => {
     ).toEqual([{ kind: 'tool_cancel', ids: ['fc_1', 'fc_2'] }])
   })
 
+  it('детектор провайдера: начало и конец фразы студента', () => {
+    // Реальные сообщения 3.1-flash-live-preview, 05.09.2026
+    expect(parseServerMessage(JSON.stringify({ voiceActivity: { type: 'ACTIVITY_START', audioOffset: '0.360s' } }))).toEqual([
+      { kind: 'activity', state: 'start' },
+    ])
+    expect(parseServerMessage(JSON.stringify({ voiceActivity: { type: 'ACTIVITY_END', audioOffset: '11.400s' } }))).toEqual([
+      { kind: 'activity', state: 'end' },
+    ])
+  })
+
   it('переводит goAway из «10s» в миллисекунды', () => {
     expect(parseServerMessage(JSON.stringify({ goAway: { timeLeft: '10s' } }))).toEqual([
       { kind: 'go_away', leftMs: 10000 },

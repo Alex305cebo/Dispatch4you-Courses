@@ -703,16 +703,32 @@ function pipeToGemini(client: import('ws').WebSocket, setup: unknown, key: strin
     for (const frame of pending) upstream.send(frame as Buffer)
     pending.length = 0
   })
+  // Журнал звонка в консоли дев-сервера. Браузерную консоль с телефона не
+  // открыть, а «брокер не отвечает» без этого не разобрать: здесь видно,
+  // распознал ли провайдер конец фразы, что он ответил и чем всё кончилось.
+  const t0 = Date.now()
+  const log = (line: string) =>
+    console.log(`[gemini-ws +${((Date.now() - t0) / 1000).toFixed(1)}s] ${line}`)
+  log('открыт')
+
   upstream.on('message', (data: RawData) => {
     if (client.readyState === client.OPEN) client.send(data as Buffer)
+    const kind = describeUpstream(data)
+    if (kind) log(kind)
   })
-  upstream.on('error', (e: Error) => closeClient(client, 1011, e.message))
+  upstream.on('error', (e: Error) => {
+    log(`ошибка наверху: ${e.message}`)
+    closeClient(client, 1011, e.message)
+  })
   upstream.on('close', (code: number, reason: Buffer) => {
+    log(`Google закрыл: ${code} ${reason.toString()}`)
     closeClient(client, code, reason.toString())
   })
 
   client.on('message', (data: RawData) => {
     if (isEmptySetup(data)) return
+    const kind = describeClient(data)
+    if (kind) log(kind)
     if (upstream.readyState === UpstreamSocket.OPEN) upstream.send(data as Buffer)
     else pending.push(data)
   })
@@ -723,6 +739,49 @@ function pipeToGemini(client: import('ws').WebSocket, setup: unknown, key: strin
       /* уже закрыт */
     }
   })
+}
+
+/** Одна строка про сообщение от Google — без аудио и без base64. */
+function describeUpstream(data: RawData): string {
+  try {
+    const m = JSON.parse(data.toString()) as Record<string, any>
+    if (m.setupComplete) return 'setupComplete'
+    if (m.toolCall) {
+      const calls = (m.toolCall.functionCalls ?? []) as { name: string; args: unknown }[]
+      return `toolCall ${calls.map((c) => `${c.name}(${JSON.stringify(c.args)})`).join(', ')}`
+    }
+    if (m.toolCallCancellation) return 'toolCallCancellation'
+    if (m.goAway) return `goAway ${JSON.stringify(m.goAway)}`
+    if (m.voiceActivity) return `voiceActivity ${JSON.stringify(m.voiceActivity)}`
+    const c = m.serverContent
+    if (c) {
+      const parts: string[] = []
+      if (c.inputTranscription?.text) parts.push(`ты: «${c.inputTranscription.text}»`)
+      if (c.outputTranscription?.text) parts.push(`брокер: «${c.outputTranscription.text}»`)
+      if (c.modelTurn) parts.push('audio')
+      if (c.interrupted) parts.push('INTERRUPTED')
+      if (c.generationComplete) parts.push('generationComplete')
+      if (c.turnComplete) parts.push('turnComplete')
+      return parts.length ? parts.join(' · ') : `serverContent ${Object.keys(c).join(',')}`
+    }
+    if (m.sessionResumptionUpdate) return ''
+    return Object.keys(m).join(',')
+  } catch {
+    return 'бинарное сообщение'
+  }
+}
+
+/** Что прислал браузер, кроме кадров микрофона (их сотни в секунду). */
+function describeClient(data: RawData): string {
+  try {
+    const m = JSON.parse(data.toString()) as Record<string, any>
+    if (m.realtimeInput?.audio) return ''
+    if (m.clientContent) return `текст от студента: ${JSON.stringify(m.clientContent.turns?.[0]?.parts?.[0]?.text ?? '').slice(0, 80)}`
+    if (m.toolResponse) return `toolResponse ×${(m.toolResponse.functionResponses ?? []).length}`
+    return `от браузера: ${Object.keys(m).join(',')}`
+  } catch {
+    return ''
+  }
 }
 
 /** Пустая настройка от браузера — та самая, что заменяется серверной. */

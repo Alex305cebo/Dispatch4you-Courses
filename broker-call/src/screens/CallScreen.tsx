@@ -37,7 +37,7 @@ export function CallScreen() {
     const el = feedRef.current
     if (!el) return
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-  }, [feed])
+  }, [feed, line])
 
   if (!setup) return null
   const { broker, load } = setup
@@ -92,6 +92,14 @@ export function CallScreen() {
                 <Turn key={entry.id} item={entry as SpeechItem} active={entry.id === lastSpeechId} />
               ),
             )}
+            {/* Ход у брокера, звука ещё нет. У 3.1 это 5–15 секунд — без
+                строки в ленте они выглядят как зависший звонок. */}
+            {line === 'thinking' || line === 'hold' ? (
+              <div className="turn turn-broker turn-thinking">
+                <div className="turn-who">Broker</div>
+                <p className="turn-text">{t('call.thinking')}…</p>
+              </div>
+            ) : null}
           </div>
         </div>
 

@@ -263,6 +263,14 @@ export class GeminiLiveTransport implements VoiceTransport {
           // Отменённые вызовы отвечать не нужно — модель их уже забыла.
           break
 
+        case 'activity':
+          // Начало — тот же сигнал, что даёт местный детектор (пузырь в ленте
+          // уже открыт им). Конец — ход у брокера: статус «думает», а не
+          // «слушаю», пока он собирается с ответом.
+          if (event.state === 'start') this.deps.emit({ type: 'user_speech_start' })
+          else this.deps.emit({ type: 'agent_thinking', active: true })
+          break
+
         case 'go_away':
           this.deps.emit({
             type: 'error',
