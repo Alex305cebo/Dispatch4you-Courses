@@ -639,7 +639,7 @@
         <div class="footer-brand-block">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-size:28px">🚛</span><span style="font-size:18px;font-weight:800;background:linear-gradient(135deg,#06b6d4,#0ea5e9);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Dispatch4You.Com</span></div>
           <p class="footer-brand-desc">${T.footerDesc}</p>
-          <a href="mailto:info@dispatch4you.com" class="footer-link" style="margin-top:8px">✉️ info@dispatch4you.com</a>
+          <a href="https://t.me/Dispatch4You_Course" target="_blank" rel="noopener" class="footer-link" style="margin-top:8px">✈️ @Dispatch4You_Course</a>
         </div>
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">${T.colLearn}</span><span class="acc-arrow">▼</span></button>
