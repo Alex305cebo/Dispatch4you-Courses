@@ -68,8 +68,6 @@
         .pbox.tight .ctime, .pbox.tight #rate { display:none; }
         .pbox.tight #cc { font-size:0; padding:0 10px; }
         .pbox.tight #cc::before { content:'CC'; font-size:12px; font-weight:800; letter-spacing:.04em; }
-        .pbox.icons #fsLabel { display:none; }
-        .pbox.icons .cbtn.fs { padding:0 11px; }
         .pbox:fullscreen.idle .subs, .pbox.fsfake.idle .subs { bottom:calc(var(--u)*2.6); }
         .scene { position:absolute; inset:0; display:none; flex-direction:column; padding:calc(var(--u)*4.2) calc(var(--u)*5) calc(var(--u)*7.6); }
         .scene.live { display:flex; }
@@ -833,8 +831,6 @@
           <div class="track" id="track"><div class="fill" id="fill"></div><i style="left:2.25%"></i><i style="left:33.48%"></i><i style="left:73.07%"></i><i style="left:94.65%"></i><div class="knob" id="knob"></div></div>
           <div class="ctrls">
             <button class="cbtn main" id="play" aria-label="Play"><svg id="playIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg><span id="playLabel">Watch</span></button>
-            <button class="cbtn" id="prev" aria-label="Previous scene"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button>
-            <button class="cbtn" id="next" aria-label="Next scene"><svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM6 18l8.5-6L6 6z"/></svg></button>
             <span class="ctime"><span id="tcur">0:00</span> / 9:39</span>
             <span class="spacer"></span>
             <button class="cbtn small" id="rate">1×</button>
@@ -921,10 +917,9 @@
       for (var i = 0; i < k.length; i++) if (!/spacer/.test(k[i].className)) w += k[i].getBoundingClientRect().width;
       return w + gap * (k.length - 1) + 6 > c.clientWidth;
     }
-    pbox.classList.remove('narrow', 'tight', 'icons');
+    pbox.classList.remove('narrow', 'tight');
     if (over()) pbox.classList.add('narrow');
     if (over()) pbox.classList.add('tight');
-    if (over()) pbox.classList.add('icons');
   }
   // Субтитры ставим ровно над панелью, а когда панель спрятана — опускаем ниже.
   function barH() {
@@ -1022,8 +1017,6 @@
   document.getElementById('bigplay').onclick = start;
   document.getElementById('poster').onclick = start;
   document.getElementById('play').onclick = function () { if (a.paused) start(); else a.pause(); };
-  document.getElementById('prev').onclick = function () { var i = sceneAt(a.currentTime); if (a.currentTime - SC[i].t < 1.2 && i > 0) i--; a.currentTime = SC[i].t; paint(); };
-  document.getElementById('next').onclick = function () { var i = sceneAt(a.currentTime); if (i < SC.length - 1) { a.currentTime = SC[i + 1].t; paint(); } };
   document.getElementById('track').onclick = function (e) {
     var r = this.getBoundingClientRect();
     a.currentTime = Math.min(TOTAL - 0.1, Math.max(0, (e.clientX - r.left) / r.width * TOTAL));
