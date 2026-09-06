@@ -79,7 +79,88 @@
         .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.5); min-height:0; }
         [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
         [data-at].on { opacity:1; transform:none; }
-        g[data-at], text[data-at], path[data-at] { transform:none !important; }
+
+
+        /* ===== АНИМАЦИИ ДЕЙСТВИЙ ===== */
+        .an { width:100%; height:auto; max-height:100%; }
+        .an text { font-family:'Inter',sans-serif; }
+        .an .t-b { fill:#fff; font-size:19px; font-weight:800; }
+        .an .t-s { fill:#94a3b8; font-size:14px; }
+        .an .t-x { fill:#e2e8f0; font-size:15px; font-weight:600; }
+        .an .plate { fill:rgba(255,255,255,.045); stroke:rgba(255,255,255,.12); }
+
+        .an .drive { transform:translateX(-300px); transition:transform 2.8s cubic-bezier(.35,0,.25,1); }
+        .on .drive, .drive.on { transform:translateX(0); }
+        .an .boom { transform-box:fill-box; transform-origin:left center; transition:transform 1s cubic-bezier(.3,0,.2,1) .4s; }
+        .on .boom, .boom.on { transform:rotate(-70deg); }
+        .an .tap { opacity:0; transform:translateY(26px); transition:opacity .35s ease, transform .55s cubic-bezier(.2,.8,.25,1); }
+        .on .tap, .tap.on { opacity:1; transform:translateY(0); }
+        .an .btn-hit { fill:#22d3ee; opacity:0; transform-box:fill-box; transform-origin:center; }
+        .on .btn-hit, .btn-hit.on { animation:hit 1.2s ease-out .35s 2; }
+        @keyframes hit { 0% { opacity:.45; transform:scale(.92); } 70% { opacity:0; transform:scale(1.3); } 100% { opacity:0; } }
+        .an .tick { stroke-dasharray:36; stroke-dashoffset:36; transition:stroke-dashoffset .6s ease .55s; }
+        .on .tick, .tick.on { stroke-dashoffset:0; }
+        .an .draw { stroke-dasharray:var(--len,320); stroke-dashoffset:var(--len,320); transition:stroke-dashoffset 1.2s cubic-bezier(.3,0,.2,1) .25s; }
+        .on .draw, .draw.on { stroke-dashoffset:0; }
+        .an .hand { transform-box:fill-box; transform-origin:bottom center; transition:transform 2.8s cubic-bezier(.4,0,.3,1) .3s; }
+        .on .hand, .hand.on { transform:rotate(300deg); }
+        .an .weekfill { transform-box:fill-box; transform-origin:left center; transform:scaleX(0); transition:transform 2.2s cubic-bezier(.35,0,.25,1) .25s; }
+        .on .weekfill, .weekfill.on { transform:scaleX(1); }
+        .an .coin { opacity:0; transform:translateX(-170px); transition:opacity .3s ease 1.15s, transform 1.25s cubic-bezier(.35,0,.25,1) 1.15s; }
+        .on .coin, .coin.on { opacity:1; transform:translateX(0); }
+        .an .needle { transform-box:fill-box; transform-origin:bottom center; transform:rotate(-76deg); transition:transform 1.9s cubic-bezier(.3,0,.2,1) .3s; }
+        .on .needle, .needle.on { transform:rotate(var(--deg,20deg)); }
+        .an .grow { transform-box:fill-box; transform-origin:bottom center; transform:scaleY(0); transition:transform 1s cubic-bezier(.25,.9,.3,1) var(--gd,0s); }
+        .on .grow, .grow.on { transform:scaleY(1); }
+        @media (prefers-reduced-motion:reduce) { .an * { transition-duration:.01s !important; animation:none !important; } }
+
+        /* ===== ВИЗУАЛЬНЫЙ СЛОЙ: цвет главы, глубина, движение ===== */
+        .scene { --gl1:rgba(6,182,212,.16); --gl2:rgba(14,165,233,.10); --acc:#06b6d4; }
+        .scene[data-c="1"] { --gl1:rgba(6,182,212,.17); --gl2:rgba(34,211,238,.10); --acc:#22d3ee; }
+        .scene[data-c="2"] { --gl1:rgba(255,153,0,.16); --gl2:rgba(245,158,11,.10); --acc:#ff9900; }
+        .scene[data-c="3"] { --gl1:rgba(16,185,129,.16); --gl2:rgba(52,211,153,.10); --acc:#10b981; }
+        .scene[data-c="4"] { --gl1:rgba(139,92,246,.17); --gl2:rgba(167,139,250,.10); --acc:#a78bfa; }
+        .scene[data-c="5"] { --gl1:rgba(244,63,94,.15); --gl2:rgba(251,113,133,.10); --acc:#fb7185; }
+        .scene::before { content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+            background:radial-gradient(58% 46% at 10% -6%, var(--gl1), transparent 68%),
+                       radial-gradient(52% 44% at 104% 106%, var(--gl2), transparent 70%); }
+        .scene::after { content:''; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.5;
+            background-image:linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+            background-size:calc(var(--u)*4.5) calc(var(--u)*4.5);
+            -webkit-mask-image:radial-gradient(72% 62% at 50% 46%, #000 20%, transparent 88%);
+                    mask-image:radial-gradient(72% 62% at 50% 46%, #000 20%, transparent 88%); }
+        .scene > .scene-cap, .scene > .scene-body { position:relative; z-index:1; }
+        .scene-cap { padding-bottom:calc(var(--u)*.9); border-bottom:1px solid rgba(255,255,255,.07); }
+        .sc-ch { color:var(--acc); }
+        .sc-ch::before { content:''; display:inline-block; width:calc(var(--u)*.42); height:calc(var(--u)*1.15);
+            border-radius:99px; background:var(--acc); margin-right:calc(var(--u)*.7); vertical-align:-8%; }
+
+        .ccard, .who, .req, .st, .role, .eq, .ins, .tc, .mt, .ts, .blk, .day, .qz, .sit-c, .sit-risk, .sit-prev,
+        .fp, .rl, .ld, .m4, .pw, .mn, .dn, .fn, .vs-row, .cl-row, .wd, .ce, .sumline, .msg-b, .sc-case, .sc-note, .col {
+            background-image:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.012));
+            box-shadow:0 calc(var(--u)*.8) calc(var(--u)*2) rgba(3,7,18,.4), inset 0 1px 0 rgba(255,255,255,.07); }
+        .ccard, .who, .tc, .mt, .m4 { transition:transform .5s cubic-bezier(.2,.8,.25,1); }
+        .ccard .ic, .who .wic, .tc .tc-i, .ts .ts-h { text-shadow:0 calc(var(--u)*.35) calc(var(--u)*.9) rgba(0,0,0,.45); }
+
+        /* появление: ступенькой, с лёгким приближением */
+        [data-at] { opacity:0; transform:translateY(calc(var(--u)*1.15)) scale(.986);
+            transition:opacity .5s ease var(--d,0s), transform .62s cubic-bezier(.2,.8,.25,1) var(--d,0s); }
+        [data-at].on { opacity:1; transform:none; }
+        @media (prefers-reduced-motion:reduce) { [data-at] { transition-duration:.01s; } }
+
+        /* полосы-индикаторы вырастают */
+        .bar .bt i, .blk-bar .seg { transition:width 1.05s cubic-bezier(.2,.8,.25,1) calc(var(--d,0s) + .12s); }
+        [data-at]:not(.on) .bar .bt i, [data-at]:not(.on) .blk-bar .seg { width:0 !important; }
+        .bar:not([data-at]) .bt i { width:var(--w); }
+
+        /* скриншоты: медленный наезд после появления */
+        .sc-shot img { transition:transform 7s ease-out .2s, opacity .5s ease; will-change:transform; }
+        [data-at].on .sc-shot img, .sc-shot[data-at].on img { transform:scale(1.025); }
+
+        /* акценты «внимание» мягко пульсируют */
+        .sc-note.danger.big, .sit-risk.hi { animation:softPulse 3.4s ease-in-out 1.2s 3; }
+        @keyframes softPulse { 0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,0); } 50% { box-shadow:0 0 0 calc(var(--u)*.55) rgba(239,68,68,.16); } }
 
         /* блоки сцен */
         .sc-title { text-align:center; }
@@ -489,14 +570,26 @@
     </div>
     <div class="scene" data-i="4">
       <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Ожидание больше двух часов</span></div>
-      <div class="scene-body"><div class="sc-sit">
-  <div class="sit-cols">
-    <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Через 1,5 часа — обращение «ждём с такого-то». Через 2 часа — второе, про оплату простоя. Спор по оплате: 30 дней</div>
-    <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>«Приложение не выключай. Снимок ленты событий сейчас и при выезде»</div>
-  </div>
-  <div class="sit-risk lo" data-at="2"><span class="lbl">Чем грозит · опасность низкая</span>Официальных сумм Amazon не публикует. По данным перевозчиков: 2 часа бесплатно, дальше по обращению</div>
-  <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Живую погрузку в сезон считать по времени, а не по милям</div>
-</div></div>
+      <div class="scene-body"><svg class="an" viewBox="0 0 900 300">
+  <g transform="translate(170,150)"><g data-at="0">
+    <circle r="98" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.14)" stroke-width="2"/>
+    <g transform="rotate(-90)"><circle r="98" fill="none" stroke="#f59e0b" stroke-width="6" class="draw" style="--len:616"/></g>
+    <g class="hand"><rect x="-3" y="-78" width="6" height="82" rx="3" fill="#e2e8f0"/></g>
+    <circle r="7" fill="#e2e8f0"/>
+  </g></g>
+  <g transform="translate(340,58)"><g data-at="1">
+    <rect width="500" height="60" rx="14" fill="rgba(255,255,255,.05)" stroke="rgba(255,255,255,.12)"/>
+    <text x="26" y="37" class="t-x" fill="#e2e8f0">Приехал — отметка в приложении</text>
+  </g></g>
+  <g transform="translate(340,132)"><g data-at="2">
+    <rect width="500" height="60" rx="14" fill="rgba(245,158,11,.12)" stroke="rgba(245,158,11,.5)"/>
+    <text x="26" y="37" class="t-x" fill="#fbbf24">Через 1,5 часа — первое обращение</text>
+  </g></g>
+  <g transform="translate(340,206)"><g data-at="3">
+    <rect width="500" height="60" rx="14" fill="rgba(16,185,129,.12)" stroke="rgba(16,185,129,.5)"/>
+    <text x="26" y="37" class="t-x" fill="#6ee7b7">Через 2 часа — обращение про простой</text>
+  </g></g>
+</svg></div>
     </div>
     <div class="scene" data-i="5">
       <div class="scene-cap"><span class="sc-ch">Глава 1. На складе</span><span class="sc-tt">Пломба не совпадает</span></div>
@@ -966,6 +1059,24 @@
   a.addEventListener('ended', markDone);
   addEventListener('pagehide', saveState);
   document.addEventListener('visibilitychange', function () { if (document.hidden) saveState(); });
+
+  // ── визуальный слой: цвет главы, ступенчатое появление, счётчик чисел ──
+  (function () {
+    var prev = null, ci = 0;
+    scenes.forEach(function (sc) {
+      var ch = (sc.querySelector('.sc-ch') || {}).textContent || '';
+      if (ch !== prev) { prev = ch; ci = ci % 5 + 1; }
+      sc.setAttribute('data-c', ci);
+      // ступенька внутри одной группы появления
+      var seen = {};
+      [].forEach.call(sc.querySelectorAll('[data-at]'), function (el) {
+        var k = el.getAttribute('data-at');
+        seen[k] = (seen[k] || 0) + 1;
+        el.style.setProperty('--d', ((seen[k] - 1) * 0.075).toFixed(3) + 's');
+      });
+    });
+
+  })();
 
   showScene(0); reveal(0, -1); setPlay(false);
 })();
