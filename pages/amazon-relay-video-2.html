@@ -81,6 +81,55 @@
         [data-at].on { opacity:1; transform:none; }
 
 
+        /* ===== СИТУАЦИИ: сцена + лента действий ===== */
+        .sit2 { display:grid; grid-template-columns:32% 1fr; gap:calc(var(--u)*2.2); align-items:center; height:100%; min-height:0; }
+        .sit2.flip { grid-template-columns:1fr 32%; } .sit2.flip .sit2-art { order:2; }
+        .sit2-art { display:flex; align-items:center; justify-content:center; }
+        .sit2-art .pic { width:100%; height:auto; max-height:calc(var(--u)*36); overflow:visible; }
+        .sit2-body { display:flex; flex-direction:column; gap:calc(var(--u)*.75); min-width:0; }
+        .sit2-row { display:flex; gap:calc(var(--u)*1); padding:calc(var(--u)*.9) calc(var(--u)*1.2); border-radius:calc(var(--u)*1.1); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); font-size:calc(var(--u)*1.28); line-height:1.5; color:var(--text-secondary); }
+        .sit2-row > i { font-style:normal; flex:0 0 calc(var(--u)*2.7); height:calc(var(--u)*2.7); border-radius:calc(var(--u)*.85); display:flex; align-items:center; justify-content:center; font-size:calc(var(--u)*1.4); background:rgba(255,255,255,.06); }
+        .sit2-row > div { min-width:0; flex:1; }
+        .sit2-row b { display:block; font-size:calc(var(--u)*1.02); font-weight:800; letter-spacing:.09em; text-transform:uppercase; margin-bottom:calc(var(--u)*.25); }
+        .sit2-row.d { border-color:rgba(6,182,212,.35); } .sit2-row.d b { color:var(--primary); } .sit2-row.d > i { background:rgba(6,182,212,.14); }
+        .sit2-row.w { border-color:rgba(255,153,0,.35); } .sit2-row.w b { color:var(--amz); } .sit2-row.w > i { background:rgba(255,153,0,.14); }
+        .sit2-row.r.hi { background:rgba(239,68,68,.09); border-color:rgba(239,68,68,.38); color:#fca5a5; } .sit2-row.r.hi b { color:#fca5a5; } .sit2-row.r.hi > i { background:rgba(239,68,68,.16); }
+        .sit2-row.r.md { background:rgba(245,158,11,.09); border-color:rgba(245,158,11,.35); color:#fcd34d; } .sit2-row.r.md b { color:#fcd34d; } .sit2-row.r.md > i { background:rgba(245,158,11,.16); }
+        .sit2-row.r.lo { background:rgba(16,185,129,.09); border-color:rgba(16,185,129,.35); color:#6ee7b7; } .sit2-row.r.lo b { color:#6ee7b7; } .sit2-row.r.lo > i { background:rgba(16,185,129,.16); }
+        .sev { height:calc(var(--u)*.5); border-radius:99px; background:rgba(255,255,255,.08); margin-top:calc(var(--u)*.6); overflow:hidden; }
+        .sev i { display:block; height:100%; width:0; background:currentColor; border-radius:99px; transition:width 1.1s cubic-bezier(.2,.8,.25,1) .35s; }
+        [data-at].on .sev i { width:var(--w); }
+        .sit2-prev { font-size:calc(var(--u)*1.16); color:var(--text-muted); padding:calc(var(--u)*.5) calc(var(--u)*1.1); border-left:3px solid #10b981; line-height:1.45; }
+        .sit2-prev b { color:#6ee7b7; font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:calc(var(--u)*.98); margin-right:calc(var(--u)*.6); }
+        @media (max-width:900px) { .sit2, .sit2.flip { grid-template-columns:1fr; } .sit2-art { display:none; } }
+
+        .pic .pulse { animation:picPulse 1.8s ease-in-out .6s infinite; transform-box:fill-box; transform-origin:center; }
+        @keyframes picPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
+        .pic .scan { animation:picScan 1.7s ease-in-out .3s 3; }
+        @keyframes picScan { 0%,100% { transform:translateY(0); } 50% { transform:translateY(150px); } }
+        .pic .rain { animation:picRain 1s linear infinite; }
+        @keyframes picRain { 0% { transform:translateY(-8px); opacity:0; } 30% { opacity:1; } 100% { transform:translateY(16px); opacity:0; } }
+        .pic .hand-fast { animation:picSpin 3s linear infinite; transform-box:fill-box; transform-origin:50% 100%; }
+        @keyframes picSpin { to { transform:rotate(360deg); } }
+        .pic .ring { animation:picRing 1.4s ease-out infinite; transform-box:fill-box; transform-origin:center; }
+        @keyframes picRing { 0% { transform:scale(.85); opacity:1; } 100% { transform:scale(1.7); opacity:0; } }
+        .pic .stamp { transform:scale(1.7); opacity:0; transform-box:fill-box; transform-origin:center; transition:transform .45s cubic-bezier(.2,1.4,.4,1) .5s, opacity .3s ease .5s; }
+        .on .pic .stamp { transform:scale(1); opacity:1; }
+        .pic .grow-x { transform:scaleX(0); transform-box:fill-box; transform-origin:left center; transition:transform 1.1s cubic-bezier(.3,0,.2,1) .4s; }
+        .on .pic .grow-x { transform:scaleX(1); }
+        .pic .drive-away { transition:transform 2.6s cubic-bezier(.4,0,.6,1) .3s; }
+        .on .pic .drive-away { transform:translateX(70px); }
+        .pic .draw { stroke-dasharray:var(--len,200); stroke-dashoffset:var(--len,200); transition:stroke-dashoffset 1s cubic-bezier(.3,0,.2,1) .4s; }
+        .on .pic .draw { stroke-dashoffset:0; }
+        @media (prefers-reduced-motion:reduce) { .pic * { animation:none !important; transition-duration:.01s !important; } }
+        .sit2.noart { grid-template-columns:1fr; }
+        .pic .drive-in { transform:translateX(-140px); transition:transform 2.4s cubic-bezier(.35,0,.25,1) .2s; }
+        .on .pic .drive-in { transform:translateX(0); }
+        .pic .pin { animation:pinBob 1.6s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+        .pic .boom { transform-box:fill-box; transform-origin:left center; transition:transform 1s cubic-bezier(.3,0,.2,1) .6s; }
+        .on .pic .boom { transform:rotate(-70deg); }
+        .pic .tapbtn { transform-box:fill-box; transform-origin:center; }
+        .on .pic .tapbtn { animation:btnPress .5s ease .7s 2; }
         /* ===== АНИМАЦИИ ДЕЙСТВИЙ ===== */
         .an { width:100%; height:auto; max-height:100%; }
         .an text { font-family:'Inter',sans-serif; }
@@ -521,12 +570,34 @@
     </div>
     <div class="scene" data-i="1">
       <div class="scene-cap"><span class="sc-ch">Глава 1. Какие бывают грузы</span><span class="sc-tt">Четыре способа получить груз</span></div>
-      <div class="scene-body"><div class="sc-cols3 four">
+      <div class="scene-body"><div class="sit2 art"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(96,96)"><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gCab)" filter="url(#fSh)"/><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gGlass)"/><g fill="#475569" transform="translate(-34,-22)"><rect y="0" width="68" height="7" rx="3.5"/><rect y="14" width="50" height="7" rx="3.5"/><rect y="28" width="60" height="7" rx="3.5"/></g><rect x="-34" y="26" width="68" height="14" rx="7" fill="#fff" fill-opacity=".9"/></g>
+    <g transform="translate(224,96)"><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gCab)" filter="url(#fSh)"/><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gGlass)"/><g transform="translate(-48,-26) scale(0.8)" filter="url(#fSoft)">
+  <rect x="0" y="52" width="112" height="12" rx="3" fill="#1e293b"/>
+  <rect x="6" y="46" width="30" height="8" rx="2" fill="#0f172a"/>
+  <rect x="18" y="4" width="50" height="56" rx="8" fill="url(#gCab)"/>
+  <rect x="18" y="4" width="50" height="56" rx="8" fill="url(#gGlass)"/>
+  <rect x="66" y="28" width="44" height="32" rx="6" fill="url(#gCab)"/>
+  <rect x="70" y="24" width="38" height="12" rx="6" fill="#fff" fill-opacity=".14"/>
+  <rect x="44" y="8" width="22" height="20" rx="4" fill="#dbeafe" fill-opacity=".85"/>
+  <rect x="47" y="10" width="8" height="16" rx="2" fill="#fff" fill-opacity=".45"/>
+  <rect x="104" y="42" width="8" height="10" rx="2" fill="#fde68a"/>
+  <rect x="98" y="30" width="12" height="16" rx="2" fill="#0f172a" fill-opacity=".55"/>
+  <rect x="24" y="-14" width="5" height="16" rx="2" fill="#94a3b8"/><rect x="22" y="-18" width="9" height="5" rx="2" fill="#cbd5e1"/>
+  <rect x="0" y="40" width="20" height="14" rx="3" fill="#1e293b"/>
+  <g transform="translate(24,66)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g><g transform="translate(50,66)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g><g transform="translate(96,66)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g></g></g>
+    <g transform="translate(96,224)"><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gAmber)" filter="url(#fSh)"/><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gGlass)"/><g transform="rotate(-25)"><rect x="-7" y="-36" width="14" height="52" rx="6" fill="#3b2402"/><rect x="-24" y="-48" width="48" height="24" rx="8" fill="#3b2402"/></g></g>
+    <g transform="translate(224,224)"><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gAmber)" filter="url(#fSh)"/><rect x="-52" y="-52" width="104" height="104" rx="22" fill="url(#gGlass)"/><g transform="translate(-40,-30)"><rect width="80" height="60" rx="14" fill="#0f172a" /><rect width="80" height="60" rx="14" fill="url(#gGlass)"/><rect width="80" height="26" rx="14" fill="#1e293b"/><rect y="13" width="80" height="13" fill="#1e293b"/><g stroke="#243044" stroke-width="1.5"><path d="M0 34.5 H80"/><path d="M0 43 H80"/><path d="M0 51.5 H80"/><path d="M11.428571428571429 26 V60"/><path d="M22.857142857142858 26 V60"/><path d="M34.285714285714285 26 V60"/><path d="M45.714285714285715 26 V60"/><path d="M57.142857142857146 26 V60"/><path d="M68.57142857142857 26 V60"/></g></g></g></svg></div><div class="sit2-body"><div class="sc-cols3 four">
   <div class="ccard" data-at="1"><div class="ic">📋</div><div class="cnum">1</div><div class="clab">Груз с доски</div><div class="cnote">доступно сразу</div></div>
   <div class="ccard" data-at="1"><div class="ic">🚚</div><div class="cnum">2</div><div class="clab">Свой трак на доске</div><div class="cnote">доступно сразу</div></div>
   <div class="ccard need" data-at="2"><div class="ic">🔨</div><div class="cnum">3</div><div class="clab">Аукцион блоков</div><div class="cnote">нужен рейтинг</div></div>
   <div class="ccard need" data-at="2"><div class="ic">📅</div><div class="cnum">4</div><div class="clab">Недельный контракт</div><div class="cnote">нужен рейтинг</div></div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="2">
       <div class="scene-cap"><span class="sc-ch">Глава 1. Какие бывают грузы</span><span class="sc-tt">Груз с доски</span></div>
@@ -549,7 +620,45 @@
     </div>
     <div class="scene" data-i="4">
       <div class="scene-cap"><span class="sc-ch">Глава 1. Какие бывают грузы</span><span class="sc-tt">Блок: вы продаёте время</span></div>
-      <div class="scene-body"><div class="sc-block">
+      <div class="scene-body"><div class="sit2 art flip"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(110,120)"><circle r="80" fill="#0b1220" stroke="#22d3ee" stroke-width="6" filter="url(#fSh)"/><path class="draw" style="--len:500" d="M0 -74 A74 74 0 1 1 -74 0" fill="none" stroke="#22d3ee" stroke-width="10" stroke-linecap="round" opacity=".5"/><text x="0" y="14" text-anchor="middle" font-family="Inter,sans-serif" font-size="46" font-weight="900" fill="#22d3ee">13</text></g>
+    <rect x="0" y="250" width="320" height="26" fill="url(#gRoad)"/>
+  <g stroke="#fbbf24" stroke-opacity=".5" stroke-width="3" stroke-dasharray="26 22"><path d="M20 263 H300"/></g><g class="grow-x"><g transform="translate(20,200) scale(0.7)" filter="url(#fSoft)">
+  <rect x="0" y="0" width="84" height="52" rx="5" fill="url(#gTrl)"/>
+  <rect x="0" y="0" width="84" height="8" rx="4" fill="url(#gTrlTop)"/>
+  <rect x="0" y="0" width="84" height="52" rx="5" fill="url(#gGlass)"/>
+  <g stroke="#b45309" stroke-opacity=".45" stroke-width="1.5"><path d="M14 10 V44"/><path d="M32 10 V44"/><path d="M50 10 V44"/><path d="M68 10 V44"/></g>
+  <rect x="0" y="0" width="7" height="52" rx="3" fill="#c26a00"/><rect x="1.5" y="18" width="4" height="14" rx="1" fill="#fcd34d"/>
+  <rect x="44" y="52" width="6" height="14" rx="2" fill="#475569"/><rect x="40" y="64" width="14" height="4" rx="2" fill="#475569"/>
+  <rect x="6" y="52" width="72" height="6" fill="#1e293b"/>
+  <g transform="translate(34,64)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g><g transform="translate(60,64)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g></g></g><g class="grow-x"><g transform="translate(120,200) scale(0.7)" filter="url(#fSoft)">
+  <rect x="0" y="0" width="84" height="52" rx="5" fill="url(#gTrl)"/>
+  <rect x="0" y="0" width="84" height="8" rx="4" fill="url(#gTrlTop)"/>
+  <rect x="0" y="0" width="84" height="52" rx="5" fill="url(#gGlass)"/>
+  <g stroke="#b45309" stroke-opacity=".45" stroke-width="1.5"><path d="M14 10 V44"/><path d="M32 10 V44"/><path d="M50 10 V44"/><path d="M68 10 V44"/></g>
+  <rect x="0" y="0" width="7" height="52" rx="3" fill="#c26a00"/><rect x="1.5" y="18" width="4" height="14" rx="1" fill="#fcd34d"/>
+  <rect x="44" y="52" width="6" height="14" rx="2" fill="#475569"/><rect x="40" y="64" width="14" height="4" rx="2" fill="#475569"/>
+  <rect x="6" y="52" width="72" height="6" fill="#1e293b"/>
+  <g transform="translate(34,64)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g><g transform="translate(60,64)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g></g></g><g class="grow-x"><g transform="translate(220,200) scale(0.7)" filter="url(#fSoft)">
+  <rect x="0" y="0" width="84" height="52" rx="5" fill="url(#gTrl)"/>
+  <rect x="0" y="0" width="84" height="8" rx="4" fill="url(#gTrlTop)"/>
+  <rect x="0" y="0" width="84" height="52" rx="5" fill="url(#gGlass)"/>
+  <g stroke="#b45309" stroke-opacity=".45" stroke-width="1.5"><path d="M14 10 V44"/><path d="M32 10 V44"/><path d="M50 10 V44"/><path d="M68 10 V44"/></g>
+  <rect x="0" y="0" width="7" height="52" rx="3" fill="#c26a00"/><rect x="1.5" y="18" width="4" height="14" rx="1" fill="#fcd34d"/>
+  <rect x="44" y="52" width="6" height="14" rx="2" fill="#475569"/><rect x="40" y="64" width="14" height="4" rx="2" fill="#475569"/>
+  <rect x="6" y="52" width="72" height="6" fill="#1e293b"/>
+  <g transform="translate(34,64)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g><g transform="translate(60,64)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g></g></g><g transform="translate(262,140)"><circle r="24" fill="url(#gAmber)" filter="url(#fSoft)"/><text x="0" y="9" text-anchor="middle" font-family="Inter,sans-serif" font-size="26" font-weight="900" fill="#3b2402">$</text></g></svg></div><div class="sit2-body"><div class="sc-block">
   <div class="blk" data-at="1">
     <div class="blk-h">Блок на 13 часов, суббота</div>
     <div class="blk-bar">
@@ -561,7 +670,7 @@
     <div class="blk-f" data-at="3">Оплата — за все 13 часов</div>
   </div>
 </div>
-<div class="sc-note" data-at="4">«Тур» — слово водителей. В документах Amazon его нет</div></div>
+<div class="sc-note" data-at="4">«Тур» — слово водителей. В документах Amazon его нет</div></div></div></div>
     </div>
     <div class="scene" data-i="5">
       <div class="scene-cap"><span class="sc-ch">Глава 1. Какие бывают грузы</span><span class="sc-tt">Какие бывают блоки</span></div>
@@ -582,16 +691,17 @@
     </div>
     <div class="scene" data-i="7">
       <div class="scene-cap"><span class="sc-ch">Глава 1. Какие бывают грузы</span><span class="sc-tt">Что выбрать под свою ситуацию</span></div>
-      <div class="scene-body"><div class="sc-choice">
+      <div class="scene-body"><div class="sit2 art"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><rect x="152" y="60" width="16" height="230" rx="5" fill="url(#gSlate)" filter="url(#fSoft)"/>
+    <g transform="translate(160,84) scale(1,1)"><path d="M0 -22 H120 L146 0 L120 22 H0z" fill="url(#gCab)" filter="url(#fSoft)"/><path d="M0 -22 H120 L146 0 L120 22 H0z" fill="url(#gGlass)"/><rect x="18" y="-5" width="70" height="10" rx="5" fill="#fff" fill-opacity=".8"/></g><g transform="translate(160,150) scale(-1,1)"><path d="M0 -22 H120 L146 0 L120 22 H0z" fill="url(#gAmber)" filter="url(#fSoft)"/><path d="M0 -22 H120 L146 0 L120 22 H0z" fill="url(#gGlass)"/><rect x="18" y="-5" width="70" height="10" rx="5" fill="#fff" fill-opacity=".8"/></g><g transform="translate(160,216) scale(1,1)"><path d="M0 -22 H120 L146 0 L120 22 H0z" fill="url(#gGreen)" filter="url(#fSoft)"/><path d="M0 -22 H120 L146 0 L120 22 H0z" fill="url(#gGlass)"/><rect x="18" y="-5" width="70" height="10" rx="5" fill="#fff" fill-opacity=".8"/></g></svg></div><div class="sit2-body"><div class="sc-choice">
   <div class="ch-row" data-at="1"><span class="ch-if">Трак стоит пустым сейчас</span><span class="ch-arr">→</span><span class="ch-do">Груз с доски</span></div>
   <div class="ch-row" data-at="2"><span class="ch-if">Освободится завтра в 14:00</span><span class="ch-arr">→</span><span class="ch-do">Свой трак на доске</span></div>
   <div class="ch-row" data-at="3"><span class="ch-if">Нужна стабильная неделя</span><span class="ch-arr">→</span><span class="ch-do">Аукцион блоков</span></div>
   <div class="ch-row" data-at="3"><span class="ch-if">Два трака и план на месяц</span><span class="ch-arr">→</span><span class="ch-do">Недельный контракт</span></div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="8">
       <div class="scene-cap"><span class="sc-ch">Глава 2. Как взять груз</span><span class="sc-tt">Глава 2. Как диспетчер берёт груз</span></div>
-      <div class="scene-body"><div class="sc-title small">
+      <div class="scene-body"><div class="sit2 art flip"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(40,50)"><rect width="240" height="210" rx="14" fill="#0f172a" filter="url(#fSh)"/><rect width="240" height="210" rx="14" fill="url(#gGlass)"/><rect width="240" height="8" rx="4" fill="#ff9900"/></g><g fill="#475569" transform="translate(60,78)"><rect y="0" width="110" height="7" rx="3.5"/><rect y="16" width="160" height="7" rx="3.5"/><rect y="32" width="130" height="7" rx="3.5"/><rect y="48" width="150" height="7" rx="3.5"/></g><rect x="60" y="150" width="200" height="40" rx="10" fill="#111a2b"/><text x="160" y="177" text-anchor="middle" font-family="Inter,sans-serif" font-size="26" font-weight="900" fill="#ffb648">$412</text><g transform="translate(60,206)"><g class="tapbtn"><rect width="200" height="30" rx="15" fill="url(#gCab)"/><rect width="200" height="30" rx="15" fill="url(#gGlass)"/><rect x="78" y="11" width="44" height="8" rx="4" fill="#fff" fill-opacity=".9"/></g></g></svg></div><div class="sit2-body"><div class="sc-title small">
   <div class="kicker" data-at="0">Глава 2</div>
   <h1 class="big" data-at="0">Как диспетчер<br><span class="accent">берёт груз</span></h1>
   <div class="sc-cols3 tight">
@@ -600,28 +710,30 @@
     <div class="ccard" data-at="1"><div class="cnum">3</div><div class="clab">забронировать и назначить водителя</div></div>
   </div>
   <div class="sc-note danger" data-at="2">Груз без водителя снимут и запишут отказ</div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="9">
       <div class="scene-cap"><span class="sc-ch">Глава 2. Как взять груз</span><span class="sc-tt">Читаем карточку груза</span></div>
-      <div class="scene-body"><div class="sc-load">
+      <div class="scene-body"><div class="sit2 art"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(30,40)"><rect width="260" height="150" rx="14" fill="#0e1626" filter="url(#fSh)"/><g stroke="#243044" stroke-width="1.5"><path d="M0 40 H260 M0 80 H260 M0 120 H260 M60 0 V150 M130 0 V150 M200 0 V150"/></g><path class="draw" style="--len:300" d="M30 120 C80 110, 90 40, 150 46 S220 40, 236 26" stroke="#22d3ee" stroke-width="4" fill="none" stroke-linecap="round"/><g class="pin"><circle cx="30" cy="120" r="9" fill="#ff9900"/><circle cx="30" cy="120" r="3.5" fill="#fff"/></g><g class="pin"><circle cx="236" cy="26" r="9" fill="#10b981"/><circle cx="236" cy="26" r="3.5" fill="#fff"/></g></g>
+    <g transform="translate(30,210)"><rect width="260" height="70" rx="14" fill="#0f172a" filter="url(#fSoft)"/><g fill="#475569" transform="translate(20,20)"><rect y="0" width="90" height="7" rx="3.5"/><rect y="16" width="120" height="7" rx="3.5"/></g><text x="216" y="48" text-anchor="middle" font-family="Inter,sans-serif" font-size="30" font-weight="900" fill="#ffb648">$412</text></g></svg></div><div class="sit2-body"><div class="sc-load">
   <div class="ld-row" data-at="1"><span class="ld-l">Откуда → куда</span><span class="ld-v"><b>CDW5</b> Картерет, Нью-Джерси → <b>JFK8</b> Стейтен-Айленд, Нью-Йорк</span></div>
   <div class="ld-row" data-at="1"><span class="ld-l">Мили</span><span class="ld-v">38 · только сам груз, дорога к складу не считается</span></div>
   <div class="ld-row" data-at="2"><span class="ld-l">Забрать</span><span class="ld-v">четверг, 22:00–23:00 · <span class="ld-warn">окно один час</span></span></div>
   <div class="ld-row" data-at="2"><span class="ld-l">Доставить</span><span class="ld-v">пятница, 02:30</span></div>
   <div class="ld-row" data-at="3"><span class="ld-l">Прицеп</span><span class="ld-v">53 фута, прицеп Amazon · отцепить и прицепить</span></div>
   <div class="ld-row big" data-at="4"><span class="ld-l">Цена</span><span class="ld-v"><b class="ld-money">$412</b> всё включено: топливо и платные дороги внутри</span></div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="10">
       <div class="scene-cap"><span class="sc-ch">Глава 2. Как взять груз</span><span class="sc-tt">Считаем доход в час</span></div>
-      <div class="scene-body"><div class="sc-calc">
+      <div class="scene-body"><div class="sit2 art flip"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(70,30)"><rect width="180" height="260" rx="18" fill="url(#gSlate)" filter="url(#fSh)"/><rect x="16" y="16" width="148" height="56" rx="10" fill="#0b1220"/><text x="90" y="54" text-anchor="middle" font-family="Inter,sans-serif" font-size="30" font-weight="900" fill="#34d399">$110</text>
+    <rect x="16" y="88" width="44" height="38" rx="9" fill="#1e293b"/><rect x="66" y="88" width="44" height="38" rx="9" fill="#1e293b"/><rect x="116" y="88" width="44" height="38" rx="9" fill="#1e293b"/><rect x="16" y="134" width="44" height="38" rx="9" fill="#1e293b"/><rect x="66" y="134" width="44" height="38" rx="9" fill="#1e293b"/><rect x="116" y="134" width="44" height="38" rx="9" fill="#1e293b"/><rect x="16" y="180" width="44" height="38" rx="9" fill="#1e293b"/><rect x="66" y="180" width="44" height="38" rx="9" fill="#1e293b"/><rect x="116" y="180" width="44" height="38" rx="9" fill="#1e293b"/><rect x="16" y="226" width="44" height="38" rx="9" fill="#1e293b"/><rect x="66" y="226" width="44" height="38" rx="9" fill="#1e293b"/><rect x="116" y="226" width="44" height="38" rx="9" fill="url(#gAmber)"/></g></svg></div><div class="sit2-body"><div class="sc-calc">
   <div class="cl-row" data-at="0"><span class="cl-l">В карточке</span><span class="cl-v dim">$412 ÷ 38 миль = $10,84 за милю</span><span class="cl-x">так считать нельзя</span></div>
   <div class="cl-row" data-at="1"><span class="cl-l">Все мили</span><span class="cl-v">17 пустых + 38 с грузом + 20 домой = <b>75 миль</b></span><span class="cl-x">$5,49 за милю</span></div>
   <div class="cl-row" data-at="2"><span class="cl-l">Всё время</span><span class="cl-v">40 мин + 30 мин + 1 ч 20 мин + 30 мин + 40 мин = <b>3 ч 40 мин</b></span><span class="cl-x"></span></div>
   <div class="cl-row res" data-at="3"><span class="cl-l">Доход в час</span><span class="cl-v"><b class="ld-money">$110</b> в час</span><span class="cl-x ok">хороший ночной рейс</span></div>
 </div>
-<div class="sc-note gold" data-at="4">Считайте доход в час за полный круг, а не цену за милю из карточки</div></div>
+<div class="sc-note gold" data-at="4">Считайте доход в час за полный круг, а не цену за милю из карточки</div></div></div></div>
     </div>
     <div class="scene" data-i="11">
       <div class="scene-cap"><span class="sc-ch">Глава 2. Как взять груз</span><span class="sc-tt">Сколько платит Relay</span></div>
@@ -635,16 +747,29 @@
     </div>
     <div class="scene" data-i="12">
       <div class="scene-cap"><span class="sc-ch">Глава 2. Как взять груз</span><span class="sc-tt">Бронируем и назначаем водителя</span></div>
-      <div class="scene-body"><div class="sc-steps">
+      <div class="scene-body"><div class="sit2 art"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(24,40)"><rect width="272" height="190" rx="14" fill="#0f172a" filter="url(#fSh)"/><rect width="272" height="190" rx="14" fill="url(#gGlass)"/><rect width="272" height="28" rx="14" fill="#1e293b"/><rect y="14" width="272" height="14" fill="#1e293b"/>
+    <g fill="#475569" transform="translate(20,46)"><rect y="0" width="120" height="7" rx="3.5"/><rect y="16" width="180" height="7" rx="3.5"/><rect y="32" width="150" height="7" rx="3.5"/></g><rect x="20" y="100" width="232" height="40" rx="10" fill="#111a2b"/><circle cx="44" cy="120" r="12" fill="url(#gCab)"/><circle cx="44" cy="116" r="4" fill="#0f172a"/><rect x="66" y="112" width="90" height="8" rx="4" fill="#94a3b8"/><path class="draw" style="--len:40" d="M222 120 l7 7 l14 -14" stroke="#34d399" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <g transform="translate(20,150)"><g class="tapbtn"><rect width="232" height="30" rx="15" fill="url(#gAmber)"/><rect width="232" height="30" rx="15" fill="url(#gGlass)"/><rect x="94" y="11" width="44" height="8" rx="4" fill="#fff" fill-opacity=".9"/></g></g></g><g transform="translate(150,216)"><g class="tap"><circle r="22" fill="#fff" fill-opacity=".14"/><circle r="12" fill="#fff" fill-opacity=".35"/><circle r="5" fill="#fff"/></g></g></svg></div><div class="sit2-body"><div class="sc-steps">
   <div class="st" data-at="1"><div class="sn">1</div><div class="sb"><div class="stt">Забронировать</div><div class="std">Груз в разделе поездок. Подтверждения на почту не будет</div></div></div>
   <div class="st" data-at="2"><div class="sn">2</div><div class="sb"><div class="stt">Назначить водителя и тягач</div><div class="std">В списке только водители со статусом «Активен»</div></div></div>
   <div class="st" data-at="3"><div class="sn">3</div><div class="sb"><div class="stt">Проверить номер тягача</div><div class="std">Ворота читают номера. Не совпал — не впустят</div></div></div>
   <div class="st" data-at="4"><div class="sn">4</div><div class="sb"><div class="stt">Посмотреть обратный груз</div><div class="std">Сайт предлагает грузы из точки доставки — убираем пустой пробег</div></div></div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="13">
       <div class="scene-cap"><span class="sc-ch">Глава 2. Как взять груз</span><span class="sc-tt">Сообщение водителю</span></div>
-      <div class="scene-body"><div class="sc-msg" data-at="2">
+      <div class="scene-body"><div class="sit2 art flip"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(30,60)"><path d="M0 18 a18 18 0 0 1 18 -18 h200 a18 18 0 0 1 18 18 v110 a18 18 0 0 1 -18 18 h-150 l-34 30 v-30 h-16 a18 18 0 0 1 -18 -18z" fill="url(#gCab)" filter="url(#fSh)"/><path d="M0 18 a18 18 0 0 1 18 -18 h200 a18 18 0 0 1 18 18 v110 a18 18 0 0 1 -18 18 h-150 l-34 30 v-30 h-16 a18 18 0 0 1 -18 -18z" fill="url(#gGlass)"/>
+    <g fill="#fff" fill-opacity=".85"><rect x="24" y="26" width="150" height="8" rx="4"/><rect x="24" y="46" width="190" height="8" rx="4"/><rect x="24" y="66" width="170" height="8" rx="4"/><rect x="24" y="86" width="120" height="8" rx="4"/><rect x="24" y="106" width="90" height="8" rx="4"/></g></g>
+    <g transform="translate(214,190) scale(0.38)" filter="url(#fSh)">
+  <rect width="170" height="330" rx="26" fill="#0f172a"/><rect width="170" height="330" rx="26" fill="url(#gGlass)"/>
+  <rect x="2" y="2" width="166" height="326" rx="24" fill="none" stroke="#475569" stroke-width="2"/>
+  <rect x="10" y="12" width="150" height="306" rx="18" fill="#0b1220"/>
+  <rect x="62" y="20" width="46" height="8" rx="4" fill="#1e293b"/>
+  <g transform="translate(10,12)">
+    <g fill="#e2e8f0" font-family="Inter,sans-serif" font-size="9" font-weight="700"><text x="12" y="24">9:41</text></g>
+    <g fill="#e2e8f0"><rect x="118" y="17" width="4" height="7" rx="1"/><rect x="124" y="14" width="4" height="10" rx="1"/><rect x="130" y="11" width="4" height="13" rx="1"/><rect x="138" y="13" width="9" height="10" rx="2" fill="none" stroke="#e2e8f0" stroke-width="1.5"/><rect x="140" y="15" width="5" height="6" rx="1"/></g>
+    <rect x="0" y="34" width="150" height="256" fill="#111a2b"/><rect x="14" y="60" width="100" height="40" rx="12" fill="#22d3ee" fill-opacity=".3"/>
+  </g></g></svg></div><div class="sit2-body"><div class="sc-msg" data-at="2">
   <div class="msg-h">Сообщение водителю перед рейсом</div>
   <div class="msg-b">Сергей, поездка на четверг. Склад CDW5 в Картерете, окно 22:00–23:00.
 Приезжай к 21:15, встань на парковке ожидания справа от въезда, к воротам не подъезжай раньше 21:45.
@@ -652,16 +777,16 @@
 Прицеп Amazon, отцепить и прицепить. Сделай осмотр прицепа: фото со всех сторон, пломба, шины.
 Номер пломбы не совпал с документом — не выезжай, звони мне.
 Дальше JFK8 в Стейтен-Айленде к 02:30, платные мосты уже в цене. Я на связи всю ночь.</div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="14">
       <div class="scene-cap"><span class="sc-ch">Глава 2. Как взять груз</span><span class="sc-tt">Чего делать нельзя</span></div>
-      <div class="scene-body"><div class="sc-dont">
+      <div class="scene-body"><div class="sit2 art"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(96,96)"><g class="pulse"><circle r="46" fill="url(#gRed)" filter="url(#fSh)"/><circle r="46" fill="url(#gGlass)"/><rect x="-28" y="-7" width="56" height="14" rx="7" fill="#fff"/></g></g><g transform="translate(224,96)"><g class="pulse"><circle r="46" fill="url(#gRed)" filter="url(#fSh)"/><circle r="46" fill="url(#gGlass)"/><rect x="-28" y="-7" width="56" height="14" rx="7" fill="#fff"/></g></g><g transform="translate(96,224)"><g class="pulse"><circle r="46" fill="url(#gRed)" filter="url(#fSh)"/><circle r="46" fill="url(#gGlass)"/><rect x="-28" y="-7" width="56" height="14" rx="7" fill="#fff"/></g></g><g transform="translate(224,224)"><g class="pulse"><circle r="46" fill="url(#gRed)" filter="url(#fSh)"/><circle r="46" fill="url(#gGlass)"/><rect x="-28" y="-7" width="56" height="14" rx="7" fill="#fff"/></g></g></svg></div><div class="sit2-body"><div class="sc-dont">
   <div class="dn" data-at="1"><span class="dn-x">✕</span><span class="dn-t"><b>Бронировать «на всякий случай»</b>Груз без водителя снимут и запишут отказ</span></div>
   <div class="dn" data-at="2"><span class="dn-x">✕</span><span class="dn-t"><b>Ставить трак на две поездки сразу</b>Придётся отказаться с полным штрафом. Ведите свой календарь</span></div>
   <div class="dn" data-at="3"><span class="dn-x">✕</span><span class="dn-t"><b>Предлагать цену за груз, который не увезёте</b>Принятое предложение — обязательство</span></div>
   <div class="dn" data-at="4"><span class="dn-x">✕</span><span class="dn-t"><b>Просить поднять цену</b>Такого механизма в Relay нет</span></div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="15">
       <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель на складе</span><span class="sc-tt">Глава 3. Чем склад Amazon отличается</span></div>
@@ -835,10 +960,32 @@
     </div>
     <div class="scene" data-i="18">
       <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель на складе</span><span class="sc-tt">Пломба и выезд</span></div>
-      <div class="scene-body"><div class="sc-steps">
+      <div class="scene-body"><div class="sit2 art flip"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(100,110)"><path d="M0 -60 a34 34 0 0 1 34 34 v22 h-16 v-22 a18 18 0 0 0 -36 0 v22 h-16 v-22 a34 34 0 0 1 34 -34z" fill="#94a3b8"/><rect x="-56" y="-6" width="112" height="76" rx="12" fill="url(#gAmber)" filter="url(#fSh)"/><rect x="-56" y="-6" width="112" height="76" rx="12" fill="url(#gGlass)"/><g fill="#3b2402"><rect x="-42" y="14" width="8" height="34"/><rect x="-30" y="14" width="4" height="34"/><rect x="-22" y="14" width="10" height="34"/><rect x="-8" y="14" width="4" height="34"/><rect x="0" y="14" width="8" height="34"/><rect x="12" y="14" width="6" height="34"/><rect x="22" y="14" width="8" height="34"/><rect x="34" y="14" width="5" height="34"/></g></g>
+    <g transform="translate(100,220)"><circle r="26" fill="url(#gGreen)" filter="url(#fSoft)"/><path class="draw" style="--len:60" d="M-12 0 l8 8 l16 -18" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+    <rect x="160" y="250" width="160" height="26" fill="url(#gRoad)"/>
+  <g stroke="#fbbf24" stroke-opacity=".5" stroke-width="3" stroke-dasharray="26 22"><path d="M180 263 H300"/></g><g transform="translate(200,150)"><rect x="0" y="0" width="12" height="100" rx="4" fill="#64748b"/><g transform="translate(6,6)"><g class="boom"><rect x="-4" y="-6" width="110" height="12" rx="6" fill="#f8fafc"/><g fill="#ef4444"><rect x="10" y="-6" width="17" height="12"/><rect x="44" y="-6" width="17" height="12"/><rect x="78" y="-6" width="17" height="12"/></g></g></g></g><g class="drive-in"><g transform="translate(214,176) scale(0.7)" filter="url(#fSoft)">
+  <rect x="0" y="52" width="112" height="12" rx="3" fill="#1e293b"/>
+  <rect x="6" y="46" width="30" height="8" rx="2" fill="#0f172a"/>
+  <rect x="18" y="4" width="50" height="56" rx="8" fill="url(#gCab)"/>
+  <rect x="18" y="4" width="50" height="56" rx="8" fill="url(#gGlass)"/>
+  <rect x="66" y="28" width="44" height="32" rx="6" fill="url(#gCab)"/>
+  <rect x="70" y="24" width="38" height="12" rx="6" fill="#fff" fill-opacity=".14"/>
+  <rect x="44" y="8" width="22" height="20" rx="4" fill="#dbeafe" fill-opacity=".85"/>
+  <rect x="47" y="10" width="8" height="16" rx="2" fill="#fff" fill-opacity=".45"/>
+  <rect x="104" y="42" width="8" height="10" rx="2" fill="#fde68a"/>
+  <rect x="98" y="30" width="12" height="16" rx="2" fill="#0f172a" fill-opacity=".55"/>
+  <rect x="24" y="-14" width="5" height="16" rx="2" fill="#94a3b8"/><rect x="22" y="-18" width="9" height="5" rx="2" fill="#cbd5e1"/>
+  <rect x="0" y="40" width="20" height="14" rx="3" fill="#1e293b"/>
+  <g transform="translate(24,66)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g><g transform="translate(50,66)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g><g transform="translate(96,66)">
+  <circle r="11" fill="#0b1220"/><circle r="11" fill="none" stroke="#1f2937" stroke-width="3"/>
+  <circle r="5.5" fill="#334155"/><circle r="5.5" fill="none" stroke="#64748b" stroke-width="1.5"/><circle r="1.98" fill="#94a3b8"/></g></g></g></svg></div><div class="sit2-body"><div class="sc-steps">
   <div class="st hot" data-at="0"><div class="sn">5</div><div class="sb"><div class="stt">Пломба</div><div class="std">Номер на пломбе = номер в документе в приложении</div><div class="std dim" data-at="1">Не совпало — стоим и звоним диспетчеру. Пломбу не срываем никогда</div></div></div>
   <div class="st" data-at="2"><div class="sn">6</div><div class="sb"><div class="stt">Выезд</div><div class="std">«Сдал» и «Уехал» — до выезда за ворота</div><div class="std dim" data-at="3">Датчики сверяют прицеп, документы формируются сами</div></div></div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="19">
       <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель на складе</span><span class="sc-tt">Что делает диспетчер в это время</span></div>
@@ -862,7 +1009,9 @@
     </div>
     <div class="scene" data-i="21">
       <div class="scene-cap"><span class="sc-ch">Глава 3. Водитель на складе</span><span class="sc-tt">Как написать обращение и один случай</span></div>
-      <div class="scene-body"><div class="sc-msg" data-at="1">
+      <div class="scene-body"><div class="sit2 art"><div class="sit2-art" data-at="0"><svg class="pic" viewBox="0 0 320 320" aria-hidden="true"><g transform="translate(30,40)"><rect width="200" height="220" rx="14" fill="#0f172a" filter="url(#fSh)"/><rect width="200" height="220" rx="14" fill="url(#gGlass)"/><rect width="200" height="8" rx="4" fill="#22d3ee"/></g><rect x="50" y="70" width="160" height="30" rx="8" fill="#111a2b"/><rect x="60" y="81" width="90" height="8" rx="4" fill="#475569"/><rect x="50" y="114" width="160" height="30" rx="8" fill="#111a2b"/><rect x="60" y="125" width="120" height="8" rx="4" fill="#475569"/><rect x="50" y="158" width="160" height="30" rx="8" fill="#111a2b"/><rect x="60" y="169" width="70" height="8" rx="4" fill="#475569"/><rect x="50" y="202" width="160" height="30" rx="8" fill="#111a2b"/><rect x="60" y="213" width="110" height="8" rx="4" fill="#475569"/>
+    <g transform="translate(246,110)"><circle r="42" fill="#0b1220" stroke="#22d3ee" stroke-width="5" filter="url(#fSoft)"/><g class="hand-fast"><rect x="-2.5" y="-34" width="5" height="38" rx="2.5" fill="#22d3ee"/></g><circle r="5" fill="#22d3ee"/></g>
+    <g transform="translate(246,236)"><circle r="30" fill="url(#gGreen)" filter="url(#fSoft)"/><path class="draw" style="--len:60" d="M-14 0 l9 9 l18 -20" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></div><div class="sit2-body"><div class="sc-msg" data-at="1">
   <div class="msg-h">Что должно быть в обращении</div>
   <div class="msg-b">Номер поездки и номер груза
 Имя водителя и номер тягача
@@ -875,7 +1024,7 @@
   <div class="ch">Случай из практики</div>
   <div class="cline bad" data-at="2">Написали на следующий день «вчера долго стояли» — простой не подтвердили</div>
   <div class="cline good" data-at="3">Написали через 1,5 часа ожидания со снимками — простой оплатили</div>
-</div></div>
+</div></div></div></div>
     </div>
     <div class="scene" data-i="22">
       <div class="scene-cap"><span class="sc-ch">Итог</span><span class="sc-tt">Итог второй части</span></div>
