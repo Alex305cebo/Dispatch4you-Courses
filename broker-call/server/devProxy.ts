@@ -155,22 +155,23 @@ export function brokerApi(env: Record<string, string>): Plugin {
           }
         }
 
-        // Озвучка проверяется ТЕМ ЖЕ путём, каким идёт звонок: сперва Gemini,
-        // и только если ключа нет — Groq. Иначе проба показывала бы отказ
-        // Orpheus там, где брокер на самом деле говорит.
-        if (geminiKey) {
+        // Озвучка проверяется ТЕМ ЖЕ путём, каким идёт звонок: сперва Groq
+        // Orpheus, Gemini TTS — только если Groq не ответил. Прежняя проба
+        // каждым обращением к /api/health съедала один из десяти суточных
+        // запросов Gemini TTS, и живому звонку их потом не хватало.
+        let tts: Record<string, unknown> = groqKey
+          ? await probeTts(groqKey, TTS_MODEL)
+          : { ok: false, error: 'no TTS key' }
+        if (!tts.ok && geminiKey) {
           const started = Date.now()
           try {
             const wav = await geminiSpeak(geminiKey, 'Okay, got it.', DEFAULT_VOICE)
-            probe.tts = { ok: true, provider: 'gemini', bytes: wav.length, ms: Date.now() - started }
+            tts = { ok: true, provider: 'gemini', bytes: wav.length, ms: Date.now() - started }
           } catch (e) {
-            probe.tts = { ok: false, provider: 'gemini', error: (e as Error).message.slice(0, 200) }
+            tts = { ...tts, gemini: (e as Error).message.slice(0, 200) }
           }
-        } else if (groqKey) {
-          probe.tts = await probeTts(groqKey, TTS_MODEL)
-        } else {
-          probe.tts = { ok: false, error: 'no TTS key' }
         }
+        probe.tts = tts
 
         probe.stt = groqKey
           ? await probeStt(groqKey, STT_MODELS[0] ?? 'whisper-large-v3')
@@ -353,47 +354,43 @@ export function brokerApi(env: Record<string, string>): Plugin {
       server.middlewares.use('/api/tts', raw(async (req, res) => {
         const body = await readJson<{ text: string; voice?: string }>(req)
 
-        // Gemini первым, когда есть ключ.
+        // Groq Orpheus первым, Gemini TTS — запасным.
         //
-        // Orpheus у Groq требует однократного принятия условий в консоли, и
-        // пока это не сделано, брокер молчит — голосовой тренажёр без голоса.
-        // Gemini TTS работает по обычному HTTP, то есть доступен и боевому PHP,
-        // в отличие от Live-вебсокета. Отказ — молча вниз, на Groq.
-        if (geminiKey) {
-          try {
-            const wav = await geminiSpeak(geminiKey, body.text, body.voice)
+        // Прежде было наоборот: Orpheus требовал однократного принятия условий,
+        // и до тех пор брокер молчал. Условия приняты, а панель квот AI Studio
+        // показала цену прежнего порядка: у моделей Gemini TTS на бесплатном
+        // ключе 10 запросов в СУТКИ и 3 в минуту. Звонок — десятки реплик.
+        if (groqKey) {
+          const r = await fetch('https://api.groq.com/openai/v1/audio/speech', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${groqKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: TTS_MODEL,
+              // Белый список: неизвестное имя подменяется, а не улетает в Groq.
+              // Ровно на этом тренажёр немел — голос `zac` из оригинального
+              // Orpheus у Groq не существует, и каждый запрос падал в 400.
+              voice: normalizeVoice(body.voice),
+              input: body.text,
+              response_format: 'wav',
+            }),
+          })
+          if (r.ok) {
             res.statusCode = 200
             res.setHeader('Content-Type', 'audio/wav')
-            res.end(wav)
+            res.end(Buffer.from(await r.arrayBuffer()))
             return
-          } catch (e) {
-            console.warn(`[broker-call] Gemini TTS не ответил, откат на Groq: ${(e as Error).message}`)
           }
+          console.warn(`[broker-call] Orpheus не ответил, откат на Gemini TTS: ${r.status}`)
         }
 
-        if (!groqKey) throw new HttpError(503, 'no TTS key configured')
-        const r = await fetch('https://api.groq.com/openai/v1/audio/speech', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${groqKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: TTS_MODEL,
-            // Белый список: неизвестное имя подменяется, а не улетает в Groq.
-            // Ровно на этом тренажёр немел — голос `zac` из оригинального
-            // Orpheus у Groq не существует, и каждый запрос падал в 400.
-            voice: normalizeVoice(body.voice),
-            input: body.text,
-            response_format: 'wav',
-          }),
-        })
-        if (!r.ok) {
-          throw new HttpError(r.status, (await r.text()).slice(0, 300))
-        }
+        if (!geminiKey) throw new HttpError(503, 'no TTS key configured')
+        const wav = await geminiSpeak(geminiKey, body.text, body.voice)
         res.statusCode = 200
         res.setHeader('Content-Type', 'audio/wav')
-        res.end(Buffer.from(await r.arrayBuffer()))
+        res.end(wav)
       }))
 
       // ── Разбор звонка ─────────────────────────────────────────────────────

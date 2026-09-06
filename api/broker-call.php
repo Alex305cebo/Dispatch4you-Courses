@@ -368,6 +368,15 @@ function bc_gemini_voice_from_orpheus($raw) {
   return bc_gemini_voice(isset($map[$v]) ? $map[$v] : 'Puck');
 }
 
+/** Готовый WAV в ответ и выход: путей отдачи звука два, заголовки одни. */
+function bc_send_wav($wav) {
+  http_response_code(200);
+  header('Content-Type: audio/wav');
+  header('Cache-Control: no-store');
+  echo $wav;
+  exit;
+}
+
 /** Заголовок WAV поверх сырого PCM16 моно — Gemini отдаёт звук без него. */
 function bc_wav_from_pcm($pcm, $rate) {
   $len = strlen($pcm);
@@ -417,7 +426,7 @@ function bc_gemini_speak($key, $text, $voice, &$why = null) {
         ],
       ]
     );
-    if ($code === 429) { bc_gemini_cooldown($model); $why = $model . ' 429: quota'; continue; }
+    if ($code === 429) { bc_gemini_cooldown($model, (string) $body); $why = $model . ' 429: quota'; continue; }
     if ($code < 200 || $code >= 300) { $why = $model . ' ' . $code . ': ' . substr((string) $body, 0, 160); continue; }
 
     $data = json_decode((string) $body, true);
@@ -475,7 +484,7 @@ function bc_gemini_turn($key, $prompt, $messages) {
     if ($code === 0 || $code === 503) { bc_gemini_cooldown($model); continue; }
     // 429 — квота, и она СВОЯ у каждой модели: у новейших flash это 20 запросов
     // в сутки. Помечаем на минуту и идём к следующей, не ждём.
-    if ($code === 429) { bc_gemini_cooldown($model); continue; }
+    if ($code === 429) { bc_gemini_cooldown($model, (string) $raw); continue; }
     if ($code < 200 || $code >= 300) { continue; }
 
     $data = json_decode((string) $raw, true);
@@ -571,10 +580,22 @@ function bc_gemini_cooling($model) {
   $map = json_decode((string) @file_get_contents(bc_gemini_cooldown_path()), true);
   return is_array($map) && isset($map[$model]) && $map[$model] > time();
 }
-function bc_gemini_cooldown($model) {
+function bc_gemini_cooldown($model, $body = '') {
   $map = json_decode((string) @file_get_contents(bc_gemini_cooldown_path()), true);
   if (!is_array($map)) { $map = []; }
-  $map[$model] = time() + 60;
+  // 429 бывает двух разных видов, и лечатся они по-разному:
+  //   PerMinute — «слишком часто», ждать секунды;
+  //   PerDay    — суточная кончилась, до завтра эта модель мертва.
+  // С общей минутой суточно-исчерпанная модель весь день заново попадала в
+  // перебор: лишний поход в сеть на каждой реплике и лишний счёт в квоте.
+  // Сутки Google считает по полуночи тихоокеанского времени.
+  $until = time() + 60;
+  if (stripos((string) $body, 'PerDay') !== false) {
+    $until = (new DateTime('tomorrow', new DateTimeZone('America/Los_Angeles')))->getTimestamp();
+  } elseif (preg_match('/"retryDelay"\s*:\s*"(\d+)s"/', (string) $body, $m)) {
+    $until = time() + max(20, (int) $m[1]);
+  }
+  $map[$model] = $until;
   @file_put_contents(bc_gemini_cooldown_path(), json_encode($map));
 }
 
@@ -763,17 +784,11 @@ switch ($action) {
       $result['probe']['chat'] = ['ok' => false, 'error' => 'no LLM key'];
     }
 
-    // Озвучка проверяется ТЕМ ЖЕ путём, каким идёт звонок: сперва Gemini,
-    // и только если ключа нет — Groq. Иначе проба показывала бы отказ Orpheus
-    // там, где брокер на самом деле говорит.
-    if ($geminiKey !== '') {
-      $t0 = microtime(true);
-      $why = null;
-      $wav = bc_gemini_speak($geminiKey, 'Okay, got it.', $DEFAULT_VOICE, $why);
-      $result['probe']['tts'] = ($wav === null)
-        ? ['ok' => false, 'provider' => 'gemini', 'error' => (string) $why]
-        : ['ok' => true, 'provider' => 'gemini', 'bytes' => strlen($wav), 'ms' => (int) round((microtime(true) - $t0) * 1000)];
-    } elseif ($groqKey !== '') {
+    // Озвучка проверяется ТЕМ ЖЕ путём, каким идёт звонок: сперва Groq
+    // Orpheus, Gemini TTS — только если Groq не ответил. Прежняя проба ходила
+    // в Gemini и каждым обращением к /api/health съедала один из десяти
+    // суточных запросов озвучки — их потом не хватало живому звонку.
+    if ($groqKey !== '') {
       $t0 = microtime(true);
       list($code, $body) = bc_post_json(
         'https://api.groq.com/openai/v1/audio/speech',
@@ -797,6 +812,19 @@ switch ($action) {
           $tts['hint'] = 'Модель требует однократного принятия условий: https://console.groq.com/playground?model=' . rawurlencode($TTS_MODEL);
         }
         $result['probe']['tts'] = $tts;
+      }
+    }
+    if (empty($result['probe']['tts']['ok']) && $geminiKey !== '') {
+      $t0 = microtime(true);
+      $why = null;
+      $wav = bc_gemini_speak($geminiKey, 'Okay, got it.', $DEFAULT_VOICE, $why);
+      if ($wav !== null) {
+        $result['probe']['tts'] = ['ok' => true, 'provider' => 'gemini', 'bytes' => strlen($wav),
+          'ms' => (int) round((microtime(true) - $t0) * 1000)];
+      } elseif (!isset($result['probe']['tts'])) {
+        $result['probe']['tts'] = ['ok' => false, 'provider' => 'gemini', 'error' => (string) $why];
+      } else {
+        $result['probe']['tts']['gemini'] = (string) $why;
       }
 
     }
@@ -1024,42 +1052,40 @@ switch ($action) {
     $text = isset($in['text']) ? (string) $in['text'] : '';
     if ($text === '') { bc_fail(400, 'no text'); }
 
-    // Gemini первым: Orpheus у Groq требует принятия условий, и без этого
-    // брокер молчит. Отказ — молча вниз, на Groq.
+    // Groq Orpheus первым, Gemini TTS — запасным.
+    //
+    // Раньше было наоборот: Orpheus требовал однократного принятия условий, и
+    // до тех пор брокер молчал. Условия приняты, а панель квот AI Studio за 28
+    // дней показала цену прежнего порядка: у моделей Gemini TTS на бесплатном
+    // ключе 10 запросов в СУТКИ и 3 в минуту на модель. Звонок — это десятки
+    // реплик, то есть суточный запас кончался на первом же разговоре, и дальше
+    // каждая реплика сперва ходила в Gemini за 429 и только потом к Groq.
+    $groqWhy = null;
+    if ($groqKey !== '') {
+      list($code, $body) = bc_post_json(
+        'https://api.groq.com/openai/v1/audio/speech',
+        $groqKey,
+        [
+          'model'           => $TTS_MODEL,
+          'voice'           => bc_voice(isset($in['voice']) ? $in['voice'] : ''),
+          'input'           => $text,
+          'response_format' => 'wav',
+        ]
+      );
+      if ($code >= 200 && $code < 300) { bc_send_wav($body); }
+      $groqWhy = $code . ': ' . substr((string) $body, 0, 200);
+    }
+
     $geminiWhy = null;
     if ($geminiKey !== '') {
       $wav = bc_gemini_speak($geminiKey, $text, isset($in['voice']) ? $in['voice'] : '', $geminiWhy);
-      if ($wav !== null) {
-        http_response_code(200);
-        header('Content-Type: audio/wav');
-        header('Cache-Control: no-store');
-        echo $wav;
-        exit;
-      }
-    }
-    if ($groqKey === '') { bc_fail(503, 'no TTS key configured'); }
-
-    list($code, $body) = bc_post_json(
-      'https://api.groq.com/openai/v1/audio/speech',
-      $groqKey,
-      [
-        'model'           => $TTS_MODEL,
-        'voice'           => bc_voice(isset($in['voice']) ? $in['voice'] : ''),
-        'input'           => $text,
-        'response_format' => 'wav',
-      ]
-    );
-    // Наружу — обе причины: на экране была видна только ошибка Groq, а почему
-    // до него вообще дошло (Gemini 429/500) — оставалось догадкой.
-    if ($code < 200 || $code >= 300) {
-      bc_fail($code, 'gemini: ' . ($geminiWhy === null ? 'нет ключа' : $geminiWhy) . ' | groq: ' . substr((string) $body, 0, 200));
+      if ($wav !== null) { bc_send_wav($wav); }
     }
 
-    http_response_code(200);
-    header('Content-Type: audio/wav');
-    header('Cache-Control: no-store');
-    echo $body;
-    exit;
+    // Наружу — обе причины: с одной на экране не понять, почему дошло до
+    // второго провайдера и что именно сломано.
+    bc_fail(502, 'groq: ' . ($groqWhy === null ? 'нет ключа' : $groqWhy)
+      . ' | gemini: ' . ($geminiWhy === null ? 'нет ключа' : $geminiWhy));
   }
 
   // ── Разбор звонка ──────────────────────────────────────────────────────────

@@ -83,9 +83,11 @@ export async function geminiTurn(
     }
     if (!r.ok) {
       // 503 «high demand» — та же история, что 429: модель сейчас не отвечает,
-      // и стучаться в неё на следующей реплике бессмысленно.
-      if (r.status === 429 || r.status === 503) coolDown(model)
-      errors.push(`${model} ${r.status}: ${(await r.text()).replace(/\s+/g, ' ').slice(0, 120)}`)
+      // и стучаться в неё на следующей реплике бессмысленно. Тело нужно ДО
+      // остывания: по нему видно, минутная кончилась квота или суточная.
+      const why = await r.text()
+      if (r.status === 429 || r.status === 503) coolDown(model, why)
+      errors.push(`${model} ${r.status}: ${why.replace(/\s+/g, ' ').slice(0, 120)}`)
       continue
     }
 
@@ -138,8 +140,33 @@ function isCoolingDown(model: string): boolean {
   return until > Date.now()
 }
 
-function coolDown(model: string): void {
-  coolingDown.set(model, Date.now() + COOLDOWN_MS)
+function coolDown(model: string, body = ''): void {
+  coolingDown.set(model, cooldownUntil(body))
+}
+
+/**
+ * До какого момента модель считать мёртвой после 429/503.
+ *
+ * Суточная квота (PerDay) не восстановится через минуту: до полуночи по
+ * тихоокеанскому времени эта модель мертва, и каждый повтор — впустую
+ * потраченный ход звонка. Минутную ждём столько, сколько просит сам Google.
+ * Отдельной функцией — чтобы разбор ответа проверялся тестом.
+ */
+export function cooldownUntil(body: string, now = Date.now()): number {
+  if (body.includes('PerDay')) return nextPacificMidnight(now)
+  const m = body.match(/"retryDelay"\s*:\s*"(\d+)s"/)
+  if (m) return now + Math.max(20_000, Number(m[1]) * 1000)
+  return now + COOLDOWN_MS
+}
+
+/** Ближайшая полночь в America/Los_Angeles — по ней Google считает сутки. */
+function nextPacificMidnight(now: number): number {
+  const here = new Date(now)
+  const pacific = new Date(here.toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }))
+  const shift = now - pacific.getTime()
+  const midnight = new Date(pacific)
+  midnight.setHours(24, 0, 0, 0)
+  return midnight.getTime() + shift
 }
 
 /**
