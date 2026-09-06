@@ -1025,11 +1025,18 @@
     function onCueChange(au, track, ui) {
         var cue = track.activeCues && track.activeCues.length ? track.activeCues[0] : null;
         if (!cue) {
-            // Пустая реплика чужого трека не должна гасить текст текущего
-            ui.line.classList.remove('has-text');
-            ui.line.textContent = '';
+            // Пауза между фразами — НЕ конец трека. Раньше здесь стирался текст
+            // и с панели, и со строки над плеером: строка схлопывалась,
+            // панель теряла высоту, а на следующей фразе всё возвращалось —
+            // картинка дёргалась на каждом предложении. Теперь последняя
+            // фраза остаётся на месте до следующей; чистит только «ended».
             if (ui.active) { ui.active.classList.remove('now'); ui.active.lastChild.textContent = ui.activeText; ui.active = null; }
-            if (!subCur || subCur.au === au) { subStop(); subCur = null; setBarText(''); }
+            if (!subCur || subCur.au === au) {
+                subStop(); subCur = null;
+                // слова договорены — все «прочитанные», ни одно не «текущее»
+                var ws = ui.line.querySelectorAll('.la-w');
+                for (var w = 0; w < ws.length; w++) { ws[w].classList.remove('now'); ws[w].classList.add('said'); }
+            }
             return;
         }
 

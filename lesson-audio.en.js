@@ -944,15 +944,36 @@
         if (subRaf !== null) { cancelAnimationFrame(subRaf); subRaf = null; }
     }
 
-    // Show/hide the subtitle line in all three places
+    // Phrases are APPENDED, not replaced: the line above the player fills
+    // up and older text scrolls off to the left. Same behaviour as the
+    // Russian player — the English one used to swap the text wholesale,
+    // which read as flicker.
+    var SUB_KEEP = 14;   // how many phrases to keep before dropping the oldest
+    function appendCue(box, txt) {
+        if (!txt) { box.textContent = ''; box.classList.remove('has-text'); return; }
+        var last = box.lastElementChild;
+        if (last && last.dataset.cue === txt) return;   // same phrase — no duplicate
+        var sp = document.createElement('span');
+        sp.className = 'la-cue';
+        sp.dataset.cue = txt;
+        sp.textContent = txt;
+        box.appendChild(sp);
+        while (box.children.length > SUB_KEEP) box.removeChild(box.firstElementChild);
+        for (var k = 0; k < box.children.length; k++) {
+            box.children[k].classList.toggle('now', k === box.children.length - 1);
+        }
+        box.classList.add('has-text');
+        if (box.scrollTo) box.scrollTo({ left: box.scrollWidth, behavior: 'smooth' });
+        else box.scrollLeft = box.scrollWidth;
+    }
+
     function setBarText(txt) {
         var boxes = [], i;
         if (fixedBar) boxes.push(fixedBar.querySelector('.la-fixed-sub'));
         if (mobileBar) boxes.push(mobileBar.querySelector('.la-mob-sub'));
         for (i = 0; i < boxes.length; i++) {
             if (!boxes[i]) continue;
-            boxes[i].textContent = txt;
-            boxes[i].classList.toggle('has-text', !!txt);
+            appendCue(boxes[i], txt);
         }
     }
 
@@ -1001,11 +1022,17 @@
     function onCueChange(au, track, ui) {
         var cue = track.activeCues && track.activeCues.length ? track.activeCues[0] : null;
         if (!cue) {
-            // An empty cue from another track must not wipe the current one's text
-            ui.line.classList.remove('has-text');
-            ui.line.textContent = '';
+            // A gap between phrases is NOT the end of the track. This used to
+            // wipe the text from the bar and the line above the player: the
+            // line collapsed, the bar lost a row, and the next phrase put it
+            // all back — the page jumped on every sentence. Now the last
+            // phrase stays until the next one; only "ended" clears it.
             if (ui.active) { ui.active.classList.remove('now'); ui.active.lastChild.textContent = ui.activeText; ui.active = null; }
-            if (!subCur || subCur.au === au) { subStop(); subCur = null; setBarText(''); }
+            if (!subCur || subCur.au === au) {
+                subStop(); subCur = null;
+                var ws = ui.line.querySelectorAll('.la-w');
+                for (var w = 0; w < ws.length; w++) { ws[w].classList.remove('now'); ws[w].classList.add('said'); }
+            }
             return;
         }
 

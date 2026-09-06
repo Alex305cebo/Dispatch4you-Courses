@@ -1037,12 +1037,17 @@ body.la-mob-bar-visible {
     max-height: 2.9em;
     overflow: hidden;
 }
-.la-mob-sub.has-text { display: block; }
+/* Строка видна всегда при развёрнутом баре — пустая, но той же высоты.
+   Иначе бар рос и сжимался на каждой паузе между фразами. */
+.la-mobile-bottom-bar:not(.collapsed) .la-mob-sub { display: block; min-height: 1.45em; }
 .la-mobile-bottom-bar.collapsed .la-mob-sub { display: none; }
 
 /* Субтитр добавляет высоты бару — не даём ему накрыть текст и кнопку «наверх» */
 /* !important — laExpandMobileBar ставит padding инлайном, инлайн иначе победит */
-body.la-mob-bar-visible:has(.la-mob-sub.has-text) {
+/* Отступ считается от РАЗВЁРНУТОГО бара, а не от наличия текста в нём:
+   раньше он прыгал 120 ↔ 164px на каждой паузе между фразами — вместе
+   со всей страницей. */
+body.la-mob-bar-visible:has(.la-mobile-bottom-bar:not(.collapsed)) {
     padding-bottom: 164px !important;
 }
 body.la-mob-bar-visible:has(.la-mobile-bottom-bar.collapsed) {
@@ -1121,8 +1126,13 @@ body.la-mob-bar-visible:has(.la-mobile-bottom-bar.collapsed) {
             mask-image: linear-gradient(to right, transparent 0, #000 34px);
   }
   .la-fixed-sub::-webkit-scrollbar { display: none; }
-  .la-fixed-sub:empty,
-  .la-fixed-sub:not(.has-text) { display: none; }
+  /* Полоса занимает место ВСЕГДА, пока бар развёрнут, — даже пустая.
+     Раньше без текста она схлопывалась в display:none, и бар менял
+     высоту на каждой паузе между фразами: вся панель дёргалась. */
+  .la-fixed-bar.visible:not(.collapsed) .la-fixed-sub {
+    display: block;
+    min-height: calc(1.4em + 6px);
+  }
   .la-fixed-sub .la-cue { margin-right: 10px; }
   .la-fixed-sub .la-cue.now { color: var(--cue-read); font-weight: 600; }
   .la-fixed-controls { order: 2; flex: 0 0 auto; }
@@ -1264,4 +1274,18 @@ body.la-mob-bar-visible:has(.la-mobile-bottom-bar.collapsed) {
   /* Панель перекрывала бы низ страницы — подпираем контент */
   body:has(.la-fixed-bar.visible) { padding-bottom: 72px; }
   body:has(.la-fixed-bar.visible.collapsed) { padding-bottom: 60px; }
+}
+
+/* Новая фраза на панели появляется плавно, а не вспыхивает. */
+.la-fixed-sub .la-cue,
+.la-mob-sub .la-cue {
+    animation: la-cue-in .25s ease-out both;
+}
+@keyframes la-cue-in {
+    from { opacity: 0; transform: translateY(3px); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .la-fixed-sub .la-cue,
+    .la-mob-sub .la-cue { animation: none; }
 }
