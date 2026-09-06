@@ -39,6 +39,7 @@
             colLearn: '📚 Обучение', colTools: '🎯 Практика', colInfo: 'ℹ️ О сервисе',
             lCourse: '📚 Курс — 15 уроков', lModules: '✍️ Модули — 12 тестов', lGlossary: '📖 Глоссарий', lCases: '🗂 Кейсы',
             lTesting: '🎯 Тестирование', lTrainer: '💡 Тренажёр',
+            lRelay: '📦 Amazon Relay', lRelayVideo: '🎬 Видеоуроки Relay',
             lMap: '🗺️ USA Map Trainer', lCareerPath: '🎮 Career Path', lAiChat: '🎙️ AI-симулятор',
             lRating: '🎖️ Рейтинг', lAnalytics: '📊 Статистика рынка',
             lAbout: 'ℹ️ О нас', lPricing: '💎 Планы и цены', lFaq: '❓ Частые вопросы', lJobs: '🚀 Работа у нас', lContacts: '📩 Написать нам',
@@ -52,6 +53,7 @@
             colLearn: '📚 Learning', colTools: '🎯 Practice', colInfo: 'ℹ️ About',
             lCourse: '📚 Course — 15 lessons', lModules: '✍️ Modules — 12 tests', lGlossary: '📖 Glossary', lCases: '🗂 Cases',
             lTesting: '🎯 Testing', lTrainer: '💡 Trainer',
+            lRelay: '📦 Amazon Relay', lRelayVideo: '🎬 Relay video lessons',
             lMap: '🗺️ USA Map Trainer', lCareerPath: '🎮 Career Path', lAiChat: '🎙️ AI Simulator',
             lRating: '🎖️ Ranking', lAnalytics: '📊 Market Data',
             lAbout: 'ℹ️ About Us', lPricing: '💎 Plans & Pricing', lFaq: '❓ FAQ', lJobs: '🚀 Work with us', lContacts: '📩 Contact Us',
@@ -644,15 +646,17 @@
           <div class="footer-acc-body">
             <a href="BASE_pages/documentation.html" class="footer-link">${T.lCourse}</a>
             <a href="BASE_pages/modules-index.html" class="footer-link">${T.lModules}</a>
+            <a href="BASE_pages/amazon-relay.html" class="footer-link">${T.lRelay}</a>
+            <a href="BASE_pages/amazon-relay-video.html" class="footer-link">${T.lRelayVideo}</a>
             <a href="BASE_pages/glossary.html" class="footer-link">${T.lGlossary}</a>
-<a href="BASE_pages/cases.html" class="footer-link">${T.lCases}</a>
-            <a href="BASE_pages/testing.html" class="footer-link">${T.lTesting}</a>
-            <a href="BASE_pages/Trainer-Quiz.html" class="footer-link">${T.lTrainer}</a>
+            <a href="BASE_pages/cases.html" class="footer-link">${T.lCases}</a>
           </div>
         </div>
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">${T.colTools}</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
+            <a href="BASE_pages/Trainer-Quiz.html" class="footer-link">${T.lTrainer}</a>
+            <a href="BASE_pages/testing.html" class="footer-link">${T.lTesting}</a>
             <a href="BASE_pages/ai-broker-chat.html" class="footer-link">${T.lAiChat}</a>
             <a href="BASE_pages/users-stats.html" class="footer-link">${T.lRating}</a>
             <a href="BASE_pages/analytics.html" class="footer-link">${T.lAnalytics}</a>
@@ -663,8 +667,8 @@
         <div class="footer-acc-col">
           <button class="footer-acc-toggle" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')"><span class="footer-col-title">${T.colInfo}</span><span class="acc-arrow">▼</span></button>
           <div class="footer-acc-body">
-            <a href="BASE_about.html" class="footer-link">${T.lAbout}</a>
             <a href="BASE_pricing.html" class="footer-link">${T.lPricing}</a>
+            <a href="BASE_about.html" class="footer-link">${T.lAbout}</a>
             <a href="BASE_faq.html" class="footer-link">${T.lFaq}</a>
             <a href="BASE_career.html" class="footer-link">${T.lJobs}</a>
             <a href="BASE_contacts.html" class="footer-link">${T.lContacts}</a>
