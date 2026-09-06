@@ -462,11 +462,17 @@ function bc_gemini_turn($key, $prompt, $messages) {
 
   foreach ($candidates as $model) {
     if (bc_gemini_cooling($model)) { continue; }
+    // 8 секунд на ход: перегруженная 3.6-flash отвечала по 20–57 секунд, и
+    // на экране это «брокер думает…» на минуту. Молчит — идём к следующей.
     list($code, $raw) = bc_post_json(
       BC_GEMINI_API . '/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($key),
       '',
-      $body
+      $body,
+      8
     );
+    // Таймаут (код 0) и 503 «high demand» — модель сейчас не отвечает; остужаем,
+    // как при 429, иначе следующая реплика снова упрётся в неё.
+    if ($code === 0 || $code === 503) { bc_gemini_cooldown($model); continue; }
     // 429 — квота, и она СВОЯ у каждой модели: у новейших flash это 20 запросов
     // в сутки. Помечаем на минуту и идём к следующей, не ждём.
     if ($code === 429) { bc_gemini_cooldown($model); continue; }
@@ -644,11 +650,11 @@ function bc_gemini_token($key, $setup) {
 }
 
 /** POST JSON к OpenAI-совместимому провайдеру. Возвращает [код, тело]. */
-function bc_post_json($url, $key, $payload) {
+function bc_post_json($url, $key, $payload, $timeout = 60) {
   $ch = curl_init($url);
   curl_setopt($ch, CURLOPT_POST, true);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+  curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
   // Пустой ключ — значит авторизация уже в адресе (?key=…, так ходит Google).
   // Отправлять при этом «Authorization: Bearer » нельзя: заголовок пустой, а
   // отказ получается тот же, что при неверном ключе, и искать его пришлось бы

@@ -424,12 +424,12 @@ return json_decode(<<<'BROKER_CONFIG_JSON'
       ],
       "bonus": [
         [
-          "flash",
-          100
+          "flash-lite",
+          1000
         ],
         [
-          "lite",
-          -60
+          "flash",
+          100
         ]
       ]
     },

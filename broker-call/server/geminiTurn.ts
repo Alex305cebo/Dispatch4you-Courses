@@ -72,9 +72,19 @@ export async function geminiTurn(
     // flash это 20 запросов В СУТКИ, у lite — на порядок больше. Ждать
     // бессмысленно: следующая в списке отвечает сразу, со своим счётчиком.
     // Так десяток моделей в каталоге складывается в один запас.
-    const r = await post(key, model, body)
+    let r: Response
+    try {
+      r = await post(key, model, body)
+    } catch (e) {
+      // Таймаут или сеть: модель зависла — к следующей, эту остужаем.
+      coolDown(model)
+      errors.push(`${model}: ${(e as Error).name === 'TimeoutError' ? `нет ответа за ${TURN_TIMEOUT_MS} мс` : (e as Error).message}`)
+      continue
+    }
     if (!r.ok) {
-      if (r.status === 429) coolDown(model)
+      // 503 «high demand» — та же история, что 429: модель сейчас не отвечает,
+      // и стучаться в неё на следующей реплике бессмысленно.
+      if (r.status === 429 || r.status === 503) coolDown(model)
       errors.push(`${model} ${r.status}: ${(await r.text()).replace(/\s+/g, ' ').slice(0, 120)}`)
       continue
     }
@@ -132,10 +142,22 @@ function coolDown(model: string): void {
   coolingDown.set(model, Date.now() + COOLDOWN_MS)
 }
 
+/**
+ * Потолок ожидания одного запроса. Перегруженная модель (3.6-flash под
+ * «high demand») отвечала по 20–57 секунд — для звонка это зависание. Лучше
+ * через 8 секунд уйти к следующей модели, чем ждать.
+ */
+export const TURN_TIMEOUT_MS = 8000
+
 function post(key: string, model: string, body: unknown): Promise<Response> {
   return fetch(
     `${GEMINI_API}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(key)}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(TURN_TIMEOUT_MS),
+    },
   )
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pickLiveModel, pickTextModel, rankModels, type ModelInfo, pickTtsModel } from './geminiModels'
+import { pickLiveModel, pickTextModel, pickChatModel, rankModels, type ModelInfo, pickTtsModel } from './geminiModels'
 
 /**
  * Имя модели в коде — это то, на чём мы горели трижды: Groq снял
@@ -180,5 +180,13 @@ describe('выбор модели озвучки', () => {
 
   it('без моделей озвучки возвращает null, а не выдуманное имя', () => {
     expect(pickTtsModel([m('gemini-3.5-flash-lite', TEXT)])).toBeNull()
+  })
+})
+
+describe('модель диалога', () => {
+  it('flash-lite первой: рассуждающий полный flash даёт 20–57 с на ход и 20 запросов в сутки', () => {
+    // Живой звонок с сайта 06.09.2026: gemini-3.6-flash — «брокер думает…» на минуту.
+    const real = [m('gemini-3.6-flash', TEXT), m('gemini-3.5-flash-lite', TEXT), m('gemini-3.5-pro', TEXT)]
+    expect(pickChatModel(real)).toBe('gemini-3.5-flash-lite')
   })
 })
