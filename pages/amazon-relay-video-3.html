@@ -83,6 +83,22 @@
 
         .sc-shot.tight img { max-height:calc(var(--u)*17); }
         .sc-shot.tight .cap { font-size:calc(var(--u)*1.05); }
+        /* ===== ДВЕ КОЛОНКИ: текст + экран ===== */
+        .sc-split { display:grid; grid-template-columns:1.05fr 1fr; gap:calc(var(--u)*2.4); align-items:center; min-height:0; height:100%; }
+        .sc-split > .sl { min-width:0; min-height:0; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.2); }
+        .sc-split .sc-title { text-align:left; }
+        .sc-split .sc-title .big { font-size:calc(var(--u)*3.2); }
+        .sc-split .sc-cols3.tight { grid-template-columns:1fr; gap:calc(var(--u)*.7); }
+        .sc-split .sc-cols3.tight .ccard { display:flex; align-items:baseline; gap:calc(var(--u)*1); text-align:left; padding:calc(var(--u)*.7) calc(var(--u)*1.2); }
+        .sc-split .sc-cols3.tight .ccard .cnum { font-size:calc(var(--u)*2.2); min-width:calc(var(--u)*8); }
+        .sc-split .sc-cols3.tight .ccard .clab { margin:0; }
+        .sc-split .sc-cols3.tight .ccard .ic { font-size:calc(var(--u)*1.8); margin:0; }
+        .sc-split .sc-shot.side { height:100%; justify-content:center; }
+        .sc-split .sc-shot.side img { max-height:calc(var(--u)*32); width:100%; object-fit:contain; }
+        .sc-split .sc-metrics { grid-template-columns:1fr; gap:calc(var(--u)*.7); }
+        .sc-split .sc-two-sit { grid-template-columns:1fr; }
+        .sc-split .sc-sit .sit-cols { grid-template-columns:1fr; }
+        @media (max-width:900px) { .sc-split { grid-template-columns:1fr; } .sc-split .sc-shot.side img { max-height:calc(var(--u)*18); } }
         /* ===== АНИМАЦИИ ДЕЙСТВИЙ ===== */
         .an .axis { stroke:rgba(255,255,255,.12); stroke-width:2; }
         .an .barv { rx:6; }
@@ -136,7 +152,7 @@
             -webkit-mask-image:radial-gradient(72% 62% at 50% 46%, #000 20%, transparent 88%);
                     mask-image:radial-gradient(72% 62% at 50% 46%, #000 20%, transparent 88%); }
         .scene > .scene-cap, .scene > .scene-body { position:relative; z-index:1; }
-        .scene-cap { padding-bottom:calc(var(--u)*.9); border-bottom:1px solid rgba(255,255,255,.07); }
+        .scene-cap { padding-bottom:calc(var(--u)*.8); border-bottom:1px solid rgba(255,255,255,.07); margin-bottom:calc(var(--u)*1.3); }
         .sc-ch { color:var(--acc); }
         .sc-ch::before { content:''; display:inline-block; width:calc(var(--u)*.42); height:calc(var(--u)*1.15);
             border-radius:99px; background:var(--acc); margin-right:calc(var(--u)*.7); vertical-align:-8%; }
@@ -760,18 +776,17 @@
     </div>
     <div class="scene" data-i="19">
       <div class="scene-cap"><span class="sc-ch">Глава 3. С аккаунтом компании</span><span class="sc-tt">Рейтинг упал ниже нужного</span></div>
-      <div class="scene-body"><div class="sc-sit">
+      <div class="scene-body"><div class="sc-split"><div class="sl"><div class="sc-sit">
   <div class="sit-cols">
     <div class="sit-c d" data-at="0"><span class="lbl">Диспетчер</span>Найти худший из четырёх показателей и работать точечно по нему. Спорные записи — спор на сайте, не в приложении</div>
     <div class="sit-c w" data-at="1"><span class="lbl">Водителю</span>Конкретно: «У нас просел показатель по приложению. Две недели: приложение открыто, каждый шаг нажимаем»</div>
   </div>
   <div class="sit-risk hi" data-at="2"><span class="lbl">Чем грозит · опасность высокая</span>Ниже нужного уровня пропадают аукционы, выигранные контракты могут отозвать, дальше — риск отключения</div>
   <div class="sit-prev" data-at="2"><span class="lbl">Как не допустить</span>Смотреть худший показатель каждый день, а не ждать письма от Amazon</div>
-</div>
-<figure class="sc-shot tight" data-at="1">
+</div></div><figure class="sc-shot side" data-at="1">
   <img src="/img/amazon-relay/performance-score.webp" alt="Рейтинг в портале: видно, какой показатель просел. Источник: блог Amazon Relay" loading="lazy">
   <figcaption class="cap">Рейтинг в портале: видно, какой показатель просел. Источник: блог Amazon Relay</figcaption>
-</figure></div>
+</figure></div></div>
     </div>
     <div class="scene" data-i="20">
       <div class="scene-cap"><span class="sc-ch">Глава 3. С аккаунтом компании</span><span class="sc-tt">Аккаунт отключили</span></div>
@@ -1098,6 +1113,22 @@
     });
 
   })();
+
+  // ── страховка: сцена, не влезающая в кадр, масштабируется, а не режется ──
+  function fitScene(sc) {
+    if (!sc) return;
+    var b = sc.querySelector('.scene-body'); if (!b) return;
+    b.style.transform = ''; b.style.transformOrigin = 'center';
+    var over = b.scrollHeight / Math.max(1, b.clientHeight);
+    if (over > 1.02) b.style.transform = 'scale(' + Math.max(.62, 1 / over).toFixed(3) + ')';
+  }
+  function fitLive() { fitScene(stage.querySelector('.scene.live')); }
+  [].forEach.call(stage.querySelectorAll('.scene img'), function (im) {
+    im.loading = 'eager';
+    im.addEventListener('load', fitLive);
+  });
+  new MutationObserver(function () { fitLive(); }).observe(stage, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  addEventListener('resize', function () { setTimeout(fitLive, 120); });
 
   showScene(0); reveal(0, -1); setPlay(false);
 })();
