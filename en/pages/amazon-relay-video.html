@@ -57,7 +57,9 @@
         .pbox:fullscreen .bar-wrap, .pbox.fsfake .bar-wrap { position:absolute; left:0; right:0; bottom:0; margin:0; padding:16px 22px 18px; background:linear-gradient(transparent, rgba(0,0,0,.82)); z-index:30; transition:opacity .35s; }
         .pbox:fullscreen.idle .bar-wrap, .pbox.fsfake.idle .bar-wrap { opacity:0; pointer-events:none; }
         .pbox:fullscreen.idle, .pbox.fsfake.idle { cursor:none; }
-        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--barh, 64px) + 8px); }
+        .pbox:fullscreen .subs, .pbox.fsfake .subs { bottom:calc(var(--u)*7.4); }
+        .pbox:fullscreen .scene, .pbox.fsfake .scene { padding-bottom:calc(var(--u)*12.5); }
+        .pbox:fullscreen.idle .scene, .pbox.fsfake.idle .scene { padding-bottom:calc(var(--u)*7.6); }
         .pbox.rot { position:fixed; inset:auto; top:50%; left:50%; width:100dvh; height:100vw; transform:translate(-50%,-50%) rotate(90deg); transform-origin:center; }
         .pbox.rot .stage { width:100%; height:100%; }
         .pbox.narrow .ctrls { gap:6px; }
@@ -77,7 +79,106 @@
         .scene-body { flex:1; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.5); min-height:0; }
         [data-at] { opacity:0; transform:translateY(calc(var(--u)*.9)); transition:opacity .55s ease, transform .55s cubic-bezier(.2,.8,.3,1); }
         [data-at].on { opacity:1; transform:none; }
-        g[data-at], text[data-at], path[data-at] { transform:none !important; }
+
+
+        .sc-shot.tight img { max-height:calc(var(--u)*17); }
+        .sc-shot.tight .cap { font-size:calc(var(--u)*1.05); }
+        /* ===== ДВЕ КОЛОНКИ: текст + экран ===== */
+        .sc-split { display:grid; grid-template-columns:1.05fr 1fr; gap:calc(var(--u)*2.4); align-items:center; min-height:0; height:100%; }
+        .sc-split > .sl { min-width:0; min-height:0; display:flex; flex-direction:column; justify-content:center; gap:calc(var(--u)*1.2); }
+        .sc-split .sc-title { text-align:left; }
+        .sc-split .sc-title .big { font-size:calc(var(--u)*3.2); }
+        .sc-split .sc-cols3.tight { grid-template-columns:1fr; gap:calc(var(--u)*.7); }
+        .sc-split .sc-cols3.tight .ccard { display:flex; align-items:baseline; gap:calc(var(--u)*1); text-align:left; padding:calc(var(--u)*.7) calc(var(--u)*1.2); }
+        .sc-split .sc-cols3.tight .ccard .cnum { font-size:calc(var(--u)*2.2); min-width:calc(var(--u)*8); }
+        .sc-split .sc-cols3.tight .ccard .clab { margin:0; }
+        .sc-split .sc-cols3.tight .ccard .ic { font-size:calc(var(--u)*1.8); margin:0; }
+        .sc-split .sc-shot.side { height:100%; justify-content:center; }
+        .sc-split .sc-shot.side img { max-height:calc(var(--u)*32); width:100%; object-fit:contain; }
+        .sc-split .sc-metrics { grid-template-columns:1fr; gap:calc(var(--u)*.7); }
+        .sc-split .sc-two-sit { grid-template-columns:1fr; }
+        .sc-split .sc-sit .sit-cols { grid-template-columns:1fr; }
+        @media (max-width:900px) { .sc-split { grid-template-columns:1fr; } .sc-split .sc-shot.side img { max-height:calc(var(--u)*18); } }
+        /* ===== АНИМАЦИИ ДЕЙСТВИЙ ===== */
+        .an { width:100%; height:auto; max-height:100%; }
+        .an text { font-family:'Inter',sans-serif; }
+        .an .t-b { fill:#fff; font-size:19px; font-weight:800; }
+        .an .t-s { fill:#94a3b8; font-size:14px; }
+        .an .t-x { fill:#e2e8f0; font-size:15px; font-weight:600; }
+        .an .plate { fill:rgba(255,255,255,.045); stroke:rgba(255,255,255,.12); }
+
+        .an .drive { transform:translateX(-300px); transition:transform 2.8s cubic-bezier(.35,0,.25,1); }
+        .on .drive, .drive.on { transform:translateX(0); }
+        .an .boom { transform-box:fill-box; transform-origin:left center; transition:transform 1s cubic-bezier(.3,0,.2,1) .4s; }
+        .on .boom, .boom.on { transform:rotate(-70deg); }
+        .an .tap { opacity:0; transform:translateY(26px); transition:opacity .35s ease, transform .55s cubic-bezier(.2,.8,.25,1); }
+        .on .tap, .tap.on { opacity:1; transform:translateY(0); }
+        .an .btn-hit { fill:#22d3ee; opacity:0; transform-box:fill-box; transform-origin:center; }
+        .on .btn-hit, .btn-hit.on { animation:hit 1.2s ease-out .35s 2; }
+        @keyframes hit { 0% { opacity:.45; transform:scale(.92); } 70% { opacity:0; transform:scale(1.3); } 100% { opacity:0; } }
+        .an .tick { stroke-dasharray:36; stroke-dashoffset:36; transition:stroke-dashoffset .6s ease .55s; }
+        .on .tick, .tick.on { stroke-dashoffset:0; }
+        .an .draw { stroke-dasharray:var(--len,320); stroke-dashoffset:var(--len,320); transition:stroke-dashoffset 1.2s cubic-bezier(.3,0,.2,1) .25s; }
+        .on .draw, .draw.on { stroke-dashoffset:0; }
+        .an .hand { transform-box:fill-box; transform-origin:bottom center; transition:transform 2.8s cubic-bezier(.4,0,.3,1) .3s; }
+        .on .hand, .hand.on { transform:rotate(300deg); }
+        .an .weekfill { transform-box:fill-box; transform-origin:left center; transform:scaleX(0); transition:transform 2.2s cubic-bezier(.35,0,.25,1) .25s; }
+        .on .weekfill, .weekfill.on { transform:scaleX(1); }
+        .an .coin { opacity:0; transform:translateX(-170px); transition:opacity .3s ease 1.15s, transform 1.25s cubic-bezier(.35,0,.25,1) 1.15s; }
+        .on .coin, .coin.on { opacity:1; transform:translateX(0); }
+        .an .needle { transform-box:fill-box; transform-origin:bottom center; transform:rotate(-76deg); transition:transform 1.9s cubic-bezier(.3,0,.2,1) .3s; }
+        .on .needle, .needle.on { transform:rotate(var(--deg,20deg)); }
+        .an .grow { transform-box:fill-box; transform-origin:bottom center; transform:scaleY(0); transition:transform 1s cubic-bezier(.25,.9,.3,1) var(--gd,0s); }
+        .on .grow, .grow.on { transform:scaleY(1); }
+        @media (prefers-reduced-motion:reduce) { .an * { transition-duration:.01s !important; animation:none !important; } }
+
+        /* ===== ВИЗУАЛЬНЫЙ СЛОЙ: цвет главы, глубина, движение ===== */
+        .scene { --gl1:rgba(6,182,212,.16); --gl2:rgba(14,165,233,.10); --acc:#06b6d4; }
+        .scene[data-c="1"] { --gl1:rgba(6,182,212,.17); --gl2:rgba(34,211,238,.10); --acc:#22d3ee; }
+        .scene[data-c="2"] { --gl1:rgba(255,153,0,.16); --gl2:rgba(245,158,11,.10); --acc:#ff9900; }
+        .scene[data-c="3"] { --gl1:rgba(16,185,129,.16); --gl2:rgba(52,211,153,.10); --acc:#10b981; }
+        .scene[data-c="4"] { --gl1:rgba(139,92,246,.17); --gl2:rgba(167,139,250,.10); --acc:#a78bfa; }
+        .scene[data-c="5"] { --gl1:rgba(244,63,94,.15); --gl2:rgba(251,113,133,.10); --acc:#fb7185; }
+        .scene::before { content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+            background:radial-gradient(58% 46% at 10% -6%, var(--gl1), transparent 68%),
+                       radial-gradient(52% 44% at 104% 106%, var(--gl2), transparent 70%); }
+        .scene::after { content:''; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.5;
+            background-image:linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+                             linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+            background-size:calc(var(--u)*4.5) calc(var(--u)*4.5);
+            -webkit-mask-image:radial-gradient(72% 62% at 50% 46%, #000 20%, transparent 88%);
+                    mask-image:radial-gradient(72% 62% at 50% 46%, #000 20%, transparent 88%); }
+        .scene > .scene-cap, .scene > .scene-body { position:relative; z-index:1; }
+        .scene-cap { padding-bottom:calc(var(--u)*.8); border-bottom:1px solid rgba(255,255,255,.07); margin-bottom:calc(var(--u)*1.3); }
+        .sc-ch { color:var(--acc); }
+        .sc-ch::before { content:''; display:inline-block; width:calc(var(--u)*.42); height:calc(var(--u)*1.15);
+            border-radius:99px; background:var(--acc); margin-right:calc(var(--u)*.7); vertical-align:-8%; }
+
+        .ccard, .who, .req, .st, .role, .eq, .ins, .tc, .mt, .ts, .blk, .day, .qz, .sit-c, .sit-risk, .sit-prev,
+        .fp, .rl, .ld, .m4, .pw, .mn, .dn, .fn, .vs-row, .cl-row, .wd, .ce, .sumline, .msg-b, .sc-case, .sc-note, .col {
+            background-image:linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.012));
+            box-shadow:0 calc(var(--u)*.8) calc(var(--u)*2) rgba(3,7,18,.4), inset 0 1px 0 rgba(255,255,255,.07); }
+        .ccard, .who, .tc, .mt, .m4 { transition:transform .5s cubic-bezier(.2,.8,.25,1); }
+        .ccard .ic, .who .wic, .tc .tc-i, .ts .ts-h { text-shadow:0 calc(var(--u)*.35) calc(var(--u)*.9) rgba(0,0,0,.45); }
+
+        /* появление: ступенькой, с лёгким приближением */
+        [data-at] { opacity:0; transform:translateY(calc(var(--u)*1.15)) scale(.986);
+            transition:opacity .5s ease var(--d,0s), transform .62s cubic-bezier(.2,.8,.25,1) var(--d,0s); }
+        [data-at].on { opacity:1; transform:none; }
+        @media (prefers-reduced-motion:reduce) { [data-at] { transition-duration:.01s; } }
+
+        /* полосы-индикаторы вырастают */
+        .bar .bt i, .blk-bar .seg { transition:width 1.05s cubic-bezier(.2,.8,.25,1) calc(var(--d,0s) + .12s); }
+        [data-at]:not(.on) .bar .bt i, [data-at]:not(.on) .blk-bar .seg { width:0 !important; }
+        .bar:not([data-at]) .bt i { width:var(--w); }
+
+        /* скриншоты: медленный наезд после появления */
+        .sc-shot img { transition:transform 7s ease-out .2s, opacity .5s ease; will-change:transform; }
+        [data-at].on .sc-shot img, .sc-shot[data-at].on img { transform:scale(1.025); }
+
+        /* акценты «внимание» мягко пульсируют */
+        .sc-note.danger.big, .sit-risk.hi { animation:softPulse 3.4s ease-in-out 1.2s 3; }
+        @keyframes softPulse { 0%,100% { box-shadow:0 0 0 0 rgba(239,68,68,0); } 50% { box-shadow:0 0 0 calc(var(--u)*.55) rgba(239,68,68,.16); } }
 
         /* блоки сцен */
         .sc-title { text-align:center; }
@@ -271,8 +372,8 @@
         /* субтитры */
         .subs { position:absolute; left:0; right:0; bottom:calc(var(--u)*2.4); display:flex; justify-content:center; padding:0 calc(var(--u)*4); z-index:6; pointer-events:none; transition:bottom .35s ease; }
         .subs.off { display:none; }
-        .subs .stx { max-width:88%; background:rgba(6,10,20,.86); padding:calc(var(--u)*.75) calc(var(--u)*1.5); border-radius:calc(var(--u)*.7); text-align:center; text-wrap:balance; }
-        .subs .stx { font-size:max(15px, calc(var(--u)*1.9)); line-height:1.42; color:#fff; font-weight:500; }
+        .subs .stx { max-width:84%; background:rgba(6,10,20,.5); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); padding:calc(var(--u)*.6) calc(var(--u)*1.3); border-radius:calc(var(--u)*.7); text-align:center; text-wrap:balance; text-shadow:0 1px 3px rgba(0,0,0,.85); }
+        .subs .stx { font-size:max(13px, calc(var(--u)*1.5)); line-height:1.38; color:#fff; font-weight:500; }
         .subs.below { position:static; padding:0; margin-top:10px; }
         .subs.below .stx { width:100%; max-width:none; text-align:left; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.09); border-left:3px solid var(--amz); border-radius:12px; padding:11px 14px; font-size:15px; line-height:1.55; color:var(--text-secondary); }
 
@@ -418,10 +519,10 @@
         .sc-cols3.four { grid-template-columns:repeat(4,1fr); }
         .ccard .cnote { font-size:calc(var(--u)*1.1); color:var(--amz); margin-top:calc(var(--u)*.4); }
         .sc-shot { display:flex; flex-direction:column; align-items:center; gap:calc(var(--u)*.7); min-height:0; margin:0; }
-        .sc-shot img { max-width:100%; max-height:calc(var(--u)*30); object-fit:contain; border-radius:calc(var(--u)*.9); border:1px solid rgba(255,255,255,.14); background:#0b1120; }
+        .sc-shot img { max-width:100%; max-height:calc(var(--u)*24); object-fit:contain; border-radius:calc(var(--u)*.9); border:1px solid rgba(255,255,255,.14); background:#0b1120; }
         .sc-shot .cap { font-size:calc(var(--u)*1.12); color:var(--text-muted); text-align:center; line-height:1.4; }
         .sc-shots { display:grid; grid-template-columns:1fr 1fr; gap:calc(var(--u)*1.4); min-height:0; }
-        .sc-shots .sc-shot img { max-height:calc(var(--u)*24); }
+        .sc-shots .sc-shot img { max-height:calc(var(--u)*20); }
         .sc-block { display:flex; justify-content:center; }
         .blk { width:100%; padding:calc(var(--u)*1.6); border-radius:calc(var(--u)*1.3); background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); }
         .blk-h { font-size:calc(var(--u)*1.7); font-weight:800; margin-bottom:calc(var(--u)*1); }
@@ -480,7 +581,7 @@
             .vs-row .vb::before { content:'Relay: '; color:var(--amz); font-weight:800; }
             .sc-flow { flex-direction:column; } .fa { justify-content:center; transform:rotate(90deg); }
             .scene { padding-bottom:calc(var(--u)*4); }
-            .subs .stx { font-size:15px; }
+            .subs .stx { font-size:14px; }
         }
         @media (max-width:600px) { .container { padding:0 14px; } .ctrls { gap:7px; } .cbtn { padding:0 10px; font-size:13px; } }
     </style>
@@ -648,7 +749,7 @@
     </div>
     <div class="scene" data-i="8">
       <div class="scene-cap"><span class="sc-ch">Chapter 2. The company in Relay</span><span class="sc-tt">Chapter 2. How a company gets into Relay</span></div>
-      <div class="scene-body"><div class="sc-title small">
+      <div class="scene-body"><div class="sc-split"><div class="sl"><div class="sc-title small">
   <div class="kicker" data-at="0">Chapter 2</div>
   <h1 class="big" data-at="0">How a company<br><span class="accent">gets into Relay</span></h1>
   <div class="sc-cols3 tight">
@@ -657,7 +758,10 @@
     <div class="ccard" data-at="2"><div class="cnum">1–3 wk</div><div class="clab">to wait for the answer</div></div>
   </div>
   <div class="sc-note warn" data-at="3">The check is automatic. One item fails — refusal with no reason given</div>
-</div></div>
+</div></div><figure class="sc-shot side" data-at="2">
+  <img src="/img/amazon-relay/portal-scorecard.webp" alt="This is the carrier portal. Source: the Amazon Relay blog" loading="lazy">
+  <figcaption class="cap">This is the carrier portal. Source: the Amazon Relay blog</figcaption>
+</figure></div></div>
     </div>
     <div class="scene" data-i="9">
       <div class="scene-cap"><span class="sc-ch">Chapter 2. The company in Relay</span><span class="sc-tt">Company age and type</span></div>
@@ -749,7 +853,7 @@
     </div>
     <div class="scene" data-i="16">
       <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver</span><span class="sc-tt">Chapter 3. How a driver is onboarded</span></div>
-      <div class="scene-body"><div class="sc-title small">
+      <div class="scene-body"><div class="sc-split"><div class="sl"><div class="sc-title small">
   <div class="kicker" data-at="0">Chapter 3</div>
   <h1 class="big" data-at="0">How a driver<br><span class="accent">is onboarded</span></h1>
   <div class="sc-cols3 tight">
@@ -757,15 +861,43 @@
     <div class="ccard" data-at="2"><div class="cnum">2–5</div><div class="clab">business days until ready</div></div>
     <div class="ccard need" data-at="2"><div class="ic">⏰</div><div class="clab">onboard in advance, not on load day</div></div>
   </div>
-</div></div>
+</div></div><figure class="sc-shot side" data-at="2">
+  <img src="/img/amazon-relay/app-trip-begin.webp" alt="The driver app: the trip, the stops, the board. Source: the Amazon Relay blog" loading="lazy">
+  <figcaption class="cap">The driver app: the trip, the stops, the board. Source: the Amazon Relay blog</figcaption>
+</figure></div></div>
     </div>
     <div class="scene" data-i="17">
       <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver</span><span class="sc-tt">The invitation and the identity check</span></div>
-      <div class="scene-body"><div class="sc-steps">
-  <div class="st" data-at="0"><div class="sn">1</div><div class="sb"><div class="stt">The dispatcher sends the invitation</div><div class="std">Site → manage resources → driver roster → add driver</div><div class="std dim" data-at="1">Name, phone, email, licence number → the driver gets a link</div></div></div>
-  <div class="st" data-at="2"><div class="sn">2</div><div class="sb"><div class="stt">The driver confirms his identity</div><div class="std">A selfie and both sides of the licence, about 48 hours to check</div><div class="std dim" data-at="3">Then the background check: criminal record and driving history</div></div></div>
-</div>
-<div class="sc-note" data-at="3">The background check is mandatory for every new driver since August 2025</div></div>
+      <div class="scene-body"><svg class="an" viewBox="0 0 900 330">
+  <g transform="translate(310,14)">
+    <rect width="280" height="304" rx="26" fill="#0b1120" stroke="rgba(255,255,255,.16)" stroke-width="2"/>
+    <rect x="108" y="14" width="64" height="9" rx="5" fill="#1e293b"/>
+    <text x="140" y="58" text-anchor="middle" class="t-b" font-size="16">The driver app</text>
+    <g transform="translate(22,76)"><g data-at="1">
+      <rect width="236" height="50" rx="12" fill="rgba(6,182,212,.12)" stroke="rgba(6,182,212,.45)"/>
+      <rect class="btn-hit" width="236" height="50" rx="12"/>
+      <text x="20" y="31" class="t-x" font-size="14">Invitation received</text>
+      <path class="tick" d="M198 24 l8 8 l14 -16" stroke="#10b981" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g></g>
+    <g transform="translate(22,142)"><g data-at="2">
+      <rect width="236" height="50" rx="12" fill="rgba(6,182,212,.12)" stroke="rgba(6,182,212,.45)"/>
+      <rect class="btn-hit" width="236" height="50" rx="12"/>
+      <text x="20" y="31" class="t-x" font-size="14">Selfie and licence</text>
+      <path class="tick" d="M198 24 l8 8 l14 -16" stroke="#10b981" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g></g>
+    <g transform="translate(22,208)"><g data-at="3">
+      <rect width="236" height="50" rx="12" fill="rgba(6,182,212,.12)" stroke="rgba(6,182,212,.45)"/>
+      <rect class="btn-hit" width="236" height="50" rx="12"/>
+      <text x="20" y="31" class="t-x" font-size="14">Background check</text>
+      <path class="tick" d="M198 24 l8 8 l14 -16" stroke="#10b981" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g></g>
+    <g transform="translate(140,233)"><g class="tap" data-at="3">
+      <circle r="17" fill="rgba(255,255,255,.3)"/><circle r="7" fill="rgba(255,255,255,.55)"/>
+    </g></g>
+  </g>
+  <g transform="translate(150,150)"><g data-at="0"><text text-anchor="middle" class="t-s">Dispatcher invites</text></g></g>
+  <g transform="translate(750,150)"><g data-at="3"><text text-anchor="middle" class="t-s">Check takes ~48 hours</text></g></g>
+</svg></div>
     </div>
     <div class="scene" data-i="18">
       <div class="scene-cap"><span class="sc-ch">Chapter 3. The driver</span><span class="sc-tt">Training and phone settings</span></div>
@@ -926,7 +1058,10 @@
     var b = document.querySelector('.bar-wrap');
     if (!b || !isFS()) { subsEl.style.bottom = ''; return; }
     var u = parseFloat(getComputedStyle(stage).getPropertyValue('--u')) || 10;
-    subsEl.style.bottom = (pbox.classList.contains('idle') ? u * 2.6 : b.offsetHeight + 8) + 'px';
+    if (pbox.classList.contains('idle')) { subsEl.style.bottom = (u * 2.6) + 'px'; return; }
+    // базовый отступ задан в CSS; поднимаем выше, только если панель оказалась толще
+    var need = b.offsetHeight + 8;
+    subsEl.style.bottom = need > u * 7.4 ? need + 'px' : '';
   }
   function lockLandscape() {
     try {
@@ -1077,6 +1212,40 @@
   a.addEventListener('ended', markDone);
   addEventListener('pagehide', saveState);
   document.addEventListener('visibilitychange', function () { if (document.hidden) saveState(); });
+
+  // ── визуальный слой: цвет главы, ступенчатое появление, счётчик чисел ──
+  (function () {
+    var prev = null, ci = 0;
+    scenes.forEach(function (sc) {
+      var ch = (sc.querySelector('.sc-ch') || {}).textContent || '';
+      if (ch !== prev) { prev = ch; ci = ci % 5 + 1; }
+      sc.setAttribute('data-c', ci);
+      // ступенька внутри одной группы появления
+      var seen = {};
+      [].forEach.call(sc.querySelectorAll('[data-at]'), function (el) {
+        var k = el.getAttribute('data-at');
+        seen[k] = (seen[k] || 0) + 1;
+        el.style.setProperty('--d', ((seen[k] - 1) * 0.075).toFixed(3) + 's');
+      });
+    });
+
+  })();
+
+  // ── страховка: сцена, не влезающая в кадр, масштабируется, а не режется ──
+  function fitScene(sc) {
+    if (!sc) return;
+    var b = sc.querySelector('.scene-body'); if (!b) return;
+    b.style.transform = ''; b.style.transformOrigin = 'center';
+    var over = b.scrollHeight / Math.max(1, b.clientHeight);
+    if (over > 1.02) b.style.transform = 'scale(' + Math.max(.62, 1 / over).toFixed(3) + ')';
+  }
+  function fitLive() { fitScene(stage.querySelector('.scene.live')); }
+  [].forEach.call(stage.querySelectorAll('.scene img'), function (im) {
+    im.loading = 'eager';
+    im.addEventListener('load', fitLive);
+  });
+  new MutationObserver(function () { fitLive(); }).observe(stage, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  addEventListener('resize', function () { setTimeout(fitLive, 120); });
 
   showScene(0); reveal(0, -1); setPlay(false);
 })();
