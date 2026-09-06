@@ -133,6 +133,24 @@
         .on .pic .boom { transform:rotate(-70deg); }
         .pic .tapbtn { transform-box:fill-box; transform-origin:center; }
         .on .pic .tapbtn { animation:btnPress .5s ease .7s 2; }
+        /* ===== ТЕЛЕФОН: сцена столбиком, шрифт не меньше 13px ===== */
+        @media (max-width:700px) {
+            .stage { aspect-ratio:auto; height:auto; min-height:calc(var(--u)*40); }
+            .scene { position:relative; inset:auto; padding:calc(var(--u)*1.6) calc(var(--u)*1.4) calc(var(--u)*2.2); }
+            .scene.live { display:flex; }
+            .scene-body { justify-content:flex-start; gap:calc(var(--u)*1.1); }
+            .scene::after { display:none; }
+            .sit2, .sit2.flip, .sit2.art, .sit2.art.flip, .sit2.noart { display:flex; flex-direction:column; gap:calc(var(--u)*1); height:auto; }
+            .sit2-art { display:flex; order:0; max-height:calc(var(--u)*17); }
+            .sit2-art .pic { max-height:calc(var(--u)*17); }
+            .sit2.flip .sit2-art { order:0; }
+            .sc-split { display:flex; flex-direction:column; height:auto; }
+            .sc-split .sc-shot.side img { max-height:calc(var(--u)*18); }
+            .an { max-height:calc(var(--u)*22); }
+            .pbox:fullscreen .stage, .pbox.fsfake .stage { width:100vw; height:100dvh; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+            .pbox:fullscreen .scene, .pbox.fsfake .scene { padding-bottom:calc(var(--u)*16); min-height:100%; }
+            .subs.below .stx { font-size:14px; }
+        }
         /* ===== АНИМАЦИИ ДЕЙСТВИЙ ===== */
         .an { width:100%; height:auto; max-height:100%; }
         .an text { font-family:'Inter',sans-serif; }
@@ -1210,7 +1228,13 @@ Attachments: a screenshot of the app, a photo of the spot, the name of the facil
   var scenes = [].slice.call(stage.querySelectorAll('.scene'));
   var cur = -1, curCue = -1, subsOn = true, rates = [1, 1.25, 1.5, 0.75], ri = 0;
 
-  function unit() { var w = stage.clientWidth, h = stage.clientHeight; stage.style.setProperty('--u', Math.min(w / 100, h / 56.25) + 'px'); }
+  // на телефоне (уже 700px) единица кадра не меньше 10.5px — текст читается, кадр растёт по высоте
+  function isMobile() { return stage.clientWidth < 700; }
+  function unit() {
+    var w = stage.clientWidth, h = stage.clientHeight;
+    var u = isMobile() ? Math.max(w / 100, 10.5) : Math.min(w / 100, h / 56.25);
+    stage.style.setProperty('--u', u + 'px');
+  }
   var player = document.querySelector('.player'), pbox = document.getElementById('pbox');
   function isFS() { return document.fullscreenElement === pbox || pbox.classList.contains('fsfake'); }
   var subsEl = document.getElementById('subs');
@@ -1224,7 +1248,7 @@ Attachments: a screenshot of the app, a photo of the spot, the name of the facil
   function fsLayout() {
     var portrait = window.innerHeight > window.innerWidth;
     var touch = false; try { touch = matchMedia('(pointer: coarse)').matches; } catch (e) {}
-    var rot = portrait && touch && Math.min(window.innerWidth, window.innerHeight) < 820;
+    var rot = portrait && touch && !isMobile() && Math.min(window.innerWidth, window.innerHeight) < 820;
     pbox.classList.toggle('rot', rot);
   }
   // Панель всегда в один ряд: если не влезает — ужимаем подписи ступенями.
@@ -1422,6 +1446,7 @@ Attachments: a screenshot of the app, a photo of the spot, the name of the facil
     if (!sc) return;
     var b = sc.querySelector('.scene-body'); if (!b) return;
     b.style.transform = ''; b.style.transformOrigin = 'center';
+    if (isMobile()) return;
     var over = b.scrollHeight / Math.max(1, b.clientHeight);
     if (over > 1.02) b.style.transform = 'scale(' + Math.max(.62, 1 / over).toFixed(3) + ')';
   }
