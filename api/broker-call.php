@@ -1020,8 +1020,9 @@ switch ($action) {
 
     // Gemini первым: Orpheus у Groq требует принятия условий, и без этого
     // брокер молчит. Отказ — молча вниз, на Groq.
+    $geminiWhy = null;
     if ($geminiKey !== '') {
-      $wav = bc_gemini_speak($geminiKey, $text, isset($in['voice']) ? $in['voice'] : '');
+      $wav = bc_gemini_speak($geminiKey, $text, isset($in['voice']) ? $in['voice'] : '', $geminiWhy);
       if ($wav !== null) {
         http_response_code(200);
         header('Content-Type: audio/wav');
@@ -1042,7 +1043,11 @@ switch ($action) {
         'response_format' => 'wav',
       ]
     );
-    if ($code < 200 || $code >= 300) { bc_fail($code, substr((string) $body, 0, 300)); }
+    // Наружу — обе причины: на экране была видна только ошибка Groq, а почему
+    // до него вообще дошло (Gemini 429/500) — оставалось догадкой.
+    if ($code < 200 || $code >= 300) {
+      bc_fail($code, 'gemini: ' . ($geminiWhy === null ? 'нет ключа' : $geminiWhy) . ' | groq: ' . substr((string) $body, 0, 200));
+    }
 
     http_response_code(200);
     header('Content-Type: audio/wav');

@@ -4,7 +4,7 @@ import { TelephonyAudio } from './TelephonyAudio'
 import { encodeWav, durationSeconds } from './audio'
 import { WHISPER_PROMPT, looksNonEnglish, normalizeTranscript, isWhisperPhantom } from '../data/terms'
 import { endpoint } from '../api'
-import { estimateDurationMs } from './browserVoice'
+import { speakInBrowser, type BrowserSpeech } from './browserVoice'
 import { synthesize } from './tts'
 import { trimHistory } from './history'
 
@@ -33,6 +33,8 @@ export class PipelineTransport implements VoiceTransport {
   private holdTimer: number | null = null
   private closed = false
   private busy = false
+  /** Голос браузера, когда облачная озвучка легла: чтобы перебивание его глушило. */
+  private browserSpeech: BrowserSpeech | null = null
   /** Студент договорил, пока брокер ещё думал: ход не теряется, а ждёт. */
   private pendingTurn = false
   /** Перебивание — только если речь длится, а не щёлкнула. */
@@ -348,15 +350,26 @@ export class PipelineTransport implements VoiceTransport {
    * хуже тишины: тишина с текстом читается как «плохая связь», робот — как
    * поломка. Текст раскрывается в темпе речи, разговор продолжается.
    */
+  /**
+   * Голос браузера (speechSynthesis) — последняя ступень после Gemini и Groq.
+   * Раньше здесь был просто таймер: слова проявлялись на экране, а брокер
+   * молчал. Живой звонок с сайта: Gemini TTS упёрся в квоту, Orpheus у Groq
+   * ждёт принятия условий — и тренажёр голоса шёл текстом. Роботизированный
+   * голос лучше тишины: разговор остаётся разговором.
+   */
   private async playInBrowser(text: string): Promise<void> {
     const id = nextId()
-    const durationMs = estimateDurationMs(text)
+    const speech = speakInBrowser(text, this.deps.voice ?? '')
+    const durationMs = speech?.estimatedMs ?? 0
 
     this.deps.emit({ type: 'agent_utterance_start', id, text, durationMs })
     this.currentUtterance = { id, startedAt: performance.now(), durationMs }
+    this.browserSpeech = speech
 
-    await wait(durationMs)
+    if (speech) await speech.done
+    else await wait(durationMs)
 
+    this.browserSpeech = null
     this.finishUtterance(false)
   }
 
@@ -368,6 +381,10 @@ export class PipelineTransport implements VoiceTransport {
   }
 
   private stopPlayback(interrupted: boolean): void {
+    if (this.browserSpeech) {
+      this.browserSpeech.cancel()
+      this.browserSpeech = null
+    }
     if (this.playing) {
       try {
         this.playing.onended = null

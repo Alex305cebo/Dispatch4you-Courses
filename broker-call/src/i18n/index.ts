@@ -89,7 +89,7 @@ const RU = {
     'Браузер не дал доступ к микрофону. Разрешите его в адресной строке и обновите страницу.',
   'error.noKeys':
     'Не настроены ключи. Скопируйте .env.example в .env.local и подставьте ключ Groq.',
-  'error.ttsFailed': 'Голос брокера недоступен — реплики идут текстом',
+  'error.ttsFailed': 'Облачный голос недоступен — брокер говорит голосом браузера',
   'error.sttFailed': 'Не удалось распознать речь. Повторите фразу.',
   'error.llmFailed': 'Брокер не отвечает. Попробуйте сказать ещё раз.',
   'error.generic': 'Что-то пошло не так',
@@ -180,7 +180,7 @@ const EN: Record<Key, string> = {
   'error.micDenied':
     'The browser blocked microphone access. Allow it in the address bar and reload.',
   'error.noKeys': 'No API keys configured. Copy .env.example to .env.local and add a Groq key.',
-  'error.ttsFailed': 'Broker voice is unavailable — replies continue as text',
+  'error.ttsFailed': 'Cloud voice is unavailable — the broker speaks with the browser voice',
   'error.sttFailed': 'Could not transcribe that. Say it again.',
   'error.llmFailed': 'The broker is not responding. Try saying it again.',
   'error.generic': 'Something went wrong',
